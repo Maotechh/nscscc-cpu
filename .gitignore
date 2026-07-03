@@ -1,0 +1,26 @@
+# Build artifacts
+obj/
+*.o
+*.elf
+*.bin
+*.coe
+*.mif
+*.vlog
+*.s
+*.log
+*.jou
+*.str
+
+# Vivado generated
+xilinx_ip/*/gen/
+*.dcp
+*.xci
+*.cache/
+*.hw/
+*.ip_user_files/
+*.sim/
+run_vivado/
+
+# OS files
+.DS_Store
+Thumbs.db
