@@ -318,7 +318,7 @@ generate for(i=0;i<2;i=i+1) begin:gen_way_hit
 	assign way_hit[i] = way_tagv_douta[i][0] && (tag == way_tagv_douta[i][20:1]); //this signal will not maintain
 end endgenerate
 
-assign cache_hit = |way_hit && !(uncache_en || cacop_op_mode0 || cacop_op_mode1 || cacop_op_mode2);  //uncache road reuse
+assign cache_hit = (|way_hit && !uncache_en) || cacop_op_mode0 || cacop_op_mode1 || cacop_op_mode2;  //uncache road reuse
 //when cache inst op mode2 no hit, main state machine will still go a round. implement easy.
 
 assign main_lookup2lookup = !(write_state_is_full && ((write_buffer_offset[3:2] == offset[3:2]) || dcacop_op_en)) && 
