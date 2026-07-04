@@ -273,7 +273,7 @@ assign rd_type = request_buffer_uncache_en ? 3'b10 : 3'b100;
 assign rd_addr = request_buffer_uncache_en ? {request_buffer_tag, request_buffer_index, request_buffer_offset} : {request_buffer_tag, request_buffer_index, 4'b0};
 
 //write process will not block pipeline 
-assign data_ok = (main_state_is_lookup && (cache_hit || tlb_excp_cancel_req)) || 
+assign data_ok = (main_state_is_lookup && (cache_hit || tlb_excp_cancel_req || request_buffer_icacop)) ||
                  (main_state_is_refill && ((ret_valid && ((miss_buffer_ret_num == request_buffer_offset[3:2]) || request_buffer_uncache_en))/* || !rd_req_buffer*/)) &&
                  !request_buffer_icacop;  //when rd_req is not set, set data_ok directly.
 //rdate connect with ret_data dirctly. maintain one clock only

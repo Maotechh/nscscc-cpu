@@ -395,9 +395,9 @@ assign rd_addr = request_buffer_uncache_en ? {request_buffer_tag, request_buffer
 
 //write process will not block pipeline
 //preld ins will not block pipeline      ps:preld is not real mem inst, this operation is controled in pipeline
-assign data_ok = ((main_state_is_lookup && (cache_hit || request_buffer_op || cancel_req)) || 
-                  (main_state_is_refill && (!request_buffer_op && (ret_valid && ((miss_buffer_ret_num == request_buffer_offset[3:2]) || request_buffer_uncache_en))))) && 
-                  !(request_buffer_preld || request_buffer_dcacop);  //when rd_req is not set, set data_ok directly.
+assign data_ok = ((main_state_is_lookup && (cache_hit || request_buffer_op || cancel_req || request_buffer_dcacop)) ||
+                  (main_state_is_refill && (!request_buffer_op && (ret_valid && ((miss_buffer_ret_num == request_buffer_offset[3:2]) || request_buffer_uncache_en))))) &&
+                  !request_buffer_preld;  // cacop handled by FSM bypass, always completes immediately
 //rdate connect with ret_data dirctly. maintain one clock only
 
 assign write_in = {(request_buffer_wstrb[3] ? request_buffer_wdata[31:24] : ret_data[31:24]), 
