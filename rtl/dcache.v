@@ -213,6 +213,13 @@ always @(posedge clk) begin
             else if (cancel_req) begin
                 main_state <= main_idle;
             end
+            else if (request_buffer_dcacop) begin
+                // cacop miss (Mode 1/2): nothing to invalidate, complete immediately.
+                // cacop hit: invalidate/writeback effected normally via cacop_op_mode* signals.
+                // This prevents deadlock when cacop misses and the FSM tries to enter
+                // main_miss/main_replace which would wait for AXI responses that never come.
+                main_state <= main_idle;
+            end
             else if (!cache_hit) begin
 				//uncache wr --> wr_req 1
 				//uncache rd, cacop(code==0) --> wr_req 0
@@ -318,7 +325,7 @@ generate for(i=0;i<2;i=i+1) begin:gen_way_hit
 	assign way_hit[i] = way_tagv_douta[i][0] && (tag == way_tagv_douta[i][20:1]); //this signal will not maintain
 end endgenerate
 
-assign cache_hit = (|way_hit && !uncache_en) || cacop_op_mode0 || cacop_op_mode1 || cacop_op_mode2;  //uncache road reuse
+assign cache_hit = |way_hit && !uncache_en;  //uncache road reuse
 //when cache inst op mode2 no hit, main state machine will still go a round. implement easy.
 
 assign main_lookup2lookup = !(write_state_is_full && ((write_buffer_offset[3:2] == offset[3:2]) || dcacop_op_en)) && 
