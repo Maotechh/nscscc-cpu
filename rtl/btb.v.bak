@@ -1,6 +1,6 @@
 module btb
 #(
-    parameter BTBNUM = 64,
+    parameter BTBNUM = 32,
 	parameter RASNUM = 16
 )
 (
@@ -63,8 +63,8 @@ wire ras_match;
 
 wire [29:0] btb_match_target;
 wire [ 1:0] btb_match_counter;
-wire [ 5:0] btb_match_index;
-wire [ 5:0] btb_random_index;
+wire [ 4:0] btb_match_index;
+wire [ 4:0] btb_random_index;
 
 wire [ 3:0] ras_match_index;
 wire [ 3:0] ras_random_index;
@@ -109,7 +109,7 @@ assign btb_untaken_entry_t = btb_untaken_entry_r & ({32{!btb_add_entry_r}} | ~bt
 assign btb_has_one_untaken_entry = |btb_untaken_entry_t;
 
 decoder_5_32 dec_btb_add_entry (.in(btb_add_entry_index_r), .out(btb_add_entry_dec));
-one_valid_64 sel_one_untaken_entry (.in(btb_untaken_entry_t), .out_en(btb_sel_one_untaken_entry));
+one_valid_32 sel_one_untaken_entry (.in(btb_untaken_entry_t), .out_en(btb_sel_one_untaken_entry));
 
 //assign btb_random_index = (btb_match && (fcsr[4:0] == btb_match_index)) ? (fcsr[4:0]+1'b1) : fcsr[4:0];
 //untaken entry can exit first, make no difference, except lose history infor. 
@@ -118,7 +118,7 @@ assign btb_add_entry_index = !btb_all_entry_valid ?      btb_select_one_invalid_
 							 							 fcsr[4:0] ; 
 
 assign btb_all_entry_valid = &btb_valid;
-one_valid_64 sel_one_btb_entry (.in(~btb_valid), .out_en(btb_select_one_invalid_entry));
+one_valid_32 sel_one_btb_entry (.in(~btb_valid), .out_en(btb_select_one_invalid_entry));
 
 //assign ras_random_index = (ras_match && (fcsr[3:0] == ras_match_index)) ? (fcsr[3:0]+1'b1) : fcsr[3:0];
 assign ras_add_entry_index = ras_all_entry_valid ? fcsr[3:0] : ras_select_one_invalid_entry;

@@ -165,3 +165,56 @@ encoder_32_5 coder (.in(one_in), .out(out_en));
 
 endmodule
 
+
+module encoder_64_6 (
+    input  [63:0] in,
+    output [ 5:0] out
+);
+    assign out = in[ 0] ? 6'd0  : in[ 1] ? 6'd1  :
+                 in[ 2] ? 6'd2  : in[ 3] ? 6'd3  :
+                 in[ 4] ? 6'd4  : in[ 5] ? 6'd5  :
+                 in[ 6] ? 6'd6  : in[ 7] ? 6'd7  :
+                 in[ 8] ? 6'd8  : in[ 9] ? 6'd9  :
+                 in[10] ? 6'd10 : in[11] ? 6'd11 :
+                 in[12] ? 6'd12 : in[13] ? 6'd13 :
+                 in[14] ? 6'd14 : in[15] ? 6'd15 :
+                 in[16] ? 6'd16 : in[17] ? 6'd17 :
+                 in[18] ? 6'd18 : in[19] ? 6'd19 :
+                 in[20] ? 6'd20 : in[21] ? 6'd21 :
+                 in[22] ? 6'd22 : in[23] ? 6'd23 :
+                 in[24] ? 6'd24 : in[25] ? 6'd25 :
+                 in[26] ? 6'd26 : in[27] ? 6'd27 :
+                 in[28] ? 6'd28 : in[29] ? 6'd29 :
+                 in[30] ? 6'd30 : in[31] ? 6'd31 :
+                 in[32] ? 6'd32 : in[33] ? 6'd33 :
+                 in[34] ? 6'd34 : in[35] ? 6'd35 :
+                 in[36] ? 6'd36 : in[37] ? 6'd37 :
+                 in[38] ? 6'd38 : in[39] ? 6'd39 :
+                 in[40] ? 6'd40 : in[41] ? 6'd41 :
+                 in[42] ? 6'd42 : in[43] ? 6'd43 :
+                 in[44] ? 6'd44 : in[45] ? 6'd45 :
+                 in[46] ? 6'd46 : in[47] ? 6'd47 :
+                 in[48] ? 6'd48 : in[49] ? 6'd49 :
+                 in[50] ? 6'd50 : in[51] ? 6'd51 :
+                 in[52] ? 6'd52 : in[53] ? 6'd53 :
+                 in[54] ? 6'd54 : in[55] ? 6'd55 :
+                 in[56] ? 6'd56 : in[57] ? 6'd57 :
+                 in[58] ? 6'd58 : in[59] ? 6'd59 :
+                 in[60] ? 6'd60 : in[61] ? 6'd61 :
+                 in[62] ? 6'd62 : in[63] ? 6'd63 : 6'd0;
+endmodule
+
+module one_valid_64 (
+    input  [63:0] in,
+    output [ 5:0] out_en
+);
+    wire [63:0] one_in;
+    assign one_in[0] = in[0];
+    genvar i;
+    generate 
+        for (i=1; i<64; i=i+1) begin: sel_one
+            assign one_in[i] = in[i] && ~|in[i-1:0];
+        end
+    endgenerate
+    encoder_64_6 coder (.in(one_in), .out(out_en));
+endmodule
