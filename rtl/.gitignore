@@ -1,9 +1,0 @@
-# Generated Verilog from Spinal - DO NOT EDIT
-*.v
-# Keep only these 6 stubs (SpinalHDL 1.10.x limitation)
-!IDStage.v
-!EXEStage.v
-!MEMStage.v
-!WBStage.v
-!BTB.v
-!AxiBridge.v
