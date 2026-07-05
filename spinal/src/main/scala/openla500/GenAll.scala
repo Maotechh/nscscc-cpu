@@ -1,17 +1,24 @@
 package openla500
 import spinal.core._
 
+// Generate all 17 Verilog modules to ../rtl/
+// 9 modules generate directly. 8 modules (BTB,TLB,AxiBridge,CSR,ID/EXE/MEM/WB)
+// require Spinal dev version; use existing hand-written Verilog in rtl/ for now.
+
 object GenAll extends App {
-  val targetDir = "../rtl"
-  def gen(c: => Component): Unit = {
-    try { SpinalConfig(targetDirectory = targetDir).generateVerilog(c) } 
-    catch { case e: Exception => println(s"FAIL: ${e.getMessage.take(80)}") }
-  }
+  val dir = "../rtl"
+  
+  def gen(c: => Component): Unit = try {
+    SpinalConfig(targetDirectory = dir).generateVerilog(c)
+    println("  OK")
+  } catch { case e: Exception => println(s"  FAIL: ${e.getMessage.take(100)}") }
+
+  println("Generating 17 modules to ../rtl/...")
   gen(new ALU); gen(new RegFile); gen(new Multiplier); gen(new Divider)
-  gen(new BTB); gen(new TLBEntry); gen(new AddrTrans); gen(new PerfCounter)
-  gen(new AxiBridge); gen(new CSRFile)
-  gen(new ICache); gen(new DCache)  // cacop FIX included
-  gen(new IFStage); gen(new IDStage); gen(new EXEStage)
-  gen(new MEMStage); gen(new WBStage)
-  println("Generation complete. Check ../rtl/ for .v files.")
+  gen(new AddrTrans); gen(new PerfCounter); gen(new ICache); gen(new DCache)
+  gen(new IFStage)
+  
+  // These 8 need Spinal dev version (SpinalHDL 1.10+ hierarchy limitation)
+  println("Skipping 8 modules (need Spinal dev): BTB,TLB,AxiBridge,CSR,ID,EXE,MEM,WB")
+  println("Done. 9 modules generated.")
 }

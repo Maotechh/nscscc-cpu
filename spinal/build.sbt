@@ -2,7 +2,7 @@ name := "nscscc-cpu-spinal"
 version := "1.0"
 scalaVersion := "2.13.16"
 
-val spinalVersion = "1.10.2"
+val spinalVersion = "1.14.2"
 
 libraryDependencies ++= Seq(
   "com.github.spinalhdl" %% "spinalhdl-core" % spinalVersion,

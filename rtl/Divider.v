@@ -1,11 +1,11 @@
-// Generator : SpinalHDL v1.10.2    git head : 279867b771fb50fc0aec21d8a20d8fdad0f87e3f
+// Generator : SpinalHDL v1.14.2    git head : 78f29dc66110fc099a777992b6daa2f803ab445e
 // Component : Divider
-// Git hash  : 2a036cbe6f1375c725b52f589992d464a607d0cd
+// Git hash  : 8b54019081ec06557709bbaafbf7a87965e11df2
 
 `timescale 1ns/1ps
 
 module Divider (
-  input  wire [0:0]    switch_Misc_l241,
+  input  wire [0:0]    switch_Misc_l245,
   input  wire          _zz_when_Divider_l33,
   input  wire [31:0]   _zz_when_Divider_l33_1,
   input  wire [31:0]   _zz_when_Divider_l33_2,
@@ -53,7 +53,7 @@ module Divider (
   assign when_Divider_l30 = (! _zz_when_Divider_l30_3[31]);
   assign when_Divider_l31 = (_zz_when_Divider_l31 == 6'h1f);
   always @(*) begin
-    case(switch_Misc_l241)
+    case(switch_Misc_l245)
       1'b0 : begin
         _zz_4 = _zz_when_Divider_l30;
       end
