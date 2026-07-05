@@ -1,3 +1,4 @@
+// Spinal-equivalent: btb ← spinal/src/.../btb.scala
 module btb
 #(
     parameter BTBNUM = 64,

@@ -1,3 +1,4 @@
+// Spinal-equivalent: csr ← spinal/src/.../csr.scala
 `include "mycpu.h"
 `include "csr.h"
 

@@ -1,10 +1,10 @@
 // Generator : SpinalHDL v1.14.2    git head : 78f29dc66110fc099a777992b6daa2f803ab445e
-// Component : AddrTrans
-// Git hash  : 8b54019081ec06557709bbaafbf7a87965e11df2
+// Component : addr_trans_tmp
+// Git hash  : 44b96c9d95df20c771a4c037f38a50b58c18805d
 
 `timescale 1ns/1ps
 
-module AddrTrans (
+module addr_trans (
   input  wire [31:0]   _zz_when_AddrTrans_l11,
   input  wire          _zz_1,
   output reg  [31:0]   _zz_2,
