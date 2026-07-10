@@ -563,6 +563,7 @@ def installed_tool_specs(tool_root: Path, manifest: dict[str, str]) -> list[tupl
         ),
         ("yosys", executable("yosys"), "yosys_binary_sha256"),
         ("java", executable("java"), "java_binary_sha256"),
+        ("python", Path(sys.executable).resolve(), "python_binary_sha256"),
         (
             "jdk_modules",
             Path("/usr/lib/jvm/java-17-openjdk-amd64/lib/modules"),
@@ -683,6 +684,7 @@ def command_chiplab_doctor(args: argparse.Namespace) -> int:
         "verilator": (["verilator", "--version"], manifest["verilator"]),
         "yosys": (["yosys", "-V"], manifest["yosys"]),
         "java": (["java", "-version"], manifest["jdk"].split("+")[0]),
+        "python": ([str(spec_paths["python"]), "--version"], manifest["python"]),
         "gcc": ([str(spec_paths["gcc"]), "--version"], "8.3.0"),
         "sbt": ([str(spec_paths["sbt"]), "--script-version"], manifest["sbt"]),
     }

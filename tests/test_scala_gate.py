@@ -146,6 +146,19 @@ class ScalaGateWarningTests(unittest.TestCase):
             self.assertFalse(policy["passed"])
             self.assertEqual(1, len(policy["inline_waivers"]))
 
+            header = root / "defs.vh"
+            header.write_text("/* verilator\n lint_save */\n", encoding="utf-8")
+            rtl.write_text('`include "defs.vh"\nmodule input_rtl; endmodule\n', encoding="utf-8")
+            policy = scala_gate.verilator_script_policy(script)
+            self.assertFalse(policy["passed"])
+            self.assertEqual(str(header.resolve()), policy["inline_waivers"][0]["path"])
+            self.assertIn(str(header.resolve()), policy["scanned_rtl_inputs"])
+
+            header.unlink()
+            policy = scala_gate.verilator_script_policy(script)
+            self.assertFalse(policy["passed"])
+            self.assertEqual("defs.vh", policy["missing_includes"][0]["include"])
+
             rtl.write_text("module input_rtl; endmodule\n", encoding="utf-8")
             (root / "verilator_config.vlt").write_text("`verilator_config\n", encoding="utf-8")
             policy = scala_gate.verilator_script_policy(script)

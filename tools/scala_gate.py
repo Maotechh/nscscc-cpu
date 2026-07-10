@@ -470,6 +470,7 @@ def verilator_script_policy(script: Path) -> dict[str, object]:
     wall_enabled = any(token.lower() == "-wall" for token in tokens)
     response_file_tokens: list[str] = []
     rtl_inputs: list[Path] = []
+    include_dirs: list[Path] = []
     for index, token in enumerate(tokens):
         if token in {"-f", "-F"}:
             response_file_tokens.append(
@@ -482,14 +483,31 @@ def verilator_script_policy(script: Path) -> dict[str, object]:
         elif token.lower().endswith((".v", ".sv")):
             candidate = Path(token)
             rtl_inputs.append(candidate if candidate.is_absolute() else script.parent / candidate)
+        elif token.startswith("+incdir+"):
+            for directory in token.removeprefix("+incdir+").split("+"):
+                candidate = Path(directory)
+                include_dirs.append(
+                    candidate if candidate.is_absolute() else script.parent / candidate
+                )
+        elif token.startswith("-I") and len(token) > 2:
+            if index > 0 and tokens[index - 1] in {"-CFLAGS", "-LDFLAGS"}:
+                continue
+            candidate = Path(token[2:])
+            include_dirs.append(candidate if candidate.is_absolute() else script.parent / candidate)
 
     discovered_vlt = sorted(str(path) for path in script.parent.rglob("*.vlt"))
     missing_rtl_inputs = sorted(str(path) for path in rtl_inputs if not path.is_file())
     inline_waivers: list[dict[str, object]] = []
     inline_pattern = re.compile(r"verilator\s+lint_(?:off|save)\b", re.IGNORECASE)
-    for rtl_path in rtl_inputs:
-        if not rtl_path.is_file():
+    include_pattern = re.compile(r"`include\s+\"([^\"]+)\"")
+    pending = [path.resolve() for path in rtl_inputs if path.is_file()]
+    scanned: set[Path] = set()
+    missing_includes: list[dict[str, object]] = []
+    while pending:
+        rtl_path = pending.pop()
+        if rtl_path in scanned:
             continue
+        scanned.add(rtl_path)
         rtl_text = rtl_path.read_text(encoding="utf-8", errors="replace")
         for match in inline_pattern.finditer(rtl_text):
             inline_waivers.append(
@@ -499,6 +517,21 @@ def verilator_script_policy(script: Path) -> dict[str, object]:
                     "text": " ".join(match.group(0).split()),
                 }
             )
+        for match in include_pattern.finditer(rtl_text):
+            include_name = match.group(1)
+            candidates = [rtl_path.parent / include_name]
+            candidates.extend(directory / include_name for directory in include_dirs)
+            included = next((candidate.resolve() for candidate in candidates if candidate.is_file()), None)
+            if included is None:
+                missing_includes.append(
+                    {
+                        "path": str(rtl_path),
+                        "line": rtl_text.count("\n", 0, match.start()) + 1,
+                        "include": include_name,
+                    }
+                )
+            elif included not in scanned:
+                pending.append(included)
     passed = (
         parse_error is None
         and wall_enabled
@@ -507,6 +540,7 @@ def verilator_script_policy(script: Path) -> dict[str, object]:
         and not response_file_tokens
         and not discovered_vlt
         and not missing_rtl_inputs
+        and not missing_includes
         and not inline_waivers
     )
     return {
@@ -520,6 +554,9 @@ def verilator_script_policy(script: Path) -> dict[str, object]:
         "response_file_tokens": response_file_tokens,
         "discovered_vlt_files": discovered_vlt,
         "missing_rtl_inputs": missing_rtl_inputs,
+        "include_dirs": sorted(str(path.resolve()) for path in include_dirs),
+        "scanned_rtl_inputs": sorted(str(path) for path in scanned),
+        "missing_includes": missing_includes,
         "inline_waivers": inline_waivers,
         "passed": passed,
     }

@@ -128,6 +128,12 @@ class GeneratedDirectorySafetyTests(unittest.TestCase):
 
 
 class GateIntegrityTests(unittest.TestCase):
+    def test_installed_tool_specs_include_python_evaluator(self) -> None:
+        specs = refactor.installed_tool_specs(Path("/tmp/tools"), {"sbt": "1.10.11"})
+        python = next(item for item in specs if item[0] == "python")
+        self.assertEqual(Path(sys.executable).resolve(), python[1])
+        self.assertEqual("python_binary_sha256", python[2])
+
     def test_cli_refuses_nonisolated_python(self) -> None:
         result = refactor.run_command(
             [sys.executable, str(Path(refactor.__file__)), "--help"], cwd=Path.cwd()
