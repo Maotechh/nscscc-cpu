@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import sys
 import tempfile
 import time
 import unittest
@@ -8,6 +9,7 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest import mock
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from tools import refactor
 
 
@@ -126,6 +128,31 @@ class GeneratedDirectorySafetyTests(unittest.TestCase):
 
 
 class GateIntegrityTests(unittest.TestCase):
+    def test_cli_refuses_nonisolated_python(self) -> None:
+        result = refactor.run_command(
+            [sys.executable, str(Path(refactor.__file__)), "--help"], cwd=Path.cwd()
+        )
+        self.assertEqual(2, result.exit_code)
+        self.assertIn("requires isolated Python", result.stderr)
+
+        isolated = refactor.run_command(
+            [sys.executable, "-I", str(Path(refactor.__file__)), "--help"], cwd=Path.cwd()
+        )
+        self.assertEqual(0, isolated.exit_code)
+
+    def test_command_report_hash_binds_raw_log(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            log = root / "raw.log"
+            result = refactor.run_command(
+                [sys.executable, "-c", "print('bound')"], cwd=root, log_path=log
+            )
+            report = result.as_dict()
+            expected_log_sha256 = refactor.sha256_file(log)
+        self.assertEqual(0, result.exit_code)
+        self.assertEqual(str(log.resolve()), report["log_path"])
+        self.assertEqual(expected_log_sha256, report["log_sha256"])
+
     def test_missing_executable_is_structured_exit_127(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             result = refactor.run_command(

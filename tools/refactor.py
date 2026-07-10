@@ -62,6 +62,8 @@ REQUIRED_MANIFEST_KEYS = {
     "verilator_engine_sha256",
     "verilator_runtime_sha256",
     "jdk_modules_sha256",
+    "python",
+    "python_binary_sha256",
     "vivado_edition",
     "vivado_build",
     "vivado_windows_home",
@@ -89,6 +91,8 @@ class CommandResult:
     stdout: str
     stderr: str
     timed_out: bool = False
+    log_path: str | None = None
+    log_sha256: str | None = None
 
     def as_dict(self) -> dict[str, Any]:
         return {
@@ -97,6 +101,8 @@ class CommandResult:
             "exit_code": self.exit_code,
             "elapsed_seconds": round(self.elapsed_seconds, 3),
             "timed_out": self.timed_out,
+            "log_path": self.log_path,
+            "log_sha256": self.log_sha256,
         }
 
 
@@ -229,6 +235,8 @@ def run_command(
             encoding="utf-8",
             newline="\n",
         )
+        result.log_path = str(log_path.resolve())
+        result.log_sha256 = sha256_file(log_path)
     return result
 
 
@@ -2440,6 +2448,9 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: Sequence[str] | None = None) -> int:
+    if not sys.flags.isolated:
+        print("ERROR: refactor.py requires isolated Python; invoke python -I", file=sys.stderr)
+        return 2
     parser = build_parser()
     args = parser.parse_args(argv)
     try:

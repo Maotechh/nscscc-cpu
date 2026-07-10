@@ -1,10 +1,13 @@
 from __future__ import annotations
 
+import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
 from unittest import mock
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from tools import scala_gate
 
 
@@ -27,7 +30,12 @@ class ScalaGateLockTests(unittest.TestCase):
             root = Path(temporary)
             jar = root / "coursier" / "v1" / "repo" / "library.jar"
             pom = root / "sbt-boot" / "sbt.properties"
-            for path, text in ((jar, "jar\n"), (pom, "properties\n")):
+            ivy_lock = root / "ivy2" / ".sbt.ivy.lock"
+            for path, text in (
+                (jar, "jar\n"),
+                (pom, "properties\n"),
+                (ivy_lock, "lock\n"),
+            ):
                 path.parent.mkdir(parents=True, exist_ok=True)
                 path.write_text(text, encoding="utf-8")
             lock_path = root / "lock.json"
@@ -35,7 +43,8 @@ class ScalaGateLockTests(unittest.TestCase):
                 lock_path, scala_gate.dependency_cache_manifest(root)
             )
             scala_gate.verify_dependency_cache(root, lock_path)
-            extra = root / "coursier" / "v1" / "repo" / "extra.jar"
+            extra = root / "ivy2" / "local" / "poison.jar"
+            extra.parent.mkdir(parents=True)
             extra.write_text("extra\n", encoding="utf-8")
             with self.assertRaisesRegex(ValueError, "differs"):
                 scala_gate.verify_dependency_cache(root, lock_path)
@@ -97,8 +106,72 @@ class ScalaGateWarningTests(unittest.TestCase):
             script.write_text(script.read_text(encoding="utf-8") + "-Wno-WIDTH\n", encoding="utf-8")
             self.assertFalse(scala_gate.verilator_script_policy(script)["passed"])
 
+    def test_verilator_policy_rejects_prohibited_global_suppressions(self) -> None:
+        baseline = (
+            "verilator -Wall -Wwarn-WIDTH -Wwarn-UNOPTFLAT "
+            "-Wwarn-CMPCONST -Wwarn-UNSIGNED\n"
+        )
+        with tempfile.TemporaryDirectory() as temporary:
+            script = Path(temporary) / "verilatorScript.sh"
+            for category in ("LATCH", "UNDRIVEN", "MULTIDRIVEN", "CLKDATA", "FOOCDC"):
+                with self.subTest(category=category):
+                    script.write_text(
+                        baseline + f"-Wno-{category}\n", encoding="utf-8"
+                    )
+                    policy = scala_gate.verilator_script_policy(script)
+                    self.assertFalse(policy["passed"])
+                    self.assertEqual([category], policy["prohibited_suppressions"])
+
+    def test_verilator_policy_rejects_indirect_and_inline_waivers(self) -> None:
+        baseline = (
+            "verilator -Wall -Wwarn-WIDTH -Wwarn-UNOPTFLAT "
+            "-Wwarn-CMPCONST -Wwarn-UNSIGNED"
+        )
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            script = root / "verilatorScript.sh"
+            flags = root / "flags"
+            flags.write_text("-Wno-LATCH\n", encoding="utf-8")
+            flags_arg = flags.as_posix()
+            script.write_text(f'{baseline} -f "{flags_arg}"\n', encoding="utf-8")
+            policy = scala_gate.verilator_script_policy(script)
+            self.assertFalse(policy["passed"])
+            self.assertEqual([f"-f {flags_arg}"], policy["response_file_tokens"])
+
+            flags.unlink()
+            rtl = root / "input.v"
+            rtl.write_text("/* verilator\n lint_off WIDTH */\n", encoding="utf-8")
+            script.write_text(f'{baseline} "{rtl.as_posix()}"\n', encoding="utf-8")
+            policy = scala_gate.verilator_script_policy(script)
+            self.assertFalse(policy["passed"])
+            self.assertEqual(1, len(policy["inline_waivers"]))
+
+            rtl.write_text("module input_rtl; endmodule\n", encoding="utf-8")
+            (root / "verilator_config.vlt").write_text("`verilator_config\n", encoding="utf-8")
+            policy = scala_gate.verilator_script_policy(script)
+            self.assertFalse(policy["passed"])
+            self.assertEqual(1, len(policy["discovered_vlt_files"]))
+
 
 class ScalaGateEnvironmentTests(unittest.TestCase):
+    def test_cli_refuses_nonisolated_python(self) -> None:
+        result = subprocess.run(
+            [sys.executable, str(Path(scala_gate.__file__)), "--help"],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        self.assertEqual(2, result.returncode)
+        self.assertIn("requires isolated Python", result.stderr)
+
+        isolated = subprocess.run(
+            [sys.executable, "-I", str(Path(scala_gate.__file__)), "--help"],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        self.assertEqual(0, isolated.returncode)
+
     def test_environment_does_not_inherit_semantic_overrides(self) -> None:
         with mock.patch.dict(
             "os.environ",
@@ -119,6 +192,61 @@ class ScalaGateEnvironmentTests(unittest.TestCase):
             isolated = Path(temporary) / "home"
             environment = scala_gate.clean_environment([], {}, home=isolated)
         self.assertEqual(str(isolated), environment["HOME"])
+
+    def test_trusted_java_options_replace_inherited_options(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary, mock.patch.dict(
+            "os.environ", {"JAVA_TOOL_OPTIONS": "-Xbad"}, clear=True
+        ):
+            root = Path(temporary)
+            properties = {
+                "user.home": root / "home",
+                "java.io.tmpdir": root / "tmp",
+                "jna.tmpdir": root / "jna",
+            }
+            environment = scala_gate.clean_environment(
+                [],
+                {"JAVA_TOOL_OPTIONS": scala_gate.trusted_java_tool_options(properties)},
+                home=root / "home",
+            )
+        self.assertNotIn("-Xbad", environment["JAVA_TOOL_OPTIONS"])
+        for key, value in properties.items():
+            self.assertIn(f'-D{key}="{value.resolve()}"', environment["JAVA_TOOL_OPTIONS"])
+
+    def test_scalatest_xml_proves_runtime_paths_are_isolated(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            reports = root / "reports"
+            reports.mkdir()
+            expected = {
+                "user.home": root / "home",
+                "java.io.tmpdir": root / "tmp",
+                "jna.tmpdir": root / "jna",
+            }
+            for path in expected.values():
+                path.mkdir()
+            report = reports / "TEST-example.xml"
+            report.write_text(
+                "<testsuite><properties>"
+                + "".join(
+                    f'<property name="{key}" value="{value.resolve()}"/>'
+                    for key, value in expected.items()
+                )
+                + f'<property name="jnidispatch.path" value="{expected["jna.tmpdir"] / "jna.so"}"/>'
+                + "</properties></testsuite>",
+                encoding="utf-8",
+            )
+            self.assertTrue(
+                scala_gate.scala_test_runtime_isolation(reports, expected)["passed"]
+            )
+            report.write_text(
+                report.read_text(encoding="utf-8").replace(
+                    str(expected["user.home"].resolve()), "/root"
+                ),
+                encoding="utf-8",
+            )
+            self.assertFalse(
+                scala_gate.scala_test_runtime_isolation(reports, expected)["passed"]
+            )
 
 
 class ScalaGateWorkspaceTests(unittest.TestCase):

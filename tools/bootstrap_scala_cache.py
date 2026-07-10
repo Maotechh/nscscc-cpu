@@ -6,12 +6,17 @@ from __future__ import annotations
 import argparse
 import os
 from pathlib import Path
+import platform
+import sys
 import tempfile
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from tools import scala_gate
 
 
 def main() -> int:
+    if not sys.flags.isolated:
+        raise SystemExit("bootstrap_scala_cache.py requires isolated Python; invoke python -I")
     parser = argparse.ArgumentParser()
     parser.add_argument("--manifest", type=Path, required=True)
     parser.add_argument("--spinal-dir", type=Path, required=True)
@@ -34,6 +39,12 @@ def main() -> int:
     cache_root.mkdir(parents=True)
 
     lock = scala_gate.parse_lock(manifest_path)
+    scala_gate.require_lock(lock, ("python", "python_binary_sha256"))
+    python = Path(sys.executable).resolve()
+    if platform.python_version() != lock["python"]:
+        raise SystemExit("Python evaluator version differs from manifest.lock")
+    if scala_gate.sha256(python) != lock["python_binary_sha256"]:
+        raise SystemExit("Python evaluator binary differs from manifest.lock")
     sbt = scala_gate.resolve_executable(
         str(tool_root / f"sbt-{lock['sbt']}" / "bin" / "sbt")
     )
@@ -48,12 +59,22 @@ def main() -> int:
         build_spinal, _ = scala_gate.copy_source_snapshot(
             spinal_dir, manifest_path, workspace_root
         )
+        runtime_properties = {
+            "user.home": workspace_root / "home",
+            "java.io.tmpdir": workspace_root / "tmp",
+            "jna.tmpdir": workspace_root / "jna",
+        }
+        for path in runtime_properties.values():
+            path.mkdir(parents=True, exist_ok=True)
         environment = scala_gate.clean_environment(
             [java.parent, verilator.parent, sbt.parent],
             {
                 "JAVA_HOME": str(java.parent.parent),
                 "SPINAL_SIM_WORKSPACE": str(workspace_root / "sim-workspace"),
                 "COURSIER_CACHE": str(cache_root / "coursier" / "v1"),
+                "JAVA_TOOL_OPTIONS": scala_gate.trusted_java_tool_options(
+                    runtime_properties
+                ),
             },
             home=workspace_root / "home",
         )

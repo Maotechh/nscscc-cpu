@@ -8,14 +8,18 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import platform
 import re
 import signal
+import shlex
 import shutil
 import subprocess
 import sys
+import tempfile
 import time
 from datetime import datetime, timezone
 from typing import Iterable
+from xml.etree import ElementTree
 
 
 TASKS = (
@@ -28,8 +32,21 @@ DEPENDENCY_LOCK_NAME = "scala-dependencies.lock.json"
 DEPENDENCY_CACHE_DIRS = {
     "coursier": Path("coursier") / "v1",
     "sbt_boot": Path("sbt-boot"),
+    "ivy": Path("ivy2"),
 }
 DEPENDENCY_SUFFIXES = (".jar", ".pom", ".xml", ".properties")
+REQUIRED_WARNING_CATEGORIES = ("WIDTH", "UNOPTFLAT", "CMPCONST", "UNSIGNED")
+PROHIBITED_WARNING_CATEGORIES = frozenset(
+    {
+        "WIDTH",
+        "LATCH",
+        "UNDRIVEN",
+        "UNOPTFLAT",
+        "MULTIDRIVEN",
+        "SYNCASYNCNET",
+        "CLKDATA",
+    }
+)
 
 
 def parse_lock(path: Path) -> dict[str, str]:
@@ -266,6 +283,17 @@ def clean_environment(
     return environment
 
 
+def trusted_java_tool_options(properties: dict[str, Path]) -> str:
+    """Encode the fixed JVM paths inherited by SBT's forked test JVM."""
+    options: list[str] = []
+    for key in sorted(properties):
+        value = str(properties[key].resolve())
+        if any(character in value for character in ('"', "\n", "\r")):
+            raise ValueError(f"JVM isolation path cannot be encoded safely: {value}")
+        options.append(f'-D{key}="{value}"')
+    return " ".join(options)
+
+
 def run_capture(command: list[str], cwd: Path, environment: dict[str, str], timeout: int) -> subprocess.CompletedProcess[str]:
     process = subprocess.Popen(
         command,
@@ -332,6 +360,68 @@ def scala_test_outcome_passed(outcome: dict[str, int]) -> bool:
     )
 
 
+def path_is_within(path: str, root: Path) -> bool:
+    try:
+        Path(path).resolve().relative_to(root.resolve())
+    except (OSError, ValueError):
+        return False
+    return True
+
+
+def scala_test_runtime_isolation(
+    report_root: Path, expected_properties: dict[str, Path]
+) -> dict[str, object]:
+    reports: list[dict[str, object]] = []
+    dispatch_paths: list[str] = []
+    for report_path in sorted(report_root.glob("TEST-*.xml")):
+        try:
+            root = ElementTree.parse(report_path).getroot()
+        except (ElementTree.ParseError, OSError) as error:
+            reports.append(
+                {
+                    "path": str(report_path),
+                    "sha256": sha256(report_path) if report_path.is_file() else None,
+                    "passed": False,
+                    "error": str(error),
+                }
+            )
+            continue
+        properties = {
+            item.attrib.get("name", ""): item.attrib.get("value", "")
+            for item in root.findall("./properties/property")
+        }
+        mismatches = {
+            key: {"expected": str(expected.resolve()), "actual": properties.get(key)}
+            for key, expected in expected_properties.items()
+            if properties.get(key) != str(expected.resolve())
+        }
+        dispatch_path = properties.get("jnidispatch.path")
+        if dispatch_path:
+            dispatch_paths.append(dispatch_path)
+        reports.append(
+            {
+                "path": str(report_path),
+                "sha256": sha256(report_path),
+                "property_mismatches": mismatches,
+                "jnidispatch_path": dispatch_path,
+                "passed": not mismatches,
+            }
+        )
+    jna_root = expected_properties["jna.tmpdir"]
+    dispatch_paths_within_jna = bool(dispatch_paths) and all(
+        path_is_within(path, jna_root) for path in dispatch_paths
+    )
+    return {
+        "report_count": len(reports),
+        "reports": reports,
+        "jnidispatch_paths": dispatch_paths,
+        "jnidispatch_paths_within_jna_tmpdir": dispatch_paths_within_jna,
+        "passed": bool(reports)
+        and all(bool(report["passed"]) for report in reports)
+        and dispatch_paths_within_jna,
+    }
+
+
 def forbidden_warning_lines(output: str) -> list[str]:
     ansi = re.compile(r"\x1b\[[0-?]*[ -/]*[@-~]")
     warnings: list[str] = []
@@ -357,17 +447,80 @@ def compiled_source_count(output: str, target_fragment: str) -> int:
 
 def verilator_script_policy(script: Path) -> dict[str, object]:
     text = script.read_text(encoding="utf-8", errors="replace")
-    categories = ("WIDTH", "UNOPTFLAT", "CMPCONST", "UNSIGNED")
-    effective: dict[str, str] = {}
-    for category in categories:
-        matches = re.findall(rf"-(Wno|Wwarn)-{category}\b", text, re.IGNORECASE)
-        effective[category] = matches[-1].lower() if matches else "missing"
-    passed = "-Wall" in text and all(value == "wwarn" for value in effective.values())
+    parse_error = None
+    try:
+        tokens = shlex.split(text, comments=True, posix=True)
+    except ValueError as error:
+        tokens = []
+        parse_error = str(error)
+    effective = {
+        match.group(2).upper(): match.group(1).lower()
+        for token in tokens
+        if (match := re.fullmatch(r"-(Wno|Wwarn)-([A-Za-z0-9_-]+)", token, re.IGNORECASE))
+    }
+    required = {
+        category: effective.get(category, "missing") for category in REQUIRED_WARNING_CATEGORIES
+    }
+    prohibited_suppressions = sorted(
+        category
+        for category, state in effective.items()
+        if state == "wno"
+        and (category in PROHIBITED_WARNING_CATEGORIES or "CDC" in category)
+    )
+    wall_enabled = any(token.lower() == "-wall" for token in tokens)
+    response_file_tokens: list[str] = []
+    rtl_inputs: list[Path] = []
+    for index, token in enumerate(tokens):
+        if token in {"-f", "-F"}:
+            response_file_tokens.append(
+                f"{token} {tokens[index + 1]}" if index + 1 < len(tokens) else f"{token} <missing>"
+            )
+        elif token.startswith("@"):
+            response_file_tokens.append(token)
+        elif token.lower().endswith(".vlt"):
+            response_file_tokens.append(token)
+        elif token.lower().endswith((".v", ".sv")):
+            candidate = Path(token)
+            rtl_inputs.append(candidate if candidate.is_absolute() else script.parent / candidate)
+
+    discovered_vlt = sorted(str(path) for path in script.parent.rglob("*.vlt"))
+    missing_rtl_inputs = sorted(str(path) for path in rtl_inputs if not path.is_file())
+    inline_waivers: list[dict[str, object]] = []
+    inline_pattern = re.compile(r"verilator\s+lint_(?:off|save)\b", re.IGNORECASE)
+    for rtl_path in rtl_inputs:
+        if not rtl_path.is_file():
+            continue
+        rtl_text = rtl_path.read_text(encoding="utf-8", errors="replace")
+        for match in inline_pattern.finditer(rtl_text):
+            inline_waivers.append(
+                {
+                    "path": str(rtl_path),
+                    "line": rtl_text.count("\n", 0, match.start()) + 1,
+                    "text": " ".join(match.group(0).split()),
+                }
+            )
+    passed = (
+        parse_error is None
+        and wall_enabled
+        and all(value == "wwarn" for value in required.values())
+        and not prohibited_suppressions
+        and not response_file_tokens
+        and not discovered_vlt
+        and not missing_rtl_inputs
+        and not inline_waivers
+    )
     return {
         "path": str(script),
         "sha256": sha256(script),
-        "wall_enabled": "-Wall" in text,
-        "effective_warning_flags": effective,
+        "wall_enabled": wall_enabled,
+        "effective_warning_flags": required,
+        "all_effective_warning_flags": effective,
+        "prohibited_suppressions": prohibited_suppressions,
+        "parse_error": parse_error,
+        "response_file_tokens": response_file_tokens,
+        "discovered_vlt_files": discovered_vlt,
+        "missing_rtl_inputs": missing_rtl_inputs,
+        "inline_waivers": inline_waivers,
         "passed": passed,
     }
 
@@ -419,6 +572,9 @@ def simulation_artifacts(simulation_workspace: Path) -> list[dict[str, object]]:
 
 
 def main() -> int:
+    if not sys.flags.isolated:
+        print("scala_gate.py requires isolated Python; invoke python -I", file=sys.stderr)
+        return 2
     parser = argparse.ArgumentParser()
     parser.add_argument("--manifest", type=Path, required=True)
     parser.add_argument("--spinal-dir", type=Path, required=True)
@@ -455,6 +611,7 @@ def main() -> int:
         "skipped": len(TASKS),
         "tasks": [],
     }
+    runtime_workspace: Path | None = None
 
     try:
         lock = parse_lock(manifest_path)
@@ -487,6 +644,8 @@ def main() -> int:
                 "sh_binary_sha256",
                 "host_ld_binary_sha256",
                 "host_ar_binary_sha256",
+                "python",
+                "python_binary_sha256",
             ),
         )
         default_sbt = tool_root / f"sbt-{lock['sbt']}" / "bin" / "sbt"
@@ -508,6 +667,7 @@ def main() -> int:
             "ld": resolve_executable("ld"),
             "ar": resolve_executable("ar"),
         }
+        python = Path(sys.executable).resolve()
 
         if sha256(sbt) != lock["sbt_script_sha256"]:
             raise ValueError(f"SBT launcher hash does not match manifest.lock: {sbt}")
@@ -515,6 +675,10 @@ def main() -> int:
             raise ValueError(f"Java binary hash does not match manifest.lock: {java}")
         if sha256(verilator) != lock["verilator_binary_sha256"]:
             raise ValueError(f"Verilator binary hash does not match manifest.lock: {verilator}")
+        if sha256(python) != lock["python_binary_sha256"]:
+            raise ValueError(f"Python evaluator binary hash does not match manifest.lock: {python}")
+        if platform.python_version() != lock["python"]:
+            raise ValueError(f"Python evaluator version does not match manifest.lock: {python}")
         for name, path, key in (
             ("Verilator engine", verilator_engine, "verilator_engine_sha256"),
             ("Verilator runtime", verilator_runtime, "verilator_runtime_sha256"),
@@ -587,7 +751,20 @@ def main() -> int:
 
         java_home = java.parent.parent
         simulation_workspace = workspace_root / "sim-workspace"
-        isolated_home = workspace_root / "home"
+        runtime_workspace = Path(tempfile.gettempdir()) / (
+            "nsg-" + sha256_bytes(run_id.encode("utf-8"))[:12]
+        )
+        runtime_workspace.mkdir(mode=0o700, parents=True, exist_ok=False)
+        isolated_home = runtime_workspace / "home"
+        isolated_tmp = runtime_workspace / "tmp"
+        isolated_jna = runtime_workspace / "jna"
+        runtime_properties = {
+            "user.home": isolated_home,
+            "java.io.tmpdir": isolated_tmp,
+            "jna.tmpdir": isolated_jna,
+        }
+        for path in runtime_properties.values():
+            path.mkdir(parents=True, exist_ok=True)
         sbt_global = workspace_root / "sbt-global"
         environment = clean_environment(
             [java.parent, verilator.parent, sbt.parent],
@@ -596,6 +773,7 @@ def main() -> int:
                 "SPINAL_SIM_WORKSPACE": str(simulation_workspace),
                 "COURSIER_MODE": "offline",
                 "COURSIER_CACHE": str(coursier_cache),
+                "JAVA_TOOL_OPTIONS": trusted_java_tool_options(runtime_properties),
             },
             home=isolated_home,
         )
@@ -613,6 +791,7 @@ def main() -> int:
             f"verilator_runtime_sha256={sha256(verilator_runtime)}\n"
             f"sbt_launch_jar_sha256={sha256(sbt_launch_jar)}\n"
             f"jdk_modules_sha256={sha256(jdk_modules)}\n"
+            f"python_binary_sha256={sha256(python)}\n"
             f"native_tools={json.dumps(native_hashes, sort_keys=True)}\n"
             f"tool_trees={json.dumps(tool_trees, sort_keys=True)}\n"
             f"{java_output}",
@@ -643,6 +822,9 @@ def main() -> int:
             "java": str(java),
             "jdk_version": lock["jdk"],
             "java_sha256": sha256(java),
+            "python": str(python),
+            "python_version": platform.python_version(),
+            "python_sha256": sha256(python),
             "verilator": str(verilator),
             "verilator_version": lock["verilator"],
             "verilator_sha256": sha256(verilator),
@@ -661,7 +843,11 @@ def main() -> int:
             "sbt_scalafmt_version": lock["sbt_scalafmt"],
             "scalafmt_version": lock["scalafmt"],
             "simulation_workspace": str(simulation_workspace),
+            "jvm_runtime_workspace": str(runtime_workspace),
+            "jvm_runtime_workspace_retention": "deleted after ScalaTest XML verification",
             "isolated_home": str(isolated_home),
+            "isolated_tmp": str(isolated_tmp),
+            "isolated_jna_tmp": str(isolated_jna),
             "sbt_boot": str(sbt_boot),
             "ivy_home": str(ivy_home),
             "coursier_cache": str(coursier_cache),
@@ -772,6 +958,14 @@ def main() -> int:
                 tail = "\n".join(output.splitlines()[-20:])
                 print(tail, file=sys.stderr)
 
+        runtime_isolation = scala_test_runtime_isolation(
+            build_spinal_dir / "target" / "test-reports", runtime_properties
+        )
+        if not runtime_isolation["passed"]:
+            summary["integrity_error"] = (
+                "ScalaTest JVM home/tmp/JNA paths escaped the isolated workspace"
+            )
+
         scripts = sorted(simulation_workspace.rglob("verilatorScript.sh"))
         simulator_policies = [verilator_script_policy(script) for script in scripts]
         simulator_policy_passed = bool(
@@ -805,6 +999,7 @@ def main() -> int:
                     and isolated_source_after == isolated_source_before
                 ),
                 "dependency_cache_stable": dependency_manifest_after == dependency_manifest,
+                "test_runtime_isolation": runtime_isolation,
                 "simulator_policies": simulator_policies,
                 "simulator_policy_passed": simulator_policy_passed,
                 "simulation_artifacts": sim_artifacts,
@@ -820,6 +1015,15 @@ def main() -> int:
         summary["toolchain_error"] = str(error)
         print(f"scala-check toolchain verification failed: {error}", file=sys.stderr)
     finally:
+        runtime_workspace_cleaned = runtime_workspace is None
+        if runtime_workspace is not None:
+            try:
+                if runtime_workspace.exists():
+                    shutil.rmtree(runtime_workspace)
+                runtime_workspace_cleaned = not runtime_workspace.exists()
+            except OSError as error:
+                summary["cleanup_error"] = str(error)
+        summary["runtime_workspace_cleaned"] = runtime_workspace_cleaned
         gate_ok = (
             summary["failed"] == 0
             and summary["skipped"] == 0
@@ -827,6 +1031,7 @@ def main() -> int:
             and summary.get("dependency_cache_stable") is True
             and "toolchain_error" not in summary
             and "integrity_error" not in summary
+            and "cleanup_error" not in summary
         )
         if gate_ok:
             summary["status"] = "pass"
