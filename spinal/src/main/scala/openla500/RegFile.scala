@@ -23,17 +23,17 @@ import spinal.lib._
 case class RegFile() extends Component {
   val io = new Bundle {
     // ---- Write port ----
-    val wen    = in  Bool()          // Write enable (active-high)
-    val wnum   = in  UInt(5 bits)    // Write register number (rd)
-    val wdata  = in  UInt(32 bits)   // Write data
+    val wen = in Bool () // Write enable (active-high)
+    val wnum = in UInt (5 bits) // Write register number (rd)
+    val wdata = in UInt (32 bits) // Write data
 
     // ---- Read port 1 (rj) ----
-    val rnum1  = in  UInt(5 bits)    // Read register number 1
-    val rdata1 = out UInt(32 bits)   // Read data 1
+    val rnum1 = in UInt (5 bits) // Read register number 1
+    val rdata1 = out UInt (32 bits) // Read data 1
 
     // ---- Read port 2 (rk) ----
-    val rnum2  = in  UInt(5 bits)    // Read register number 2
-    val rdata2 = out UInt(32 bits)   // Read data 2
+    val rnum2 = in UInt (5 bits) // Read register number 2
+    val rdata2 = out UInt (32 bits) // Read data 2
   }
 
   // ------------------------------------------------------------------
@@ -42,7 +42,7 @@ case class RegFile() extends Component {
   // and synchronous writes (posedge clk).
   // All registers initialize to 0 after reset.
   // ------------------------------------------------------------------
-  val rf = Vec(Reg(UInt(32 bits)) init(0), 32)
+  val rf = Vec(Reg(UInt(32 bits)) init (0), 32)
 
   // ------------------------------------------------------------------
   // Synchronous write

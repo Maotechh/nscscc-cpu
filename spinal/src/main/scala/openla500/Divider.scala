@@ -3,12 +3,12 @@ import spinal.core._
 
 case class Divider() extends Component {
   val io = new Bundle {
-    val div_op = in UInt(1 bits); val div_signed = in Bool()
-    val src1 = in UInt(32 bits); val src2 = in UInt(32 bits)
-    val valid = in Bool(); val result = out UInt(32 bits)
-    val ready = out Bool(); val div_by_zero = out Bool()
+    val div_op = in UInt (1 bits); val div_signed = in Bool ()
+    val src1 = in UInt (32 bits); val src2 = in UInt (32 bits)
+    val valid = in Bool (); val result = out UInt (32 bits)
+    val ready = out Bool (); val div_by_zero = out Bool ()
   }
-  val cnt = Reg(UInt(6 bits)) init(0); val busy = Reg(Bool()) init(False)
+  val cnt = Reg(UInt(6 bits)) init (0); val busy = Reg(Bool()) init (False)
   val quotient = Reg(UInt(32 bits)); val remainder = Reg(UInt(32 bits))
   val divisor = Reg(UInt(32 bits)); val sign_q = Reg(Bool()); val sign_r = Reg(Bool())
 
@@ -19,7 +19,7 @@ case class Divider() extends Component {
     val a = (io.div_signed && io.src1(31)) ? (U(0, 32 bits) - io.src1) | io.src1
     val b = (io.div_signed && io.src2(31)) ? (U(0, 32 bits) - io.src2) | io.src2
     when(io.src2 === U(0)) { quotient := U(0); remainder := io.src1; busy := False }
-    .otherwise { quotient := U(0); remainder := a; divisor := b }
+      .otherwise { quotient := U(0); remainder := a; divisor := b }
   }
 
   when(busy) {

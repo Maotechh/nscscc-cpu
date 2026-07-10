@@ -3,48 +3,49 @@ import spinal.core._
 
 case class MyCPUTop() extends Component {
   val io = new Bundle {
-    val aclk = in Bool(); val resetn = in Bool()
-    val axi_araddr = out UInt(32 bits); val axi_arvalid = out Bool(); val axi_arready = in Bool()
-    val axi_rdata = in UInt(32 bits); val axi_rvalid = in Bool(); val axi_rready = out Bool()
-    val axi_awaddr = out UInt(32 bits); val axi_awvalid = out Bool(); val axi_awready = in Bool()
-    val axi_wdata = out UInt(32 bits); val axi_wstrb = out UInt(4 bits); val axi_wvalid = out Bool()
-    val axi_wready = in Bool(); val axi_bvalid = in Bool(); val axi_bready = out Bool()
-    val debug_wb_pc = out UInt(32 bits); val debug_wb_rf_wen = out Bool()
-    val debug_wb_rf_wnum = out UInt(5 bits); val debug_wb_rf_wdata = out UInt(32 bits)
+    val aclk = in Bool (); val resetn = in Bool ()
+    val axi_araddr = out UInt (32 bits); val axi_arvalid = out Bool (); val axi_arready = in Bool ()
+    val axi_rdata = in UInt (32 bits); val axi_rvalid = in Bool (); val axi_rready = out Bool ()
+    val axi_awaddr = out UInt (32 bits); val axi_awvalid = out Bool (); val axi_awready = in Bool ()
+    val axi_wdata = out UInt (32 bits); val axi_wstrb = out UInt (4 bits);
+    val axi_wvalid = out Bool ()
+    val axi_wready = in Bool (); val axi_bvalid = in Bool (); val axi_bready = out Bool ()
+    val debug_wb_pc = out UInt (32 bits); val debug_wb_rf_wen = out Bool ()
+    val debug_wb_rf_wnum = out UInt (5 bits); val debug_wb_rf_wdata = out UInt (32 bits)
   }
   // Instantiate sub-modules
-  val if_stage  = new IFStage
-  val id_stage  = new IDStage
+  val if_stage = new IFStage
+  val id_stage = new IDStage
   val exe_stage = new EXEStage
   val mem_stage = new MEMStage
-  val wb_stage  = new WBStage
-  val regfile   = new RegFile
-  val alu       = new ALU
-  val mul       = new Multiplier
-  val div       = new Divider
-  val icache    = new ICache
-  val dcache    = new DCache
+  val wb_stage = new WBStage
+  val regfile = new RegFile
+  val alu = new ALU
+  val mul = new Multiplier
+  val div = new Divider
+  val icache = new ICache
+  val dcache = new DCache
 
   // Pipeline regs
-  val if2id_r  = Reg(IF2ID()); val id2exe_r = Reg(ID2EXE())
-  val exe2mem_r = Reg(EXE2MEM()); val mem2wb_r  = Reg(MEM2WB())
-  val stall_if = Reg(Bool()) init(False); val stall_id = Reg(Bool()) init(False)
+  val if2id_r = Reg(IF2ID()); val id2exe_r = Reg(ID2EXE())
+  val exe2mem_r = Reg(EXE2MEM()); val mem2wb_r = Reg(MEM2WB())
+  val stall_if = Reg(Bool()) init (False); val stall_id = Reg(Bool()) init (False)
 
   // Drive defaults for cache
-  icache.io.cacop_en    := False; icache.io.cacop_mode := U(0, 2 bits)
+  icache.io.cacop_en := False; icache.io.cacop_mode := U(0, 2 bits)
   icache.io.cacop_vaddr := U(0); icache.io.req_op := False
-  icache.io.req_wdata   := U(0); icache.io.req_wstrb := U(0)
-  dcache.io.cacop_en    := False; dcache.io.cacop_mode := U(0, 2 bits)
+  icache.io.req_wdata := U(0); icache.io.req_wstrb := U(0)
+  dcache.io.cacop_en := False; dcache.io.cacop_mode := U(0, 2 bits)
   dcache.io.cacop_vaddr := U(0); dcache.io.req_uncached := False
   icache.io.refill_last := False; dcache.io.refill_last := False
 
   // == IF connections ==
   if_stage.io.imem_rdata := icache.io.rsp_data
   if_stage.io.imem_valid := icache.io.rsp_valid
-  if_stage.io.br_taken   := exe_stage.io.br_taken
-  if_stage.io.br_target  := exe_stage.io.br_target
-  if_stage.io.ertn_req   := False; if_stage.io.ertn_addr := U(0, 32 bits)
-  if_stage.io.stall_req  := stall_if
+  if_stage.io.br_taken := exe_stage.io.br_taken
+  if_stage.io.br_target := exe_stage.io.br_target
+  if_stage.io.ertn_req := False; if_stage.io.ertn_addr := U(0, 32 bits)
+  if_stage.io.stall_req := stall_if
   icache.io.req_valid := !stall_if; icache.io.req_addr := if_stage.io.imem_addr
   if2id_r := if_stage.io.if2id
 
@@ -72,10 +73,10 @@ case class MyCPUTop() extends Component {
   exe2mem_r := exe_stage.io.exe2mem
 
   // == MEM ==
-  mem_stage.io.exe2mem  := exe2mem_r
+  mem_stage.io.exe2mem := exe2mem_r
   dcache.io.req_valid := mem_stage.io.dmem_read || mem_stage.io.dmem_write
-  dcache.io.req_op    := mem_stage.io.dmem_write
-  dcache.io.req_addr  := mem_stage.io.dmem_addr
+  dcache.io.req_op := mem_stage.io.dmem_write
+  dcache.io.req_addr := mem_stage.io.dmem_addr
   dcache.io.req_wdata := mem_stage.io.dmem_wdata
   dcache.io.req_wstrb := mem_stage.io.dmem_wstrb
   mem_stage.io.dmem_rdata := dcache.io.rsp_data
@@ -86,12 +87,12 @@ case class MyCPUTop() extends Component {
 
   // == WB ==
   wb_stage.io.mem2wb := mem2wb_r
-  regfile.io.wen   := wb_stage.io.rf_wen
-  regfile.io.wnum  := wb_stage.io.rf_wnum
+  regfile.io.wen := wb_stage.io.rf_wen
+  regfile.io.wnum := wb_stage.io.rf_wnum
   regfile.io.wdata := wb_stage.io.rf_wdata
-  io.debug_wb_pc       := mem2wb_r.pc
-  io.debug_wb_rf_wen   := wb_stage.io.rf_wen
-  io.debug_wb_rf_wnum  := wb_stage.io.rf_wnum
+  io.debug_wb_pc := mem2wb_r.pc
+  io.debug_wb_rf_wen := wb_stage.io.rf_wen
+  io.debug_wb_rf_wnum := wb_stage.io.rf_wnum
   io.debug_wb_rf_wdata := wb_stage.io.rf_wdata
 
   // AXI (placeholder)

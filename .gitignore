@@ -24,3 +24,11 @@ run_vivado/
 # OS files
 .DS_Store
 Thumbs.db
+__pycache__/
+*.py[cod]
+
+# Local refactor/validation workspaces and generated artifacts
+/.work/
+/build/
+/logs/refactor/**/raw/
+/logs/refactor/**/waveforms/

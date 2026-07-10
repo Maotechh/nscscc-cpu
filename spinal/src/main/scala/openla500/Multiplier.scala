@@ -3,11 +3,11 @@ import spinal.core._
 
 case class Multiplier() extends Component {
   val io = new Bundle {
-    val mul_op = in UInt(2 bits); val mul_signed = in Bool()
-    val src1 = in UInt(32 bits); val src2 = in UInt(32 bits)
-    val valid = in Bool(); val result = out UInt(32 bits); val ready = out Bool()
+    val mul_op = in UInt (2 bits); val mul_signed = in Bool ()
+    val src1 = in UInt (32 bits); val src2 = in UInt (32 bits)
+    val valid = in Bool (); val result = out UInt (32 bits); val ready = out Bool ()
   }
-  val cnt = Reg(UInt(6 bits)) init(0); val busy = Reg(Bool()) init(False)
+  val cnt = Reg(UInt(6 bits)) init (0); val busy = Reg(Bool()) init (False)
   val prod = Reg(UInt(65 bits)); val sign_a = Reg(Bool()); val sign_b = Reg(Bool())
   val is_signed = io.mul_op === U(0, 2 bits) || io.mul_op === U(1, 2 bits)
 
@@ -30,7 +30,9 @@ case class Multiplier() extends Component {
     }
     when(cnt === 32) {
       busy := False
-      when(sign_a ^ sign_b) { prod(63 downto 31) := (U(0, 33 bits) - prod(63 downto 31)).resize(33) }
+      when(sign_a ^ sign_b) {
+        prod(63 downto 31) := (U(0, 33 bits) - prod(63 downto 31)).resize(33)
+      }
     }
   }
 

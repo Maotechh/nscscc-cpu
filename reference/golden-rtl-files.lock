@@ -1,0 +1,24 @@
+# Files exported from team_golden_candidate. Keep this list explicit: dead or
+# backup RTL must not silently enter the equivalence scope.
+rtl/addr_trans.v
+rtl/alu.v
+rtl/axi_bridge.v
+rtl/btb.v
+rtl/csr.h
+rtl/csr.v
+rtl/dcache.v
+rtl/div.v
+rtl/exe_stage.v
+rtl/icache.v
+rtl/id_stage.v
+rtl/if_stage.v
+rtl/lacc_core.v
+rtl/lacc_demo.v
+rtl/mem_stage.v
+rtl/mul.v
+rtl/mycpu_top.v
+rtl/perf_counter.v
+rtl/regfile.v
+rtl/tlb_entry.v
+rtl/tools.v
+rtl/wb_stage.v

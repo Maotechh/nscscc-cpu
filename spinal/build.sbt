@@ -1,13 +1,54 @@
+import scala.io.Source
+
+def loadManifestLock(lockFile: File): Map[String, String] = {
+  if (!lockFile.isFile) {
+    sys.error(s"Missing version lock: ${lockFile.getAbsolutePath}")
+  }
+
+  val source = Source.fromFile(lockFile, "UTF-8")
+  try {
+    source
+      .getLines()
+      .map(_.trim)
+      .filter(line => line.nonEmpty && !line.startsWith("#"))
+      .map { line =>
+        line.split("=", 2) match {
+          case Array(key, value) => key.trim -> value.trim
+          case _                 => sys.error(s"Invalid manifest.lock line: $line")
+        }
+      }
+      .foldLeft(Map.empty[String, String]) { case (values, (key, value)) =>
+        if (values.contains(key)) {
+          sys.error(s"Duplicate '$key' in ${lockFile.getAbsolutePath}")
+        }
+        values.updated(key, value)
+      }
+  } finally {
+    source.close()
+  }
+}
+
+val manifestLock = loadManifestLock(file("../reference/manifest.lock"))
+
+def lockedVersion(key: String): String =
+  manifestLock.getOrElse(key, sys.error(s"Missing '$key' in reference/manifest.lock"))
+
 name := "nscscc-cpu-spinal"
 version := "1.0"
-scalaVersion := "2.13.16"
+scalaVersion := lockedVersion("scala")
 
-val spinalVersion = "1.14.2"
+val spinalVersion = lockedVersion("spinalhdl")
+
+ThisBuild / scalacOptions ++= Seq("-deprecation", "-feature", "-unchecked", "-Werror")
 
 libraryDependencies ++= Seq(
+  compilerPlugin("com.github.spinalhdl" %% "spinalhdl-idsl-plugin" % spinalVersion),
   "com.github.spinalhdl" %% "spinalhdl-core" % spinalVersion,
-  "com.github.spinalhdl" %% "spinalhdl-lib"  % spinalVersion,
-  "org.scalatest"        %% "scalatest"       % "3.2.19" % Test
+  "com.github.spinalhdl" %% "spinalhdl-lib" % spinalVersion,
+  "com.github.spinalhdl" %% "spinalhdl-sim" % spinalVersion % Test,
+  "org.scalatest" %% "scalatest" % lockedVersion("scalatest") % Test
 )
 
-fork := true
+Compile / run / fork := true
+Test / fork := true
+Test / parallelExecution := false
