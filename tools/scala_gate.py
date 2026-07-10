@@ -499,10 +499,12 @@ def verilator_script_policy(script: Path) -> dict[str, object]:
     missing_rtl_inputs = sorted(str(path) for path in rtl_inputs if not path.is_file())
     inline_waivers: list[dict[str, object]] = []
     inline_pattern = re.compile(r"verilator\s+lint_(?:off|save)\b", re.IGNORECASE)
-    include_pattern = re.compile(r"`include\s+\"([^\"]+)\"")
+    include_directive_pattern = re.compile(r"`include\b([^\r\n]*)")
+    literal_include_pattern = re.compile(r"\s*\"([^\"]+)\"")
     pending = [path.resolve() for path in rtl_inputs if path.is_file()]
     scanned: set[Path] = set()
     missing_includes: list[dict[str, object]] = []
+    unresolved_include_directives: list[dict[str, object]] = []
     while pending:
         rtl_path = pending.pop()
         if rtl_path in scanned:
@@ -517,8 +519,18 @@ def verilator_script_policy(script: Path) -> dict[str, object]:
                     "text": " ".join(match.group(0).split()),
                 }
             )
-        for match in include_pattern.finditer(rtl_text):
-            include_name = match.group(1)
+        for match in include_directive_pattern.finditer(rtl_text):
+            literal = literal_include_pattern.fullmatch(match.group(1).strip())
+            if literal is None:
+                unresolved_include_directives.append(
+                    {
+                        "path": str(rtl_path),
+                        "line": rtl_text.count("\n", 0, match.start()) + 1,
+                        "directive": match.group(0).strip(),
+                    }
+                )
+                continue
+            include_name = literal.group(1)
             candidates = [rtl_path.parent / include_name]
             candidates.extend(directory / include_name for directory in include_dirs)
             included = next((candidate.resolve() for candidate in candidates if candidate.is_file()), None)
@@ -541,6 +553,7 @@ def verilator_script_policy(script: Path) -> dict[str, object]:
         and not discovered_vlt
         and not missing_rtl_inputs
         and not missing_includes
+        and not unresolved_include_directives
         and not inline_waivers
     )
     return {
@@ -557,6 +570,7 @@ def verilator_script_policy(script: Path) -> dict[str, object]:
         "include_dirs": sorted(str(path.resolve()) for path in include_dirs),
         "scanned_rtl_inputs": sorted(str(path) for path in scanned),
         "missing_includes": missing_includes,
+        "unresolved_include_directives": unresolved_include_directives,
         "inline_waivers": inline_waivers,
         "passed": passed,
     }

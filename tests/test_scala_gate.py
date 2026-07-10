@@ -159,6 +159,17 @@ class ScalaGateWarningTests(unittest.TestCase):
             self.assertFalse(policy["passed"])
             self.assertEqual("defs.vh", policy["missing_includes"][0]["include"])
 
+            rtl.write_text(
+                '`define HEADER "defs.vh"\n`include `HEADER\nmodule input_rtl; endmodule\n',
+                encoding="utf-8",
+            )
+            policy = scala_gate.verilator_script_policy(script)
+            self.assertFalse(policy["passed"])
+            self.assertEqual(
+                "`include `HEADER",
+                policy["unresolved_include_directives"][0]["directive"],
+            )
+
             rtl.write_text("module input_rtl; endmodule\n", encoding="utf-8")
             (root / "verilator_config.vlt").write_text("`verilator_config\n", encoding="utf-8")
             policy = scala_gate.verilator_script_policy(script)
