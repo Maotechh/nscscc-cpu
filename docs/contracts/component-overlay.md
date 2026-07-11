@@ -20,7 +20,7 @@
 1. 两个参数必须同时出现，并且只允许与 `--dut-source mixed --diagnostic` 组合。
 2. mixed base 固定为 `team_golden_candidate`；使用 replacement 时禁止 `--candidate-commit` override。
 3. `--source-head` 必须是完整 40 位 SHA，并且逐字等于当前 HEAD；入口与写 manifest 前各复验一次。
-4. spec 与 replacement source 必须都是该 clean source HEAD 中的普通 Git blob；不读取或回退到未提交工作树内容。
+4. spec 与 replacement source 必须都是该 source HEAD 中的普通 Git blob；不读取或回退到未提交工作树内容。staged、untracked、文件模式或忽略行尾空白后仍存在的语义 diff 均失败；Windows/WSL 对同一 checkout 的纯 CRLF 归一化差异允许通过，但原始 status 条目数和 `eol_normalization_only` 必须写入 manifest。
 5. 任一失败在开始时删除同 iteration 的旧 overlay report，不能留下可复用的旧 diagnostic/PASS。
 6. overlay 与 smoke 必须使用同一 Linux `CHIPLAB_WORK_ROOT`。两者同时获取 `OUT_DIR` 和 work root 下的 iteration lock；任一活动命令存在时，另一命令不得 reset 或消费同一 DUT。
 7. `OUT_DIR` 与 `CHIPLAB_WORK_ROOT` 必须是互不相同、互非祖先/后代的目录；在创建锁或 reset worktree 前检查，拒绝证据目录与可删除工作区发生别名。

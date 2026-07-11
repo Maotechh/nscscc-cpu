@@ -127,6 +127,8 @@ class ComponentReplacementPlan:
     source_head: str
     source_tree: str
     source_branch: str
+    source_status_entry_count: int
+    source_eol_normalization_only: bool
     base_candidate_commit: str
     replacements: tuple[ComponentReplacement, ...]
 
@@ -141,6 +143,8 @@ class ComponentReplacementPlan:
             "source_tree": self.source_tree,
             "source_branch": self.source_branch,
             "worktree_clean": True,
+            "worktree_raw_status_entry_count": self.source_status_entry_count,
+            "worktree_eol_normalization_only": self.source_eol_normalization_only,
             "base_candidate_commit": self.base_candidate_commit,
             "replacements": [
                 {
@@ -390,7 +394,7 @@ def git_regular_blob_entry(commit: str, path: str) -> dict[str, str]:
     return {"mode": mode, "type": object_type, "oid": object_id, "path": actual_path}
 
 
-def require_clean_source_head(expected_head: str) -> dict[str, str]:
+def require_clean_source_head(expected_head: str) -> dict[str, Any]:
     if re.fullmatch(r"[0-9a-f]{40}", expected_head or "") is None:
         raise RefactorError("--source-head must be a full lowercase 40-character Git SHA")
     actual_head = git_text(["rev-parse", "HEAD"])
@@ -401,13 +405,36 @@ def require_clean_source_head(expected_head: str) -> dict[str, str]:
     branch = git_text(["branch", "--show-current"])
     if not branch.startswith("refactor/"):
         raise RefactorError(f"replacement source must be on a refactor/* branch: {branch or '<detached>'}")
-    dirty = git_text(["status", "--porcelain=v1", "--untracked-files=all"])
-    if dirty:
-        raise RefactorError(f"replacement source worktree is dirty:\n{dirty}")
+    raw_status = git_text(["status", "--porcelain=v1", "--untracked-files=all"])
+    staged = git(["diff", "--cached", "--quiet", "--exit-code", "--"])
+    semantic = git(
+        [
+            "diff",
+            "--quiet",
+            "--exit-code",
+            "--no-ext-diff",
+            "--ignore-space-at-eol",
+            "--",
+        ]
+    )
+    for result, context in ((staged, "staged diff"), (semantic, "semantic worktree diff")):
+        if result.exit_code not in {0, 1}:
+            require_command(result, f"inspect replacement source {context}")
+    untracked = git_text(["ls-files", "--others", "--exclude-standard"])
+    if staged.exit_code != 0 or semantic.exit_code != 0 or untracked:
+        raise RefactorError(
+            "replacement source worktree has staged, semantic, or untracked changes:\n"
+            f"status={raw_status or '<clean>'}\n"
+            f"staged_exit={staged.exit_code} semantic_exit={semantic.exit_code}\n"
+            f"untracked={untracked or '<none>'}"
+        )
+    status_entry_count = len(raw_status.splitlines()) if raw_status else 0
     return {
         "head": actual_head,
         "tree": git_text(["rev-parse", "HEAD^{tree}"]),
         "branch": branch,
+        "status_entry_count": status_entry_count,
+        "eol_normalization_only": status_entry_count > 0,
     }
 
 
@@ -668,6 +695,8 @@ def load_component_replacement_plan(
         source_head=source_state["head"],
         source_tree=source_state["tree"],
         source_branch=source_state["branch"],
+        source_status_entry_count=source_state["status_entry_count"],
+        source_eol_normalization_only=source_state["eol_normalization_only"],
         base_candidate_commit=base_commit,
         replacements=tuple(replacements),
     )

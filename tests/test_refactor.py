@@ -679,6 +679,8 @@ class ComponentReplacementValidationTests(unittest.TestCase):
             "head": self.SOURCE_HEAD,
             "tree": "c" * 40,
             "branch": "refactor/component-overlay-test",
+            "status_entry_count": 0,
+            "eol_normalization_only": False,
         }
         with mock.patch.object(
             refactor, "parse_lock", return_value={"team_golden_candidate": self.BASE_HEAD}
@@ -846,19 +848,39 @@ class ComponentReplacementValidationTests(unittest.TestCase):
             ("rev-parse", "HEAD"): self.SOURCE_HEAD,
             ("branch", "--show-current"): "refactor/component-overlay-test",
             ("status", "--porcelain=v1", "--untracked-files=all"): "",
+            ("ls-files", "--others", "--exclude-standard"): "",
             ("rev-parse", "HEAD^{tree}"): "c" * 40,
         }
 
         def git_text(args: list[str]) -> str:
             return responses[tuple(args)]
 
-        with mock.patch.object(refactor, "git_text", side_effect=git_text):
+        clean_result = refactor.CommandResult([], "test", 0, 0.0, "", "")
+        with mock.patch.object(
+            refactor, "git_text", side_effect=git_text
+        ), mock.patch.object(refactor, "git", return_value=clean_result):
             state = refactor.require_clean_source_head(self.SOURCE_HEAD)
         self.assertEqual(self.SOURCE_HEAD, state["head"])
 
         responses[("status", "--porcelain=v1", "--untracked-files=all")] = " M rtl/icache.v"
-        with mock.patch.object(refactor, "git_text", side_effect=git_text), self.assertRaisesRegex(
-            refactor.RefactorError, "worktree is dirty"
+        with mock.patch.object(
+            refactor, "git_text", side_effect=git_text
+        ), mock.patch.object(refactor, "git", return_value=clean_result):
+            eol_state = refactor.require_clean_source_head(self.SOURCE_HEAD)
+        self.assertTrue(eol_state["eol_normalization_only"])
+        self.assertEqual(1, eol_state["status_entry_count"])
+
+        dirty_result = refactor.CommandResult([], "test", 1, 0.0, "", "")
+
+        def dirty_git(args: list[str], **_: object) -> refactor.CommandResult:
+            return clean_result if "--cached" in args else dirty_result
+
+        with mock.patch.object(
+            refactor, "git_text", side_effect=git_text
+        ), mock.patch.object(
+            refactor, "git", side_effect=dirty_git
+        ), self.assertRaisesRegex(
+            refactor.RefactorError, "semantic, or untracked"
         ):
             refactor.require_clean_source_head(self.SOURCE_HEAD)
 
@@ -900,6 +922,8 @@ class ComponentReplacementValidationTests(unittest.TestCase):
             source_head=self.SOURCE_HEAD,
             source_tree="c" * 40,
             source_branch="refactor/component-overlay-test",
+            source_status_entry_count=0,
+            source_eol_normalization_only=False,
             base_candidate_commit=self.BASE_HEAD,
             replacements=(replacement,),
         )
