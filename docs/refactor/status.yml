@@ -1,0 +1,121 @@
+schema_version: 1
+updated_at: "2026-07-11T14:41:24+08:00"
+active_iteration: "20260710-2026-baseline"
+active_branch: "refactor/20260710-2026-baseline-automation"
+source_head: "45043bd8a89b0e4dea3911ed609d128252f0319f"
+
+boundaries:
+  baseline_validation:
+    owner: verification
+    state: blocked
+    golden_ref: a158aa8
+    dependencies: []
+    contract: docs/contracts/baseline-validation.md
+    required_gates:
+      - doctor
+      - chiplab_doctor
+      - golden_overlay
+      - func_smoke
+      - claim_review
+      - experiment_audit
+    evidence:
+      - logs/refactor/20260710-2026-baseline/iteration.md
+      - logs/refactor/20260710-2026-baseline/evidence/chiplab-doctor.json
+      - logs/refactor/20260710-2026-baseline/evidence/chiplab-overlay-manifest.json
+      - logs/refactor/20260710-2026-baseline/evidence/rtl-smoke-summary.json
+      - logs/refactor/20260710-2026-baseline/evidence/scala-summary.json
+      - logs/refactor/20260710-2026-baseline/evidence/baseline-matrix.json
+      - logs/refactor/20260710-2026-baseline/reviews/experiment-audit.md
+    active_pr: null
+    blocked_by:
+      - a158aa8_func_lab19_mismatch_at_1c07c79c
+      - 644_unapproved_verilator_warnings
+      - independent_rtl_static_and_yosys_not_executed
+      - claude_bridge_missing_GEEKPIE_CLAUDE_API_KEY
+    last_iteration: "20260710-2026-baseline"
+
+  core_top_compat:
+    owner: compat
+    state: not_started
+    golden_ref: a158aa8:rtl/mycpu_top.v
+    dependencies:
+      - baseline_validation
+    contract: null
+    required_gates:
+      - contract
+      - scala
+      - rtl_static
+      - func_smoke
+      - claim_review
+    evidence: []
+    active_pr: null
+    blocked_by: []
+    last_iteration: null
+
+  pipeline:
+    owner: pipeline
+    state: not_started
+    golden_ref: a158aa8:rtl
+    dependencies:
+      - core_top_compat
+    contract: null
+    required_gates:
+      - unit_diff
+      - func_full
+      - random
+      - claim_review
+    evidence: []
+    active_pr: null
+    blocked_by: []
+    last_iteration: null
+
+  privileged:
+    owner: privileged
+    state: not_started
+    golden_ref: a158aa8:rtl
+    dependencies:
+      - core_top_compat
+    contract: null
+    required_gates:
+      - unit_diff
+      - func_full
+      - random
+      - claim_review
+    evidence: []
+    active_pr: null
+    blocked_by: []
+    last_iteration: null
+
+  memory_system:
+    owner: memory
+    state: not_started
+    golden_ref: a158aa8:rtl
+    dependencies:
+      - core_top_compat
+    contract: null
+    required_gates:
+      - unit_diff
+      - func_full
+      - random
+      - perf
+      - claim_review
+    evidence: []
+    active_pr: null
+    blocked_by: []
+    last_iteration: null
+
+  observability:
+    owner: observe
+    state: not_started
+    golden_ref: a158aa8:rtl/mycpu_top.v
+    dependencies:
+      - core_top_compat
+    contract: null
+    required_gates:
+      - contract
+      - difftest
+      - claim_review
+    evidence: []
+    active_pr: null
+    blocked_by: []
+    last_iteration: null

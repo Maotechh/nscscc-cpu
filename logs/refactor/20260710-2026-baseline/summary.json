@@ -1,0 +1,104 @@
+{
+  "schema_version": 1,
+  "iteration_id": "20260710-2026-baseline",
+  "status": "blocked",
+  "branch": "refactor/20260710-2026-baseline-automation",
+  "base_sha": "20cae5fd66391f4a1bccc1b87035be421039144b",
+  "head_sha": "45043bd8a89b0e4dea3911ed609d128252f0319f",
+  "review_target_sha": "45043bd8a89b0e4dea3911ed609d128252f0319f",
+  "selected_boundary": "baseline_validation",
+  "selection_reason": "锁定的 a158aa8 尚未在固定官方环境中成为可执行 golden truth；先建立 fail-closed、可复现的最小 baseline 闭环，才能为后续等价替换提供 oracle。",
+  "required_gates": [
+    "doctor",
+    "automation_tests",
+    "scala_check",
+    "chiplab_doctor",
+    "golden_overlay",
+    "build_integrity",
+    "compile_warning_policy",
+    "func_smoke",
+    "rtl_static",
+    "claim_review",
+    "experiment_audit"
+  ],
+  "claims": [
+    {
+      "id": "C1",
+      "text": "本轮源码修改位于 refactor/20260710-2026-baseline-automation，base/main/origin-main 均为 20cae5f，没有修改或合并 main。",
+      "status": "supported",
+      "evidence": ["evidence/git-state.txt", "evidence/windows-doctor.json"]
+    },
+    {
+      "id": "C2",
+      "text": "锁定 chiplab、gitlink、candidate、工具指纹和 22-file overlay 已在 HEAD 45043bd 上通过 doctor 与哈希链验证。",
+      "status": "supported",
+      "evidence": ["evidence/chiplab-doctor.json", "evidence/chiplab-overlay.json", "evidence/chiplab-overlay-manifest.json"]
+    },
+    {
+      "id": "C3",
+      "text": "a158aa8 在锁定的单一官方 func/func_lab19 中执行 172552 条指令、602903 周期后发生明确 DiffTest mismatch，因此尚不能作为重构 golden truth。",
+      "status": "supported",
+      "evidence": ["evidence/rtl-smoke-summary.json", "evidence/func-lab19-excerpt.md"]
+    },
+    {
+      "id": "C4",
+      "text": "当前 Scala gate 只证明 4/4 构建任务和有限的 4-bit ALU local directed smoke；不证明与 a158aa8 ALU 或整核等价。",
+      "status": "supported_with_qualification",
+      "evidence": ["evidence/scala-summary.json", "reviews/scala-format-semantic-review.md"]
+    },
+    {
+      "id": "C5",
+      "text": "Vivado 2023.2 SW Build 4029153 的 launcher/binary/version probe 通过；许可、器件、综合、实现、时序和 bitstream 未验证。",
+      "status": "supported_with_qualification",
+      "evidence": ["evidence/windows-doctor.json"]
+    },
+    {
+      "id": "C6",
+      "text": "d22c13c 到 d76ca40 的单 case 诊断把首个可见回归缩小到 cacop 相关提交，但不是完整根因证明，也不批准 d22c13c 为新 golden。",
+      "status": "supported_with_diagnostic_scope",
+      "evidence": ["evidence/baseline-matrix.json"]
+    },
+    {
+      "id": "C7",
+      "text": "本轮不支持 rtl-static、58/81、random、perf、U-Boot/Linux、FPGA flow、Scala 整核等价或完全重构完成等声明。",
+      "status": "unsupported_by_current_evidence",
+      "evidence": ["evidence/rtl-smoke-summary.json", "reviews/experiment-audit.md"]
+    }
+  ],
+  "gates": {
+    "doctor": {"status": "pass", "planned": 19, "executed": 19, "passed": 19, "failed": 0, "skipped": 0},
+    "automation_tests": {"status": "pass", "planned": 59, "executed": 59, "passed": 59, "failed": 0, "skipped": 0},
+    "scala_check": {"status": "pass", "planned": 4, "executed": 4, "passed": 4, "failed": 0, "skipped": 0},
+    "chiplab_doctor": {"status": "pass", "planned": 44, "executed": 44, "passed": 44, "failed": 0, "skipped": 0},
+    "golden_overlay": {"status": "pass", "planned": 1, "executed": 1, "passed": 1, "failed": 0, "skipped": 0},
+    "build_integrity": {"status": "pass", "planned": 1, "executed": 1, "passed": 1, "failed": 0, "skipped": 0},
+    "compile_warning_policy": {"status": "fail", "planned": 1, "executed": 1, "passed": 0, "failed": 1, "skipped": 0},
+    "func_smoke": {"status": "fail", "planned": 1, "executed": 1, "passed": 0, "failed": 1, "skipped": 0},
+    "rtl_static": {"status": "skipped", "planned": 2, "executed": 0, "passed": 0, "failed": 0, "skipped": 2},
+    "claim_review": {"status": "unavailable", "planned": 2, "executed": 2, "passed": 0, "failed": 2, "skipped": 0},
+    "experiment_audit": {"status": "warning", "planned": 1, "executed": 1, "passed": 0, "failed": 1, "skipped": 0}
+  },
+  "not_executed_release_gates": [
+    {"gate": "func_58", "executed": 0, "reason": "最小 func_smoke 已失败"},
+    {"gate": "func_81", "executed": 0, "reason": "最小 func_smoke 已失败"},
+    {"gate": "random_difftest", "executed": 0, "reason": "baseline 尚未建立且 commit contract 不完整"},
+    {"gate": "perf_20", "executed": 0, "reason": "baseline 功能失败"},
+    {"gate": "uboot_linux", "executed": 0, "reason": "baseline 功能失败"},
+    {"gate": "vivado_full_flow", "executed": 0, "reason": "本轮只做安装版本 probe；未越级运行 FPGA release gate"}
+  ],
+  "blocked_by": [
+    "a158aa8_func_lab19_mismatch_at_1c07c79c",
+    "644_unapproved_verilator_warnings",
+    "independent_rtl_static_and_yosys_not_executed",
+    "claude_bridge_missing_GEEKPIE_CLAUDE_API_KEY"
+  ],
+  "next_unblocked_candidate": "独立 golden-recovery/cacop 迭代；只恢复 d76ca40 引入的活动 cacop 行为并复跑最低门禁。",
+  "pr": {
+    "status": "awaiting_push",
+    "url": null,
+    "draft_only": true,
+    "auto_merge": false,
+    "last_push_error": "GitHub port 443 connection timeout; no upstream was created."
+  },
+  "updated_at": "2026-07-11T15:31:37+08:00"
+}

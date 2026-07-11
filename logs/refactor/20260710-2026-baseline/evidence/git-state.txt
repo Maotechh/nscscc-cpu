@@ -1,0 +1,23 @@
+采证时间：2026-07-11T06:03:10+08:00
+仓库：D:/schoolworks/CS110/longxin/nscscc-cpu
+
+$ git status --short --branch
+## refactor/20260710-2026-baseline-automation
+?? docs/refactor/
+?? logs/
+
+$ git rev-parse HEAD
+45043bd8a89b0e4dea3911ed609d128252f0319f
+
+$ git rev-parse --verify main
+20cae5fd66391f4a1bccc1b87035be421039144b
+
+$ git rev-parse --verify origin/main
+20cae5fd66391f4a1bccc1b87035be421039144b
+
+$ git remote -v
+origin  https://github.com/Maotechh/nscscc-cpu.git (fetch)
+origin  https://github.com/Maotechh/nscscc-cpu.git (push)
+
+说明：源码 HEAD 为 45043bd；此时仅 docs/refactor 与 logs 为未跟踪证据文件。
+本迭代不修改、不提交或合并 main；证据将形成 45043bd 的直接子提交。

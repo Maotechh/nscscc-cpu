@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "iteration_id": "20260710-2026-baseline",
+  "external_artifact_policy": "大日志、trace、可执行文件和工作副本不提交；其绝对 locator、SHA256 与大小封装在 rtl-smoke-summary.json 和 scala-summary.json。",
+  "artifacts": [
+    {"id":"automation-tests","path":"evidence/automation-tests.txt","sha256":"f8fdaaea557df52623882a2a3d1b63bea89147fb7c3aebcb72ca0f350b66c922","size":8368,"tracked":true,"retention":"git"},
+    {"id":"baseline-matrix","path":"evidence/baseline-matrix.json","sha256":"5ddcd0e50014015e5d714c07e2807e0a1dc4d7ebb5d63db867ba027b462f8773","size":2755,"tracked":true,"retention":"git"},
+    {"id":"chiplab-doctor","path":"evidence/chiplab-doctor.json","sha256":"f42905de8f79071e535e355a33fc1df1ea3b5f3e64dfccf288557be7b7e8546c","size":16175,"tracked":true,"retention":"git"},
+    {"id":"overlay-manifest","path":"evidence/chiplab-overlay-manifest.json","sha256":"86e0a2306c6ed3e4f98d93ae69cb80b2c6ecef961119d1e128da8e480aa6c917","size":16398,"tracked":true,"retention":"git"},
+    {"id":"overlay-report","path":"evidence/chiplab-overlay.json","sha256":"24280e5a461b094389d210d11abd5f8ec39c4fcf0d838cada637ccf187704d98","size":760,"tracked":true,"retention":"git"},
+    {"id":"func-lab19-excerpt","path":"evidence/func-lab19-excerpt.md","sha256":"aebf529eb442d96e4e92c663e7083a0bf5f756c33d15e0b979746c2d84bf524a","size":1010,"tracked":true,"retention":"git"},
+    {"id":"git-state","path":"evidence/git-state.txt","sha256":"b33c46e30619bc7ee3f4cd6c09b339f0b4de44554537ba91d49b5ea3a6536f0a","size":732,"tracked":true,"retention":"git"},
+    {"id":"rtl-smoke","path":"evidence/rtl-smoke-summary.json","sha256":"2360489c56046b3e6a04bfcc640da7a37af2d1e47bd1fbc702e33d4b762a5ec1","size":189880,"tracked":true,"retention":"git"},
+    {"id":"scala-summary","path":"evidence/scala-summary.json","sha256":"b85fc7d09bb65fff207710c7fdc002f7968b84890991591680d8801fda285eb1","size":29316,"tracked":true,"retention":"git"},
+    {"id":"windows-doctor","path":"evidence/windows-doctor.json","sha256":"b24b0089bb236953cc48ed9f40b6613b11e0f99b5dd790702c3d5a9192f60d81","size":6200,"tracked":true,"retention":"git"},
+    {"id":"claude-raw","path":"reviews/claude-raw.md","sha256":"cdd4283497ae2b7830a932e785177cc54457370d9fcd0e7277ac2375709a43d0","size":1031,"tracked":true,"retention":"git"},
+    {"id":"claude-job","path":"reviews/claude-job.json","sha256":"6457e16dc6371425a8456a57417bfe9855e79cdc9087725f6b939f901030effd","size":498,"tracked":true,"retention":"git"},
+    {"id":"claude-request","path":"reviews/claude-request.json","sha256":"d369484bbdc4f83c08318eac8d7d573305e6ad3a2ed2aaee93294494f403ca72","size":888,"tracked":true,"retention":"git"},
+    {"id":"claude-summary","path":"reviews/claude-summary.json","sha256":"23f1dfa5fb2e177507c06c769fd12bb10fc5a076c4095f9921b763cda8ccb950","size":1804,"tracked":true,"retention":"git"}
+  ]
+}

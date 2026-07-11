@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "iteration_id": "20260710-2026-baseline",
+  "review_target_sha": "45043bd8a89b0e4dea3911ed609d128252f0319f",
+  "base_sha": "20cae5fd66391f4a1bccc1b87035be421039144b",
+  "branch": "refactor/20260710-2026-baseline-automation",
+  "attempts": [
+    {
+      "job_id": "e4fab9d9580349a69e3602507ba58d48",
+      "tools": "Bash,Read,Grep,Glob",
+      "status": "failed",
+      "error": "The responses review backend does not allow reviewer tools"
+    },
+    {
+      "job_id": "833f3d577d6e4a63b5acff8bae96bf44",
+      "tools": "",
+      "status": "failed",
+      "error": "Required provider environment variable is not set: GEEKPIE_CLAUDE_API_KEY"
+    }
+  ],
+  "prompt_path": "reviews/claude-prompt.md",
+  "requested_checks": [
+    "phantom_result",
+    "unexecuted_gate",
+    "oracle_integrity",
+    "interface_timing_claim",
+    "hash_chain",
+    "claim_scope"
+  ]
+}
