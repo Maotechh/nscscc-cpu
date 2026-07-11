@@ -2243,17 +2243,23 @@ def verify_candidate_support_bindings(
             f"actual={sorted(str(item) for item in support)}"
         )
     header = support.get("IP/myCPU/mycpu.h")
+    mycpu = work / "IP" / "myCPU"
+    header_payload = git_blob(
+        f"{manifest['openla500_upstream']}:mycpu.h",
+        cwd=mycpu,
+    )
     if (
         header is None
         or header.get("source") != f"{manifest['openla500_upstream']}:mycpu.h"
+        or header.get("sha256") != sha256_bytes(header_payload)
         or header.get("sha256") != manifest["openla500_mycpu_h_sha256"]
-        or header.get("size") != len(git_blob(f"{manifest['openla500_upstream']}:mycpu.h"))
+        or header.get("size") != len(header_payload)
     ):
         raise RefactorError("openLA500 support header binding mismatch")
     license_entry = support.get("IP/myCPU/LICENSE")
     license_payload = git_blob(
         f"{manifest['chiplab_mycpu_gitlink']}:LICENSE",
-        cwd=work / "IP" / "myCPU",
+        cwd=mycpu,
     )
     if (
         license_entry is None
