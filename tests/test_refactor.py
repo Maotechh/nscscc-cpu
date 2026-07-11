@@ -635,6 +635,26 @@ class ComponentReplacementValidationTests(unittest.TestCase):
     BASE_PAYLOAD = b"module icache; endmodule\n"
     REPLACEMENT_PAYLOAD = b'`include "mycpu.h"\nmodule icache; endmodule\n'
 
+    def _git_in(self, repo: Path, *args: str) -> str:
+        result = refactor.run_command(["git", *args], cwd=repo)
+        self.assertEqual(0, result.exit_code, result.stderr)
+        return result.stdout.strip()
+
+    def _new_source_repo(self) -> tuple[Path, str, Path]:
+        temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(temporary.cleanup)
+        repo = Path(temporary.name)
+        self._git_in(repo, "init", "-b", "refactor/eol-provenance-test")
+        self._git_in(repo, "config", "user.name", "Refactor Test")
+        self._git_in(repo, "config", "user.email", "refactor@example.invalid")
+        self._git_in(repo, "config", "core.autocrlf", "false")
+        source = repo / "rtl" / "icache.v"
+        source.parent.mkdir()
+        source.write_bytes(b"module icache;\nendmodule\n")
+        self._git_in(repo, "add", "rtl/icache.v")
+        self._git_in(repo, "commit", "-m", "fixture")
+        return repo, self._git_in(repo, "rev-parse", "HEAD"), source
+
     def _spec(self, **entry_updates: object) -> bytes:
         entry: dict[str, object] = {
             "target": self.TARGET_PATH,
@@ -648,7 +668,12 @@ class ComponentReplacementValidationTests(unittest.TestCase):
             + "\n"
         ).encode("utf-8")
 
-    def _load(self, spec_payload: bytes | None = None) -> refactor.ComponentReplacementPlan:
+    def _load(
+        self,
+        spec_payload: bytes | None = None,
+        *,
+        source_state_updates: dict[str, object] | None = None,
+    ) -> refactor.ComponentReplacementPlan:
         payload = spec_payload if spec_payload is not None else self._spec()
 
         def blob(revision: str) -> bytes:
@@ -680,8 +705,12 @@ class ComponentReplacementValidationTests(unittest.TestCase):
             "tree": "c" * 40,
             "branch": "refactor/component-overlay-test",
             "status_entry_count": 0,
+            "porcelain_clean": True,
+            "semantic_clean": True,
             "eol_normalization_only": False,
         }
+        if source_state_updates is not None:
+            state.update(source_state_updates)
         with mock.patch.object(
             refactor, "parse_lock", return_value={"team_golden_candidate": self.BASE_HEAD}
         ), mock.patch.object(
@@ -763,8 +792,11 @@ class ComponentReplacementValidationTests(unittest.TestCase):
             b'`include "mycpu.h"\nmodule icache; endmodule\n', "icache.v"
         )
         refactor.validate_replacement_verilog(
-            b'// $readmemh("ignored.hex", mem);\nmodule icache; '
-            b'initial $display("$fopen is text"); endmodule\n',
+            b'// $display("ignored"); $finish;\nmodule icache; '
+            b'localparam [8*8-1:0] NOTE = "$warning in text"; '
+            b'localparam WIDTH = $clog2(16); '
+            b'wire signed [7:0] converted = $signed($unsigned(8\'h80)); '
+            b'localparam VALUE_BITS = $bits(converted); endmodule\n',
             "icache.v",
         )
         invalid = (
@@ -789,6 +821,78 @@ class ComponentReplacementValidationTests(unittest.TestCase):
             with self.subTest(payload=payload), self.assertRaises(refactor.RefactorError):
                 refactor.validate_replacement_verilog(payload, "icache.v")
 
+    def test_replacement_rejects_minimal_forged_pass_oracle(self) -> None:
+        payload = (
+            b'module icache; initial begin $display("HIT GOOD TRAP"); '
+            b'$finish; end endmodule\n'
+        )
+
+        with self.assertRaisesRegex(
+            refactor.RefactorError, "forbidden oracle-output or simulation-control"
+        ):
+            refactor.validate_replacement_verilog(payload, "icache.v")
+
+    def test_replacement_rejects_oracle_output_and_simulation_control_tasks(self) -> None:
+        forbidden_tasks = (
+            "$display",
+            "$displayb",
+            "$displayh",
+            "$displayo",
+            "$write",
+            "$writeb",
+            "$writeh",
+            "$writeo",
+            "$monitor",
+            "$monitorb",
+            "$monitorh",
+            "$monitoro",
+            "$monitoron",
+            "$monitoroff",
+            "$strobe",
+            "$strobeb",
+            "$strobeh",
+            "$strobeo",
+            "$fdisplay",
+            "$fdisplayb",
+            "$fdisplayh",
+            "$fdisplayo",
+            "$fwrite",
+            "$fwriteb",
+            "$fwriteh",
+            "$fwriteo",
+            "$fmonitor",
+            "$fmonitorb",
+            "$fmonitorh",
+            "$fmonitoro",
+            "$fstrobe",
+            "$fstrobeb",
+            "$fstrobeh",
+            "$fstrobeo",
+            "$printtimescale",
+            "$finish",
+            "$finish_and_return",
+            "$stop",
+            "$fatal",
+            "$error",
+            "$warning",
+            "$info",
+            "$exit",
+        )
+        for task in forbidden_tasks:
+            with self.subTest(task=task), self.assertRaisesRegex(
+                refactor.RefactorError, task.replace("$", r"\$")
+            ):
+                refactor.validate_replacement_verilog(
+                    f"module icache; initial {task}; endmodule\n".encode("ascii"),
+                    "icache.v",
+                )
+
+        with self.assertRaisesRegex(refactor.RefactorError, "unapproved system tasks"):
+            refactor.validate_replacement_verilog(
+                b"module icache; initial $custom_oracle_logger; endmodule\n",
+                "icache.v",
+            )
+
     def test_replacement_may_only_reuse_locked_base_macros(self) -> None:
         base = b'`ifdef LACC\nmodule icache; endmodule\n`endif\n'
         refactor.validate_replacement_verilog(
@@ -811,6 +915,28 @@ class ComponentReplacementValidationTests(unittest.TestCase):
         self.assertEqual(self.TARGET_PATH, replacement.target)
         self.assertEqual(self.SOURCE_PATH, replacement.source)
         self.assertEqual(self.REPLACEMENT_PAYLOAD, replacement.payload)
+        metadata = plan.metadata()
+        self.assertEqual("committed_git_blobs", metadata["replacement_payload_source"])
+        self.assertTrue(metadata["worktree_clean"])
+        self.assertTrue(metadata["worktree_porcelain_clean"])
+        self.assertTrue(metadata["worktree_semantic_clean"])
+
+    def test_metadata_does_not_call_crlf_materialization_clean(self) -> None:
+        plan = self._load(
+            source_state_updates={
+                "status_entry_count": 101,
+                "porcelain_clean": False,
+                "semantic_clean": True,
+                "eol_normalization_only": True,
+            }
+        )
+
+        metadata = plan.metadata()
+        self.assertFalse(metadata["worktree_clean"])
+        self.assertFalse(metadata["worktree_porcelain_clean"])
+        self.assertTrue(metadata["worktree_semantic_clean"])
+        self.assertTrue(metadata["worktree_eol_normalization_only"])
+        self.assertEqual(101, metadata["worktree_raw_status_entry_count"])
 
     def test_load_plan_rejects_unknown_schema_fields(self) -> None:
         document = json.loads(self._spec())
@@ -847,12 +973,11 @@ class ComponentReplacementValidationTests(unittest.TestCase):
         responses = {
             ("rev-parse", "HEAD"): self.SOURCE_HEAD,
             ("branch", "--show-current"): "refactor/component-overlay-test",
-            ("status", "--porcelain=v1", "--untracked-files=all"): "",
             ("ls-files", "--others", "--exclude-standard"): "",
             ("rev-parse", "HEAD^{tree}"): "c" * 40,
         }
 
-        def git_text(args: list[str]) -> str:
+        def git_text(args: list[str], **_: object) -> str:
             return responses[tuple(args)]
 
         clean_result = refactor.CommandResult([], "test", 0, 0.0, "", "")
@@ -861,31 +986,60 @@ class ComponentReplacementValidationTests(unittest.TestCase):
         ), mock.patch.object(refactor, "git", return_value=clean_result):
             state = refactor.require_clean_source_head(self.SOURCE_HEAD)
         self.assertEqual(self.SOURCE_HEAD, state["head"])
-
-        responses[("status", "--porcelain=v1", "--untracked-files=all")] = " M rtl/icache.v"
-        with mock.patch.object(
-            refactor, "git_text", side_effect=git_text
-        ), mock.patch.object(refactor, "git", return_value=clean_result):
-            eol_state = refactor.require_clean_source_head(self.SOURCE_HEAD)
-        self.assertTrue(eol_state["eol_normalization_only"])
-        self.assertEqual(1, eol_state["status_entry_count"])
+        self.assertTrue(state["porcelain_clean"])
+        self.assertTrue(state["semantic_clean"])
 
         dirty_result = refactor.CommandResult([], "test", 1, 0.0, "", "")
 
         def dirty_git(args: list[str], **_: object) -> refactor.CommandResult:
-            return clean_result if "--cached" in args else dirty_result
+            if args[0] == "status" or "--cached" in args:
+                return clean_result
+            return dirty_result
 
         with mock.patch.object(
             refactor, "git_text", side_effect=git_text
         ), mock.patch.object(
             refactor, "git", side_effect=dirty_git
-        ), self.assertRaisesRegex(
-            refactor.RefactorError, "semantic, or untracked"
-        ):
+        ), self.assertRaisesRegex(refactor.RefactorError, "non-CRLF"):
             refactor.require_clean_source_head(self.SOURCE_HEAD)
 
         with self.assertRaisesRegex(refactor.RefactorError, "full lowercase"):
             refactor.require_clean_source_head(self.SOURCE_HEAD.upper())
+
+    def test_source_head_accepts_only_unstaged_crlf_materialization(self) -> None:
+        repo, head, source = self._new_source_repo()
+        source.write_bytes(b"module icache;\r\nendmodule\r\n")
+
+        state = refactor.require_clean_source_head(head, cwd=repo)
+
+        self.assertFalse(state["porcelain_clean"])
+        self.assertTrue(state["semantic_clean"])
+        self.assertTrue(state["eol_normalization_only"])
+        self.assertEqual(1, state["status_entry_count"])
+
+    def test_source_head_rejects_spaces_or_content_hidden_behind_crlf(self) -> None:
+        invalid_payloads = (
+            b"module icache; \r\nendmodule\r\n",
+            b"module changed;\r\nendmodule\r\n",
+        )
+        for payload in invalid_payloads:
+            with self.subTest(payload=payload):
+                repo, head, source = self._new_source_repo()
+                source.write_bytes(payload)
+                with self.assertRaisesRegex(refactor.RefactorError, "non-CRLF"):
+                    refactor.require_clean_source_head(head, cwd=repo)
+
+    def test_source_head_rejects_staged_or_untracked_changes(self) -> None:
+        repo, head, source = self._new_source_repo()
+        source.write_bytes(b"module icache;\r\nendmodule\r\n")
+        self._git_in(repo, "add", "rtl/icache.v")
+        with self.assertRaisesRegex(refactor.RefactorError, "staged"):
+            refactor.require_clean_source_head(head, cwd=repo)
+
+        repo, head, _ = self._new_source_repo()
+        (repo / "untracked.v").write_bytes(b"module untracked; endmodule\n")
+        with self.assertRaisesRegex(refactor.RefactorError, "untracked"):
+            refactor.require_clean_source_head(head, cwd=repo)
 
     def test_mixed_claim_shape_cannot_be_gate_eligible(self) -> None:
         overlay = {
@@ -923,6 +1077,8 @@ class ComponentReplacementValidationTests(unittest.TestCase):
             source_tree="c" * 40,
             source_branch="refactor/component-overlay-test",
             source_status_entry_count=0,
+            source_porcelain_clean=True,
+            source_semantic_clean=True,
             source_eol_normalization_only=False,
             base_candidate_commit=self.BASE_HEAD,
             replacements=(replacement,),

@@ -20,7 +20,7 @@
 1. 两个参数必须同时出现，并且只允许与 `--dut-source mixed --diagnostic` 组合。
 2. mixed base 固定为 `team_golden_candidate`；使用 replacement 时禁止 `--candidate-commit` override。
 3. `--source-head` 必须是完整 40 位 SHA，并且逐字等于当前 HEAD；入口与写 manifest 前各复验一次。
-4. spec 与 replacement source 必须都是该 source HEAD 中的普通 Git blob；不读取或回退到未提交工作树内容。staged、untracked、文件模式或忽略行尾空白后仍存在的语义 diff 均失败；Windows/WSL 对同一 checkout 的纯 CRLF 归一化差异允许通过，但原始 status 条目数和 `eol_normalization_only` 必须写入 manifest。
+4. spec 与 replacement source 必须都是该 source HEAD 中的普通 Git blob；不读取或回退到未提交工作树内容。staged、untracked、文件模式以及忽略且仅忽略行尾 CR 后仍存在的 diff 均失败；行尾空格不是可忽略差异。Windows/WSL 对同一 checkout 的纯 CRLF 物化差异允许通过，但 manifest 必须分别记录真实 `worktree_porcelain_clean`、`worktree_semantic_clean`、原始 status 条目数和 `worktree_eol_normalization_only`，且 replacement payload 仍只读取已提交 Git blob。
 5. 任一失败在开始时删除同 iteration 的旧 overlay report，不能留下可复用的旧 diagnostic/PASS。
 6. overlay 与 smoke 必须使用同一 Linux `CHIPLAB_WORK_ROOT`。两者同时获取 `OUT_DIR` 和 work root 下的 iteration lock；任一活动命令存在时，另一命令不得 reset 或消费同一 DUT。
 7. `OUT_DIR` 与 `CHIPLAB_WORK_ROOT` 必须是互不相同、互非祖先/后代的目录；在创建锁或 reset worktree 前检查，拒绝证据目录与可删除工作区发生别名。
@@ -77,7 +77,7 @@ doctor、overlay、smoke 必须共用 `OUT_DIR`；doctor 与 overlay 必须共�
 - source Git tree mode 只能是 `100644` 或 `100755` 普通 blob；拒绝 `120000` symlink、submodule、目录和 path traversal。
 - `base_sha256` 必须匹配 `a158aa8:<target>`；`replacement_sha256` 必须匹配 `<source-head>:<source>`。
 - replacement 内只允许 literal `` `include "mycpu.h"``；拒绝绝对/相对其他 include 和宏展开 include。spec 不能引入额外 support HDL。
-- replacement 禁止本地 `` `define/`undef``、token-paste、历史 base 未引用的新宏、`$readmemh/$readmemb`、文件 I/O、dump/random、plusargs、`$system` 和 DPI 等未绑定外部依赖。未来若活动功能确需此类输入，必须先扩展 spec，逐项记录宏值或路径、Git blob、SHA256 和 overlay target。
+- replacement 禁止本地 `` `define/`undef``、token-paste、历史 base 未引用的新宏、`$readmemh/$readmemb`、文件 I/O、dump/random、plusargs、`$system` 和 DPI 等未绑定外部依赖。所有可写 simulator log 或改变仿真终止状态的 system task 也必须拒绝，包括 `$display/$write/$monitor/$strobe` 及其文件/进制 variants，以及 `$finish/$stop/$fatal/$error/$warning/$info/$exit`。其他未知 `$identifier` 默认拒绝；只允许代码中明确列出的无外部副作用 elaboration/bit-query function allowlist，例如 `$signed/$unsigned/$clog2/$bits`。扫描忽略注释和字符串。未来若活动功能确需此类输入，必须先扩展 spec，逐项记录宏值或路径、Git blob、SHA256 和 overlay target。
 
 ## 导出与 overlay 不变量
 
@@ -106,6 +106,21 @@ gate_eligible=false
 即使 diagnostic smoke 功能通过，也只能证明该 composite DUT 在所执行用例上的行为，不得提升 `team_golden_candidate`、不得满足 locked baseline gate。更新正式 reference 必须另开 manifest/ADR PR，经人工确认并跑完整影响门禁。
 
 没有 replacement 参数时，原 locked baseline export/overlay schema 与语义保持兼容；回归必须证明默认路径仍只消费 `a158aa8`。
+
+## Identity control 比较
+
+等字节 replacement 的 control 必须由统一入口生成比较证据：
+
+```bash
+make identity-compare \
+  OUT_DIR=<shared-output> \
+  LOCKED_ITERATION_ID=<locked-id> \
+  MIXED_ITERATION_ID=<mixed-id>
+```
+
+比较器单次读取并哈希 locked/mixed 的 overlay report、overlay manifest 和 `rtl-smoke` report，核对两侧 provenance 形状、report/manifest/post-run 哈希链、DUT 文件投影、support/tool 绑定、identity replacement、测试用 ELF/ROM、parser、trace/UART 和 warning 计数。输入/schema 错误必须删除旧输出并返回 2；比较不一致写 `status=fail` 后返回 1；全部一致才返回 0。
+
+比较结果固定 `gate_eligible=false`，只允许声明“指定用例的 manifest-bound DUT/测试输入投影与选定观测证据一致”。`Vsimu_top__ALL.a`、simulator `output`、编译/仿真日志、绝对路径、run id、时间戳和耗时不属于 identity claim；这些字段不同不得被隐藏，也不得据此宣称整个构建字节可复现、CPU PASS 或 RTL 形式等价。
 
 ## 最低测试
 

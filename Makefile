@@ -9,6 +9,8 @@ DUT_SOURCE ?= candidate
 REPLACEMENT_SPEC ?=
 SOURCE_HEAD ?=
 DIAGNOSTIC ?=
+LOCKED_ITERATION_ID ?=
+MIXED_ITERATION_ID ?=$(ITERATION_ID)
 VIVADO_HOME ?=
 SCALA_CACHE_ROOT ?= $(CHIPLAB_TOOL_ROOT)/scala-cache-sbt1.10.11-spinal1.14.2
 
@@ -20,7 +22,7 @@ $(error DIAGNOSTIC must be empty, 0, or 1)
 endif
 DIAGNOSTIC_ARG = $(if $(filter 1,$(DIAGNOSTIC)),--diagnostic,)
 
-.PHONY: doctor scala-cache-bootstrap scala-check chiplab-doctor golden-export chiplab-overlay rtl-smoke evidence-check test-automation
+.PHONY: doctor scala-cache-bootstrap scala-check chiplab-doctor golden-export chiplab-overlay rtl-smoke identity-compare evidence-check test-automation
 
 doctor:
 	$(PYTHON) -I tools/refactor.py doctor --out-dir "$(OUT_DIR)" $(if $(VIVADO_HOME),--vivado-home "$(VIVADO_HOME)",)
@@ -42,6 +44,9 @@ chiplab-overlay:
 
 rtl-smoke:
 	$(PYTHON) -I tools/refactor.py rtl-smoke --out-dir "$(OUT_DIR)" --work-root "$(CHIPLAB_WORK_ROOT)" --iteration-id "$(ITERATION_ID)" --tool-root "$(CHIPLAB_TOOL_ROOT)" $(DIAGNOSTIC_ARG)
+
+identity-compare:
+	$(PYTHON) -I tools/identity_compare.py --out-dir "$(OUT_DIR)" --locked-iteration-id "$(LOCKED_ITERATION_ID)" --mixed-iteration-id "$(MIXED_ITERATION_ID)"
 
 evidence-check:
 	$(PYTHON) -I tools/refactor.py validate-iteration --iteration-dir "logs/refactor/$(ITERATION_ID)"

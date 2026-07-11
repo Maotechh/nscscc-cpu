@@ -33,6 +33,36 @@ LOCKED_SMOKE_CASE = "func/func_lab19"
 ITERATION_ID_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,79}$")
 SHA256_HEX_PATTERN = re.compile(r"[0-9a-f]{64}")
 COMPONENT_REPLACEMENT_SCHEMA_VERSION = 1
+FORBIDDEN_REPLACEMENT_ORACLE_TASK_PATTERN = re.compile(
+    r"\$(?:"
+    r"f?(?:display|write|monitor|strobe)(?:b|h|o)?|"
+    r"monitor(?:on|off)|printtimescale|"
+    r"finish(?:_and_return)?|stop|fatal|error|warning|info|exit"
+    r")\b",
+    re.IGNORECASE,
+)
+REPLACEMENT_SYSTEM_IDENTIFIER_PATTERN = re.compile(r"\$[A-Za-z_][A-Za-z0-9_$]*")
+SIDE_EFFECT_FREE_REPLACEMENT_SYSTEM_FUNCTIONS = frozenset(
+    {
+        "$bits",
+        "$clog2",
+        "$countbits",
+        "$countones",
+        "$dimensions",
+        "$high",
+        "$increment",
+        "$isunknown",
+        "$left",
+        "$low",
+        "$onehot",
+        "$onehot0",
+        "$right",
+        "$signed",
+        "$size",
+        "$unsigned",
+        "$unpacked_dimensions",
+    }
+)
 
 REQUIRED_MANIFEST_KEYS = {
     "chiplab_commit",
@@ -128,6 +158,8 @@ class ComponentReplacementPlan:
     source_tree: str
     source_branch: str
     source_status_entry_count: int
+    source_porcelain_clean: bool
+    source_semantic_clean: bool
     source_eol_normalization_only: bool
     base_candidate_commit: str
     replacements: tuple[ComponentReplacement, ...]
@@ -142,8 +174,12 @@ class ComponentReplacementPlan:
             "source_head": self.source_head,
             "source_tree": self.source_tree,
             "source_branch": self.source_branch,
-            "worktree_clean": True,
+            "replacement_payload_source": "committed_git_blobs",
+            "worktree_clean": self.source_porcelain_clean,
+            "worktree_porcelain_clean": self.source_porcelain_clean,
             "worktree_raw_status_entry_count": self.source_status_entry_count,
+            "worktree_semantic_clean": self.source_semantic_clean,
+            "worktree_semantic_diff_policy": "ignore-cr-at-eol-only",
             "worktree_eol_normalization_only": self.source_eol_normalization_only,
             "base_candidate_commit": self.base_candidate_commit,
             "replacements": [
@@ -394,47 +430,82 @@ def git_regular_blob_entry(commit: str, path: str) -> dict[str, str]:
     return {"mode": mode, "type": object_type, "oid": object_id, "path": actual_path}
 
 
-def require_clean_source_head(expected_head: str) -> dict[str, Any]:
+def require_clean_source_head(
+    expected_head: str, *, cwd: Path = REPO_ROOT
+) -> dict[str, Any]:
     if re.fullmatch(r"[0-9a-f]{40}", expected_head or "") is None:
         raise RefactorError("--source-head must be a full lowercase 40-character Git SHA")
-    actual_head = git_text(["rev-parse", "HEAD"])
+    actual_head = git_text(["rev-parse", "HEAD"], cwd=cwd)
     if actual_head != expected_head:
         raise RefactorError(
             f"replacement source HEAD changed: expected={expected_head} actual={actual_head}"
         )
-    branch = git_text(["branch", "--show-current"])
+    branch = git_text(["branch", "--show-current"], cwd=cwd)
     if not branch.startswith("refactor/"):
         raise RefactorError(f"replacement source must be on a refactor/* branch: {branch or '<detached>'}")
-    raw_status = git_text(["status", "--porcelain=v1", "--untracked-files=all"])
-    staged = git(["diff", "--cached", "--quiet", "--exit-code", "--"])
+    status_result = git(
+        ["status", "--porcelain=v1", "-z", "--untracked-files=all"], cwd=cwd
+    )
+    require_command(status_result, "inspect replacement source porcelain status")
+    status_entries = [entry for entry in status_result.stdout.split("\0") if entry]
+    porcelain_clean = not status_entries
+    eol_status_shape = all(entry.startswith(" M ") for entry in status_entries)
+    staged = git(
+        [
+            "diff",
+            "--cached",
+            "--quiet",
+            "--exit-code",
+            "--no-ext-diff",
+            "--no-textconv",
+            "--ignore-submodules=none",
+            "--",
+        ],
+        cwd=cwd,
+    )
     semantic = git(
         [
             "diff",
             "--quiet",
             "--exit-code",
             "--no-ext-diff",
-            "--ignore-space-at-eol",
+            "--no-textconv",
+            "--ignore-submodules=none",
+            "--ignore-cr-at-eol",
             "--",
-        ]
+        ],
+        cwd=cwd,
     )
     for result, context in ((staged, "staged diff"), (semantic, "semantic worktree diff")):
         if result.exit_code not in {0, 1}:
             require_command(result, f"inspect replacement source {context}")
-    untracked = git_text(["ls-files", "--others", "--exclude-standard"])
-    if staged.exit_code != 0 or semantic.exit_code != 0 or untracked:
+    untracked = git_text(
+        ["ls-files", "--others", "--exclude-standard"], cwd=cwd
+    )
+    semantic_clean = (
+        staged.exit_code == 0
+        and semantic.exit_code == 0
+        and not untracked
+        and eol_status_shape
+    )
+    if not semantic_clean:
+        rendered_status = "\n".join(repr(entry) for entry in status_entries)
         raise RefactorError(
-            "replacement source worktree has staged, semantic, or untracked changes:\n"
-            f"status={raw_status or '<clean>'}\n"
+            "replacement source worktree has staged, non-CRLF, untracked, or unsupported status changes:\n"
+            f"status={rendered_status or '<clean>'}\n"
             f"staged_exit={staged.exit_code} semantic_exit={semantic.exit_code}\n"
+            f"eol_status_shape={eol_status_shape}\n"
             f"untracked={untracked or '<none>'}"
         )
-    status_entry_count = len(raw_status.splitlines()) if raw_status else 0
+    status_entry_count = len(status_entries)
     return {
         "head": actual_head,
-        "tree": git_text(["rev-parse", "HEAD^{tree}"]),
+        "tree": git_text(["rev-parse", "HEAD^{tree}"], cwd=cwd),
         "branch": branch,
         "status_entry_count": status_entry_count,
-        "eol_normalization_only": status_entry_count > 0,
+        "porcelain_clean": porcelain_clean,
+        "semantic_clean": semantic_clean,
+        "eol_normalization_only": not porcelain_clean,
     }
 
 
@@ -562,6 +633,12 @@ def validate_replacement_verilog(
         raise RefactorError(
             f"replacement Verilog adds unbound macro dependencies {new_macros}: {source}"
         )
+    oracle_task = FORBIDDEN_REPLACEMENT_ORACLE_TASK_PATTERN.search(executable_code)
+    if oracle_task:
+        raise RefactorError(
+            "replacement Verilog uses a forbidden oracle-output or simulation-control "
+            f"system task {oracle_task.group(0)}: {source}"
+        )
     external_task = re.search(
         r"\$(?:readmem[hb]|writemem[hb]|fopen|fclose|fread|fwrite|fscanf|fgets|fgetc|"
         r"ungetc|fseek|ftell|rewind|fflush|ferror|fdisplay|fmonitor|fstrobe|scanf|"
@@ -574,6 +651,15 @@ def validate_replacement_verilog(
         raise RefactorError(
             "replacement Verilog uses an unbound external system task "
             f"{external_task.group(0)}: {source}"
+        )
+    unapproved_system_identifiers = sorted(
+        set(REPLACEMENT_SYSTEM_IDENTIFIER_PATTERN.findall(executable_code))
+        - SIDE_EFFECT_FREE_REPLACEMENT_SYSTEM_FUNCTIONS
+    )
+    if unapproved_system_identifiers:
+        raise RefactorError(
+            "replacement Verilog uses unapproved system tasks or functions "
+            f"{unapproved_system_identifiers}: {source}"
         )
     comment_free = mask_verilog_comments_and_strings(text, mask_strings=False)
     if re.search(r'\b(?:import|export)\s*"DPI(?:-C)?"', comment_free, re.IGNORECASE):
@@ -595,20 +681,11 @@ def validate_replacement_verilog(
 def load_component_replacement_plan(
     spec_path_value: str,
     source_head: str,
-    *,
-    require_clean: bool = True,
 ) -> ComponentReplacementPlan:
     manifest = parse_lock(MANIFEST_PATH)
-    if require_clean:
-        source_state = require_clean_source_head(source_head)
-    else:
-        source_state = {
-            "head": git_text(["rev-parse", "HEAD"]),
-            "tree": git_text(["rev-parse", "HEAD^{tree}"]),
-            "branch": git_text(["branch", "--show-current"]),
-        }
-        if source_state["head"] != source_head:
-            raise RefactorError("replacement source HEAD changed")
+    source_state = require_clean_source_head(source_head)
+    if source_state["head"] != source_head:
+        raise RefactorError("replacement source HEAD changed")
     spec_path = checked_repo_git_path(spec_path_value, "replacement spec path")
     git_regular_blob_entry(source_head, spec_path)
     spec_payload = git_blob(f"{source_head}:{spec_path}")
@@ -696,6 +773,8 @@ def load_component_replacement_plan(
         source_tree=source_state["tree"],
         source_branch=source_state["branch"],
         source_status_entry_count=source_state["status_entry_count"],
+        source_porcelain_clean=source_state["porcelain_clean"],
+        source_semantic_clean=source_state["semantic_clean"],
         source_eol_normalization_only=source_state["eol_normalization_only"],
         base_candidate_commit=base_commit,
         replacements=tuple(replacements),
