@@ -21,7 +21,7 @@ import tempfile
 import time
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import Any, Iterable, Sequence
 
 
@@ -31,6 +31,8 @@ GOLDEN_FILES_PATH = REPO_ROOT / "reference" / "golden-rtl-files.lock"
 GENERATED_MARKER = ".nscscc-refactor-generated.json"
 LOCKED_SMOKE_CASE = "func/func_lab19"
 ITERATION_ID_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,79}$")
+SHA256_HEX_PATTERN = re.compile(r"[0-9a-f]{64}")
+COMPONENT_REPLACEMENT_SCHEMA_VERSION = 1
 
 REQUIRED_MANIFEST_KEYS = {
     "chiplab_commit",
@@ -106,6 +108,55 @@ class CommandResult:
         }
 
 
+@dataclass(frozen=True)
+class ComponentReplacement:
+    target: str
+    source: str
+    base_sha256: str
+    replacement_sha256: str
+    source_oid: str
+    source_mode: str
+    payload: bytes
+
+
+@dataclass(frozen=True)
+class ComponentReplacementPlan:
+    spec_path: str
+    spec_commit: str
+    spec_sha256: str
+    source_head: str
+    source_tree: str
+    source_branch: str
+    base_candidate_commit: str
+    replacements: tuple[ComponentReplacement, ...]
+
+    def metadata(self) -> dict[str, Any]:
+        return {
+            "schema_version": COMPONENT_REPLACEMENT_SCHEMA_VERSION,
+            "spec_path": self.spec_path,
+            "spec_source": f"{self.spec_commit}:{self.spec_path}",
+            "spec_commit": self.spec_commit,
+            "spec_sha256": self.spec_sha256,
+            "source_head": self.source_head,
+            "source_tree": self.source_tree,
+            "source_branch": self.source_branch,
+            "worktree_clean": True,
+            "base_candidate_commit": self.base_candidate_commit,
+            "replacements": [
+                {
+                    "target": item.target,
+                    "source": item.source,
+                    "base_sha256": item.base_sha256,
+                    "replacement_sha256": item.replacement_sha256,
+                    "source_oid": item.source_oid,
+                    "source_mode": item.source_mode,
+                    "size": len(item.payload),
+                }
+                for item in self.replacements
+            ],
+        }
+
+
 def now_iso() -> str:
     return datetime.now(timezone.utc).astimezone().isoformat(timespec="seconds")
 
@@ -128,6 +179,37 @@ def write_json(path: Path, value: Any) -> None:
     temporary = path.with_suffix(path.suffix + ".tmp")
     temporary.write_text(payload, encoding="utf-8", newline="\n")
     temporary.replace(path)
+
+
+def strict_json_loads(payload: str, context: str) -> Any:
+    def object_from_pairs(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+        result: dict[str, Any] = {}
+        for key, value in pairs:
+            if key in result:
+                raise RefactorError(f"duplicate JSON key in {context}: {key}")
+            result[key] = value
+        return result
+
+    def reject_constant(value: str) -> None:
+        raise RefactorError(f"non-standard JSON constant in {context}: {value}")
+
+    try:
+        return json.loads(
+            payload,
+            object_pairs_hook=object_from_pairs,
+            parse_constant=reject_constant,
+        )
+    except json.JSONDecodeError as error:
+        raise RefactorError(f"invalid JSON in {context}: {error}") from error
+
+
+def read_json_file_with_sha256(path: Path) -> tuple[Any, str]:
+    try:
+        payload = path.read_bytes()
+        text = payload.decode("utf-8")
+    except (OSError, UnicodeError) as error:
+        raise RefactorError(f"invalid JSON {path}: {error}") from error
+    return strict_json_loads(text, str(path)), sha256_bytes(payload)
 
 
 def parse_lock(path: Path) -> dict[str, str]:
@@ -269,6 +351,326 @@ def git_blob(revision_and_path: str, *, cwd: Path = REPO_ROOT) -> bytes:
         stderr = process.stderr.decode("utf-8", "replace")
         raise RefactorError(f"git cat-file blob {revision_and_path} failed: {stderr}")
     return process.stdout
+
+
+def checked_repo_git_path(value: Any, context: str) -> str:
+    if not isinstance(value, str) or not value:
+        raise RefactorError(f"{context} must be a non-empty repo-relative POSIX path")
+    if "\\" in value or any(ord(character) < 32 for character in value):
+        raise RefactorError(f"invalid {context}: {value!r}")
+    path = PurePosixPath(value)
+    if path.is_absolute() or value.startswith(":") or any(
+        part in {"", ".", ".."} for part in path.parts
+    ):
+        raise RefactorError(f"invalid {context}: {value!r}")
+    normalized = path.as_posix()
+    if normalized != value:
+        raise RefactorError(f"invalid {context}: {value!r}")
+    return normalized
+
+
+def git_regular_blob_entry(commit: str, path: str) -> dict[str, str]:
+    result = git(
+        ["ls-tree", "-z", "--full-tree", commit, "--", f":(literal){path}"],
+        cwd=REPO_ROOT,
+    )
+    require_command(result, f"inspect Git tree entry {commit}:{path}")
+    records = [record for record in result.stdout.split("\0") if record]
+    if len(records) != 1 or "\t" not in records[0]:
+        raise RefactorError(f"replacement source must be one tracked Git blob: {commit}:{path}")
+    metadata, actual_path = records[0].split("\t", 1)
+    parts = metadata.split()
+    if len(parts) != 3 or actual_path != path:
+        raise RefactorError(f"replacement Git tree entry is malformed: {commit}:{path}")
+    mode, object_type, object_id = parts
+    if mode not in {"100644", "100755"} or object_type != "blob":
+        raise RefactorError(
+            f"replacement source must be a regular tracked blob: {commit}:{path} mode={mode} type={object_type}"
+        )
+    return {"mode": mode, "type": object_type, "oid": object_id, "path": actual_path}
+
+
+def require_clean_source_head(expected_head: str) -> dict[str, str]:
+    if re.fullmatch(r"[0-9a-f]{40}", expected_head or "") is None:
+        raise RefactorError("--source-head must be a full lowercase 40-character Git SHA")
+    actual_head = git_text(["rev-parse", "HEAD"])
+    if actual_head != expected_head:
+        raise RefactorError(
+            f"replacement source HEAD changed: expected={expected_head} actual={actual_head}"
+        )
+    branch = git_text(["branch", "--show-current"])
+    if not branch.startswith("refactor/"):
+        raise RefactorError(f"replacement source must be on a refactor/* branch: {branch or '<detached>'}")
+    dirty = git_text(["status", "--porcelain=v1", "--untracked-files=all"])
+    if dirty:
+        raise RefactorError(f"replacement source worktree is dirty:\n{dirty}")
+    return {
+        "head": actual_head,
+        "tree": git_text(["rev-parse", "HEAD^{tree}"]),
+        "branch": branch,
+    }
+
+
+def mask_verilog_comments_and_strings(text: str, *, mask_strings: bool) -> str:
+    output: list[str] = []
+    index = 0
+    state = "code"
+    while index < len(text):
+        character = text[index]
+        following = text[index + 1] if index + 1 < len(text) else ""
+        if state == "code":
+            if character == "/" and following == "/":
+                output.extend((" ", " "))
+                index += 2
+                state = "line_comment"
+                continue
+            if character == "/" and following == "*":
+                output.extend((" ", " "))
+                index += 2
+                state = "block_comment"
+                continue
+            if character == '"':
+                output.append(" " if mask_strings else character)
+                index += 1
+                state = "string"
+                continue
+            output.append(character)
+            index += 1
+            continue
+        if state == "line_comment":
+            output.append("\n" if character == "\n" else " ")
+            index += 1
+            if character == "\n":
+                state = "code"
+            continue
+        if state == "block_comment":
+            if character == "*" and following == "/":
+                output.extend((" ", " "))
+                index += 2
+                state = "code"
+            else:
+                output.append("\n" if character == "\n" else " ")
+                index += 1
+            continue
+        if character == "\\" and following:
+            output.extend((" ", " ") if mask_strings else (character, following))
+            index += 2
+            continue
+        output.append(" " if mask_strings else character)
+        index += 1
+        if character == '"':
+            state = "code"
+    return "".join(output)
+
+
+def referenced_verilog_macros(text: str) -> set[str]:
+    code = mask_verilog_comments_and_strings(text, mask_strings=True)
+    macros = {
+        match.group(1)
+        for match in re.finditer(
+            r"`\s*(?:ifdef|ifndef|elsif)\s+([A-Za-z_][A-Za-z0-9_$]*)",
+            code,
+            re.IGNORECASE,
+        )
+    }
+    directives = {
+        "begin_keywords",
+        "celldefine",
+        "default_nettype",
+        "define",
+        "else",
+        "elsif",
+        "end_keywords",
+        "endcelldefine",
+        "endif",
+        "ifdef",
+        "ifndef",
+        "include",
+        "line",
+        "nounconnected_drive",
+        "pragma",
+        "resetall",
+        "timescale",
+        "unconnected_drive",
+        "undef",
+    }
+    macros.update(
+        name
+        for name in re.findall(r"`\s*([A-Za-z_][A-Za-z0-9_$]*)", code)
+        if name.lower() not in directives
+    )
+    return macros
+
+
+def validate_replacement_verilog(
+    payload: bytes,
+    source: str,
+    *,
+    base_payload: bytes | None = None,
+) -> None:
+    try:
+        text = payload.decode("utf-8")
+    except UnicodeDecodeError as error:
+        raise RefactorError(f"replacement Verilog is not UTF-8: {source}") from error
+    if "\x00" in text:
+        raise RefactorError(f"replacement Verilog contains a NUL byte: {source}")
+    if re.search(r"verilator\s+lint_(?:off|save)\b", text, re.IGNORECASE):
+        raise RefactorError(f"replacement Verilog contains an inline lint waiver: {source}")
+    executable_code = mask_verilog_comments_and_strings(text, mask_strings=True)
+    if re.search(r"`\s*(?:define|undef)\b|``", executable_code, re.IGNORECASE):
+        raise RefactorError(
+            f"replacement Verilog contains a local macro or token-paste dependency: {source}"
+        )
+    replacement_macros = referenced_verilog_macros(text)
+    if base_payload is None:
+        base_macros: set[str] = set()
+    else:
+        try:
+            base_text = base_payload.decode("utf-8")
+        except UnicodeDecodeError as error:
+            raise RefactorError(f"locked base Verilog is not UTF-8 for {source}") from error
+        base_macros = referenced_verilog_macros(base_text)
+    new_macros = sorted(replacement_macros - base_macros)
+    if new_macros:
+        raise RefactorError(
+            f"replacement Verilog adds unbound macro dependencies {new_macros}: {source}"
+        )
+    external_task = re.search(
+        r"\$(?:readmem[hb]|writemem[hb]|fopen|fclose|fread|fwrite|fscanf|fgets|fgetc|"
+        r"ungetc|fseek|ftell|rewind|fflush|ferror|fdisplay|fmonitor|fstrobe|scanf|"
+        r"dumpfile|dumpvars|dumpon|dumpoff|dumpall|dumpflush|random|urandom|"
+        r"urandom_range|system|value\$plusargs|test\$plusargs)\b",
+        executable_code,
+        re.IGNORECASE,
+    )
+    if external_task:
+        raise RefactorError(
+            "replacement Verilog uses an unbound external system task "
+            f"{external_task.group(0)}: {source}"
+        )
+    comment_free = mask_verilog_comments_and_strings(text, mask_strings=False)
+    if re.search(r'\b(?:import|export)\s*"DPI(?:-C)?"', comment_free, re.IGNORECASE):
+        raise RefactorError(f"replacement Verilog uses an unbound DPI dependency: {source}")
+    include_pattern = re.compile(r"`include\b([^\r\n]*)")
+    literal_pattern = re.compile(r'\s*"([^"]+)"\s*(?://.*)?')
+    for match in include_pattern.finditer(text):
+        literal = literal_pattern.fullmatch(match.group(1))
+        if literal is None:
+            raise RefactorError(
+                f"unresolved replacement include at {source}:{text.count(chr(10), 0, match.start()) + 1}"
+            )
+        if literal.group(1) != "mycpu.h":
+            raise RefactorError(
+                f"unapproved replacement include {literal.group(1)!r} in {source}"
+            )
+
+
+def load_component_replacement_plan(
+    spec_path_value: str,
+    source_head: str,
+    *,
+    require_clean: bool = True,
+) -> ComponentReplacementPlan:
+    manifest = parse_lock(MANIFEST_PATH)
+    if require_clean:
+        source_state = require_clean_source_head(source_head)
+    else:
+        source_state = {
+            "head": git_text(["rev-parse", "HEAD"]),
+            "tree": git_text(["rev-parse", "HEAD^{tree}"]),
+            "branch": git_text(["branch", "--show-current"]),
+        }
+        if source_state["head"] != source_head:
+            raise RefactorError("replacement source HEAD changed")
+    spec_path = checked_repo_git_path(spec_path_value, "replacement spec path")
+    git_regular_blob_entry(source_head, spec_path)
+    spec_payload = git_blob(f"{source_head}:{spec_path}")
+    try:
+        spec_text = spec_payload.decode("utf-8")
+    except UnicodeDecodeError as error:
+        raise RefactorError(
+            f"replacement spec is not valid UTF-8 JSON: {source_head}:{spec_path}"
+        ) from error
+    document = strict_json_loads(spec_text, f"replacement spec {source_head}:{spec_path}")
+    if not isinstance(document, dict) or set(document) != {"schema_version", "replacements"}:
+        raise RefactorError("replacement spec must contain exactly schema_version and replacements")
+    if (
+        type(document.get("schema_version")) is not int
+        or document.get("schema_version") != COMPONENT_REPLACEMENT_SCHEMA_VERSION
+    ):
+        raise RefactorError("unsupported replacement spec schema_version")
+    raw_replacements = document.get("replacements")
+    if not isinstance(raw_replacements, list) or not raw_replacements:
+        raise RefactorError("replacement spec must contain at least one replacement")
+
+    locked_paths = read_golden_files()
+    locked_set = set(locked_paths)
+    base_commit = manifest["team_golden_candidate"]
+    replacements: list[ComponentReplacement] = []
+    targets: set[str] = set()
+    sources: set[str] = set()
+    required_keys = {"target", "source", "base_sha256", "replacement_sha256"}
+    for index, raw in enumerate(raw_replacements):
+        if not isinstance(raw, dict) or set(raw) != required_keys:
+            raise RefactorError(f"replacement[{index}] must contain exactly {sorted(required_keys)}")
+        target = checked_repo_git_path(raw.get("target"), f"replacement[{index}].target")
+        source = checked_repo_git_path(raw.get("source"), f"replacement[{index}].source")
+        if target not in locked_set or not target.endswith(".v"):
+            raise RefactorError(f"replacement target is not a locked Verilog file: {target}")
+        if PurePosixPath(source).name != PurePosixPath(target).name:
+            raise RefactorError(
+                f"replacement source basename must match target: source={source} target={target}"
+            )
+        if target in targets or source in sources:
+            raise RefactorError(f"replacement spec has a duplicate target or source: {target} / {source}")
+        base_sha = raw.get("base_sha256")
+        replacement_sha = raw.get("replacement_sha256")
+        if not isinstance(base_sha, str) or SHA256_HEX_PATTERN.fullmatch(base_sha) is None:
+            raise RefactorError(f"replacement[{index}].base_sha256 is invalid")
+        if not isinstance(replacement_sha, str) or SHA256_HEX_PATTERN.fullmatch(replacement_sha) is None:
+            raise RefactorError(f"replacement[{index}].replacement_sha256 is invalid")
+        base_payload = git_blob(f"{base_commit}:{target}")
+        actual_base_sha = sha256_bytes(base_payload)
+        if base_sha != actual_base_sha:
+            raise RefactorError(
+                f"replacement base blob mismatch for {target}: expected={base_sha} actual={actual_base_sha}"
+            )
+        source_entry = git_regular_blob_entry(source_head, source)
+        replacement_payload = git_blob(f"{source_head}:{source}")
+        actual_replacement_sha = sha256_bytes(replacement_payload)
+        if replacement_sha != actual_replacement_sha:
+            raise RefactorError(
+                f"replacement source blob mismatch for {source}: expected={replacement_sha} actual={actual_replacement_sha}"
+            )
+        validate_replacement_verilog(
+            replacement_payload,
+            f"{source_head}:{source}",
+            base_payload=base_payload,
+        )
+        replacements.append(
+            ComponentReplacement(
+                target=target,
+                source=source,
+                base_sha256=base_sha,
+                replacement_sha256=replacement_sha,
+                source_oid=source_entry["oid"],
+                source_mode=source_entry["mode"],
+                payload=replacement_payload,
+            )
+        )
+        targets.add(target)
+        sources.add(source)
+
+    return ComponentReplacementPlan(
+        spec_path=spec_path,
+        spec_commit=source_state["head"],
+        spec_sha256=sha256_bytes(spec_payload),
+        source_head=source_state["head"],
+        source_tree=source_state["tree"],
+        source_branch=source_state["branch"],
+        base_candidate_commit=base_commit,
+        replacements=tuple(replacements),
+    )
 
 
 def report_path(out_dir: Path, name: str) -> Path:
@@ -604,6 +1006,39 @@ def require_tool_fingerprints(tool_root: Path, manifest: dict[str, str]) -> list
     return fingerprints
 
 
+def expected_chiplab_doctor_check_names(
+    tool_root: Path, manifest: dict[str, str]
+) -> set[str]:
+    names = {
+        "host.locked_platform",
+        "chiplab.path",
+        "chiplab.filesystem",
+        "chiplab.commit",
+        "chiplab.clean",
+        "chiplab.mycpu_gitlink",
+        "chiplab.symlink_checkout",
+        "chiplab.official_paths",
+    }
+    names.update(
+        f"tool.{prefix}.{suffix}"
+        for prefix in ("la32r_gcc", "nemu", "picolibc", "qemu", "sbt")
+        for suffix in ("asset_exists", "sha256")
+    )
+    names.update(
+        f"tool.{name}.installed_sha256"
+        for name, _, _ in installed_tool_specs(tool_root, manifest)
+    )
+    names.update(
+        f"tool.{name}.version"
+        for name in ("verilator", "yosys", "java", "python", "gcc", "sbt")
+    )
+    names.update(
+        f"package.{package}.dpkg_verify"
+        for package in ("verilator", "yosys", "openjdk-17-jre-headless")
+    )
+    return names
+
+
 def command_chiplab_doctor(args: argparse.Namespace) -> int:
     out_dir = checked_out_dir(args.out_dir)
     chiplab = Path(args.chiplab_ref).resolve() if args.chiplab_ref else Path()
@@ -763,13 +1198,20 @@ def export_golden(
     *,
     diagnostic: bool = False,
     export_id: str = "standalone",
+    replacement_plan: ComponentReplacementPlan | None = None,
 ) -> tuple[Path, dict[str, Any]]:
     manifest = parse_lock(MANIFEST_PATH)
     if candidate_override and not diagnostic:
         raise RefactorError("candidate override requires explicit --diagnostic mode")
     requested_candidate = candidate_override or manifest["team_golden_candidate"]
     candidate = git_text(["rev-parse", f"{requested_candidate}^{{commit}}"])
-    candidate_locked = candidate == manifest["team_golden_candidate"]
+    base_candidate_locked = candidate == manifest["team_golden_candidate"]
+    if replacement_plan is not None:
+        if not diagnostic or not base_candidate_locked or candidate_override is not None:
+            raise RefactorError("component replacements require the locked base in diagnostic mode")
+        if replacement_plan.base_candidate_commit != candidate:
+            raise RefactorError("component replacement base differs from the locked candidate")
+    candidate_locked = base_candidate_locked and replacement_plan is None
     if not diagnostic and not candidate_locked:
         raise RefactorError("baseline export must use the locked candidate")
     files = read_golden_files()
@@ -780,28 +1222,93 @@ def export_golden(
     destination = out_dir / "reference" / "golden-rtl" / checked_iteration_id(export_id)
     reset_generated_dir(destination, out_dir, "golden-rtl-export")
     entries: list[dict[str, Any]] = []
+    replacements = {
+        item.target: item for item in replacement_plan.replacements
+    } if replacement_plan is not None else {}
     for source_path in files:
-        payload = git_blob(f"{candidate}:{source_path}")
+        base_payload = git_blob(f"{candidate}:{source_path}")
+        base_tree_entry = git_regular_blob_entry(candidate, source_path)
+        replacement = replacements.get(source_path)
+        payload = replacement.payload if replacement is not None else base_payload
         target = destination / Path(source_path).name
         target.write_bytes(payload)
-        entries.append(
+        entry: dict[str, Any] = {
+            "path": target.name,
+            "logical_path": source_path,
+            "source": (
+                f"{replacement_plan.source_head}:{replacement.source}"
+                if replacement is not None and replacement_plan is not None
+                else f"{candidate}:{source_path}"
+            ),
+            "source_kind": "replacement" if replacement is not None else "golden",
+            "sha256": sha256_bytes(payload),
+            "size": len(payload),
+            "base_source": f"{candidate}:{source_path}",
+            "base_sha256": sha256_bytes(base_payload),
+            "base_size": len(base_payload),
+            "base_oid": base_tree_entry["oid"],
+            "base_mode": base_tree_entry["mode"],
+        }
+        if replacement is not None and replacement_plan is not None:
+            entry.update(
+                {
+                    "replacement_source": f"{replacement_plan.source_head}:{replacement.source}",
+                    "replacement_source_path": replacement.source,
+                    "replacement_oid": replacement.source_oid,
+                    "replacement_mode": replacement.source_mode,
+                    "replacement_spec_source": (
+                        f"{replacement_plan.spec_commit}:{replacement_plan.spec_path}"
+                    ),
+                    "replacement_spec_sha256": replacement_plan.spec_sha256,
+                }
+            )
+        entries.append(entry)
+    selection_payload = json.dumps(
+        [
             {
-                "path": target.name,
-                "source": f"{candidate}:{source_path}",
-                "sha256": sha256_bytes(payload),
-                "size": len(payload),
+                "logical_path": entry["logical_path"],
+                "source": entry["source"],
+                "sha256": entry["sha256"],
+                "size": entry["size"],
             }
-        )
+            for entry in entries
+        ],
+        sort_keys=True,
+        separators=(",", ":"),
+    ).encode("utf-8")
     export_manifest = {
         "schema_version": 1,
         "generated_at": now_iso(),
         "candidate_commit": candidate,
         "candidate_locked": candidate_locked,
+        "base_candidate_locked": base_candidate_locked,
+        "baseline_exact": replacement_plan is None and base_candidate_locked,
+        "provenance_mode": (
+            "mixed_candidate"
+            if replacement_plan is not None
+            else "locked_candidate"
+            if base_candidate_locked
+            else "diagnostic_candidate"
+        ),
+        "gate_kind": (
+            "component_replacement"
+            if replacement_plan is not None
+            else "baseline_candidate"
+            if base_candidate_locked
+            else "candidate_override"
+        ),
         "mode": "diagnostic" if diagnostic else "baseline",
         "gate_eligible": not diagnostic and candidate_locked,
         "evaluator_sha256": sha256_file(Path(__file__)),
         "files_lock_sha256": sha256_file(GOLDEN_FILES_PATH),
         "files": entries,
+        "file_count": len(entries),
+        "replacement_count": len(replacements),
+        "base_selected_count": len(entries) - len(replacements),
+        "selection_sha256": sha256_bytes(selection_payload),
+        "component_replacement": (
+            replacement_plan.metadata() if replacement_plan is not None else None
+        ),
         "excluded_dead_or_backup": sorted(FORBIDDEN_GOLDEN_FILES),
     }
     write_json(destination / "manifest.json", export_manifest)
@@ -810,6 +1317,9 @@ def export_golden(
 
 def command_golden_export(args: argparse.Namespace) -> int:
     out_dir = checked_out_dir(args.out_dir)
+    current_report = report_path(out_dir, "golden-export")
+    if current_report.exists():
+        current_report.unlink()
     destination, export_manifest = export_golden(
         out_dir,
         args.candidate_commit,
@@ -829,7 +1339,7 @@ def command_golden_export(args: argparse.Namespace) -> int:
         "file_count": len(export_manifest["files"]),
         "manifest_sha256": sha256_file(destination / "manifest.json"),
     }
-    write_json(report_path(out_dir, "golden-export"), report)
+    write_json(current_report, report)
     print_report(report)
     return 0
 
@@ -910,22 +1420,43 @@ def require_passing_chiplab_doctor(
     chiplab_ref: Path,
     tool_root: Path,
     max_age_seconds: int,
-) -> tuple[Path, dict[str, Any]]:
+) -> tuple[Path, dict[str, Any], str]:
     if not 1 <= max_age_seconds <= 86400:
         raise RefactorError("doctor freshness limit must be between 1 second and 24 hours")
     path = report_path(out_dir, "chiplab-doctor")
     if not path.is_file():
         raise RefactorError(f"missing chiplab doctor report: {path}")
-    data = validate_json_file(path)
-    if data.get("status") != "pass" or any(
-        item.get("status") != "pass" for item in data.get("checks", [])
+    data, report_sha256 = read_json_file_with_sha256(path)
+    checks = data.get("checks")
+    if (
+        data.get("schema_version") != 1
+        or data.get("command") != "chiplab-doctor"
+        or data.get("status") != "pass"
+        or not isinstance(checks, list)
+        or not checks
+        or any(not isinstance(item, dict) for item in checks)
+        or any(item.get("status") != "pass" for item in checks if isinstance(item, dict))
     ):
         raise RefactorError("chiplab doctor report is not a complete PASS")
+    check_names = [item.get("name") for item in checks]
+    if any(not isinstance(name, str) or not name for name in check_names):
+        raise RefactorError("chiplab doctor report has a malformed check name")
+    if len(check_names) != len(set(check_names)):
+        raise RefactorError("chiplab doctor report has duplicate check names")
+    manifest = parse_lock(MANIFEST_PATH)
+    expected_names = expected_chiplab_doctor_check_names(tool_root, manifest)
+    if set(check_names) != expected_names:
+        raise RefactorError(
+            "chiplab doctor check set is incomplete or unexpected: "
+            f"missing={sorted(expected_names - set(check_names))} "
+            f"extra={sorted(set(check_names) - expected_names)}"
+        )
     expected = {
         "chiplab_reference": str(chiplab_ref),
         "tool_root": str(tool_root),
         "manifest_sha256": sha256_file(MANIFEST_PATH),
         "evaluator_sha256": sha256_file(Path(__file__)),
+        "repo_head_sha": git_text(["rev-parse", "HEAD"]),
     }
     mismatches = {
         key: {"expected": value, "actual": data.get(key)}
@@ -943,28 +1474,76 @@ def require_passing_chiplab_doctor(
         raise RefactorError(
             f"chiplab doctor is stale or from the future: age={age:.1f}s limit={max_age_seconds}s"
         )
-    current_fingerprints = require_tool_fingerprints(tool_root, parse_lock(MANIFEST_PATH))
+    current_fingerprints = require_tool_fingerprints(tool_root, manifest)
     if data.get("tool_fingerprints") != current_fingerprints:
         raise RefactorError("installed tool fingerprints changed after chiplab doctor")
-    return path, data
+    return path, data, report_sha256
 
 
 def command_chiplab_overlay(args: argparse.Namespace) -> int:
-    if os.name != "posix":
-        raise RefactorError("chiplab overlay must run in WSL/Linux so official symlinks remain symlinks")
     out_dir = checked_out_dir(args.out_dir)
-    work_root = Path(args.work_root).resolve()
-    chiplab_ref = Path(args.chiplab_ref).resolve()
-    tool_root = Path(args.tool_root).resolve()
-    manifest = parse_lock(MANIFEST_PATH)
     iteration_id = checked_iteration_id(args.iteration_id)
+    work_root = Path(args.work_root).resolve()
+    require_nonoverlapping_validation_roots(out_dir, work_root)
+    run_id = f"overlay-{time.time_ns()}-{os.getpid()}"
+    out_lock = acquire_iteration_lock(
+        out_dir, iteration_id, "chiplab-overlay", run_id
+    )
+    try:
+        work_lock = acquire_iteration_lock(
+            work_root, iteration_id, "chiplab-overlay", run_id
+        )
+        try:
+            overlay_report = iteration_report_path(out_dir, iteration_id, "chiplab-overlay")
+            if overlay_report.exists():
+                overlay_report.unlink()
+            return _command_chiplab_overlay_locked(args)
+        finally:
+            work_lock.unlink()
+    finally:
+        out_lock.unlink()
+
+
+def validate_overlay_source_selection(
+    args: argparse.Namespace,
+) -> tuple[str | None, str | None]:
+    replacement_spec = getattr(args, "replacement_spec", None)
+    source_head = getattr(args, "source_head", None)
+    if bool(replacement_spec) != bool(source_head):
+        raise RefactorError("--replacement-spec and --source-head must be provided together")
+    if args.dut_source == "mixed":
+        if not args.diagnostic or not replacement_spec or not source_head:
+            raise RefactorError(
+                "mixed DUT requires --diagnostic, --replacement-spec, and --source-head"
+            )
+        if args.candidate_commit:
+            raise RefactorError(
+                "mixed DUT always uses the locked base; --candidate-commit is forbidden"
+            )
+    elif replacement_spec or source_head:
+        raise RefactorError(
+            "component replacement arguments are only valid with --dut-source mixed"
+        )
     if args.candidate_commit and not args.diagnostic:
         raise RefactorError("candidate override requires explicit --diagnostic mode")
     if args.dut_source == "official" and not args.diagnostic:
         raise RefactorError("official control runs require explicit --diagnostic mode")
+    return replacement_spec, source_head
+
+
+def _command_chiplab_overlay_locked(args: argparse.Namespace) -> int:
+    if os.name != "posix":
+        raise RefactorError("chiplab overlay must run in WSL/Linux so official symlinks remain symlinks")
+    out_dir = checked_out_dir(args.out_dir)
+    iteration_id = checked_iteration_id(args.iteration_id)
     overlay_report_path = iteration_report_path(out_dir, iteration_id, "chiplab-overlay")
     if overlay_report_path.exists():
         overlay_report_path.unlink()
+    work_root = Path(args.work_root).resolve()
+    chiplab_ref = Path(args.chiplab_ref).resolve()
+    tool_root = Path(args.tool_root).resolve()
+    manifest = parse_lock(MANIFEST_PATH)
+    replacement_spec, source_head = validate_overlay_source_selection(args)
     if not chiplab_ref.is_dir():
         raise RefactorError(f"missing --chiplab-ref directory: {chiplab_ref}")
     fs_type = filesystem_type(work_root)
@@ -978,7 +1557,7 @@ def command_chiplab_overlay(args: argparse.Namespace) -> int:
         raise RefactorError("chiplab reference is dirty")
     if git_text(["rev-parse", "HEAD"], cwd=chiplab_ref / "IP" / "myCPU") != manifest["chiplab_mycpu_gitlink"]:
         raise RefactorError("chiplab reference myCPU gitlink differs from manifest.lock")
-    doctor_path, doctor_report = require_passing_chiplab_doctor(
+    doctor_path, doctor_report, doctor_sha256 = require_passing_chiplab_doctor(
         out_dir,
         chiplab_ref,
         tool_root,
@@ -988,12 +1567,19 @@ def command_chiplab_overlay(args: argparse.Namespace) -> int:
 
     golden_dir: Path | None = None
     golden_manifest: dict[str, Any] | None = None
-    if args.dut_source == "candidate":
+    replacement_plan: ComponentReplacementPlan | None = None
+    if args.dut_source == "mixed":
+        assert replacement_spec is not None and source_head is not None
+        replacement_plan = load_component_replacement_plan(replacement_spec, source_head)
+        if doctor_report.get("repo_head_sha") != replacement_plan.source_head:
+            raise RefactorError("chiplab doctor source HEAD differs from mixed replacement source")
+    if args.dut_source in {"candidate", "mixed"}:
         golden_dir, golden_manifest = export_golden(
             out_dir,
             args.candidate_commit,
             diagnostic=args.diagnostic,
             export_id=iteration_id,
+            replacement_plan=replacement_plan,
         )
     work = work_root / iteration_id
     reset_generated_dir(work, work_root, "chiplab-validation-copy")
@@ -1047,7 +1633,7 @@ def command_chiplab_overlay(args: argparse.Namespace) -> int:
     removed_stale: list[str] = []
     overlay_entries: list[dict[str, Any]] = []
     support_files: list[dict[str, Any]] = []
-    if args.dut_source == "candidate":
+    if args.dut_source in {"candidate", "mixed"}:
         assert golden_dir is not None and golden_manifest is not None
         upstream_header = git_blob(f"{manifest['openla500_upstream']}:mycpu.h", cwd=mycpu)
         upstream_header_sha = sha256_bytes(upstream_header)
@@ -1062,6 +1648,7 @@ def command_chiplab_overlay(args: argparse.Namespace) -> int:
                 "path": "IP/myCPU/mycpu.h",
                 "source": f"{manifest['openla500_upstream']}:mycpu.h",
                 "sha256": upstream_header_sha,
+                "size": len(upstream_header),
                 "reason": "a158aa8 omitted this included header; the chiplab gitlink header lacks LACC definitions",
             }
         )
@@ -1113,6 +1700,12 @@ def command_chiplab_overlay(args: argparse.Namespace) -> int:
         "generated_at": now_iso(),
         "iteration_id": iteration_id,
         "dut_source": args.dut_source,
+        "provenance_mode": (
+            golden_manifest.get("provenance_mode") if golden_manifest is not None else "official_control"
+        ),
+        "gate_kind": (
+            golden_manifest.get("gate_kind") if golden_manifest is not None else "official_control"
+        ),
         "mode": "diagnostic" if args.diagnostic else "baseline",
         "gate_eligible": bool(
             not args.diagnostic
@@ -1131,6 +1724,16 @@ def command_chiplab_overlay(args: argparse.Namespace) -> int:
         ),
         "golden_candidate_commit": golden_manifest["candidate_commit"] if golden_manifest is not None else None,
         "candidate_locked": golden_manifest["candidate_locked"] if golden_manifest is not None else None,
+        "base_candidate_locked": (
+            golden_manifest.get("base_candidate_locked") if golden_manifest is not None else None
+        ),
+        "baseline_exact": golden_manifest.get("baseline_exact") if golden_manifest is not None else None,
+        "component_replacement": (
+            golden_manifest.get("component_replacement") if golden_manifest is not None else None
+        ),
+        "selection_sha256": (
+            golden_manifest.get("selection_sha256") if golden_manifest is not None else None
+        ),
         "files": overlay_entries,
         "removed_stale_verilog": sorted(removed_stale),
         "preserved_official_files": ["IP/myCPU/LICENSE"],
@@ -1142,16 +1745,29 @@ def command_chiplab_overlay(args: argparse.Namespace) -> int:
         },
         "tool_fingerprints": runtime_fingerprints,
         "doctor_report": str(doctor_path),
-        "doctor_report_sha256": sha256_file(doctor_path),
+        "doctor_report_sha256": doctor_sha256,
         "doctor_generated_at": doctor_report["generated_at"],
         "evaluator_sha256": sha256_file(Path(__file__)),
         "official_workspace_fingerprint": official_workspace_fingerprint(work),
         "work_filesystem": fs_type,
     }
+    if replacement_plan is not None:
+        final_source_state = require_clean_source_head(replacement_plan.source_head)
+        if (
+            final_source_state["tree"] != replacement_plan.source_tree
+            or final_source_state["branch"] != replacement_plan.source_branch
+        ):
+            raise RefactorError("replacement source tree or branch changed during overlay")
     overlay_manifest_path = iteration_report_path(out_dir, iteration_id, "chiplab-overlay-manifest")
     write_json(overlay_manifest_path, overlay_manifest)
-    write_json(work / ".refactor-overlay.json", overlay_manifest)
-    marker_sha256 = sha256_file(work / ".refactor-overlay.json")
+    marker_path = work / ".refactor-overlay.json"
+    write_json(marker_path, overlay_manifest)
+    stored_manifest, overlay_manifest_sha256 = read_json_file_with_sha256(
+        overlay_manifest_path
+    )
+    stored_marker, marker_sha256 = read_json_file_with_sha256(marker_path)
+    if stored_manifest != overlay_manifest or stored_marker != overlay_manifest:
+        raise RefactorError("overlay manifest changed while it was being published")
     gate_eligible = bool(overlay_manifest["gate_eligible"])
     report = {
         "schema_version": 1,
@@ -1164,10 +1780,21 @@ def command_chiplab_overlay(args: argparse.Namespace) -> int:
         "work_dir": str(work),
         "file_count": len(overlay_entries),
         "dut_source": args.dut_source,
+        "provenance_mode": overlay_manifest["provenance_mode"],
+        "gate_kind": overlay_manifest["gate_kind"],
+        "candidate_locked": overlay_manifest["candidate_locked"],
+        "base_candidate_locked": overlay_manifest["base_candidate_locked"],
+        "baseline_exact": overlay_manifest["baseline_exact"],
+        "golden_candidate_commit": overlay_manifest["golden_candidate_commit"],
+        "selection_sha256": overlay_manifest["selection_sha256"],
+        "component_replacement": overlay_manifest["component_replacement"],
+        "replacement_count": (
+            len(replacement_plan.replacements) if replacement_plan is not None else 0
+        ),
         "overlay_manifest": str(overlay_manifest_path),
-        "overlay_manifest_sha256": sha256_file(overlay_manifest_path),
+        "overlay_manifest_sha256": overlay_manifest_sha256,
         "work_marker_sha256": marker_sha256,
-        "doctor_report_sha256": sha256_file(doctor_path),
+        "doctor_report_sha256": doctor_sha256,
     }
     write_json(overlay_report_path, report)
     print_report(report)
@@ -1340,6 +1967,58 @@ def verilator_compile_check_passed(
     )
 
 
+def acquire_iteration_lock(
+    out_dir: Path,
+    iteration_id: str,
+    operation: str,
+    run_id: str,
+) -> Path:
+    if operation not in {"chiplab-overlay", "rtl-smoke"}:
+        raise RefactorError(f"unsupported validation lock operation: {operation}")
+    lock_root = resolved_below(
+        out_dir / ".locks" / "iterations", out_dir, "iteration validation lock root"
+    )
+    lock_root.mkdir(parents=True, exist_ok=True)
+    lock_path = resolved_below(
+        lock_root / f"{checked_iteration_id(iteration_id)}.lock",
+        out_dir,
+        "iteration validation lock",
+    )
+    payload = {
+        "schema_version": 1,
+        "iteration_id": iteration_id,
+        "operation": operation,
+        "run_id": run_id,
+        "pid": os.getpid(),
+        "created_at": now_iso(),
+        "evaluator_sha256": sha256_file(Path(__file__)),
+    }
+    try:
+        with lock_path.open("x", encoding="utf-8", newline="\n") as stream:
+            json.dump(payload, stream, indent=2, sort_keys=True)
+            stream.write("\n")
+    except FileExistsError as error:
+        raise RefactorError(
+            f"iteration validation lock already exists: {lock_path}; "
+            "wait for the active overlay/smoke process or inspect a stale lock explicitly"
+        ) from error
+    return lock_path
+
+
+def require_nonoverlapping_validation_roots(out_dir: Path, work_root: Path) -> None:
+    out_resolved = out_dir.resolve()
+    work_resolved = work_root.resolve()
+    if (
+        out_resolved == work_resolved
+        or out_resolved in work_resolved.parents
+        or work_resolved in out_resolved.parents
+    ):
+        raise RefactorError(
+            "OUT_DIR and CHIPLAB_WORK_ROOT must be non-overlapping directories: "
+            f"out_dir={out_resolved} work_root={work_resolved}"
+        )
+
+
 def acquire_smoke_lock(work: Path, iteration_id: str, run_id: str) -> Path:
     lock_path = resolved_below(work / ".rtl-smoke.lock", work, "RTL smoke lock")
     payload = {
@@ -1439,6 +2118,8 @@ def verify_overlay_files(work: Path, overlay: dict[str, Any]) -> None:
     mycpu = work / "IP" / "myCPU"
     hdl_suffixes = {".v", ".sv", ".vh", ".h"}
     expected_hdl: set[str] = set()
+    overlay_paths: set[str] = set()
+    logical_names: set[str] = set()
     files = overlay.get("files")
     support_files = overlay.get("support_files")
     if not isinstance(files, list) or not isinstance(support_files, list):
@@ -1446,17 +2127,38 @@ def verify_overlay_files(work: Path, overlay: dict[str, Any]) -> None:
     for entry in files:
         if not isinstance(entry, dict):
             raise RefactorError("overlay manifest has a malformed file entry")
-        relative = Path(str(entry.get("overlay_path", "")))
-        target = resolved_below(work / relative, work, "overlay file")
-        if not target.is_file():
-            raise RefactorError(f"overlay file disappeared: {relative}")
+        overlay_path = str(entry.get("overlay_path", ""))
+        logical_name = str(entry.get("path", ""))
+        expected_path = f"IP/myCPU/{logical_name}"
+        if (
+            not logical_name
+            or "\\" in logical_name
+            or any(ord(character) < 32 for character in logical_name)
+            or PurePosixPath(logical_name).name != logical_name
+            or overlay_path != expected_path
+        ):
+            raise RefactorError(
+                f"overlay path is not the canonical DUT target: path={logical_name!r} overlay={overlay_path!r}"
+            )
+        if overlay_path in overlay_paths or logical_name in logical_names:
+            raise RefactorError(f"overlay manifest has duplicate DUT path: {overlay_path}")
+        overlay_paths.add(overlay_path)
+        logical_names.add(logical_name)
+        relative = Path(overlay_path)
+        unresolved_target = work / relative
+        if unresolved_target.is_symlink():
+            raise RefactorError(f"overlay file must not be a symlink: {relative}")
+        target = resolved_below(unresolved_target, work, "overlay file")
+        expected_target = (mycpu / logical_name).resolve()
+        if target != expected_target or not target.is_file():
+            raise RefactorError(f"overlay file disappeared or moved: {relative}")
         actual_sha = sha256_file(target)
         if actual_sha != entry.get("overlay_sha256") or actual_sha != entry.get("sha256"):
             raise RefactorError(f"overlay file hash mismatch: {relative}")
         if entry.get("size") is not None and target.stat().st_size != entry.get("size"):
             raise RefactorError(f"overlay file size mismatch: {relative}")
         if target.suffix.lower() in hdl_suffixes:
-            expected_hdl.add(target.name)
+            expected_hdl.add(logical_name)
     allowed_support_paths = {"IP/myCPU/LICENSE", "IP/myCPU/mycpu.h"}
     support_paths: list[str] = []
     for entry in support_files:
@@ -1466,18 +2168,25 @@ def verify_overlay_files(work: Path, overlay: dict[str, Any]) -> None:
         support_paths.append(support_path)
         if support_path not in allowed_support_paths:
             raise RefactorError(f"overlay manifest has an unapproved support file: {support_path}")
-        target = resolved_below(work / Path(support_path), work, "support file")
+        unresolved_target = work / Path(support_path)
+        if unresolved_target.is_symlink():
+            raise RefactorError(f"support file must not be a symlink: {support_path}")
+        target = resolved_below(unresolved_target, work, "support file")
         if not target.is_file() or sha256_file(target) != entry.get("sha256"):
             raise RefactorError(f"support file hash mismatch: {entry.get('path')}")
         if entry.get("size") is not None and target.stat().st_size != entry.get("size"):
             raise RefactorError(f"support file size mismatch: {entry.get('path')}")
         if target.suffix.lower() in hdl_suffixes:
-            expected_hdl.add(target.name)
+            expected_hdl.add(target.relative_to(mycpu).as_posix())
     if len(support_paths) != len(set(support_paths)):
         raise RefactorError("overlay manifest has duplicate support-file paths")
-    actual_hdl = {
-        path.name for path in mycpu.iterdir() if path.is_file() and path.suffix.lower() in hdl_suffixes
-    }
+    actual_hdl: set[str] = set()
+    for path in mycpu.rglob("*"):
+        relative = path.relative_to(mycpu).as_posix()
+        if path.is_symlink():
+            raise RefactorError(f"DUT tree contains a symlink: IP/myCPU/{relative}")
+        if path.is_file() and path.suffix.lower() in hdl_suffixes:
+            actual_hdl.add(relative)
     if actual_hdl != expected_hdl:
         raise RefactorError(
             "unexpected or missing DUT HDL after overlay: "
@@ -1485,30 +2194,11 @@ def verify_overlay_files(work: Path, overlay: dict[str, Any]) -> None:
         )
 
 
-def verify_candidate_source_bindings(
+def verify_candidate_support_bindings(
     work: Path,
     overlay: dict[str, Any],
     manifest: dict[str, str],
 ) -> None:
-    candidate = manifest["team_golden_candidate"]
-    locked_paths = read_golden_files()
-    entries = overlay.get("files")
-    if not isinstance(entries, list) or len(entries) != len(locked_paths):
-        raise RefactorError("candidate overlay file count differs from golden allowlist")
-    by_source = {entry.get("source"): entry for entry in entries if isinstance(entry, dict)}
-    for source_path in locked_paths:
-        source = f"{candidate}:{source_path}"
-        entry = by_source.get(source)
-        if entry is None:
-            raise RefactorError(f"candidate overlay is missing locked source: {source}")
-        expected_target = f"IP/myCPU/{Path(source_path).name}"
-        if entry.get("overlay_path") != expected_target or entry.get("path") != Path(source_path).name:
-            raise RefactorError(f"candidate overlay target mismatch for {source}")
-        payload = git_blob(source)
-        expected_hash = sha256_bytes(payload)
-        if entry.get("sha256") != expected_hash or entry.get("size") != len(payload):
-            raise RefactorError(f"candidate source blob mismatch for {source}")
-
     support_entries = overlay.get("support_files", [])
     if not isinstance(support_entries, list):
         raise RefactorError("candidate support-file list is malformed")
@@ -1528,6 +2218,7 @@ def verify_candidate_source_bindings(
         header is None
         or header.get("source") != f"{manifest['openla500_upstream']}:mycpu.h"
         or header.get("sha256") != manifest["openla500_mycpu_h_sha256"]
+        or header.get("size") != len(git_blob(f"{manifest['openla500_upstream']}:mycpu.h"))
     ):
         raise RefactorError("openLA500 support header binding mismatch")
     license_entry = support.get("IP/myCPU/LICENSE")
@@ -1535,8 +2226,283 @@ def verify_candidate_source_bindings(
         f"{manifest['chiplab_mycpu_gitlink']}:LICENSE",
         cwd=work / "IP" / "myCPU",
     )
-    if license_entry is None or license_entry.get("sha256") != sha256_bytes(license_payload):
+    if (
+        license_entry is None
+        or license_entry.get("source") != f"{manifest['chiplab_mycpu_gitlink']}:LICENSE"
+        or license_entry.get("sha256") != sha256_bytes(license_payload)
+        or license_entry.get("size") != len(license_payload)
+    ):
         raise RefactorError("official license binding mismatch")
+
+
+def verify_candidate_source_bindings(
+    work: Path,
+    overlay: dict[str, Any],
+    manifest: dict[str, str],
+) -> None:
+    candidate = overlay.get("golden_candidate_commit")
+    if not isinstance(candidate, str) or re.fullmatch(r"[0-9a-f]{40}", candidate) is None:
+        raise RefactorError("candidate overlay lacks a full source commit")
+    locked = candidate == manifest["team_golden_candidate"]
+    expected_provenance = "locked_candidate" if locked else "diagnostic_candidate"
+    expected_gate_kind = "baseline_candidate" if locked else "candidate_override"
+    if (
+        overlay.get("dut_source") != "candidate"
+        or overlay.get("candidate_locked") is not locked
+        or overlay.get("base_candidate_locked") is not locked
+        or overlay.get("baseline_exact") is not locked
+        or overlay.get("provenance_mode") != expected_provenance
+        or overlay.get("gate_kind") != expected_gate_kind
+        or overlay.get("component_replacement") is not None
+    ):
+        raise RefactorError("candidate overlay provenance shape does not match its source commit")
+    locked_paths = read_golden_files()
+    entries = overlay.get("files")
+    if not isinstance(entries, list) or len(entries) != len(locked_paths):
+        raise RefactorError("candidate overlay file count differs from golden allowlist")
+    by_logical: dict[str, dict[str, Any]] = {}
+    for entry in entries:
+        if not isinstance(entry, dict):
+            raise RefactorError("candidate overlay has a malformed file entry")
+        logical_path = entry.get("logical_path")
+        if not isinstance(logical_path, str) or logical_path in by_logical:
+            raise RefactorError("candidate overlay has a missing or duplicate logical path")
+        by_logical[logical_path] = entry
+    selection: list[dict[str, Any]] = []
+    for source_path in locked_paths:
+        source = f"{candidate}:{source_path}"
+        entry = by_logical.get(source_path)
+        if entry is None:
+            raise RefactorError(f"candidate overlay is missing selected source: {source}")
+        expected_target = f"IP/myCPU/{Path(source_path).name}"
+        if (
+            entry.get("overlay_path") != expected_target
+            or entry.get("path") != Path(source_path).name
+            or entry.get("source") != source
+            or entry.get("source_kind") != "golden"
+        ):
+            raise RefactorError(f"candidate overlay target mismatch for {source}")
+        payload = git_blob(source)
+        expected_hash = sha256_bytes(payload)
+        tree_entry = git_regular_blob_entry(candidate, source_path)
+        if (
+            entry.get("sha256") != expected_hash
+            or entry.get("size") != len(payload)
+            or entry.get("base_source") != source
+            or entry.get("base_sha256") != expected_hash
+            or entry.get("base_size") != len(payload)
+            or entry.get("base_oid") != tree_entry["oid"]
+            or entry.get("base_mode") != tree_entry["mode"]
+        ):
+            raise RefactorError(f"candidate source blob mismatch for {source}")
+        selection.append(
+            {
+                "logical_path": source_path,
+                "source": source,
+                "sha256": expected_hash,
+                "size": len(payload),
+            }
+        )
+    if set(by_logical) != set(locked_paths):
+        raise RefactorError("candidate overlay logical paths differ from the locked exact union")
+    selection_sha = sha256_bytes(
+        json.dumps(selection, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    )
+    if overlay.get("selection_sha256") != selection_sha:
+        raise RefactorError("candidate overlay selection hash mismatch")
+
+    verify_candidate_support_bindings(work, overlay, manifest)
+
+
+def verify_official_source_bindings(
+    work: Path,
+    overlay: dict[str, Any],
+    manifest: dict[str, str],
+) -> None:
+    if (
+        overlay.get("dut_source") != "official"
+        or overlay.get("provenance_mode") != "official_control"
+        or overlay.get("gate_kind") != "official_control"
+        or overlay.get("mode") != "diagnostic"
+        or overlay.get("gate_eligible") is not False
+        or overlay.get("golden_candidate_commit") is not None
+        or overlay.get("candidate_locked") is not None
+        or overlay.get("base_candidate_locked") is not None
+        or overlay.get("baseline_exact") is not None
+        or overlay.get("component_replacement") is not None
+        or overlay.get("selection_sha256") is not None
+    ):
+        raise RefactorError("official control overlay provenance shape is invalid")
+    mycpu = work / "IP" / "myCPU"
+    commit = manifest["chiplab_mycpu_gitlink"]
+    tree_names = git_text(["ls-tree", "--name-only", commit], cwd=mycpu).splitlines()
+    expected_names = sorted(
+        name
+        for name in tree_names
+        if "/" not in name and PurePosixPath(name).suffix.lower() in {".v", ".h"}
+    )
+    entries = overlay.get("files")
+    if not isinstance(entries, list) or len(entries) != len(expected_names):
+        raise RefactorError("official control file count differs from the locked gitlink")
+    by_name: dict[str, dict[str, Any]] = {}
+    for entry in entries:
+        if not isinstance(entry, dict):
+            raise RefactorError("official control has a malformed file entry")
+        name = entry.get("path")
+        if not isinstance(name, str) or name in by_name:
+            raise RefactorError("official control has a missing or duplicate file path")
+        by_name[name] = entry
+    for name in expected_names:
+        entry = by_name.get(name)
+        source = f"{commit}:{name}"
+        payload = git_blob(source, cwd=mycpu)
+        expected_sha = sha256_bytes(payload)
+        if (
+            entry is None
+            or entry.get("source") != source
+            or entry.get("overlay_path") != f"IP/myCPU/{name}"
+            or entry.get("sha256") != expected_sha
+            or entry.get("size") != len(payload)
+        ):
+            raise RefactorError(f"official control source binding mismatch: {source}")
+    if set(by_name) != set(expected_names):
+        raise RefactorError("official control paths differ from the locked gitlink")
+    support = overlay.get("support_files")
+    if not isinstance(support, list) or len(support) != 1 or not isinstance(support[0], dict):
+        raise RefactorError("official control support-file list is malformed")
+    license_entry = support[0]
+    license_payload = git_blob(f"{commit}:LICENSE", cwd=mycpu)
+    if (
+        license_entry.get("path") != "IP/myCPU/LICENSE"
+        or license_entry.get("source") != f"{commit}:LICENSE"
+        or license_entry.get("sha256") != sha256_bytes(license_payload)
+        or license_entry.get("size") != len(license_payload)
+    ):
+        raise RefactorError("official control license binding mismatch")
+
+
+def verify_component_replacement_bindings(
+    work: Path,
+    overlay: dict[str, Any],
+    manifest: dict[str, str],
+) -> None:
+    if (
+        overlay.get("dut_source") != "mixed"
+        or overlay.get("provenance_mode") != "mixed_candidate"
+        or overlay.get("gate_kind") != "component_replacement"
+        or overlay.get("mode") != "diagnostic"
+        or overlay.get("gate_eligible") is not False
+        or overlay.get("candidate_locked") is not False
+        or overlay.get("base_candidate_locked") is not True
+        or overlay.get("baseline_exact") is not False
+    ):
+        raise RefactorError("mixed overlay has a gate-eligible or locked baseline shape")
+    metadata = overlay.get("component_replacement")
+    if not isinstance(metadata, dict):
+        raise RefactorError("mixed overlay lacks component replacement provenance")
+    spec_path = metadata.get("spec_path")
+    source_head = metadata.get("source_head")
+    if not isinstance(spec_path, str) or not isinstance(source_head, str):
+        raise RefactorError("mixed overlay replacement provenance is malformed")
+    plan = load_component_replacement_plan(spec_path, source_head)
+    if metadata != plan.metadata():
+        raise RefactorError("component replacement spec or source binding changed after overlay")
+    if overlay.get("golden_candidate_commit") != manifest["team_golden_candidate"]:
+        raise RefactorError("mixed overlay base candidate differs from manifest.lock")
+
+    locked_paths = read_golden_files()
+    entries = overlay.get("files")
+    if not isinstance(entries, list) or len(entries) != len(locked_paths):
+        raise RefactorError("mixed overlay file count differs from the locked exact union")
+    by_logical: dict[str, dict[str, Any]] = {}
+    for entry in entries:
+        if not isinstance(entry, dict):
+            raise RefactorError("mixed overlay has a malformed file entry")
+        logical_path = entry.get("logical_path")
+        if not isinstance(logical_path, str) or logical_path in by_logical:
+            raise RefactorError("mixed overlay has a missing or duplicate logical path")
+        by_logical[logical_path] = entry
+    replacements = {item.target: item for item in plan.replacements}
+    selection: list[dict[str, Any]] = []
+    for logical_path in locked_paths:
+        entry = by_logical.get(logical_path)
+        if entry is None:
+            raise RefactorError(f"mixed overlay is missing locked target: {logical_path}")
+        target_name = PurePosixPath(logical_path).name
+        expected_overlay = f"IP/myCPU/{target_name}"
+        if entry.get("path") != target_name or entry.get("overlay_path") != expected_overlay:
+            raise RefactorError(f"mixed overlay target mismatch for {logical_path}")
+        base_payload = git_blob(f"{manifest['team_golden_candidate']}:{logical_path}")
+        base_sha = sha256_bytes(base_payload)
+        base_tree_entry = git_regular_blob_entry(manifest["team_golden_candidate"], logical_path)
+        if (
+            entry.get("base_source") != f"{manifest['team_golden_candidate']}:{logical_path}"
+            or entry.get("base_sha256") != base_sha
+            or entry.get("base_size") != len(base_payload)
+            or entry.get("base_oid") != base_tree_entry["oid"]
+            or entry.get("base_mode") != base_tree_entry["mode"]
+        ):
+            raise RefactorError(f"mixed overlay base blob mismatch for {logical_path}")
+        replacement = replacements.get(logical_path)
+        if replacement is None:
+            expected_source = f"{manifest['team_golden_candidate']}:{logical_path}"
+            expected_payload = base_payload
+            if entry.get("source_kind") != "golden":
+                raise RefactorError(f"mixed overlay selection mismatch for {logical_path}")
+        else:
+            expected_source = f"{plan.source_head}:{replacement.source}"
+            expected_payload = replacement.payload
+            if (
+                entry.get("source_kind") != "replacement"
+                or entry.get("replacement_source") != expected_source
+                or entry.get("replacement_source_path") != replacement.source
+                or entry.get("replacement_oid") != replacement.source_oid
+                or entry.get("replacement_mode") != replacement.source_mode
+                or entry.get("replacement_spec_source")
+                != f"{plan.spec_commit}:{plan.spec_path}"
+                or entry.get("replacement_spec_sha256") != plan.spec_sha256
+            ):
+                raise RefactorError(f"mixed overlay replacement blob mismatch for {logical_path}")
+        expected_sha = sha256_bytes(expected_payload)
+        if (
+            entry.get("source") != expected_source
+            or entry.get("sha256") != expected_sha
+            or entry.get("size") != len(expected_payload)
+        ):
+            raise RefactorError(f"mixed overlay installed source mismatch for {logical_path}")
+        selection.append(
+            {
+                "logical_path": logical_path,
+                "source": expected_source,
+                "sha256": expected_sha,
+                "size": len(expected_payload),
+            }
+        )
+    if set(by_logical) != set(locked_paths):
+        raise RefactorError("mixed overlay logical paths differ from the locked exact union")
+    selection_sha = sha256_bytes(
+        json.dumps(selection, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    )
+    if overlay.get("selection_sha256") != selection_sha:
+        raise RefactorError("mixed overlay selection hash mismatch")
+    verify_candidate_support_bindings(work, overlay, manifest)
+
+
+def verify_dut_source_bindings(
+    work: Path,
+    overlay: dict[str, Any],
+    manifest: dict[str, str],
+) -> None:
+    verify_overlay_files(work, overlay)
+    dut_source = overlay.get("dut_source")
+    if dut_source == "mixed":
+        verify_component_replacement_bindings(work, overlay, manifest)
+    elif dut_source == "candidate":
+        verify_candidate_source_bindings(work, overlay, manifest)
+    elif dut_source == "official":
+        verify_official_source_bindings(work, overlay, manifest)
+    else:
+        raise RefactorError(f"unknown DUT source in overlay: {dut_source!r}")
 
 
 def verify_overlay_integrity(
@@ -1544,14 +2510,17 @@ def verify_overlay_integrity(
     out_dir: Path,
     iteration_id: str,
     tool_root: Path,
+    work_root: Path,
     diagnostic: bool,
     doctor_max_age_seconds: int,
-) -> tuple[Path, dict[str, Any], dict[str, Any], str]:
+) -> tuple[Path, dict[str, Any], dict[str, Any], str, str]:
     manifest = parse_lock(MANIFEST_PATH)
     overlay_report_path = iteration_report_path(out_dir, iteration_id, "chiplab-overlay")
     if not overlay_report_path.is_file():
         raise RefactorError(f"missing iteration overlay report: {overlay_report_path}")
-    overlay_report = validate_json_file(overlay_report_path)
+    overlay_report, overlay_report_sha256 = read_json_file_with_sha256(
+        overlay_report_path
+    )
     if overlay_report.get("iteration_id") != iteration_id:
         raise RefactorError("overlay report iteration id mismatch")
     expected_mode = "diagnostic" if diagnostic else "baseline"
@@ -1566,6 +2535,11 @@ def verify_overlay_integrity(
         raise RefactorError("baseline smoke requires a gate-eligible locked overlay PASS")
 
     work = Path(str(overlay_report.get("work_dir", ""))).resolve()
+    expected_work = (work_root.resolve() / iteration_id).resolve()
+    if work != expected_work:
+        raise RefactorError(
+            f"overlay work directory differs from --work-root: expected={expected_work} actual={work}"
+        )
     work_marker = work / GENERATED_MARKER
     marker = work / ".refactor-overlay.json"
     if not work_marker.is_file() or not marker.is_file():
@@ -1582,19 +2556,49 @@ def verify_overlay_integrity(
             f"RTL smoke lock remains from an interrupted or concurrent run: {smoke_lock}; "
             "rebuild the isolated overlay before retrying"
         )
-    marker_sha = sha256_file(marker)
+    overlay, marker_sha = read_json_file_with_sha256(marker)
     if marker_sha != overlay_report.get("work_marker_sha256"):
         raise RefactorError("work overlay marker was modified after overlay")
-    overlay = validate_json_file(marker)
     overlay_manifest_path = Path(str(overlay_report.get("overlay_manifest", ""))).resolve()
     if not overlay_manifest_path.is_file():
         raise RefactorError("overlay manifest path is missing")
-    if sha256_file(overlay_manifest_path) != overlay_report.get("overlay_manifest_sha256"):
+    immutable_overlay, overlay_manifest_sha256 = read_json_file_with_sha256(
+        overlay_manifest_path
+    )
+    if overlay_manifest_sha256 != overlay_report.get("overlay_manifest_sha256"):
         raise RefactorError("overlay manifest hash differs from overlay report")
-    if validate_json_file(overlay_manifest_path) != overlay:
+    if immutable_overlay != overlay:
         raise RefactorError("work marker and immutable overlay manifest differ")
     if overlay.get("iteration_id") != iteration_id or overlay.get("mode") != expected_mode:
         raise RefactorError("overlay manifest is not bound to this smoke run")
+    projected_fields = {
+        "iteration_id": overlay.get("iteration_id"),
+        "work_dir": str(work),
+        "file_count": len(overlay.get("files", [])) if isinstance(overlay.get("files"), list) else None,
+        "dut_source": overlay.get("dut_source"),
+        "provenance_mode": overlay.get("provenance_mode"),
+        "gate_kind": overlay.get("gate_kind"),
+        "mode": overlay.get("mode"),
+        "gate_eligible": overlay.get("gate_eligible"),
+        "candidate_locked": overlay.get("candidate_locked"),
+        "base_candidate_locked": overlay.get("base_candidate_locked"),
+        "baseline_exact": overlay.get("baseline_exact"),
+        "golden_candidate_commit": overlay.get("golden_candidate_commit"),
+        "selection_sha256": overlay.get("selection_sha256"),
+        "component_replacement": overlay.get("component_replacement"),
+        "replacement_count": (
+            len(overlay.get("component_replacement", {}).get("replacements", []))
+            if isinstance(overlay.get("component_replacement"), dict)
+            else 0
+        ),
+    }
+    projection_mismatches = {
+        key: {"report": overlay_report.get(key), "manifest": value}
+        for key, value in projected_fields.items()
+        if overlay_report.get(key) != value
+    }
+    if projection_mismatches:
+        raise RefactorError(f"overlay report projection mismatch: {projection_mismatches}")
     if overlay.get("evaluator_sha256") != sha256_file(Path(__file__)):
         raise RefactorError("overlay was produced by a different evaluator revision")
     if overlay.get("manifest_sha256") != sha256_file(MANIFEST_PATH):
@@ -1603,6 +2607,10 @@ def verify_overlay_integrity(
         raise RefactorError("overlay golden file allowlist hash is stale")
     if overlay.get("chiplab_commit") != manifest["chiplab_commit"]:
         raise RefactorError("overlay marker no longer matches manifest.lock")
+    if overlay.get("mycpu_reference_commit") != manifest["chiplab_mycpu_gitlink"]:
+        raise RefactorError("overlay myCPU gitlink no longer matches manifest.lock")
+    if overlay.get("work_filesystem") != filesystem_type(work):
+        raise RefactorError("overlay work filesystem changed after creation")
     if overlay.get("chiplab_tree") != git_text(["rev-parse", "HEAD^{tree}"], cwd=work):
         raise RefactorError("validation chiplab tree differs from overlay")
     if git_text(["rev-parse", "HEAD"], cwd=work) != manifest["chiplab_commit"]:
@@ -1611,13 +2619,13 @@ def verify_overlay_integrity(
         raise RefactorError("validation myCPU reference HEAD changed after overlay")
 
     chiplab_ref = Path(str(overlay.get("chiplab_reference", ""))).resolve()
-    doctor_path, _ = require_passing_chiplab_doctor(
+    doctor_path, current_doctor, current_doctor_sha256 = require_passing_chiplab_doctor(
         out_dir,
         chiplab_ref,
         tool_root,
         doctor_max_age_seconds,
     )
-    if sha256_file(doctor_path) != overlay.get("doctor_report_sha256"):
+    if current_doctor_sha256 != overlay.get("doctor_report_sha256"):
         raise RefactorError("chiplab doctor report changed after overlay")
     current_fingerprints = require_tool_fingerprints(tool_root, manifest)
     if current_fingerprints != overlay.get("tool_fingerprints"):
@@ -1635,14 +2643,8 @@ def verify_overlay_integrity(
         if overlay.get("tool_links", {}).get(name) != str(expected_target):
             raise RefactorError(f"tool link manifest mismatch for {name}")
 
-    verify_overlay_files(work, overlay)
     require_official_worktree_integrity(work, overlay.get("official_workspace_fingerprint", {}))
-    if not diagnostic:
-        if overlay.get("dut_source") != "candidate" or not overlay.get("candidate_locked"):
-            raise RefactorError("baseline smoke requires candidate_locked=true candidate RTL")
-        if overlay.get("golden_candidate_commit") != manifest["team_golden_candidate"]:
-            raise RefactorError("baseline candidate commit differs from manifest.lock")
-        verify_candidate_source_bindings(work, overlay, manifest)
+    if overlay.get("dut_source") in {"candidate", "mixed"}:
         export_manifest = (
             out_dir / "reference" / "golden-rtl" / iteration_id / "manifest.json"
         )
@@ -1651,10 +2653,57 @@ def verify_overlay_integrity(
             or sha256_file(export_manifest) != overlay.get("golden_export_manifest_sha256")
         ):
             raise RefactorError("golden export manifest is missing or stale")
-    return work, overlay, overlay_report, sha256_file(doctor_path)
+    dut_source = overlay.get("dut_source")
+    if dut_source == "mixed":
+        metadata = overlay.get("component_replacement")
+        source_head = metadata.get("source_head") if isinstance(metadata, dict) else None
+        if current_doctor.get("repo_head_sha") != source_head:
+            raise RefactorError("chiplab doctor no longer matches mixed replacement source HEAD")
+        verify_dut_source_bindings(work, overlay, manifest)
+    elif dut_source == "candidate":
+        verify_dut_source_bindings(work, overlay, manifest)
+        if not diagnostic and (
+            not overlay.get("candidate_locked")
+            or not overlay.get("baseline_exact")
+            or overlay.get("golden_candidate_commit") != manifest["team_golden_candidate"]
+        ):
+            raise RefactorError("baseline smoke requires candidate_locked=true candidate RTL")
+    elif dut_source == "official":
+        if not diagnostic:
+            raise RefactorError("official control cannot satisfy a baseline gate")
+        verify_dut_source_bindings(work, overlay, manifest)
+    else:
+        raise RefactorError(f"unknown DUT source in overlay: {dut_source!r}")
+    return (
+        work,
+        overlay,
+        overlay_report,
+        current_doctor_sha256,
+        overlay_report_sha256,
+    )
 
 
 def command_rtl_smoke(args: argparse.Namespace) -> int:
+    out_dir = checked_out_dir(args.out_dir)
+    iteration_id = checked_iteration_id(args.iteration_id)
+    work_root = Path(args.work_root).resolve()
+    require_nonoverlapping_validation_roots(out_dir, work_root)
+    run_id = f"smoke-{time.time_ns()}-{os.getpid()}"
+    out_lock = acquire_iteration_lock(out_dir, iteration_id, "rtl-smoke", run_id)
+    try:
+        work_lock = acquire_iteration_lock(work_root, iteration_id, "rtl-smoke", run_id)
+        try:
+            smoke_report = iteration_report_path(out_dir, iteration_id, "rtl-smoke")
+            if smoke_report.exists():
+                smoke_report.unlink()
+            return _command_rtl_smoke_locked(args)
+        finally:
+            work_lock.unlink()
+    finally:
+        out_lock.unlink()
+
+
+def _command_rtl_smoke_locked(args: argparse.Namespace) -> int:
     require_posix_validation_environment()
     out_dir = checked_out_dir(args.out_dir)
     iteration_id = checked_iteration_id(args.iteration_id)
@@ -1663,13 +2712,15 @@ def command_rtl_smoke(args: argparse.Namespace) -> int:
         smoke_report_path.unlink()
     require_locked_smoke_case(args.case)
     tool_root = Path(args.tool_root).resolve()
-    work, overlay, overlay_report, doctor_sha = verify_overlay_integrity(
+    work, overlay, overlay_report, doctor_sha, overlay_report_sha = verify_overlay_integrity(
         out_dir=out_dir,
         iteration_id=iteration_id,
         tool_root=tool_root,
+        work_root=Path(args.work_root),
         diagnostic=args.diagnostic,
         doctor_max_age_seconds=args.doctor_max_age_seconds,
     )
+    overlay_report_path = iteration_report_path(out_dir, iteration_id, "chiplab-overlay")
     manifest = parse_lock(MANIFEST_PATH)
     env = smoke_environment(work, tool_root)
     run_dir = work / "sims" / "verilator" / "run_prog"
@@ -1818,6 +2869,43 @@ def command_rtl_smoke(args: argparse.Namespace) -> int:
         environment_sha256 = sha256_bytes(
             json.dumps(env, sort_keys=True, separators=(",", ":")).encode("utf-8")
         )
+        current_marker = work / ".refactor-overlay.json"
+        if not current_marker.is_file():
+            raise RefactorError("DUT overlay marker disappeared during RTL smoke")
+        post_marker, current_marker_sha = read_json_file_with_sha256(current_marker)
+        if (
+            current_marker_sha != overlay_report.get("work_marker_sha256")
+            or post_marker != overlay
+        ):
+            raise RefactorError("DUT overlay marker changed during RTL smoke")
+        post_overlay_report, post_overlay_report_sha = read_json_file_with_sha256(
+            overlay_report_path
+        )
+        if (
+            post_overlay_report_sha != overlay_report_sha
+            or post_overlay_report != overlay_report
+        ):
+            raise RefactorError("DUT overlay report changed during RTL smoke")
+        overlay_manifest_path = Path(
+            str(overlay_report.get("overlay_manifest", ""))
+        ).resolve()
+        post_overlay_manifest, post_overlay_manifest_sha = read_json_file_with_sha256(
+            overlay_manifest_path
+        )
+        if (
+            post_overlay_manifest != overlay
+            or post_overlay_manifest_sha
+            != overlay_report.get("overlay_manifest_sha256")
+        ):
+            raise RefactorError("immutable DUT overlay manifest changed during RTL smoke")
+        verify_dut_source_bindings(work, overlay, manifest)
+        post_run_dut_verification = {
+            "status": "pass",
+            "work_marker_sha256": current_marker_sha,
+            "overlay_report_sha256": overlay_report_sha,
+            "overlay_manifest_sha256": post_overlay_manifest_sha,
+            "selection_sha256": overlay.get("selection_sha256"),
+        }
         report = {
             "schema_version": 1,
             "command": "rtl-smoke",
@@ -1847,8 +2935,15 @@ def command_rtl_smoke(args: argparse.Namespace) -> int:
             "run_id": run_id,
             "chiplab_commit": manifest["chiplab_commit"],
             "dut_source": overlay.get("dut_source"),
+            "provenance_mode": overlay.get("provenance_mode"),
+            "gate_kind": overlay.get("gate_kind"),
             "golden_candidate_commit": overlay.get("golden_candidate_commit"),
             "candidate_locked": overlay.get("candidate_locked"),
+            "base_candidate_locked": overlay.get("base_candidate_locked"),
+            "baseline_exact": overlay.get("baseline_exact"),
+            "component_replacement": overlay.get("component_replacement"),
+            "selection_sha256": overlay.get("selection_sha256"),
+            "observed_result": gate_result if args.diagnostic else None,
             "requested_case": args.case,
             "actual_case": actual_case,
             "configure_valid": configure_ok,
@@ -1859,15 +2954,14 @@ def command_rtl_smoke(args: argparse.Namespace) -> int:
             "build_errors": build_errors,
             "output_contract_ok": output_contract_ok,
             "output_evidence": output_evidence,
+            "post_run_dut_verification": post_run_dut_verification,
             "environment": env,
             "environment_sha256": environment_sha256,
             "result_file_policy": {
                 "status": "not_provided_by_locked_func_lab19",
                 "functional_oracle": "NEMU DPI DiffTest markers and simulator termination output",
             },
-            "overlay_report_sha256": sha256_file(
-                iteration_report_path(out_dir, iteration_id, "chiplab-overlay")
-            ),
+            "overlay_report_sha256": overlay_report_sha,
             "doctor_report_sha256": doctor_sha,
             "evaluator_sha256": sha256_file(Path(__file__)),
             "commands": [item.as_dict() for item in commands],
@@ -1907,10 +3001,8 @@ def command_rtl_smoke(args: argparse.Namespace) -> int:
 
 
 def validate_json_file(path: Path) -> Any:
-    try:
-        return json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, UnicodeError, json.JSONDecodeError) as error:
-        raise RefactorError(f"invalid JSON {path}: {error}") from error
+    value, _ = read_json_file_with_sha256(path)
+    return value
 
 
 ITERATION_STATUSES = frozenset({"draft", "blocked", "ready", "complete"})
@@ -2422,12 +3514,22 @@ def build_parser() -> argparse.ArgumentParser:
     overlay.add_argument("--iteration-id", required=True)
     overlay.add_argument("--chiplab-ref", required=True)
     overlay.add_argument("--tool-root", default="/opt/chiplab-tools/root")
-    overlay.add_argument("--dut-source", choices=("candidate", "official"), default="candidate")
+    overlay.add_argument(
+        "--dut-source", choices=("candidate", "mixed", "official"), default="candidate"
+    )
     overlay.add_argument("--diagnostic", action="store_true")
     overlay.add_argument("--doctor-max-age-seconds", type=int, default=3600)
     overlay.add_argument(
         "--candidate-commit",
         help="Diagnostic override. Reports candidate_locked=false and cannot establish the locked baseline.",
+    )
+    overlay.add_argument(
+        "--replacement-spec",
+        help="Committed repo-relative JSON selection; only valid for a diagnostic mixed DUT.",
+    )
+    overlay.add_argument(
+        "--source-head",
+        help="Full clean source HEAD containing the replacement spec and replacement Verilog.",
     )
     overlay.set_defaults(handler=command_chiplab_overlay)
 
@@ -2435,6 +3537,7 @@ def build_parser() -> argparse.ArgumentParser:
     smoke.add_argument("--out-dir", default="build")
     smoke.add_argument("--iteration-id", required=True)
     smoke.add_argument("--tool-root", default="/opt/chiplab-tools/root")
+    smoke.add_argument("--work-root", default="/tmp/nscscc-refactor-work")
     smoke.add_argument("--case", default="func/func_lab19")
     smoke.add_argument("--diagnostic", action="store_true")
     smoke.add_argument("--doctor-max-age-seconds", type=int, default=3600)

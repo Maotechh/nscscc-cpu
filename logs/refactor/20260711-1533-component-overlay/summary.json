@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "iteration_id": "20260711-1533-component-overlay",
+  "status": "draft",
+  "branch": "refactor/20260711-1533-component-overlay",
+  "base_sha": "fec3e1460fb9658329d5221e062c116090ef4d99",
+  "head_sha": "fec3e1460fb9658329d5221e062c116090ef4d99",
+  "selected_boundary": "component_replacement_overlay",
+  "required_gates": [
+    "doctor",
+    "automation_tests",
+    "contract_tests",
+    "scala_check",
+    "rtl_static",
+    "locked_overlay_regression",
+    "diagnostic_overlay",
+    "func_smoke_control",
+    "claim_review"
+  ],
+  "gates": {
+    "doctor": {"status":"pending","planned":19,"executed":0,"passed":0,"failed":0,"skipped":19},
+    "automation_tests": {"status":"pending","planned":85,"executed":0,"passed":0,"failed":0,"skipped":85},
+    "contract_tests": {"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":1},
+    "scala_check": {"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":1},
+    "rtl_static": {"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":1},
+    "locked_overlay_regression": {"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":1},
+    "diagnostic_overlay": {"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":1},
+    "func_smoke_control": {"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":1},
+    "claim_review": {"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":1}
+  },
+  "claims": [],
+  "blocked_by": [],
+  "pr": {"status":"awaiting_implementation","url":null,"draft_only":true,"auto_merge":false},
+  "updated_at": "2026-07-11T15:33:00+08:00"
+}

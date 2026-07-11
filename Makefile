@@ -1,12 +1,24 @@
 PYTHON ?= $(if $(filter Windows_NT,$(OS)),python,python3)
 SBT ?=
 OUT_DIR ?= build
-ITERATION_ID ?= 20260710-2026-baseline
+ITERATION_ID ?=
 CHIPLAB_REFERENCE ?=
 CHIPLAB_TOOL_ROOT ?= /opt/chiplab-tools/root
 CHIPLAB_WORK_ROOT ?= /tmp/nscscc-refactor-work
+DUT_SOURCE ?= candidate
+REPLACEMENT_SPEC ?=
+SOURCE_HEAD ?=
+DIAGNOSTIC ?=
 VIVADO_HOME ?=
 SCALA_CACHE_ROOT ?= $(CHIPLAB_TOOL_ROOT)/scala-cache-sbt1.10.11-spinal1.14.2
+
+ifneq ($(word 2,$(strip $(DIAGNOSTIC))),)
+$(error DIAGNOSTIC must be empty, 0, or 1)
+endif
+ifneq ($(strip $(filter-out 0 1,$(DIAGNOSTIC))),)
+$(error DIAGNOSTIC must be empty, 0, or 1)
+endif
+DIAGNOSTIC_ARG = $(if $(filter 1,$(DIAGNOSTIC)),--diagnostic,)
 
 .PHONY: doctor scala-cache-bootstrap scala-check chiplab-doctor golden-export chiplab-overlay rtl-smoke evidence-check test-automation
 
@@ -26,10 +38,10 @@ golden-export:
 	$(PYTHON) -I tools/refactor.py golden-export --out-dir "$(OUT_DIR)"
 
 chiplab-overlay:
-	$(PYTHON) -I tools/refactor.py chiplab-overlay --out-dir "$(OUT_DIR)" --work-root "$(CHIPLAB_WORK_ROOT)" --iteration-id "$(ITERATION_ID)" --chiplab-ref "$(CHIPLAB_REFERENCE)" --tool-root "$(CHIPLAB_TOOL_ROOT)"
+	$(PYTHON) -I tools/refactor.py chiplab-overlay --out-dir "$(OUT_DIR)" --work-root "$(CHIPLAB_WORK_ROOT)" --iteration-id "$(ITERATION_ID)" --chiplab-ref "$(CHIPLAB_REFERENCE)" --tool-root "$(CHIPLAB_TOOL_ROOT)" --dut-source "$(DUT_SOURCE)" $(if $(REPLACEMENT_SPEC),--replacement-spec "$(REPLACEMENT_SPEC)",) $(if $(SOURCE_HEAD),--source-head "$(SOURCE_HEAD)",) $(DIAGNOSTIC_ARG)
 
 rtl-smoke:
-	$(PYTHON) -I tools/refactor.py rtl-smoke --out-dir "$(OUT_DIR)" --iteration-id "$(ITERATION_ID)" --tool-root "$(CHIPLAB_TOOL_ROOT)"
+	$(PYTHON) -I tools/refactor.py rtl-smoke --out-dir "$(OUT_DIR)" --work-root "$(CHIPLAB_WORK_ROOT)" --iteration-id "$(ITERATION_ID)" --tool-root "$(CHIPLAB_TOOL_ROOT)" $(DIAGNOSTIC_ARG)
 
 evidence-check:
 	$(PYTHON) -I tools/refactor.py validate-iteration --iteration-dir "logs/refactor/$(ITERATION_ID)"

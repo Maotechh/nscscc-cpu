@@ -1,10 +1,32 @@
 schema_version: 1
-updated_at: "2026-07-11T14:41:24+08:00"
-active_iteration: "20260710-2026-baseline"
-active_branch: "refactor/20260710-2026-baseline-automation"
-source_head: "45043bd8a89b0e4dea3911ed609d128252f0319f"
+updated_at: "2026-07-11T15:33:00+08:00"
+active_iteration: "20260711-1533-component-overlay"
+active_branch: "refactor/20260711-1533-component-overlay"
+source_head: "fec3e1460fb9658329d5221e062c116090ef4d99"
 
 boundaries:
+  component_replacement_overlay:
+    owner: verification
+    state: implementation_in_review
+    golden_ref: a158aa8:reference/golden-rtl-files.lock
+    dependencies: []
+    contract: docs/contracts/component-overlay.md
+    required_gates:
+      - doctor
+      - automation_tests
+      - contract_tests
+      - scala_check
+      - rtl_static
+      - locked_overlay_regression
+      - diagnostic_overlay
+      - func_smoke_control
+      - claim_review
+    evidence:
+      - logs/refactor/20260711-1533-component-overlay/iteration.md
+    active_pr: null
+    blocked_by: []
+    last_iteration: "20260711-1533-component-overlay"
+
   baseline_validation:
     owner: verification
     state: blocked
