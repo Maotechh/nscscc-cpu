@@ -1,9 +1,9 @@
 # 20260711-1533-component-overlay
 
-- 状态：`draft`
+- 状态：`draft`；PR 状态为 `awaiting_pr`（仅允许 Draft；未创建 PR）
 - 分支：`refactor/20260711-1533-component-overlay`
 - Base：`fec3e1460fb9658329d5221e062c116090ef4d99`
-- 日志更新时 HEAD：`322a9e01da06b95b041059cad7c82cdafa881e35`（待形成新的 source commit）
+- 已审核 source HEAD：`71a1995b7ca4dd922d1896e6b820e8029ff88575`
 - Owner / Agent：Codex
 - 目标边界：`component_replacement_overlay`
 
@@ -19,7 +19,7 @@ baseline 迭代证明当前 locked `a158aa8` 在 `func_lab19` 失败。准备修
 - `main` 与 `origin/main` 保持 `20cae5fd66391f4a1bccc1b87035be421039144b`。
 - 当前工作树干净。
 - `git diff a158aa8 -- rtl/icache.v rtl/dcache.v` 显示两个历史文件在当前开发线均不存在；不能直接构造完整 22-file diagnostic candidate。
-- baseline PR 因 GitHub 443 超时仍为本地 `awaiting_push`；本分支锁定其本地 commit 为 base，并保持 Draft，不自动合并。
+- 本分支的 source HEAD 已推送到 `origin/refactor/20260711-1533-component-overlay`；未创建 PR，未修改或合并 `main`。
 
 ## 行为合同
 
@@ -37,11 +37,22 @@ baseline 迭代证明当前 locked `a158aa8` 在 `func_lab19` 失败。准备修
 - 最终开发态检查发现 131 项 Windows 自动化测试，其中 123 项通过、8 项因平台/权限条件跳过；WSL 实际执行 `test_refactor 77/77 PASS` 与 identity comparator `24/24 PASS`，没有 skip。WSL symlink、parent-swap、directory-fsync、lock replacement 场景均实际执行；Windows 路径覆盖祖先目录 handle 与 lock handle 删除。Python compile、`flake8 --select=F` 和 `git diff --check` 通过。
 - 新增负测证明：物理 `compile.log` 隐藏 error、两侧共同伪造 warning PASS、共同加入 oracle bypass 字段、缺失/篡改 publication marker、部分获取锁后的回滚释放失败和 `KeyboardInterrupt` 都会失败。模拟“锁已实际释放后再抛错”时，命令返回错误且不输出 PASS，但不再竞态删除已经 marker-bound 的报告。
 - Claude bridge 两次均在模型启动前失败：第一次 backend 不允许 reviewer tools，第二次缺少 `GEEKPIE_CLAUDE_API_KEY`。原始终态已保存，不能称为 Claude 审核；独立 Codex 复审仅作为降级检查。
-- 以上仍不是 clean committed HEAD 的最终 evidence；正式 gate 在 `summary.json` 中保持 pending。
+- clean committed HEAD `71a1995` 的 Windows doctor、跨主机单测、Scala、locked/mixed overlay、两侧官方 smoke 和 identity comparison 已实际执行。原始结果位于 `artifacts.json` 登记的本地 locator；报告哈希已复算。
+- 最新 `claude-review` 无工具请求 `9d2ba22f27944064a2f220d1dde481c9` 仍因缺少 `GEEKPIE_CLAUDE_API_KEY` 在模型启动前失败；没有 Claude 正文，不能称为 Claude 审核。
+- `experiment-audit` 与 result-to-claim 独立复核确认没有把两侧共同失败包装成功能通过。唯一功能观测是两侧均在 PC `0x1c07c79c` 失败，`t0` 期望 `0x000006e2`、实际 `0x00000008`。
 
 ## 当前门禁
 
-实现和跨主机开发态单测已完成，真实 locked/mixed chiplab overlay、Scala、官方 smoke、独立 rtl-static/Yosys 尚未在新的 clean source commit 上执行；Claude claim review 为 `unavailable`。所有正式门禁仍保持 pending，不能形成 PASS claim。
+clean source HEAD `71a1995` 上的结果如下：
+
+- Windows doctor：`19/19 PASS`，确认 Vivado 2023.2 ML Standard build 4029153 与锁定路径。
+- Windows 自动化：发现 131 项，`123 PASS / 8 SKIP / 0 FAIL`；因 skip 规则，不能记为正式 gate PASS。
+- WSL 自动化：`test_refactor 77/77 PASS`、`identity_compare 24/24 PASS`，无 skip。
+- Scala：format、compile、testCompile、test 共 `4/4 PASS`。
+- chiplab doctor、locked overlay、等字节 ALU mixed overlay 均成功发布。
+- locked 与 mixed 的官方 `func/func_lab19` 均执行并失败：`172552` 条指令、`602903` 周期、相同首个 mismatch；不是功能 PASS。
+- identity comparator 为 `status=pass`、`gate_eligible=false`，只支持单用例选定观测一致的窄 claim。
+- 独立 `rtl-static`/Yosys 未执行；Claude 为 `unavailable`；性能、Linux、Vivado FPGA 未执行。
 
 ## 回退
 
@@ -49,4 +60,4 @@ baseline 迭代证明当前 locked `a158aa8` 在 `func_lab19` 失败。准备修
 
 ## 下一步
 
-形成并立即推送 source commit 后，在 clean HEAD 上运行 doctor、自动化测试、Scala、locked candidate overlay 与等字节 ALU mixed overlay；随后执行官方 diagnostic smoke、最新 experiment-audit/claim review 和证据提交。证据齐全前不武断创建 PR，任何 PR 仍只能是 Draft，代理不合并 `main`。
+提交并推送本次证据更新，但不自动创建 PR。随后从该已推送 HEAD 新开最小 `alu` 重构迭代：建立 14-bit one-hot golden 合同、可复现 Spinal 生成入口、端口检查、旧新 directed/random/formal 差分和 diagnostic overlay。性能只作为未来防回退 gate，不在 ALU 迭代做优化。

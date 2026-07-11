@@ -4,7 +4,7 @@
   "status": "draft",
   "branch": "refactor/20260711-1533-component-overlay",
   "base_sha": "fec3e1460fb9658329d5221e062c116090ef4d99",
-  "head_sha": "322a9e01da06b95b041059cad7c82cdafa881e35",
+  "head_sha": "71a1995b7ca4dd922d1896e6b820e8029ff88575",
   "selected_boundary": "component_replacement_overlay",
   "required_gates": [
     "doctor",
@@ -18,27 +18,55 @@
     "claim_review"
   ],
   "gates": {
-    "doctor": {"status":"pending","planned":19,"executed":0,"passed":0,"failed":0,"skipped":19},
-    "automation_tests": {"status":"pending","planned":131,"executed":0,"passed":0,"failed":0,"skipped":131},
-    "contract_tests": {"status":"pending","planned":24,"executed":0,"passed":0,"failed":0,"skipped":24},
-    "scala_check": {"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":1},
-    "rtl_static": {"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":1},
-    "locked_overlay_regression": {"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":1},
-    "diagnostic_overlay": {"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":1},
-    "func_smoke_control": {"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":1},
-    "claim_review": {"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":1}
+    "doctor": {"status":"pass","planned":2,"executed":2,"passed":2,"failed":0,"skipped":0,"detail":"Windows doctor 19/19 checks and locked chiplab doctor passed."},
+    "automation_tests": {"status":"warning","planned":232,"executed":224,"passed":224,"failed":0,"skipped":8,"detail":"Windows 123/131 with 8 conditional skips; WSL refactor 77/77 and identity 24/24. Project policy prevents gate PASS while skips remain."},
+    "contract_tests": {"status":"pass","planned":24,"executed":24,"passed":24,"failed":0,"skipped":0,"detail":"WSL identity comparator contract and negative tests."},
+    "scala_check": {"status":"pass","planned":4,"executed":4,"passed":4,"failed":0,"skipped":0},
+    "rtl_static": {"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":1,"detail":"No independent Verilator --lint-only/Yosys entry was executed."},
+    "locked_overlay_regression": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0},
+    "diagnostic_overlay": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0,"detail":"Byte-identical ALU replacement only; gate_eligible remains false."},
+    "func_smoke_control": {"status":"fail","planned":2,"executed":2,"passed":0,"failed":2,"skipped":0,"detail":"Locked and mixed func/func_lab19 both failed at PC 0x1c07c79c after 172552 instructions and 602903 cycles."},
+    "claim_review": {"status":"unavailable","planned":1,"executed":0,"passed":0,"failed":0,"skipped":1,"detail":"Claude bridge failed before model start; independent Codex reviews do not replace it."}
   },
   "development_checks": {
-    "windows_automation": {"status":"pass","planned":131,"executed":131,"passed":123,"failed":0,"skipped":8,"scope":"uncommitted_worktree_only"},
-    "wsl_refactor": {"status":"pass","planned":77,"executed":77,"passed":77,"failed":0,"skipped":0,"scope":"uncommitted_worktree_only"},
-    "wsl_identity_compare": {"status":"pass","planned":24,"executed":24,"passed":24,"failed":0,"skipped":0,"scope":"uncommitted_worktree_only"},
-    "python_compile_and_flake_f": {"status":"pass","scope":"modified_python_files"}
+    "windows_automation": {"status":"pass_with_skips","planned":131,"executed":131,"passed":123,"failed":0,"skipped":8,"scope":"clean_head_71a1995"},
+    "wsl_refactor": {"status":"pass","planned":77,"executed":77,"passed":77,"failed":0,"skipped":0,"scope":"clean_head_71a1995"},
+    "wsl_identity_compare": {"status":"pass","planned":24,"executed":24,"passed":24,"failed":0,"skipped":0,"scope":"clean_head_71a1995"},
+    "python_compile_and_flake_f": {"status":"pass","scope":"clean_head_71a1995_modified_python_files"},
+    "git_diff_check": {"status":"pass","scope":"clean_head_71a1995"}
   },
-  "claims": [],
+  "observations": {
+    "case": "func/func_lab19",
+    "locked_status": "fail",
+    "mixed_status": "fail",
+    "instructions": 172552,
+    "cycles": 602903,
+    "first_mismatch": "t0(r12) different at pc = 0x1c07c79c, right= 0x000006e2, wrong = 0x00000008",
+    "warnings": {"total":644,"dut":280,"official_environment":364},
+    "identity_comparison_status": "pass",
+    "identity_gate_eligible": false
+  },
+  "claims": [
+    {
+      "id": "C1",
+      "status": "supported_with_narrow_scope",
+      "text": "在锁定环境的单一 func/func_lab19 用例中，等字节 ALU mixed overlay 与 locked 侧使用相同的 manifest-bound 输入投影，并产生相同的选定失败观测。",
+      "excludes": ["CPU correctness", "RTL equivalence", "functional gate PASS", "full SpinalHDL refactor"]
+    },
+    {
+      "id": "C2",
+      "status": "development_evidence_only",
+      "text": "clean head 71a1995 的 Windows 自动化为 123 PASS/8 SKIP，WSL 自动化为 101/101 PASS。",
+      "excludes": ["formal automation gate PASS because skipped must be zero"]
+    }
+  ],
   "blocked_by": [
-    "source_commit_and_exact_evidence_pending",
+    "windows_automation_has_8_conditional_skips",
+    "func_lab19_locked_and_mixed_mismatch_at_1c07c79c",
+    "644_unapproved_verilator_warnings",
+    "independent_rtl_static_and_yosys_not_executed",
     "claude_bridge_missing_GEEKPIE_CLAUDE_API_KEY"
   ],
-  "pr": {"status":"awaiting_source_push","url":null,"draft_only":true,"auto_merge":false},
-  "updated_at": "2026-07-12T04:01:58+08:00"
+  "pr": {"status":"awaiting_pr","url":null,"draft_only":true,"auto_merge":false,"created":false},
+  "updated_at": "2026-07-12T04:18:38+08:00"
 }

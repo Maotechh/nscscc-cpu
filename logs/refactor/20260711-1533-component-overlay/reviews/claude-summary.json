@@ -2,11 +2,11 @@
   "schema_version": 1,
   "iteration_id": "20260711-1533-component-overlay",
   "status": "unavailable",
-  "job_id": "a3054297d7834c969127004b786df9e0",
+  "job_id": "9d2ba22f27944064a2f220d1dde481c9",
   "provider": null,
   "model": null,
   "reviewed_head_sha": null,
-  "raw_sha256": "0804d97f5475bfc4961a82bda12d84f5ea4118d45a98997a605fd732dabcb307",
+  "raw_sha256": "fbf88886055035810713229400841a600667f24d02329ac146ebc0b60850b30e",
   "error": "Required provider environment variable is not set: GEEKPIE_CLAUDE_API_KEY",
   "open_blocking_count": 1,
   "fresh_against_head": false,
@@ -15,8 +15,8 @@
   "provenance": {
     "source": "claude-review-mcp",
     "raw_path": "reviews/claude-raw.md",
-    "raw_sha256": "0804d97f5475bfc4961a82bda12d84f5ea4118d45a98997a605fd732dabcb307",
-    "job_id": "a3054297d7834c969127004b786df9e0",
+    "raw_sha256": "fbf88886055035810713229400841a600667f24d02329ac146ebc0b60850b30e",
+    "job_id": "9d2ba22f27944064a2f220d1dde481c9",
     "provider": null,
     "model": null,
     "reviewed_head_sha": null
@@ -32,6 +32,13 @@
       "job_id": "a3054297d7834c969127004b786df9e0",
       "status": "failed",
       "model_started": false,
+      "error": "Required provider environment variable is not set: GEEKPIE_CLAUDE_API_KEY"
+    },
+    {
+      "job_id": "9d2ba22f27944064a2f220d1dde481c9",
+      "status": "failed",
+      "model_started": false,
+      "review_target": "71a1995b7ca4dd922d1896e6b820e8029ff88575",
       "error": "Required provider environment variable is not set: GEEKPIE_CLAUDE_API_KEY"
     }
   ],

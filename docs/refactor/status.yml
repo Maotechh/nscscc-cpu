@@ -1,8 +1,8 @@
 schema_version: 1
-updated_at: "2026-07-11T15:33:00+08:00"
+updated_at: "2026-07-12T04:18:38+08:00"
 active_iteration: "20260711-1533-component-overlay"
 active_branch: "refactor/20260711-1533-component-overlay"
-source_head: "fec3e1460fb9658329d5221e062c116090ef4d99"
+source_head: "71a1995b7ca4dd922d1896e6b820e8029ff88575"
 
 boundaries:
   component_replacement_overlay:
@@ -23,8 +23,15 @@ boundaries:
       - claim_review
     evidence:
       - logs/refactor/20260711-1533-component-overlay/iteration.md
+      - logs/refactor/20260711-1533-component-overlay/summary.json
+      - logs/refactor/20260711-1533-component-overlay/reviews/experiment-audit.md
+      - logs/refactor/20260711-1533-component-overlay/reviews/result-to-claim.md
     active_pr: null
-    blocked_by: []
+    blocked_by:
+      - func_lab19_locked_and_mixed_mismatch_at_1c07c79c
+      - 644_unapproved_verilator_warnings
+      - independent_rtl_static_and_yosys_not_executed
+      - claude_bridge_missing_GEEKPIE_CLAUDE_API_KEY
     last_iteration: "20260711-1533-component-overlay"
 
   baseline_validation:

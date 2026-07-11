@@ -2,7 +2,8 @@
 
 ## 范围
 
-- 基准：`322a9e01da06b95b041059cad7c82cdafa881e35`
+- 初审基准：`322a9e01da06b95b041059cad7c82cdafa881e35`
+- 最终 claim 复审基准：`71a1995b7ca4dd922d1896e6b820e8029ff88575`
 - 对象：overlay/smoke/identity 的锁、结构化证据发布、物理日志复算和负向测试。
 - 身份：独立 Codex 子代理降级复审，不是 Claude 审核。
 
@@ -16,7 +17,7 @@
 
 ## Claim 审核
 
-- publication marker 已进入三条生产路径：`supported`，待 clean commit 重跑正式证据。
+- publication marker 已进入三条生产路径：`supported`，clean source HEAD `71a1995` 的正式证据已重跑并复算。
 - release-all 和部分获取回滚：`supported`，开发态正负测试覆盖。
 - 物理 compile/raw/artifact 复算与共同伪造拒绝：`supported`，开发态正负测试覆盖。
 - CPU 功能、RTL 等价、性能或正式 chiplab PASS：`unsupported`，本迭代不提出这些 claim。
@@ -24,6 +25,6 @@
 ## 剩余限制
 
 - Claude bridge 不可用，required review 仍为 open blocker。
-- 当前结果来自未提交工作树；旧 `322a9e0` exact evidence 已作废。
-- 正式 doctor、Scala、rtl-static、locked/mixed overlay、官方 smoke 与 identity 必须在新的 clean commit 上重跑。
+- Windows Git 视角在运行时为 clean；WSL 有 101 个 CRLF-only porcelain 条目，报告明确记录 `source_semantic_clean=true`、`source_porcelain_clean=false`，replacement payload 仍读取 committed Git blob。
+- doctor、Scala、locked/mixed overlay、官方 smoke 与 identity 已在 source HEAD `71a1995` 重跑；独立 rtl-static/Yosys 仍未执行。
 - 本轮只构建 Spinal 重构所需验证 harness，不做性能优化。

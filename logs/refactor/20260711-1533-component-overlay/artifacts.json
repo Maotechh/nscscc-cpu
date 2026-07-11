@@ -1,5 +1,30 @@
 {
   "schema_version": 1,
   "iteration_id": "20260711-1533-component-overlay",
-  "artifacts": []
+  "external_artifact_policy": "原始 smoke 报告、编译日志和 chiplab worktree 不提交 Git；本文件固定绝对 locator、SHA256、大小和保留方式。",
+  "artifact_root": "/tmp/nscscc-component-overlay-71a1995-v1",
+  "worktree_root": "/tmp/nscscc-component-work-71a1995-v1",
+  "retention": "local_until_explicit_clean",
+  "artifacts": [
+    {"id":"experiment-audit","path":"reviews/experiment-audit.json","sha256":"aaf51b144cf525e7846d0a92833c2182246604423d395309d32ca3be24f0943f","size":1121,"tracked":true,"retention":"git"},
+    {"id":"result-to-claim","path":"reviews/result-to-claim.json","sha256":"aad53437aeef634c1086ee644febc21f61ab077410455c0d0a21c4a72b4869b7","size":563,"tracked":true,"retention":"git"},
+    {"id":"claude-raw","path":"reviews/claude-raw.md","sha256":"fbf88886055035810713229400841a600667f24d02329ac146ebc0b60850b30e","size":1465,"tracked":true,"retention":"git"},
+    {"id":"claude-summary","path":"reviews/claude-summary.json","sha256":"5f54915f59f684b616a3ce35173a8a82a8f03eb7dc182cb45aa9c861b35d52e3","size":1952,"tracked":true,"retention":"git"},
+    {"id":"local-independent-review","path":"reviews/local-independent-review.md","sha256":"49a74fdf6c9c34dd3d4df8aa6b6a2e645ce27afd781b40fc45058154862928a5","size":2543,"tracked":true,"retention":"git"}
+  ],
+  "external_artifacts": [
+    {"id":"windows-doctor","path":"D:/schoolworks/CS110/longxin/nscscc-cpu/build/exact-71a1995/windows-doctor/reports/doctor.json","sha256":"3e5095704dfcf219c32374cb98acae3e9e29e7d18d4af761ce20cb49b8fb522f","size":3954,"tracked":false},
+    {"id":"chiplab-doctor","path":"/tmp/nscscc-component-overlay-71a1995-v1/reports/chiplab-doctor.json","sha256":"9ffe3de638e748921ed8dabe89eccac83d02003cd7ba08754ce64ca674ed3271","size":16175,"tracked":false},
+    {"id":"scala-summary","path":"/tmp/nscscc-component-overlay-71a1995-v1/scala-check/summary.json","sha256":"babd7e9035c20fb09398d8ab5ccf1e6e4b4fa79da415b5dd6e9a02a68c7164ec","size":29452,"tracked":false},
+    {"id":"locked-overlay","path":"/tmp/nscscc-component-overlay-71a1995-v1/reports/iterations/20260712-71a1995-identity-locked/chiplab-overlay.json","sha256":"cb042b229a41fa0c66d9628e4f2fa15bc8d8648979088f99e774c972fb837602","size":1321,"tracked":false},
+    {"id":"locked-overlay-marker","path":"/tmp/nscscc-component-overlay-71a1995-v1/reports/iterations/20260712-71a1995-identity-locked/chiplab-overlay.json.publication.json","sha256":"d764700533f321ec2572d5294f68529ed0978b6c54a6f411f2d464e79a65d0df","size":390,"tracked":false},
+    {"id":"locked-smoke","path":"/tmp/nscscc-component-overlay-71a1995-v1/reports/iterations/20260712-71a1995-identity-locked/rtl-smoke.json","sha256":"d36d505a0e164d797d8279228e8306e68ead119853f5d97144a40ae276eaf42b","size":196608,"tracked":false},
+    {"id":"locked-smoke-marker","path":"/tmp/nscscc-component-overlay-71a1995-v1/reports/iterations/20260712-71a1995-identity-locked/rtl-smoke.json.publication.json","sha256":"9dca0918a713278e4235d8c96cfdf95ddec685f41a0a00931b5452442a982a83","size":370,"tracked":false},
+    {"id":"mixed-overlay","path":"/tmp/nscscc-component-overlay-71a1995-v1/reports/iterations/20260712-71a1995-identity-mixed/chiplab-overlay.json","sha256":"5ba8350b18495f88b8fb44b0572951ed8879352cfc3094f78ce12b128a22c841","size":2701,"tracked":false},
+    {"id":"mixed-overlay-marker","path":"/tmp/nscscc-component-overlay-71a1995-v1/reports/iterations/20260712-71a1995-identity-mixed/chiplab-overlay.json.publication.json","sha256":"726b1d965fd8180373d399c7ad7afa822af65a474f1395e33bd7aac7c4582cc9","size":389,"tracked":false},
+    {"id":"mixed-smoke","path":"/tmp/nscscc-component-overlay-71a1995-v1/reports/iterations/20260712-71a1995-identity-mixed/rtl-smoke.json","sha256":"535a2590c204fe54db7d258b9a80ba6b7eb5f77b7dbd2a7d587a7a4b64e63e05","size":197326,"tracked":false},
+    {"id":"mixed-smoke-marker","path":"/tmp/nscscc-component-overlay-71a1995-v1/reports/iterations/20260712-71a1995-identity-mixed/rtl-smoke.json.publication.json","sha256":"69c5171ea3c483dd94a912225246ccb38e6e2af55663df3418d5302d8bea0525","size":369,"tracked":false},
+    {"id":"identity-comparison","path":"/tmp/nscscc-component-overlay-71a1995-v1/reports/iterations/20260712-71a1995-identity-mixed/identity-comparison.json","sha256":"75fa08f15f081e5dac73ab27fff39d0665ed0262d16f9e7c9307d88369611742","size":8214,"tracked":false},
+    {"id":"identity-comparison-marker","path":"/tmp/nscscc-component-overlay-71a1995-v1/reports/iterations/20260712-71a1995-identity-mixed/identity-comparison.json.publication.json","sha256":"3f0077c7fc1d20d2aab894e01cc89fbbd3cd089398e9bbc4e415188ae2ac19fb","size":403,"tracked":false}
+  ]
 }
