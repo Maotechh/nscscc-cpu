@@ -4,7 +4,7 @@
   "status": "draft",
   "branch": "refactor/20260711-1533-component-overlay",
   "base_sha": "fec3e1460fb9658329d5221e062c116090ef4d99",
-  "head_sha": "fec3e1460fb9658329d5221e062c116090ef4d99",
+  "head_sha": "322a9e01da06b95b041059cad7c82cdafa881e35",
   "selected_boundary": "component_replacement_overlay",
   "required_gates": [
     "doctor",
@@ -19,8 +19,8 @@
   ],
   "gates": {
     "doctor": {"status":"pending","planned":19,"executed":0,"passed":0,"failed":0,"skipped":19},
-    "automation_tests": {"status":"pending","planned":85,"executed":0,"passed":0,"failed":0,"skipped":85},
-    "contract_tests": {"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":1},
+    "automation_tests": {"status":"pending","planned":131,"executed":0,"passed":0,"failed":0,"skipped":131},
+    "contract_tests": {"status":"pending","planned":24,"executed":0,"passed":0,"failed":0,"skipped":24},
     "scala_check": {"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":1},
     "rtl_static": {"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":1},
     "locked_overlay_regression": {"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":1},
@@ -28,8 +28,17 @@
     "func_smoke_control": {"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":1},
     "claim_review": {"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":1}
   },
+  "development_checks": {
+    "windows_automation": {"status":"pass","planned":131,"executed":131,"passed":123,"failed":0,"skipped":8,"scope":"uncommitted_worktree_only"},
+    "wsl_refactor": {"status":"pass","planned":77,"executed":77,"passed":77,"failed":0,"skipped":0,"scope":"uncommitted_worktree_only"},
+    "wsl_identity_compare": {"status":"pass","planned":24,"executed":24,"passed":24,"failed":0,"skipped":0,"scope":"uncommitted_worktree_only"},
+    "python_compile_and_flake_f": {"status":"pass","scope":"modified_python_files"}
+  },
   "claims": [],
-  "blocked_by": [],
-  "pr": {"status":"awaiting_implementation","url":null,"draft_only":true,"auto_merge":false},
-  "updated_at": "2026-07-11T15:33:00+08:00"
+  "blocked_by": [
+    "source_commit_and_exact_evidence_pending",
+    "claude_bridge_missing_GEEKPIE_CLAUDE_API_KEY"
+  ],
+  "pr": {"status":"awaiting_source_push","url":null,"draft_only":true,"auto_merge":false},
+  "updated_at": "2026-07-12T04:01:58+08:00"
 }

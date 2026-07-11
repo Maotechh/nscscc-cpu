@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import copy
 import json
+import os
+import stat
 import sys
 import tempfile
 import time
@@ -56,6 +58,7 @@ class MakeContractTests(unittest.TestCase):
     SOURCE_HEAD = "b" * 40
     SPEC = "tests/fixtures/component-overlay/identity.json"
     WORK_ROOT = "/tmp/component overlay work"
+    TOOL_ROOT = "/opt/component tools"
 
     def _dry_run(self, *assignments: str) -> refactor.CommandResult:
         return refactor.run_command(
@@ -68,6 +71,22 @@ class MakeContractTests(unittest.TestCase):
                 *assignments,
                 "chiplab-overlay",
                 "rtl-smoke",
+            ],
+            cwd=refactor.REPO_ROOT,
+        )
+
+    def _identity_dry_run(self) -> refactor.CommandResult:
+        return refactor.run_command(
+            [
+                "make",
+                "-n",
+                "OUT_DIR=/tmp/component evidence",
+                "CHIPLAB_REFERENCE=/opt/chiplab-reference",
+                f"CHIPLAB_WORK_ROOT={self.WORK_ROOT}",
+                f"CHIPLAB_TOOL_ROOT={self.TOOL_ROOT}",
+                "LOCKED_ITERATION_ID=locked-control",
+                "MIXED_ITERATION_ID=mixed-control",
+                "identity-compare",
             ],
             cwd=refactor.REPO_ROOT,
         )
@@ -108,6 +127,17 @@ class MakeContractTests(unittest.TestCase):
         self.assertEqual(
             2, result.stdout.count(f'--work-root "{self.WORK_ROOT}"')
         )
+
+    def test_identity_compare_forwards_all_locked_roots_and_ids(self) -> None:
+        result = self._identity_dry_run()
+        self.assertEqual(0, result.exit_code, result.stderr)
+        self.assertIn('--out-dir "/tmp/component evidence"', result.stdout)
+        self.assertIn(f'--work-root "{self.WORK_ROOT}"', result.stdout)
+        self.assertIn('--chiplab-ref "/opt/chiplab-reference"', result.stdout)
+        self.assertIn(f'--tool-root "{self.TOOL_ROOT}"', result.stdout)
+        self.assertIn('--locked-iteration-id "locked-control"', result.stdout)
+        self.assertIn('--mixed-iteration-id "mixed-control"', result.stdout)
+        self.assertNotIn("--output", result.stdout)
 
 
 class SimulationParserTests(unittest.TestCase):
@@ -185,6 +215,158 @@ class GeneratedDirectorySafetyTests(unittest.TestCase):
             )
             with self.assertRaises(refactor.RefactorError):
                 refactor.reset_generated_dir(target, root, "replacement")
+
+
+class AtomicJsonWriteTests(unittest.TestCase):
+    def test_uses_unique_exclusive_regular_temporaries_without_fixed_tmp(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            target = root / "report.json"
+            fixed_temporary = target.with_suffix(target.suffix + ".tmp")
+            fixed_temporary.write_text("do-not-touch\n", encoding="utf-8")
+            observed_names: list[str] = []
+            observed_flags: list[int] = []
+            if os.name == "posix":
+                real_open = os.open
+
+                def observe_open(path: object, flags: int, *args: object, **kwargs: object):
+                    if isinstance(path, str) and path.startswith(f".{target.name}."):
+                        observed_names.append(path)
+                        observed_flags.append(flags)
+                    return real_open(path, flags, *args, **kwargs)
+
+                patcher = mock.patch.object(
+                    refactor.os, "open", side_effect=observe_open
+                )
+            else:
+                real_factory = tempfile.NamedTemporaryFile
+
+                def observe_temporary(*args: object, **kwargs: object):
+                    handle = real_factory(*args, **kwargs)
+                    observed_names.append(Path(handle.name).name)
+                    observed_flags.append(os.O_EXCL)
+                    return handle
+
+                patcher = mock.patch.object(
+                    refactor.tempfile,
+                    "NamedTemporaryFile",
+                    side_effect=observe_temporary,
+                )
+
+            with patcher:
+                refactor.write_json(target, {"generation": 1})
+                refactor.write_json(target, {"generation": 2})
+
+            self.assertEqual({"generation": 2}, json.loads(target.read_text(encoding="utf-8")))
+            self.assertTrue(stat.S_ISREG(target.lstat().st_mode))
+            self.assertFalse(target.is_symlink())
+            self.assertEqual("do-not-touch\n", fixed_temporary.read_text(encoding="utf-8"))
+            self.assertEqual(2, len(observed_names))
+            self.assertEqual(2, len(set(observed_names)))
+            self.assertNotIn(fixed_temporary.name, observed_names)
+            self.assertTrue(all(flags & os.O_EXCL for flags in observed_flags))
+            self.assertFalse(
+                any(
+                    path.name.startswith(f".{target.name}.")
+                    and path.name.endswith(".tmp")
+                    for path in root.iterdir()
+                )
+            )
+
+    def test_rejects_symlink_output_target_when_supported(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            victim = root / "victim.json"
+            victim.write_text('{"unchanged": true}\n', encoding="utf-8")
+            target = root / "report.json"
+            try:
+                target.symlink_to(victim)
+            except (NotImplementedError, OSError) as error:
+                self.skipTest(f"filesystem cannot create a file symlink: {error}")
+
+            with self.assertRaisesRegex(refactor.RefactorError, "symlink or junction"):
+                refactor.write_json(target, {"unchanged": False})
+
+            self.assertEqual('{"unchanged": true}\n', victim.read_text(encoding="utf-8"))
+            self.assertTrue(target.is_symlink())
+
+    def test_rejects_symlink_parent_when_supported(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            real_parent = root / "real-parent"
+            real_parent.mkdir()
+            linked_parent = root / "linked-parent"
+            try:
+                linked_parent.symlink_to(real_parent, target_is_directory=True)
+            except (NotImplementedError, OSError) as error:
+                self.skipTest(f"filesystem cannot create a directory symlink: {error}")
+
+            with self.assertRaisesRegex(refactor.RefactorError, "symlink or junction"):
+                refactor.write_json(linked_parent / "report.json", {"status": "pass"})
+
+            self.assertFalse((real_parent / "report.json").exists())
+
+    def test_checked_out_dir_rejects_symlink_root_when_supported(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            real_output = root / "real-output"
+            real_output.mkdir()
+            linked_output = root / "linked-output"
+            try:
+                linked_output.symlink_to(real_output, target_is_directory=True)
+            except (NotImplementedError, OSError) as error:
+                self.skipTest(f"filesystem cannot create a directory symlink: {error}")
+
+            with self.assertRaisesRegex(refactor.RefactorError, "generated OUT_DIR"):
+                refactor.checked_out_dir(linked_output)
+
+    @unittest.skipUnless(os.name == "posix", "requires POSIX dir_fd rename semantics")
+    def test_parent_swap_cannot_redirect_publication(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            parent = root / "parent"
+            parent.mkdir()
+            moved = root / "moved-parent"
+            external = root / "external"
+            external.mkdir()
+            victim = external / "report.json"
+            victim.write_text("unchanged\n", encoding="utf-8")
+            target = parent / "report.json"
+            real_replace = os.replace
+
+            def swap_parent(*args: object, **kwargs: object) -> None:
+                parent.rename(moved)
+                parent.symlink_to(external, target_is_directory=True)
+                real_replace(*args, **kwargs)
+
+            with mock.patch.object(
+                refactor.os, "replace", side_effect=swap_parent
+            ), self.assertRaisesRegex(refactor.RefactorError, "parent changed"):
+                refactor.write_json(target, {"status": "forged"})
+
+            self.assertEqual("unchanged\n", victim.read_text(encoding="utf-8"))
+            self.assertFalse((moved / "report.json").exists())
+
+    @unittest.skipUnless(os.name == "posix", "requires POSIX directory fsync")
+    def test_directory_fsync_failure_removes_published_report(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            target = Path(temporary) / "report.json"
+            real_fsync = os.fsync
+            calls = 0
+
+            def fail_directory_fsync(descriptor: int) -> None:
+                nonlocal calls
+                calls += 1
+                if calls == 2:
+                    raise OSError("forced directory fsync failure")
+                real_fsync(descriptor)
+
+            with mock.patch.object(
+                refactor.os, "fsync", side_effect=fail_directory_fsync
+            ), self.assertRaisesRegex(OSError, "forced directory fsync failure"):
+                refactor.write_json(target, {"status": "pass"})
+
+            self.assertFalse(target.exists())
 
 
 class GateIntegrityTests(unittest.TestCase):
@@ -318,6 +500,8 @@ class GateIntegrityTests(unittest.TestCase):
             for path in paths:
                 path.parent.mkdir(parents=True, exist_ok=True)
                 path.write_text("fresh\n", encoding="utf-8")
+                fresh_ns = started_ns + 1_000_000_000
+                os.utime(path, ns=(fresh_ns, fresh_ns))
             entries, all_fresh = refactor.fresh_build_artifacts(
                 run_dir, "func/func_lab19", started_ns
             )
@@ -335,7 +519,7 @@ class GateIntegrityTests(unittest.TestCase):
             lock = refactor.acquire_smoke_lock(work, "iteration", "run-one")
             with self.assertRaisesRegex(refactor.RefactorError, "already exists"):
                 refactor.acquire_smoke_lock(work, "iteration", "run-two")
-            lock.unlink()
+            refactor.release_validation_lock(lock)
 
     def test_overlay_and_smoke_share_iteration_lock(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -347,7 +531,132 @@ class GateIntegrityTests(unittest.TestCase):
                 refactor.acquire_iteration_lock(
                     out_dir, "20260711-lock-test", "rtl-smoke", "smoke-run"
                 )
-            lock.unlink()
+            refactor.release_validation_lock(lock)
+
+    def test_old_owner_cannot_remove_replacement_lock(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            out_dir = Path(temporary)
+            old = refactor.acquire_iteration_lock(
+                out_dir, "20260711-lock-owner", "rtl-smoke", "old-run"
+            )
+            try:
+                old.path.unlink()
+            except OSError as error:
+                refactor.abandon_validation_lock(old)
+                self.skipTest(f"filesystem does not permit replacing an open lock: {error}")
+            replacement = refactor.acquire_iteration_lock(
+                out_dir, "20260711-lock-owner", "rtl-smoke", "new-run"
+            )
+            with self.assertRaisesRegex(refactor.RefactorError, "ownership changed"):
+                refactor.release_validation_lock(old)
+            self.assertTrue(replacement.path.is_file())
+            refactor.release_validation_lock(replacement)
+
+    def test_failed_lock_write_removes_only_partial_lock(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            out_dir = Path(temporary)
+            lock_path = (
+                out_dir / ".locks" / "iterations" / "20260711-partial-lock.lock"
+            )
+            with mock.patch.object(
+                refactor, "_write_all", side_effect=OSError("simulated ENOSPC")
+            ), self.assertRaisesRegex(OSError, "simulated ENOSPC"):
+                refactor.acquire_iteration_lock(
+                    out_dir,
+                    "20260711-partial-lock",
+                    "rtl-smoke",
+                    "partial-run",
+                )
+            self.assertFalse(lock_path.exists())
+
+    def test_release_all_continues_after_keyboard_interrupt(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            first = refactor.acquire_iteration_lock(
+                root / "one", "20260712-release-all", "rtl-smoke", "run-one"
+            )
+            second = refactor.acquire_iteration_lock(
+                root / "two", "20260712-release-all", "rtl-smoke", "run-two"
+            )
+            real_release = refactor.release_validation_lock
+            release_count = 0
+
+            def interrupt_after_release(lock: refactor.ValidationLock) -> None:
+                nonlocal release_count
+                release_count += 1
+                real_release(lock)
+                if release_count == 1:
+                    raise KeyboardInterrupt("simulated interrupt")
+
+            with mock.patch.object(
+                refactor,
+                "release_validation_lock",
+                side_effect=interrupt_after_release,
+            ), self.assertRaises(KeyboardInterrupt):
+                refactor.release_validation_locks([first, second])
+
+            self.assertEqual(2, release_count)
+            self.assertFalse(first.path.exists())
+            self.assertFalse(second.path.exists())
+
+    def test_publication_marker_is_required_and_exact(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            iteration_id = "20260712-publication-marker"
+            report_path = refactor.iteration_report_path(
+                root, iteration_id, "rtl-smoke"
+            )
+            report = {
+                "command": "rtl-smoke",
+                "iteration_id": iteration_id,
+                "run_id": "fixture-publication",
+                "status": "pass",
+            }
+            publisher_sha = "a" * 64
+            refactor.write_json(report_path, report)
+            report_sha = refactor.sha256_file(report_path)
+
+            with self.assertRaisesRegex(refactor.RefactorError, "invalid JSON"):
+                refactor.require_report_publication(
+                    report_path,
+                    report,
+                    report_sha,
+                    command="rtl-smoke",
+                    iteration_id=iteration_id,
+                    publication_id="fixture-publication",
+                    publisher_sha256=publisher_sha,
+                )
+
+            marker_path, _ = refactor.write_publication_marker(
+                report_path,
+                report,
+                command="rtl-smoke",
+                iteration_id=iteration_id,
+                publication_id="fixture-publication",
+                publisher_sha256=publisher_sha,
+            )
+            refactor.require_report_publication(
+                report_path,
+                report,
+                report_sha,
+                command="rtl-smoke",
+                iteration_id=iteration_id,
+                publication_id="fixture-publication",
+                publisher_sha256=publisher_sha,
+            )
+            marker = refactor.validate_json_file(marker_path)
+            marker["report_sha256"] = "b" * 64
+            refactor.write_json(marker_path, marker)
+            with self.assertRaisesRegex(refactor.RefactorError, "marker mismatch"):
+                refactor.require_report_publication(
+                    report_path,
+                    report,
+                    report_sha,
+                    command="rtl-smoke",
+                    iteration_id=iteration_id,
+                    publication_id="fixture-publication",
+                    publisher_sha256=publisher_sha,
+                )
 
     def test_validation_roots_must_not_overlap(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -387,6 +696,7 @@ class GateIntegrityTests(unittest.TestCase):
             ), self.assertRaisesRegex(refactor.RefactorError, "intentional failure"):
                 refactor.command_chiplab_overlay(args)
             self.assertFalse(stale.exists())
+            self.assertFalse(refactor.publication_marker_path(stale).exists())
             self.assertFalse(
                 (out_dir / ".locks" / "iterations" / f"{iteration_id}.lock").exists()
             )
@@ -399,6 +709,316 @@ class GateIntegrityTests(unittest.TestCase):
                     / f"{iteration_id}.lock"
                 ).exists()
             )
+
+    def test_overlay_error_after_real_release_keeps_published_report(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            out_dir = root / "out"
+            work_root = root / "work-root"
+            iteration_id = "20260712-overlay-release-test"
+            report_path = refactor.iteration_report_path(
+                out_dir, iteration_id, "chiplab-overlay"
+            )
+            args = SimpleNamespace(
+                out_dir=str(out_dir),
+                work_root=str(work_root),
+                iteration_id=iteration_id,
+            )
+
+            def publish(_: SimpleNamespace, run_id: str) -> int:
+                report = {
+                    "command": "chiplab-overlay",
+                    "status": "pass",
+                    "run_id": run_id,
+                }
+                refactor.write_json(report_path, report)
+                refactor.write_publication_marker(
+                    report_path,
+                    report,
+                    command="chiplab-overlay",
+                    iteration_id=iteration_id,
+                    publication_id=run_id,
+                    publisher_sha256=refactor.sha256_file(Path(refactor.__file__)),
+                )
+                return 0
+
+            real_release = refactor.release_validation_lock
+            release_count = 0
+
+            def release_then_fail_once(lock: refactor.ValidationLock) -> None:
+                nonlocal release_count
+                release_count += 1
+                real_release(lock)
+                if release_count == 1:
+                    raise refactor.RefactorError("simulated overlay release failure")
+
+            printer = mock.Mock()
+            with mock.patch.object(
+                refactor, "_command_chiplab_overlay_locked", side_effect=publish
+            ), mock.patch.object(
+                refactor,
+                "release_validation_lock",
+                side_effect=release_then_fail_once,
+            ), mock.patch.object(
+                refactor, "print_report", printer
+            ), self.assertRaisesRegex(refactor.RefactorError, "validation lock release failed"):
+                refactor.command_chiplab_overlay(args)
+
+            self.assertEqual(2, release_count)
+            self.assertTrue(report_path.is_file())
+            self.assertTrue(refactor.publication_marker_path(report_path).is_file())
+            printer.assert_not_called()
+            for root_path in (out_dir, work_root):
+                self.assertFalse(
+                    (
+                        root_path
+                        / ".locks"
+                        / "iterations"
+                        / f"{iteration_id}.lock"
+                    ).exists()
+                )
+
+    def test_smoke_error_after_real_release_keeps_published_report(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            out_dir = root / "out"
+            work_root = root / "work-root"
+            iteration_id = "20260712-smoke-release-test"
+            report_path = refactor.iteration_report_path(
+                out_dir, iteration_id, "rtl-smoke"
+            )
+            args = SimpleNamespace(
+                out_dir=str(out_dir),
+                work_root=str(work_root),
+                iteration_id=iteration_id,
+            )
+
+            def publish(_: SimpleNamespace) -> int:
+                report = {
+                    "command": "rtl-smoke",
+                    "status": "pass",
+                    "run_id": "fixture-smoke",
+                }
+                refactor.write_json(report_path, report)
+                refactor.write_publication_marker(
+                    report_path,
+                    report,
+                    command="rtl-smoke",
+                    iteration_id=iteration_id,
+                    publication_id="fixture-smoke",
+                    publisher_sha256=refactor.sha256_file(Path(refactor.__file__)),
+                )
+                return 0
+
+            real_release = refactor.release_validation_lock
+            release_count = 0
+
+            def release_then_fail_once(lock: refactor.ValidationLock) -> None:
+                nonlocal release_count
+                release_count += 1
+                real_release(lock)
+                if release_count == 1:
+                    raise refactor.RefactorError("simulated smoke release failure")
+
+            printer = mock.Mock()
+            with mock.patch.object(
+                refactor, "_command_rtl_smoke_locked", side_effect=publish
+            ), mock.patch.object(
+                refactor,
+                "release_validation_lock",
+                side_effect=release_then_fail_once,
+            ), mock.patch.object(
+                refactor, "print_report", printer
+            ), self.assertRaisesRegex(refactor.RefactorError, "validation lock release failed"):
+                refactor.command_rtl_smoke(args)
+
+            self.assertEqual(2, release_count)
+            self.assertTrue(report_path.is_file())
+            self.assertTrue(refactor.publication_marker_path(report_path).is_file())
+            printer.assert_not_called()
+            for root_path in (out_dir, work_root):
+                self.assertFalse(
+                    (
+                        root_path
+                        / ".locks"
+                        / "iterations"
+                        / f"{iteration_id}.lock"
+                    ).exists()
+                )
+
+    def test_overlay_binding_failure_cannot_publish_success_report(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            out_dir = root / "out"
+            work_root = root / "work-root"
+            chiplab_ref = root / "chiplab-reference"
+            tool_root = root / "tools"
+            iteration_id = "20260712-overlay-binding-test"
+            chiplab_commit = "a" * 40
+            mycpu_commit = "b" * 40
+            (chiplab_ref / "IP" / "myCPU").mkdir(parents=True)
+            for path in (
+                tool_root
+                / "loongson-gnu-toolchain-8.3-x86_64-loongarch32r-linux-gnusf-v2.0",
+                tool_root / "nemu",
+                tool_root / "picolibc",
+            ):
+                path.mkdir(parents=True)
+            overlay_report = refactor.iteration_report_path(
+                out_dir, iteration_id, "chiplab-overlay"
+            )
+            refactor.write_json(
+                overlay_report, {"status": "pass", "gate_eligible": True}
+            )
+            work = work_root / iteration_id
+            written_paths: list[Path] = []
+
+            def fake_write_json(path: Path, value: object) -> None:
+                output = Path(path)
+                output.parent.mkdir(parents=True, exist_ok=True)
+                output.write_text(
+                    json.dumps(value, ensure_ascii=False, indent=2, sort_keys=True)
+                    + "\n",
+                    encoding="utf-8",
+                    newline="\n",
+                )
+                written_paths.append(output)
+
+            def fake_reset_generated_dir(
+                path: Path, allowed_root: Path, purpose: str
+            ) -> None:
+                self.assertEqual(work, Path(path))
+                self.assertEqual(work_root, Path(allowed_root))
+                Path(path).mkdir(parents=True)
+                (Path(path) / refactor.GENERATED_MARKER).write_text(
+                    json.dumps(
+                        {
+                            "schema_version": 1,
+                            "purpose": purpose,
+                            "resolved_path": str(Path(path)),
+                        }
+                    ),
+                    encoding="utf-8",
+                )
+
+            def fake_run_command(
+                command: list[str], **kwargs: object
+            ) -> refactor.CommandResult:
+                self.assertEqual(["git", "clone"], [str(item) for item in command[:2]])
+                mycpu = work / "IP" / "myCPU"
+                mycpu.mkdir(parents=True)
+                (mycpu / "mycpu_top.v").write_text(
+                    "module core_top; endmodule\n", encoding="utf-8"
+                )
+                (mycpu / "mycpu.h").write_text("// header\n", encoding="utf-8")
+                (mycpu / "LICENSE").write_text("license\n", encoding="utf-8")
+                return refactor.CommandResult(
+                    [str(item) for item in command],
+                    str(kwargs["cwd"]),
+                    0,
+                    0.01,
+                    "",
+                    "",
+                )
+
+            def fake_git_text(command: list[str], *, cwd: Path = refactor.REPO_ROOT) -> str:
+                if command == ["status", "--porcelain=v1"]:
+                    return ""
+                if command == ["rev-parse", "HEAD"]:
+                    return (
+                        mycpu_commit
+                        if Path(cwd) == chiplab_ref / "IP" / "myCPU"
+                        else chiplab_commit
+                    )
+                if command == ["rev-parse", "HEAD^{tree}"]:
+                    return "c" * 40
+                self.fail(f"unexpected git_text call: {command} cwd={cwd}")
+
+            args = SimpleNamespace(
+                out_dir=str(out_dir),
+                iteration_id=iteration_id,
+                work_root=str(work_root),
+                chiplab_ref=str(chiplab_ref),
+                tool_root=str(tool_root),
+                dut_source="official",
+                diagnostic=True,
+                replacement_spec=None,
+                source_head=None,
+                candidate_commit=None,
+                doctor_max_age_seconds=3600,
+            )
+            manifest = {
+                "chiplab_commit": chiplab_commit,
+                "chiplab_mycpu_gitlink": mycpu_commit,
+            }
+            success = refactor.CommandResult([], str(root), 0, 0.01, "", "")
+            verifier_failure = refactor.RefactorError(
+                "intentional DUT binding verification failure"
+            )
+            print_report = mock.Mock()
+            real_is_symlink = Path.is_symlink
+
+            def fake_is_symlink(path: Path) -> bool:
+                candidate = Path(path)
+                return (
+                    "toolchains" in candidate.parts
+                    or candidate.as_posix().endswith(
+                        "software/examples/func/func_lab19/Makefile"
+                    )
+                    or real_is_symlink(candidate)
+                )
+
+            with mock.patch.object(
+                refactor, "os", SimpleNamespace(name="posix")
+            ), mock.patch.object(
+                refactor, "parse_lock", return_value=manifest
+            ), mock.patch.object(
+                refactor, "filesystem_type", return_value="ext4"
+            ), mock.patch.object(
+                refactor, "require_passing_chiplab_doctor",
+                return_value=(
+                    root / "doctor.json",
+                    {"generated_at": "2026-07-12T00:00:00+08:00"},
+                    "d" * 64,
+                ),
+            ), mock.patch.object(
+                refactor, "require_tool_fingerprints", return_value={}
+            ), mock.patch.object(
+                refactor, "reset_generated_dir", side_effect=fake_reset_generated_dir
+            ), mock.patch.object(
+                refactor, "run_command", side_effect=fake_run_command
+            ), mock.patch.object(
+                refactor, "git", return_value=success
+            ), mock.patch.object(
+                refactor, "git_text", side_effect=fake_git_text
+            ), mock.patch.object(
+                refactor, "ensure_symlink"
+            ), mock.patch.object(
+                refactor, "official_workspace_fingerprint", return_value={}
+            ), mock.patch.object(
+                refactor,
+                "verify_dut_source_bindings",
+                side_effect=[None, verifier_failure],
+            ) as verifier, mock.patch.object(
+                refactor, "write_json", side_effect=fake_write_json
+            ), mock.patch.object(
+                Path, "is_symlink", side_effect=fake_is_symlink, autospec=True
+            ), mock.patch.object(
+                refactor, "print_report", print_report
+            ), self.assertRaisesRegex(
+                refactor.RefactorError, "intentional DUT binding verification failure"
+            ):
+                refactor._command_chiplab_overlay_locked(args, "fixture-overlay-run")
+
+            manifest_path = refactor.iteration_report_path(
+                out_dir, iteration_id, "chiplab-overlay-manifest"
+            )
+            self.assertEqual(2, verifier.call_count)
+            self.assertIn(manifest_path, written_paths)
+            self.assertIn(work / ".refactor-overlay.json", written_paths)
+            self.assertNotIn(overlay_report, written_paths)
+            self.assertFalse(overlay_report.exists())
+            print_report.assert_not_called()
 
     def test_smoke_cleanup_removes_every_reusable_artifact(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -413,6 +1033,7 @@ class GateIntegrityTests(unittest.TestCase):
                 run_dir / "log" / "func" / "func_lab19_log" / "simu_trace.txt",
                 run_dir / "log" / "compile.log",
                 run_dir / "config-software.mak",
+                run_dir / "config.log",
             ]
             for path in paths:
                 path.parent.mkdir(parents=True, exist_ok=True)
@@ -420,8 +1041,40 @@ class GateIntegrityTests(unittest.TestCase):
             removed = refactor.clean_smoke_generated_paths(
                 work, run_dir, "func/func_lab19"
             )
-            self.assertEqual(8, len(removed))
+            self.assertEqual(9, len(removed))
             self.assertTrue(all(not path.exists() for path in paths))
+
+    def test_post_smoke_integrity_allows_only_declared_generated_paths(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            work = Path(temporary)
+            (work / "source.txt").write_text("locked\n", encoding="utf-8")
+            exclusions = refactor.smoke_generated_relative_paths(
+                refactor.LOCKED_SMOKE_CASE
+            )
+            expected = refactor.official_workspace_fingerprint(
+                work, extra_excluded_paths=exclusions
+            )
+            for relative in exclusions:
+                generated = work / Path(relative)
+                if generated.suffix or generated.name in {"output", "config-software.mak"}:
+                    generated.parent.mkdir(parents=True, exist_ok=True)
+                    generated.write_text("generated\n", encoding="utf-8")
+                else:
+                    generated.mkdir(parents=True, exist_ok=True)
+                    (generated / "generated.bin").write_bytes(b"generated\n")
+            (work / ".rtl-smoke.lock").write_text("{}\n", encoding="utf-8")
+            clean = refactor.CommandResult(["git"], str(work), 0, 0.01, "", "")
+            with mock.patch.object(refactor, "git", return_value=clean):
+                refactor.require_post_smoke_official_integrity(
+                    work, expected, refactor.LOCKED_SMOKE_CASE
+                )
+                (work / "unexpected.bin").write_bytes(b"unexpected\n")
+                with self.assertRaisesRegex(
+                    refactor.RefactorError, "outside the smoke generated-path contract"
+                ):
+                    refactor.require_post_smoke_official_integrity(
+                        work, expected, refactor.LOCKED_SMOKE_CASE
+                    )
 
     def test_rtl_smoke_never_simulates_when_tee_hides_verilator_error(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -466,6 +1119,8 @@ class GateIntegrityTests(unittest.TestCase):
                     compile_log.write_text(
                         "%Error-WIDTH: build failed but tee returned zero\n", encoding="utf-8"
                     )
+                    fresh_ns = time.time_ns() + 1_000_000_000
+                    os.utime(compile_log, ns=(fresh_ns, fresh_ns))
                 else:
                     self.fail(f"unexpected simulation call: {argv}")
                 return refactor.CommandResult(argv, str(run_dir), 0, 0.01, "", "")
@@ -500,6 +1155,8 @@ class GateIntegrityTests(unittest.TestCase):
                 refactor, "run_command", side_effect=fake_run
             ), mock.patch.object(
                 refactor, "verify_dut_source_bindings"
+            ), mock.patch.object(
+                refactor, "require_post_smoke_official_integrity"
             ), mock.patch.object(refactor, "print_report"):
                 self.assertEqual(1, refactor.command_rtl_smoke(args))
 
@@ -568,6 +1225,17 @@ class OverlayIntegrityTests(unittest.TestCase):
                 "module extra; endmodule\n", encoding="utf-8"
             )
             with self.assertRaises(refactor.RefactorError):
+                refactor.verify_overlay_files(work, overlay)
+
+    def test_unlisted_systemverilog_header_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            work, overlay, _ = self._fixture(Path(temporary))
+            (work / "IP" / "myCPU" / "evil.svh").write_text(
+                "`define FORGED_ORACLE 1\n", encoding="utf-8"
+            )
+            with self.assertRaisesRegex(
+                refactor.RefactorError, "unexpected or missing DUT HDL"
+            ):
                 refactor.verify_overlay_files(work, overlay)
 
     def test_nested_unlisted_rtl_is_rejected(self) -> None:

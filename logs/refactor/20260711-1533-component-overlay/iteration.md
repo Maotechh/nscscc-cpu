@@ -2,7 +2,8 @@
 
 - 状态：`draft`
 - 分支：`refactor/20260711-1533-component-overlay`
-- Base / 当前 HEAD：`fec3e1460fb9658329d5221e062c116090ef4d99`
+- Base：`fec3e1460fb9658329d5221e062c116090ef4d99`
+- 日志更新时 HEAD：`322a9e01da06b95b041059cad7c82cdafa881e35`（待形成新的 source commit）
 - Owner / Agent：Codex
 - 目标边界：`component_replacement_overlay`
 
@@ -30,11 +31,17 @@ baseline 迭代证明当前 locked `a158aa8` 在 `func_lab19` 失败。准备修
 - 本轮不会用修改 `reference/manifest.lock`、复制完整旧 RTL 或放宽 `candidate_locked` 作为捷径。
 - 第一轮单测为 `57/59 PASS`：旧 overlay fixture 缺少新 `path` 字段；补齐 schema 后恢复通过。
 - 独立只读审核发现并修复：嵌套 RTL/同名错位路径、diagnostic provenance 绕过、report projection、重复 JSON key/布尔 schema、空 doctor checks、doctor 解析/哈希竞态、不同 OUT_DIR 共享 worktree 并发 reset、post-run DUT 漂移及 Verilog 外部文件/DPI 依赖。
-- 开发态最新单测为 `85/85 PASS`，但这不是 clean committed HEAD 的最终 evidence；正式计数仍在 `summary.json` 中保持 pending。
+- 旧 `322a9e0` exact evidence 经复核后发现比较器仍可能接受空/空哈希证据、未复算物理 artifact/raw log，并存在 warning tuple key collision；该 evidence 已明确作废，不用于最终 claim。
+- 加固过程中真实触发并修复：固定 `.tmp` symlink 风险、父目录替换 TOCTOU、目录 fsync 失败后残留 PASS、旧锁持有者删除新锁、半写锁、比较输出在取得锁前被并发删除、post-smoke 错用 pristine workspace 指纹，以及 release 后撤销 report 会删除后继输出的竞态。最终采用锁内 publication marker；裸 report 不再算证据，释放后不再按路径撤销。
+- post-smoke 合同现在只排除九个固定生成路径和 `.rtl-smoke.lock` 控制文件。把遗漏的 `config.log` 加入后，对旧真实 locked/mixed worktree 与只读 reference 的复算均为同一 `1535` entries、SHA256 `a089db6e8f4fc1cffdfc46d4f76b1233b1004c127a87b03a3feac0ca35eb26b8`；这只验证过滤边界，不恢复旧 evidence 的有效性。
+- 最终开发态检查发现 131 项 Windows 自动化测试，其中 123 项通过、8 项因平台/权限条件跳过；WSL 实际执行 `test_refactor 77/77 PASS` 与 identity comparator `24/24 PASS`，没有 skip。WSL symlink、parent-swap、directory-fsync、lock replacement 场景均实际执行；Windows 路径覆盖祖先目录 handle 与 lock handle 删除。Python compile、`flake8 --select=F` 和 `git diff --check` 通过。
+- 新增负测证明：物理 `compile.log` 隐藏 error、两侧共同伪造 warning PASS、共同加入 oracle bypass 字段、缺失/篡改 publication marker、部分获取锁后的回滚释放失败和 `KeyboardInterrupt` 都会失败。模拟“锁已实际释放后再抛错”时，命令返回错误且不输出 PASS，但不再竞态删除已经 marker-bound 的报告。
+- Claude bridge 两次均在模型启动前失败：第一次 backend 不允许 reviewer tools，第二次缺少 `GEEKPIE_CLAUDE_API_KEY`。原始终态已保存，不能称为 Claude 审核；独立 Codex 复审仅作为降级检查。
+- 以上仍不是 clean committed HEAD 的最终 evidence；正式 gate 在 `summary.json` 中保持 pending。
 
 ## 当前门禁
 
-实现和开发态单测已完成，真实 locked/mixed chiplab overlay、Scala、官方 smoke、独立 rtl-static/Yosys 和 claim review 尚未在 clean source commit 上执行。所有正式门禁仍保持 pending，不能形成 PASS claim。
+实现和跨主机开发态单测已完成，真实 locked/mixed chiplab overlay、Scala、官方 smoke、独立 rtl-static/Yosys 尚未在新的 clean source commit 上执行；Claude claim review 为 `unavailable`。所有正式门禁仍保持 pending，不能形成 PASS claim。
 
 ## 回退
 
@@ -42,4 +49,4 @@ baseline 迭代证明当前 locked `a158aa8` 在 `func_lab19` 失败。准备修
 
 ## 下一步
 
-形成 source commit 后，在 clean HEAD 上运行 doctor、85 项自动化测试、Scala、locked candidate overlay 与等字节 ALU mixed overlay；随后执行官方 diagnostic smoke、独立审核和证据提交。
+形成并立即推送 source commit 后，在 clean HEAD 上运行 doctor、自动化测试、Scala、locked candidate overlay 与等字节 ALU mixed overlay；随后执行官方 diagnostic smoke、最新 experiment-audit/claim review 和证据提交。证据齐全前不武断创建 PR，任何 PR 仍只能是 Draft，代理不合并 `main`。

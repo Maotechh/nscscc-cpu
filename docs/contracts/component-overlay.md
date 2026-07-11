@@ -22,7 +22,7 @@
 3. `--source-head` 必须是完整 40 位 SHA，并且逐字等于当前 HEAD；入口与写 manifest 前各复验一次。
 4. spec 与 replacement source 必须都是该 source HEAD 中的普通 Git blob；不读取或回退到未提交工作树内容。staged、untracked、文件模式以及忽略且仅忽略行尾 CR 后仍存在的 diff 均失败；行尾空格不是可忽略差异。Windows/WSL 对同一 checkout 的纯 CRLF 物化差异允许通过，但 manifest 必须分别记录真实 `worktree_porcelain_clean`、`worktree_semantic_clean`、原始 status 条目数和 `worktree_eol_normalization_only`，且 replacement payload 仍只读取已提交 Git blob。
 5. 任一失败在开始时删除同 iteration 的旧 overlay report，不能留下可复用的旧 diagnostic/PASS。
-6. overlay 与 smoke 必须使用同一 Linux `CHIPLAB_WORK_ROOT`。两者同时获取 `OUT_DIR` 和 work root 下的 iteration lock；任一活动命令存在时，另一命令不得 reset 或消费同一 DUT。
+6. overlay 与 smoke 必须使用同一 Linux `CHIPLAB_WORK_ROOT`。两者同时获取 `OUT_DIR` 和 work root 下的 iteration lock；任一活动命令存在时，另一命令不得 reset 或消费同一 DUT。锁持有者保留打开的文件描述符，释放时必须核对 inode/file identity、iteration、operation 与 run id；旧持有者不得删除后来者的锁，半写锁只能由原持有者清理。正常 producer/consumer 都必须遵守这些协作锁；同用户恶意进程绕过锁实施路径替换不属于本合同保证的威胁模型。
 7. `OUT_DIR` 与 `CHIPLAB_WORK_ROOT` 必须是互不相同、互非祖先/后代的目录；在创建锁或 reset worktree 前检查，拒绝证据目录与可删除工作区发生别名。
 
 统一 Make 入口示例（在 WSL/Linux 中执行）：
@@ -50,9 +50,9 @@ make rtl-smoke \
   DIAGNOSTIC=1
 ```
 
-doctor、overlay、smoke 必须共用 `OUT_DIR`；doctor 与 overlay 必须共用 `CHIPLAB_REFERENCE`；overlay 与 smoke 必须共用 `CHIPLAB_WORK_ROOT` 和 `ITERATION_ID`。`DIAGNOSTIC` 只接受空、`0` 或 `1`。spec、replacement 和 evaluator 提交后工作树必须 clean，再运行 doctor/overlay/smoke。
+doctor、overlay、smoke 必须共用 `OUT_DIR`；doctor 与 overlay 必须共用 `CHIPLAB_REFERENCE`；overlay 与 smoke 必须共用 `CHIPLAB_WORK_ROOT` 和 `ITERATION_ID`。`DIAGNOSTIC` 只接受空、`0` 或 `1`。spec、replacement 和 evaluator 必须已提交，并满足规则 4 的 semantic-clean/CRLF-only 合同，再运行 doctor/overlay/smoke。
 
-若进程被 `SIGKILL` 或机器断电，fail-closed lock 文件可能保留。只能在人工核对记录的 PID 已不存在且没有 overlay/smoke 进程后删除对应 `.locks/iterations/<iteration-id>.lock`；不得由脚本按时间自动清锁。
+若进程被 `SIGKILL` 或机器断电，fail-closed lock 文件可能保留。只能在人工核对记录的 PID 已不存在且没有 overlay/smoke 进程后删除对应 `.locks/iterations/<iteration-id>.lock`；同时删除该未完成命令对应的 `*.publication.json`，不得由脚本按时间自动清锁。
 
 ## Spec schema
 
@@ -89,6 +89,8 @@ doctor、overlay、smoke 必须共用 `OUT_DIR`；doctor 与 overlay 必须共�
 6. overlay/smoke verifier 重新从 Git 读取 base/spec/replacement blob，并同时核对 report、marker、物理文件的 SHA256/size；仅让 manifest 与物理文件一起自洽不构成通过。
 7. replacement source commit、spec commit 或当前 HEAD 改变后，旧 overlay 必须拒绝。
 8. smoke 在构建和仿真结束后再次核对 DUT exact union、Git blob provenance、marker 与 overlay report；post-run 复验失败时不得生成可消费的结果报告。
+9. overlay 同时记录 pristine official workspace 指纹，以及排除固定 smoke 生成路径后的 post-smoke 指纹。后者只排除 `obj_dir`、simulator `output/tmp`、本用例 software obj、compile log、两份 configure 输出与本用例 log 这九个路径及 `.rtl-smoke.lock` 控制文件；其他 tracked/untracked official 文件变化仍失败。不得复用 pristine 指纹直接判断已运行过 smoke 的工作区。
+10. 结构化 JSON 通过同目录临时普通文件原子写入。POSIX 使用已验证 directory fd 的相对 open/replace，Windows 在写入期间持有禁止 delete/rename 的目录 handle。producer 在全部协作锁内先删除旧 report/marker，再写 report，最后原子写 `<report>.publication.json`；marker 精确绑定 operation、iteration、run id、report SHA256 和 publisher SHA256。consumer 必须先取得同一组协作锁并通过 marker helper 读取；缺 marker、marker 不匹配或仅有裸 PASS JSON 均不是证据。锁释放失败后不再按路径撤销已发布文件：残留锁会阻止消费；若底层锁已实际全部释放后才报告异常，marker/report 仍保持自洽，但调用命令的非零退出仍必须记录。
 
 ## Claim 与状态
 
@@ -114,11 +116,14 @@ gate_eligible=false
 ```bash
 make identity-compare \
   OUT_DIR=<shared-output> \
+  CHIPLAB_WORK_ROOT=<shared-work-root> \
+  CHIPLAB_REFERENCE=<locked-reference> \
+  CHIPLAB_TOOL_ROOT=<locked-tool-root> \
   LOCKED_ITERATION_ID=<locked-id> \
   MIXED_ITERATION_ID=<mixed-id>
 ```
 
-比较器单次读取并哈希 locked/mixed 的 overlay report、overlay manifest 和 `rtl-smoke` report，核对两侧 provenance 形状、report/manifest/post-run 哈希链、DUT 文件投影、support/tool 绑定、identity replacement、测试用 ELF/ROM、parser、trace/UART 和 warning 计数。输入/schema 错误必须删除旧输出并返回 2；比较不一致写 `status=fail` 后返回 1；全部一致才返回 0。
+比较器按固定路径读取并哈希 locked/mixed 的 overlay report、overlay manifest 和 `rtl-smoke` report。执行期间按 iteration id 排序，先同时持有两侧 `OUT_DIR` 与 `CHIPLAB_WORK_ROOT` 锁，再清理自己的旧输出；并发命令已有的 comparison report 不得在锁冲突前被删除。部分获取失败时也必须逐把尝试释放所有已取得的锁。它只接受 marker 已发布的 overlay/smoke report，重新运行当前 doctor/source/Git blob/post-smoke workspace 绑定检查，逐个复算 `run_prog` 下九个精确 canonical artifact 和三份 canonical raw log，并从 raw log 重新解析 build error、warning 与仿真结果。环境、单用例 counts、未执行 rtl-static 的固定披露、oracle role 和 result-file policy 也必须匹配官方 wrapper 语义，不能两侧一起伪造后通过。发布前再次核对六份输入 JSON 和当前运行时锚点未变化。输出只能写入 mixed iteration 的 `identity-comparison.json`，不接受任意输出路径；`OUT_DIR`、目标或父目录为 symlink/junction 时失败且不得触碰其指向对象。输入/schema/物理证据错误必须在仍持锁时删除本命令的 report/marker 并返回 2；比较不一致写 `status=fail` 后返回 1；全部一致才返回 0。identity 输出本身也必须有匹配的 publication marker；锁释放异常返回 2，但不在释放后执行有竞态的路径删除。
 
 比较结果固定 `gate_eligible=false`，只允许声明“指定用例的 manifest-bound DUT/测试输入投影与选定观测证据一致”。`Vsimu_top__ALL.a`、simulator `output`、编译/仿真日志、绝对路径、run id、时间戳和耗时不属于 identity claim；这些字段不同不得被隐藏，也不得据此宣称整个构建字节可复现、CPU PASS 或 RTL 形式等价。
 

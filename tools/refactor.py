@@ -13,8 +13,10 @@ import json
 import os
 import platform
 import re
+import secrets
 import signal
 import shutil
+import stat
 import subprocess
 import sys
 import tempfile
@@ -139,6 +141,20 @@ class CommandResult:
 
 
 @dataclass(frozen=True)
+class ValidationLock:
+    path: Path
+    iteration_id: str
+    operation: str
+    run_id: str
+    descriptor: int
+    device: int
+    inode: int
+
+    def __str__(self) -> str:
+        return str(self.path)
+
+
+@dataclass(frozen=True)
 class ComponentReplacement:
     target: str
     source: str
@@ -213,12 +229,182 @@ def sha256_file(path: Path) -> str:
     return digest.hexdigest()
 
 
+def json_payload(value: Any) -> bytes:
+    return (json.dumps(value, ensure_ascii=False, indent=2, sort_keys=True) + "\n").encode(
+        "utf-8"
+    )
+
+
+def json_sha256(value: Any) -> str:
+    return sha256_bytes(json_payload(value))
+
+
 def write_json(path: Path, value: Any) -> None:
+    path = Path(path).absolute()
+    reject_link_or_reparse_path(path, "JSON output")
     path.parent.mkdir(parents=True, exist_ok=True)
-    payload = json.dumps(value, ensure_ascii=False, indent=2, sort_keys=True) + "\n"
-    temporary = path.with_suffix(path.suffix + ".tmp")
-    temporary.write_text(payload, encoding="utf-8", newline="\n")
-    temporary.replace(path)
+    reject_link_or_reparse_path(path, "JSON output")
+    payload = json_payload(value)
+    if os.name == "posix":
+        _write_json_posix(path, payload)
+    else:
+        _write_json_windows(path, payload)
+
+
+def _same_file_identity(left: os.stat_result, right: os.stat_result) -> bool:
+    return (left.st_dev, left.st_ino) == (right.st_dev, right.st_ino)
+
+
+def _write_json_posix(path: Path, payload: bytes) -> None:
+    parent_flags = os.O_RDONLY | getattr(os, "O_DIRECTORY", 0) | getattr(os, "O_NOFOLLOW", 0)
+    parent_fd = os.open(path.parent, parent_flags)
+    temporary_name = f".{path.name}.{os.getpid()}.{secrets.token_hex(12)}.tmp"
+    published = False
+    try:
+        parent_identity = os.fstat(parent_fd)
+        path_identity = os.stat(path.parent, follow_symlinks=False)
+        if not _same_file_identity(parent_identity, path_identity):
+            raise RefactorError(f"JSON output parent changed before publication: {path.parent}")
+        try:
+            target = os.stat(path.name, dir_fd=parent_fd, follow_symlinks=False)
+        except FileNotFoundError:
+            target = None
+        if target is not None and not stat.S_ISREG(target.st_mode):
+            raise RefactorError(f"JSON output must be a regular file: {path}")
+        descriptor = os.open(
+            temporary_name,
+            os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_NOFOLLOW", 0),
+            0o600,
+            dir_fd=parent_fd,
+        )
+        try:
+            with os.fdopen(descriptor, "wb", closefd=True) as stream:
+                stream.write(payload)
+                stream.flush()
+                os.fsync(stream.fileno())
+        except BaseException:
+            try:
+                os.close(descriptor)
+            except OSError:
+                pass
+            raise
+        current_parent = os.stat(path.parent, follow_symlinks=False)
+        if not _same_file_identity(parent_identity, current_parent):
+            raise RefactorError(f"JSON output parent changed before publication: {path.parent}")
+        os.replace(
+            temporary_name,
+            path.name,
+            src_dir_fd=parent_fd,
+            dst_dir_fd=parent_fd,
+        )
+        published = True
+        try:
+            current_parent = os.stat(path.parent, follow_symlinks=False)
+            if not _same_file_identity(parent_identity, current_parent):
+                raise RefactorError(
+                    f"JSON output parent changed during publication: {path.parent}"
+                )
+            os.fsync(parent_fd)
+        except BaseException:
+            try:
+                os.unlink(path.name, dir_fd=parent_fd)
+                published = False
+                os.fsync(parent_fd)
+            except OSError:
+                pass
+            raise
+    finally:
+        if not published:
+            try:
+                os.unlink(temporary_name, dir_fd=parent_fd)
+            except FileNotFoundError:
+                pass
+        os.close(parent_fd)
+
+
+def _write_json_windows(path: Path, payload: bytes) -> None:
+    import ctypes
+    from ctypes import wintypes
+
+    kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+    create_file = kernel32.CreateFileW
+    create_file.argtypes = (
+        wintypes.LPCWSTR,
+        wintypes.DWORD,
+        wintypes.DWORD,
+        wintypes.LPVOID,
+        wintypes.DWORD,
+        wintypes.DWORD,
+        wintypes.HANDLE,
+    )
+    create_file.restype = wintypes.HANDLE
+    close_handle = kernel32.CloseHandle
+    close_handle.argtypes = (wintypes.HANDLE,)
+    close_handle.restype = wintypes.BOOL
+    candidates = list(reversed([path.parent, *path.parent.parents]))
+    initial_identities = {
+        candidate: candidate.stat(follow_symlinks=False) for candidate in candidates
+    }
+    directory_handles: list[int] = []
+    try:
+        for candidate in candidates:
+            directory_handle = create_file(
+                str(candidate),
+                0x0080,
+                0x00000001 | 0x00000002,
+                None,
+                3,
+                0x02000000 | 0x00200000,
+                None,
+            )
+            if directory_handle == wintypes.HANDLE(-1).value:
+                raise ctypes.WinError(ctypes.get_last_error())
+            directory_handles.append(directory_handle)
+        reject_link_or_reparse_path(path, "JSON output")
+        for candidate, initial_identity in initial_identities.items():
+            current_identity = candidate.stat(follow_symlinks=False)
+            if not _same_file_identity(initial_identity, current_identity):
+                raise RefactorError(
+                    f"JSON output ancestor changed before publication: {candidate}"
+                )
+        handle = tempfile.NamedTemporaryFile(
+            mode="wb",
+            prefix=f".{path.name}.",
+            suffix=".tmp",
+            dir=path.parent,
+            delete=False,
+        )
+        temporary = Path(handle.name)
+        with handle:
+            handle.write(payload)
+            handle.flush()
+            os.fsync(handle.fileno())
+        reject_link_or_reparse_path(path, "JSON output")
+        for candidate, initial_identity in initial_identities.items():
+            current_identity = candidate.stat(follow_symlinks=False)
+            if not _same_file_identity(initial_identity, current_identity):
+                raise RefactorError(
+                    f"JSON output ancestor changed during publication: {candidate}"
+                )
+        os.replace(temporary, path)
+    finally:
+        if "temporary" in locals():
+            temporary.unlink(missing_ok=True)
+        for directory_handle in reversed(directory_handles):
+            close_handle(directory_handle)
+
+
+def reject_link_or_reparse_path(path: Path, context: str) -> None:
+    """Reject existing symlink/junction components without resolving the target."""
+
+    absolute = Path(path).absolute()
+    candidates = [absolute, *absolute.parents]
+    for candidate in reversed(candidates):
+        is_junction = bool(
+            hasattr(candidate, "is_junction") and candidate.is_junction()
+        )
+        if candidate.is_symlink() or is_junction:
+            raise RefactorError(f"{context} must not contain a symlink or junction: {candidate}")
 
 
 def strict_json_loads(payload: str, context: str) -> Any:
@@ -317,7 +503,7 @@ def run_command(
             stdout=stdout,
             stderr=stderr,
         )
-    except subprocess.TimeoutExpired as error:
+    except subprocess.TimeoutExpired:
         if os.name == "posix":
             os.killpg(process.pid, signal.SIGTERM)
         else:
@@ -787,7 +973,9 @@ def report_path(out_dir: Path, name: str) -> Path:
 
 def checked_out_dir(value: str | Path) -> Path:
     """Allow generated output outside the repo or below the repo's build/ only."""
-    path = Path(value).resolve()
+    requested = Path(value).absolute()
+    reject_link_or_reparse_path(requested, "generated OUT_DIR")
+    path = requested.resolve()
     try:
         relative = path.relative_to(REPO_ROOT)
     except ValueError:
@@ -797,6 +985,7 @@ def checked_out_dir(value: str | Path) -> Path:
             f"generated OUT_DIR inside the repository must be below {REPO_ROOT / 'build'}: {path}"
         )
     path.mkdir(parents=True, exist_ok=True)
+    reject_link_or_reparse_path(path, "generated OUT_DIR")
     return path
 
 
@@ -825,6 +1014,106 @@ def vivado_version_matches(text: str, manifest: dict[str, str]) -> bool:
 
 def iteration_report_path(out_dir: Path, iteration_id: str, name: str) -> Path:
     return out_dir / "reports" / "iterations" / checked_iteration_id(iteration_id) / f"{name}.json"
+
+
+def publication_marker_path(report_path: Path) -> Path:
+    report_path = Path(report_path).absolute()
+    return report_path.with_name(f"{report_path.name}.publication.json")
+
+
+def checked_publication_id(value: str) -> str:
+    if not isinstance(value, str) or not ITERATION_ID_PATTERN.fullmatch(value):
+        raise RefactorError(f"invalid report publication id: {value!r}")
+    return value
+
+
+def remove_stale_report_publication(report_path: Path) -> None:
+    for path in (publication_marker_path(report_path), Path(report_path).absolute()):
+        reject_link_or_reparse_path(path, "report publication cleanup")
+        try:
+            identity = path.lstat()
+        except FileNotFoundError:
+            continue
+        if not stat.S_ISREG(identity.st_mode):
+            raise RefactorError(f"report publication path must be a regular file: {path}")
+        path.unlink()
+
+
+def write_publication_marker(
+    report_path: Path,
+    report: dict[str, Any],
+    *,
+    command: str,
+    iteration_id: str,
+    publication_id: str,
+    publisher_sha256: str,
+) -> tuple[Path, str]:
+    report_path = Path(report_path).absolute()
+    publication_id = checked_publication_id(publication_id)
+    reject_link_or_reparse_path(report_path, "report publication")
+    if re.fullmatch(r"[0-9a-f]{64}", publisher_sha256) is None:
+        raise RefactorError("report publisher SHA256 is invalid")
+    expected_report_sha256 = json_sha256(report)
+    if sha256_file(report_path) != expected_report_sha256:
+        raise RefactorError(f"report changed before publication marker: {report_path}")
+    marker = {
+        "schema_version": 1,
+        "iteration_id": checked_iteration_id(iteration_id),
+        "operation": command,
+        "publication_id": publication_id,
+        "report_name": report_path.name,
+        "report_sha256": expected_report_sha256,
+        "publisher_sha256": publisher_sha256,
+    }
+    marker_path = publication_marker_path(report_path)
+    write_json(marker_path, marker)
+    marker_sha256 = json_sha256(marker)
+    if sha256_file(marker_path) != marker_sha256:
+        raise RefactorError(f"publication marker changed while being written: {marker_path}")
+    return marker_path, marker_sha256
+
+
+def require_report_publication(
+    report_path: Path,
+    report: dict[str, Any],
+    report_sha256: str,
+    *,
+    command: str,
+    iteration_id: str,
+    publication_id: str,
+    publisher_sha256: str,
+) -> tuple[Path, dict[str, Any], str]:
+    publication_id = checked_publication_id(publication_id)
+    marker_path = publication_marker_path(report_path)
+    reject_link_or_reparse_path(Path(report_path).absolute(), "published report")
+    reject_link_or_reparse_path(marker_path, "report publication marker")
+    if re.fullmatch(r"[0-9a-f]{64}", publisher_sha256) is None:
+        raise RefactorError("report publisher SHA256 is invalid")
+    if sha256_file(Path(report_path)) != report_sha256:
+        raise RefactorError(f"published report changed before consumption: {report_path}")
+    marker, marker_sha256 = read_json_file_with_sha256(marker_path)
+    if not isinstance(marker, dict) or set(marker) != {
+        "schema_version",
+        "iteration_id",
+        "operation",
+        "publication_id",
+        "report_name",
+        "report_sha256",
+        "publisher_sha256",
+    }:
+        raise RefactorError(f"publication marker has an invalid schema: {marker_path}")
+    expected = {
+        "schema_version": 1,
+        "iteration_id": checked_iteration_id(iteration_id),
+        "operation": command,
+        "publication_id": publication_id,
+        "report_name": Path(report_path).name,
+        "report_sha256": report_sha256,
+        "publisher_sha256": publisher_sha256,
+    }
+    if marker != expected or report_sha256 != json_sha256(report):
+        raise RefactorError(f"report publication marker mismatch: {marker_path}")
+    return marker_path, marker, marker_sha256
 
 
 def print_report(report: dict[str, Any]) -> None:
@@ -1465,10 +1754,48 @@ def filesystem_type(path: Path) -> str:
     return result.stdout.strip()
 
 
-def official_workspace_fingerprint(work: Path) -> dict[str, Any]:
+def smoke_generated_relative_paths(case: str) -> frozenset[str]:
+    require_locked_smoke_case(case)
+    run_dir = PurePosixPath("sims/verilator/run_prog")
+    return frozenset(
+        {
+            str(run_dir / "obj_dir"),
+            str(run_dir / "output"),
+            str(run_dir / "tmp"),
+            str(run_dir / "obj" / f"{case}_obj"),
+            f"software/examples/{case}/obj",
+            str(run_dir / "log" / f"{case}_log"),
+            str(run_dir / "log" / "compile.log"),
+            str(run_dir / "config-software.mak"),
+            str(run_dir / "config.log"),
+        }
+    )
+
+
+def official_workspace_fingerprint(
+    work: Path, *, extra_excluded_paths: Iterable[str] = ()
+) -> dict[str, Any]:
     """Hash every non-DUT file in the fresh chiplab copy, including ignored extras."""
     excluded_roots = {".git", "IP/myCPU", "toolchains"}
-    excluded_files = {GENERATED_MARKER, ".refactor-overlay.json"}
+    excluded_files = {GENERATED_MARKER, ".refactor-overlay.json", ".rtl-smoke.lock"}
+    extra_excluded = frozenset(extra_excluded_paths)
+    for relative in extra_excluded:
+        pure = PurePosixPath(relative)
+        if (
+            not relative
+            or pure.is_absolute()
+            or ".." in pure.parts
+            or "." in pure.parts
+            or "\\" in relative
+        ):
+            raise RefactorError(f"invalid workspace fingerprint exclusion: {relative!r}")
+
+    def excluded(relative: str) -> bool:
+        prefixes = excluded_roots | set(extra_excluded)
+        return relative in prefixes or any(
+            relative.startswith(prefix + "/") for prefix in prefixes
+        )
+
     entries: list[dict[str, Any]] = []
     for root, directories, files in os.walk(work, followlinks=False):
         root_path = Path(root)
@@ -1477,9 +1804,7 @@ def official_workspace_fingerprint(work: Path) -> dict[str, Any]:
         for name in sorted(directories):
             path = root_path / name
             relative = path.relative_to(work).as_posix()
-            if relative in excluded_roots or any(
-                relative.startswith(prefix + "/") for prefix in excluded_roots
-            ):
+            if excluded(relative):
                 continue
             if path.is_symlink():
                 entries.append({"path": relative, "kind": "symlink", "target": os.readlink(path)})
@@ -1491,7 +1816,7 @@ def official_workspace_fingerprint(work: Path) -> dict[str, Any]:
             relative = path.relative_to(work).as_posix()
             if relative in excluded_files or relative_root in excluded_roots:
                 continue
-            if any(relative.startswith(prefix + "/") for prefix in excluded_roots):
+            if excluded(relative):
                 continue
             if path.is_symlink():
                 entries.append({"path": relative, "kind": "symlink", "target": os.readlink(path)})
@@ -1521,6 +1846,31 @@ def require_official_worktree_integrity(work: Path, expected: dict[str, Any]) ->
     require_command(diff, "check official chiplab tracked inputs")
     if diff.stdout.strip():
         raise RefactorError(f"official chiplab tracked inputs are dirty: {diff.stdout.strip()}")
+
+
+def require_post_smoke_official_integrity(
+    work: Path,
+    expected: dict[str, Any],
+    case: str,
+) -> None:
+    exclusions = smoke_generated_relative_paths(case)
+    current = official_workspace_fingerprint(
+        work, extra_excluded_paths=exclusions
+    )
+    if current != expected:
+        raise RefactorError(
+            "official chiplab inputs changed outside the smoke generated-path contract: "
+            f"expected={expected} actual={current}"
+        )
+    diff = git(
+        ["diff", "--name-only", "HEAD", "--", ".", ":(exclude)IP/myCPU"],
+        cwd=work,
+    )
+    require_command(diff, "check post-smoke official tracked inputs")
+    if diff.stdout.strip():
+        raise RefactorError(
+            f"official chiplab tracked inputs are dirty after smoke: {diff.stdout.strip()}"
+        )
 
 
 def require_passing_chiplab_doctor(
@@ -1594,22 +1944,48 @@ def command_chiplab_overlay(args: argparse.Namespace) -> int:
     work_root = Path(args.work_root).resolve()
     require_nonoverlapping_validation_roots(out_dir, work_root)
     run_id = f"overlay-{time.time_ns()}-{os.getpid()}"
-    out_lock = acquire_iteration_lock(
-        out_dir, iteration_id, "chiplab-overlay", run_id
-    )
+    overlay_report_path = iteration_report_path(out_dir, iteration_id, "chiplab-overlay")
+    locks: list[ValidationLock] = []
+    report: dict[str, Any] | None = None
+    report_sha256: str | None = None
+    result_code = 2
     try:
-        work_lock = acquire_iteration_lock(
-            work_root, iteration_id, "chiplab-overlay", run_id
+        locks.append(
+            acquire_iteration_lock(out_dir, iteration_id, "chiplab-overlay", run_id)
         )
-        try:
-            overlay_report = iteration_report_path(out_dir, iteration_id, "chiplab-overlay")
-            if overlay_report.exists():
-                overlay_report.unlink()
-            return _command_chiplab_overlay_locked(args)
-        finally:
-            work_lock.unlink()
+        locks.append(
+            acquire_iteration_lock(work_root, iteration_id, "chiplab-overlay", run_id)
+        )
+        remove_stale_report_publication(overlay_report_path)
+        result_code = _command_chiplab_overlay_locked(args, run_id)
+        stored, report_sha256 = read_json_file_with_sha256(overlay_report_path)
+        if not isinstance(stored, dict):
+            raise RefactorError("chiplab overlay report must be a JSON object")
+        report = stored
+        require_report_publication(
+            overlay_report_path,
+            report,
+            report_sha256,
+            command="chiplab-overlay",
+            iteration_id=iteration_id,
+            publication_id=run_id,
+            publisher_sha256=sha256_file(Path(__file__)),
+        )
     finally:
-        out_lock.unlink()
+        body_error = sys.exc_info()[1]
+        try:
+            release_validation_locks(locks)
+        except BaseException as release_error:
+            if body_error is not None:
+                raise RefactorError(
+                    "chiplab overlay failed and validation lock release also failed: "
+                    f"body={body_error}; release={release_error}"
+                ) from body_error
+            raise
+    if report is None or report_sha256 is None:
+        raise RefactorError("chiplab overlay completed without a published report")
+    print_report(report)
+    return result_code
 
 
 def validate_overlay_source_selection(
@@ -1639,14 +2015,13 @@ def validate_overlay_source_selection(
     return replacement_spec, source_head
 
 
-def _command_chiplab_overlay_locked(args: argparse.Namespace) -> int:
+def _command_chiplab_overlay_locked(args: argparse.Namespace, run_id: str) -> int:
     if os.name != "posix":
         raise RefactorError("chiplab overlay must run in WSL/Linux so official symlinks remain symlinks")
     out_dir = checked_out_dir(args.out_dir)
     iteration_id = checked_iteration_id(args.iteration_id)
     overlay_report_path = iteration_report_path(out_dir, iteration_id, "chiplab-overlay")
-    if overlay_report_path.exists():
-        overlay_report_path.unlink()
+    remove_stale_report_publication(overlay_report_path)
     work_root = Path(args.work_root).resolve()
     chiplab_ref = Path(args.chiplab_ref).resolve()
     tool_root = Path(args.tool_root).resolve()
@@ -1807,6 +2182,7 @@ def _command_chiplab_overlay_locked(args: argparse.Namespace) -> int:
         "schema_version": 1,
         "generated_at": now_iso(),
         "iteration_id": iteration_id,
+        "run_id": run_id,
         "dut_source": args.dut_source,
         "provenance_mode": (
             golden_manifest.get("provenance_mode") if golden_manifest is not None else "official_control"
@@ -1857,6 +2233,10 @@ def _command_chiplab_overlay_locked(args: argparse.Namespace) -> int:
         "doctor_generated_at": doctor_report["generated_at"],
         "evaluator_sha256": sha256_file(Path(__file__)),
         "official_workspace_fingerprint": official_workspace_fingerprint(work),
+        "post_smoke_official_workspace_fingerprint": official_workspace_fingerprint(
+            work,
+            extra_excluded_paths=smoke_generated_relative_paths(LOCKED_SMOKE_CASE),
+        ),
         "work_filesystem": fs_type,
     }
     if replacement_plan is not None:
@@ -1866,6 +2246,7 @@ def _command_chiplab_overlay_locked(args: argparse.Namespace) -> int:
             or final_source_state["branch"] != replacement_plan.source_branch
         ):
             raise RefactorError("replacement source tree or branch changed during overlay")
+    verify_dut_source_bindings(work, overlay_manifest, manifest)
     overlay_manifest_path = iteration_report_path(out_dir, iteration_id, "chiplab-overlay-manifest")
     write_json(overlay_manifest_path, overlay_manifest)
     marker_path = work / ".refactor-overlay.json"
@@ -1876,6 +2257,7 @@ def _command_chiplab_overlay_locked(args: argparse.Namespace) -> int:
     stored_marker, marker_sha256 = read_json_file_with_sha256(marker_path)
     if stored_manifest != overlay_manifest or stored_marker != overlay_manifest:
         raise RefactorError("overlay manifest changed while it was being published")
+    verify_dut_source_bindings(work, stored_manifest, manifest)
     gate_eligible = bool(overlay_manifest["gate_eligible"])
     report = {
         "schema_version": 1,
@@ -1885,6 +2267,7 @@ def _command_chiplab_overlay_locked(args: argparse.Namespace) -> int:
         "mode": overlay_manifest["mode"],
         "gate_eligible": gate_eligible,
         "iteration_id": iteration_id,
+        "run_id": run_id,
         "work_dir": str(work),
         "file_count": len(overlay_entries),
         "dut_source": args.dut_source,
@@ -1903,9 +2286,19 @@ def _command_chiplab_overlay_locked(args: argparse.Namespace) -> int:
         "overlay_manifest_sha256": overlay_manifest_sha256,
         "work_marker_sha256": marker_sha256,
         "doctor_report_sha256": doctor_sha256,
+        "evaluator_sha256": sha256_file(Path(__file__)),
     }
     write_json(overlay_report_path, report)
-    print_report(report)
+    if sha256_file(overlay_report_path) != json_sha256(report):
+        raise RefactorError("chiplab overlay report changed during publication")
+    write_publication_marker(
+        overlay_report_path,
+        report,
+        command="chiplab-overlay",
+        iteration_id=iteration_id,
+        publication_id=run_id,
+        publisher_sha256=sha256_file(Path(__file__)),
+    )
     return 0
 
 
@@ -2080,15 +2473,20 @@ def acquire_iteration_lock(
     iteration_id: str,
     operation: str,
     run_id: str,
-) -> Path:
-    if operation not in {"chiplab-overlay", "rtl-smoke"}:
+) -> ValidationLock:
+    if operation not in {"chiplab-overlay", "rtl-smoke", "identity-compare"}:
         raise RefactorError(f"unsupported validation lock operation: {operation}")
+    lock_root_candidate = out_dir / ".locks" / "iterations"
+    reject_link_or_reparse_path(lock_root_candidate, "iteration validation lock root")
     lock_root = resolved_below(
-        out_dir / ".locks" / "iterations", out_dir, "iteration validation lock root"
+        lock_root_candidate, out_dir, "iteration validation lock root"
     )
     lock_root.mkdir(parents=True, exist_ok=True)
+    reject_link_or_reparse_path(lock_root, "iteration validation lock root")
+    lock_candidate = lock_root / f"{checked_iteration_id(iteration_id)}.lock"
+    reject_link_or_reparse_path(lock_candidate, "iteration validation lock")
     lock_path = resolved_below(
-        lock_root / f"{checked_iteration_id(iteration_id)}.lock",
+        lock_candidate,
         out_dir,
         "iteration validation lock",
     )
@@ -2101,16 +2499,14 @@ def acquire_iteration_lock(
         "created_at": now_iso(),
         "evaluator_sha256": sha256_file(Path(__file__)),
     }
-    try:
-        with lock_path.open("x", encoding="utf-8", newline="\n") as stream:
-            json.dump(payload, stream, indent=2, sort_keys=True)
-            stream.write("\n")
-    except FileExistsError as error:
-        raise RefactorError(
+    return _acquire_validation_lock(
+        lock_path,
+        payload,
+        exists_message=(
             f"iteration validation lock already exists: {lock_path}; "
             "wait for the active overlay/smoke process or inspect a stale lock explicitly"
-        ) from error
-    return lock_path
+        ),
+    )
 
 
 def require_nonoverlapping_validation_roots(out_dir: Path, work_root: Path) -> None:
@@ -2127,26 +2523,221 @@ def require_nonoverlapping_validation_roots(out_dir: Path, work_root: Path) -> N
         )
 
 
-def acquire_smoke_lock(work: Path, iteration_id: str, run_id: str) -> Path:
-    lock_path = resolved_below(work / ".rtl-smoke.lock", work, "RTL smoke lock")
+def acquire_smoke_lock(work: Path, iteration_id: str, run_id: str) -> ValidationLock:
+    lock_candidate = work / ".rtl-smoke.lock"
+    reject_link_or_reparse_path(lock_candidate, "RTL smoke lock")
+    lock_path = resolved_below(lock_candidate, work, "RTL smoke lock")
     payload = {
         "schema_version": 1,
         "iteration_id": iteration_id,
+        "operation": "rtl-smoke-workspace",
         "run_id": run_id,
         "pid": os.getpid(),
         "created_at": now_iso(),
         "evaluator_sha256": sha256_file(Path(__file__)),
     }
-    try:
-        with lock_path.open("x", encoding="utf-8", newline="\n") as stream:
-            json.dump(payload, stream, indent=2, sort_keys=True)
-            stream.write("\n")
-    except FileExistsError as error:
-        raise RefactorError(
+    return _acquire_validation_lock(
+        lock_path,
+        payload,
+        exists_message=(
             f"RTL smoke lock already exists: {lock_path}; rebuild the isolated overlay "
             "instead of reusing a workspace from an interrupted run"
-        ) from error
-    return lock_path
+        ),
+    )
+
+
+def _write_all(descriptor: int, payload: bytes) -> None:
+    offset = 0
+    while offset < len(payload):
+        written = os.write(descriptor, payload[offset:])
+        if written <= 0:
+            raise OSError("validation lock write made no progress")
+        offset += written
+
+
+def _acquire_validation_lock(
+    path: Path,
+    payload: dict[str, Any],
+    *,
+    exists_message: str,
+) -> ValidationLock:
+    try:
+        descriptor = _open_exclusive_lock_descriptor(path)
+    except FileExistsError as error:
+        raise RefactorError(exists_message) from error
+    identity = os.fstat(descriptor)
+    lease = ValidationLock(
+        path=path,
+        iteration_id=str(payload["iteration_id"]),
+        operation=str(payload["operation"]),
+        run_id=str(payload["run_id"]),
+        descriptor=descriptor,
+        device=identity.st_dev,
+        inode=identity.st_ino,
+    )
+    try:
+        encoded = (
+            json.dumps(payload, indent=2, sort_keys=True) + "\n"
+        ).encode("utf-8")
+        _write_all(descriptor, encoded)
+        os.fsync(descriptor)
+    except BaseException:
+        _remove_owned_lock(lease, allow_partial=True)
+        raise
+    return lease
+
+
+def _open_exclusive_lock_descriptor(path: Path) -> int:
+    if os.name != "nt":
+        return os.open(
+            path,
+            os.O_RDWR
+            | os.O_CREAT
+            | os.O_EXCL
+            | getattr(os, "O_BINARY", 0)
+            | getattr(os, "O_NOFOLLOW", 0),
+            0o600,
+        )
+
+    import ctypes
+    import msvcrt
+    from ctypes import wintypes
+
+    kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+    create_file = kernel32.CreateFileW
+    create_file.argtypes = (
+        wintypes.LPCWSTR,
+        wintypes.DWORD,
+        wintypes.DWORD,
+        wintypes.LPVOID,
+        wintypes.DWORD,
+        wintypes.DWORD,
+        wintypes.HANDLE,
+    )
+    create_file.restype = wintypes.HANDLE
+    handle = create_file(
+        str(path),
+        0x80000000 | 0x40000000 | 0x00010000,
+        0x00000001 | 0x00000002,
+        None,
+        1,
+        0x00000080 | 0x00200000,
+        None,
+    )
+    if handle == wintypes.HANDLE(-1).value:
+        error_code = ctypes.get_last_error()
+        if error_code in {80, 183}:
+            raise FileExistsError(error_code, "validation lock already exists", str(path))
+        raise ctypes.WinError(error_code)
+    try:
+        return msvcrt.open_osfhandle(
+            handle, os.O_RDWR | getattr(os, "O_BINARY", 0)
+        )
+    except BaseException:
+        kernel32.CloseHandle(handle)
+        raise
+
+
+def _mark_windows_lock_for_deletion(descriptor: int) -> None:
+    import ctypes
+    import msvcrt
+    from ctypes import wintypes
+
+    class FileDispositionInfo(ctypes.Structure):
+        _fields_ = [("delete_file", wintypes.BOOL)]
+
+    kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+    set_information = kernel32.SetFileInformationByHandle
+    set_information.argtypes = (
+        wintypes.HANDLE,
+        ctypes.c_int,
+        wintypes.LPVOID,
+        wintypes.DWORD,
+    )
+    set_information.restype = wintypes.BOOL
+    information = FileDispositionInfo(True)
+    handle = msvcrt.get_osfhandle(descriptor)
+    if not set_information(
+        handle,
+        4,
+        ctypes.byref(information),
+        ctypes.sizeof(information),
+    ):
+        raise ctypes.WinError(ctypes.get_last_error())
+
+
+def _remove_owned_lock(lease: ValidationLock, *, allow_partial: bool) -> None:
+    descriptor_open = True
+    try:
+        descriptor_identity = os.fstat(lease.descriptor)
+        try:
+            path_identity = lease.path.lstat()
+        except FileNotFoundError as error:
+            raise RefactorError(
+                f"validation lock disappeared before release: {lease.path}"
+            ) from error
+        if (
+            not stat.S_ISREG(path_identity.st_mode)
+            or (descriptor_identity.st_dev, descriptor_identity.st_ino)
+            != (lease.device, lease.inode)
+            or (path_identity.st_dev, path_identity.st_ino)
+            != (lease.device, lease.inode)
+        ):
+            raise RefactorError(
+                f"validation lock ownership changed before release: {lease.path}"
+            )
+        if not allow_partial:
+            os.lseek(lease.descriptor, 0, os.SEEK_SET)
+            chunks: list[bytes] = []
+            while True:
+                chunk = os.read(lease.descriptor, 65536)
+                if not chunk:
+                    break
+                chunks.append(chunk)
+            try:
+                stored = strict_json_loads(b"".join(chunks).decode("utf-8"), str(lease.path))
+            except (UnicodeError, RefactorError) as error:
+                raise RefactorError(f"validation lock metadata is unreadable: {lease.path}") from error
+            if (
+                not isinstance(stored, dict)
+                or stored.get("iteration_id") != lease.iteration_id
+                or stored.get("operation") != lease.operation
+                or stored.get("run_id") != lease.run_id
+            ):
+                raise RefactorError(
+                    f"validation lock metadata changed before release: {lease.path}"
+                )
+        if os.name == "nt":
+            _mark_windows_lock_for_deletion(lease.descriptor)
+        else:
+            lease.path.unlink()
+    finally:
+        if descriptor_open:
+            os.close(lease.descriptor)
+
+
+def release_validation_lock(lease: ValidationLock) -> None:
+    _remove_owned_lock(lease, allow_partial=False)
+
+
+def release_validation_locks(leases: list[ValidationLock]) -> None:
+    """Release every lease and report all failures after cleanup is attempted."""
+
+    failures: list[tuple[Path, BaseException]] = []
+    for lease in reversed(leases):
+        try:
+            release_validation_lock(lease)
+        except BaseException as error:
+            failures.append((lease.path, error))
+    if failures:
+        details = "; ".join(f"{path}: {error}" for path, error in failures)
+        if not isinstance(failures[0][1], Exception):
+            raise failures[0][1]
+        raise RefactorError(f"validation lock release failed: {details}") from failures[0][1]
+
+
+def abandon_validation_lock(lease: ValidationLock) -> None:
+    os.close(lease.descriptor)
 
 
 def clean_smoke_generated_paths(work: Path, run_dir: Path, case: str) -> list[str]:
@@ -2159,6 +2750,7 @@ def clean_smoke_generated_paths(work: Path, run_dir: Path, case: str) -> list[st
         run_dir / "log" / f"{case}_log",
         run_dir / "log" / "compile.log",
         run_dir / "config-software.mak",
+        run_dir / "config.log",
     ]
     removed: list[str] = []
     for path in paths:
@@ -2224,7 +2816,7 @@ def resolved_below(path: Path, root: Path, context: str) -> Path:
 
 def verify_overlay_files(work: Path, overlay: dict[str, Any]) -> None:
     mycpu = work / "IP" / "myCPU"
-    hdl_suffixes = {".v", ".sv", ".vh", ".h"}
+    hdl_suffixes = {".v", ".sv", ".vh", ".svh", ".h"}
     expected_hdl: set[str] = set()
     overlay_paths: set[str] = set()
     logical_names: set[str] = set()
@@ -2627,6 +3219,7 @@ def verify_overlay_integrity(
     work_root: Path,
     diagnostic: bool,
     doctor_max_age_seconds: int,
+    post_smoke: bool = False,
 ) -> tuple[Path, dict[str, Any], dict[str, Any], str, str]:
     manifest = parse_lock(MANIFEST_PATH)
     overlay_report_path = iteration_report_path(out_dir, iteration_id, "chiplab-overlay")
@@ -2634,6 +3227,18 @@ def verify_overlay_integrity(
         raise RefactorError(f"missing iteration overlay report: {overlay_report_path}")
     overlay_report, overlay_report_sha256 = read_json_file_with_sha256(
         overlay_report_path
+    )
+    if not isinstance(overlay_report, dict):
+        raise RefactorError("overlay report must be a JSON object")
+    overlay_run_id = str(overlay_report.get("run_id", ""))
+    require_report_publication(
+        overlay_report_path,
+        overlay_report,
+        overlay_report_sha256,
+        command="chiplab-overlay",
+        iteration_id=iteration_id,
+        publication_id=overlay_run_id,
+        publisher_sha256=str(overlay_report.get("evaluator_sha256", "")),
     )
     if overlay_report.get("iteration_id") != iteration_id:
         raise RefactorError("overlay report iteration id mismatch")
@@ -2757,7 +3362,16 @@ def verify_overlay_integrity(
         if overlay.get("tool_links", {}).get(name) != str(expected_target):
             raise RefactorError(f"tool link manifest mismatch for {name}")
 
-    require_official_worktree_integrity(work, overlay.get("official_workspace_fingerprint", {}))
+    if post_smoke:
+        require_post_smoke_official_integrity(
+            work,
+            overlay.get("post_smoke_official_workspace_fingerprint", {}),
+            LOCKED_SMOKE_CASE,
+        )
+    else:
+        require_official_worktree_integrity(
+            work, overlay.get("official_workspace_fingerprint", {})
+        )
     if overlay.get("dut_source") in {"candidate", "mixed"}:
         export_manifest = (
             out_dir / "reference" / "golden-rtl" / iteration_id / "manifest.json"
@@ -2803,18 +3417,47 @@ def command_rtl_smoke(args: argparse.Namespace) -> int:
     work_root = Path(args.work_root).resolve()
     require_nonoverlapping_validation_roots(out_dir, work_root)
     run_id = f"smoke-{time.time_ns()}-{os.getpid()}"
-    out_lock = acquire_iteration_lock(out_dir, iteration_id, "rtl-smoke", run_id)
+    smoke_report_path = iteration_report_path(out_dir, iteration_id, "rtl-smoke")
+    locks: list[ValidationLock] = []
+    report: dict[str, Any] | None = None
+    report_sha256: str | None = None
+    result_code = 2
     try:
-        work_lock = acquire_iteration_lock(work_root, iteration_id, "rtl-smoke", run_id)
-        try:
-            smoke_report = iteration_report_path(out_dir, iteration_id, "rtl-smoke")
-            if smoke_report.exists():
-                smoke_report.unlink()
-            return _command_rtl_smoke_locked(args)
-        finally:
-            work_lock.unlink()
+        locks.append(acquire_iteration_lock(out_dir, iteration_id, "rtl-smoke", run_id))
+        locks.append(
+            acquire_iteration_lock(work_root, iteration_id, "rtl-smoke", run_id)
+        )
+        remove_stale_report_publication(smoke_report_path)
+        result_code = _command_rtl_smoke_locked(args)
+        stored, report_sha256 = read_json_file_with_sha256(smoke_report_path)
+        if not isinstance(stored, dict):
+            raise RefactorError("RTL smoke report must be a JSON object")
+        report = stored
+        publication_id = str(report.get("run_id", ""))
+        require_report_publication(
+            smoke_report_path,
+            report,
+            report_sha256,
+            command="rtl-smoke",
+            iteration_id=iteration_id,
+            publication_id=publication_id,
+            publisher_sha256=sha256_file(Path(__file__)),
+        )
     finally:
-        out_lock.unlink()
+        body_error = sys.exc_info()[1]
+        try:
+            release_validation_locks(locks)
+        except BaseException as release_error:
+            if body_error is not None:
+                raise RefactorError(
+                    "RTL smoke failed and validation lock release also failed: "
+                    f"body={body_error}; release={release_error}"
+                ) from body_error
+            raise
+    if report is None or report_sha256 is None:
+        raise RefactorError("RTL smoke completed without a published report")
+    print_report(report)
+    return result_code
 
 
 def _command_rtl_smoke_locked(args: argparse.Namespace) -> int:
@@ -2822,8 +3465,7 @@ def _command_rtl_smoke_locked(args: argparse.Namespace) -> int:
     out_dir = checked_out_dir(args.out_dir)
     iteration_id = checked_iteration_id(args.iteration_id)
     smoke_report_path = iteration_report_path(out_dir, iteration_id, "rtl-smoke")
-    if smoke_report_path.exists():
-        smoke_report_path.unlink()
+    remove_stale_report_publication(smoke_report_path)
     require_locked_smoke_case(args.case)
     tool_root = Path(args.tool_root).resolve()
     work, overlay, overlay_report, doctor_sha, overlay_report_sha = verify_overlay_integrity(
@@ -2840,7 +3482,8 @@ def _command_rtl_smoke_locked(args: argparse.Namespace) -> int:
     run_dir = work / "sims" / "verilator" / "run_prog"
     run_id = f"{time.time_ns()}-{os.getpid()}"
     lock_path = acquire_smoke_lock(work, iteration_id, run_id)
-    completed = False
+    release_attempted = False
+    publication_sha256: str | None = None
     result_code = 1
     try:
         raw_dir = out_dir / "raw" / "iterations" / iteration_id / "rtl-smoke" / run_id
@@ -3013,12 +3656,23 @@ def _command_rtl_smoke_locked(args: argparse.Namespace) -> int:
         ):
             raise RefactorError("immutable DUT overlay manifest changed during RTL smoke")
         verify_dut_source_bindings(work, overlay, manifest)
+        require_post_smoke_official_integrity(
+            work,
+            overlay.get("post_smoke_official_workspace_fingerprint", {}),
+            args.case,
+        )
         post_run_dut_verification = {
             "status": "pass",
             "work_marker_sha256": current_marker_sha,
             "overlay_report_sha256": overlay_report_sha,
             "overlay_manifest_sha256": post_overlay_manifest_sha,
             "selection_sha256": overlay.get("selection_sha256"),
+            "official_workspace_fingerprint": overlay.get(
+                "post_smoke_official_workspace_fingerprint"
+            ),
+            "generated_path_exclusions": sorted(
+                smoke_generated_relative_paths(args.case)
+            ),
         }
         report = {
             "schema_version": 1,
@@ -3105,12 +3759,37 @@ def _command_rtl_smoke_locked(args: argparse.Namespace) -> int:
             "raw_dir": str(raw_dir),
         }
         write_json(smoke_report_path, report)
-        print_report(report)
+        publication_sha256 = json_sha256(report)
+        if sha256_file(smoke_report_path) != publication_sha256:
+            raise RefactorError("RTL smoke report changed during publication")
         result_code = 0 if gate_result == "pass" else 1
-        completed = True
-    finally:
-        if completed:
-            lock_path.unlink()
+        release_attempted = True
+        release_validation_lock(lock_path)
+        write_publication_marker(
+            smoke_report_path,
+            report,
+            command="rtl-smoke",
+            iteration_id=iteration_id,
+            publication_id=run_id,
+            publisher_sha256=sha256_file(Path(__file__)),
+        )
+    except BaseException as command_error:
+        failures: list[Exception] = []
+        try:
+            remove_stale_report_publication(smoke_report_path)
+        except Exception as error:
+            failures.append(error)
+        if not release_attempted:
+            try:
+                abandon_validation_lock(lock_path)
+            except Exception as error:
+                failures.append(error)
+        if failures:
+            details = "; ".join(str(error) for error in failures)
+            raise RefactorError(
+                f"RTL smoke failure cleanup failed: {details}"
+            ) from command_error
+        raise
     return result_code
 
 

@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "iteration_id": "20260711-1533-component-overlay",
+  "status": "unavailable",
+  "job_id": "a3054297d7834c969127004b786df9e0",
+  "provider": null,
+  "model": null,
+  "reviewed_head_sha": null,
+  "raw_sha256": "0804d97f5475bfc4961a82bda12d84f5ea4118d45a98997a605fd732dabcb307",
+  "error": "Required provider environment variable is not set: GEEKPIE_CLAUDE_API_KEY",
+  "open_blocking_count": 1,
+  "fresh_against_head": false,
+  "allow_ready": false,
+  "allow_status_promotion": false,
+  "provenance": {
+    "source": "claude-review-mcp",
+    "raw_path": "reviews/claude-raw.md",
+    "raw_sha256": "0804d97f5475bfc4961a82bda12d84f5ea4118d45a98997a605fd732dabcb307",
+    "job_id": "a3054297d7834c969127004b786df9e0",
+    "provider": null,
+    "model": null,
+    "reviewed_head_sha": null
+  },
+  "attempts": [
+    {
+      "job_id": "884950e282464bdaaf2e1e49b061adc1",
+      "status": "failed",
+      "model_started": false,
+      "error": "The responses review backend does not allow reviewer tools"
+    },
+    {
+      "job_id": "a3054297d7834c969127004b786df9e0",
+      "status": "failed",
+      "model_started": false,
+      "error": "Required provider environment variable is not set: GEEKPIE_CLAUDE_API_KEY"
+    }
+  ],
+  "findings": [
+    {
+      "id": "CLAUDE-CREDENTIAL-UNAVAILABLE",
+      "disposition": "open",
+      "blocking": true,
+      "summary": "Bridge 在模型启动前失败，没有 Claude response、provider、model 或 thread。"
+    }
+  ],
+  "fallback_review": {
+    "type": "independent_read_only_codex_subagents",
+    "may_be_called_claude_review": false,
+    "paths": [
+      "reviews/local-independent-review.md"
+    ]
+  }
+}
