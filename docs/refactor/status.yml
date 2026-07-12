@@ -1,8 +1,8 @@
 schema_version: 1
-updated_at: "2026-07-12T18:45:00+08:00"
+updated_at: "2026-07-12T20:15:00+08:00"
 active_iteration: "20260712-1651-mul-spinal"
 active_branch: "refactor/20260712-1651-mul-spinal"
-source_head: "a17b30165a70f2eae37a6f7074f5fbf7a25ee688"
+source_head: "f6c55e6dcb42761c283febf99460214452628fd0"
 
 boundaries:
   component_replacement_overlay:
@@ -131,6 +131,7 @@ boundaries:
       - mul_golden_harness
     contract: docs/contracts/mul.md
     required_gates:
+      - contract
       - scala
       - elaborate
       - generate
@@ -146,12 +147,20 @@ boundaries:
       - logs/refactor/20260712-1651-mul-spinal/iteration.md
       - logs/refactor/20260712-1651-mul-spinal/summary.json
       - logs/refactor/20260712-1651-mul-spinal/artifacts.json
+      - logs/refactor/20260712-1651-mul-spinal/evidence/local-gates.json
+      - logs/refactor/20260712-1651-mul-spinal/evidence/chiplab-comparison.json
+      - logs/refactor/20260712-1651-mul-spinal/evidence/vivado-leaf.json
+      - logs/refactor/20260712-1651-mul-spinal/reviews/claude-summary.json
+      - logs/refactor/20260712-1651-mul-spinal/reviews/experiment-audit.json
+      - logs/refactor/20260712-1651-mul-spinal/reviews/result-to-claim.json
+      - logs/refactor/20260712-1651-mul-spinal/reviews/result-to-claim.json
     active_pr: null
     blocked_by:
-      - golden_sequential_formal_solver_timeout
+      - func_lab19_candidate_and_mixed_mismatch_at_1c07c79c
+      - 640_unapproved_verilator_warnings_in_mixed_compile
       - vivado_leaf_63_unapproved_warnings
-      - mixed_overlay_pending
-      - claim_review_pending
+      - golden_sequential_formal_solver_timeout
+      - claude_bridge_missing_GEEKPIE_CLAUDE_API_KEY
     last_iteration: "20260712-1651-mul-spinal"
 
   core_top_compat:

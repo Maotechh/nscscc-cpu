@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "iteration_id": "20260712-1651-mul-spinal",
+  "reviewer": "/root/mul_final_audit",
+  "reviewed_implementation_sha": "dea1b95f13dbefaa185255c206a962c6d210b203",
+  "final_implementation_sha": "f6c55e6dcb42761c283febf99460214452628fd0",
+  "is_claude_review": false,
+  "status": "findings_fixed_with_commit_bound_rerun",
+  "findings": [
+    {"id":"R1","severity":"high","finding":"commands.jsonl used RTL although Makefile consumes MUL_RTL","resolution":"fixed","evidence":"final command records use MUL_RTL and all RTL gates were rerun on f6c55e6"},
+    {"id":"R2","severity":"high","finding":"Vivado command names, argv and elapsed times contradicted the raw summary","resolution":"fixed","evidence":"commands.jsonl restored synth_mul/path-report/netlist commands and raw elapsed values"},
+    {"id":"R3","severity":"high","finding":"PASS evidence was pre-commit","resolution":"fixed","evidence":"all final local gates and chiplab runs bind f6c55e6"},
+    {"id":"R4","severity":"medium","finding":"contract gate missing from summary/status","resolution":"fixed","evidence":"contract is a required gate with tracked summary evidence"},
+    {"id":"R5","severity":"medium","finding":"external artifacts were outside evidence-check coverage","resolution":"fixed","evidence":"tracked evidence files are listed in artifacts.json with hash and size"},
+    {"id":"R6","severity":"medium","finding":"candidate differential compiled a mutable source path","resolution":"fixed","evidence":"f6c55e6 compiles OUT_DIR/input/mul.v and checks source/snapshot stability"},
+    {"id":"R7","severity":"low","finding":"automation/chiplab commands relied on incompletely recorded executable/environment","resolution":"fixed","evidence":"final JSONL records python3 -I and explicit chiplab roots"}
+  ],
+  "open": [
+    "Claude reviewer unavailable",
+    "golden complete formal equivalence unproved",
+    "func_lab19 and warning gates fail",
+    "Vivado strict warning gate fails"
+  ]
+}

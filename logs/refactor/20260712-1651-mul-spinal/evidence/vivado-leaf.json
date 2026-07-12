@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "iteration_id": "20260712-1651-mul-spinal",
+  "tool": "Vivado 2023.2 ML Standard",
+  "part": "xc7a200tfbg676-2",
+  "scope": "isolated leaf synth_design only",
+  "inputs": {
+    "golden_sha256": "251d2bba3e659c294c9a004bbb2b542435fcfa0b0c1582cc1a7a3edca765a4c0",
+    "candidate_sha256": "5ff75243dd504bf74c01645862364cd416dffc554d64c82dea6be8f7181660d6"
+  },
+  "golden": {
+    "synth_returncode": 0,
+    "lut": 1537,
+    "ff": 592,
+    "dsp": 0,
+    "bram36": 0,
+    "warnings": 3
+  },
+  "candidate": {
+    "synth_returncode": 0,
+    "lut": 50,
+    "ff": 34,
+    "dsp": 4,
+    "bram36": 0,
+    "warnings": 63
+  },
+  "strict_warning_gate": "fail",
+  "implementation": "not_run",
+  "timing_closure": "not_run",
+  "bitstream": "not_run",
+  "fmax": null,
+  "fmax_reason": "leaf run has no I/O delays and setup WNS is inf",
+  "external_summary": {
+    "path": "D:/schoolworks/CS110/longxin/.work/vivado-mul-leaf-20260712-173227/summary.json",
+    "sha256": "c29e62b33aa4e104751a7a4bdec07a643d656b09d7f4ca4e143ea9df86dc3072",
+    "size": 13004
+  },
+  "claim_limit": "synth_design completed and resource diagnostics were recorded; no strict FPGA, timing, equivalence, implementation, or bitstream PASS"
+}

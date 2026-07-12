@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "iteration_id": "20260712-1651-mul-spinal",
+  "status": "unavailable",
+  "job_id": "d230467dbe564da3a6e7d9e1772d7fe8",
+  "provider": null,
+  "model": null,
+  "reviewed_head_sha": "f6c55e6dcb42761c283febf99460214452628fd0",
+  "raw_path": "reviews/claude-raw.md",
+  "raw_sha256": "3d11ff277bfb22b41562b56b33d810c9187b7e904ae7b579f0866eb9f5913922",
+  "error": "Required provider environment variable is not set: GEEKPIE_CLAUDE_API_KEY",
+  "open_blocking_count": 1,
+  "fresh_against_head": false,
+  "allow_ready": false,
+  "allow_status_promotion": false,
+  "attempts": [
+    {
+      "job_id": "c744d547b6c946b6bb3f1c9f307b01d8",
+      "status": "failed",
+      "error": "The responses review backend does not allow reviewer tools",
+      "response_received": false
+    },
+    {
+      "job_id": "d230467dbe564da3a6e7d9e1772d7fe8",
+      "status": "failed",
+      "error": "Required provider environment variable is not set: GEEKPIE_CLAUDE_API_KEY",
+      "response_received": false,
+      "complete_diff_embedded": true,
+      "reviewer_tools": false
+    }
+  ],
+  "findings": [
+    {
+      "id": "CLAUDE-UNAVAILABLE",
+      "status": "open",
+      "blocking": true,
+      "detail": "两次 bridge job 均在 reviewer 模型启动前失败；没有 Claude 审查结论。"
+    }
+  ],
+  "fallback": {
+    "kind": "independent_read_only_codex_reviews",
+    "paths": [
+      "reviews/local-independent-review.md",
+      "reviews/experiment-audit.md",
+      "reviews/result-to-claim.md"
+    ],
+    "is_claude_review": false
+  },
+  "provenance": {
+    "source": "claude-review-mcp",
+    "raw_path": "reviews/claude-raw.md",
+    "raw_sha256": "3d11ff277bfb22b41562b56b33d810c9187b7e904ae7b579f0866eb9f5913922",
+    "job_id": "d230467dbe564da3a6e7d9e1772d7fe8",
+    "provider": null,
+    "model": null,
+    "reviewed_head_sha": "f6c55e6dcb42761c283febf99460214452628fd0"
+  }
+}
