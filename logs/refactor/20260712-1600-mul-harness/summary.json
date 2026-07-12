@@ -4,7 +4,7 @@
   "status": "draft",
   "branch": "refactor/20260712-1600-mul-harness",
   "base_sha": "2cb5d0b3a01591eadc2a5e4e34b51f0404197550",
-  "head_sha": "2cb5d0b3a01591eadc2a5e4e34b51f0404197550",
+  "head_sha": "dedf10544fb6a2270173616034f177d1c2dabcef",
   "selected_boundary": "mul-golden-harness",
   "required_gates": ["doctor","automation_tests","harness_schema","golden_mul_diff","claim_review"],
   "gates": {

@@ -2,7 +2,7 @@ schema_version: 1
 updated_at: "2026-07-12T16:05:00+08:00"
 active_iteration: "20260712-1600-mul-harness"
 active_branch: "refactor/20260712-1600-mul-harness"
-source_head: "2cb5d0b3a01591eadc2a5e4e34b51f0404197550"
+source_head: "dedf10544fb6a2270173616034f177d1c2dabcef"
 
 boundaries:
   component_replacement_overlay:

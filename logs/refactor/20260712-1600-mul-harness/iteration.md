@@ -3,7 +3,7 @@
 - 状态：`draft`（Claude 审核桥凭据不可用；不得提升）
 - 分支：`refactor/20260712-1600-mul-harness`
 - Base SHA：`2cb5d0b3a01591eadc2a5e4e34b51f0404197550`
-- 当前 Head：`2cb5d0b3a01591eadc2a5e4e34b51f0404197550`（待本迭代提交）
+- 当前 Head：`dedf10544fb6a2270173616034f177d1c2dabcef`
 - Owner / Agent：Codex
 - 目标边界：`mul-golden-harness`
 
