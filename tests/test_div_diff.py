@@ -290,6 +290,27 @@ class DivFailClosedTests(unittest.TestCase):
             early_failure["executed"] + early_failure["skipped"],
         )
 
+        after_golden = div_diff._golden_failure_counts({"golden": {"status": "pass"}})
+        self.assertEqual(
+            {"planned": 4, "executed": 2, "passed": 1, "failed": 1, "skipped": 2},
+            after_golden,
+        )
+
+        after_all_subchecks = div_diff._golden_failure_counts(
+            {
+                "golden": {"status": "pass"},
+                "negative_controls": [
+                    {"control_pass": True},
+                    {"control_pass": True},
+                    {"control_pass": True},
+                ],
+            }
+        )
+        self.assertEqual(
+            {"planned": 4, "executed": 4, "passed": 3, "failed": 1, "skipped": 0},
+            after_all_subchecks,
+        )
+
     def test_skip_and_mismatch_fail_closed(self) -> None:
         for output, needle in (("SKIP unavailable\n", "SKIP"), ("DIV_MISMATCH kind=result edge=1\n", "DIV_MISMATCH")):
             with tempfile.TemporaryDirectory() as temporary:
