@@ -10,7 +10,7 @@ fresh build directory, and drives an independent mathematical model.
 
 The golden command is deliberately fail-closed.  A warning outside the exact
 three warnings emitted by the locked source, a timeout, a malformed/``SKIP``
-marker, a source change, or a missing result is a failed gate.  Two mutated
+marker, a source change, or a missing result is a failed gate.  Three mutated
 golden controls are compiled and expected to fail, so a permanently passing
 driver cannot masquerade as differential evidence.
 """
@@ -43,7 +43,7 @@ GOLDEN_SIZE = 2642
 DEFAULT_SEED = 0x158AA8
 DEFAULT_VECTOR_COUNT = 4096
 MASK32 = (1 << 32) - 1
-DRIVER_VERSION = "div-diff-driver-v1"
+DRIVER_VERSION = "div-diff-driver-v2"
 NORMALIZED_MODULE = "div_golden"
 
 # These are source-bound approvals, not a global warning suppression.  The
@@ -1303,19 +1303,29 @@ def run_golden(args: argparse.Namespace) -> tuple[int, dict[str, Any]]:
     except Exception as error:
         summary["status"] = "fail"
         summary["error"] = str(error)
-        executed = int("golden" in summary) + len(summary.get("negative_controls", []))
-        passed = int(summary.get("golden", {}).get("status") == "pass") + sum(
-            bool(item.get("control_pass")) for item in summary.get("negative_controls", [])
-        )
-        summary["counts"] = {
-            "planned": 4,
-            "executed": executed,
-            "passed": passed,
-            "failed": max(1, executed - passed),
-            "skipped": 0,
-        }
+        summary["counts"] = _golden_failure_counts(summary)
         _persist(out_dir, summary)
         return 1, summary
+
+
+def _golden_failure_counts(summary: dict[str, Any]) -> dict[str, int]:
+    controls = summary.get("negative_controls", [])
+    executed = max(1, int("golden" in summary) + len(controls))
+    golden_passed = summary.get("golden", {}).get("status") == "pass"
+    stability = summary.get("source_stability")
+    if stability is not None:
+        golden_passed = golden_passed and bool(stability.get("stable")) and (
+            stability.get("manifest_before_sha256")
+            == stability.get("manifest_after_sha256")
+        )
+    passed = int(golden_passed) + sum(bool(item.get("control_pass")) for item in controls)
+    return {
+        "planned": 4,
+        "executed": executed,
+        "passed": passed,
+        "failed": executed - passed,
+        "skipped": 4 - executed,
+    }
 
 
 def run_candidate(args: argparse.Namespace) -> tuple[int, dict[str, Any]]:
@@ -1358,7 +1368,15 @@ def run_candidate(args: argparse.Namespace) -> tuple[int, dict[str, Any]]:
         _persist(out_dir, summary)
         return 0, summary
     except Exception as error:
+        summary["status"] = "fail"
         summary["error"] = str(error)
+        summary["counts"] = {
+            "planned": 1,
+            "executed": 1,
+            "passed": 0,
+            "failed": 1,
+            "skipped": 0,
+        }
         _persist(out_dir, summary)
         return 1, summary
 

@@ -256,6 +256,39 @@ class DivFailClosedTests(unittest.TestCase):
                 code, summary = div_diff.run_candidate(args)
         self.assertEqual(1, code)
         self.assertIn("stimulus differs", summary["error"])
+        self.assertEqual(
+            {"planned": 1, "executed": 1, "passed": 0, "failed": 1, "skipped": 0},
+            summary["counts"],
+        )
+
+    def test_golden_stability_failure_keeps_count_arithmetic(self) -> None:
+        summary = {
+            "golden": {"status": "pass"},
+            "negative_controls": [
+                {"control_pass": True},
+                {"control_pass": True},
+                {"control_pass": True},
+            ],
+            "source_stability": {
+                "stable": False,
+                "manifest_before_sha256": "a" * 64,
+                "manifest_after_sha256": "a" * 64,
+            },
+        }
+        counts = div_diff._golden_failure_counts(summary)
+        self.assertEqual(4, counts["executed"])
+        self.assertEqual(3, counts["passed"])
+        self.assertEqual(counts["executed"], counts["passed"] + counts["failed"])
+
+        early_failure = div_diff._golden_failure_counts({})
+        self.assertEqual(
+            {"planned": 4, "executed": 1, "passed": 0, "failed": 1, "skipped": 3},
+            early_failure,
+        )
+        self.assertEqual(
+            early_failure["planned"],
+            early_failure["executed"] + early_failure["skipped"],
+        )
 
     def test_skip_and_mismatch_fail_closed(self) -> None:
         for output, needle in (("SKIP unavailable\n", "SKIP"), ("DIV_MISMATCH kind=result edge=1\n", "DIV_MISMATCH")):
