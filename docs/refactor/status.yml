@@ -1,13 +1,13 @@
 schema_version: 1
-updated_at: "2026-07-13T04:10:00+08:00"
+updated_at: "2026-07-13T06:03:00+08:00"
 active_iteration: "20260713-0410-core-top-compat"
 active_branch: "refactor/20260713-0410-core-top-compat"
-source_head: "7e5811f8faeca71a6f8fc3d7f9fd25aaac6587ab"
+source_head: "0e2787fc5ab30e246da5be1c6080e2847b2645cf"
 
 boundaries:
   component_replacement_overlay:
     owner: verification
-    state: implementation_in_review
+    state: wrapped_golden
     golden_ref: a158aa8:reference/golden-rtl-files.lock
     dependencies: []
     contract: docs/contracts/component-overlay.md
@@ -244,9 +244,21 @@ boundaries:
       - random
       - fpga
       - claim_review
-    evidence: []
+    evidence:
+      - logs/refactor/20260713-0410-core-top-compat/evidence/contract.json
+      - logs/refactor/20260713-0410-core-top-compat/evidence/generate.json
+      - logs/refactor/20260713-0410-core-top-compat/evidence/publish-check.json
+      - logs/refactor/20260713-0410-core-top-compat/evidence/chiplab-comparison.json
+      - logs/refactor/20260713-0410-core-top-compat/evidence/vivado.json
     active_pr: null
-    blocked_by: []
+    blocked_by:
+      - legacy_verilog_backend_still_active
+      - func_lab19_locked_and_mixed_mismatch_at_1c07c79c
+      - 635_unapproved_verilator_warnings_in_mixed_compile
+      - func_full_and_random_wrappers_not_implemented
+      - vivado_post_route_drc_has_46_unapproved_warnings
+      - identity_comparison_fail
+      - claude_bridge_missing_GEEKPIE_CLAUDE_API_KEY
     last_iteration: "20260713-0410-core-top-compat"
 
   pipeline:

@@ -1,0 +1,1199 @@
+{
+  "build_workspace": "/tmp/nscscc-core-top-0e2787f/local/scala-check/workspaces/1783890833689696908-377529",
+  "dependency_cache_stable": true,
+  "elapsed_seconds": 38.34,
+  "evaluator_sha256": "35676ee5ac04dcf24851f086c0c40c67d6816e364a35fbe5c2aa4fd0bd736322",
+  "executed": 4,
+  "failed": 0,
+  "gate": "scala-check",
+  "generated_at": "2026-07-13T05:13:53+08:00",
+  "isolated_source_after": {
+    "files": [
+      {
+        "path": ".scalafmt.conf",
+        "sha256": "f652f6aacb3fe68ad449ea8e8e9a32e2e58180fddebed4c6111a9f1122b40eb2",
+        "size": 58
+      },
+      {
+        "path": "build.sbt",
+        "sha256": "32bc5ef69c93e565ddc10be3f555ee17e310d1ff0eb577469c9c5c257e7b740b",
+        "size": 1730
+      },
+      {
+        "path": "project/build.properties",
+        "sha256": "38901e157e1ca1e142d978bc5254ddb83e0f6765747f5668351996fdb606000b",
+        "size": 20
+      },
+      {
+        "path": "project/plugins.sbt",
+        "sha256": "dcfaae93ee9652d7a27d5d8a071b6175669b1b89361cec00a55627d6effff07d",
+        "size": 57
+      },
+      {
+        "path": "src/main/scala/openla500/ALU.scala",
+        "sha256": "74cd4043e14726904a1700fa966ac9933ab231bf88d92420fdf942d35861e92e",
+        "size": 2540
+      },
+      {
+        "path": "src/main/scala/openla500/AddrTrans.scala",
+        "sha256": "f0d0d31a9453c787de05b3041666a08f4dbf1f822f350734a665bbdcbbb6313d",
+        "size": 731
+      },
+      {
+        "path": "src/main/scala/openla500/AxiBridge.scala",
+        "sha256": "f960ace434d6123aa5944ce6e90fa701c63a5af8209bb4b328e8337c381be18c",
+        "size": 3111
+      },
+      {
+        "path": "src/main/scala/openla500/BTB.scala",
+        "sha256": "927d1fee847649ced1737ab45deba9a5ae42b7c3d8ec8bef50c02eedd1634b30",
+        "size": 2297
+      },
+      {
+        "path": "src/main/scala/openla500/CSR.scala",
+        "sha256": "4928172fdf67323867e4acfa3a2c550ba17be98805226d6d01fd2c1cd956f3fb",
+        "size": 4794
+      },
+      {
+        "path": "src/main/scala/openla500/Cache.scala",
+        "sha256": "5ae4b85489d1e634a448a1f80cb919c919d23b75dd53f4416357e302f842cf74",
+        "size": 6304
+      },
+      {
+        "path": "src/main/scala/openla500/Config.scala",
+        "sha256": "d27a57d2b4b724733a5895b898c17644d5811c8d6b74786024df1895b5dacb8b",
+        "size": 2291
+      },
+      {
+        "path": "src/main/scala/openla500/Core.scala",
+        "sha256": "ceb8644ce450e03209a4f57592cd6a2f073f3a0bb6408e1d7a539fa4ffc7accb",
+        "size": 11114
+      },
+      {
+        "path": "src/main/scala/openla500/Divider.scala",
+        "sha256": "cab427a59ec9022b86436ab9ce225e2386d0c397397c684215493f45af596922",
+        "size": 1587
+      },
+      {
+        "path": "src/main/scala/openla500/GenAll.scala",
+        "sha256": "75cdade512c646f49d759da2e7e5f208a8d7c7666d63812065f99c919f555cbc",
+        "size": 1481
+      },
+      {
+        "path": "src/main/scala/openla500/Multiplier.scala",
+        "sha256": "99a74f31ec4f9cd95535a6271e50c89cf75c7085d663c2b22b9cd0c34398ef91",
+        "size": 1404
+      },
+      {
+        "path": "src/main/scala/openla500/MyCPUTop.scala",
+        "sha256": "c3c9a0563e72552b915f123b5702813ed77743cfca6482dea378c0d6f348a633",
+        "size": 4462
+      },
+      {
+        "path": "src/main/scala/openla500/PerfCounter.scala",
+        "sha256": "6586b094fe2a76cf7d9e0282bd8c62af575295db3035079fc48e1275c0519eae",
+        "size": 1328
+      },
+      {
+        "path": "src/main/scala/openla500/Pipeline.scala",
+        "sha256": "3a096dfa93324c3c058e4f98ed97d54b63b02e610d3fb9bd4bd32f42071491b9",
+        "size": 11043
+      },
+      {
+        "path": "src/main/scala/openla500/RegFile.scala",
+        "sha256": "9f2f6c7574a74f03f2d427b87a3967b5e67a65859019f230261bea58a73b13e3",
+        "size": 3794
+      },
+      {
+        "path": "src/main/scala/openla500/TLB.scala",
+        "sha256": "a0af38a3a407767df452a7c79c489597f2d29581ab351cb5cf01b7861581c0de",
+        "size": 3474
+      },
+      {
+        "path": "src/main/scala/openla500/compat/CoreTopCompat.scala",
+        "sha256": "dd57f25b12ea26f5e679d793216da4625737b745a23f905c6710888c22e67ada",
+        "size": 6392
+      },
+      {
+        "path": "src/main/scala/openla500/compat/GenerateCoreTopCompat.scala",
+        "sha256": "3a5c5f672b117eb9d364e78fafc1a55620616cb1a48d05e1d1030a918a710a75",
+        "size": 2711
+      },
+      {
+        "path": "src/main/scala/openla500/execute/GenerateOpenLa500Alu.scala",
+        "sha256": "9b1f192ee57c0f241add25cbaf5651e774a3ff89bd2cfecf1187c5891e4bd0c8",
+        "size": 2684
+      },
+      {
+        "path": "src/main/scala/openla500/execute/GenerateOpenLa500Div.scala",
+        "sha256": "64cabb23f457daed7ce8948dd0d11c8789d821bd85ad5e1f963ebad8152851d3",
+        "size": 2684
+      },
+      {
+        "path": "src/main/scala/openla500/execute/GenerateOpenLa500Mul.scala",
+        "sha256": "8e7ee1f73077c9f41001038d51d05db9045d0b5c88559b7823fe72b3378bb086",
+        "size": 2684
+      },
+      {
+        "path": "src/main/scala/openla500/execute/OpenLa500Alu.scala",
+        "sha256": "06abf9698e8896d4fda373f3440295ad9b514e923448cac1f44109aab6c087bb",
+        "size": 2922
+      },
+      {
+        "path": "src/main/scala/openla500/execute/OpenLa500Div.scala",
+        "sha256": "e284558ab378f91708d3d9ad1b497612e7f7df85c90a1048039dab1dce2f5ac3",
+        "size": 3545
+      },
+      {
+        "path": "src/main/scala/openla500/execute/OpenLa500Mul.scala",
+        "sha256": "a7bf777cad6791c03768c8c17f06f3b99357e45bf00fce04a0dad481cbc17b93",
+        "size": 1311
+      },
+      {
+        "path": "src/test/scala/openla500/ALUSpec.scala",
+        "sha256": "20c0f7aa6159ad4e4ee03e361655e23922897e72b96d3bdcd56a51a220c7cb2c",
+        "size": 2844
+      },
+      {
+        "path": "src/test/scala/openla500/execute/OpenLa500AluSpec.scala",
+        "sha256": "e0c1cf3e0b34b6bf1652908e2f2ea706ccad2cc7f70167dae06cbf982a49e44e",
+        "size": 7673
+      },
+      {
+        "path": "src/test/scala/openla500/execute/OpenLa500MulSpec.scala",
+        "sha256": "97e08c1ae919baa235fd8b8ec33130a1912a6d2f56dd800c016eb470f3a3511d",
+        "size": 6503
+      }
+    ],
+    "sha256": "d50e81684e2734e2fbc01850cabe11aacb8649b75c0b426121f3787d19c1e0cd"
+  },
+  "isolated_source_before": {
+    "files": [
+      {
+        "path": ".scalafmt.conf",
+        "sha256": "f652f6aacb3fe68ad449ea8e8e9a32e2e58180fddebed4c6111a9f1122b40eb2",
+        "size": 58
+      },
+      {
+        "path": "build.sbt",
+        "sha256": "32bc5ef69c93e565ddc10be3f555ee17e310d1ff0eb577469c9c5c257e7b740b",
+        "size": 1730
+      },
+      {
+        "path": "project/build.properties",
+        "sha256": "38901e157e1ca1e142d978bc5254ddb83e0f6765747f5668351996fdb606000b",
+        "size": 20
+      },
+      {
+        "path": "project/plugins.sbt",
+        "sha256": "dcfaae93ee9652d7a27d5d8a071b6175669b1b89361cec00a55627d6effff07d",
+        "size": 57
+      },
+      {
+        "path": "src/main/scala/openla500/ALU.scala",
+        "sha256": "74cd4043e14726904a1700fa966ac9933ab231bf88d92420fdf942d35861e92e",
+        "size": 2540
+      },
+      {
+        "path": "src/main/scala/openla500/AddrTrans.scala",
+        "sha256": "f0d0d31a9453c787de05b3041666a08f4dbf1f822f350734a665bbdcbbb6313d",
+        "size": 731
+      },
+      {
+        "path": "src/main/scala/openla500/AxiBridge.scala",
+        "sha256": "f960ace434d6123aa5944ce6e90fa701c63a5af8209bb4b328e8337c381be18c",
+        "size": 3111
+      },
+      {
+        "path": "src/main/scala/openla500/BTB.scala",
+        "sha256": "927d1fee847649ced1737ab45deba9a5ae42b7c3d8ec8bef50c02eedd1634b30",
+        "size": 2297
+      },
+      {
+        "path": "src/main/scala/openla500/CSR.scala",
+        "sha256": "4928172fdf67323867e4acfa3a2c550ba17be98805226d6d01fd2c1cd956f3fb",
+        "size": 4794
+      },
+      {
+        "path": "src/main/scala/openla500/Cache.scala",
+        "sha256": "5ae4b85489d1e634a448a1f80cb919c919d23b75dd53f4416357e302f842cf74",
+        "size": 6304
+      },
+      {
+        "path": "src/main/scala/openla500/Config.scala",
+        "sha256": "d27a57d2b4b724733a5895b898c17644d5811c8d6b74786024df1895b5dacb8b",
+        "size": 2291
+      },
+      {
+        "path": "src/main/scala/openla500/Core.scala",
+        "sha256": "ceb8644ce450e03209a4f57592cd6a2f073f3a0bb6408e1d7a539fa4ffc7accb",
+        "size": 11114
+      },
+      {
+        "path": "src/main/scala/openla500/Divider.scala",
+        "sha256": "cab427a59ec9022b86436ab9ce225e2386d0c397397c684215493f45af596922",
+        "size": 1587
+      },
+      {
+        "path": "src/main/scala/openla500/GenAll.scala",
+        "sha256": "75cdade512c646f49d759da2e7e5f208a8d7c7666d63812065f99c919f555cbc",
+        "size": 1481
+      },
+      {
+        "path": "src/main/scala/openla500/Multiplier.scala",
+        "sha256": "99a74f31ec4f9cd95535a6271e50c89cf75c7085d663c2b22b9cd0c34398ef91",
+        "size": 1404
+      },
+      {
+        "path": "src/main/scala/openla500/MyCPUTop.scala",
+        "sha256": "c3c9a0563e72552b915f123b5702813ed77743cfca6482dea378c0d6f348a633",
+        "size": 4462
+      },
+      {
+        "path": "src/main/scala/openla500/PerfCounter.scala",
+        "sha256": "6586b094fe2a76cf7d9e0282bd8c62af575295db3035079fc48e1275c0519eae",
+        "size": 1328
+      },
+      {
+        "path": "src/main/scala/openla500/Pipeline.scala",
+        "sha256": "3a096dfa93324c3c058e4f98ed97d54b63b02e610d3fb9bd4bd32f42071491b9",
+        "size": 11043
+      },
+      {
+        "path": "src/main/scala/openla500/RegFile.scala",
+        "sha256": "9f2f6c7574a74f03f2d427b87a3967b5e67a65859019f230261bea58a73b13e3",
+        "size": 3794
+      },
+      {
+        "path": "src/main/scala/openla500/TLB.scala",
+        "sha256": "a0af38a3a407767df452a7c79c489597f2d29581ab351cb5cf01b7861581c0de",
+        "size": 3474
+      },
+      {
+        "path": "src/main/scala/openla500/compat/CoreTopCompat.scala",
+        "sha256": "dd57f25b12ea26f5e679d793216da4625737b745a23f905c6710888c22e67ada",
+        "size": 6392
+      },
+      {
+        "path": "src/main/scala/openla500/compat/GenerateCoreTopCompat.scala",
+        "sha256": "3a5c5f672b117eb9d364e78fafc1a55620616cb1a48d05e1d1030a918a710a75",
+        "size": 2711
+      },
+      {
+        "path": "src/main/scala/openla500/execute/GenerateOpenLa500Alu.scala",
+        "sha256": "9b1f192ee57c0f241add25cbaf5651e774a3ff89bd2cfecf1187c5891e4bd0c8",
+        "size": 2684
+      },
+      {
+        "path": "src/main/scala/openla500/execute/GenerateOpenLa500Div.scala",
+        "sha256": "64cabb23f457daed7ce8948dd0d11c8789d821bd85ad5e1f963ebad8152851d3",
+        "size": 2684
+      },
+      {
+        "path": "src/main/scala/openla500/execute/GenerateOpenLa500Mul.scala",
+        "sha256": "8e7ee1f73077c9f41001038d51d05db9045d0b5c88559b7823fe72b3378bb086",
+        "size": 2684
+      },
+      {
+        "path": "src/main/scala/openla500/execute/OpenLa500Alu.scala",
+        "sha256": "06abf9698e8896d4fda373f3440295ad9b514e923448cac1f44109aab6c087bb",
+        "size": 2922
+      },
+      {
+        "path": "src/main/scala/openla500/execute/OpenLa500Div.scala",
+        "sha256": "e284558ab378f91708d3d9ad1b497612e7f7df85c90a1048039dab1dce2f5ac3",
+        "size": 3545
+      },
+      {
+        "path": "src/main/scala/openla500/execute/OpenLa500Mul.scala",
+        "sha256": "a7bf777cad6791c03768c8c17f06f3b99357e45bf00fce04a0dad481cbc17b93",
+        "size": 1311
+      },
+      {
+        "path": "src/test/scala/openla500/ALUSpec.scala",
+        "sha256": "20c0f7aa6159ad4e4ee03e361655e23922897e72b96d3bdcd56a51a220c7cb2c",
+        "size": 2844
+      },
+      {
+        "path": "src/test/scala/openla500/execute/OpenLa500AluSpec.scala",
+        "sha256": "e0c1cf3e0b34b6bf1652908e2f2ea706ccad2cc7f70167dae06cbf982a49e44e",
+        "size": 7673
+      },
+      {
+        "path": "src/test/scala/openla500/execute/OpenLa500MulSpec.scala",
+        "sha256": "97e08c1ae919baa235fd8b8ec33130a1912a6d2f56dd800c016eb470f3a3511d",
+        "size": 6503
+      }
+    ],
+    "sha256": "d50e81684e2734e2fbc01850cabe11aacb8649b75c0b426121f3787d19c1e0cd"
+  },
+  "manifest": "/tmp/nscscc-core-top-0e2787f-src/reference/manifest.lock",
+  "manifest_sha256": "743dd7e58d77e456cfe664d80c2e6614ab426f72bfecd9088ff18d702afa2f20",
+  "passed": 4,
+  "planned": 4,
+  "repo_head_sha": "0e2787fc5ab30e246da5be1c6080e2847b2645cf",
+  "runtime_workspace_cleaned": true,
+  "schema_version": 1,
+  "simulation_artifacts": [
+    {
+      "executable": false,
+      "path": "/tmp/nscscc-core-top-0e2787f/local/scala-check/workspaces/1783890833689696908-377529/sim-workspace/ALUSimTop/rtl/ALU.v",
+      "sha256": "145bcd411c4181e26598430a0d7811cd2a1e3228cd8b85ad11ba10892831ce3a",
+      "size": 4250
+    },
+    {
+      "executable": false,
+      "path": "/tmp/nscscc-core-top-0e2787f/local/scala-check/workspaces/1783890833689696908-377529/sim-workspace/ALUSimTop/rtl/ALUSimTop.v",
+      "sha256": "4194027a38f322dc38ca9231432584e02f9a80ad006950d2ab55db6d1d4d5dda",
+      "size": 1226
+    },
+    {
+      "executable": true,
+      "path": "/tmp/nscscc-core-top-0e2787f/local/scala-check/workspaces/1783890833689696908-377529/sim-workspace/ALUSimTop/verilator/VALUSimTop",
+      "sha256": "009b3e53cc4031687a71de22089379c9ee98dfdb7141ddb99975bcae9111824c",
+      "size": 649320
+    },
+    {
+      "executable": true,
+      "path": "/tmp/nscscc-core-top-0e2787f/local/scala-check/workspaces/1783890833689696908-377529/sim-workspace/ALUSimTop/verilator/verilator_2.so",
+      "sha256": "009b3e53cc4031687a71de22089379c9ee98dfdb7141ddb99975bcae9111824c",
+      "size": 649320
+    },
+    {
+      "executable": false,
+      "path": "/tmp/nscscc-core-top-0e2787f/local/scala-check/workspaces/1783890833689696908-377529/sim-workspace/ALUSimTop/verilatorScript.sh",
+      "sha256": "6e5ea63fd1c861a3a33bead797c1b4ebab8a06878b860a55f9ff736e196667e2",
+      "size": 950
+    },
+    {
+      "executable": false,
+      "path": "/tmp/nscscc-core-top-0e2787f/local/scala-check/workspaces/1783890833689696908-377529/sim-workspace/openla500-alu-directed/OpenLa500AluSimTop/rtl/OpenLa500Alu.v",
+      "sha256": "b256cba25c65aa2a9f23a0f8bb4d09f8a048c321dd3faae6fb89e550bf5b4edb",
+      "size": 6434
+    },
+    {
+      "executable": false,
+      "path": "/tmp/nscscc-core-top-0e2787f/local/scala-check/workspaces/1783890833689696908-377529/sim-workspace/openla500-alu-directed/OpenLa500AluSimTop/rtl/OpenLa500AluSimTop.v",
+      "sha256": "361e56a922519b75fff0926fcee22d5365af9c366b0f001053ecf5bd5ffb945c",
+      "size": 917
+    },
+    {
+      "executable": true,
+      "path": "/tmp/nscscc-core-top-0e2787f/local/scala-check/workspaces/1783890833689696908-377529/sim-workspace/openla500-alu-directed/OpenLa500AluSimTop/verilator/VOpenLa500AluSimTop",
+      "sha256": "bd7e790fc3132c1020a749799ac03c1a666767375d7ab7ecfec08a404f6c076d",
+      "size": 650440
+    },
+    {
+      "executable": true,
+      "path": "/tmp/nscscc-core-top-0e2787f/local/scala-check/workspaces/1783890833689696908-377529/sim-workspace/openla500-alu-directed/OpenLa500AluSimTop/verilator/verilator_3.so",
+      "sha256": "bd7e790fc3132c1020a749799ac03c1a666767375d7ab7ecfec08a404f6c076d",
+      "size": 650440
+    },
+    {
+      "executable": false,
+      "path": "/tmp/nscscc-core-top-0e2787f/local/scala-check/workspaces/1783890833689696908-377529/sim-workspace/openla500-alu-directed/OpenLa500AluSimTop/verilatorScript.sh",
+      "sha256": "f38ece34c5cc26434d101f6cce58523b88a404134597e766a8e80fcb205f8d3d",
+      "size": 1032
+    },
+    {
+      "executable": false,
+      "path": "/tmp/nscscc-core-top-0e2787f/local/scala-check/workspaces/1783890833689696908-377529/sim-workspace/openla500-alu-directed/tmp/job_3/OpenLa500Alu.v",
+      "sha256": "b256cba25c65aa2a9f23a0f8bb4d09f8a048c321dd3faae6fb89e550bf5b4edb",
+      "size": 6434
+    },
+    {
+      "executable": false,
+      "path": "/tmp/nscscc-core-top-0e2787f/local/scala-check/workspaces/1783890833689696908-377529/sim-workspace/openla500-alu-directed/tmp/job_3/OpenLa500AluSimTop.v",
+      "sha256": "361e56a922519b75fff0926fcee22d5365af9c366b0f001053ecf5bd5ffb945c",
+      "size": 917
+    },
+    {
+      "executable": false,
+      "path": "/tmp/nscscc-core-top-0e2787f/local/scala-check/workspaces/1783890833689696908-377529/sim-workspace/openla500-alu-random/OpenLa500AluSimTop/rtl/OpenLa500Alu.v",
+      "sha256": "b256cba25c65aa2a9f23a0f8bb4d09f8a048c321dd3faae6fb89e550bf5b4edb",
+      "size": 6434
+    },
+    {
+      "executable": false,
+      "path": "/tmp/nscscc-core-top-0e2787f/local/scala-check/workspaces/1783890833689696908-377529/sim-workspace/openla500-alu-random/OpenLa500AluSimTop/rtl/OpenLa500AluSimTop.v",
+      "sha256": "361e56a922519b75fff0926fcee22d5365af9c366b0f001053ecf5bd5ffb945c",
+      "size": 917
+    },
+    {
+      "executable": true,
+      "path": "/tmp/nscscc-core-top-0e2787f/local/scala-check/workspaces/1783890833689696908-377529/sim-workspace/openla500-alu-random/OpenLa500AluSimTop/verilator/VOpenLa500AluSimTop",
+      "sha256": "e0783be43273214330a01b26954f134b72ac97729aeeae3906d64d64b2f0e1f5",
+      "size": 650440
+    },
+    {
+      "executable": true,
+      "path": "/tmp/nscscc-core-top-0e2787f/local/scala-check/workspaces/1783890833689696908-377529/sim-workspace/openla500-alu-random/OpenLa500AluSimTop/verilator/verilator_4.so",
+      "sha256": "e0783be43273214330a01b26954f134b72ac97729aeeae3906d64d64b2f0e1f5",
+      "size": 650440
+    },
+    {
+      "executable": false,
+      "path": "/tmp/nscscc-core-top-0e2787f/local/scala-check/workspaces/1783890833689696908-377529/sim-workspace/openla500-alu-random/OpenLa500AluSimTop/verilatorScript.sh",
+      "sha256": "f69ae3739215f673749f92ae4429928b7be0fbbdd9f58233fb7a2acf67041307",
+      "size": 1028
+    },
+    {
+      "executable": false,
+      "path": "/tmp/nscscc-core-top-0e2787f/local/scala-check/workspaces/1783890833689696908-377529/sim-workspace/openla500-alu-random/tmp/job_4/OpenLa500Alu.v",
+      "sha256": "b256cba25c65aa2a9f23a0f8bb4d09f8a048c321dd3faae6fb89e550bf5b4edb",
+      "size": 6434
+    },
+    {
+      "executable": false,
+      "path": "/tmp/nscscc-core-top-0e2787f/local/scala-check/workspaces/1783890833689696908-377529/sim-workspace/openla500-alu-random/tmp/job_4/OpenLa500AluSimTop.v",
+      "sha256": "361e56a922519b75fff0926fcee22d5365af9c366b0f001053ecf5bd5ffb945c",
+      "size": 917
+    },
+    {
+      "executable": false,
+      "path": "/tmp/nscscc-core-top-0e2787f/local/scala-check/workspaces/1783890833689696908-377529/sim-workspace/openla500-mul-cycle-contract/OpenLa500MulSimTop/rtl/OpenLa500Mul.v",
+      "sha256": "0b222e0655b7920476bdd4cf51f1fbc7e7b7354547232cf2e5407cd4a157267b",
+      "size": 1296
+    },
+    {
+      "executable": false,
+      "path": "/tmp/nscscc-core-top-0e2787f/local/scala-check/workspaces/1783890833689696908-377529/sim-workspace/openla500-mul-cycle-contract/OpenLa500MulSimTop/rtl/OpenLa500MulSimTop.v",
+      "sha256": "4d055e7e70960ac89a61c479ef0a1b96f75fbb2418e6e760f7a6b1bd1d9384b8",
+      "size": 1034
+    },
+    {
+      "executable": true,
+      "path": "/tmp/nscscc-core-top-0e2787f/local/scala-check/workspaces/1783890833689696908-377529/sim-workspace/openla500-mul-cycle-contract/OpenLa500MulSimTop/verilator/VOpenLa500MulSimTop",
+      "sha256": "ad67056c1956f03601902dcd408c3dcb66e7c81225f95352e7eb19467efcd9a0",
+      "size": 646416
+    },
+    {
+      "executable": true,
+      "path": "/tmp/nscscc-core-top-0e2787f/local/scala-check/workspaces/1783890833689696908-377529/sim-workspace/openla500-mul-cycle-contract/OpenLa500MulSimTop/verilator/verilator_1.so",
+      "sha256": "ad67056c1956f03601902dcd408c3dcb66e7c81225f95352e7eb19467efcd9a0",
+      "size": 646416
+    },
+    {
+      "executable": false,
+      "path": "/tmp/nscscc-core-top-0e2787f/local/scala-check/workspaces/1783890833689696908-377529/sim-workspace/openla500-mul-cycle-contract/OpenLa500MulSimTop/verilatorScript.sh",
+      "sha256": "f61a6901dd009364ab72ed379d11951e90f6fbad8d8046cff2bb8e182cceb7a2",
+      "size": 1044
+    },
+    {
+      "executable": false,
+      "path": "/tmp/nscscc-core-top-0e2787f/local/scala-check/workspaces/1783890833689696908-377529/sim-workspace/openla500-mul-cycle-contract/tmp/job_1/OpenLa500Mul.v",
+      "sha256": "0b222e0655b7920476bdd4cf51f1fbc7e7b7354547232cf2e5407cd4a157267b",
+      "size": 1296
+    },
+    {
+      "executable": false,
+      "path": "/tmp/nscscc-core-top-0e2787f/local/scala-check/workspaces/1783890833689696908-377529/sim-workspace/openla500-mul-cycle-contract/tmp/job_1/OpenLa500MulSimTop.v",
+      "sha256": "4d055e7e70960ac89a61c479ef0a1b96f75fbb2418e6e760f7a6b1bd1d9384b8",
+      "size": 1034
+    },
+    {
+      "executable": false,
+      "path": "/tmp/nscscc-core-top-0e2787f/local/scala-check/workspaces/1783890833689696908-377529/sim-workspace/tmp/job_2/ALU.v",
+      "sha256": "145bcd411c4181e26598430a0d7811cd2a1e3228cd8b85ad11ba10892831ce3a",
+      "size": 4250
+    },
+    {
+      "executable": false,
+      "path": "/tmp/nscscc-core-top-0e2787f/local/scala-check/workspaces/1783890833689696908-377529/sim-workspace/tmp/job_2/ALUSimTop.v",
+      "sha256": "4194027a38f322dc38ca9231432584e02f9a80ad006950d2ab55db6d1d4d5dda",
+      "size": 1226
+    }
+  ],
+  "simulator_policies": [
+    {
+      "all_effective_warning_flags": {
+        "ATTRIBUTES": "wno",
+        "CMPCONST": "wwarn",
+        "UNOPTFLAT": "wwarn",
+        "UNSIGNED": "wwarn",
+        "WIDTH": "wwarn"
+      },
+      "discovered_vlt_files": [],
+      "effective_warning_flags": {
+        "CMPCONST": "wwarn",
+        "UNOPTFLAT": "wwarn",
+        "UNSIGNED": "wwarn",
+        "WIDTH": "wwarn"
+      },
+      "include_dirs": [],
+      "inline_waivers": [],
+      "missing_includes": [],
+      "missing_rtl_inputs": [],
+      "parse_error": null,
+      "passed": true,
+      "path": "/tmp/nscscc-core-top-0e2787f/local/scala-check/workspaces/1783890833689696908-377529/sim-workspace/ALUSimTop/verilatorScript.sh",
+      "prohibited_suppressions": [],
+      "response_file_tokens": [],
+      "scanned_rtl_inputs": [
+        "/tmp/nscscc-core-top-0e2787f/local/scala-check/workspaces/1783890833689696908-377529/sim-workspace/tmp/job_2/ALU.v",
+        "/tmp/nscscc-core-top-0e2787f/local/scala-check/workspaces/1783890833689696908-377529/sim-workspace/tmp/job_2/ALUSimTop.v"
+      ],
+      "sha256": "6e5ea63fd1c861a3a33bead797c1b4ebab8a06878b860a55f9ff736e196667e2",
+      "unresolved_include_directives": [],
+      "wall_enabled": true
+    },
+    {
+      "all_effective_warning_flags": {
+        "ATTRIBUTES": "wno",
+        "CMPCONST": "wwarn",
+        "UNOPTFLAT": "wwarn",
+        "UNSIGNED": "wwarn",
+        "WIDTH": "wwarn"
+      },
+      "discovered_vlt_files": [],
+      "effective_warning_flags": {
+        "CMPCONST": "wwarn",
+        "UNOPTFLAT": "wwarn",
+        "UNSIGNED": "wwarn",
+        "WIDTH": "wwarn"
+      },
+      "include_dirs": [],
+      "inline_waivers": [],
+      "missing_includes": [],
+      "missing_rtl_inputs": [],
+      "parse_error": null,
+      "passed": true,
+      "path": "/tmp/nscscc-core-top-0e2787f/local/scala-check/workspaces/1783890833689696908-377529/sim-workspace/openla500-alu-directed/OpenLa500AluSimTop/verilatorScript.sh",
+      "prohibited_suppressions": [],
+      "response_file_tokens": [],
+      "scanned_rtl_inputs": [
+        "/tmp/nscscc-core-top-0e2787f/local/scala-check/workspaces/1783890833689696908-377529/sim-workspace/openla500-alu-directed/tmp/job_3/OpenLa500Alu.v",
+        "/tmp/nscscc-core-top-0e2787f/local/scala-check/workspaces/1783890833689696908-377529/sim-workspace/openla500-alu-directed/tmp/job_3/OpenLa500AluSimTop.v"
+      ],
+      "sha256": "f38ece34c5cc26434d101f6cce58523b88a404134597e766a8e80fcb205f8d3d",
+      "unresolved_include_directives": [],
+      "wall_enabled": true
+    },
+    {
+      "all_effective_warning_flags": {
+        "ATTRIBUTES": "wno",
+        "CMPCONST": "wwarn",
+        "UNOPTFLAT": "wwarn",
+        "UNSIGNED": "wwarn",
+        "WIDTH": "wwarn"
+      },
+      "discovered_vlt_files": [],
+      "effective_warning_flags": {
+        "CMPCONST": "wwarn",
+        "UNOPTFLAT": "wwarn",
+        "UNSIGNED": "wwarn",
+        "WIDTH": "wwarn"
+      },
+      "include_dirs": [],
+      "inline_waivers": [],
+      "missing_includes": [],
+      "missing_rtl_inputs": [],
+      "parse_error": null,
+      "passed": true,
+      "path": "/tmp/nscscc-core-top-0e2787f/local/scala-check/workspaces/1783890833689696908-377529/sim-workspace/openla500-alu-random/OpenLa500AluSimTop/verilatorScript.sh",
+      "prohibited_suppressions": [],
+      "response_file_tokens": [],
+      "scanned_rtl_inputs": [
+        "/tmp/nscscc-core-top-0e2787f/local/scala-check/workspaces/1783890833689696908-377529/sim-workspace/openla500-alu-random/tmp/job_4/OpenLa500Alu.v",
+        "/tmp/nscscc-core-top-0e2787f/local/scala-check/workspaces/1783890833689696908-377529/sim-workspace/openla500-alu-random/tmp/job_4/OpenLa500AluSimTop.v"
+      ],
+      "sha256": "f69ae3739215f673749f92ae4429928b7be0fbbdd9f58233fb7a2acf67041307",
+      "unresolved_include_directives": [],
+      "wall_enabled": true
+    },
+    {
+      "all_effective_warning_flags": {
+        "ATTRIBUTES": "wno",
+        "CMPCONST": "wwarn",
+        "UNOPTFLAT": "wwarn",
+        "UNSIGNED": "wwarn",
+        "WIDTH": "wwarn"
+      },
+      "discovered_vlt_files": [],
+      "effective_warning_flags": {
+        "CMPCONST": "wwarn",
+        "UNOPTFLAT": "wwarn",
+        "UNSIGNED": "wwarn",
+        "WIDTH": "wwarn"
+      },
+      "include_dirs": [],
+      "inline_waivers": [],
+      "missing_includes": [],
+      "missing_rtl_inputs": [],
+      "parse_error": null,
+      "passed": true,
+      "path": "/tmp/nscscc-core-top-0e2787f/local/scala-check/workspaces/1783890833689696908-377529/sim-workspace/openla500-mul-cycle-contract/OpenLa500MulSimTop/verilatorScript.sh",
+      "prohibited_suppressions": [],
+      "response_file_tokens": [],
+      "scanned_rtl_inputs": [
+        "/tmp/nscscc-core-top-0e2787f/local/scala-check/workspaces/1783890833689696908-377529/sim-workspace/openla500-mul-cycle-contract/tmp/job_1/OpenLa500Mul.v",
+        "/tmp/nscscc-core-top-0e2787f/local/scala-check/workspaces/1783890833689696908-377529/sim-workspace/openla500-mul-cycle-contract/tmp/job_1/OpenLa500MulSimTop.v"
+      ],
+      "sha256": "f61a6901dd009364ab72ed379d11951e90f6fbad8d8046cff2bb8e182cceb7a2",
+      "unresolved_include_directives": [],
+      "wall_enabled": true
+    }
+  ],
+  "simulator_policy_passed": true,
+  "skipped": 0,
+  "source_after": {
+    "files": [
+      {
+        "path": ".scalafmt.conf",
+        "sha256": "f652f6aacb3fe68ad449ea8e8e9a32e2e58180fddebed4c6111a9f1122b40eb2",
+        "size": 58
+      },
+      {
+        "path": "build.sbt",
+        "sha256": "32bc5ef69c93e565ddc10be3f555ee17e310d1ff0eb577469c9c5c257e7b740b",
+        "size": 1730
+      },
+      {
+        "path": "project/build.properties",
+        "sha256": "38901e157e1ca1e142d978bc5254ddb83e0f6765747f5668351996fdb606000b",
+        "size": 20
+      },
+      {
+        "path": "project/plugins.sbt",
+        "sha256": "dcfaae93ee9652d7a27d5d8a071b6175669b1b89361cec00a55627d6effff07d",
+        "size": 57
+      },
+      {
+        "path": "src/main/scala/openla500/ALU.scala",
+        "sha256": "74cd4043e14726904a1700fa966ac9933ab231bf88d92420fdf942d35861e92e",
+        "size": 2540
+      },
+      {
+        "path": "src/main/scala/openla500/AddrTrans.scala",
+        "sha256": "f0d0d31a9453c787de05b3041666a08f4dbf1f822f350734a665bbdcbbb6313d",
+        "size": 731
+      },
+      {
+        "path": "src/main/scala/openla500/AxiBridge.scala",
+        "sha256": "f960ace434d6123aa5944ce6e90fa701c63a5af8209bb4b328e8337c381be18c",
+        "size": 3111
+      },
+      {
+        "path": "src/main/scala/openla500/BTB.scala",
+        "sha256": "927d1fee847649ced1737ab45deba9a5ae42b7c3d8ec8bef50c02eedd1634b30",
+        "size": 2297
+      },
+      {
+        "path": "src/main/scala/openla500/CSR.scala",
+        "sha256": "4928172fdf67323867e4acfa3a2c550ba17be98805226d6d01fd2c1cd956f3fb",
+        "size": 4794
+      },
+      {
+        "path": "src/main/scala/openla500/Cache.scala",
+        "sha256": "5ae4b85489d1e634a448a1f80cb919c919d23b75dd53f4416357e302f842cf74",
+        "size": 6304
+      },
+      {
+        "path": "src/main/scala/openla500/Config.scala",
+        "sha256": "d27a57d2b4b724733a5895b898c17644d5811c8d6b74786024df1895b5dacb8b",
+        "size": 2291
+      },
+      {
+        "path": "src/main/scala/openla500/Core.scala",
+        "sha256": "ceb8644ce450e03209a4f57592cd6a2f073f3a0bb6408e1d7a539fa4ffc7accb",
+        "size": 11114
+      },
+      {
+        "path": "src/main/scala/openla500/Divider.scala",
+        "sha256": "cab427a59ec9022b86436ab9ce225e2386d0c397397c684215493f45af596922",
+        "size": 1587
+      },
+      {
+        "path": "src/main/scala/openla500/GenAll.scala",
+        "sha256": "75cdade512c646f49d759da2e7e5f208a8d7c7666d63812065f99c919f555cbc",
+        "size": 1481
+      },
+      {
+        "path": "src/main/scala/openla500/Multiplier.scala",
+        "sha256": "99a74f31ec4f9cd95535a6271e50c89cf75c7085d663c2b22b9cd0c34398ef91",
+        "size": 1404
+      },
+      {
+        "path": "src/main/scala/openla500/MyCPUTop.scala",
+        "sha256": "c3c9a0563e72552b915f123b5702813ed77743cfca6482dea378c0d6f348a633",
+        "size": 4462
+      },
+      {
+        "path": "src/main/scala/openla500/PerfCounter.scala",
+        "sha256": "6586b094fe2a76cf7d9e0282bd8c62af575295db3035079fc48e1275c0519eae",
+        "size": 1328
+      },
+      {
+        "path": "src/main/scala/openla500/Pipeline.scala",
+        "sha256": "3a096dfa93324c3c058e4f98ed97d54b63b02e610d3fb9bd4bd32f42071491b9",
+        "size": 11043
+      },
+      {
+        "path": "src/main/scala/openla500/RegFile.scala",
+        "sha256": "9f2f6c7574a74f03f2d427b87a3967b5e67a65859019f230261bea58a73b13e3",
+        "size": 3794
+      },
+      {
+        "path": "src/main/scala/openla500/TLB.scala",
+        "sha256": "a0af38a3a407767df452a7c79c489597f2d29581ab351cb5cf01b7861581c0de",
+        "size": 3474
+      },
+      {
+        "path": "src/main/scala/openla500/compat/CoreTopCompat.scala",
+        "sha256": "dd57f25b12ea26f5e679d793216da4625737b745a23f905c6710888c22e67ada",
+        "size": 6392
+      },
+      {
+        "path": "src/main/scala/openla500/compat/GenerateCoreTopCompat.scala",
+        "sha256": "3a5c5f672b117eb9d364e78fafc1a55620616cb1a48d05e1d1030a918a710a75",
+        "size": 2711
+      },
+      {
+        "path": "src/main/scala/openla500/execute/GenerateOpenLa500Alu.scala",
+        "sha256": "9b1f192ee57c0f241add25cbaf5651e774a3ff89bd2cfecf1187c5891e4bd0c8",
+        "size": 2684
+      },
+      {
+        "path": "src/main/scala/openla500/execute/GenerateOpenLa500Div.scala",
+        "sha256": "64cabb23f457daed7ce8948dd0d11c8789d821bd85ad5e1f963ebad8152851d3",
+        "size": 2684
+      },
+      {
+        "path": "src/main/scala/openla500/execute/GenerateOpenLa500Mul.scala",
+        "sha256": "8e7ee1f73077c9f41001038d51d05db9045d0b5c88559b7823fe72b3378bb086",
+        "size": 2684
+      },
+      {
+        "path": "src/main/scala/openla500/execute/OpenLa500Alu.scala",
+        "sha256": "06abf9698e8896d4fda373f3440295ad9b514e923448cac1f44109aab6c087bb",
+        "size": 2922
+      },
+      {
+        "path": "src/main/scala/openla500/execute/OpenLa500Div.scala",
+        "sha256": "e284558ab378f91708d3d9ad1b497612e7f7df85c90a1048039dab1dce2f5ac3",
+        "size": 3545
+      },
+      {
+        "path": "src/main/scala/openla500/execute/OpenLa500Mul.scala",
+        "sha256": "a7bf777cad6791c03768c8c17f06f3b99357e45bf00fce04a0dad481cbc17b93",
+        "size": 1311
+      },
+      {
+        "path": "src/test/scala/openla500/ALUSpec.scala",
+        "sha256": "20c0f7aa6159ad4e4ee03e361655e23922897e72b96d3bdcd56a51a220c7cb2c",
+        "size": 2844
+      },
+      {
+        "path": "src/test/scala/openla500/execute/OpenLa500AluSpec.scala",
+        "sha256": "e0c1cf3e0b34b6bf1652908e2f2ea706ccad2cc7f70167dae06cbf982a49e44e",
+        "size": 7673
+      },
+      {
+        "path": "src/test/scala/openla500/execute/OpenLa500MulSpec.scala",
+        "sha256": "97e08c1ae919baa235fd8b8ec33130a1912a6d2f56dd800c016eb470f3a3511d",
+        "size": 6503
+      }
+    ],
+    "sha256": "d50e81684e2734e2fbc01850cabe11aacb8649b75c0b426121f3787d19c1e0cd"
+  },
+  "source_before": {
+    "files": [
+      {
+        "path": ".scalafmt.conf",
+        "sha256": "f652f6aacb3fe68ad449ea8e8e9a32e2e58180fddebed4c6111a9f1122b40eb2",
+        "size": 58
+      },
+      {
+        "path": "build.sbt",
+        "sha256": "32bc5ef69c93e565ddc10be3f555ee17e310d1ff0eb577469c9c5c257e7b740b",
+        "size": 1730
+      },
+      {
+        "path": "project/build.properties",
+        "sha256": "38901e157e1ca1e142d978bc5254ddb83e0f6765747f5668351996fdb606000b",
+        "size": 20
+      },
+      {
+        "path": "project/plugins.sbt",
+        "sha256": "dcfaae93ee9652d7a27d5d8a071b6175669b1b89361cec00a55627d6effff07d",
+        "size": 57
+      },
+      {
+        "path": "src/main/scala/openla500/ALU.scala",
+        "sha256": "74cd4043e14726904a1700fa966ac9933ab231bf88d92420fdf942d35861e92e",
+        "size": 2540
+      },
+      {
+        "path": "src/main/scala/openla500/AddrTrans.scala",
+        "sha256": "f0d0d31a9453c787de05b3041666a08f4dbf1f822f350734a665bbdcbbb6313d",
+        "size": 731
+      },
+      {
+        "path": "src/main/scala/openla500/AxiBridge.scala",
+        "sha256": "f960ace434d6123aa5944ce6e90fa701c63a5af8209bb4b328e8337c381be18c",
+        "size": 3111
+      },
+      {
+        "path": "src/main/scala/openla500/BTB.scala",
+        "sha256": "927d1fee847649ced1737ab45deba9a5ae42b7c3d8ec8bef50c02eedd1634b30",
+        "size": 2297
+      },
+      {
+        "path": "src/main/scala/openla500/CSR.scala",
+        "sha256": "4928172fdf67323867e4acfa3a2c550ba17be98805226d6d01fd2c1cd956f3fb",
+        "size": 4794
+      },
+      {
+        "path": "src/main/scala/openla500/Cache.scala",
+        "sha256": "5ae4b85489d1e634a448a1f80cb919c919d23b75dd53f4416357e302f842cf74",
+        "size": 6304
+      },
+      {
+        "path": "src/main/scala/openla500/Config.scala",
+        "sha256": "d27a57d2b4b724733a5895b898c17644d5811c8d6b74786024df1895b5dacb8b",
+        "size": 2291
+      },
+      {
+        "path": "src/main/scala/openla500/Core.scala",
+        "sha256": "ceb8644ce450e03209a4f57592cd6a2f073f3a0bb6408e1d7a539fa4ffc7accb",
+        "size": 11114
+      },
+      {
+        "path": "src/main/scala/openla500/Divider.scala",
+        "sha256": "cab427a59ec9022b86436ab9ce225e2386d0c397397c684215493f45af596922",
+        "size": 1587
+      },
+      {
+        "path": "src/main/scala/openla500/GenAll.scala",
+        "sha256": "75cdade512c646f49d759da2e7e5f208a8d7c7666d63812065f99c919f555cbc",
+        "size": 1481
+      },
+      {
+        "path": "src/main/scala/openla500/Multiplier.scala",
+        "sha256": "99a74f31ec4f9cd95535a6271e50c89cf75c7085d663c2b22b9cd0c34398ef91",
+        "size": 1404
+      },
+      {
+        "path": "src/main/scala/openla500/MyCPUTop.scala",
+        "sha256": "c3c9a0563e72552b915f123b5702813ed77743cfca6482dea378c0d6f348a633",
+        "size": 4462
+      },
+      {
+        "path": "src/main/scala/openla500/PerfCounter.scala",
+        "sha256": "6586b094fe2a76cf7d9e0282bd8c62af575295db3035079fc48e1275c0519eae",
+        "size": 1328
+      },
+      {
+        "path": "src/main/scala/openla500/Pipeline.scala",
+        "sha256": "3a096dfa93324c3c058e4f98ed97d54b63b02e610d3fb9bd4bd32f42071491b9",
+        "size": 11043
+      },
+      {
+        "path": "src/main/scala/openla500/RegFile.scala",
+        "sha256": "9f2f6c7574a74f03f2d427b87a3967b5e67a65859019f230261bea58a73b13e3",
+        "size": 3794
+      },
+      {
+        "path": "src/main/scala/openla500/TLB.scala",
+        "sha256": "a0af38a3a407767df452a7c79c489597f2d29581ab351cb5cf01b7861581c0de",
+        "size": 3474
+      },
+      {
+        "path": "src/main/scala/openla500/compat/CoreTopCompat.scala",
+        "sha256": "dd57f25b12ea26f5e679d793216da4625737b745a23f905c6710888c22e67ada",
+        "size": 6392
+      },
+      {
+        "path": "src/main/scala/openla500/compat/GenerateCoreTopCompat.scala",
+        "sha256": "3a5c5f672b117eb9d364e78fafc1a55620616cb1a48d05e1d1030a918a710a75",
+        "size": 2711
+      },
+      {
+        "path": "src/main/scala/openla500/execute/GenerateOpenLa500Alu.scala",
+        "sha256": "9b1f192ee57c0f241add25cbaf5651e774a3ff89bd2cfecf1187c5891e4bd0c8",
+        "size": 2684
+      },
+      {
+        "path": "src/main/scala/openla500/execute/GenerateOpenLa500Div.scala",
+        "sha256": "64cabb23f457daed7ce8948dd0d11c8789d821bd85ad5e1f963ebad8152851d3",
+        "size": 2684
+      },
+      {
+        "path": "src/main/scala/openla500/execute/GenerateOpenLa500Mul.scala",
+        "sha256": "8e7ee1f73077c9f41001038d51d05db9045d0b5c88559b7823fe72b3378bb086",
+        "size": 2684
+      },
+      {
+        "path": "src/main/scala/openla500/execute/OpenLa500Alu.scala",
+        "sha256": "06abf9698e8896d4fda373f3440295ad9b514e923448cac1f44109aab6c087bb",
+        "size": 2922
+      },
+      {
+        "path": "src/main/scala/openla500/execute/OpenLa500Div.scala",
+        "sha256": "e284558ab378f91708d3d9ad1b497612e7f7df85c90a1048039dab1dce2f5ac3",
+        "size": 3545
+      },
+      {
+        "path": "src/main/scala/openla500/execute/OpenLa500Mul.scala",
+        "sha256": "a7bf777cad6791c03768c8c17f06f3b99357e45bf00fce04a0dad481cbc17b93",
+        "size": 1311
+      },
+      {
+        "path": "src/test/scala/openla500/ALUSpec.scala",
+        "sha256": "20c0f7aa6159ad4e4ee03e361655e23922897e72b96d3bdcd56a51a220c7cb2c",
+        "size": 2844
+      },
+      {
+        "path": "src/test/scala/openla500/execute/OpenLa500AluSpec.scala",
+        "sha256": "e0c1cf3e0b34b6bf1652908e2f2ea706ccad2cc7f70167dae06cbf982a49e44e",
+        "size": 7673
+      },
+      {
+        "path": "src/test/scala/openla500/execute/OpenLa500MulSpec.scala",
+        "sha256": "97e08c1ae919baa235fd8b8ec33130a1912a6d2f56dd800c016eb470f3a3511d",
+        "size": 6503
+      }
+    ],
+    "sha256": "d50e81684e2734e2fbc01850cabe11aacb8649b75c0b426121f3787d19c1e0cd"
+  },
+  "source_stable": true,
+  "status": "pass",
+  "tasks": [
+    {
+      "argv": [
+        "/usr/lib/jvm/java-17-openjdk-amd64/bin/java",
+        "-Dsbt.global.base=/tmp/nscscc-core-top-0e2787f/local/scala-check/workspaces/1783890833689696908-377529/sbt-global",
+        "-Dsbt.boot.directory=/opt/chiplab-tools/root/scala-cache-sbt1.10.11-spinal1.14.2/sbt-boot",
+        "-Dsbt.ivy.home=/opt/chiplab-tools/root/scala-cache-sbt1.10.11-spinal1.14.2/ivy2",
+        "-Dsbt.offline=true",
+        "-Dsbt.supershell=false",
+        "-Dsbt.log.noformat=true",
+        "-jar",
+        "/opt/chiplab-tools/root/sbt-1.10.11/bin/sbt-launch.jar",
+        "scalafmtCheckAll"
+      ],
+      "compiled_source_count": null,
+      "elapsed_seconds": 7.407,
+      "expected_source_count": null,
+      "forbidden_warnings": [],
+      "id": "scalafmt",
+      "log": "/tmp/nscscc-core-top-0e2787f/local/scala-check/scalafmt.log",
+      "log_sha256": "7bcc6f183a01977479c7dd3cd17325082fe68d6527018ed3854801b5505e7f2b",
+      "passed": true,
+      "returncode": 0,
+      "sbt_task": "scalafmtCheckAll",
+      "test_outcome": null,
+      "timed_out": false
+    },
+    {
+      "argv": [
+        "/usr/lib/jvm/java-17-openjdk-amd64/bin/java",
+        "-Dsbt.global.base=/tmp/nscscc-core-top-0e2787f/local/scala-check/workspaces/1783890833689696908-377529/sbt-global",
+        "-Dsbt.boot.directory=/opt/chiplab-tools/root/scala-cache-sbt1.10.11-spinal1.14.2/sbt-boot",
+        "-Dsbt.ivy.home=/opt/chiplab-tools/root/scala-cache-sbt1.10.11-spinal1.14.2/ivy2",
+        "-Dsbt.offline=true",
+        "-Dsbt.supershell=false",
+        "-Dsbt.log.noformat=true",
+        "-jar",
+        "/opt/chiplab-tools/root/sbt-1.10.11/bin/sbt-launch.jar",
+        "Compile / compile"
+      ],
+      "compiled_source_count": 24,
+      "elapsed_seconds": 11.068,
+      "expected_source_count": 24,
+      "forbidden_warnings": [],
+      "id": "compile",
+      "log": "/tmp/nscscc-core-top-0e2787f/local/scala-check/compile.log",
+      "log_sha256": "c728af54bbe7bf87cee4030b7310e78ee83003d1cc33b0e8216f99d6bb20f9aa",
+      "passed": true,
+      "returncode": 0,
+      "sbt_task": "Compile / compile",
+      "test_outcome": null,
+      "timed_out": false
+    },
+    {
+      "argv": [
+        "/usr/lib/jvm/java-17-openjdk-amd64/bin/java",
+        "-Dsbt.global.base=/tmp/nscscc-core-top-0e2787f/local/scala-check/workspaces/1783890833689696908-377529/sbt-global",
+        "-Dsbt.boot.directory=/opt/chiplab-tools/root/scala-cache-sbt1.10.11-spinal1.14.2/sbt-boot",
+        "-Dsbt.ivy.home=/opt/chiplab-tools/root/scala-cache-sbt1.10.11-spinal1.14.2/ivy2",
+        "-Dsbt.offline=true",
+        "-Dsbt.supershell=false",
+        "-Dsbt.log.noformat=true",
+        "-jar",
+        "/opt/chiplab-tools/root/sbt-1.10.11/bin/sbt-launch.jar",
+        "Test / compile"
+      ],
+      "compiled_source_count": 3,
+      "elapsed_seconds": 7.166,
+      "expected_source_count": 3,
+      "forbidden_warnings": [],
+      "id": "test-compile",
+      "log": "/tmp/nscscc-core-top-0e2787f/local/scala-check/test-compile.log",
+      "log_sha256": "14d3d2ca5f4330983af298475c5d8ede9661619120f0f85ccae5271438caaa43",
+      "passed": true,
+      "returncode": 0,
+      "sbt_task": "Test / compile",
+      "test_outcome": null,
+      "timed_out": false
+    },
+    {
+      "argv": [
+        "/usr/lib/jvm/java-17-openjdk-amd64/bin/java",
+        "-Dsbt.global.base=/tmp/nscscc-core-top-0e2787f/local/scala-check/workspaces/1783890833689696908-377529/sbt-global",
+        "-Dsbt.boot.directory=/opt/chiplab-tools/root/scala-cache-sbt1.10.11-spinal1.14.2/sbt-boot",
+        "-Dsbt.ivy.home=/opt/chiplab-tools/root/scala-cache-sbt1.10.11-spinal1.14.2/ivy2",
+        "-Dsbt.offline=true",
+        "-Dsbt.supershell=false",
+        "-Dsbt.log.noformat=true",
+        "-jar",
+        "/opt/chiplab-tools/root/sbt-1.10.11/bin/sbt-launch.jar",
+        "Test / test"
+      ],
+      "compiled_source_count": null,
+      "elapsed_seconds": 11.933,
+      "expected_source_count": null,
+      "forbidden_warnings": [],
+      "id": "test",
+      "log": "/tmp/nscscc-core-top-0e2787f/local/scala-check/test.log",
+      "log_sha256": "139c0d52ff142d10cd9d1668700f5ab02e64ebf5f50c4739e294aeb907a24160",
+      "passed": true,
+      "returncode": 0,
+      "sbt_task": "Test / test",
+      "test_outcome": {
+        "aborted_suites": 0,
+        "canceled": 0,
+        "failed": 0,
+        "ignored": 0,
+        "pending": 0,
+        "succeeded": 6,
+        "total": 6
+      },
+      "timed_out": false
+    }
+  ],
+  "test_runtime_isolation": {
+    "jnidispatch_paths": [
+      "/tmp/nsg-393e5a6d7b59/jna/jna8381626696179701627.tmp",
+      "/tmp/nsg-393e5a6d7b59/jna/jna8381626696179701627.tmp",
+      "/tmp/nsg-393e5a6d7b59/jna/jna8381626696179701627.tmp"
+    ],
+    "jnidispatch_paths_within_jna_tmpdir": true,
+    "passed": true,
+    "report_count": 3,
+    "reports": [
+      {
+        "jnidispatch_path": "/tmp/nsg-393e5a6d7b59/jna/jna8381626696179701627.tmp",
+        "passed": true,
+        "path": "/tmp/nscscc-core-top-0e2787f/local/scala-check/workspaces/1783890833689696908-377529/spinal/target/test-reports/TEST-openla500.ALUSpec.xml",
+        "property_mismatches": {},
+        "sha256": "97e23fa2aae04b5aa00cb303b5dad3107016551f4ab9f061fea6eaad7964ef0c"
+      },
+      {
+        "jnidispatch_path": "/tmp/nsg-393e5a6d7b59/jna/jna8381626696179701627.tmp",
+        "passed": true,
+        "path": "/tmp/nscscc-core-top-0e2787f/local/scala-check/workspaces/1783890833689696908-377529/spinal/target/test-reports/TEST-openla500.execute.OpenLa500AluSpec.xml",
+        "property_mismatches": {},
+        "sha256": "e6b2151f46fdb11b0256ae56296982c8313f838b6c15043b6bc68355e784af42"
+      },
+      {
+        "jnidispatch_path": "/tmp/nsg-393e5a6d7b59/jna/jna8381626696179701627.tmp",
+        "passed": true,
+        "path": "/tmp/nscscc-core-top-0e2787f/local/scala-check/workspaces/1783890833689696908-377529/spinal/target/test-reports/TEST-openla500.execute.OpenLa500MulSpec.xml",
+        "property_mismatches": {},
+        "sha256": "0a8a6322d9b78f87f688205e4c17e2aff63926b5cb433ad0bc317969c2b1116c"
+      }
+    ]
+  },
+  "toolchain": {
+    "coursier_cache": "/opt/chiplab-tools/root/scala-cache-sbt1.10.11-spinal1.14.2/coursier/v1",
+    "dependency_artifact_count": 426,
+    "dependency_artifacts_sha256": "f84701a4773644e383c0c658a264d00f04fcbf5e8d03c358af56569a17eb3a35",
+    "dependency_cache_root": "/opt/chiplab-tools/root/scala-cache-sbt1.10.11-spinal1.14.2",
+    "dependency_lock": "/tmp/nscscc-core-top-0e2787f-src/reference/scala-dependencies.lock.json",
+    "dependency_lock_sha256": "0a5b155ce209d52cb12f24006be105b498796c7a6906c1981093c935fc4aa51d",
+    "environment": {
+      "COURSIER_CACHE": "/opt/chiplab-tools/root/scala-cache-sbt1.10.11-spinal1.14.2/coursier/v1",
+      "COURSIER_MODE": "offline",
+      "HOME": "/tmp/nsg-393e5a6d7b59/home",
+      "JAVA_HOME": "/usr/lib/jvm/java-17-openjdk-amd64",
+      "JAVA_TOOL_OPTIONS": "-Djava.io.tmpdir=\"/tmp/nsg-393e5a6d7b59/tmp\" -Djna.tmpdir=\"/tmp/nsg-393e5a6d7b59/jna\" -Duser.home=\"/tmp/nsg-393e5a6d7b59/home\"",
+      "LANG": "C.UTF-8",
+      "LC_ALL": "C.UTF-8",
+      "PATH": "/usr/lib/jvm/java-17-openjdk-amd64/bin:/usr/bin:/opt/chiplab-tools/root/sbt-1.10.11/bin:/usr/bin:/bin",
+      "SPINAL_SIM_WORKSPACE": "/tmp/nscscc-core-top-0e2787f/local/scala-check/workspaces/1783890833689696908-377529/sim-workspace",
+      "TZ": "UTC"
+    },
+    "environment_sha256": "2f712fbe729a710784e54ddd7e13f3985b610c4a6817548b95f60ffee892a595",
+    "isolated_home": "/tmp/nsg-393e5a6d7b59/home",
+    "isolated_jna_tmp": "/tmp/nsg-393e5a6d7b59/jna",
+    "isolated_tmp": "/tmp/nsg-393e5a6d7b59/tmp",
+    "ivy_home": "/opt/chiplab-tools/root/scala-cache-sbt1.10.11-spinal1.14.2/ivy2",
+    "java": "/usr/lib/jvm/java-17-openjdk-amd64/bin/java",
+    "java_sha256": "c0a86c03d2acbe2f389d5198142309f8e61db0c498920893977a494c4e9fd69b",
+    "jdk_modules_sha256": "2d9de349be2aaa70adf53f78a88b8ca9bff70e910795655022808b4f61cbdc15",
+    "jdk_version": "17.0.19+10",
+    "jvm_runtime_workspace": "/tmp/nsg-393e5a6d7b59",
+    "jvm_runtime_workspace_retention": "deleted after ScalaTest XML verification",
+    "manifest": "/tmp/nscscc-core-top-0e2787f-src/reference/manifest.lock",
+    "native_tools": {
+      "ar": {
+        "path": "/usr/bin/x86_64-linux-gnu-ar",
+        "sha256": "534681ac11c18868cfc4fdf98770aa0ba8973eedc90c231e94e6ba96e1a04f27"
+      },
+      "gpp": {
+        "path": "/usr/bin/x86_64-linux-gnu-g++-13",
+        "sha256": "1353e9bdd29a7295c7226bf6c63abccce056d8cac31f112e5cdbecc3f28c2769"
+      },
+      "ld": {
+        "path": "/usr/bin/x86_64-linux-gnu-ld.bfd",
+        "sha256": "e46a122cc3a29feba3b1d0fc2a274b6e46538be016ebe381370c0801bb98b0b8"
+      },
+      "make": {
+        "path": "/usr/bin/make",
+        "sha256": "d78b8f1d099fbcfb6f2f49ab87223b9b68fb3956642f92d6ec6de812e8afa965"
+      },
+      "perl": {
+        "path": "/usr/bin/perl",
+        "sha256": "56e5ea41974eb1eff0f7ea64677578b1938053d29818c2810bcb21e2ca68cafa"
+      },
+      "sh": {
+        "path": "/usr/bin/dash",
+        "sha256": "86d31f6fb799e91fa21bad341484564510ca287703a16e9e46c53338776f4f42"
+      }
+    },
+    "python": "/usr/bin/python3.12",
+    "python_sha256": "1643dacd9feaedc58f3cc581e4d22577dfe25c09b10282936186ccf0f2e61118",
+    "python_version": "3.12.3",
+    "sbt": "/opt/chiplab-tools/root/sbt-1.10.11/bin/sbt",
+    "sbt_boot": "/opt/chiplab-tools/root/scala-cache-sbt1.10.11-spinal1.14.2/sbt-boot",
+    "sbt_launch_jar_sha256": "e988d533a020e5b60ec22c3b5df4cd3e3df465f4fdc3951c63036e21483978e4",
+    "sbt_scalafmt_version": "2.5.2",
+    "sbt_sha256": "b9732e3e9673acf5e7c8e604dd50f7d2ca719c91b47c33f4af42fdaf1dedaf02",
+    "sbt_version": "1.10.11",
+    "scala_version": "2.13.16",
+    "scalafmt_version": "3.8.3",
+    "scalatest_version": "3.2.19",
+    "simulation_workspace": "/tmp/nscscc-core-top-0e2787f/local/scala-check/workspaces/1783890833689696908-377529/sim-workspace",
+    "spinalhdl_version": "1.14.2",
+    "tool_trees": {
+      "jdk_include": {
+        "entry_count": 6,
+        "sha256": "179fd5ec60cc403fa79ac4874d66d13256c04c0ba04c2971fd727111a7966490"
+      },
+      "jdk_lib": {
+        "entry_count": 55,
+        "sha256": "c0e924679eeabef422bfd83774e15d2e560d3125ca54d9d78428f40551a8b434"
+      },
+      "verilator_include": {
+        "entry_count": 54,
+        "sha256": "dfb993c4f8716c12b4a4bdf489bd0cee66ca9cf01e07e95e95a462e95d5e8b82"
+      }
+    },
+    "verilator": "/usr/bin/verilator",
+    "verilator_engine_sha256": "25f33046f0055a6982c67cdc55081685a844abb50d044cfda087bd418db9be6c",
+    "verilator_runtime_sha256": "b784038c3cf821588ff4576653b540355889c0621bc258d1b349c29a63836c35",
+    "verilator_sha256": "4c6292ab82e57b7f34ab26dbae86ba9c494bacfb088b6ff34be93c553d1301b1",
+    "verilator_version": "5.020"
+  }
+}
