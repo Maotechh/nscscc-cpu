@@ -4,6 +4,8 @@
 
 `awaiting_push`。这是基于 `refactor/20260711-1533-component-overlay` 的 stacked Draft；当前不自动创建 PR、不标记 ready、不合并。
 
+实现/tested SHA 为 `4743235`，合同澄清为 `ecdc699`，最终 chiplab evidence/publication SHA 为 `d0cd4b33da9a984f66d803943e3e97621124d1ec`。
+
 ## 行为合同
 
 用 Scala 手写真源生成精确兼容 `a158aa8:rtl/alu.v` 的组合 `alu`：14-bit masked-OR、zero/multi-hot、ANDN/ORN、四个固定端口、无 clock/reset。

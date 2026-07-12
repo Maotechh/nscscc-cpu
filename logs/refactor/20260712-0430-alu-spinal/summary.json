@@ -4,8 +4,11 @@
   "status": "draft",
   "branch": "refactor/20260712-0430-alu-spinal",
   "base_sha": "0d135ceed3ae9454b9cd2bca9f87a329c692d8c2",
-  "head_sha": "ecdc699e10a20c4071f80de55e39f8a4255aa985",
-  "review_target_sha": "ecdc699e10a20c4071f80de55e39f8a4255aa985",
+  "head_sha": "d0cd4b33da9a984f66d803943e3e97621124d1ec",
+  "review_target_sha": "d0cd4b33da9a984f66d803943e3e97621124d1ec",
+  "implementation_tested_sha": "4743235630f69dc96a77ff995ad00a9412d422c7",
+  "contract_sha": "ecdc699e10a20c4071f80de55e39f8a4255aa985",
+  "evidence_publication_sha": "d0cd4b33da9a984f66d803943e3e97621124d1ec",
   "selected_boundary": "alu",
   "required_gates": [
     "doctor",
@@ -35,7 +38,7 @@
     "formal": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0,"detail":"Yosys 2-state 组合形式等价覆盖 78 个输入变量。"},
     "diagnostic_overlay": {"status":"pass","planned":2,"executed":2,"passed":2,"failed":0,"skipped":0,"detail":"locked candidate 与 committed mixed overlay 均完成；mixed gate_eligible=false。"},
     "func_smoke": {"status":"fail","planned":2,"executed":2,"passed":0,"failed":2,"skipped":0,"detail":"两侧均在 PC 0x1c07c79c 失败；172552 instructions / 602903 cycles；trace 相同。"},
-    "claim_review": {"status":"unavailable","planned":1,"executed":1,"passed":0,"failed":1,"skipped":0,"detail":"Claude bridge 在模型启动前缺少 GEEKPIE_CLAUDE_API_KEY；降级审查不能替代。"}
+    "claim_review": {"status":"unavailable","planned":2,"executed":2,"passed":0,"failed":2,"skipped":0,"detail":"实现提交和最终 publication HEAD 的 Claude job 均在模型启动前缺少 GEEKPIE_CLAUDE_API_KEY；降级审查不能替代。"}
   },
   "observations": {
     "rtl_sha256": "1349173904c772225ed4184a7e65aa88f7278fbcd060d33d81c966954c128146",
@@ -81,5 +84,5 @@
     "claude_bridge_missing_GEEKPIE_CLAUDE_API_KEY"
   ],
   "pr": {"status":"awaiting_push","url":null,"draft_only":true,"auto_merge":false,"created":false},
-  "updated_at": "2026-07-12T15:35:00+08:00"
+  "updated_at": "2026-07-12T15:55:00+08:00"
 }

@@ -1,7 +1,8 @@
 # Result-to-Claim 结论
 
 - 审核者：独立只读 Codex 子代理；不是 Claude。
-- 实现证据目标：`4743235630f69dc96a77ff995ad00a9412d422c7`
+- 最终 publication：`d0cd4b33da9a984f66d803943e3e97621124d1ec`
+- 实现/tested：`4743235630f69dc96a77ff995ad00a9412d422c7`
 - 总结：`partial`（模块 claim 支持，整机 claim 不支持）。
 
 ## C1：Spinal ALU 叶子

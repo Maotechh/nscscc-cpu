@@ -1,7 +1,8 @@
 # 本地独立只读复审
 
-- 复审对象：ALU 实现提交 `4743235630f69dc96a77ff995ad00a9412d422c7`
-- 合同澄清提交：`ecdc6994f01ff06f91c57a93d2da86c2460c5847`（仅文档）
+- 复审对象：最终 publication `d0cd4b33da9a984f66d803943e3e97621124d1ec`
+- ALU 实现/tested：`4743235630f69dc96a77ff995ad00a9412d422c7`
+- 合同澄清：`ecdc699e10a20c4071f80de55e39f8a4255aa985`（仅文档）
 - 身份：独立 Codex 子代理降级复审，不是 Claude 审核。
 
 ## C1：模块级 Spinal ALU

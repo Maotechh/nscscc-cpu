@@ -1,6 +1,7 @@
 {
   "schema_version": 1,
-  "reviewed_source_head": "4743235630f69dc96a77ff995ad00a9412d422c7",
+  "reviewed_source_head": "d0cd4b33da9a984f66d803943e3e97621124d1ec",
+  "implementation_tested_sha": "4743235630f69dc96a77ff995ad00a9412d422c7",
   "claim_supported": "partial",
   "confidence": "high",
   "supported_claim": "模块级 Spinal ALU 的锁定 2-state 组合等价、端口合同和单一 func_lab19 paired diagnostic。",

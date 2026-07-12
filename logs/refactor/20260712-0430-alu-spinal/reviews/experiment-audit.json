@@ -2,7 +2,8 @@
   "schema_version": 1,
   "date": "2026-07-12",
   "auditor": "independent-read-only-codex-subagent",
-  "reviewed_source_head": "4743235630f69dc96a77ff995ad00a9412d422c7",
+  "reviewed_source_head": "d0cd4b33da9a984f66d803943e3e97621124d1ec",
+  "implementation_tested_sha": "4743235630f69dc96a77ff995ad00a9412d422c7",
   "overall_verdict": "warn",
   "integrity_status": "warn",
   "checks": {

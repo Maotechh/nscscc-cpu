@@ -1,7 +1,9 @@
 {
   "schema_version": 1,
   "iteration_id": "20260712-0430-alu-spinal",
-  "source_head": "4743235630f69dc96a77ff995ad00a9412d422c7",
+  "implementation_tested_sha": "4743235630f69dc96a77ff995ad00a9412d422c7",
+  "contract_sha": "ecdc699e10a20c4071f80de55e39f8a4255aa985",
+  "evidence_publication_sha": "d0cd4b33da9a984f66d803943e3e97621124d1ec",
   "rtl": {
     "path": "reference/component-replacements/alu.v",
     "sha256": "1349173904c772225ed4184a7e65aa88f7278fbcd060d33d81c966954c128146",

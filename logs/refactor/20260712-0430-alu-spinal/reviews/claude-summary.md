@@ -2,7 +2,7 @@
 
 状态：`unavailable`。
 
-本轮向 `claude-review` MCP 提交了内嵌 base/head、完整 claim、锁定版本、模块门禁、失败历史和 candidate/mixed smoke 结果的无工具审核请求。job `a016bb2337534c96b27ea3bd984076ed` 在模型启动前因缺少 `GEEKPIE_CLAUDE_API_KEY` 失败，没有 Claude response、provider、model 或 thread。
+本轮向 `claude-review` MCP 提交了两次内嵌 base/head、完整 claim、锁定版本、模块门禁、失败历史和 candidate/mixed smoke 结果的无工具审核请求。job `a016bb2337534c96b27ea3bd984076ed`（实现提交）和 `f7d899c567884172925dd856b55eb885`（最终 d0cd4b3）均在模型启动前因缺少 `GEEKPIE_CLAUDE_API_KEY` 失败，没有 Claude response、provider、model 或 thread。
 
 处置：
 

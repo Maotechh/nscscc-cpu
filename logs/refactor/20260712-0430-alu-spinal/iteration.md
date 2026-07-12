@@ -3,7 +3,9 @@
 - 状态：`draft / implementation_in_review`
 - 分支：`refactor/20260712-0430-alu-spinal`
 - Base SHA：`0d135ceed3ae9454b9cd2bca9f87a329c692d8c2`
-- 实现与验证目标 SHA：`ecdc699e10a20c4071f80de55e39f8a4255aa985`（RTL/tool gate 结果在其父提交 `4743235`，合同仅作语义澄清）
+- 实现/tested SHA：`4743235630f69dc96a77ff995ad00a9412d422c7`
+- 合同澄清 SHA：`ecdc699e10a20c4071f80de55e39f8a4255aa985`
+- 最终 evidence/publication SHA：`d0cd4b33da9a984f66d803943e3e97621124d1ec`
 - Owner / Agent：Codex
 - 目标边界：`alu`
 
@@ -41,7 +43,7 @@ ALU 是 `a158aa8` 活动路径中依赖最少、blast radius 最小且 golden or
 2. 第一版 generation 因 SBT Unix socket 路径过长失败；生成 gate 改用短临时 runtime workspace，并验证清理。
 3. 第一版 port-check 未先执行 Yosys `proc`；补齐 lower process 后端口检查通过。
 4. 第一版 replacement SHA256 `317d142c...` 带 `timescale`。旧 mixed smoke 为 652 warnings，只作为失败历史；最终证据全部在新 HEAD 和新 overlay 上重跑。
-5. Claude review job `a016bb2337534c96b27ea3bd984076ed` 在模型启动前因缺少 `GEEKPIE_CLAUDE_API_KEY` 失败。没有 Claude response，不能把降级复审称为 Claude 审核。
+5. Claude review job `a016bb2337534c96b27ea3bd984076ed` 和最终 HEAD job `f7d899c567884172925dd856b55eb885` 均在模型启动前因缺少 `GEEKPIE_CLAUDE_API_KEY` 失败。没有 Claude response，不能把降级复审称为 Claude 审核。
 
 ## 最终门禁
 
@@ -58,7 +60,7 @@ ALU 是 `a158aa8` 活动路径中依赖最少、blast radius 最小且 golden or
 
 ## 官方 chiplab 诊断
 
-全新 candidate 与 mixed overlay 均实际编译并运行官方发现的 `func/func_lab19`，没有复用旧 `8d2b85b` 结果：
+全新 candidate 与 mixed overlay 均实际编译并运行官方发现的 `func/func_lab19`，没有复用旧 `8d2b85b` 结果；最终 mixed overlay 的 source/spec commit 均为 `d0cd4b3`：
 
 | 项目 | candidate `a158aa8` | mixed `4743235` |
 |---|---:|---:|
