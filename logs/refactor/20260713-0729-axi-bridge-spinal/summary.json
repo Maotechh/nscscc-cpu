@@ -1,0 +1,62 @@
+{
+  "schema_version": 1,
+  "iteration_id": "20260713-0729-axi-bridge-spinal",
+  "status": "draft",
+  "branch": "refactor/20260713-0729-axi-bridge-spinal",
+  "base_sha": "f621c7a1e056b9f128b86efddbdd2598b3692ecc",
+  "head_sha": null,
+  "selected_boundary": "axi_bridge",
+  "boundary_state": "differential_pass",
+  "required_gates": [
+    "doctor",
+    "automation_tests",
+    "contract",
+    "scala",
+    "elaborate",
+    "generate",
+    "port_check",
+    "lint",
+    "yosys_check",
+    "unit_diff",
+    "random_backpressure_diff",
+    "diagnostic_overlay",
+    "func_smoke",
+    "claim_review"
+  ],
+  "gates": {
+    "doctor": {"status":"pass","planned":2,"executed":2,"passed":2,"failed":0,"skipped":0},
+    "automation_tests": {"status":"pass","planned":308,"executed":308,"passed":308,"failed":0,"skipped":0},
+    "contract": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0},
+    "scala": {"status":"pass","planned":4,"executed":4,"passed":4,"failed":0,"skipped":0},
+    "elaborate": {"status":"pass","planned":2,"executed":2,"passed":2,"failed":0,"skipped":0},
+    "generate": {"status":"pass","planned":2,"executed":2,"passed":2,"failed":0,"skipped":0},
+    "port_check": {"status":"pass","planned":65,"executed":65,"passed":65,"failed":0,"skipped":0},
+    "lint": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0,"detail":"exact dead compatibility ports use scoped UNUSEDSIGNAL waiver; unapproved warnings=0"},
+    "yosys_check": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0},
+    "unit_diff": {"status":"pass","planned":8192,"executed":8192,"passed":8192,"failed":0,"skipped":0},
+    "random_backpressure_diff": {"status":"pass","planned":8192,"executed":8192,"passed":8192,"failed":0,"skipped":0,"detail":"fixed seed shares the directed prefix and randomized suffix with unit_diff; it is one execution, not an additional 8192 cycles"},
+    "oracle_negative_controls": {"status":"pass","planned":3,"executed":3,"passed":3,"failed":0,"skipped":0},
+    "diagnostic_overlay": {"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":0},
+    "func_smoke": {"status":"pending","planned":2,"executed":0,"passed":0,"failed":0,"skipped":0},
+    "claim_review": {"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":0}
+  },
+  "observations": {
+    "golden_sha256": "07c30c8e5e99373ecb988b2a5cc03e4e8cb7b6e22af26b1b37171a808b144f9e",
+    "golden_size": 10106,
+    "rtl_sha256": "4c307033b1d79da6cc257d314d92ef69830ed87cddc24eb7269ff278927e70a0",
+    "rtl_size": 10819,
+    "ports": 65,
+    "seed": "0x158aa8",
+    "cycles": 8192,
+    "trace_sha256": "d940e413491705cf70504fb2fdbb96e2738080ecf29ad6849a07f2cf8a9e93f8",
+    "mismatches": 0,
+    "negative_controls_detected": 3
+  },
+  "claims": [
+    {"id":"C1","status":"supported_with_narrow_scope","text":"锁定 golden 与本轮 Spinal-generated axi_bridge 在固定 seed 的 8192 拍、valid-window 观察合同上逐拍一致。","excludes":["4-state invalid payload equivalence","all-sequence formal equivalence","whole-CPU correctness","official func PASS"]}
+  ],
+  "blocked_by": ["official_func_smoke_pending","claim_review_pending"],
+  "not_executed": ["func58", "func81", "multi_seed_random_difftest", "perf20", "uboot", "linux", "vivado_implementation", "bitstream", "remote_fpga_board"],
+  "pr": {"status":"awaiting_push","url":null,"draft_only":true,"auto_merge":false,"created":false,"branch_pushed":false},
+  "updated_at": "2026-07-13T07:56:00+08:00"
+}

@@ -1,8 +1,8 @@
 schema_version: 1
-updated_at: "2026-07-13T06:13:00+08:00"
-active_iteration: "20260713-0613-core-contracts"
-active_branch: "refactor/20260713-0613-core-contracts"
-source_head: "5848f94a331ff2064a36a1ddc7a5e0b438e24964"
+updated_at: "2026-07-13T07:48:00+08:00"
+active_iteration: "20260713-0729-axi-bridge-spinal"
+active_branch: "refactor/20260713-0729-axi-bridge-spinal"
+source_head: "f621c7a1e056b9f128b86efddbdd2598b3692ecc"
 
 boundaries:
   component_replacement_overlay:
@@ -321,12 +321,44 @@ boundaries:
     blocked_by: []
     last_iteration: null
 
+  axi_bridge:
+    owner: memory
+    state: differential_pass
+    golden_ref: a158aa8:rtl/axi_bridge.v
+    dependencies:
+      - core_contracts
+    contract: docs/contracts/axi-bridge.md
+    required_gates:
+      - doctor
+      - automation_tests
+      - contract
+      - scala
+      - elaborate
+      - generate
+      - port_check
+      - lint
+      - yosys_check
+      - unit_diff
+      - random_backpressure_diff
+      - diagnostic_overlay
+      - func_smoke
+      - claim_review
+    evidence:
+      - logs/refactor/20260713-0729-axi-bridge-spinal/iteration.md
+      - logs/refactor/20260713-0729-axi-bridge-spinal/summary.json
+    active_pr: null
+    blocked_by:
+      - official_func_smoke_pending
+      - claude_claim_review_pending
+    last_iteration: "20260713-0729-axi-bridge-spinal"
+
   memory_system:
     owner: memory
     state: not_started
     golden_ref: a158aa8:rtl
     dependencies:
       - core_contracts
+      - axi_bridge
     contract: null
     required_gates:
       - unit_diff
