@@ -373,6 +373,7 @@ def verify_contract(contract_path: Path, manifest_path: Path, out_dir: Path) -> 
         "gate": "mul-contract",
         "status": "pass",
         "generated_at": now_iso(),
+        "evaluator_sha256": sha256_file(Path(__file__).resolve()),
         "repository_head": head,
         "contract": {
             "path": str(contract_path),
@@ -417,6 +418,7 @@ def _write_failure(out_dir: Path, error: Exception) -> dict[str, Any]:
         "gate": "mul-contract",
         "status": "fail",
         "generated_at": now_iso(),
+        "evaluator_sha256": sha256_file(Path(__file__).resolve()),
         "error": str(error),
     }
     write_json(out_dir / "summary.json", summary)

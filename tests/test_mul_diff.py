@@ -261,6 +261,7 @@ class MulDiffGoldenFailClosedTests(unittest.TestCase):
 
     def _contract_evidence(self) -> dict[str, object]:
         return {
+            "evaluator_sha256": mul_diff.sha256_file(ROOT / "tools" / "mul_contract.py"),
             "contract": {"sha256": "contract"},
             "golden": {"verified": True},
             "protocol": {"latency_edges": 1},
@@ -389,6 +390,7 @@ class MulDiffCandidateFailClosedTests(unittest.TestCase):
 
     def _contract_evidence(self) -> dict[str, object]:
         return {
+            "evaluator_sha256": mul_diff.sha256_file(ROOT / "tools" / "mul_contract.py"),
             "contract": {"sha256": "contract"},
             "golden": {"verified": True},
             "protocol": {"latency_edges": 1},
@@ -408,6 +410,7 @@ class MulDiffCandidateFailClosedTests(unittest.TestCase):
         create_binary: bool = True,
         simulation_output: str | None = None,
         tamper_source: bool = False,
+        tamper_snapshot: bool = False,
     ) -> tuple[int, dict[str, object]]:
         args = self._args(root)
         tools = {}
@@ -440,6 +443,10 @@ class MulDiffCandidateFailClosedTests(unittest.TestCase):
                 observed_compile.extend(argv)
                 if tamper_source:
                     args.rtl.write_text("module mul; wire tampered; endmodule\n", encoding="ascii")
+                if tamper_snapshot:
+                    Path(argv[-2]).write_text(
+                        "module mul; wire snapshot_tampered; endmodule\n", encoding="ascii"
+                    )
                 if create_binary:
                     binary = cwd / "obj_dir" / "Vmul"
                     binary.parent.mkdir(parents=True, exist_ok=True)
@@ -478,6 +485,9 @@ class MulDiffCandidateFailClosedTests(unittest.TestCase):
         self.assertIn("--Wno-fatal", summary["_observed_compile"])
         self.assertEqual(0, summary["compile"]["warning_count"])
         self.assertEqual(0, summary["counts"]["skipped"])
+        self.assertTrue(summary["candidate"]["snapshot_stable"])
+        self.assertIn(str(Path(summary["candidate"]["snapshot"])), summary["_observed_compile"])
+        self.assertNotIn(str(Path(temporary) / "mul.v"), summary["_observed_compile"])
 
     def test_candidate_warning_is_never_waived(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -508,6 +518,15 @@ class MulDiffCandidateFailClosedTests(unittest.TestCase):
         self.assertEqual(1, code)
         self.assertIn("changed during compilation", str(summary["error"]))
         self.assertFalse(summary["candidate"]["source_stable"])
+
+    def test_snapshot_tamper_during_compile_fails(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            code, summary = self._run_mocked(
+                Path(temporary), tamper_snapshot=True
+            )
+        self.assertEqual(1, code)
+        self.assertIn("snapshot changed during compilation", str(summary["error"]))
+        self.assertFalse(summary["candidate"]["snapshot_stable"])
 
     def test_missing_candidate_binary_fails_before_simulation(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

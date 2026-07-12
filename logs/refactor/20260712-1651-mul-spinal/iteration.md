@@ -51,6 +51,10 @@ evaluator 与 Yosys/Verilator 版本和二进制哈希。
    两个 `synth_design` 均完成。candidate 仍有 63 条未批准 warning，严格 gate 失败。
 8. pre-commit `evidence-check` 因 review target 尚未提交且缺 Claude 审查文件而按 schema
    返回 2；未创建占位审查绕过校验。该检查必须在实现提交、commit-bound 门禁和真实审查后重跑。
+9. 独立终审发现 candidate unit 直接编译源路径仍存在 change-and-restore TOCTOU 窗口，
+   且 contract 结果未绑定 evaluator bytes；已改为只编译 `OUT_DIR/input/mul.v` 哈希快照，
+   同时复核源/快照并记录 canonical contract evaluator SHA。终审还发现若干预提交命令记录
+   与原始 artifact 不一致，最终日志必须从原始 summary 修正，不能沿用这些命令。
 
 ## Pre-commit 门禁
 

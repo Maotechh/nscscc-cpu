@@ -141,6 +141,24 @@ def verify_contract(contract: Path, manifest: Path, out_dir: Path) -> dict[str, 
         raise
 
 
+def contract_evaluator_evidence(
+    repo_root: Path, contract_evidence: dict[str, Any]
+) -> dict[str, str]:
+    """Bind a canonical contract result to the validator bytes that produced it."""
+
+    validator = (repo_root / "tools" / "mul_contract.py").resolve()
+    if validator.is_symlink() or not validator.is_file():
+        raise MulDiffError(f"locked mul contract validator is not a regular file: {validator}")
+    actual_sha256 = sha256_file(validator)
+    reported_sha256 = contract_evidence.get("evaluator_sha256")
+    if reported_sha256 != actual_sha256:
+        raise MulDiffError(
+            "contract evaluator hash mismatch: "
+            f"reported={reported_sha256!r} actual={actual_sha256}"
+        )
+    return {"path": str(validator), "sha256": actual_sha256}
+
+
 def _git_bytes(repo_root: Path, args: list[str]) -> bytes:
     """Use the canonical contract validator's cross-platform worktree resolver."""
 
@@ -669,6 +687,9 @@ def run_golden(args: argparse.Namespace) -> tuple[int, dict[str, Any]]:
         }
         contract_dir = out_dir / "contract"
         contract_evidence = verify_contract(args.contract.resolve(), args.manifest.resolve(), contract_dir)
+        summary["contract_evaluator"] = contract_evaluator_evidence(
+            repo_root, contract_evidence
+        )
         summary["contract"] = contract_evidence.get("contract")
         summary["golden_contract"] = contract_evidence.get("golden")
         summary["protocol"] = contract_evidence.get("protocol")
@@ -889,6 +910,25 @@ def _candidate_source_stable(path: Path, before_sha256: str) -> tuple[bool, str,
     return after_sha256 == before_sha256, after_sha256, after_size
 
 
+def _snapshot_candidate(
+    candidate: Path, source_sha256: str, source_size: int, out_dir: Path
+) -> Path:
+    """Copy the hash-bound source once and make all tools consume that snapshot."""
+
+    snapshot_dir = out_dir / "input"
+    snapshot_dir.mkdir(parents=True, exist_ok=False)
+    snapshot = snapshot_dir / "mul.v"
+    payload = candidate.read_bytes()
+    if len(payload) != source_size or sha256_bytes(payload) != source_sha256:
+        raise MulDiffError("candidate RTL changed while its input snapshot was created")
+    snapshot.write_bytes(payload)
+    if snapshot.is_symlink() or not snapshot.is_file():
+        raise MulDiffError(f"candidate snapshot is not a regular file: {snapshot}")
+    if snapshot.stat().st_size != source_size or sha256_file(snapshot) != source_sha256:
+        raise MulDiffError("candidate snapshot hash/size differs from the source")
+    return snapshot
+
+
 def run_candidate(args: argparse.Namespace) -> tuple[int, dict[str, Any]]:
     """Run the candidate RTL against the independent cycle driver.
 
@@ -916,6 +956,9 @@ def run_candidate(args: argparse.Namespace) -> tuple[int, dict[str, Any]]:
         contract_evidence = verify_contract(
             Path(args.contract).expanduser(), manifest_path, contract_dir
         )
+        summary["contract_evaluator"] = contract_evaluator_evidence(
+            repo_root, contract_evidence
+        )
         summary["contract"] = contract_evidence.get("contract")
         summary["golden_contract"] = contract_evidence.get("golden")
         summary["protocol"] = contract_evidence.get("protocol")
@@ -941,6 +984,14 @@ def run_candidate(args: argparse.Namespace) -> tuple[int, dict[str, Any]]:
             "size_before": source_size,
             "size": source_size,
         }
+        snapshot = _snapshot_candidate(candidate, source_sha256, source_size, out_dir)
+        summary["candidate"].update(
+            {
+                "snapshot": str(snapshot),
+                "snapshot_sha256": sha256_file(snapshot),
+                "snapshot_size": snapshot.stat().st_size,
+            }
+        )
 
         vectors, directed_count = make_vectors(args.seed, args.vector_count)
         vector_path = out_dir / "vectors.txt"
@@ -1001,13 +1052,13 @@ def run_candidate(args: argparse.Namespace) -> tuple[int, dict[str, Any]]:
             str(obj_dir),
             "-Wall",
             "--Wno-fatal",
-            str(candidate),
+            str(snapshot),
             str(driver_path),
         ]
         compile_result = run_command(compile_argv, cwd=out_dir, timeout=args.timeout)
         compile_log = out_dir / "compile.log"
         _write_command_log(compile_log, compile_result)
-        warnings = parse_verilator_warnings(str(compile_result["stdout"]), candidate)
+        warnings = parse_verilator_warnings(str(compile_result["stdout"]), snapshot)
         unparsed_warnings = unparsed_verilator_warning_lines(
             str(compile_result["stdout"]), warnings
         )
@@ -1015,11 +1066,17 @@ def run_candidate(args: argparse.Namespace) -> tuple[int, dict[str, Any]]:
         source_stable, source_after_sha256, source_after_size = _candidate_source_stable(
             candidate, source_sha256
         )
+        snapshot_stable, snapshot_after_sha256, snapshot_after_size = _candidate_source_stable(
+            snapshot, source_sha256
+        )
         summary["candidate"].update(
             {
                 "sha256_after": source_after_sha256,
                 "size_after": source_after_size,
+                "snapshot_sha256_after": snapshot_after_sha256,
+                "snapshot_size_after": snapshot_after_size,
                 "source_stable": source_stable,
+                "snapshot_stable": snapshot_stable,
             }
         )
         summary["compile"] = {
@@ -1038,6 +1095,8 @@ def run_candidate(args: argparse.Namespace) -> tuple[int, dict[str, Any]]:
             raise MulDiffError("candidate Verilator compile failed or timed out")
         if not source_stable:
             raise MulDiffError("candidate RTL changed during compilation")
+        if not snapshot_stable:
+            raise MulDiffError("candidate snapshot changed during compilation")
         if warnings or unparsed_warnings or generic_warnings:
             raise MulDiffError("candidate Verilator -Wall emitted a warning")
         if not binary.is_file() or binary.stat().st_size == 0:
@@ -1074,15 +1133,23 @@ def run_candidate(args: argparse.Namespace) -> tuple[int, dict[str, Any]]:
         final_stable, final_sha256, final_size = _candidate_source_stable(
             candidate, source_sha256
         )
+        snapshot_final_stable, snapshot_final_sha256, snapshot_final_size = (
+            _candidate_source_stable(snapshot, source_sha256)
+        )
         summary["candidate"].update(
             {
                 "sha256_final": final_sha256,
                 "size_final": final_size,
+                "snapshot_sha256_final": snapshot_final_sha256,
+                "snapshot_size_final": snapshot_final_size,
                 "source_stable": source_stable and final_stable,
+                "snapshot_stable": snapshot_stable and snapshot_final_stable,
             }
         )
         if not final_stable:
             raise MulDiffError("candidate RTL changed during simulation")
+        if not snapshot_final_stable:
+            raise MulDiffError("candidate snapshot changed during simulation")
         summary["counts"] = {
             "planned": actual_count,
             "executed": parsed["active"],

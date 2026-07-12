@@ -95,6 +95,10 @@ class MulContractGoldenTests(unittest.TestCase):
         self.assertEqual(mul_contract.GOLDEN_SHA256, summary["golden"]["actual_sha256"])
         self.assertEqual(mul_contract.GOLDEN_SIZE, summary["golden"]["actual_size"])
         self.assertTrue(summary["golden"]["verified"])
+        self.assertEqual(
+            mul_contract.sha256_file(Path(mul_contract.__file__).resolve()),
+            summary["evaluator_sha256"],
+        )
 
     def test_hash_tampering_fails_before_git_verification(self) -> None:
         document = copy.deepcopy(mul_contract.load_json(CONTRACT_PATH))

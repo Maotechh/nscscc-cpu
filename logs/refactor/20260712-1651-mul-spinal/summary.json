@@ -41,11 +41,12 @@
   },
   "claims": [],
   "blocked_by": [
+    "snapshot_hardening_commit_and_commit_bound_rerun_pending",
     "mixed_overlay_pending",
     "claim_review_pending",
     "vivado_leaf_63_unapproved_warnings",
     "golden_sequential_formal_solver_timeout"
   ],
   "pr":{"status":"awaiting_implementation_commit","url":null,"draft_only":true,"auto_merge":false,"created":false},
-  "updated_at":"2026-07-12T18:32:00+08:00"
+  "updated_at":"2026-07-12T18:55:00+08:00"
 }
