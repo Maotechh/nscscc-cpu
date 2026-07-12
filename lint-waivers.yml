@@ -11,6 +11,39 @@
       "reason": "Golden adds 1-bit SecStageCarry[15] to a 64-bit sum; Verilog zero-extends it. This waiver only compiles the locked golden oracle and never applies to candidate RTL.",
       "owner": "verification",
       "expires_when": "golden mul oracle is retired after a release-gate-equivalent Spinal replacement"
+    },
+    {
+      "id": "golden-div-count-index-width",
+      "rule": "WIDTHTRUNC",
+      "file": "a158aa8ab4d49cece1a0fe488d7ac7dc02bd8cf6:rtl/div.v",
+      "line": 82,
+      "source_sha256": "7e499f4c43c92154d1d4e21be2f269ac140b4f2b2d944677c71f6f4213b66dc6",
+      "scope": "golden_div_simulation_compile",
+      "reason": "Golden indexes a 33-bit dividend magnitude with an 8-bit counter; the active iteration range is 32 through 0. This waiver applies only to the locked golden oracle.",
+      "owner": "verification",
+      "expires_when": "golden div oracle is retired after a release-gate-equivalent Spinal replacement"
+    },
+    {
+      "id": "golden-div-quotient-extension-bit-unused",
+      "rule": "UNUSEDSIGNAL",
+      "file": "a158aa8ab4d49cece1a0fe488d7ac7dc02bd8cf6:rtl/div.v",
+      "line": 85,
+      "source_sha256": "7e499f4c43c92154d1d4e21be2f269ac140b4f2b2d944677c71f6f4213b66dc6",
+      "scope": "golden_div_simulation_compile",
+      "reason": "Golden intentionally truncates TmpS from 33 to 32 output bits. This waiver applies only to the locked golden oracle.",
+      "owner": "verification",
+      "expires_when": "golden div oracle is retired after a release-gate-equivalent Spinal replacement"
+    },
+    {
+      "id": "golden-div-remainder-extension-bit-unused",
+      "rule": "UNUSEDSIGNAL",
+      "file": "a158aa8ab4d49cece1a0fe488d7ac7dc02bd8cf6:rtl/div.v",
+      "line": 85,
+      "source_sha256": "7e499f4c43c92154d1d4e21be2f269ac140b4f2b2d944677c71f6f4213b66dc6",
+      "scope": "golden_div_simulation_compile",
+      "reason": "Golden intentionally truncates TmpR from 33 to 32 output bits. This waiver applies only to the locked golden oracle.",
+      "owner": "verification",
+      "expires_when": "golden div oracle is retired after a release-gate-equivalent Spinal replacement"
     }
   ]
 }

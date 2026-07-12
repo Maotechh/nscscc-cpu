@@ -1,0 +1,115 @@
+{
+  "schema_version": 1,
+  "target": "div",
+  "module": "div",
+  "generated_file": "div.v",
+  "generator_main": "openla500.execute.GenerateOpenLa500Div",
+  "golden": {
+    "commit_key": "team_golden_candidate",
+    "path": "rtl/div.v",
+    "git_blob_sha1": "225827c7d69addd280cb671c17e067a406a9171f",
+    "sha256": "7e499f4c43c92154d1d4e21be2f269ac140b4f2b2d944677c71f6f4213b66dc6",
+    "size": 2642
+  },
+  "ports": {
+    "div_clk": {
+      "direction": "input",
+      "width": 1
+    },
+    "reset": {
+      "direction": "input",
+      "width": 1
+    },
+    "div": {
+      "direction": "input",
+      "width": 1
+    },
+    "div_signed": {
+      "direction": "input",
+      "width": 1
+    },
+    "x": {
+      "direction": "input",
+      "width": 32
+    },
+    "y": {
+      "direction": "input",
+      "width": 32
+    },
+    "s": {
+      "direction": "output",
+      "width": 32
+    },
+    "r": {
+      "direction": "output",
+      "width": 32
+    },
+    "complete": {
+      "direction": "output",
+      "width": 1
+    }
+  },
+  "protocol": {
+    "clock": "div_clk",
+    "edge": "posedge",
+    "reset": {
+      "signal": "reset",
+      "active_level": 1,
+      "behavior": "synchronous_clear_idle"
+    },
+    "request": {
+      "signal": "div",
+      "active_level": 1,
+      "mode": "level",
+      "accept": "first_active_edge_from_idle",
+      "hold_through": "result_capture_edge"
+    },
+    "operands_stable": "from_accept_through_result_capture",
+    "active_edges_to_complete": 33,
+    "complete": {
+      "signal": "complete",
+      "active_level": 1,
+      "assert_after_consecutive_request_edges": 33,
+      "pulse_edges": 1
+    },
+    "result": {
+      "capture_edge": "first_posedge_after_complete",
+      "consecutive_request_edges_to_capture": 34,
+      "valid_window_edges": 1,
+      "complete_level_during_valid_window": 0
+    },
+    "abort": {
+      "triggers": [
+        "reset_active_edge",
+        "request_low_before_result_capture"
+      ],
+      "behavior": "synchronous_rearm_no_valid_result"
+    },
+    "rearm": {
+      "low_edges_before_restart": 1,
+      "held_high_cleanup_edges": 2
+    },
+    "unknown_policy": "ignore_results_before_capture_edge"
+  },
+  "arithmetic": {
+    "quotient": "truncate_toward_zero",
+    "remainder_sign": "dividend",
+    "signed_overflow": "wrap_32bit",
+    "divide_by_zero": {
+      "unsigned_quotient": "0xffffffff",
+      "signed_nonnegative_quotient": "0xffffffff",
+      "signed_negative_quotient": "0x00000001",
+      "remainder": "dividend_bits"
+    },
+    "output_width": 32
+  },
+  "stimulus": {
+    "seed": "0x158aa8",
+    "random_transactions": 4096
+  },
+  "diff": {
+    "runner": "verilator_cycle",
+    "independent_model": true,
+    "cycle_exact": true
+  }
+}

@@ -1,8 +1,8 @@
 schema_version: 1
-updated_at: "2026-07-12T20:15:00+08:00"
-active_iteration: "20260712-1651-mul-spinal"
-active_branch: "refactor/20260712-1651-mul-spinal"
-source_head: "f6c55e6dcb42761c283febf99460214452628fd0"
+updated_at: "2026-07-12T20:27:00+08:00"
+active_iteration: "20260712-2024-div-harness"
+active_branch: "refactor/20260712-2024-div-harness"
+source_head: "de6e0845660296d2d3e22a447d31d345afce4333"
 
 boundaries:
   component_replacement_overlay:
@@ -162,6 +162,55 @@ boundaries:
       - golden_sequential_formal_solver_timeout
       - claude_bridge_missing_GEEKPIE_CLAUDE_API_KEY
     last_iteration: "20260712-1651-mul-spinal"
+
+  div_golden_harness:
+    owner: verification
+    state: implementation_in_review
+    golden_ref: a158aa8:rtl/div.v
+    dependencies:
+      - component_replacement_overlay
+    contract: docs/contracts/div.md
+    required_gates:
+      - doctor
+      - automation_tests
+      - contract_schema
+      - golden_port_check
+      - golden_cycle_self_check
+      - negative_controls
+      - claim_review
+    evidence:
+      - logs/refactor/20260712-2024-div-harness/iteration.md
+      - logs/refactor/20260712-2024-div-harness/summary.json
+    active_pr: null
+    blocked_by:
+      - harness_implementation_pending
+    last_iteration: "20260712-2024-div-harness"
+
+  div:
+    owner: execute
+    state: not_started
+    golden_ref: a158aa8:rtl/div.v
+    dependencies:
+      - div_golden_harness
+    contract: docs/contracts/div.md
+    required_gates:
+      - contract
+      - scala
+      - elaborate
+      - generate
+      - port_check
+      - lint
+      - yosys_check
+      - unit_diff
+      - formal
+      - diagnostic_overlay
+      - func_smoke
+      - claim_review
+    evidence: []
+    active_pr: null
+    blocked_by:
+      - div_golden_harness_pending
+    last_iteration: null
 
   core_top_compat:
     owner: compat

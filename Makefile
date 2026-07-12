@@ -30,9 +30,14 @@ MUL_RTL ?= $(MUL_GENERATE_DIR)/rtl/mul.v
 MUL_CONTRACT ?= reference/component-contracts/mul.json
 MUL_VECTOR_COUNT ?= 4096
 MUL_RANDOM_SEED ?= 0x158aa8
+DIV_CONTRACT ?= reference/component-contracts/div.json
+DIV_VECTOR_COUNT ?= 4096
+DIV_RANDOM_SEED ?= 0x158aa8
+DIV_GENERATE_DIR ?= $(OUT_DIR)/div/generate
+DIV_RTL ?= $(DIV_GENERATE_DIR)/rtl/div.v
 LINT_WAIVERS ?= lint-waivers.yml
 
-.PHONY: doctor scala-cache-bootstrap scala-check elaborate generate port-check lint yosys-check unit formal mul-contract mul-golden-unit mul-candidate-unit chiplab-doctor golden-export chiplab-overlay rtl-smoke identity-compare evidence-check test-automation
+.PHONY: doctor scala-cache-bootstrap scala-check elaborate generate port-check lint yosys-check unit formal mul-contract mul-golden-unit mul-candidate-unit div-contract div-golden-unit div-candidate-unit chiplab-doctor golden-export chiplab-overlay rtl-smoke identity-compare evidence-check test-automation
 
 doctor:
 	$(PYTHON) -I tools/refactor.py doctor --out-dir "$(OUT_DIR)" $(if $(VIVADO_HOME),--vivado-home "$(VIVADO_HOME)",)
@@ -100,6 +105,15 @@ mul-golden-unit:
 
 mul-candidate-unit:
 	$(PYTHON) -I tools/mul_diff.py candidate --contract "$(MUL_CONTRACT)" --manifest "reference/manifest.lock" --rtl "$(MUL_RTL)" --out-dir "$(OUT_DIR)/mul/unit" --vector-count "$(MUL_VECTOR_COUNT)" --seed "$(MUL_RANDOM_SEED)"
+
+div-contract:
+	$(PYTHON) -I tools/div_contract.py verify --contract "$(DIV_CONTRACT)" --manifest "reference/manifest.lock" --out-dir "$(OUT_DIR)/div/contract"
+
+div-golden-unit:
+	$(PYTHON) -I tools/div_diff.py golden --contract "$(DIV_CONTRACT)" --manifest "reference/manifest.lock" --out-dir "$(OUT_DIR)/div/unit" --vector-count "$(DIV_VECTOR_COUNT)" --seed "$(DIV_RANDOM_SEED)"
+
+div-candidate-unit:
+	$(PYTHON) -I tools/div_diff.py candidate --contract "$(DIV_CONTRACT)" --manifest "reference/manifest.lock" --rtl "$(DIV_RTL)" --out-dir "$(OUT_DIR)/div/unit" --vector-count "$(DIV_VECTOR_COUNT)" --seed "$(DIV_RANDOM_SEED)"
 
 chiplab-doctor:
 	$(PYTHON) -I tools/refactor.py chiplab-doctor --out-dir "$(OUT_DIR)" --chiplab-ref "$(CHIPLAB_REFERENCE)" --tool-root "$(CHIPLAB_TOOL_ROOT)"
