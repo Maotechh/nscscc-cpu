@@ -1,8 +1,8 @@
 schema_version: 1
-updated_at: "2026-07-13T03:55:00+08:00"
-active_iteration: "20260713-0302-div-spinal"
-active_branch: "refactor/20260713-0302-div-spinal"
-source_head: "9e78538c0dec08fa9fcace49e068b8bc9d4d5af1"
+updated_at: "2026-07-13T04:10:00+08:00"
+active_iteration: "20260713-0410-core-top-compat"
+active_branch: "refactor/20260713-0410-core-top-compat"
+source_head: "7e5811f8faeca71a6f8fc3d7f9fd25aaac6587ab"
 
 boundaries:
   component_replacement_overlay:
@@ -229,21 +229,25 @@ boundaries:
 
   core_top_compat:
     owner: compat
-    state: not_started
+    state: implementation_in_review
     golden_ref: a158aa8:rtl/mycpu_top.v
     dependencies:
-      - baseline_validation
-    contract: null
+      - component_replacement_overlay
+    contract: docs/contracts/core-top-compat.md
     required_gates:
+      - doctor
       - contract
       - scala
       - rtl_static
       - func_smoke
+      - func_full
+      - random
+      - fpga
       - claim_review
     evidence: []
     active_pr: null
     blocked_by: []
-    last_iteration: null
+    last_iteration: "20260713-0410-core-top-compat"
 
   pipeline:
     owner: pipeline

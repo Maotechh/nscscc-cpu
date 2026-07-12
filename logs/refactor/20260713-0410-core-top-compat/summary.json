@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "iteration_id": "20260713-0410-core-top-compat",
+  "status": "draft",
+  "branch": "refactor/20260713-0410-core-top-compat",
+  "base_sha": "7e5811f8faeca71a6f8fc3d7f9fd25aaac6587ab",
+  "head_sha": "7e5811f8faeca71a6f8fc3d7f9fd25aaac6587ab",
+  "selected_boundary": "core_top_compat",
+  "required_gates": ["doctor","contract","scala","elaborate","generate","publish_check","port_check","lint","yosys_check","func_smoke","func_full","random","fpga","claim_review"],
+  "gates": {
+    "doctor":{"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":1},
+    "contract":{"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":1},
+    "scala":{"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":1},
+    "elaborate":{"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":1},
+    "generate":{"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":1},
+    "publish_check":{"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":1},
+    "port_check":{"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":1},
+    "lint":{"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":1},
+    "yosys_check":{"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":1},
+    "func_smoke":{"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":1},
+    "func_full":{"status":"blocked","planned":139,"executed":0,"passed":0,"failed":0,"skipped":139},
+    "random":{"status":"blocked","planned":1,"executed":0,"passed":0,"failed":0,"skipped":1},
+    "fpga":{"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":1},
+    "claim_review":{"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":1}
+  },
+  "blocked_by": ["func_lab19_baseline_failure_at_1c07c79c","func_full_and_random_wrappers_not_implemented"],
+  "updated_at": "2026-07-13T04:10:00+08:00"
+}

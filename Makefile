@@ -35,9 +35,16 @@ DIV_VECTOR_COUNT ?= 4096
 DIV_RANDOM_SEED ?= 0x158aa8
 DIV_GENERATE_DIR ?= $(OUT_DIR)/div/generate
 DIV_RTL ?= $(DIV_GENERATE_DIR)/rtl/div.v
+CORE_TOP_PORTS ?= reference/core-top.ports.json
+CORE_TOP_GENERATE_DIR ?= $(OUT_DIR)/core_top/generate
+CORE_TOP_WRAPPER_RTL ?= $(CORE_TOP_GENERATE_DIR)/rtl/core_top.v
+CORE_TOP_PACKAGE_DIR ?= $(OUT_DIR)/core_top/package
+CORE_TOP_RTL ?= $(CORE_TOP_PACKAGE_DIR)/rtl/mycpu_top.v
+CORE_TOP_TRACKED_RTL ?= reference/component-replacements/mycpu_top.v
+CORE_TOP_REPLACEMENT_SPEC ?= reference/component-replacements/core-top.json
 LINT_WAIVERS ?= lint-waivers.yml
 
-.PHONY: doctor scala-cache-bootstrap scala-check elaborate generate port-check lint yosys-check unit formal mul-contract mul-golden-unit mul-candidate-unit div-contract div-golden-unit div-candidate-unit chiplab-doctor golden-export chiplab-overlay rtl-smoke identity-compare evidence-check test-automation
+.PHONY: doctor scala-cache-bootstrap scala-check elaborate generate port-check lint yosys-check unit formal core-top-contract core-top-package core-top-publish-check mul-contract mul-golden-unit mul-candidate-unit div-contract div-golden-unit div-candidate-unit chiplab-doctor golden-export chiplab-overlay rtl-smoke identity-compare evidence-check test-automation
 
 doctor:
 	$(PYTHON) -I tools/refactor.py doctor --out-dir "$(OUT_DIR)" $(if $(VIVADO_HOME),--vivado-home "$(VIVADO_HOME)",)
@@ -49,58 +56,70 @@ scala-check:
 	$(PYTHON) -I tools/scala_gate.py --manifest "reference/manifest.lock" --spinal-dir "spinal" --tool-root "$(CHIPLAB_TOOL_ROOT)" --out-dir "$(OUT_DIR)/scala-check" $(if $(SBT),--sbt "$(SBT)",) $(if $(JAVA_HOME),--java-home "$(JAVA_HOME)",)
 
 elaborate:
-ifeq ($(TARGET),mul)
+ifeq ($(TARGET),core_top)
+	$(PYTHON) -I tools/spinal_generate.py --manifest "reference/manifest.lock" --spinal-dir "spinal" --tool-root "$(CHIPLAB_TOOL_ROOT)" --main-class "openla500.compat.GenerateCoreTopCompat" --expected-module "core_top" --expected-file "core_top.v" --out-dir "$(OUT_DIR)/core_top/elaborate" --runs 2 $(if $(JAVA_HOME),--java-home "$(JAVA_HOME)",)
+else ifeq ($(TARGET),mul)
 	$(PYTHON) -I tools/mul_gate.py elaborate --target "$(TARGET)" --manifest "reference/manifest.lock" --spinal-dir "spinal" --tool-root "$(CHIPLAB_TOOL_ROOT)" --out-dir "$(OUT_DIR)/mul/elaborate" $(if $(JAVA_HOME),--java-home "$(JAVA_HOME)",)
 else ifeq ($(TARGET),div)
 	$(PYTHON) -I tools/div_gate.py elaborate --target "$(TARGET)" --manifest "reference/manifest.lock" --spinal-dir "spinal" --tool-root "$(CHIPLAB_TOOL_ROOT)" --out-dir "$(OUT_DIR)/div/elaborate" $(if $(JAVA_HOME),--java-home "$(JAVA_HOME)",)
 else ifeq ($(TARGET),alu)
 	$(PYTHON) -I tools/alu_gate.py elaborate --target "$(TARGET)" --manifest "reference/manifest.lock" --spinal-dir "spinal" --tool-root "$(CHIPLAB_TOOL_ROOT)" --out-dir "$(OUT_DIR)/alu/elaborate" $(if $(JAVA_HOME),--java-home "$(JAVA_HOME)",)
 else
-	@echo "ERROR: unsupported TARGET=$(TARGET); expected alu, mul, or div" >&2; exit 2
+	@echo "ERROR: unsupported TARGET=$(TARGET); expected core_top, alu, mul, or div" >&2; exit 2
 endif
 
 generate:
-ifeq ($(TARGET),mul)
+ifeq ($(TARGET),core_top)
+	$(PYTHON) -I tools/spinal_generate.py --manifest "reference/manifest.lock" --spinal-dir "spinal" --tool-root "$(CHIPLAB_TOOL_ROOT)" --main-class "openla500.compat.GenerateCoreTopCompat" --expected-module "core_top" --expected-file "core_top.v" --out-dir "$(CORE_TOP_GENERATE_DIR)" --runs 2 $(if $(JAVA_HOME),--java-home "$(JAVA_HOME)",)
+	$(PYTHON) -I tools/core_top_gate.py package --repo-root "." --manifest "reference/manifest.lock" --ports "$(CORE_TOP_PORTS)" --rtl "$(CORE_TOP_WRAPPER_RTL)" --out-dir "$(CORE_TOP_PACKAGE_DIR)"
+	$(PYTHON) -I tools/core_top_gate.py publish-check --repo-root "." --manifest "reference/manifest.lock" --ports "$(CORE_TOP_PORTS)" --rtl "$(CORE_TOP_RTL)" --tracked-rtl "$(CORE_TOP_TRACKED_RTL)" --replacement-spec "$(CORE_TOP_REPLACEMENT_SPEC)" --out-dir "$(OUT_DIR)/core_top/publish-check"
+else ifeq ($(TARGET),mul)
 	$(PYTHON) -I tools/mul_gate.py generate --target "$(TARGET)" --manifest "reference/manifest.lock" --spinal-dir "spinal" --tool-root "$(CHIPLAB_TOOL_ROOT)" --out-dir "$(MUL_GENERATE_DIR)" $(if $(JAVA_HOME),--java-home "$(JAVA_HOME)",)
 else ifeq ($(TARGET),div)
 	$(PYTHON) -I tools/div_gate.py generate --target "$(TARGET)" --manifest "reference/manifest.lock" --spinal-dir "spinal" --tool-root "$(CHIPLAB_TOOL_ROOT)" --out-dir "$(DIV_GENERATE_DIR)" $(if $(JAVA_HOME),--java-home "$(JAVA_HOME)",)
 else ifeq ($(TARGET),alu)
 	$(PYTHON) -I tools/alu_gate.py generate --target "$(TARGET)" --manifest "reference/manifest.lock" --spinal-dir "spinal" --tool-root "$(CHIPLAB_TOOL_ROOT)" --out-dir "$(ALU_GENERATE_DIR)" $(if $(JAVA_HOME),--java-home "$(JAVA_HOME)",)
 else
-	@echo "ERROR: unsupported TARGET=$(TARGET); expected alu, mul, or div" >&2; exit 2
+	@echo "ERROR: unsupported TARGET=$(TARGET); expected core_top, alu, mul, or div" >&2; exit 2
 endif
 
 port-check:
-ifeq ($(TARGET),mul)
+ifeq ($(TARGET),core_top)
+	$(PYTHON) -I tools/core_top_gate.py port-check --repo-root "." --manifest "reference/manifest.lock" --ports "$(CORE_TOP_PORTS)" --rtl "$(CORE_TOP_RTL)" --out-dir "$(OUT_DIR)/core_top/port-check"
+else ifeq ($(TARGET),mul)
 	$(PYTHON) -I tools/mul_gate.py port-check --target "$(TARGET)" --manifest "reference/manifest.lock" --rtl "$(MUL_RTL)" --out-dir "$(OUT_DIR)/mul/port-check"
 else ifeq ($(TARGET),div)
 	$(PYTHON) -I tools/div_gate.py port-check --target "$(TARGET)" --manifest "reference/manifest.lock" --rtl "$(DIV_RTL)" --out-dir "$(OUT_DIR)/div/port-check"
 else ifeq ($(TARGET),alu)
 	$(PYTHON) -I tools/alu_gate.py port-check --target "$(TARGET)" --manifest "reference/manifest.lock" --rtl "$(ALU_RTL)" --out-dir "$(OUT_DIR)/alu/port-check"
 else
-	@echo "ERROR: unsupported TARGET=$(TARGET); expected alu, mul, or div" >&2; exit 2
+	@echo "ERROR: unsupported TARGET=$(TARGET); expected core_top, alu, mul, or div" >&2; exit 2
 endif
 
 lint:
-ifeq ($(TARGET),mul)
+ifeq ($(TARGET),core_top)
+	$(PYTHON) -I tools/core_top_gate.py lint --repo-root "." --manifest "reference/manifest.lock" --ports "$(CORE_TOP_PORTS)" --rtl "$(CORE_TOP_RTL)" --out-dir "$(OUT_DIR)/core_top/lint"
+else ifeq ($(TARGET),mul)
 	$(PYTHON) -I tools/mul_gate.py lint --target "$(TARGET)" --manifest "reference/manifest.lock" --rtl "$(MUL_RTL)" --out-dir "$(OUT_DIR)/mul/lint"
 else ifeq ($(TARGET),div)
 	$(PYTHON) -I tools/div_gate.py lint --target "$(TARGET)" --manifest "reference/manifest.lock" --rtl "$(DIV_RTL)" --out-dir "$(OUT_DIR)/div/lint"
 else ifeq ($(TARGET),alu)
 	$(PYTHON) -I tools/alu_gate.py lint --target "$(TARGET)" --manifest "reference/manifest.lock" --rtl "$(ALU_RTL)" --out-dir "$(OUT_DIR)/alu/lint"
 else
-	@echo "ERROR: unsupported TARGET=$(TARGET); expected alu, mul, or div" >&2; exit 2
+	@echo "ERROR: unsupported TARGET=$(TARGET); expected core_top, alu, mul, or div" >&2; exit 2
 endif
 
 yosys-check:
-ifeq ($(TARGET),mul)
+ifeq ($(TARGET),core_top)
+	$(PYTHON) -I tools/core_top_gate.py yosys-check --repo-root "." --manifest "reference/manifest.lock" --ports "$(CORE_TOP_PORTS)" --rtl "$(CORE_TOP_RTL)" --out-dir "$(OUT_DIR)/core_top/yosys-check"
+else ifeq ($(TARGET),mul)
 	$(PYTHON) -I tools/mul_gate.py yosys-check --target "$(TARGET)" --manifest "reference/manifest.lock" --rtl "$(MUL_RTL)" --out-dir "$(OUT_DIR)/mul/yosys-check"
 else ifeq ($(TARGET),div)
 	$(PYTHON) -I tools/div_gate.py yosys-check --target "$(TARGET)" --manifest "reference/manifest.lock" --rtl "$(DIV_RTL)" --out-dir "$(OUT_DIR)/div/yosys-check"
 else ifeq ($(TARGET),alu)
 	$(PYTHON) -I tools/alu_gate.py yosys-check --target "$(TARGET)" --manifest "reference/manifest.lock" --rtl "$(ALU_RTL)" --out-dir "$(OUT_DIR)/alu/yosys-check"
 else
-	@echo "ERROR: unsupported TARGET=$(TARGET); expected alu, mul, or div" >&2; exit 2
+	@echo "ERROR: unsupported TARGET=$(TARGET); expected core_top, alu, mul, or div" >&2; exit 2
 endif
 
 unit:
@@ -124,6 +143,15 @@ else ifeq ($(TARGET),alu)
 else
 	@echo "ERROR: unsupported TARGET=$(TARGET); expected alu, mul, or div" >&2; exit 2
 endif
+
+core-top-contract:
+	$(PYTHON) -I tools/core_top_gate.py contract --repo-root "." --manifest "reference/manifest.lock" --ports "$(CORE_TOP_PORTS)" $(if $(CHIPLAB_REFERENCE),--chiplab-mycpu "$(CHIPLAB_REFERENCE)/IP/myCPU",) --out-dir "$(OUT_DIR)/core_top/contract"
+
+core-top-package:
+	$(PYTHON) -I tools/core_top_gate.py package --repo-root "." --manifest "reference/manifest.lock" --ports "$(CORE_TOP_PORTS)" --rtl "$(CORE_TOP_WRAPPER_RTL)" --out-dir "$(CORE_TOP_PACKAGE_DIR)"
+
+core-top-publish-check:
+	$(PYTHON) -I tools/core_top_gate.py publish-check --repo-root "." --manifest "reference/manifest.lock" --ports "$(CORE_TOP_PORTS)" --rtl "$(CORE_TOP_RTL)" --tracked-rtl "$(CORE_TOP_TRACKED_RTL)" --replacement-spec "$(CORE_TOP_REPLACEMENT_SPEC)" --out-dir "$(OUT_DIR)/core_top/publish-check"
 
 mul-contract:
 	$(PYTHON) -I tools/mul_contract.py verify --contract "$(MUL_CONTRACT)" --manifest "reference/manifest.lock" --out-dir "$(OUT_DIR)/mul/contract"

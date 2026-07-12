@@ -1,0 +1,7 @@
+{
+  "schema_version": 1,
+  "iteration_id": "20260713-0410-core-top-compat",
+  "retention": "local_until_explicit_clean",
+  "artifacts": [],
+  "external_artifacts": []
+}
