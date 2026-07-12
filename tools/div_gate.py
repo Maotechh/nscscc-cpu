@@ -42,6 +42,7 @@ SCALA_DEPENDENCY_LOCK = "scala-dependencies.lock.json"
 FORMAL_PASS_BASE = "Base case for induction length 1 proven."
 FORMAL_PASS_INDUCTION = "Induction step proven: SUCCESS!"
 FORMAL_EXPECTED_FAILURE = "ERROR: Called with -verify and proof did fail!"
+FORMAL_COUNTEREXAMPLE = "SAT proof finished - model found: FAIL!"
 
 
 class DivGateError(RuntimeError):
@@ -855,11 +856,14 @@ def formal_positive_passed(result: dict[str, object], log_text: str) -> bool:
 
 
 def formal_negative_detected(result: dict[str, object], log_text: str) -> bool:
+    error_lines = [line.strip() for line in log_text.splitlines() if line.startswith("ERROR:")]
     return bool(
         result.get("returncode") != 0
         and not result.get("timed_out")
         and not result.get("warnings")
+        and FORMAL_COUNTEREXAMPLE in log_text
         and FORMAL_EXPECTED_FAILURE in log_text
+        and error_lines == [FORMAL_EXPECTED_FAILURE]
         and FORMAL_PASS_INDUCTION not in log_text
         and "SKIP" not in log_text.upper()
     )

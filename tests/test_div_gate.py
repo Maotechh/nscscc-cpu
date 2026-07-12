@@ -312,12 +312,25 @@ class DivGateCliTests(unittest.TestCase):
 
         negative = {"returncode": 1, "timed_out": False, "warnings": []}
         self.assertTrue(
-            div_gate.formal_negative_detected(negative, div_gate.FORMAL_EXPECTED_FAILURE)
+            div_gate.formal_negative_detected(
+                negative,
+                div_gate.FORMAL_COUNTEREXAMPLE + "\n" + div_gate.FORMAL_EXPECTED_FAILURE,
+            )
         )
         self.assertFalse(div_gate.formal_negative_detected(negative, "generic tool failure"))
         self.assertFalse(
             div_gate.formal_negative_detected(
-                {**negative, "timed_out": True}, div_gate.FORMAL_EXPECTED_FAILURE
+                negative,
+                div_gate.FORMAL_COUNTEREXAMPLE
+                + "\n"
+                + div_gate.FORMAL_EXPECTED_FAILURE
+                + "\nERROR: unrelated tool failure",
+            )
+        )
+        self.assertFalse(
+            div_gate.formal_negative_detected(
+                {**negative, "timed_out": True},
+                div_gate.FORMAL_COUNTEREXAMPLE + "\n" + div_gate.FORMAL_EXPECTED_FAILURE,
             )
         )
 

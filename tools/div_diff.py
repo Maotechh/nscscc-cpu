@@ -1110,7 +1110,6 @@ def _compile_and_run(
     verilator: Path,
     timeout: int,
     values: dict[str, str],
-    expected_compile_pass: bool,
     approved_warnings: list[dict[str, Any]],
 ) -> dict[str, Any]:
     model_dir.mkdir(parents=True, exist_ok=True)
@@ -1273,14 +1272,14 @@ def run_golden(args: argparse.Namespace) -> tuple[int, dict[str, Any]]:
         golden_path.write_bytes(blob_payload)
         summary["golden_artifact"] = {"path": str(golden_path), "sha256": sha256_file(golden_path), "size": golden_path.stat().st_size, "git_ref": f"{values[GOLDEN_COMMIT_KEY]}:{GOLDEN_PATH}"}
         baseline_blob_hash = sha256_bytes(blob_payload)
-        result = _compile_and_run(source_payload=blob_payload, source_kind="golden", vectors_path=vectors_path, expected_count=total, directed_count=directed_count, model_dir=golden_dir, verilator=verilator, timeout=args.timeout, values=values, expected_compile_pass=True, approved_warnings=approved_warnings)
+        result = _compile_and_run(source_payload=blob_payload, source_kind="golden", vectors_path=vectors_path, expected_count=total, directed_count=directed_count, model_dir=golden_dir, verilator=verilator, timeout=args.timeout, values=values, approved_warnings=approved_warnings)
         summary["golden"] = result
         if result.get("status") != "pass":
             raise DivDiffError(str(result.get("error", "golden differential failed")))
         controls: list[dict[str, Any]] = []
         for name in ("result_bit_flip", "complete_timing", "remainder_capture_bit_flip"):
             control_payload = mutate_source(blob_payload, name)
-            control = _compile_and_run(source_payload=control_payload, source_kind=f"negative:{name}", vectors_path=vectors_path, expected_count=total, directed_count=directed_count, model_dir=out_dir / "negative" / name, verilator=verilator, timeout=args.timeout, values=values, expected_compile_pass=False, approved_warnings=approved_warnings)
+            control = _compile_and_run(source_payload=control_payload, source_kind=f"negative:{name}", vectors_path=vectors_path, expected_count=total, directed_count=directed_count, model_dir=out_dir / "negative" / name, verilator=verilator, timeout=args.timeout, values=values, approved_warnings=approved_warnings)
             control["expected_failure"] = True
             control["control_source_sha256"] = sha256_bytes(control_payload)
             parsed_control = control.get("simulation", {}).get("parsed", {})
@@ -1357,7 +1356,19 @@ def run_candidate(args: argparse.Namespace) -> tuple[int, dict[str, Any]]:
     summary = _base_summary(args, "candidate")
     try:
         manifest_path = args.manifest.resolve()
+        manifest_hash_before = sha256_file(manifest_path)
+        repo_root = manifest_path.parent.parent
+        summary["repository_head"] = _git_head(repo_root)
+        summary["manifest"] = {
+            "path": str(manifest_path),
+            "sha256_before": manifest_hash_before,
+        }
+        summary["evaluator"] = {
+            "path": str(Path(__file__).resolve()),
+            "sha256": sha256_file(Path(__file__).resolve()),
+        }
         values = parse_manifest(manifest_path)
+        summary["manifest"]["team_golden_candidate"] = values[GOLDEN_COMMIT_KEY]
         contract = _contract_evidence(args, manifest_path, out_dir / "contract")
         summary["contract"] = contract.get("contract")
         summary["golden_contract"] = contract.get("golden")
@@ -1378,15 +1389,31 @@ def run_candidate(args: argparse.Namespace) -> tuple[int, dict[str, Any]]:
         vectors, directed_count = make_vectors(args.seed, args.vector_count)
         vectors_path = out_dir / "vectors.txt"
         total = write_vector_file(vectors_path, vectors)
+        summary["stimulus"] = {
+            "seed": f"0x{args.seed:x}",
+            "random_transactions": args.vector_count,
+        }
+        summary["vectors"] = {
+            "path": str(vectors_path),
+            "sha256": sha256_file(vectors_path),
+            "directed": directed_count,
+            "random": args.vector_count,
+            "total": total,
+        }
         verilator, tools = _toolchain(values, args, out_dir)
         summary["toolchain"] = tools
-        result = _compile_and_run(source_payload=payload_before, source_kind="candidate", vectors_path=vectors_path, expected_count=total, directed_count=directed_count, model_dir=out_dir / "candidate", verilator=verilator, timeout=args.timeout, values=values, expected_compile_pass=True, approved_warnings=[])
+        result = _compile_and_run(source_payload=payload_before, source_kind="candidate", vectors_path=vectors_path, expected_count=total, directed_count=directed_count, model_dir=out_dir / "candidate", verilator=verilator, timeout=args.timeout, values=values, approved_warnings=[])
         result["candidate_source"] = {"path": str(source), "sha256_before": sha256_bytes(payload_before), "sha256_after": sha256_file(source), "stable": sha256_file(source) == sha256_bytes(payload_before)}
         summary["candidate"] = result
         if not result["candidate_source"]["stable"]:
             raise DivDiffError("candidate source changed during compilation")
         if result.get("status") != "pass":
             raise DivDiffError(str(result.get("error", "candidate differential failed")))
+        manifest_hash_after = sha256_file(manifest_path)
+        summary["manifest"]["sha256_after"] = manifest_hash_after
+        summary["manifest"]["stable"] = manifest_hash_after == manifest_hash_before
+        if not summary["manifest"]["stable"]:
+            raise DivDiffError("manifest changed during candidate differential")
         summary["counts"] = {"planned": 1, "executed": 1, "passed": 1, "failed": 0, "skipped": 0}
         summary["status"] = "pass"
         _persist(out_dir, summary)

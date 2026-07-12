@@ -283,6 +283,9 @@ class DivFailClosedTests(unittest.TestCase):
                 code, summary = div_diff.run_candidate(args)
         self.assertEqual(1, code)
         self.assertIn("stimulus differs", summary["error"])
+        self.assertRegex(summary["repository_head"], r"^[0-9a-f]{40}$")
+        self.assertRegex(summary["manifest"]["sha256_before"], r"^[0-9a-f]{64}$")
+        self.assertRegex(summary["evaluator"]["sha256"], r"^[0-9a-f]{64}$")
         self.assertEqual(
             {"planned": 1, "executed": 1, "passed": 0, "failed": 1, "skipped": 0},
             summary["counts"],
