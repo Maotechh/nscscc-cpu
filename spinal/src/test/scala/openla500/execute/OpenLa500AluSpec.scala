@@ -207,6 +207,7 @@ class OpenLa500AluSpec extends AnyFunSuite {
       assert(!moduleHeader.contains("io_"))
       assert(!moduleHeader.toLowerCase.contains("clk"))
       assert(!moduleHeader.toLowerCase.contains("reset"))
+      assert(!rtl.contains("`timescale"))
     } finally {
       Files.walk(outputDirectory).iterator().asScala.toSeq.reverse.foreach(Files.delete)
     }

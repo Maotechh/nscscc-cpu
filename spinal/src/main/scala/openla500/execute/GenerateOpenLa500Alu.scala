@@ -62,11 +62,15 @@ object GenerateOpenLa500Alu {
       s"output directory changed while it was being created: $outputDirectory"
     )
 
-    SpinalConfig(targetDirectory = outputDirectory.toString, oneFilePerComponent = false)
-      .generateVerilog {
-        val dut = new OpenLa500Alu
-        dut.setDefinitionName("alu")
-        dut
-      }
+    val config = SpinalConfig(
+      targetDirectory = outputDirectory.toString,
+      oneFilePerComponent = false
+    )
+    config.withTimescale = false
+    config.generateVerilog {
+      val dut = new OpenLa500Alu
+      dut.setDefinitionName("alu")
+      dut
+    }
   }
 }

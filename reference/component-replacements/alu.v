@@ -1,7 +1,7 @@
 // Generator : SpinalHDL v1.14.2    git head : 78f29dc66110fc099a777992b6daa2f803ab445e
 // Component : alu
 
-`timescale 1ns/1ps
+
 
 module alu (
   input  wire [13:0]   alu_op,
