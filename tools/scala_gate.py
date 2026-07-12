@@ -1019,8 +1019,9 @@ def main() -> int:
 
         scripts = sorted(simulation_workspace.rglob("verilatorScript.sh"))
         simulator_policies = [verilator_script_policy(script) for script in scripts]
+        # A test suite may compile several isolated DUT wrappers; audit every script.
         simulator_policy_passed = bool(
-            len(simulator_policies) == 1 and simulator_policies[0]["passed"]
+            simulator_policies and all(policy["passed"] for policy in simulator_policies)
         )
         if not simulator_policy_passed:
             summary["integrity_error"] = (

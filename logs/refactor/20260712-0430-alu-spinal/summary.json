@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "iteration_id": "20260712-0430-alu-spinal",
+  "status": "draft",
+  "branch": "refactor/20260712-0430-alu-spinal",
+  "base_sha": "0d135ceed3ae9454b9cd2bca9f87a329c692d8c2",
+  "head_sha": "0d135ceed3ae9454b9cd2bca9f87a329c692d8c2",
+  "selected_boundary": "alu",
+  "required_gates": ["doctor","scala","elaborate","generate","port_check","lint","yosys_check","unit_diff","formal","diagnostic_overlay","func_smoke","claim_review"],
+  "gates": {
+    "doctor": {"status":"pending","planned":2,"executed":0,"passed":0,"failed":0,"skipped":2},
+    "scala": {"status":"pending","planned":4,"executed":0,"passed":0,"failed":0,"skipped":4},
+    "elaborate": {"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":1},
+    "generate": {"status":"pending","planned":2,"executed":0,"passed":0,"failed":0,"skipped":2},
+    "port_check": {"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":1},
+    "lint": {"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":1},
+    "yosys_check": {"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":1},
+    "unit_diff": {"status":"pending","planned":2,"executed":0,"passed":0,"failed":0,"skipped":2},
+    "formal": {"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":1},
+    "diagnostic_overlay": {"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":1},
+    "func_smoke": {"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":1},
+    "claim_review": {"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":1}
+  },
+  "claims": [],
+  "blocked_by": [],
+  "pr": {"status":"awaiting_implementation","url":null,"draft_only":true,"auto_merge":false,"created":false},
+  "updated_at": "2026-07-12T04:30:00+08:00"
+}

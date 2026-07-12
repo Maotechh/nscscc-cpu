@@ -1,8 +1,8 @@
 schema_version: 1
-updated_at: "2026-07-12T04:18:38+08:00"
-active_iteration: "20260711-1533-component-overlay"
-active_branch: "refactor/20260711-1533-component-overlay"
-source_head: "71a1995b7ca4dd922d1896e6b820e8029ff88575"
+updated_at: "2026-07-12T04:30:00+08:00"
+active_iteration: "20260712-0430-alu-spinal"
+active_branch: "refactor/20260712-0430-alu-spinal"
+source_head: "0d135ceed3ae9454b9cd2bca9f87a329c692d8c2"
 
 boundaries:
   component_replacement_overlay:
@@ -62,6 +62,32 @@ boundaries:
       - independent_rtl_static_and_yosys_not_executed
       - claude_bridge_missing_GEEKPIE_CLAUDE_API_KEY
     last_iteration: "20260710-2026-baseline"
+
+  alu:
+    owner: execute
+    state: not_started
+    golden_ref: a158aa8:rtl/alu.v
+    dependencies:
+      - component_replacement_overlay
+    contract: docs/contracts/alu.md
+    required_gates:
+      - doctor
+      - scala
+      - elaborate
+      - generate
+      - port_check
+      - lint
+      - yosys_check
+      - unit_diff
+      - formal
+      - diagnostic_overlay
+      - func_smoke
+      - claim_review
+    evidence:
+      - logs/refactor/20260712-0430-alu-spinal/iteration.md
+    active_pr: null
+    blocked_by: []
+    last_iteration: "20260712-0430-alu-spinal"
 
   core_top_compat:
     owner: compat
