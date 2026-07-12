@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "iteration_id": "20260712-0430-alu-spinal",
+  "source_head": "4743235630f69dc96a77ff995ad00a9412d422c7",
+  "chiplab_commit": "a2e11b38bc5c85abb4408a8e0c0f5ce903c7ba31",
+  "mycpu_gitlink": "aa3bde1f3e720e71c2c78d6b81930d797b810149",
+  "case": "func/func_lab19",
+  "candidate": {
+    "iteration_id": "20260712-0430-alu-candidate-clean",
+    "source": "a158aa8ab4d49cece1a0fe488d7ac7dc02bd8cf6",
+    "gate_eligible": true,
+    "executed": 1,
+    "passed": 0,
+    "failed": 1,
+    "skipped": 0,
+    "instructions": 172552,
+    "cycles": 602903,
+    "first_mismatch": "t0(r12) different at pc = 0x1c07c79c, right= 0x000006e2, wrong = 0x00000008",
+    "trace_sha256": "8efa7942ab6d4702129dc0c7eb0676c6cfcd87361ee8ecf99411567c3db38acb",
+    "warnings": {"total":644,"dut":280,"official_environment":364}
+  },
+  "mixed": {
+    "iteration_id": "20260712-0430-alu-mixed-clean",
+    "source_head": "4743235630f69dc96a77ff995ad00a9412d422c7",
+    "replacement_sha256": "1349173904c772225ed4184a7e65aa88f7278fbcd060d33d81c966954c128146",
+    "replacement_oid": "0fe78eb097f6b7f56e4ab8d15baa11e108aff955",
+    "gate_eligible": false,
+    "executed": 1,
+    "passed": 0,
+    "failed": 1,
+    "skipped": 0,
+    "instructions": 172552,
+    "cycles": 602903,
+    "first_mismatch": "t0(r12) different at pc = 0x1c07c79c, right= 0x000006e2, wrong = 0x00000008",
+    "trace_sha256": "8efa7942ab6d4702129dc0c7eb0676c6cfcd87361ee8ecf99411567c3db38acb",
+    "warnings": {"total":642,"dut":278,"official_environment":364}
+  },
+  "comparison": {
+    "same_first_mismatch": true,
+    "same_instruction_count": true,
+    "same_cycle_count": true,
+    "same_trace_sha256": true,
+    "warning_delta_total": -2,
+    "functional_gate_pass": false,
+    "integrated_pass_supported": false
+  },
+  "artifact_root": "/tmp/nscscc-alu-clean-4743235-chiplab-doctor",
+  "worktree_root": "/tmp/nscscc-alu-clean-4743235-work",
+  "retention": "local_until_explicit_clean"
+}

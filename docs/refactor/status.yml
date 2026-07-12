@@ -1,8 +1,8 @@
 schema_version: 1
-updated_at: "2026-07-12T04:30:00+08:00"
+updated_at: "2026-07-12T15:45:00+08:00"
 active_iteration: "20260712-0430-alu-spinal"
 active_branch: "refactor/20260712-0430-alu-spinal"
-source_head: "0d135ceed3ae9454b9cd2bca9f87a329c692d8c2"
+source_head: "ecdc699e10a20c4071f80de55e39f8a4255aa985"
 
 boundaries:
   component_replacement_overlay:
@@ -65,7 +65,7 @@ boundaries:
 
   alu:
     owner: execute
-    state: not_started
+    state: implementation_in_review
     golden_ref: a158aa8:rtl/alu.v
     dependencies:
       - component_replacement_overlay
@@ -85,8 +85,18 @@ boundaries:
       - claim_review
     evidence:
       - logs/refactor/20260712-0430-alu-spinal/iteration.md
+      - logs/refactor/20260712-0430-alu-spinal/summary.json
+      - logs/refactor/20260712-0430-alu-spinal/evidence/local-gates.json
+      - logs/refactor/20260712-0430-alu-spinal/evidence/chiplab-comparison.json
+      - logs/refactor/20260712-0430-alu-spinal/evidence/automation-tests.txt
+      - logs/refactor/20260712-0430-alu-spinal/reviews/claude-summary.json
+      - logs/refactor/20260712-0430-alu-spinal/reviews/experiment-audit.json
+      - logs/refactor/20260712-0430-alu-spinal/reviews/result-to-claim.json
     active_pr: null
-    blocked_by: []
+    blocked_by:
+      - func_lab19_candidate_and_mixed_mismatch_at_1c07c79c
+      - 642_unapproved_verilator_warnings_in_mixed_compile
+      - claude_bridge_missing_GEEKPIE_CLAUDE_API_KEY
     last_iteration: "20260712-0430-alu-spinal"
 
   core_top_compat:

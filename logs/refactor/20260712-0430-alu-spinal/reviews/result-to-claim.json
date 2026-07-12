@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "reviewed_source_head": "4743235630f69dc96a77ff995ad00a9412d422c7",
+  "claim_supported": "partial",
+  "confidence": "high",
+  "supported_claim": "模块级 Spinal ALU 的锁定 2-state 组合等价、端口合同和单一 func_lab19 paired diagnostic。",
+  "unsupported": ["CPU correctness", "integrated_pass", "58/81 func", "random DiffTest", "performance", "Linux", "FPGA", "full Spinal refactor"],
+  "next_action": "保持 implementation_in_review；修复 Claude bridge 后重新审核最终 HEAD，再建立 mul-golden-harness prerequisite。",
+  "claims": [
+    {"id":"C1","impact":"supported_with_narrow_scope"},
+    {"id":"C2","impact":"supported_with_narrow_scope"},
+    {"id":"C3","impact":"unsupported"}
+  ]
+}

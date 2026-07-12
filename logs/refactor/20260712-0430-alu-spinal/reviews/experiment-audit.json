@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "date": "2026-07-12",
+  "auditor": "independent-read-only-codex-subagent",
+  "reviewed_source_head": "4743235630f69dc96a77ff995ad00a9412d422c7",
+  "overall_verdict": "warn",
+  "integrity_status": "warn",
+  "checks": {
+    "oracle_provenance": {"status":"pass","detail":"Golden RTL、锁定 NEMU 和 committed replacement blob 均有固定来源。"},
+    "score_normalization": {"status":"pass","detail":"没有自归一化分数。"},
+    "result_existence": {"status":"pass","detail":"结构化 gate、overlay、smoke 和 RTL hash locator 可复核。"},
+    "dead_or_unexecuted": {"status":"warn","detail":"只有一个 func case；58/81、random、perf、Linux、FPGA 未执行。"},
+    "scope": {"status":"warn","detail":"两侧均 FAIL，不能使用 comprehensive/full/release 语言。"},
+    "evaluation_type": "simulation_only_plus_formal_combination"
+  },
+  "claims": [
+    {"id":"C1","impact":"supported_with_narrow_scope"},
+    {"id":"C2","impact":"supported_with_narrow_scope"},
+    {"id":"C3","impact":"unsupported"},
+    {"id":"CPU_PASS","impact":"unsupported"},
+    {"id":"FULL_REFACTOR","impact":"unsupported"}
+  ]
+}

@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "iteration_id": "20260712-0430-alu-spinal",
+  "status": "unavailable",
+  "job_id": "a016bb2337534c96b27ea3bd984076ed",
+  "provider": null,
+  "model": null,
+  "reviewed_head_sha": null,
+  "raw_sha256": "0305b7c8411be4a7a57b21e7d83dcafe8aa9560776c2f0e0e045e2d6cb8d63dc",
+  "error": "Required provider environment variable is not set: GEEKPIE_CLAUDE_API_KEY",
+  "open_blocking_count": 1,
+  "fresh_against_head": false,
+  "allow_ready": false,
+  "allow_status_promotion": false,
+  "provenance": {
+    "source": "claude-review-mcp",
+    "raw_path": "reviews/claude-raw.md",
+    "raw_sha256": "0305b7c8411be4a7a57b21e7d83dcafe8aa9560776c2f0e0e045e2d6cb8d63dc",
+    "job_id": "a016bb2337534c96b27ea3bd984076ed",
+    "provider": null,
+    "model": null,
+    "reviewed_head_sha": null
+  },
+  "attempts": [
+    {
+      "job_id": "a016bb2337534c96b27ea3bd984076ed",
+      "status": "failed",
+      "model_started": false,
+      "review_target": "4743235630f69dc96a77ff995ad00a9412d422c7",
+      "error": "Required provider environment variable is not set: GEEKPIE_CLAUDE_API_KEY"
+    }
+  ],
+  "findings": [
+    {
+      "id": "CLAUDE-CREDENTIAL-UNAVAILABLE",
+      "disposition": "open",
+      "blocking": true,
+      "summary": "Bridge 在模型启动前失败，没有 Claude response、provider、model 或 thread。"
+    }
+  ],
+  "fallback_review": {
+    "type": "independent_read_only_codex_subagents",
+    "may_be_called_claude_review": false,
+    "paths": [
+      "reviews/local-independent-review.md",
+      "reviews/experiment-audit.md",
+      "reviews/result-to-claim.md"
+    ]
+  }
+}

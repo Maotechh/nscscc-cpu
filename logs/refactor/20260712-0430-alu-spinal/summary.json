@@ -4,25 +4,82 @@
   "status": "draft",
   "branch": "refactor/20260712-0430-alu-spinal",
   "base_sha": "0d135ceed3ae9454b9cd2bca9f87a329c692d8c2",
-  "head_sha": "0d135ceed3ae9454b9cd2bca9f87a329c692d8c2",
+  "head_sha": "ecdc699e10a20c4071f80de55e39f8a4255aa985",
+  "review_target_sha": "ecdc699e10a20c4071f80de55e39f8a4255aa985",
   "selected_boundary": "alu",
-  "required_gates": ["doctor","scala","elaborate","generate","port_check","lint","yosys_check","unit_diff","formal","diagnostic_overlay","func_smoke","claim_review"],
+  "required_gates": [
+    "doctor",
+    "automation_tests",
+    "scala",
+    "elaborate",
+    "generate",
+    "port_check",
+    "lint",
+    "yosys_check",
+    "unit_diff",
+    "formal",
+    "diagnostic_overlay",
+    "func_smoke",
+    "claim_review"
+  ],
   "gates": {
-    "doctor": {"status":"pending","planned":2,"executed":0,"passed":0,"failed":0,"skipped":2},
-    "scala": {"status":"pending","planned":4,"executed":0,"passed":0,"failed":0,"skipped":4},
-    "elaborate": {"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":1},
-    "generate": {"status":"pending","planned":2,"executed":0,"passed":0,"failed":0,"skipped":2},
-    "port_check": {"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":1},
-    "lint": {"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":1},
-    "yosys_check": {"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":1},
-    "unit_diff": {"status":"pending","planned":2,"executed":0,"passed":0,"failed":0,"skipped":2},
-    "formal": {"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":1},
-    "diagnostic_overlay": {"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":1},
-    "func_smoke": {"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":1},
-    "claim_review": {"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":1}
+    "doctor": {"status":"pass","planned":2,"executed":2,"passed":2,"failed":0,"skipped":0,"detail":"Windows Vivado doctor 与锁定 chiplab/toolchain doctor 均通过。"},
+    "automation_tests": {"status":"pass","planned":137,"executed":137,"passed":137,"failed":0,"skipped":0,"detail":"WSL unittest discover: Ran 137 tests, OK；包含预期失败的负向合同测试。"},
+    "scala": {"status":"pass","planned":4,"executed":4,"passed":4,"failed":0,"skipped":0},
+    "elaborate": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0},
+    "generate": {"status":"pass","planned":2,"executed":2,"passed":2,"failed":0,"skipped":0,"detail":"两个独立 OUT_DIR 均内部双生成可复现，且提交 blob 字节一致。"},
+    "port_check": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0},
+    "lint": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0,"detail":"ALU Verilator -Wall 为 0 warning。"},
+    "yosys_check": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0},
+    "unit_diff": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0,"detail":"3 Scala tests，4096 fixed-seed vectors，skipped=0。"},
+    "formal": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0,"detail":"Yosys 2-state 组合形式等价覆盖 78 个输入变量。"},
+    "diagnostic_overlay": {"status":"pass","planned":2,"executed":2,"passed":2,"failed":0,"skipped":0,"detail":"locked candidate 与 committed mixed overlay 均完成；mixed gate_eligible=false。"},
+    "func_smoke": {"status":"fail","planned":2,"executed":2,"passed":0,"failed":2,"skipped":0,"detail":"两侧均在 PC 0x1c07c79c 失败；172552 instructions / 602903 cycles；trace 相同。"},
+    "claim_review": {"status":"unavailable","planned":1,"executed":1,"passed":0,"failed":1,"skipped":0,"detail":"Claude bridge 在模型启动前缺少 GEEKPIE_CLAUDE_API_KEY；降级审查不能替代。"}
   },
-  "claims": [],
-  "blocked_by": [],
-  "pr": {"status":"awaiting_implementation","url":null,"draft_only":true,"auto_merge":false,"created":false},
-  "updated_at": "2026-07-12T04:30:00+08:00"
+  "observations": {
+    "rtl_sha256": "1349173904c772225ed4184a7e65aa88f7278fbcd060d33d81c966954c128146",
+    "rtl_size": 6398,
+    "formal_input_bits": 78,
+    "random_seed": "0x158aa8",
+    "random_vectors": 4096,
+    "case": "func/func_lab19",
+    "candidate_status": "fail",
+    "mixed_status": "fail",
+    "instructions": 172552,
+    "cycles": 602903,
+    "first_mismatch": "t0(r12) different at pc = 0x1c07c79c, right= 0x000006e2, wrong = 0x00000008",
+    "trace_sha256": "8efa7942ab6d4702129dc0c7eb0676c6cfcd87361ee8ecf99411567c3db38acb",
+    "warnings": {
+      "candidate": {"total":644,"dut":280,"official_environment":364},
+      "mixed": {"total":642,"dut":278,"official_environment":364},
+      "delta_total": -2
+    }
+  },
+  "claims": [
+    {
+      "id": "C1",
+      "status": "supported_with_narrow_scope",
+      "text": "提交的 Spinal-generated ALU 在锁定环境中可复现、精确匹配端口，并通过 Yosys 2-state 组合形式等价。",
+      "excludes": ["4-state X/Z equivalence", "whole-CPU correctness", "timing/resource equivalence", "full SpinalHDL refactor"]
+    },
+    {
+      "id": "C2",
+      "status": "supported_with_narrow_scope",
+      "text": "单一 func_lab19 中 candidate/mixed 的首错、计数和 trace 相同，mixed 少两条 DUT warning。",
+      "excludes": ["functional PASS", "integrated_pass", "58/81 suites", "random/perf/Linux/FPGA"]
+    },
+    {
+      "id": "C3",
+      "status": "unsupported",
+      "text": "ALU 已通过完整 CPU 官方功能验证。"
+    }
+  ],
+  "blocked_by": [
+    "func_lab19_candidate_and_mixed_mismatch_at_1c07c79c",
+    "642_unapproved_verilator_warnings",
+    "claude_bridge_missing_GEEKPIE_CLAUDE_API_KEY"
+  ],
+  "pr": {"status":"awaiting_push","url":null,"draft_only":true,"auto_merge":false,"created":false},
+  "updated_at": "2026-07-12T15:35:00+08:00"
 }

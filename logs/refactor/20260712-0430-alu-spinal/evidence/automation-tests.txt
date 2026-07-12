@@ -1,0 +1,106 @@
+python3 -I -m unittest discover -s tests -p "test_*.py"
+..ERROR: unsupported TARGET='cache'; expected 'alu'
+.......................................................................................................................................
+----------------------------------------------------------------------
+Ran 137 tests in 7.785s
+
+OK
+{
+  "actual_ports": {
+    "alu_op": [
+      "input",
+      14
+    ],
+    "alu_result": [
+      "output",
+      32
+    ],
+    "alu_src1": [
+      "input",
+      32
+    ],
+    "alu_src2": [
+      "input",
+      32
+    ]
+  },
+  "expected_ports": {
+    "alu_op": [
+      "input",
+      14
+    ],
+    "alu_result": [
+      "output",
+      32
+    ],
+    "alu_src1": [
+      "input",
+      32
+    ],
+    "alu_src2": [
+      "input",
+      32
+    ]
+  },
+  "gate": "port-check",
+  "rtl": "/tmp/tmpfmwxhmrk/alu.v",
+  "rtl_sha256": "7525a9af125b4e64165912c47d49f1c54bdd8ba58d43f078d3ad7f8408a6a64f",
+  "schema_version": 1,
+  "status": "pass",
+  "yosys": {
+    "returncode": 0,
+    "warnings": []
+  }
+}
+{
+  "actual_ports": {
+    "alu_op": [
+      "input",
+      14
+    ],
+    "alu_result": [
+      "output",
+      32
+    ],
+    "alu_src1": [
+      "input",
+      32
+    ],
+    "alu_src2": [
+      "input",
+      32
+    ],
+    "clk": [
+      "input",
+      1
+    ]
+  },
+  "expected_ports": {
+    "alu_op": [
+      "input",
+      14
+    ],
+    "alu_result": [
+      "output",
+      32
+    ],
+    "alu_src1": [
+      "input",
+      32
+    ],
+    "alu_src2": [
+      "input",
+      32
+    ]
+  },
+  "gate": "port-check",
+  "rtl": "/tmp/tmpasq5tbdf/alu.v",
+  "rtl_sha256": "7525a9af125b4e64165912c47d49f1c54bdd8ba58d43f078d3ad7f8408a6a64f",
+  "schema_version": 1,
+  "status": "fail",
+  "yosys": {
+    "returncode": 0,
+    "warnings": []
+  }
+}
+EXIT_CODE=0
