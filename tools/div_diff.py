@@ -662,6 +662,7 @@ int main(int argc, char** argv) {
     const uint32_t held_b_x = 0xfffffff6U, held_b_y = 0x00000003U;
     const Result held_a_expected = model(0U, held_a_x, held_a_y);
     const Result held_b_expected = model(1U, held_b_x, held_b_y);
+    const uint32_t held_a_historical_r = historical_unsigned_remainder;
     dut->div = 1; dut->div_signed = 0; dut->x = held_a_x; dut->y = held_a_y;
     for (unsigned held = 1; held <= 33; ++held) {
         tick(dut); ++edge;
@@ -669,6 +670,13 @@ int main(int argc, char** argv) {
         if (dut->complete != expected_complete) {
             fail("held_high_first_timing", edge, index, 0, held_a_x, held_a_y,
                  expected_complete, 0, dut->complete, 0);
+            delete dut; delete context; return 1;
+        }
+        if (held == 33 &&
+            (static_cast<uint32_t>(dut->s) != held_a_expected.q ||
+             static_cast<uint32_t>(dut->r) != held_a_historical_r)) {
+            fail("held_high_first_window", edge, index, 0, held_a_x, held_a_y,
+                 held_a_expected.q, held_a_historical_r, dut->s, dut->r);
             delete dut; delete context; return 1;
         }
     }
@@ -680,8 +688,17 @@ int main(int argc, char** argv) {
         delete dut; delete context; return 1;
     }
     historical_unsigned_remainder = held_a_expected.r;
-    // The next transaction changes both operands and signedness during E35.
+    // Change live inputs after E34, but before E35.  real_complete must keep
+    // the captured sign context and both visible results stable without a clock.
     dut->div_signed = 1; dut->x = held_b_x; dut->y = held_b_y;
+    eval(dut);
+    if (dut->complete != 0 || static_cast<uint32_t>(dut->s) != held_a_expected.q ||
+        static_cast<uint32_t>(dut->r) != held_a_expected.r) {
+        fail("held_high_live_input_stability", edge, index, 1,
+             held_b_x, held_b_y, held_a_expected.q, held_a_expected.r,
+             dut->s, dut->r);
+        delete dut; delete context; return 1;
+    }
     tick(dut); ++edge;  // E35: complete_delay cleanup, not a new E1.
     if (dut->complete != 0) {
         fail("held_high_cleanup", edge, index, 1, held_b_x, held_b_y,
@@ -951,11 +968,13 @@ def _write_driver(path: Path) -> None:
 def normalize_source(payload: bytes) -> bytes:
     """Rename only the module declaration to avoid Verilator's div/div clash."""
 
-    needle = b"module div("
-    if payload.count(needle) != 1:
+    declaration = re.compile(rb"(?m)^module[ \t]+div(?=[ \t]*\()")
+    matches = tuple(declaration.finditer(payload))
+    if len(matches) != 1:
         raise DivDiffError("golden source module declaration is not uniquely recognized")
-    transformed = payload.replace(needle, b"module div_golden(", 1)
-    if transformed.count(b"module div_golden(") != 1:
+    transformed, replacements = declaration.subn(b"module div_golden", payload)
+    normalized = re.compile(rb"(?m)^module[ \t]+div_golden(?=[ \t]*\()")
+    if replacements != 1 or len(tuple(normalized.finditer(transformed))) != 1:
         raise DivDiffError("normalized source module declaration is not unique")
     return transformed
 

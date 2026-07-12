@@ -75,6 +75,8 @@ class DivParserTests(unittest.TestCase):
         payload = b"module div(\n);\nassign s = TmpS[31:0];\nassign complete = (count == 8'hff);\nUnsignR <= tmp_r;\n"
         normalized = div_diff.normalize_source(payload)
         self.assertIn(b"module div_golden(", normalized)
+        spinal = b"module div (\n  input wire div_clk\n);\n"
+        self.assertIn(b"module div_golden (", div_diff.normalize_source(spinal))
         self.assertEqual(1, div_diff.mutate_source(payload, "result_bit_flip").count(b"^ 32'h00000001"))
         self.assertEqual(1, div_diff.mutate_source(payload, "complete_timing").count(b"8'hfe"))
         self.assertEqual(
@@ -85,6 +87,31 @@ class DivParserTests(unittest.TestCase):
         )
         with self.assertRaises(div_diff.DivDiffError):
             div_diff.normalize_source(payload + b"module div(")
+
+    def test_normalization_rejects_duplicate_near_and_unanchored_modules(self) -> None:
+        for payload in (
+            b"module div();\nmodule div ();\n",
+            b"module divider();\n",
+            b"module div_extra();\n",
+            b"// module div();\nmodule divider();\n",
+            b"prefix module div();\n",
+        ):
+            with self.subTest(payload=payload):
+                with self.assertRaises(div_diff.DivDiffError):
+                    div_diff.normalize_source(payload)
+
+    def test_driver_checks_e33_history_and_e34_live_input_stability(self) -> None:
+        driver = div_diff.CPP_DRIVER
+        self.assertIn("const uint32_t held_a_historical_r = historical_unsigned_remainder;", driver)
+        self.assertIn('fail("held_high_first_window"', driver)
+        self.assertIn("held_a_expected.q, held_a_historical_r", driver)
+        change = driver.index("dut->div_signed = 1; dut->x = held_b_x; dut->y = held_b_y;")
+        evaluate = driver.index("eval(dut);", change)
+        stability = driver.index('fail("held_high_live_input_stability"', evaluate)
+        cleanup_edge = driver.index("tick(dut); ++edge;  // E35", stability)
+        self.assertLess(change, evaluate)
+        self.assertLess(evaluate, stability)
+        self.assertLess(stability, cleanup_edge)
 
 
 class DivFailClosedTests(unittest.TestCase):

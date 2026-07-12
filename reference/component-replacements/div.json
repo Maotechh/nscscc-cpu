@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "replacements": [
+    {
+      "target": "rtl/div.v",
+      "source": "reference/component-replacements/div.v",
+      "base_sha256": "7e499f4c43c92154d1d4e21be2f269ac140b4f2b2d944677c71f6f4213b66dc6",
+      "replacement_sha256": "0c022398490e29cb92cd7adc31d2e35b26e47c3ea5a4b84316a54cfbbae0f349"
+    }
+  ]
+}
