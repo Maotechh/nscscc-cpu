@@ -1,8 +1,8 @@
 schema_version: 1
-updated_at: "2026-07-13T06:03:00+08:00"
-active_iteration: "20260713-0410-core-top-compat"
-active_branch: "refactor/20260713-0410-core-top-compat"
-source_head: "0e2787fc5ab30e246da5be1c6080e2847b2645cf"
+updated_at: "2026-07-13T06:13:00+08:00"
+active_iteration: "20260713-0613-core-contracts"
+active_branch: "refactor/20260713-0613-core-contracts"
+source_head: "1e3a501ef90d2ec5a397b31e2a43e3e69aeec22c"
 
 boundaries:
   component_replacement_overlay:
@@ -261,12 +261,38 @@ boundaries:
       - claude_bridge_missing_GEEKPIE_CLAUDE_API_KEY
     last_iteration: "20260713-0410-core-top-compat"
 
+  core_contracts:
+    owner: architecture
+    state: implementation_in_review
+    golden_ref: a158aa8:rtl/{if_stage,id_stage,exe_stage,mem_stage,wb_stage,axi_bridge}.v
+    dependencies:
+      - core_top_compat
+    contract: docs/contracts/core-contracts.md
+    required_gates:
+      - doctor
+      - scala
+      - contract_tests
+      - elaboration_matrix
+      - claim_review
+    evidence:
+      - logs/refactor/20260713-0613-core-contracts/iteration.md
+      - logs/refactor/20260713-0613-core-contracts/summary.json
+      - logs/refactor/20260713-0613-core-contracts/evidence/doctor.json
+      - logs/refactor/20260713-0613-core-contracts/evidence/scala.json
+      - logs/refactor/20260713-0613-core-contracts/evidence/core-contract-check.txt
+      - logs/refactor/20260713-0613-core-contracts/evidence/automation-tests-posix.txt
+      - logs/refactor/20260713-0613-core-contracts/reviews/local-independent-review.md
+    active_pr: null
+    blocked_by:
+      - claude_bridge_missing_GEEKPIE_CLAUDE_API_KEY
+    last_iteration: "20260713-0613-core-contracts"
+
   pipeline:
     owner: pipeline
     state: not_started
     golden_ref: a158aa8:rtl
     dependencies:
-      - core_top_compat
+      - core_contracts
     contract: null
     required_gates:
       - unit_diff
@@ -283,7 +309,7 @@ boundaries:
     state: not_started
     golden_ref: a158aa8:rtl
     dependencies:
-      - core_top_compat
+      - core_contracts
     contract: null
     required_gates:
       - unit_diff
@@ -300,7 +326,7 @@ boundaries:
     state: not_started
     golden_ref: a158aa8:rtl
     dependencies:
-      - core_top_compat
+      - core_contracts
     contract: null
     required_gates:
       - unit_diff
@@ -318,7 +344,7 @@ boundaries:
     state: not_started
     golden_ref: a158aa8:rtl/mycpu_top.v
     dependencies:
-      - core_top_compat
+      - core_contracts
     contract: null
     required_gates:
       - contract
