@@ -25,8 +25,12 @@ DIAGNOSTIC_ARG = $(if $(filter 1,$(DIAGNOSTIC)),--diagnostic,)
 TARGET ?=
 ALU_GENERATE_DIR ?= $(OUT_DIR)/alu/generate
 ALU_RTL ?= $(ALU_GENERATE_DIR)/rtl/alu.v
+MUL_CONTRACT ?= reference/component-contracts/mul.json
+MUL_VECTOR_COUNT ?= 4096
+MUL_RANDOM_SEED ?= 0x158aa8
+LINT_WAIVERS ?= lint-waivers.yml
 
-.PHONY: doctor scala-cache-bootstrap scala-check elaborate generate port-check lint yosys-check unit formal chiplab-doctor golden-export chiplab-overlay rtl-smoke identity-compare evidence-check test-automation
+.PHONY: doctor scala-cache-bootstrap scala-check elaborate generate port-check lint yosys-check unit formal mul-contract mul-golden-unit chiplab-doctor golden-export chiplab-overlay rtl-smoke identity-compare evidence-check test-automation
 
 doctor:
 	$(PYTHON) -I tools/refactor.py doctor --out-dir "$(OUT_DIR)" $(if $(VIVADO_HOME),--vivado-home "$(VIVADO_HOME)",)
@@ -53,10 +57,20 @@ yosys-check:
 	$(PYTHON) -I tools/alu_gate.py yosys-check --target "$(TARGET)" --manifest "reference/manifest.lock" --rtl "$(ALU_RTL)" --out-dir "$(OUT_DIR)/alu/yosys-check"
 
 unit:
+ifeq ($(TARGET),mul)
+	$(PYTHON) -I tools/mul_diff.py golden --contract "$(MUL_CONTRACT)" --manifest "reference/manifest.lock" --waivers "$(LINT_WAIVERS)" --out-dir "$(OUT_DIR)/mul/unit" --vector-count "$(MUL_VECTOR_COUNT)" --seed "$(MUL_RANDOM_SEED)"
+else
 	$(PYTHON) -I tools/alu_gate.py unit --target "$(TARGET)" --manifest "reference/manifest.lock" --spinal-dir "spinal" --tool-root "$(CHIPLAB_TOOL_ROOT)" --out-dir "$(OUT_DIR)/alu/unit" $(if $(JAVA_HOME),--java-home "$(JAVA_HOME)",)
+endif
 
 formal:
 	$(PYTHON) -I tools/alu_gate.py formal --target "$(TARGET)" --manifest "reference/manifest.lock" --rtl "$(ALU_RTL)" --out-dir "$(OUT_DIR)/alu/formal"
+
+mul-contract:
+	$(PYTHON) -I tools/mul_contract.py verify --contract "$(MUL_CONTRACT)" --manifest "reference/manifest.lock" --out-dir "$(OUT_DIR)/mul/contract"
+
+mul-golden-unit:
+	$(PYTHON) -I tools/mul_diff.py golden --contract "$(MUL_CONTRACT)" --manifest "reference/manifest.lock" --waivers "$(LINT_WAIVERS)" --out-dir "$(OUT_DIR)/mul/unit" --vector-count "$(MUL_VECTOR_COUNT)" --seed "$(MUL_RANDOM_SEED)"
 
 chiplab-doctor:
 	$(PYTHON) -I tools/refactor.py chiplab-doctor --out-dir "$(OUT_DIR)" --chiplab-ref "$(CHIPLAB_REFERENCE)" --tool-root "$(CHIPLAB_TOOL_ROOT)"

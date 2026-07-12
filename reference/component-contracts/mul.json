@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "target": "mul",
+  "module": "mul",
+  "generated_file": "mul.v",
+  "generator_main": null,
+  "golden": {
+    "commit_key": "team_golden_candidate",
+    "path": "rtl/mul.v",
+    "sha256": "251d2bba3e659c294c9a004bbb2b542435fcfa0b0c1582cc1a7a3edca765a4c0",
+    "size": 6045
+  },
+  "ports": {
+    "mul_clk": {
+      "direction": "input",
+      "width": 1
+    },
+    "reset": {
+      "direction": "input",
+      "width": 1
+    },
+    "mul_signed": {
+      "direction": "input",
+      "width": 1
+    },
+    "x": {
+      "direction": "input",
+      "width": 32
+    },
+    "y": {
+      "direction": "input",
+      "width": 32
+    },
+    "result": {
+      "direction": "output",
+      "width": 64
+    }
+  },
+  "protocol": {
+    "clock": "mul_clk",
+    "edge": "posedge",
+    "reset": {
+      "signal": "reset",
+      "active_level": 1,
+      "behavior": "synchronous_hold"
+    },
+    "capture_when": "!reset",
+    "latency_edges": 1,
+    "warmup_active_edges": 1,
+    "unknown_policy": "ignore_before_first_active_capture",
+    "throughput_per_cycle": true
+  },
+  "stimulus": {
+    "seed": "0x158aa8",
+    "random_vectors": 4096
+  },
+  "diff": {
+    "runner": "verilator_cycle",
+    "independent_model": true
+  }
+}

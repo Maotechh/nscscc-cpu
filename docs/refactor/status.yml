@@ -1,8 +1,8 @@
 schema_version: 1
-updated_at: "2026-07-12T15:55:00+08:00"
-active_iteration: "20260712-0430-alu-spinal"
-active_branch: "refactor/20260712-0430-alu-spinal"
-source_head: "d0cd4b33da9a984f66d803943e3e97621124d1ec"
+updated_at: "2026-07-12T16:05:00+08:00"
+active_iteration: "20260712-1600-mul-harness"
+active_branch: "refactor/20260712-1600-mul-harness"
+source_head: "2cb5d0b3a01591eadc2a5e4e34b51f0404197550"
 
 boundaries:
   component_replacement_overlay:
@@ -98,6 +98,55 @@ boundaries:
       - 642_unapproved_verilator_warnings_in_mixed_compile
       - claude_bridge_missing_GEEKPIE_CLAUDE_API_KEY
     last_iteration: "20260712-0430-alu-spinal"
+
+  mul_golden_harness:
+    owner: verification
+    state: implementation_in_review
+    golden_ref: a158aa8:rtl/mul.v
+    dependencies:
+      - component_replacement_overlay
+    contract: docs/contracts/mul.md
+    required_gates:
+      - doctor
+      - automation_tests
+      - contract_schema
+      - golden_port_check
+      - golden_cycle_self_check
+      - claim_review
+    evidence:
+      - logs/refactor/20260712-1600-mul-harness/iteration.md
+      - logs/refactor/20260712-1600-mul-harness/summary.json
+      - logs/refactor/20260712-1600-mul-harness/reviews/claude-summary.json
+      - logs/refactor/20260712-1600-mul-harness/reviews/claude-raw.md
+    active_pr: null
+    blocked_by:
+      - claude_bridge_missing_GEEKPIE_CLAUDE_API_KEY
+    last_iteration: "20260712-1600-mul-harness"
+
+  mul:
+    owner: execute
+    state: not_started
+    golden_ref: a158aa8:rtl/mul.v
+    dependencies:
+      - mul_golden_harness
+    contract: docs/contracts/mul.md
+    required_gates:
+      - scala
+      - elaborate
+      - generate
+      - port_check
+      - lint
+      - yosys_check
+      - unit_diff
+      - formal
+      - diagnostic_overlay
+      - func_smoke
+      - claim_review
+    evidence: []
+    active_pr: null
+    blocked_by:
+      - mul_golden_harness_not_reviewed
+    last_iteration: null
 
   core_top_compat:
     owner: compat

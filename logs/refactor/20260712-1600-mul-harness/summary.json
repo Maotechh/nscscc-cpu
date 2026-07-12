@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "iteration_id": "20260712-1600-mul-harness",
+  "status": "draft",
+  "branch": "refactor/20260712-1600-mul-harness",
+  "base_sha": "2cb5d0b3a01591eadc2a5e4e34b51f0404197550",
+  "head_sha": "2cb5d0b3a01591eadc2a5e4e34b51f0404197550",
+  "selected_boundary": "mul-golden-harness",
+  "required_gates": ["doctor","automation_tests","harness_schema","golden_mul_diff","claim_review"],
+  "gates": {
+    "doctor": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0},
+    "automation_tests": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0},
+    "harness_schema": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0},
+    "golden_mul_diff": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0},
+    "claim_review": {"status":"unavailable","planned":1,"executed":1,"passed":0,"failed":1,"skipped":0}
+  },
+  "claims": [
+    {
+      "id":"locked_golden_mul_harness",
+      "status":"supported",
+      "text":"锁定 a158aa8 的 mul.v 可由独立数学模型逐拍验证：4128/4128 active capture 通过，reset-hold、无时钟扰动和 signed/unsigned directed/random 均执行。",
+      "evidence":["logs/refactor/20260712-1600-mul-harness/iteration.md","/tmp/nscscc-mul-make-unit/mul/unit/summary.json"]
+    },
+    {
+      "id":"spinal_or_cpu_equivalence",
+      "status":"not_claimed",
+      "text":"本迭代没有替换或集成 Spinal mul，不支持 candidate、whole-CPU、性能、Linux 或 FPGA claim。",
+      "evidence":["docs/contracts/mul.md"]
+    }
+  ],
+  "blocked_by": ["claude_bridge_missing_GEEKPIE_CLAUDE_API_KEY"],
+  "pr": {"status":"awaiting_push","url":null,"draft_only":true,"auto_merge":false,"created":false},
+  "updated_at": "2026-07-12T16:45:00+08:00"
+}

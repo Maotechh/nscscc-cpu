@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "iteration_id": "20260712-1600-mul-harness",
+  "status": "unavailable",
+  "job_id": "7e4decbc2fae445995731dd648aa812d",
+  "provider": null,
+  "model": null,
+  "reviewed_head_sha": null,
+  "raw_sha256": "023a41dd6dce3dc44b6d902a495c0771a4b50850cdc93e1a4375b4e8f659171f",
+  "error": "Required provider environment variable is not set: GEEKPIE_CLAUDE_API_KEY",
+  "open_blocking_count": 1,
+  "fresh_against_head": false,
+  "allow_ready": false,
+  "allow_status_promotion": false,
+  "provenance": {
+    "source": "claude-review-mcp",
+    "raw_path": "reviews/claude-raw.md",
+    "raw_sha256": "023a41dd6dce3dc44b6d902a495c0771a4b50850cdc93e1a4375b4e8f659171f",
+    "job_id": "7e4decbc2fae445995731dd648aa812d",
+    "provider": null,
+    "model": null,
+    "reviewed_head_sha": null
+  },
+  "findings": [
+    {
+      "id": "CLAUDE-CREDENTIAL-UNAVAILABLE",
+      "disposition": "open",
+      "blocking": true,
+      "summary": "Claude bridge 在模型启动前失败，未返回可用的独立审查意见。"
+    }
+  ],
+  "fallback_review": {
+    "type": "local_read_only_tests_and_agent_audits",
+    "may_be_called_claude_review": false,
+    "paths": [
+      "tests/test_mul_diff.py",
+      "logs/refactor/20260712-1600-mul-harness/iteration.md"
+    ]
+  }
+}

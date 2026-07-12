@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "iteration_id": "20260712-1600-mul-harness",
+  "external_artifact_policy": "大日志和临时仿真目录不提交 Git；只提交摘要、哈希和 locator。",
+  "artifacts": [
+    {"id":"makefile","path":"Makefile","size":5172,"sha256":"f0fbf931d7e7f79cfe0b042818dcb13143dc06de62c52d8f00855c281369c861"},
+    {"id":"mul-contract-doc","path":"docs/contracts/mul.md","size":3896,"sha256":"9720dabc0548c4d7c320a7c5321234382d1ab73489ccb7ca3b17078123374936"},
+    {"id":"mul-contract-json","path":"reference/component-contracts/mul.json","size":1234,"sha256":"042aa19e31984b7842c8c0d94f6907447b8d8534d1f6cb550b6dc2ca7025d59c"},
+    {"id":"mul-contract-validator","path":"tools/mul_contract.py","size":17710,"sha256":"3b4854a76f71aad8446b26acd39046d1b087bc92bc75467d673e87270069d617"},
+    {"id":"mul-diff-runner","path":"tools/mul_diff.py","size":34828,"sha256":"6b42cb3bac1bfa61dd9e86293edf96402b2db83a53261076fa69e9b3fcf6d97c"},
+    {"id":"mul-contract-tests","path":"tests/test_mul_contract.py","size":5038,"sha256":"708a343ddf3d4a66361b63a24eecf1dd771d0986a50e150f5525595d33c0d66d"},
+    {"id":"mul-diff-tests","path":"tests/test_mul_diff.py","size":14504,"sha256":"cda18dbcb80969764d6568a827d4c09c63391b39b77496e9e84e8638390e836e"},
+    {"id":"lint-waivers","path":"lint-waivers.yml","size":677,"sha256":"571824f3fad2f70f68ab51eb00f7a151afccee308f8ed191c39c6eb9a58666c3"},
+    {"id":"status","path":"docs/refactor/status.yml","size":6614,"sha256":"549649e16c389c0f18c923905defe468fa85230d0b3dd618e72b62595306071d"},
+    {"id":"iteration-log","path":"logs/refactor/20260712-1600-mul-harness/iteration.md","size":3894,"sha256":"0ac8173ef0b50c09305f8f9f402a44e3350e852a6ff306b8c6301ccb0fea1d2d"},
+    {"id":"command-log","path":"logs/refactor/20260712-1600-mul-harness/commands.jsonl","size":3058,"sha256":"68ca47e9cdb2760a4b91176b9d843353fa89829e0cade233321b7cc3ca52c1b6"},
+    {"id":"pr-draft","path":"logs/refactor/20260712-1600-mul-harness/pr.md","size":604,"sha256":"46a8370ba7ed63ea747ec9c93549211946e17c07e1fbc0305e14d4f2cc7ae3f4"},
+    {"id":"claude-raw","path":"logs/refactor/20260712-1600-mul-harness/reviews/claude-raw.md","size":686,"sha256":"023a41dd6dce3dc44b6d902a495c0771a4b50850cdc93e1a4375b4e8f659171f"},
+    {"id":"claude-summary-json","path":"logs/refactor/20260712-1600-mul-harness/reviews/claude-summary.json","size":1279,"sha256":"258c4c3931e0a515c1d3fd78bbfb30a978091373cabf49ac0eda19f5ba898d94"},
+    {"id":"claude-summary-md","path":"logs/refactor/20260712-1600-mul-harness/reviews/claude-summary.md","size":452,"sha256":"da15ba24f163d57dd13898ff0b72a3528d380b6711d67667b406d9875d43737f"}
+  ]
+}

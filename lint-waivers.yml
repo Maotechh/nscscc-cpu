@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "waivers": [
+    {
+      "id": "golden-mul-result-carry-width",
+      "rule": "WIDTHEXPAND",
+      "file": "a158aa8ab4d49cece1a0fe488d7ac7dc02bd8cf6:rtl/mul.v",
+      "line": 195,
+      "source_sha256": "251d2bba3e659c294c9a004bbb2b542435fcfa0b0c1582cc1a7a3edca765a4c0",
+      "scope": "golden_mul_simulation_compile",
+      "reason": "Golden adds 1-bit SecStageCarry[15] to a 64-bit sum; Verilog zero-extends it. This waiver only compiles the locked golden oracle and never applies to candidate RTL.",
+      "owner": "verification",
+      "expires_when": "golden mul oracle is retired after a release-gate-equivalent Spinal replacement"
+    }
+  ]
+}
