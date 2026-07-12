@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "iteration_id": "20260712-2024-div-harness",
+  "status": "unavailable",
+  "job_id": "284b9e8505c044789952d20723a26631",
+  "provider": null,
+  "model": null,
+  "reviewed_head_sha": null,
+  "raw_path": "reviews/claude-raw.md",
+  "raw_sha256": "2e16d1b271a568f97dbd08748a79c425a1a9ecc6acda310fa941f215abfdb334",
+  "error": "Required provider environment variable is not set: GEEKPIE_CLAUDE_API_KEY",
+  "open_blocking_count": 1,
+  "fresh_against_head": false,
+  "allow_ready": false,
+  "allow_status_promotion": false,
+  "attempts": [
+    {
+      "job_id": "284b9e8505c044789952d20723a26631",
+      "status": "failed",
+      "error": "Required provider environment variable is not set: GEEKPIE_CLAUDE_API_KEY",
+      "response_received": false,
+      "model_started": false
+    }
+  ],
+  "findings": [
+    {
+      "id": "CLAUDE-UNAVAILABLE",
+      "status": "open",
+      "blocking": true,
+      "detail": "bridge job 在 reviewer 模型启动前失败；没有 Claude 审查结论。"
+    }
+  ],
+  "fallback": {
+    "kind": "independent_read_only_codex_review_and_structured_audit",
+    "paths": [
+      "reviews/local-independent-review.md",
+      "reviews/experiment-audit.md",
+      "evidence/claim-audit.json"
+    ],
+    "is_claude_review": false
+  },
+  "provenance": {
+    "source": "claude-review-mcp",
+    "raw_path": "reviews/claude-raw.md",
+    "raw_sha256": "2e16d1b271a568f97dbd08748a79c425a1a9ecc6acda310fa941f215abfdb334",
+    "job_id": "284b9e8505c044789952d20723a26631",
+    "provider": null,
+    "model": null,
+    "reviewed_head_sha": null
+  }
+}

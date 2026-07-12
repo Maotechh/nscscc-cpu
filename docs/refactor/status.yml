@@ -1,8 +1,8 @@
 schema_version: 1
-updated_at: "2026-07-12T20:27:00+08:00"
+updated_at: "2026-07-12T23:05:30+08:00"
 active_iteration: "20260712-2024-div-harness"
 active_branch: "refactor/20260712-2024-div-harness"
-source_head: "de6e0845660296d2d3e22a447d31d345afce4333"
+source_head: "03c7fb6fec46107ae44183ed3262198641b333bb"
 
 boundaries:
   component_replacement_overlay:
@@ -165,7 +165,7 @@ boundaries:
 
   div_golden_harness:
     owner: verification
-    state: implementation_in_review
+    state: differential_pass
     golden_ref: a158aa8:rtl/div.v
     dependencies:
       - component_replacement_overlay
@@ -181,9 +181,13 @@ boundaries:
     evidence:
       - logs/refactor/20260712-2024-div-harness/iteration.md
       - logs/refactor/20260712-2024-div-harness/summary.json
+      - logs/refactor/20260712-2024-div-harness/evidence/contract.json
+      - logs/refactor/20260712-2024-div-harness/evidence/golden-diff.json
+      - logs/refactor/20260712-2024-div-harness/evidence/claim-audit.json
+      - logs/refactor/20260712-2024-div-harness/reviews/local-independent-review.md
     active_pr: null
     blocked_by:
-      - harness_implementation_pending
+      - claude_bridge_missing_GEEKPIE_CLAUDE_API_KEY
     last_iteration: "20260712-2024-div-harness"
 
   div:
@@ -209,7 +213,7 @@ boundaries:
     evidence: []
     active_pr: null
     blocked_by:
-      - div_golden_harness_pending
+      - div_harness_pr_unmerged
     last_iteration: null
 
   core_top_compat:
