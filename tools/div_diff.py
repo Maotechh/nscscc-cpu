@@ -49,20 +49,20 @@ NORMALIZED_MODULE = "div_golden"
 # These are source-bound approvals, not a global warning suppression.  The
 # source hash and transformed-source hash are recorded beside every result;
 # any message/line drift or an additional warning fails the gate.
-EXPECTED_GOLDEN_WARNINGS = (
-    (
+EXPECTED_GOLDEN_WAIVERS = {
+    "golden-div-count-index-width": (
         "WIDTHTRUNC",
         82,
         "Bit extraction of var[32:0] requires 6 bit index, not 8 bits.",
     ),
-    ("UNUSEDSIGNAL", 85, "Bits of signal are not used: 'TmpS'[32]"),
-    ("UNUSEDSIGNAL", 85, "Bits of signal are not used: 'TmpR'[32]"),
-)
-EXPECTED_GOLDEN_WAIVERS = {
-    "golden-div-count-index-width": ("WIDTHTRUNC", 82),
-    "golden-div-quotient-extension-bit-unused": ("UNUSEDSIGNAL", 85),
-    "golden-div-remainder-extension-bit-unused": ("UNUSEDSIGNAL", 85),
+    "golden-div-quotient-extension-bit-unused": (
+        "UNUSEDSIGNAL", 85, "Bits of signal are not used: 'TmpS'[32]"
+    ),
+    "golden-div-remainder-extension-bit-unused": (
+        "UNUSEDSIGNAL", 85, "Bits of signal are not used: 'TmpR'[32]"
+    ),
 }
+EXPECTED_GOLDEN_WARNINGS = tuple(EXPECTED_GOLDEN_WAIVERS.values())
 GOLDEN_WAIVER_SCOPE = "golden_div_simulation_compile"
 LOCKED_ARITHMETIC = {
     "quotient": "truncate_toward_zero",
@@ -658,29 +658,33 @@ int main(int argc, char** argv) {
 
     // Keep div high after E34.  E35 is cleanup/re-arm and E36 must become E1
     // of the next transaction without an extra completion pulse.
-    const uint32_t held_x = 0x89abcdefU, held_y = 0x00000103U;
-    const Result held_expected = model(0U, held_x, held_y);
-    dut->div = 1; dut->div_signed = 0; dut->x = held_x; dut->y = held_y;
+    const uint32_t held_a_x = 0x89abcdefU, held_a_y = 0x00000103U;
+    const uint32_t held_b_x = 0xfffffff6U, held_b_y = 0x00000003U;
+    const Result held_a_expected = model(0U, held_a_x, held_a_y);
+    const Result held_b_expected = model(1U, held_b_x, held_b_y);
+    dut->div = 1; dut->div_signed = 0; dut->x = held_a_x; dut->y = held_a_y;
     for (unsigned held = 1; held <= 33; ++held) {
         tick(dut); ++edge;
         const int expected_complete = (held == 33) ? 1 : 0;
         if (dut->complete != expected_complete) {
-            fail("held_high_first_timing", edge, index, 0, held_x, held_y,
+            fail("held_high_first_timing", edge, index, 0, held_a_x, held_a_y,
                  expected_complete, 0, dut->complete, 0);
             delete dut; delete context; return 1;
         }
     }
     tick(dut); ++edge;  // E34: capture first result while request stays high.
-    if (dut->complete != 0 || static_cast<uint32_t>(dut->s) != held_expected.q ||
-        static_cast<uint32_t>(dut->r) != held_expected.r) {
-        fail("held_high_first_result", edge, index, 0, held_x, held_y,
-             held_expected.q, held_expected.r, dut->s, dut->r);
+    if (dut->complete != 0 || static_cast<uint32_t>(dut->s) != held_a_expected.q ||
+        static_cast<uint32_t>(dut->r) != held_a_expected.r) {
+        fail("held_high_first_result", edge, index, 0, held_a_x, held_a_y,
+             held_a_expected.q, held_a_expected.r, dut->s, dut->r);
         delete dut; delete context; return 1;
     }
-    historical_unsigned_remainder = held_expected.r;
+    historical_unsigned_remainder = held_a_expected.r;
+    // The next transaction changes both operands and signedness during E35.
+    dut->div_signed = 1; dut->x = held_b_x; dut->y = held_b_y;
     tick(dut); ++edge;  // E35: complete_delay cleanup, not a new E1.
     if (dut->complete != 0) {
-        fail("held_high_cleanup", edge, index, 0, held_x, held_y,
+        fail("held_high_cleanup", edge, index, 1, held_b_x, held_b_y,
              0, 0, dut->s, dut->r);
         delete dut; delete context; return 1;
     }
@@ -689,16 +693,27 @@ int main(int argc, char** argv) {
         tick(dut); ++edge;
         const int expected_complete = (held == 33) ? 1 : 0;
         if (dut->complete != expected_complete) {
-            fail("held_high_restart_timing", edge, index, 0, held_x, held_y,
+            fail("held_high_restart_timing", edge, index, 1, held_b_x, held_b_y,
                  expected_complete, 0, dut->complete, 0);
             delete dut; delete context; return 1;
         }
+        if (held == 33) {
+            const uint32_t historical_r =
+                static_cast<uint32_t>(0U - historical_unsigned_remainder);
+            if (static_cast<uint32_t>(dut->s) != held_b_expected.q ||
+                static_cast<uint32_t>(dut->r) != historical_r) {
+                fail("held_high_restart_window", edge, index, 1,
+                     held_b_x, held_b_y, held_b_expected.q, historical_r,
+                     dut->s, dut->r);
+                delete dut; delete context; return 1;
+            }
+        }
     }
     tick(dut); ++edge;
-    if (dut->complete != 0 || static_cast<uint32_t>(dut->s) != held_expected.q ||
-        static_cast<uint32_t>(dut->r) != held_expected.r) {
-        fail("held_high_restart_result", edge, index, 0, held_x, held_y,
-             held_expected.q, held_expected.r, dut->s, dut->r);
+    if (dut->complete != 0 || static_cast<uint32_t>(dut->s) != held_b_expected.q ||
+        static_cast<uint32_t>(dut->r) != held_b_expected.r) {
+        fail("held_high_restart_result", edge, index, 1, held_b_x, held_b_y,
+             held_b_expected.q, held_b_expected.r, dut->s, dut->r);
         delete dut; delete context; return 1;
     }
     ++held_high_restart_checks;
@@ -816,7 +831,7 @@ def validate_waivers(path: Path) -> dict[str, Any]:
             f"golden div waiver set drifted: expected={sorted(expected_ids)} actual={sorted(scoped_ids)}"
         )
     accepted: list[dict[str, Any]] = []
-    for waiver_id, (rule, line) in EXPECTED_GOLDEN_WAIVERS.items():
+    for waiver_id, (rule, line, message) in EXPECTED_GOLDEN_WAIVERS.items():
         item = by_id[waiver_id]
         expected = {
             "rule": rule,
@@ -833,7 +848,9 @@ def validate_waivers(path: Path) -> dict[str, Any]:
             raise DivDiffError(f"golden div waiver {waiver_id} has no reason")
         if not isinstance(item.get("expires_when"), str) or not item["expires_when"].strip():
             raise DivDiffError(f"golden div waiver {waiver_id} has no expiry condition")
-        accepted.append({"id": waiver_id, "rule": rule, "line": line})
+        accepted.append(
+            {"id": waiver_id, "rule": rule, "line": line, "message": message}
+        )
     return {
         "path": str(path),
         "sha256": sha256_file(path),
@@ -843,7 +860,11 @@ def validate_waivers(path: Path) -> dict[str, Any]:
 
 
 def warning_policy(
-    text: str, source: Path, *, golden: bool
+    text: str,
+    source: Path,
+    *,
+    golden: bool,
+    approved_warnings: list[dict[str, Any]],
 ) -> tuple[bool, list[dict[str, Any]], str | None]:
     parsed = parse_verilator_warnings(text, source)
     generic = generic_warning_lines(text)
@@ -854,11 +875,24 @@ def warning_policy(
         return False, parsed, "warning references a non-input source"
     signatures = tuple(sorted(warning_signature(item) for item in parsed))
     if golden:
-        if signatures != tuple(sorted(EXPECTED_GOLDEN_WARNINGS)):
+        approvals: dict[tuple[str, int, str], str] = {}
+        for approval in approved_warnings:
+            signature = (
+                str(approval.get("rule")),
+                int(approval.get("line", -1)),
+                str(approval.get("message")),
+            )
+            waiver_id = str(approval.get("id", ""))
+            if not waiver_id or signature in approvals:
+                return False, parsed, "golden warning waiver mapping is not unique"
+            approvals[signature] = waiver_id
+        if signatures != tuple(sorted(approvals)):
             return False, parsed, (
                 "golden warning set drifted: "
-                f"expected={EXPECTED_GOLDEN_WARNINGS!r} actual={signatures!r}"
+                f"expected={tuple(sorted(approvals))!r} actual={signatures!r}"
             )
+        for warning in parsed:
+            warning["waiver_id"] = approvals[warning_signature(warning)]
     elif parsed:
         return False, parsed, "candidate/negative source emitted an unapproved warning"
     return True, parsed, None
@@ -933,6 +967,9 @@ def mutate_source(payload: bytes, kind: str) -> bytes:
     elif kind == "complete_timing":
         needle = b"assign complete = (count == 8'hff);"
         replacement = b"assign complete = (count == 8'hfe);"
+    elif kind == "remainder_capture_bit_flip":
+        needle = b"UnsignR <= tmp_r;"
+        replacement = b"UnsignR <= tmp_r ^ 33'h000000001;"
     else:
         raise DivDiffError(f"unknown negative control: {kind}")
     if payload.count(needle) != 1:
@@ -1055,6 +1092,7 @@ def _compile_and_run(
     timeout: int,
     values: dict[str, str],
     expected_compile_pass: bool,
+    approved_warnings: list[dict[str, Any]],
 ) -> dict[str, Any]:
     model_dir.mkdir(parents=True, exist_ok=True)
     source_path = model_dir / "div_golden.v"
@@ -1078,6 +1116,7 @@ def _compile_and_run(
         str(compile_result.get("stdout", "")),
         source_path,
         golden=(source_kind == "golden" or source_kind.startswith("negative:")),
+        approved_warnings=approved_warnings,
     )
     compile_summary: dict[str, Any] = {
         "argv": compile_argv,
@@ -1186,6 +1225,7 @@ def run_golden(args: argparse.Namespace) -> tuple[int, dict[str, Any]]:
         summary["repository_head"] = _git_head(repo_root)
         summary["manifest"] = {"path": str(manifest_path), "sha256": manifest_hash_before, "team_golden_candidate": values[GOLDEN_COMMIT_KEY]}
         summary["waivers"] = validate_waivers(args.waivers.resolve())
+        approved_warnings = summary["waivers"]["accepted"]
         contract_dir = out_dir / "contract"
         contract = _contract_evidence(args, manifest_path, contract_dir)
         summary["contract"] = contract.get("contract")
@@ -1214,18 +1254,22 @@ def run_golden(args: argparse.Namespace) -> tuple[int, dict[str, Any]]:
         golden_path.write_bytes(blob_payload)
         summary["golden_artifact"] = {"path": str(golden_path), "sha256": sha256_file(golden_path), "size": golden_path.stat().st_size, "git_ref": f"{values[GOLDEN_COMMIT_KEY]}:{GOLDEN_PATH}"}
         baseline_blob_hash = sha256_bytes(blob_payload)
-        result = _compile_and_run(source_payload=blob_payload, source_kind="golden", vectors_path=vectors_path, expected_count=total, directed_count=directed_count, model_dir=golden_dir, verilator=verilator, timeout=args.timeout, values=values, expected_compile_pass=True)
+        result = _compile_and_run(source_payload=blob_payload, source_kind="golden", vectors_path=vectors_path, expected_count=total, directed_count=directed_count, model_dir=golden_dir, verilator=verilator, timeout=args.timeout, values=values, expected_compile_pass=True, approved_warnings=approved_warnings)
         summary["golden"] = result
         if result.get("status") != "pass":
             raise DivDiffError(str(result.get("error", "golden differential failed")))
         controls: list[dict[str, Any]] = []
-        for name in ("result_bit_flip", "complete_timing"):
+        for name in ("result_bit_flip", "complete_timing", "remainder_capture_bit_flip"):
             control_payload = mutate_source(blob_payload, name)
-            control = _compile_and_run(source_payload=control_payload, source_kind=f"negative:{name}", vectors_path=vectors_path, expected_count=total, directed_count=directed_count, model_dir=out_dir / "negative" / name, verilator=verilator, timeout=args.timeout, values=values, expected_compile_pass=False)
+            control = _compile_and_run(source_payload=control_payload, source_kind=f"negative:{name}", vectors_path=vectors_path, expected_count=total, directed_count=directed_count, model_dir=out_dir / "negative" / name, verilator=verilator, timeout=args.timeout, values=values, expected_compile_pass=False, approved_warnings=approved_warnings)
             control["expected_failure"] = True
             control["control_source_sha256"] = sha256_bytes(control_payload)
             parsed_control = control.get("simulation", {}).get("parsed", {})
-            expected_kind = "complete_window" if name == "result_bit_flip" else "complete_timing"
+            expected_kind = {
+                "result_bit_flip": "complete_window",
+                "complete_timing": "complete_timing",
+                "remainder_capture_bit_flip": "result",
+            }[name]
             mismatch = str(parsed_control.get("first_mismatch") or "")
             control["expected_mismatch_kind"] = expected_kind
             control["control_pass"] = (
@@ -1238,9 +1282,9 @@ def run_golden(args: argparse.Namespace) -> tuple[int, dict[str, Any]]:
                 and mismatch.startswith(f"DIV_MISMATCH kind={expected_kind} ")
             )
             controls.append(control)
+            summary["negative_controls"] = controls
             if not control["control_pass"]:
                 raise DivDiffError(f"negative control did not fail as expected: {name}")
-        summary["negative_controls"] = controls
         blob_after = _blob(repo_root, values)
         summary["source_stability"] = {
             "golden_blob_before_sha256": baseline_blob_hash,
@@ -1251,7 +1295,7 @@ def run_golden(args: argparse.Namespace) -> tuple[int, dict[str, Any]]:
         }
         if not summary["source_stability"]["stable"] or summary["source_stability"]["manifest_before_sha256"] != summary["source_stability"]["manifest_after_sha256"]:
             raise DivDiffError("locked golden source or manifest changed during run")
-        summary["counts"] = {"planned": 3, "executed": 3, "passed": 3, "failed": 0, "skipped": 0}
+        summary["counts"] = {"planned": 4, "executed": 4, "passed": 4, "failed": 0, "skipped": 0}
         summary["status"] = "pass"
         summary["elapsed_seconds"] = round(time.monotonic() - started, 3)
         _persist(out_dir, summary)
@@ -1259,7 +1303,17 @@ def run_golden(args: argparse.Namespace) -> tuple[int, dict[str, Any]]:
     except Exception as error:
         summary["status"] = "fail"
         summary["error"] = str(error)
-        summary["counts"] = {"planned": 3, "executed": int("golden" in summary) + len(summary.get("negative_controls", [])), "passed": 0, "failed": 1, "skipped": 0}
+        executed = int("golden" in summary) + len(summary.get("negative_controls", []))
+        passed = int(summary.get("golden", {}).get("status") == "pass") + sum(
+            bool(item.get("control_pass")) for item in summary.get("negative_controls", [])
+        )
+        summary["counts"] = {
+            "planned": 4,
+            "executed": executed,
+            "passed": passed,
+            "failed": max(1, executed - passed),
+            "skipped": 0,
+        }
         _persist(out_dir, summary)
         return 1, summary
 
@@ -1268,7 +1322,21 @@ def run_candidate(args: argparse.Namespace) -> tuple[int, dict[str, Any]]:
     out_dir = _fresh_out(args.out_dir)
     summary = _base_summary(args, "candidate")
     try:
-        values = parse_manifest(args.manifest.resolve())
+        manifest_path = args.manifest.resolve()
+        values = parse_manifest(manifest_path)
+        contract = _contract_evidence(args, manifest_path, out_dir / "contract")
+        summary["contract"] = contract.get("contract")
+        summary["golden_contract"] = contract.get("golden")
+        summary["protocol"] = contract.get("protocol")
+        summary["ports"] = contract.get("ports")
+        summary["arithmetic"] = contract.get("arithmetic")
+        stimulus = contract.get("stimulus", {})
+        expected_seed = int(str(stimulus.get("seed", f"0x{args.seed:x}")), 0)
+        expected_random = int(
+            stimulus.get("random_transactions", stimulus.get("random_vectors", args.vector_count))
+        )
+        if args.seed != expected_seed or args.vector_count != expected_random:
+            raise DivDiffError("CLI stimulus differs from locked div contract")
         source = args.rtl.expanduser().resolve()
         if source.is_symlink() or not source.is_file():
             raise DivDiffError(f"candidate RTL must be a regular file: {source}")
@@ -1278,7 +1346,7 @@ def run_candidate(args: argparse.Namespace) -> tuple[int, dict[str, Any]]:
         total = write_vector_file(vectors_path, vectors)
         verilator, tools = _toolchain(values, args, out_dir)
         summary["toolchain"] = tools
-        result = _compile_and_run(source_payload=payload_before, source_kind="candidate", vectors_path=vectors_path, expected_count=total, directed_count=directed_count, model_dir=out_dir / "candidate", verilator=verilator, timeout=args.timeout, values=values, expected_compile_pass=True)
+        result = _compile_and_run(source_payload=payload_before, source_kind="candidate", vectors_path=vectors_path, expected_count=total, directed_count=directed_count, model_dir=out_dir / "candidate", verilator=verilator, timeout=args.timeout, values=values, expected_compile_pass=True, approved_warnings=[])
         result["candidate_source"] = {"path": str(source), "sha256_before": sha256_bytes(payload_before), "sha256_after": sha256_file(source), "stable": sha256_file(source) == sha256_bytes(payload_before)}
         summary["candidate"] = result
         if not result["candidate_source"]["stable"]:
@@ -1301,7 +1369,7 @@ def build_parser() -> argparse.ArgumentParser:
     for command in ("golden", "candidate"):
         sub = subparsers.add_parser(command, help=f"run locked {command} divider differential")
         sub.add_argument("--manifest", type=Path, required=True)
-        sub.add_argument("--contract", type=Path, default=None)
+        sub.add_argument("--contract", type=Path, required=True)
         sub.add_argument("--out-dir", type=Path, required=True)
         sub.add_argument("--vector-count", type=int, default=DEFAULT_VECTOR_COUNT)
         sub.add_argument("--seed", type=lambda value: int(value, 0), default=DEFAULT_SEED)

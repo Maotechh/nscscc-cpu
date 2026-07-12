@@ -72,11 +72,17 @@ class DivParserTests(unittest.TestCase):
         self.assertFalse(near["pass_marker"])
 
     def test_normalization_and_negative_anchors_are_unique(self) -> None:
-        payload = b"module div(\n);\nassign s = TmpS[31:0];\nassign complete = (count == 8'hff);\n"
+        payload = b"module div(\n);\nassign s = TmpS[31:0];\nassign complete = (count == 8'hff);\nUnsignR <= tmp_r;\n"
         normalized = div_diff.normalize_source(payload)
         self.assertIn(b"module div_golden(", normalized)
         self.assertEqual(1, div_diff.mutate_source(payload, "result_bit_flip").count(b"^ 32'h00000001"))
         self.assertEqual(1, div_diff.mutate_source(payload, "complete_timing").count(b"8'hfe"))
+        self.assertEqual(
+            1,
+            div_diff.mutate_source(payload, "remainder_capture_bit_flip").count(
+                b"^ 33'h000000001"
+            ),
+        )
         with self.assertRaises(div_diff.DivDiffError):
             div_diff.normalize_source(payload + b"module div(")
 
@@ -192,6 +198,24 @@ class DivFailClosedTests(unittest.TestCase):
     def test_golden_warning_waivers_are_consumed_fail_closed(self) -> None:
         evidence = div_diff.validate_waivers(ROOT / "lint-waivers.yml")
         self.assertEqual(3, len(evidence["accepted"]))
+        with tempfile.TemporaryDirectory() as temporary:
+            source = Path(temporary) / "div_golden.v"
+            source.write_text("module div_golden; endmodule\n", encoding="ascii")
+            warning_text = "\n".join(
+                f"%Warning-{item['rule']}: {source}:{item['line']}:1: {item['message']}"
+                for item in evidence["accepted"]
+            )
+            passed, warnings, error = div_diff.warning_policy(
+                warning_text,
+                source,
+                golden=True,
+                approved_warnings=evidence["accepted"],
+            )
+        self.assertTrue(passed, error)
+        self.assertEqual(
+            set(div_diff.EXPECTED_GOLDEN_WAIVERS),
+            {warning["waiver_id"] for warning in warnings},
+        )
         document = json.loads((ROOT / "lint-waivers.yml").read_text(encoding="utf-8"))
         document["waivers"] = [
             item
@@ -204,6 +228,35 @@ class DivFailClosedTests(unittest.TestCase):
             with self.assertRaisesRegex(div_diff.DivDiffError, "waiver set drifted"):
                 div_diff.validate_waivers(broken)
 
+    def test_candidate_consumes_locked_contract_stimulus(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            args = type(
+                "Args",
+                (),
+                {
+                    "contract": ROOT / "reference" / "component-contracts" / "div.json",
+                    "manifest": ROOT / "reference" / "manifest.lock",
+                    "out_dir": Path(temporary) / "out",
+                    "rtl": Path(temporary) / "missing.v",
+                    "vector_count": div_diff.DEFAULT_VECTOR_COUNT,
+                    "seed": div_diff.DEFAULT_SEED,
+                    "timeout": 5,
+                    "verilator": None,
+                },
+            )()
+            drifted = {
+                "stimulus": {"seed": "0x1", "random_transactions": 4096},
+                "contract": {},
+                "golden": {},
+                "protocol": {},
+                "ports": {},
+                "arithmetic": {},
+            }
+            with mock.patch.object(div_diff, "_contract_evidence", return_value=drifted):
+                code, summary = div_diff.run_candidate(args)
+        self.assertEqual(1, code)
+        self.assertIn("stimulus differs", summary["error"])
+
     def test_skip_and_mismatch_fail_closed(self) -> None:
         for output, needle in (("SKIP unavailable\n", "SKIP"), ("DIV_MISMATCH kind=result edge=1\n", "DIV_MISMATCH")):
             with tempfile.TemporaryDirectory() as temporary:
@@ -215,7 +268,7 @@ class DivFailClosedTests(unittest.TestCase):
         result = subprocess.run([sys.executable, str(ROOT / "tools" / "div_diff.py"), "--help"], cwd=ROOT, capture_output=True, text=True, check=False)
         self.assertEqual(2, result.returncode)
         self.assertIn("requires isolated Python", result.stderr)
-        result = subprocess.run([sys.executable, "-I", str(ROOT / "tools" / "div_diff.py"), "golden", "--manifest", "missing", "--waivers", str(ROOT / "lint-waivers.yml"), "--out-dir", "unused", "--vector-count", "4095"], cwd=ROOT, capture_output=True, text=True, check=False)
+        result = subprocess.run([sys.executable, "-I", str(ROOT / "tools" / "div_diff.py"), "golden", "--manifest", "missing", "--contract", str(ROOT / "reference" / "component-contracts" / "div.json"), "--waivers", str(ROOT / "lint-waivers.yml"), "--out-dir", "unused", "--vector-count", "4095"], cwd=ROOT, capture_output=True, text=True, check=False)
         self.assertEqual(2, result.returncode)
         self.assertIn("vector-count must be >=4096", result.stderr)
 
