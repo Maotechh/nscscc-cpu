@@ -36,6 +36,7 @@ from typing import Any, Iterable
 
 
 GOLDEN_COMMIT_KEY = "team_golden_candidate"
+GOLDEN_COMMIT = "a158aa8ab4d49cece1a0fe488d7ac7dc02bd8cf6"
 GOLDEN_PATH = "rtl/div.v"
 GOLDEN_SHA256 = "7e499f4c43c92154d1d4e21be2f269ac140b4f2b2d944677c71f6f4213b66dc6"
 GOLDEN_SIZE = 2642
@@ -57,6 +58,12 @@ EXPECTED_GOLDEN_WARNINGS = (
     ("UNUSEDSIGNAL", 85, "Bits of signal are not used: 'TmpS'[32]"),
     ("UNUSEDSIGNAL", 85, "Bits of signal are not used: 'TmpR'[32]"),
 )
+EXPECTED_GOLDEN_WAIVERS = {
+    "golden-div-count-index-width": ("WIDTHTRUNC", 82),
+    "golden-div-quotient-extension-bit-unused": ("UNUSEDSIGNAL", 85),
+    "golden-div-remainder-extension-bit-unused": ("UNUSEDSIGNAL", 85),
+}
+GOLDEN_WAIVER_SCOPE = "golden_div_simulation_compile"
 LOCKED_ARITHMETIC = {
     "quotient": "truncate_toward_zero",
     "remainder_sign": "dividend",
@@ -486,7 +493,8 @@ int main(int argc, char** argv) {
     dut->div_clk = 0; dut->reset = 1; dut->div = 0;
     dut->div_signed = 0; dut->x = 0; dut->y = 0; eval(dut);
     uint64_t edge = 0;
-    size_t reset_checks = 0, abort_checks = 0, active = 0;
+    size_t reset_checks = 0, abort_checks = 0, late_abort_checks = 0, active = 0;
+    size_t held_high_cleanup_checks = 0, held_high_restart_checks = 0;
     size_t complete_pulses = 0, result_checks = 0, divide_zero = 0;
     size_t pulse_quotient_checks = 0, historical_remainder_checks = 0;
     size_t signed_count = 0, unsigned_count = 0;
@@ -617,17 +625,101 @@ int main(int argc, char** argv) {
             delete dut; delete context; return 1;
         }
     }
+    // Exercise the E33 notification -> E34 late-abort boundary.  Dropping div
+    // before the capture edge must suppress the result capture and re-arm.
+    const uint32_t late_x = 0x13579bdfU, late_y = 0x00000101U;
+    const Result late_expected = model(0U, late_x, late_y);
+    dut->reset = 0; dut->div = 1; dut->div_signed = 0;
+    dut->x = late_x; dut->y = late_y;
+    for (unsigned held = 1; held <= 33; ++held) {
+        tick(dut); ++edge;
+        const int expected_complete = (held == 33) ? 1 : 0;
+        if (dut->complete != expected_complete) {
+            fail("late_abort_timing", edge, index, 0, late_x, late_y,
+                 expected_complete, 0, dut->complete, 0);
+            delete dut; delete context; return 1;
+        }
+        if (held == 33 &&
+            (static_cast<uint32_t>(dut->s) != late_expected.q ||
+             static_cast<uint32_t>(dut->r) != historical_unsigned_remainder)) {
+            fail("late_abort_window", edge, index, 0, late_x, late_y,
+                 late_expected.q, historical_unsigned_remainder, dut->s, dut->r);
+            delete dut; delete context; return 1;
+        }
+    }
+    dut->div = 0;
+    tick(dut); ++edge;
+    if (dut->complete != 0) {
+        fail("late_abort_capture", edge, index, 0, late_x, late_y,
+             0, 0, dut->s, dut->r);
+        delete dut; delete context; return 1;
+    }
+    ++late_abort_checks;
+
+    // Keep div high after E34.  E35 is cleanup/re-arm and E36 must become E1
+    // of the next transaction without an extra completion pulse.
+    const uint32_t held_x = 0x89abcdefU, held_y = 0x00000103U;
+    const Result held_expected = model(0U, held_x, held_y);
+    dut->div = 1; dut->div_signed = 0; dut->x = held_x; dut->y = held_y;
+    for (unsigned held = 1; held <= 33; ++held) {
+        tick(dut); ++edge;
+        const int expected_complete = (held == 33) ? 1 : 0;
+        if (dut->complete != expected_complete) {
+            fail("held_high_first_timing", edge, index, 0, held_x, held_y,
+                 expected_complete, 0, dut->complete, 0);
+            delete dut; delete context; return 1;
+        }
+    }
+    tick(dut); ++edge;  // E34: capture first result while request stays high.
+    if (dut->complete != 0 || static_cast<uint32_t>(dut->s) != held_expected.q ||
+        static_cast<uint32_t>(dut->r) != held_expected.r) {
+        fail("held_high_first_result", edge, index, 0, held_x, held_y,
+             held_expected.q, held_expected.r, dut->s, dut->r);
+        delete dut; delete context; return 1;
+    }
+    historical_unsigned_remainder = held_expected.r;
+    tick(dut); ++edge;  // E35: complete_delay cleanup, not a new E1.
+    if (dut->complete != 0) {
+        fail("held_high_cleanup", edge, index, 0, held_x, held_y,
+             0, 0, dut->s, dut->r);
+        delete dut; delete context; return 1;
+    }
+    ++held_high_cleanup_checks;
+    for (unsigned held = 1; held <= 33; ++held) {  // E36 is held==1.
+        tick(dut); ++edge;
+        const int expected_complete = (held == 33) ? 1 : 0;
+        if (dut->complete != expected_complete) {
+            fail("held_high_restart_timing", edge, index, 0, held_x, held_y,
+                 expected_complete, 0, dut->complete, 0);
+            delete dut; delete context; return 1;
+        }
+    }
+    tick(dut); ++edge;
+    if (dut->complete != 0 || static_cast<uint32_t>(dut->s) != held_expected.q ||
+        static_cast<uint32_t>(dut->r) != held_expected.r) {
+        fail("held_high_restart_result", edge, index, 0, held_x, held_y,
+             held_expected.q, held_expected.r, dut->s, dut->r);
+        delete dut; delete context; return 1;
+    }
+    ++held_high_restart_checks;
+    dut->div = 0; tick(dut); ++edge;
+
     if (index != expected_count || active != expected_count ||
         directed_count > active || complete_pulses != active ||
         result_checks != active || reset_checks == 0 || abort_checks == 0 ||
         pulse_quotient_checks != active || historical_remainder_checks != active ||
-        divide_zero == 0 || signed_count == 0 || unsigned_count == 0) {
+        late_abort_checks != 1 || held_high_cleanup_checks != 1 ||
+        held_high_restart_checks != 1 || divide_zero == 0 ||
+        signed_count == 0 || unsigned_count == 0) {
         std::cerr << "DIV_ERROR count/check coverage mismatch expected=" << expected_count
                   << " active=" << active << " directed=" << directed_count
                   << " complete=" << complete_pulses << " results=" << result_checks
                   << " pulse_s=" << pulse_quotient_checks
                   << " historical_r=" << historical_remainder_checks
                   << " reset=" << reset_checks << " abort=" << abort_checks
+                  << " late_abort=" << late_abort_checks
+                  << " held_high_cleanup=" << held_high_cleanup_checks
+                  << " held_high_restart=" << held_high_restart_checks
                   << " divide_zero=" << divide_zero << " signed=" << signed_count
                   << " unsigned=" << unsigned_count << "\n";
         delete dut; delete context; return 1;
@@ -641,6 +733,9 @@ int main(int argc, char** argv) {
               << " historical_r=" << historical_remainder_checks
               << " results=" << result_checks
               << " reset=" << reset_checks << " abort=" << abort_checks
+              << " late_abort=" << late_abort_checks
+              << " held_high_cleanup=" << held_high_cleanup_checks
+              << " held_high_restart=" << held_high_restart_checks
               << " edges=" << edge << "\n";
     delete dut; delete context; return 0;
 }
@@ -692,6 +787,61 @@ def warning_signature(warning: dict[str, Any]) -> tuple[str, int, str]:
     return str(warning["rule"]), int(warning["line"]), str(warning["message"])
 
 
+def validate_waivers(path: Path) -> dict[str, Any]:
+    """Bind the accepted golden warnings to the repository waiver registry."""
+
+    document = load_json(path)
+    if not isinstance(document, dict) or set(document) != {"schema_version", "waivers"}:
+        raise DivDiffError("lint waiver document must contain schema_version and waivers")
+    if document["schema_version"] != 1 or not isinstance(document["waivers"], list):
+        raise DivDiffError("lint waiver schema_version/waivers is invalid")
+    required_fields = {
+        "id", "rule", "file", "line", "source_sha256", "scope",
+        "reason", "owner", "expires_when",
+    }
+    by_id: dict[str, dict[str, Any]] = {}
+    scoped_ids: set[str] = set()
+    for item in document["waivers"]:
+        if not isinstance(item, dict) or set(item) != required_fields:
+            raise DivDiffError("lint waiver entry fields are invalid")
+        waiver_id = item.get("id")
+        if not isinstance(waiver_id, str) or not waiver_id or waiver_id in by_id:
+            raise DivDiffError("lint waiver ids must be unique non-empty strings")
+        by_id[waiver_id] = item
+        if item.get("scope") == GOLDEN_WAIVER_SCOPE:
+            scoped_ids.add(waiver_id)
+    expected_ids = set(EXPECTED_GOLDEN_WAIVERS)
+    if scoped_ids != expected_ids:
+        raise DivDiffError(
+            f"golden div waiver set drifted: expected={sorted(expected_ids)} actual={sorted(scoped_ids)}"
+        )
+    accepted: list[dict[str, Any]] = []
+    for waiver_id, (rule, line) in EXPECTED_GOLDEN_WAIVERS.items():
+        item = by_id[waiver_id]
+        expected = {
+            "rule": rule,
+            "line": line,
+            "file": f"{GOLDEN_COMMIT}:{GOLDEN_PATH}",
+            "source_sha256": GOLDEN_SHA256,
+            "scope": GOLDEN_WAIVER_SCOPE,
+            "owner": "verification",
+        }
+        for field, value in expected.items():
+            if item.get(field) != value:
+                raise DivDiffError(f"golden div waiver {waiver_id}.{field} drifted")
+        if not isinstance(item.get("reason"), str) or not item["reason"].strip():
+            raise DivDiffError(f"golden div waiver {waiver_id} has no reason")
+        if not isinstance(item.get("expires_when"), str) or not item["expires_when"].strip():
+            raise DivDiffError(f"golden div waiver {waiver_id} has no expiry condition")
+        accepted.append({"id": waiver_id, "rule": rule, "line": line})
+    return {
+        "path": str(path),
+        "sha256": sha256_file(path),
+        "scope": GOLDEN_WAIVER_SCOPE,
+        "accepted": sorted(accepted, key=lambda item: item["id"]),
+    }
+
+
 def warning_policy(
     text: str, source: Path, *, golden: bool
 ) -> tuple[bool, list[dict[str, Any]], str | None]:
@@ -726,7 +876,8 @@ def parse_driver_result(text: str) -> dict[str, Any]:
     marker = re.search(
         r"^DIV_SELF_CHECK_PASS active=(\d+) directed=(\d+) signed=(\d+) unsigned=(\d+) "
         r"divide_zero=(\d+) complete_pulses=(\d+) pulse_s=(\d+) historical_r=(\d+) "
-        r"results=(\d+) reset=(\d+) abort=(\d+) edges=(\d+)$",
+        r"results=(\d+) reset=(\d+) abort=(\d+) late_abort=(\d+) "
+        r"held_high_cleanup=(\d+) held_high_restart=(\d+) edges=(\d+)$",
         text,
         flags=re.MULTILINE,
     )
@@ -747,7 +898,10 @@ def parse_driver_result(text: str) -> dict[str, Any]:
         "results": int(marker.group(9)) if marker else 0,
         "reset": int(marker.group(10)) if marker else 0,
         "abort": int(marker.group(11)) if marker else 0,
-        "edges": int(marker.group(12)) if marker else 0,
+        "late_abort": int(marker.group(12)) if marker else 0,
+        "held_high_cleanup": int(marker.group(13)) if marker else 0,
+        "held_high_restart": int(marker.group(14)) if marker else 0,
+        "edges": int(marker.group(15)) if marker else 0,
         "first_mismatch": mismatch,
         "first_error": error,
         "skip": skip,
@@ -1031,6 +1185,7 @@ def run_golden(args: argparse.Namespace) -> tuple[int, dict[str, Any]]:
         values = parse_manifest(manifest_path)
         summary["repository_head"] = _git_head(repo_root)
         summary["manifest"] = {"path": str(manifest_path), "sha256": manifest_hash_before, "team_golden_candidate": values[GOLDEN_COMMIT_KEY]}
+        summary["waivers"] = validate_waivers(args.waivers.resolve())
         contract_dir = out_dir / "contract"
         contract = _contract_evidence(args, manifest_path, contract_dir)
         summary["contract"] = contract.get("contract")
@@ -1152,6 +1307,8 @@ def build_parser() -> argparse.ArgumentParser:
         sub.add_argument("--seed", type=lambda value: int(value, 0), default=DEFAULT_SEED)
         sub.add_argument("--timeout", type=int, default=900)
         sub.add_argument("--verilator", type=str, default=None)
+        if command == "golden":
+            sub.add_argument("--waivers", type=Path, required=True)
         if command == "candidate":
             sub.add_argument("--rtl", type=Path, required=True)
     return parser

@@ -42,13 +42,17 @@ class DivParserTests(unittest.TestCase):
         text = (
             "DIV_SELF_CHECK_PASS active=4136 directed=40 signed=2068 unsigned=2068 "
             "divide_zero=20 complete_pulses=4136 pulse_s=4136 historical_r=4136 "
-            "results=4136 reset=40 abort=16 edges=150000\n"
+            "results=4136 reset=40 abort=16 late_abort=1 held_high_cleanup=1 "
+            "held_high_restart=1 edges=150000\n"
         )
         parsed = div_diff.parse_driver_result(text)
         self.assertTrue(parsed["pass_marker"])
         self.assertEqual(4136, parsed["active"])
         self.assertEqual(40, parsed["directed"])
         self.assertEqual(20, parsed["divide_zero"])
+        self.assertEqual(1, parsed["late_abort"])
+        self.assertEqual(1, parsed["held_high_cleanup"])
+        self.assertEqual(1, parsed["held_high_restart"])
         self.assertIsNone(parsed["first_mismatch"])
         self.assertIsNone(parsed["skip"])
 
@@ -57,7 +61,8 @@ class DivParserTests(unittest.TestCase):
         parsed = div_diff.parse_driver_result(
             mismatch
             + "DIV_SELF_CHECK_PASS active=1 directed=1 signed=1 unsigned=0 divide_zero=1 "
-            "complete_pulses=1 pulse_s=1 historical_r=1 results=1 reset=3 abort=1 edges=40\n"
+            "complete_pulses=1 pulse_s=1 historical_r=1 results=1 reset=3 abort=1 "
+            "late_abort=1 held_high_cleanup=1 held_high_restart=1 edges=40\n"
         )
         self.assertTrue(parsed["pass_marker"])
         self.assertEqual(mismatch.strip(), parsed["first_mismatch"])
@@ -89,6 +94,7 @@ class DivFailClosedTests(unittest.TestCase):
                 "seed": div_diff.DEFAULT_SEED,
                 "timeout": 5,
                 "verilator": None,
+                "waivers": ROOT / "lint-waivers.yml",
             },
         )()
 
@@ -183,6 +189,21 @@ class DivFailClosedTests(unittest.TestCase):
         self.assertEqual(1, code)
         self.assertIn("source changed during compilation", str(summary.get("error", "")))
 
+    def test_golden_warning_waivers_are_consumed_fail_closed(self) -> None:
+        evidence = div_diff.validate_waivers(ROOT / "lint-waivers.yml")
+        self.assertEqual(3, len(evidence["accepted"]))
+        document = json.loads((ROOT / "lint-waivers.yml").read_text(encoding="utf-8"))
+        document["waivers"] = [
+            item
+            for item in document["waivers"]
+            if item["id"] != "golden-div-count-index-width"
+        ]
+        with tempfile.TemporaryDirectory() as temporary:
+            broken = Path(temporary) / "lint-waivers.yml"
+            broken.write_text(json.dumps(document), encoding="utf-8")
+            with self.assertRaisesRegex(div_diff.DivDiffError, "waiver set drifted"):
+                div_diff.validate_waivers(broken)
+
     def test_skip_and_mismatch_fail_closed(self) -> None:
         for output, needle in (("SKIP unavailable\n", "SKIP"), ("DIV_MISMATCH kind=result edge=1\n", "DIV_MISMATCH")):
             with tempfile.TemporaryDirectory() as temporary:
@@ -194,7 +215,7 @@ class DivFailClosedTests(unittest.TestCase):
         result = subprocess.run([sys.executable, str(ROOT / "tools" / "div_diff.py"), "--help"], cwd=ROOT, capture_output=True, text=True, check=False)
         self.assertEqual(2, result.returncode)
         self.assertIn("requires isolated Python", result.stderr)
-        result = subprocess.run([sys.executable, "-I", str(ROOT / "tools" / "div_diff.py"), "golden", "--manifest", "missing", "--out-dir", "unused", "--vector-count", "4095"], cwd=ROOT, capture_output=True, text=True, check=False)
+        result = subprocess.run([sys.executable, "-I", str(ROOT / "tools" / "div_diff.py"), "golden", "--manifest", "missing", "--waivers", str(ROOT / "lint-waivers.yml"), "--out-dir", "unused", "--vector-count", "4095"], cwd=ROOT, capture_output=True, text=True, check=False)
         self.assertEqual(2, result.returncode)
         self.assertIn("vector-count must be >=4096", result.stderr)
 

@@ -110,7 +110,7 @@ div-contract:
 	$(PYTHON) -I tools/div_contract.py verify --contract "$(DIV_CONTRACT)" --manifest "reference/manifest.lock" --out-dir "$(OUT_DIR)/div/contract"
 
 div-golden-unit:
-	$(PYTHON) -I tools/div_diff.py golden --contract "$(DIV_CONTRACT)" --manifest "reference/manifest.lock" --out-dir "$(OUT_DIR)/div/unit" --vector-count "$(DIV_VECTOR_COUNT)" --seed "$(DIV_RANDOM_SEED)"
+	$(PYTHON) -I tools/div_diff.py golden --contract "$(DIV_CONTRACT)" --manifest "reference/manifest.lock" --waivers "$(LINT_WAIVERS)" --out-dir "$(OUT_DIR)/div/unit" --vector-count "$(DIV_VECTOR_COUNT)" --seed "$(DIV_RANDOM_SEED)"
 
 div-candidate-unit:
 	$(PYTHON) -I tools/div_diff.py candidate --contract "$(DIV_CONTRACT)" --manifest "reference/manifest.lock" --rtl "$(DIV_RTL)" --out-dir "$(OUT_DIR)/div/unit" --vector-count "$(DIV_VECTOR_COUNT)" --seed "$(DIV_RANDOM_SEED)"
