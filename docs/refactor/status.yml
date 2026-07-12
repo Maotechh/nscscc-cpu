@@ -2,7 +2,7 @@ schema_version: 1
 updated_at: "2026-07-13T06:13:00+08:00"
 active_iteration: "20260713-0613-core-contracts"
 active_branch: "refactor/20260713-0613-core-contracts"
-source_head: "1e3a501ef90d2ec5a397b31e2a43e3e69aeec22c"
+source_head: "5848f94a331ff2064a36a1ddc7a5e0b438e24964"
 
 boundaries:
   component_replacement_overlay:

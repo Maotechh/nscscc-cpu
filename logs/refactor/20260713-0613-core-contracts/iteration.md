@@ -1,7 +1,7 @@
 # 20260713-0613-core-contracts
 
 - 状态：`draft / implementation_in_review / awaiting_push`
-- 分支 / Base SHA：`refactor/20260713-0613-core-contracts` / `1e3a501ef90d2ec5a397b31e2a43e3e69aeec22c`
+- 分支 / Base SHA / implementation SHA：`refactor/20260713-0613-core-contracts` / `1e3a501ef90d2ec5a397b31e2a43e3e69aeec22c` / `5848f94a331ff2064a36a1ddc7a5e0b438e24964`
 - Owner / Agent：Codex + parallel contract owners
 - 目标边界：冻结 CoreConfig、流水、memory/AXI、commit/ArchState typed contracts
 
@@ -66,4 +66,4 @@
 
 revert 本 prerequisite PR 即可；它不切换活动 CPU backend，不改变参赛稳定线。
 
-PR：未自动创建或合并，分支推送后保持 draft 候选。
+PR：未自动创建或合并。首次 push 在 48.7 秒后因 GitHub connection reset 失败，状态保持 `awaiting_push`。

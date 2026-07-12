@@ -4,7 +4,7 @@
   "status": "draft",
   "branch": "refactor/20260713-0613-core-contracts",
   "base_sha": "1e3a501ef90d2ec5a397b31e2a43e3e69aeec22c",
-  "head_sha": "1e3a501ef90d2ec5a397b31e2a43e3e69aeec22c",
+  "head_sha": "5848f94a331ff2064a36a1ddc7a5e0b438e24964",
   "selected_boundary": "core_contracts",
   "required_gates": ["doctor","automation_tests","scala","contract_tests","elaboration_matrix","claim_review"],
   "gates": {
@@ -20,5 +20,6 @@
     "本轮未迁移新的活动 CPU 行为，也没有官方功能、性能或 FPGA PASS claim"
   ],
   "blocked_by": ["claude_bridge_missing_GEEKPIE_CLAUDE_API_KEY"],
-  "updated_at": "2026-07-13T07:18:20+08:00"
+  "push_status": "awaiting_push",
+  "updated_at": "2026-07-13T07:27:50+08:00"
 }
