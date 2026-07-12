@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "replacements": [
+    {
+      "target": "rtl/alu.v",
+      "source": "reference/component-replacements/alu.v",
+      "base_sha256": "5d73aa7f57367311f5d6f6fad5f750e5f97bc2bd1e52c7d0b9e543596ffc7d32",
+      "replacement_sha256": "317d142c64edd5a5e6984a90565184c26b90c1c43f7fd0fd83a14b39f753a6c8"
+    }
+  ]
+}
