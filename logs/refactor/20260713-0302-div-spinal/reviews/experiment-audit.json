@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "external_auditor": "unavailable",
+  "overall_verdict": "warn",
+  "integrity_status": "pass_with_external_review_unavailable_and_open_gate_failures",
+  "artifact_audit": {
+    "status": "pass",
+    "planned": 24,
+    "executed": 24,
+    "passed": 24,
+    "failed": 0,
+    "skipped": 0,
+    "evidence": "logs/refactor/20260713-0302-div-spinal/evidence/claim-audit.json"
+  },
+  "independent_code_review": {
+    "status": "pass_after_fixes_with_nonblocking_test_gap",
+    "reviewed_head": "9e78538c0dec08fa9fcace49e068b8bc9d4d5af1",
+    "evidence": "logs/refactor/20260713-0302-div-spinal/reviews/local-independent-review.md"
+  },
+  "evaluation_type": "locked_golden_cycle_differential_and_diagnostic_integration",
+  "claim_scope": "divider leaf only",
+  "scope_warning": "官方功能、Vivado timing/DRC/methodology、identity 与 release gates 均未通过或未执行。",
+  "unsupported_claims": [
+    "complete_sequential_equivalence",
+    "whole_cpu",
+    "func58",
+    "func81",
+    "random_difftest",
+    "perf",
+    "uboot",
+    "linux",
+    "vivado_implementation",
+    "bitstream",
+    "fpga_board"
+  ]
+}

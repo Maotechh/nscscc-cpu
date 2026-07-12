@@ -1,0 +1,136 @@
+{
+  "cases": [
+    {
+      "case": "positive",
+      "command": {
+        "argv": [
+          "/usr/bin/yosys",
+          "-l",
+          "/tmp/nscscc-div-9e78538-formal/div/formal/positive/yosys.log",
+          "-s",
+          "/tmp/nscscc-div-9e78538-formal/div/formal/positive/gate.ys"
+        ],
+        "elapsed_seconds": 1.395,
+        "log": "/tmp/nscscc-div-9e78538-formal/div/formal/positive/yosys.log",
+        "log_sha256": "26229551574de802f130a5d479caaa6dc817d7f3b6ac1d54f03a3887234d625f",
+        "returncode": 0,
+        "timed_out": false,
+        "tool": {
+          "path": "/usr/bin/yosys",
+          "sha256": "88c0a12bb814a1a8716b1ae10b482e35d3005ed558e1f5f626b3dc983ea3abd0",
+          "version": "Yosys 0.33 (git sha1 2584903a060)"
+        },
+        "warnings": []
+      },
+      "expected": "proof",
+      "harness": "/tmp/nscscc-div-9e78538-formal/div/formal/positive/harness.sv",
+      "harness_sha256": "b07ff307753600367a983d3e050587d6f4b24b6183a6f81d3f85a1bb5595f573",
+      "passed": true
+    },
+    {
+      "case": "negative-pulse-phase",
+      "command": {
+        "argv": [
+          "/usr/bin/yosys",
+          "-l",
+          "/tmp/nscscc-div-9e78538-formal/div/formal/negative-pulse-phase/yosys.log",
+          "-s",
+          "/tmp/nscscc-div-9e78538-formal/div/formal/negative-pulse-phase/gate.ys"
+        ],
+        "elapsed_seconds": 0.141,
+        "log": "/tmp/nscscc-div-9e78538-formal/div/formal/negative-pulse-phase/yosys.log",
+        "log_sha256": "027ddd514c24c9ac9cb3b06d1c819aabd89fd363e9fc6f29b851ffb02db173ed",
+        "returncode": 1,
+        "timed_out": false,
+        "tool": {
+          "path": "/usr/bin/yosys",
+          "sha256": "88c0a12bb814a1a8716b1ae10b482e35d3005ed558e1f5f626b3dc983ea3abd0",
+          "version": "Yosys 0.33 (git sha1 2584903a060)"
+        },
+        "warnings": []
+      },
+      "expected": "counterexample",
+      "harness": "/tmp/nscscc-div-9e78538-formal/div/formal/negative-pulse-phase/harness.sv",
+      "harness_sha256": "4647dc01cf38a780cc25b45cc8b1606ee39dd9888d18e49fbb2bd5a3c2a0b6ef",
+      "passed": true
+    },
+    {
+      "case": "negative-held-high-cleanup",
+      "command": {
+        "argv": [
+          "/usr/bin/yosys",
+          "-l",
+          "/tmp/nscscc-div-9e78538-formal/div/formal/negative-held-high-cleanup/yosys.log",
+          "-s",
+          "/tmp/nscscc-div-9e78538-formal/div/formal/negative-held-high-cleanup/gate.ys"
+        ],
+        "elapsed_seconds": 0.381,
+        "log": "/tmp/nscscc-div-9e78538-formal/div/formal/negative-held-high-cleanup/yosys.log",
+        "log_sha256": "5f5c0c4b23febb1ca76269d7816b1ddd6f6d88a20074f101b8a8c686887e4f95",
+        "returncode": 1,
+        "timed_out": false,
+        "tool": {
+          "path": "/usr/bin/yosys",
+          "sha256": "88c0a12bb814a1a8716b1ae10b482e35d3005ed558e1f5f626b3dc983ea3abd0",
+          "version": "Yosys 0.33 (git sha1 2584903a060)"
+        },
+        "warnings": []
+      },
+      "expected": "counterexample",
+      "harness": "/tmp/nscscc-div-9e78538-formal/div/formal/negative-held-high-cleanup/harness.sv",
+      "harness_sha256": "e8ba916ea3ced83800071af266c79a5e216a5c3cdd8dc4a6da785bba0470c7f0",
+      "passed": true
+    }
+  ],
+  "counts": {
+    "executed": 3,
+    "failed": 0,
+    "passed": 3,
+    "planned": 3,
+    "skipped": 0
+  },
+  "evaluator_sha256": "42153b372bdede205e03cba5614190173ea354f3ee8aa29c68c68d7644abe3e3",
+  "gate": "div-candidate-contract-formal",
+  "input": {
+    "sha256": "0c022398490e29cb92cd7adc31d2e35b26e47c3ea5a4b84316a54cfbbae0f349",
+    "size": 4747,
+    "snapshot": "/tmp/nscscc-div-9e78538-formal/div/formal/input/div.v",
+    "snapshot_stable": true,
+    "source": "/mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260713-0302-div-spinal/reference/component-replacements/div.v",
+    "source_stable": true
+  },
+  "negative_controls": [
+    "complete_one_edge_early",
+    "held_high_cleanup_one_edge_short"
+  ],
+  "proof_scope": {
+    "activation": "properties start after a sampled synchronous reset",
+    "arithmetic_proved": false,
+    "claim": "candidate satisfies the locked divider pulse/order protocol only",
+    "golden_formal_equivalence": false,
+    "properties": [
+      "complete_low_after_reset_or_abort",
+      "complete_asserts_only_on_E33",
+      "E34_result_window_has_complete_low",
+      "held_high_E35_cleanup_then_E36_restart"
+    ],
+    "semantics": "2-state sequential",
+    "unbounded": true
+  },
+  "provenance": {
+    "evaluator_sha256": "42153b372bdede205e03cba5614190173ea354f3ee8aa29c68c68d7644abe3e3",
+    "manifest": "/mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260713-0302-div-spinal/reference/manifest.lock",
+    "manifest_sha256": "743dd7e58d77e456cfe664d80c2e6614ab426f72bfecd9088ff18d702afa2f20",
+    "repository_head": "9e78538c0dec08fa9fcace49e068b8bc9d4d5af1"
+  },
+  "rtl": "/tmp/nscscc-div-9e78538-formal/div/formal/input/div.v",
+  "rtl_sha256": "0c022398490e29cb92cd7adc31d2e35b26e47c3ea5a4b84316a54cfbbae0f349",
+  "schema_version": 1,
+  "status": "pass",
+  "target": "div",
+  "tool": {
+    "path": "/usr/bin/yosys",
+    "sha256": "88c0a12bb814a1a8716b1ae10b482e35d3005ed558e1f5f626b3dc983ea3abd0",
+    "version": "Yosys 0.33 (git sha1 2584903a060)"
+  }
+}

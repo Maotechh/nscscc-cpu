@@ -1,0 +1,252 @@
+{
+  "arithmetic": {
+    "divide_by_zero": {
+      "remainder": "dividend_bits",
+      "signed_negative_quotient": "0x00000001",
+      "signed_nonnegative_quotient": "0xffffffff",
+      "unsigned_quotient": "0xffffffff"
+    },
+    "output_width": 32,
+    "quotient": "truncate_toward_zero",
+    "remainder_sign": "dividend",
+    "signed_overflow": "wrap_32bit"
+  },
+  "candidate": {
+    "candidate_source": {
+      "path": "/mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260713-0302-div-spinal/reference/component-replacements/div.v",
+      "sha256_after": "0c022398490e29cb92cd7adc31d2e35b26e47c3ea5a4b84316a54cfbbae0f349",
+      "sha256_before": "0c022398490e29cb92cd7adc31d2e35b26e47c3ea5a4b84316a54cfbbae0f349",
+      "stable": true
+    },
+    "compile": {
+      "argv": [
+        "/usr/bin/verilator",
+        "--cc",
+        "--exe",
+        "--build",
+        "--Wall",
+        "--Wno-fatal",
+        "--top-module",
+        "div_golden",
+        "--prefix",
+        "Vdiv_golden",
+        "--Mdir",
+        "/tmp/nscscc-div-9e78538-unit/div/unit/candidate/obj_dir",
+        "/tmp/nscscc-div-9e78538-unit/div/unit/candidate/div_golden.v",
+        "/tmp/nscscc-div-9e78538-unit/div/unit/candidate/div_diff_driver.cpp"
+      ],
+      "elapsed_seconds": 4.649,
+      "error_lines": [],
+      "log": "/tmp/nscscc-div-9e78538-unit/div/unit/candidate/compile.log",
+      "log_sha256": "6d6ed87557d6c1bcc8e76d51297deb00ca182dca5db7319812c6ba2d726e5648",
+      "returncode": 0,
+      "timed_out": false,
+      "warning_count": 0,
+      "warning_error": null,
+      "warning_policy_pass": true,
+      "warnings": []
+    },
+    "driver": {
+      "path": "/tmp/nscscc-div-9e78538-unit/div/unit/candidate/div_diff_driver.cpp",
+      "sha256": "7fd34bfa459b8bdbb5e5db1f6e29ce7667f4e62fba97a592d787c2ee06a28ce0",
+      "stable": true,
+      "version": "div-diff-driver-v2"
+    },
+    "simulation": {
+      "argv": [
+        "/tmp/nscscc-div-9e78538-unit/div/unit/candidate/obj_dir/Vdiv_golden",
+        "/tmp/nscscc-div-9e78538-unit/div/unit/vectors.txt",
+        "4136",
+        "40"
+      ],
+      "elapsed_seconds": 0.019,
+      "log": "/tmp/nscscc-div-9e78538-unit/div/unit/candidate/simulation.log",
+      "log_sha256": "2fcf71ac63e6918c2c9964e271d825b2c6cbc5c609f59a5ef842017f7c1d24c0",
+      "parsed": {
+        "abort": 16,
+        "active": 4136,
+        "complete_pulses": 4136,
+        "directed": 40,
+        "divide_zero": 18,
+        "edges": 145131,
+        "first_error": null,
+        "first_mismatch": null,
+        "held_high_cleanup": 1,
+        "held_high_restart": 1,
+        "historical_r": 4136,
+        "late_abort": 1,
+        "pass_marker": true,
+        "pulse_s": 4136,
+        "reset": 54,
+        "results": 4136,
+        "signed": 2041,
+        "skip": null,
+        "unsigned": 2095
+      },
+      "returncode": 0,
+      "timed_out": false
+    },
+    "source": {
+      "normalization": "single module declaration div -> div_golden; no signal/body edits",
+      "original_sha256": "0c022398490e29cb92cd7adc31d2e35b26e47c3ea5a4b84316a54cfbbae0f349",
+      "original_size": 4747,
+      "path": "/tmp/nscscc-div-9e78538-unit/div/unit/candidate/div_golden.v",
+      "sha256": "7ab23e5c37c48eac1b327ddeb906f0372d3fb8410b249e9fb7319e972b32b9f5",
+      "size": 4754,
+      "stable": true
+    },
+    "source_kind": "candidate",
+    "status": "pass"
+  },
+  "claim_scope": "locked openLA500 div cycle behavior against an independent mathematical model",
+  "command": "candidate",
+  "contract": {
+    "path": "/mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260713-0302-div-spinal/reference/component-contracts/div.json",
+    "sha256": "ab5887bdf903cb3a3b2d68929291425ce3e7d4dc680135e20ee1048d01dc1af3"
+  },
+  "counts": {
+    "executed": 1,
+    "failed": 0,
+    "passed": 1,
+    "planned": 1,
+    "skipped": 0
+  },
+  "evaluator": {
+    "path": "/mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260713-0302-div-spinal/tools/div_diff.py",
+    "sha256": "9ae83eb2b10c7112ec13a4738ec6e3d25b05e573707dc12e86df6110a23cd3b7"
+  },
+  "gate": "div-candidate-diff",
+  "generated_at": "2026-07-13T03:29:13+08:00",
+  "golden_contract": {
+    "actual_git_blob_sha1": "225827c7d69addd280cb671c17e067a406a9171f",
+    "actual_sha256": "7e499f4c43c92154d1d4e21be2f269ac140b4f2b2d944677c71f6f4213b66dc6",
+    "actual_size": 2642,
+    "commit": "a158aa8ab4d49cece1a0fe488d7ac7dc02bd8cf6",
+    "expected_git_blob_sha1": "225827c7d69addd280cb671c17e067a406a9171f",
+    "expected_sha256": "7e499f4c43c92154d1d4e21be2f269ac140b4f2b2d944677c71f6f4213b66dc6",
+    "expected_size": 2642,
+    "object_type": "blob",
+    "path": "rtl/div.v",
+    "verified": true
+  },
+  "manifest": {
+    "path": "/mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260713-0302-div-spinal/reference/manifest.lock",
+    "sha256_after": "743dd7e58d77e456cfe664d80c2e6614ab426f72bfecd9088ff18d702afa2f20",
+    "sha256_before": "743dd7e58d77e456cfe664d80c2e6614ab426f72bfecd9088ff18d702afa2f20",
+    "stable": true,
+    "team_golden_candidate": "a158aa8ab4d49cece1a0fe488d7ac7dc02bd8cf6"
+  },
+  "ports": {
+    "complete": {
+      "direction": "output",
+      "width": 1
+    },
+    "div": {
+      "direction": "input",
+      "width": 1
+    },
+    "div_clk": {
+      "direction": "input",
+      "width": 1
+    },
+    "div_signed": {
+      "direction": "input",
+      "width": 1
+    },
+    "r": {
+      "direction": "output",
+      "width": 32
+    },
+    "reset": {
+      "direction": "input",
+      "width": 1
+    },
+    "s": {
+      "direction": "output",
+      "width": 32
+    },
+    "x": {
+      "direction": "input",
+      "width": 32
+    },
+    "y": {
+      "direction": "input",
+      "width": 32
+    }
+  },
+  "protocol": {
+    "abort": {
+      "behavior": "synchronous_rearm_no_valid_result",
+      "triggers": [
+        "reset_active_edge",
+        "request_low_before_result_capture"
+      ]
+    },
+    "active_edges_to_complete": 33,
+    "clock": "div_clk",
+    "complete": {
+      "active_level": 1,
+      "assert_after_consecutive_request_edges": 33,
+      "pulse_edges": 1,
+      "signal": "complete"
+    },
+    "edge": "posedge",
+    "operands_stable": "from_accept_through_result_capture",
+    "rearm": {
+      "held_high_cleanup_edges": 2,
+      "low_edges_before_restart": 1
+    },
+    "request": {
+      "accept": "first_active_edge_from_idle",
+      "active_level": 1,
+      "hold_through": "result_capture_edge",
+      "mode": "level",
+      "signal": "div"
+    },
+    "reset": {
+      "active_level": 1,
+      "behavior": "synchronous_clear_idle",
+      "signal": "reset"
+    },
+    "result": {
+      "capture_edge": "first_posedge_after_complete",
+      "complete_level_during_valid_window": 0,
+      "consecutive_request_edges_to_capture": 34,
+      "valid_window_edges": 1
+    },
+    "unknown_policy": "ignore_results_before_capture_edge"
+  },
+  "repository_head": "9e78538c0dec08fa9fcace49e068b8bc9d4d5af1",
+  "schema_version": 1,
+  "seed": 1411752,
+  "status": "pass",
+  "stimulus": {
+    "random_transactions": 4096,
+    "seed": "0x158aa8"
+  },
+  "toolchain": {
+    "g++": {
+      "path": "/usr/bin/x86_64-linux-gnu-g++-13",
+      "sha256": "1353e9bdd29a7295c7226bf6c63abccce056d8cac31f112e5cdbecc3f28c2769",
+      "version": "x86_64-linux-gnu-g++-13 (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0"
+    },
+    "make": {
+      "path": "/usr/bin/make",
+      "sha256": "d78b8f1d099fbcfb6f2f49ab87223b9b68fb3956642f92d6ec6de812e8afa965",
+      "version": "GNU Make 4.3"
+    },
+    "verilator": {
+      "path": "/usr/bin/verilator",
+      "sha256": "4c6292ab82e57b7f34ab26dbae86ba9c494bacfb088b6ff34be93c553d1301b1",
+      "version": "Verilator 5.020 2024-01-01 rev (Debian 5.020-1)"
+    }
+  },
+  "vector_count": 4096,
+  "vectors": {
+    "directed": 40,
+    "path": "/tmp/nscscc-div-9e78538-unit/div/unit/vectors.txt",
+    "random": 4096,
+    "sha256": "754ee2e0308b21c4bc6cd2d808e0112b14a4e30a380f8dfff5d5175fcda99ead",
+    "total": 4136
+  }
+}

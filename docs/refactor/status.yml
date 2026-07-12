@@ -1,8 +1,8 @@
 schema_version: 1
-updated_at: "2026-07-12T23:05:30+08:00"
-active_iteration: "20260712-2024-div-harness"
-active_branch: "refactor/20260712-2024-div-harness"
-source_head: "03c7fb6fec46107ae44183ed3262198641b333bb"
+updated_at: "2026-07-13T03:55:00+08:00"
+active_iteration: "20260713-0302-div-spinal"
+active_branch: "refactor/20260713-0302-div-spinal"
+source_head: "9e78538c0dec08fa9fcace49e068b8bc9d4d5af1"
 
 boundaries:
   component_replacement_overlay:
@@ -192,7 +192,7 @@ boundaries:
 
   div:
     owner: execute
-    state: not_started
+    state: differential_pass
     golden_ref: a158aa8:rtl/div.v
     dependencies:
       - div_golden_harness
@@ -210,11 +210,22 @@ boundaries:
       - diagnostic_overlay
       - func_smoke
       - claim_review
-    evidence: []
+    evidence:
+      - logs/refactor/20260713-0302-div-spinal/iteration.md
+      - logs/refactor/20260713-0302-div-spinal/summary.json
+      - logs/refactor/20260713-0302-div-spinal/evidence/local-gates.json
+      - logs/refactor/20260713-0302-div-spinal/evidence/vivado-leaf.json
+      - logs/refactor/20260713-0302-div-spinal/evidence/chiplab-comparison.json
+      - logs/refactor/20260713-0302-div-spinal/reviews/local-independent-review.md
     active_pr: null
     blocked_by:
       - div_harness_pr_unmerged
-    last_iteration: null
+      - func_lab19_locked_and_mixed_mismatch_at_1c07c79c
+      - 641_unapproved_verilator_warnings_in_mixed_compile
+      - vivado_leaf_drc_methodology_and_timing_fail
+      - golden_sequential_formal_equivalence_not_proved
+      - claude_bridge_missing_GEEKPIE_CLAUDE_API_KEY
+    last_iteration: "20260713-0302-div-spinal"
 
   core_top_compat:
     owner: compat

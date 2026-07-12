@@ -1,0 +1,56 @@
+{
+  "command": {
+    "argv": [
+      "/usr/bin/verilator",
+      "--lint-only",
+      "-Wall",
+      "--Wno-fatal",
+      "--top-module",
+      "div_lint",
+      "/tmp/nscscc-div-9e78538-lint/div/lint/input/div_lint.v"
+    ],
+    "elapsed_seconds": 0.052,
+    "returncode": 0,
+    "timed_out": false
+  },
+  "gate": "lint",
+  "input": {
+    "sha256": "0c022398490e29cb92cd7adc31d2e35b26e47c3ea5a4b84316a54cfbbae0f349",
+    "size": 4747,
+    "snapshot": "/tmp/nscscc-div-9e78538-lint/div/lint/input/div.v",
+    "snapshot_stable": true,
+    "source": "/mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260713-0302-div-spinal/reference/component-replacements/div.v",
+    "source_stable": true
+  },
+  "log": "/tmp/nscscc-div-9e78538-lint/div/lint/verilator.log",
+  "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "provenance": {
+    "evaluator_sha256": "42153b372bdede205e03cba5614190173ea354f3ee8aa29c68c68d7644abe3e3",
+    "manifest": "/mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260713-0302-div-spinal/reference/manifest.lock",
+    "manifest_sha256": "743dd7e58d77e456cfe664d80c2e6614ab426f72bfecd9088ff18d702afa2f20",
+    "repository_head": "9e78538c0dec08fa9fcace49e068b8bc9d4d5af1"
+  },
+  "rtl": "/tmp/nscscc-div-9e78538-lint/div/lint/input/div.v",
+  "rtl_sha256": "0c022398490e29cb92cd7adc31d2e35b26e47c3ea5a4b84316a54cfbbae0f349",
+  "schema_version": 1,
+  "status": "pass",
+  "target": "div",
+  "tool": {
+    "path": "/usr/bin/verilator",
+    "sha256": "4c6292ab82e57b7f34ab26dbae86ba9c494bacfb088b6ff34be93c553d1301b1",
+    "version": "Verilator 5.020 2024-01-01 rev (Debian 5.020-1)"
+  },
+  "verilator_normalization": {
+    "kind": "module_name_only",
+    "normalized_module": "div_lint",
+    "normalized_path": "/tmp/nscscc-div-9e78538-lint/div/lint/input/div_lint.v",
+    "normalized_sha256": "c0ccbb152c86db49bbe80ca0487d1a23f59170549deb692017d3700aa8c0f5b6",
+    "normalized_size": 4752,
+    "reason": "Verilator C++ backend rejects module div with input div",
+    "replacement_count": 1,
+    "source_sha256": "0c022398490e29cb92cd7adc31d2e35b26e47c3ea5a4b84316a54cfbbae0f349",
+    "source_size": 4747,
+    "stable": true
+  },
+  "warnings": []
+}

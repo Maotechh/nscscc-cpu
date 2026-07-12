@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "iteration_id": "20260713-0302-div-spinal",
+  "source_head": "9e78538c0dec08fa9fcace49e068b8bc9d4d5af1",
+  "tool": "Vivado ML Standard 2023.2",
+  "part": "xc7a200tfbg676-2",
+  "scope": "leaf_synthesis_only",
+  "status": "fail",
+  "strict_warning_gate": "fail",
+  "implementation_executed": false,
+  "bitstream_executed": false,
+  "attempts": [
+    {"id":"candidate-initial","returncode":0,"accepted":false,"reason":"约束包含实现阶段专用命令，结果不作为最终证据"},
+    {"id":"candidate-final","returncode":0,"accepted":false,"reason":"未加载约束文件"},
+    {"id":"candidate-final2","returncode":1,"accepted":false,"reason":"在打开综合设计前创建时钟"},
+    {"id":"golden-final","returncode":0,"accepted":true},
+    {"id":"candidate-final3","returncode":0,"accepted":true}
+  ],
+  "report_findings": {
+    "vivado_log": {
+      "golden_warning_count": 1,
+      "candidate_warning_count": 1,
+      "common": "WARNING: [Synth 8-7080] Parallel synthesis criteria is not met"
+    },
+    "drc": {
+      "golden": {"critical_warning_categories":{"NSTD-1":1,"UCIO-1":1},"warning_categories":{"CFGBVS-1":1}},
+      "candidate": {"critical_warning_categories":{"NSTD-1":1,"UCIO-1":1},"warning_categories":{"CFGBVS-1":1}}
+    },
+    "methodology": {
+      "golden": {"XDCH-2":132,"TIMING-16":0},
+      "candidate": {"XDCH-2":132,"TIMING-16":57}
+    },
+    "waived": false
+  },
+  "golden": {
+    "rtl_sha256": "7e499f4c43c92154d1d4e21be2f269ac140b4f2b2d944677c71f6f4213b66dc6",
+    "lut": 290,
+    "ff": 107,
+    "bram": 0,
+    "dsp": 0,
+    "worst_setup_slack_ns": -0.364,
+    "total_negative_slack_ns": -7.803,
+    "failing_endpoints": 41,
+    "total_endpoints": 376,
+    "worst_setup_data_path_delay_ns": 5.936,
+    "dcp_sha256": "c986afd629a27eb65507b40216f886930a1f6d4be3e2fffd64d5ad582d6da34c",
+    "log_sha256": "25432684bee32bbe943baa33044c4e91cfe7474dbe68f7a0c5efffb348ad09c3"
+  },
+  "candidate": {
+    "rtl_sha256": "0c022398490e29cb92cd7adc31d2e35b26e47c3ea5a4b84316a54cfbbae0f349",
+    "lut": 245,
+    "ff": 107,
+    "bram": 0,
+    "dsp": 0,
+    "worst_setup_slack_ns": -1.800,
+    "total_negative_slack_ns": -86.872,
+    "failing_endpoints": 62,
+    "total_endpoints": 375,
+    "worst_setup_data_path_delay_ns": 7.565,
+    "dcp_sha256": "a616de391ab447feee0671b3fce3ff35222edf175b23b6ee0f81880840c91f50",
+    "log_sha256": "3859133d90bd678ac7efabf464e328883b83a51b5d575cc64d22ec6a601f6008"
+  },
+  "timing_constraints_met": {"golden":false,"candidate":false},
+  "timing_claim": "人工 2 ns I/O delay 的叶子综合诊断两侧均未收敛，不能外推整机 Fmax 或性能；DRC/methodology 未通过，implementation 与 bitstream 未执行。",
+  "artifact_root": "D:/schoolworks/CS110/longxin/.work/vivado-div-leaf-20260713-0331"
+}

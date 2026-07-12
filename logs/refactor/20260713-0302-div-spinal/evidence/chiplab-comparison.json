@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "iteration_id": "20260713-0302-div-spinal",
+  "source_head": "9e78538c0dec08fa9fcace49e068b8bc9d4d5af1",
+  "case": "func/func_lab19",
+  "chiplab_commit": "a2e11b38bc5c85abb4408a8e0c0f5ce903c7ba31",
+  "mycpu_gitlink": "aa3bde1f3e720e71c2c78d6b81930d797b810149",
+  "doctor": "pass",
+  "locked": {
+    "iteration_id": "20260713-0302-div-locked-9e78538",
+    "dut_source": "candidate",
+    "gate_result": "fail",
+    "functional_status": "fail",
+    "executed": 1,
+    "passed": 0,
+    "failed": 1,
+    "skipped": 0,
+    "instructions": 172552,
+    "cycles": 602903,
+    "warnings": {"total":644,"dut":280,"official_environment":364},
+    "trace_sha256": "8efa7942ab6d4702129dc0c7eb0676c6cfcd87361ee8ecf99411567c3db38acb"
+  },
+  "mixed": {
+    "iteration_id": "20260713-0302-div-mixed-9e78538",
+    "dut_source": "mixed",
+    "observed_status": "diagnostic",
+    "gate_result": "fail",
+    "functional_status": "fail",
+    "executed": 1,
+    "passed": 0,
+    "failed": 1,
+    "skipped": 0,
+    "instructions": 172552,
+    "cycles": 602903,
+    "warnings": {"total":641,"dut":277,"official_environment":364},
+    "trace_sha256": "8efa7942ab6d4702129dc0c7eb0676c6cfcd87361ee8ecf99411567c3db38acb"
+  },
+  "first_mismatch": "t0(r12) different at pc = 0x1c07c79c, right= 0x000006e2, wrong = 0x00000008",
+  "replacement": {
+    "target": "rtl/div.v",
+    "base_sha256": "7e499f4c43c92154d1d4e21be2f269ac140b4f2b2d944677c71f6f4213b66dc6",
+    "replacement_sha256": "0c022398490e29cb92cd7adc31d2e35b26e47c3ea5a4b84316a54cfbbae0f349"
+  },
+  "identity_compare": {
+    "status": "fail",
+    "parser_equal": true,
+    "trace_uart_equal": true,
+    "rom_equal": true,
+    "elf_equal": true,
+    "warning_counts_equal": false,
+    "identity_replacement": false,
+    "rtl_file_union_equal": false,
+    "mismatches": [
+      "locked and mixed DUT file projections differ",
+      "mixed replacement is not byte-identical",
+      "Verilator warning counts differ"
+    ]
+  },
+  "claim": "两次已执行诊断在同一个既有 func_lab19 首错、指令数、周期数和 trace 上一致；这不是功能、集成或 RTL 身份 PASS。",
+  "remote_fpga_submission": {
+    "executed": false,
+    "reason": "必需的本地 func-smoke 和 warning gate 失败，按 nscscc-fpga-evaluate 合同不得提交板卡任务。"
+  },
+  "raw_report_root": "/tmp/nscscc-div-9e78538-chiplab-final/reports"
+}
