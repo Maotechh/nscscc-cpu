@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "iteration_id": "20260712-1651-mul-spinal",
+  "external_artifact_policy": "大日志、Scala workspace、Vivado 工程和波形不提交；只提交摘要、哈希和 locator。",
+  "retention": "local_until_explicit_clean",
+  "artifacts": [],
+  "external_artifacts": [
+    {"id":"automation-tests","path":"/tmp/nscscc-mul-final-automation.txt","sha256":"69fe91ff392d65ea6bb264a66551b9ce3201f7d50b005689eaeb7c62ea2d167c","size":12510,"tracked":false},
+    {"id":"scala-summary","path":"/tmp/nscscc-mul-final-scala/scala-check/summary.json","sha256":"2b1e5db0aad74764ec1887530a135a4d13ad0be8a894215f08fb59c774d80d7c","size":45368,"tracked":false},
+    {"id":"elaborate-summary","path":"/tmp/nscscc-mul-final-elaborate/mul/elaborate/summary.json","sha256":"a7fe6849d013f004931e47fb099113f90466a4ff62f8b030a1d5999e1da146d7","size":12278,"tracked":false},
+    {"id":"generate-summary","path":"/tmp/nscscc-mul-final-generate/mul/generate/summary.json","sha256":"90593cf87bd9d0ad9c97536aeba3e40b6e7293cc3336c172ad530088452d0c59","size":12883,"tracked":false},
+    {"id":"contract-summary","path":"/tmp/nscscc-mul-final-contract/mul/contract/summary.json","sha256":"8865f153370df0cbb5a437983dc75b246ecae35df3db2ada0f514ec66e4a78c0","size":1955,"tracked":false},
+    {"id":"port-summary","path":"/tmp/nscscc-mul-final-port/mul/port-check/summary.json","sha256":"c2c95b61926f955cf2ce3142c33fe57af18732a94e10a0235bcb50f54bc886d5","size":2137,"tracked":false},
+    {"id":"lint-summary","path":"/tmp/nscscc-mul-final-lint/mul/lint/summary.json","sha256":"87a48f0d9d2159b4416562e46d2dd2c14eecd68be2f8b3624cbf401b2aff9d68","size":1532,"tracked":false},
+    {"id":"yosys-summary","path":"/tmp/nscscc-mul-final-yosys/mul/yosys-check/summary.json","sha256":"9a3f9d113292535bae6453bf1ff90d617f8613358d669d80a06acff6223d80e4","size":1550,"tracked":false},
+    {"id":"unit-summary","path":"/tmp/nscscc-mul-final-unit/mul/unit/summary.json","sha256":"b7e141b45c3bb7c181d37cad7825e69306aa5687e5c6527289dec3c5ee66b681","size":5390,"tracked":false},
+    {"id":"formal-summary","path":"/tmp/nscscc-mul-final-formal/mul/formal/summary.json","sha256":"a1700aad4e16eaa1efa9126a45e121925efcaa198b21452bab6762159bd62295","size":4857,"tracked":false},
+    {"id":"windows-doctor","path":"build/20260712-1651-mul-final-doctor/reports/doctor.json","sha256":"750a5e30411cb7be710e6afffd38d274428da68d480a90f2cdcd609f64d2ad18","size":5151,"tracked":false},
+    {"id":"chiplab-doctor","path":"/tmp/nscscc-mul-final-chiplab-doctor/reports/chiplab-doctor.json","sha256":"df48f48af9b50bbf9740458f169002860ac5b7314717904e82ec409662a881d8","size":16175,"tracked":false},
+    {"id":"vivado-leaf-summary","path":"D:/schoolworks/CS110/longxin/.work/vivado-mul-leaf-20260712-173227/summary.json","sha256":"c29e62b33aa4e104751a7a4bdec07a643d656b09d7f4ca4e143ea9df86dc3072","size":13004,"tracked":false},
+    {"id":"vivado-artifact-index","path":"D:/schoolworks/CS110/longxin/.work/vivado-mul-leaf-20260712-173227/artifacts.json","sha256":"555a670d07021b5cf931ef4dadb6d4840435e44ec76297c9286755de07b3373c","tracked":false},
+    {"id":"vivado-checksums","path":"D:/schoolworks/CS110/longxin/.work/vivado-mul-leaf-20260712-173227/SHA256SUMS.txt","sha256":"fc1e207ebd10168ca01417acd7a3f1108ebd283c6f1b1a9b6920b5042ecfaf09","tracked":false}
+  ]
+}

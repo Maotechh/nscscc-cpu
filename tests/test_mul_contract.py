@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import copy
 import json
+import os
 import sys
 import tempfile
 import unittest
@@ -25,6 +26,7 @@ class MulContractSchemaTests(unittest.TestCase):
         validated = mul_contract.validate_contract(copy.deepcopy(self.document))
         self.assertEqual("mul", validated["target"])
         self.assertEqual(64, validated["ports"]["result"]["width"])
+        self.assertEqual(mul_contract.GENERATOR_MAIN, validated["generator_main"])
 
     def test_unknown_top_level_field_is_rejected(self) -> None:
         document = copy.deepcopy(self.document)
@@ -60,6 +62,12 @@ class MulContractSchemaTests(unittest.TestCase):
         with self.assertRaises(mul_contract.MulContractError):
             mul_contract.validate_contract(document)
 
+    def test_generator_main_must_be_the_locked_spinal_entry(self) -> None:
+        document = copy.deepcopy(self.document)
+        document["generator_main"] = None
+        with self.assertRaisesRegex(mul_contract.MulContractError, "generator_main"):
+            mul_contract.validate_contract(document)
+
     def test_random_vector_floor_is_enforced(self) -> None:
         document = copy.deepcopy(self.document)
         document["stimulus"]["random_vectors"] = 4095
@@ -68,6 +76,16 @@ class MulContractSchemaTests(unittest.TestCase):
 
 
 class MulContractGoldenTests(unittest.TestCase):
+    def test_windows_worktree_pointer_has_wsl_and_cygwin_candidates(self) -> None:
+        candidates = mul_contract._git_dir_candidates(
+            Path("/workspace"), r"D:\repo\.git\worktrees\mul"
+        )
+        if os.name == "nt":
+            self.assertEqual([Path(r"D:\repo\.git\worktrees\mul")], candidates)
+        else:
+            self.assertEqual(Path("/mnt/d/repo/.git/worktrees/mul"), candidates[0])
+            self.assertEqual(Path("/cygdrive/d/repo/.git/worktrees/mul"), candidates[1])
+
     def test_locked_git_blob_hash_and_size(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             summary = mul_contract.verify_contract(

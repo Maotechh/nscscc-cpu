@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "replacements": [
+    {
+      "target": "rtl/mul.v",
+      "source": "reference/component-replacements/mul.v",
+      "base_sha256": "251d2bba3e659c294c9a004bbb2b542435fcfa0b0c1582cc1a7a3edca765a4c0",
+      "replacement_sha256": "5ff75243dd504bf74c01645862364cd416dffc554d64c82dea6be8f7181660d6"
+    }
+  ]
+}

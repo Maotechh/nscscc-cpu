@@ -8,6 +8,7 @@ from collections import OrderedDict
 from datetime import datetime, timezone
 import hashlib
 import json
+import os
 from pathlib import Path
 import re
 import subprocess
@@ -23,6 +24,7 @@ GOLDEN_COMMIT_KEY = "team_golden_candidate"
 GOLDEN_PATH = "rtl/mul.v"
 GOLDEN_SHA256 = "251d2bba3e659c294c9a004bbb2b542435fcfa0b0c1582cc1a7a3edca765a4c0"
 GOLDEN_SIZE = 6045
+GENERATOR_MAIN = "openla500.execute.GenerateOpenLa500Mul"
 LOCKED_PORTS: dict[str, dict[str, object]] = {
     "mul_clk": {"direction": "input", "width": 1},
     "reset": {"direction": "input", "width": 1},
@@ -159,8 +161,8 @@ def validate_contract(document: Any) -> dict[str, Any]:
         raise MulContractError("module must be the Verilog identifier 'mul'")
     if top["generated_file"] != GENERATED_FILE:
         raise MulContractError(f"generated_file must be {GENERATED_FILE!r}")
-    if top["generator_main"] is not None:
-        raise MulContractError("generator_main must be null until a candidate generator is locked")
+    if top["generator_main"] != GENERATOR_MAIN:
+        raise MulContractError(f"generator_main must be {GENERATOR_MAIN}")
 
     golden = _require_object(top["golden"], "golden")
     _require_fields(golden, GOLDEN_FIELDS, "golden")
@@ -261,10 +263,41 @@ def parse_manifest(path: Path) -> dict[str, str]:
     return values
 
 
+def _git_dir_candidates(repo_root: Path, raw: str) -> list[Path]:
+    candidates: list[Path] = []
+    windows_drive = re.fullmatch(r"([A-Za-z]):[\\\\/](.+)", raw)
+    if windows_drive and os.name != "nt":
+        drive, suffix = windows_drive.groups()
+        suffix = suffix.replace("\\", "/")
+        candidates.extend(
+            [Path(f"/mnt/{drive.lower()}/{suffix}"), Path(f"/cygdrive/{drive.lower()}/{suffix}")]
+        )
+    raw_path = Path(raw)
+    candidates.append(raw_path if raw_path.is_absolute() else repo_root / raw_path)
+    return candidates
+
+
+def _resolve_git_dir(repo_root: Path) -> Path:
+    dot_git = repo_root / ".git"
+    if dot_git.is_dir():
+        return dot_git.resolve()
+    if not dot_git.is_file():
+        raise MulContractError(f"Git metadata is missing: {dot_git}")
+    line = dot_git.read_text(encoding="utf-8").strip()
+    if not line.startswith("gitdir:"):
+        raise MulContractError(f"invalid Git worktree pointer: {dot_git}")
+    raw = line.removeprefix("gitdir:").strip()
+    for candidate in _git_dir_candidates(repo_root, raw):
+        if candidate.is_dir():
+            return candidate.resolve()
+    raise MulContractError(f"Git worktree metadata target is missing: {raw}")
+
+
 def _run_git(repo_root: Path, args: list[str]) -> bytes:
+    git_dir = _resolve_git_dir(repo_root)
     try:
         result = subprocess.run(
-            ["git", *args],
+            ["git", f"--git-dir={git_dir}", f"--work-tree={repo_root.resolve()}", *args],
             cwd=repo_root,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,

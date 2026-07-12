@@ -5,7 +5,8 @@
 - Golden candidate：`a158aa8ab4d49cece1a0fe488d7ac7dc02bd8cf6:rtl/mul.v`。
 - Golden blob SHA256：`251d2bba3e659c294c9a004bbb2b542435fcfa0b0c1582cc1a7a3edca765a4c0`，6045 bytes。
 - 活动实例：同一提交的 `rtl/mycpu_top.v` 中唯一 `u_mul`。
-- 当前迭代只建立 oracle/harness，不生成或替换 candidate RTL。
+- Golden harness 由前置迭代建立；candidate 生成入口固定为
+  `openla500.execute.GenerateOpenLa500Mul`，生成物仍必须由全部门禁证明后才可 overlay。
 - 现有 `spinal/src/main/scala/openla500/Multiplier.scala` 的 ready/valid、32-cycle 和 32-bit result 合同不兼容，不能作为 oracle。
 
 ## 精确端口
@@ -62,7 +63,7 @@ end
 - runner 先做一次有效采样，再检查 reset hold；不能利用 Verilator 2-state 初值把 golden 未定义状态当作 0。
 - runner 必须检查 active edge 后结果、无时钟输入扰动 hold、连续每拍采样和 reset hold。
 - warning、timeout、非零退出、零向量、首个 mismatch、缺 artifact 或 `SKIP` 都返回非零。
-- golden self-check 只证明 harness 能执行并与独立数学模型一致，不证明任何 Spinal candidate。
+- golden self-check 只证明 harness 能执行并与独立数学模型一致；candidate 必须另跑相同向量和时序检查。
 
 在 Windows + WSL 的 `/mnt/<drive>` 挂载目录中，GNU make 可能因宿主与 WSL
 文件时间精度产生 `clock skew detected`。该 warning 也属于未批准 warning，runner
@@ -71,4 +72,4 @@ end
 
 ## 后续 candidate 要求
 
-后续 `mul-spinal` 迭代必须另行提供精确端口、显式 `mul_clk` ClockDomain、同步 hold、cycle differential 和顺序 formal。只有 candidate 实际进入 mixed overlay 后才能讨论 whole-CPU 可见回退；本 harness PR 不声明 `differential_pass` 或 `integrated_pass`。
+本 `mul-spinal` 迭代必须提供精确端口、显式 `mul_clk` ClockDomain、同步 hold、cycle differential 和 first-capture-aware 顺序 formal。当前 formal 证明 candidate 在 2-state 语义下满足独立数学模型的 active capture 与 reset hold 合同，并不构成 candidate 与 golden Booth/Wallace 实现的形式等价证明。只有 candidate 实际进入 mixed overlay 后才能讨论 whole-CPU 可见回退；leaf PASS 不等于 `integrated_pass`。

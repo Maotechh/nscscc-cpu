@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "iteration_id": "20260712-1651-mul-spinal",
+  "status": "draft",
+  "branch": "refactor/20260712-1651-mul-spinal",
+  "base_sha": "a17b30165a70f2eae37a6f7074f5fbf7a25ee688",
+  "head_sha": "a17b30165a70f2eae37a6f7074f5fbf7a25ee688",
+  "implementation_commit": null,
+  "selected_boundary": "mul",
+  "required_gates": ["doctor","automation_tests","scala","elaborate","generate","port_check","lint","yosys_check","unit_diff","formal","diagnostic_overlay","func_smoke","vivado_leaf_synth","claim_review"],
+  "gates": {
+    "doctor":{"status":"pass","planned":2,"executed":2,"passed":2,"failed":0,"skipped":0,"detail":"Windows Vivado doctor 与锁定 chiplab/toolchain doctor 均通过；当前为 pre-commit HEAD。"},
+    "automation_tests":{"status":"pass","planned":192,"executed":192,"passed":192,"failed":0,"skipped":0},
+    "scala":{"status":"pass","planned":4,"executed":4,"passed":4,"failed":0,"skipped":0},
+    "elaborate":{"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0},
+    "generate":{"status":"pass","planned":2,"executed":2,"passed":2,"failed":0,"skipped":0,"detail":"两次 RTL 字节一致；426 个 dependency artifact 前后稳定。"},
+    "port_check":{"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0},
+    "lint":{"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0,"detail":"Verilator 5.020 -Wall，0 warning。"},
+    "yosys_check":{"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0},
+    "unit_diff":{"status":"pass","planned":4128,"executed":4128,"passed":4128,"failed":0,"skipped":0,"detail":"32 directed + 4096 random；4127 perturb；32 reset-hold。"},
+    "formal":{"status":"pass","planned":3,"executed":3,"passed":3,"failed":0,"skipped":0,"detail":"仅 candidate 2-state contract temporal induction 与两项负控；golden formal equivalence=false。"},
+    "diagnostic_overlay":{"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":1,"detail":"仅表示实现提交前尚未运行；不能计为通过。"},
+    "func_smoke":{"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":1,"detail":"仅表示实现提交前尚未运行；不能计为通过。"},
+    "vivado_leaf_synth":{"status":"fail","planned":2,"executed":2,"passed":0,"failed":2,"skipped":0,"detail":"两侧 synth_design rc=0，但 golden 3/candidate 63 条 warning 未获批准；无 I/O delay，不能声明 Fmax。"},
+    "claim_review":{"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":1,"detail":"仅表示 review target 尚未提交；不能计为通过。"}
+  },
+  "observations": {
+    "rtl_sha256": "5ff75243dd504bf74c01645862364cd416dffc554d64c82dea6be8f7181660d6",
+    "rtl_size": 1260,
+    "random_seed": "0x158aa8",
+    "directed_vectors": 32,
+    "random_vectors": 4096,
+    "golden_formal_equivalence": "open_solver_timeout",
+    "vivado": {
+      "part": "xc7a200tfbg676-2",
+      "scope": "leaf_synth_only",
+      "golden":{"lut":1537,"ff":592,"dsp":0,"warnings":3},
+      "candidate":{"lut":50,"ff":34,"dsp":4,"warnings":63},
+      "fmax": null
+    }
+  },
+  "claims": [],
+  "blocked_by": [
+    "mixed_overlay_pending",
+    "claim_review_pending",
+    "vivado_leaf_63_unapproved_warnings",
+    "golden_sequential_formal_solver_timeout"
+  ],
+  "pr":{"status":"awaiting_implementation_commit","url":null,"draft_only":true,"auto_merge":false,"created":false},
+  "updated_at":"2026-07-12T18:32:00+08:00"
+}

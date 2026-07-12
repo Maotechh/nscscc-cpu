@@ -141,6 +141,16 @@ def verify_contract(contract: Path, manifest: Path, out_dir: Path) -> dict[str, 
         raise
 
 
+def _git_bytes(repo_root: Path, args: list[str]) -> bytes:
+    """Use the canonical contract validator's cross-platform worktree resolver."""
+
+    module = _mul_contract_module(repo_root)
+    try:
+        return module._run_git(repo_root, args)
+    except Exception as error:  # normalize the sibling validator's exception type
+        raise MulDiffError(str(error)) from error
+
+
 def resolve_executable(value: str | None, default: str) -> Path:
     candidate = value or shutil.which(default)
     if not candidate:
@@ -327,6 +337,24 @@ def generic_warning_lines(text: str) -> list[str]:
         if re.search(r"\bwarning\s*:", stripped, flags=re.IGNORECASE):
             lines.append(stripped)
     return lines
+
+
+def unparsed_verilator_warning_lines(
+    text: str, parsed_warnings: list[dict[str, Any]]
+) -> list[str]:
+    """Return every Verilator warning header the structured parser did not bind.
+
+    A warning that cannot be mapped to a source file/line is not safe to waive.  Keeping
+    this separate from ``generic_warning_lines`` also catches unusual ``%Warning-*``
+    formatting emitted by a future Verilator build.
+    """
+
+    parsed_raw = {str(item.get("raw", "")).strip() for item in parsed_warnings}
+    return [
+        stripped
+        for raw in text.splitlines()
+        if (stripped := raw.strip()).startswith("%Warning-") and stripped not in parsed_raw
+    ]
 
 
 def signed32(value: int) -> int:
@@ -663,17 +691,7 @@ def run_golden(args: argparse.Namespace) -> tuple[int, dict[str, Any]]:
         golden = golden_dir / "mul.v"
         # Use cat-file via the contract validator's verified source, then read
         # it back from our own artifact so the compiler input is hash-bound.
-        git_result = subprocess.run(
-            ["git", "cat-file", "blob", blob_ref],
-            cwd=repo_root,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            check=False,
-            timeout=30,
-        )
-        if git_result.returncode != 0:
-            raise MulDiffError(git_result.stderr.decode("utf-8", errors="replace").strip())
-        golden.write_bytes(git_result.stdout)
+        golden.write_bytes(_git_bytes(repo_root, ["cat-file", "blob", blob_ref]))
         if sha256_file(golden) != GOLDEN_SHA256 or golden.stat().st_size != GOLDEN_SIZE:
             raise MulDiffError("compiler golden artifact hash/size differs from locked blob")
         summary["golden_artifact"] = {
@@ -745,6 +763,7 @@ def run_golden(args: argparse.Namespace) -> tuple[int, dict[str, Any]]:
         compile_log = out_dir / "compile.log"
         _write_command_log(compile_log, compile_result)
         warnings = parse_verilator_warnings(str(compile_result["stdout"]), golden)
+        unparsed_warnings = unparsed_verilator_warning_lines(str(compile_result["stdout"]), warnings)
         generic_warnings = generic_warning_lines(str(compile_result["stdout"]))
         summary["compile"] = {
             "argv": compile_argv,
@@ -754,6 +773,7 @@ def run_golden(args: argparse.Namespace) -> tuple[int, dict[str, Any]]:
             "log": str(compile_log),
             "log_sha256": sha256_file(compile_log),
             "warnings": warnings,
+            "unparsed_verilator_warnings": unparsed_warnings,
             "generic_warnings": generic_warnings,
         }
         golden_ref = f"{values[GOLDEN_COMMIT_KEY]}:{GOLDEN_PATH}"
@@ -778,7 +798,7 @@ def run_golden(args: argparse.Namespace) -> tuple[int, dict[str, Any]]:
         summary["waivers"]["warning_error"] = warning_error
         if compile_result["returncode"] != 0 or compile_result["timed_out"]:
             raise MulDiffError("Verilator compile failed or timed out")
-        if generic_warnings or non_golden_warnings:
+        if generic_warnings or non_golden_warnings or unparsed_warnings:
             raise MulDiffError(
                 "compile emitted a warning outside the locked golden waiver scope"
             )
@@ -831,21 +851,271 @@ def run_golden(args: argparse.Namespace) -> tuple[int, dict[str, Any]]:
         write_json(out_dir / "summary.json", summary)
 
 
+def _fresh_output_directory(path: Path) -> Path:
+    """Resolve an output path without following a caller-supplied symlink."""
+
+    raw = Path(path).expanduser()
+    if raw.is_symlink():
+        raise MulDiffError(f"output directory must not be a symlink: {raw}")
+    resolved = raw.resolve()
+    if resolved.exists():
+        if not resolved.is_dir():
+            raise MulDiffError(f"output path must be a directory: {resolved}")
+        if any(resolved.iterdir()):
+            raise MulDiffError(f"output directory must be fresh: {resolved}")
+    resolved.mkdir(parents=True, exist_ok=True)
+    return resolved
+
+
+def _candidate_source(path: Path) -> tuple[Path, str, int]:
+    """Return a regular candidate source and its initial content identity."""
+
+    raw = Path(path).expanduser()
+    if raw.is_symlink() or not raw.is_file():
+        raise MulDiffError(f"candidate RTL must be a regular file: {raw}")
+    resolved = raw.resolve()
+    if resolved.is_symlink() or not resolved.is_file():
+        raise MulDiffError(f"candidate RTL changed to a non-regular file: {resolved}")
+    return resolved, sha256_file(resolved), resolved.stat().st_size
+
+
+def _candidate_source_stable(path: Path, before_sha256: str) -> tuple[bool, str, int]:
+    """Re-check source identity after compilation to catch in-place tampering."""
+
+    if path.is_symlink() or not path.is_file():
+        raise MulDiffError(f"candidate RTL disappeared or became a symlink: {path}")
+    after_sha256 = sha256_file(path)
+    after_size = path.stat().st_size
+    return after_sha256 == before_sha256, after_sha256, after_size
+
+
+def run_candidate(args: argparse.Namespace) -> tuple[int, dict[str, Any]]:
+    """Run the candidate RTL against the independent cycle driver.
+
+    Candidate compilation is stricter than the golden-only gate: every warning is an
+    error, and the candidate source hash must remain stable for the complete compile.
+    """
+
+    started = time.monotonic()
+    out_dir = _fresh_output_directory(args.out_dir)
+    summary = _base_summary(args)
+    summary["gate"] = "mul-candidate-diff"
+    summary["command"] = "candidate"
+    summary["claim_scope"] = "candidate cycle differential against independent mathematical model"
+    manifest_path = Path(args.manifest).expanduser()
+    repo_root = manifest_path.resolve().parent.parent
+    summary["repository_head"] = None
+    try:
+        values = parse_manifest(manifest_path.resolve())
+        summary["manifest"] = {
+            "path": str(manifest_path.resolve()),
+            "sha256": sha256_file(manifest_path.resolve()),
+            "team_golden_candidate": values[GOLDEN_COMMIT_KEY],
+        }
+        contract_dir = out_dir / "contract"
+        contract_evidence = verify_contract(
+            Path(args.contract).expanduser(), manifest_path, contract_dir
+        )
+        summary["contract"] = contract_evidence.get("contract")
+        summary["golden_contract"] = contract_evidence.get("golden")
+        summary["protocol"] = contract_evidence.get("protocol")
+        summary["ports"] = contract_evidence.get("ports")
+        stimulus = contract_evidence.get("stimulus", {})
+        expected_seed = int(str(stimulus.get("seed", "0x0")), 0)
+        expected_random = int(stimulus.get("random_vectors", 0))
+        if args.seed != expected_seed or args.vector_count != expected_random:
+            raise MulDiffError(
+                f"CLI stimulus differs from locked contract: seed/count {args.seed:#x}/{args.vector_count} "
+                f"!= {expected_seed:#x}/{expected_random}"
+            )
+        summary["stimulus"] = {
+            "seed": f"0x{args.seed:x}",
+            "random_vectors": args.vector_count,
+        }
+
+        candidate, source_sha256, source_size = _candidate_source(args.rtl)
+        summary["candidate"] = {
+            "path": str(candidate),
+            "sha256_before": source_sha256,
+            "sha256": source_sha256,
+            "size_before": source_size,
+            "size": source_size,
+        }
+
+        vectors, directed_count = make_vectors(args.seed, args.vector_count)
+        vector_path = out_dir / "vectors.txt"
+        actual_count = write_vector_file(vector_path, vectors)
+        if actual_count != directed_count + args.vector_count:
+            raise MulDiffError("vector file count mismatch")
+        summary["vectors"] = {
+            "path": str(vector_path),
+            "sha256": sha256_file(vector_path),
+            "directed": directed_count,
+            "random": args.vector_count,
+            "total": actual_count,
+        }
+
+        driver_path = out_dir / "driver" / "mul_diff_driver.cpp"
+        _write_driver(driver_path)
+        summary["driver"] = {
+            "path": str(driver_path),
+            "sha256": sha256_file(driver_path),
+            "version": DRIVER_VERSION,
+        }
+        verilator = checked_executable(
+            values, args.verilator, "verilator", "verilator_binary_sha256"
+        )
+        summary["verilator"] = {"path": str(verilator), "sha256": sha256_file(verilator)}
+        version = run_command([str(verilator), "--version"], cwd=out_dir, timeout=args.timeout)
+        version_text = str(version["stdout"]).strip()
+        summary["verilator"]["version"] = version_text
+        if version["returncode"] != 0 or version["timed_out"] or not re.search(
+            r"Verilator\s+5\.020(?:\s|$)", version_text
+        ):
+            raise MulDiffError(f"locked Verilator 5.020 check failed: {version_text}")
+
+        toolchain: dict[str, dict[str, Any]] = {}
+        for tool_name, lock_key in (("make", "make_binary_sha256"), ("g++", "gpp_binary_sha256")):
+            tool = checked_executable(values, None, tool_name, lock_key)
+            tool_version = run_command([str(tool), "--version"], cwd=out_dir, timeout=args.timeout)
+            if tool_version["returncode"] != 0 or tool_version["timed_out"]:
+                raise MulDiffError(f"locked {tool_name} version check failed")
+            lines = str(tool_version["stdout"]).splitlines()
+            toolchain[tool_name] = {
+                "path": str(tool),
+                "sha256": sha256_file(tool),
+                "version": lines[0] if lines else "",
+            }
+        summary["toolchain"] = toolchain
+
+        obj_dir = out_dir / "obj_dir"
+        binary = obj_dir / "Vmul"
+        compile_argv = [
+            str(verilator),
+            "--cc",
+            "--exe",
+            "--build",
+            "--top-module",
+            "mul",
+            "--Mdir",
+            str(obj_dir),
+            "-Wall",
+            "--Wno-fatal",
+            str(candidate),
+            str(driver_path),
+        ]
+        compile_result = run_command(compile_argv, cwd=out_dir, timeout=args.timeout)
+        compile_log = out_dir / "compile.log"
+        _write_command_log(compile_log, compile_result)
+        warnings = parse_verilator_warnings(str(compile_result["stdout"]), candidate)
+        unparsed_warnings = unparsed_verilator_warning_lines(
+            str(compile_result["stdout"]), warnings
+        )
+        generic_warnings = generic_warning_lines(str(compile_result["stdout"]))
+        source_stable, source_after_sha256, source_after_size = _candidate_source_stable(
+            candidate, source_sha256
+        )
+        summary["candidate"].update(
+            {
+                "sha256_after": source_after_sha256,
+                "size_after": source_after_size,
+                "source_stable": source_stable,
+            }
+        )
+        summary["compile"] = {
+            "argv": compile_argv,
+            "returncode": compile_result["returncode"],
+            "timed_out": compile_result["timed_out"],
+            "elapsed_seconds": compile_result["elapsed_seconds"],
+            "log": str(compile_log),
+            "log_sha256": sha256_file(compile_log),
+            "warnings": warnings,
+            "unparsed_verilator_warnings": unparsed_warnings,
+            "generic_warnings": generic_warnings,
+            "warning_count": len(warnings) + len(unparsed_warnings) + len(generic_warnings),
+        }
+        if compile_result["returncode"] != 0 or compile_result["timed_out"]:
+            raise MulDiffError("candidate Verilator compile failed or timed out")
+        if not source_stable:
+            raise MulDiffError("candidate RTL changed during compilation")
+        if warnings or unparsed_warnings or generic_warnings:
+            raise MulDiffError("candidate Verilator -Wall emitted a warning")
+        if not binary.is_file() or binary.stat().st_size == 0:
+            raise MulDiffError(f"candidate Verilator binary artifact is missing: {binary}")
+        summary["binary"] = {
+            "path": str(binary),
+            "sha256": sha256_file(binary),
+            "size": binary.stat().st_size,
+        }
+
+        simulation_argv = [str(binary), str(vector_path), str(actual_count), str(directed_count)]
+        simulation_result = run_command(simulation_argv, cwd=out_dir, timeout=args.timeout)
+        simulation_log = out_dir / "simulation.log"
+        _write_command_log(simulation_log, simulation_result)
+        parsed = parse_driver_result(str(simulation_result["stdout"]))
+        summary["simulation"] = {
+            "argv": simulation_argv,
+            "returncode": simulation_result["returncode"],
+            "timed_out": simulation_result["timed_out"],
+            "elapsed_seconds": simulation_result["elapsed_seconds"],
+            "log": str(simulation_log),
+            "log_sha256": sha256_file(simulation_log),
+            "parser": parsed,
+            "warnings": generic_warning_lines(str(simulation_result["stdout"])),
+        }
+        if simulation_result["returncode"] != 0 or simulation_result["timed_out"]:
+            raise MulDiffError("candidate cycle driver failed or timed out")
+        if summary["simulation"]["warnings"] or "SKIP" in str(simulation_result["stdout"]).upper():
+            raise MulDiffError("candidate cycle driver emitted warning or SKIP")
+        if not parsed["pass_marker"] or parsed["active"] != actual_count or parsed["directed"] != directed_count:
+            raise MulDiffError("candidate cycle driver did not publish the complete PASS marker")
+        if parsed["first_mismatch"]:
+            raise MulDiffError(parsed["first_mismatch"])
+        final_stable, final_sha256, final_size = _candidate_source_stable(
+            candidate, source_sha256
+        )
+        summary["candidate"].update(
+            {
+                "sha256_final": final_sha256,
+                "size_final": final_size,
+                "source_stable": source_stable and final_stable,
+            }
+        )
+        if not final_stable:
+            raise MulDiffError("candidate RTL changed during simulation")
+        summary["counts"] = {
+            "planned": actual_count,
+            "executed": parsed["active"],
+            "passed": parsed["active"],
+            "failed": 0,
+            "skipped": 0,
+        }
+        summary["status"] = "pass"
+        return 0, summary
+    except (
+        MulDiffError,
+        OSError,
+        ValueError,
+        json.JSONDecodeError,
+        subprocess.SubprocessError,
+    ) as error:
+        summary["error"] = str(error)
+        summary.setdefault(
+            "counts", {"planned": 0, "executed": 0, "passed": 0, "failed": 1, "skipped": 0}
+        )
+        return 1, summary
+    finally:
+        summary["repository_head"] = _git_head(repo_root)
+        summary["evaluator_sha256"] = sha256_file(Path(__file__))
+        summary["elapsed_seconds"] = round(time.monotonic() - started, 3)
+        write_json(out_dir / "summary.json", summary)
+
+
 def _git_head(repo_root: Path) -> str | None:
     try:
-        result = subprocess.run(
-            ["git", "rev-parse", "HEAD"],
-            cwd=repo_root,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.DEVNULL,
-            text=True,
-            encoding="ascii",
-            timeout=10,
-            check=False,
-        )
-    except (OSError, subprocess.SubprocessError):
+        return _git_bytes(repo_root, ["rev-parse", "HEAD"]).decode("ascii").strip()
+    except (MulDiffError, OSError, UnicodeError, subprocess.SubprocessError):
         return None
-    return result.stdout.strip() if result.returncode == 0 else None
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -860,6 +1130,17 @@ def build_parser() -> argparse.ArgumentParser:
     golden.add_argument("--timeout", type=int, default=900)
     golden.add_argument("--verilator", type=str, default=None)
     golden.add_argument("--waivers", type=Path, default=Path("lint-waivers.yml"))
+    candidate = subparsers.add_parser(
+        "candidate", help="run candidate RTL against the independent cycle model"
+    )
+    candidate.add_argument("--contract", type=Path, required=True)
+    candidate.add_argument("--manifest", type=Path, required=True)
+    candidate.add_argument("--rtl", type=Path, required=True)
+    candidate.add_argument("--out-dir", type=Path, required=True)
+    candidate.add_argument("--vector-count", type=int, default=DEFAULT_VECTOR_COUNT)
+    candidate.add_argument("--seed", type=lambda value: int(value, 0), default=DEFAULT_SEED)
+    candidate.add_argument("--timeout", type=int, default=900)
+    candidate.add_argument("--verilator", type=str, default=None)
     return parser
 
 
@@ -868,13 +1149,16 @@ def main(argv: list[str] | None = None) -> int:
         print("mul_diff.py requires isolated Python; invoke python -I", file=sys.stderr)
         return 2
     args = build_parser().parse_args(argv)
-    if args.command != "golden":
+    if args.command not in {"golden", "candidate"}:
         return 2
     if args.vector_count < 4096 or args.seed < 0 or args.timeout <= 0:
         print("ERROR: vector-count must be >=4096, seed non-negative, timeout positive", file=sys.stderr)
         return 2
     try:
-        code, summary = run_golden(args)
+        if args.command == "golden":
+            code, summary = run_golden(args)
+        else:
+            code, summary = run_candidate(args)
     except MulDiffError as error:
         print(f"ERROR: {error}", file=sys.stderr)
         return 2

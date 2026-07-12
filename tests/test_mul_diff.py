@@ -238,6 +238,13 @@ class MulDiffCliAndToolTests(unittest.TestCase):
         self.assertEqual(124, result["returncode"])
         self.assertTrue(result["timed_out"])
 
+    def test_output_path_must_be_a_directory(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            output = Path(temporary) / "summary.json"
+            output.write_text("{}\n", encoding="utf-8")
+            with self.assertRaisesRegex(mul_diff.MulDiffError, "must be a directory"):
+                mul_diff._fresh_output_directory(output)
+
 
 class MulDiffGoldenFailClosedTests(unittest.TestCase):
     def _args(self, root: Path) -> SimpleNamespace:
@@ -363,6 +370,168 @@ class MulDiffGoldenFailClosedTests(unittest.TestCase):
         self.assertEqual(0, summary["counts"]["failed"])
         self.assertEqual(0, summary["counts"]["skipped"])
         self.assertEqual(summary["counts"]["planned"], summary["counts"]["executed"])
+
+
+class MulDiffCandidateFailClosedTests(unittest.TestCase):
+    def _args(self, root: Path) -> SimpleNamespace:
+        candidate = root / "mul.v"
+        candidate.write_text("module mul; endmodule\n", encoding="ascii")
+        return SimpleNamespace(
+            contract=CONTRACT_PATH,
+            manifest=MANIFEST_PATH,
+            rtl=candidate,
+            out_dir=root / "out",
+            vector_count=mul_diff.DEFAULT_VECTOR_COUNT,
+            seed=mul_diff.DEFAULT_SEED,
+            timeout=10,
+            verilator=None,
+        )
+
+    def _contract_evidence(self) -> dict[str, object]:
+        return {
+            "contract": {"sha256": "contract"},
+            "golden": {"verified": True},
+            "protocol": {"latency_edges": 1},
+            "ports": {"result": {"width": 64}},
+            "stimulus": {
+                "seed": f"0x{mul_diff.DEFAULT_SEED:x}",
+                "random_vectors": mul_diff.DEFAULT_VECTOR_COUNT,
+            },
+        }
+
+    def _run_mocked(
+        self,
+        root: Path,
+        *,
+        extra_compile_output: str = "",
+        compile_timeout: bool = False,
+        create_binary: bool = True,
+        simulation_output: str | None = None,
+        tamper_source: bool = False,
+    ) -> tuple[int, dict[str, object]]:
+        args = self._args(root)
+        tools = {}
+        for name in ("verilator", "make", "g++"):
+            path = root / name
+            path.write_text(name, encoding="ascii")
+            path.chmod(0o755)
+            tools[name] = path
+        observed_compile: list[str] = []
+
+        def checked_tool(
+            values: dict[str, str], value: str | None, name: str, lock_key: str
+        ) -> Path:
+            del values, value, lock_key
+            return tools[name]
+
+        def fake_run(
+            argv: list[str],
+            *,
+            cwd: Path,
+            timeout: int,
+            environment: dict[str, str] | None = None,
+        ) -> dict[str, object]:
+            del timeout, environment
+            executable = Path(argv[0]).name
+            if argv[1:] == ["--version"]:
+                version = "Verilator 5.020" if executable == "verilator" else f"{executable} test version"
+                return command_result(version + "\n")
+            if "--cc" in argv:
+                observed_compile.extend(argv)
+                if tamper_source:
+                    args.rtl.write_text("module mul; wire tampered; endmodule\n", encoding="ascii")
+                if create_binary:
+                    binary = cwd / "obj_dir" / "Vmul"
+                    binary.parent.mkdir(parents=True, exist_ok=True)
+                    binary.write_bytes(b"mock-verilated-binary")
+                return command_result(
+                    extra_compile_output,
+                    returncode=124 if compile_timeout else 0,
+                    timed_out=compile_timeout,
+                )
+            if simulation_output is not None:
+                return command_result(simulation_output)
+            active = int(argv[2])
+            directed = int(argv[3])
+            return command_result(
+                f"MUL_SELF_CHECK_PASS active={active} directed={directed} "
+                f"perturb={active - 1} reset_hold=32 edges={active + 32}\n"
+            )
+
+        with mock.patch.object(
+            mul_diff, "verify_contract", return_value=self._contract_evidence()
+        ), mock.patch.object(
+            mul_diff, "checked_executable", side_effect=checked_tool
+        ), mock.patch.object(mul_diff, "run_command", side_effect=fake_run):
+            code, summary = mul_diff.run_candidate(args)
+        summary["_observed_compile"] = observed_compile
+        return code, summary
+
+    def test_candidate_pass_records_hash_and_wall(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            code, summary = self._run_mocked(Path(temporary))
+        self.assertEqual(0, code)
+        self.assertEqual("pass", summary["status"])
+        self.assertTrue(summary["candidate"]["source_stable"])
+        self.assertEqual(summary["candidate"]["sha256_before"], summary["candidate"]["sha256_after"])
+        self.assertIn("-Wall", summary["_observed_compile"])
+        self.assertIn("--Wno-fatal", summary["_observed_compile"])
+        self.assertEqual(0, summary["compile"]["warning_count"])
+        self.assertEqual(0, summary["counts"]["skipped"])
+
+    def test_candidate_warning_is_never_waived(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            candidate = root / "mul.v"
+            output = f"%Warning-WIDTH: {candidate}:1:2: candidate warning\n"
+            code, summary = self._run_mocked(root, extra_compile_output=output)
+        self.assertEqual(1, code)
+        self.assertEqual("fail", summary["status"])
+        self.assertIn("emitted a warning", str(summary["error"]))
+        self.assertEqual(1, summary["compile"]["warning_count"])
+        self.assertEqual(1, summary["counts"]["failed"])
+
+    def test_missing_candidate_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            args = self._args(root)
+            args.rtl.unlink()
+            with mock.patch.object(mul_diff, "verify_contract", return_value=self._contract_evidence()):
+                code, summary = mul_diff.run_candidate(args)
+        self.assertEqual(1, code)
+        self.assertEqual("fail", summary["status"])
+        self.assertIn("regular file", str(summary["error"]))
+
+    def test_source_tamper_during_compile_fails(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            code, summary = self._run_mocked(Path(temporary), tamper_source=True)
+        self.assertEqual(1, code)
+        self.assertIn("changed during compilation", str(summary["error"]))
+        self.assertFalse(summary["candidate"]["source_stable"])
+
+    def test_missing_candidate_binary_fails_before_simulation(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            code, summary = self._run_mocked(Path(temporary), create_binary=False)
+        self.assertEqual(1, code)
+        self.assertIn("binary artifact is missing", str(summary["error"]))
+        self.assertNotIn("simulation", summary)
+
+    def test_candidate_mismatch_and_skip_are_failures(self) -> None:
+        mismatch = (
+            "MUL_MISMATCH kind=active edge=1 index=0 signed=0 x=0x00000000 "
+            "y=0x00000000 expected=0x0000000000000000 actual=0x1\n"
+            "MUL_SELF_CHECK_PASS active=4128 directed=32 perturb=4127 reset_hold=32 edges=4160\n"
+        )
+        with tempfile.TemporaryDirectory() as temporary:
+            code, summary = self._run_mocked(Path(temporary), simulation_output=mismatch)
+        self.assertEqual(1, code)
+        self.assertIn("MUL_MISMATCH", str(summary["error"]))
+
+        with tempfile.TemporaryDirectory() as temporary:
+            skipped = "SKIP candidate\n"
+            code, summary = self._run_mocked(Path(temporary), simulation_output=skipped)
+        self.assertEqual(1, code)
+        self.assertIn("SKIP", str(summary["error"]))
 
 
 if __name__ == "__main__":

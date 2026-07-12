@@ -3,7 +3,7 @@
   "target": "mul",
   "module": "mul",
   "generated_file": "mul.v",
-  "generator_main": null,
+  "generator_main": "openla500.execute.GenerateOpenLa500Mul",
   "golden": {
     "commit_key": "team_golden_candidate",
     "path": "rtl/mul.v",
