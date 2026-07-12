@@ -41,10 +41,14 @@
 | 12 | ANDN |
 | 13 | ORN |
 
-每个操作先独立计算 32-bit 结果，再由对应 op bit 扩展为 32-bit mask 后按位 OR。由此得到强制边界行为：
+Golden 先形成各个 named result wire，再由对应 op bit 扩展为 32-bit mask 后按位 OR。
+这些 named result 并非全部相互独立：ADD/SUB/SLT/SLTU 共享由相关 op bit
+共同控制的 adder，SRL/SRA 共享由 SRA bit 控制符号扩展的 right-shifter。
+Spinal 实现必须保留这类共享控制耦合。由此得到强制边界行为：
 
 - `alu_op == 0` 时输出 0。
-- multi-hot 时输出所有被选择操作结果的按位 OR；不得改成优先级 mux。
+- multi-hot 时输出 golden 对应 named result wires 的 masked-OR；不得把共享
+  adder/right-shifter 拆成互不相关的理想操作，也不得改成优先级 mux。
 - ADD/SUB 为 32-bit 模运算，不对外输出 overflow。
 - shift amount 只使用 `alu_src2[4:0]`。
 - SRA 以 `alu_src1` 的 bit 31 做符号扩展。
