@@ -1,16 +1,27 @@
 # 20260713-0729-csr-spinal
 
-- Status: implementation_in_review
-- Branch / Base SHA / Head SHA: `refactor/20260713-0729-csr-spinal` / `f621c7a1e056b9f128b86efddbdd2598b3692ecc` / pending
+- Status: implementation_in_review（未获得 CI/维护者批准，不是完成状态）
+- Branch / Base SHA / Head SHA: `refactor/20260713-0729-csr-spinal` / `f621c7a1e056b9f128b86efddbdd2598b3692ecc` / `9d319136ce20a7bf8547896fb29a58e2f86ce4f4`
 - Owner / Agent: privileged / csr_spinal
-- Selected boundary and selection reason: 活动 CSR 同时解除异常、TLB、地址转换和整机 DiffTest 的依赖，且 golden RTL 可独立执行。
-- Golden reference and locked tool versions: `a158aa8:rtl/csr.v` blob `8d64a8af6c92b3ea0c35d10ced5e06bd12e574f8`；其余版本见 `reference/manifest.lock`。
-- Behavior contract: `docs/contracts/csr.md`
-- Files changed: 新增 `OpenLa500Csr`/生成器、CSR 合同、端口/静态/逐拍差分 gate、DIFFTEST replacement 及本迭代证据；更新 Makefile/status/lint waiver。
-- Attempts and failures: 首次生成因 golden 保留位的部分赋值检查失败，改为显式自保持且不增加复位值；首次 overlay 前发现缺 `TLBNUM` 参数，生成器补固定兼容参数；初始 CPUCFG 负控未命中读口，补齐 CPUCFG directed read 后在 cycle 59 被检测。
-- Commands and gate results: locked Scala 4/4 PASS；Python 307/307 PASS；off/on 生成各 2 次可复现；55/81 exact port PASS；Yosys PASS；Verilator 8 条 legacy waiver 后 PASS；4174 边沿差分 PASS；CPUCFG1 负控按预期 FAIL。
-- Functional/performance/resource delta: locked myCPU 单模块 overlay 编译 returncode 0，但整机仍有 145 条未批准 warning，严格集成 gate 为 FAIL；未运行性能或资源测试。
-- Residual risks: golden baseline 自身 func_lab19 失败；CSR 单元差分不能替代整机异常/随机 DiffTest。
-- Rollback: revert 本迭代提交并恢复 `rtl/csr.v` overlay。
-- PR URL or awaiting state: awaiting_push
-- Next unblocked candidates: exception/CSR pipeline integration, TLB, address translation
+- Selected boundary and selection reason: CSR 是活动异常、TLB、地址转换和 DiffTest 的共享状态边界；先迁移单一 CSR 组件可解除后续特权集成依赖，同时保留旧 top 作为可回退参赛线。
+- Golden reference and locked tool versions: `a158aa8:rtl/csr.v`，blob `8d64a8af6c92b3ea0c35d10ced5e06bd12e574f8`；具体版本见 `reference/manifest.lock`。
+- Behavior contract: `docs/contracts/csr.md`；保留未复位状态、CSR 读写旁路、timer/LLBCTL/异常输入优先级和 `TLBNUM` 参数。
+- Files changed: `OpenLa500Csr`、off/on 生成器、CSR 合同、端口/静态/逐拍差分 gate、DIFFTEST replacement、Makefile/status 与本证据。
+- Attempts and failures:
+  - 初版生成器对 golden 的部分复位值检查过严，改为显式保持并不增加非 golden 复位状态。
+  - 第一次 overlay 发现工具需要 upstream `mycpu.h` 对象；在隔离 Linux reference 的 submodule 对象库补入锁定 upstream commit，不修改官方提交或源码树。
+  - 官方 `func/func_lab19` 编译和仿真命令均返回 0，但 NEMU DiffTest 首个不一致仍在 `0x1c07c79c`；该位置与已知 candidate/golden baseline 失败一致，不能归因于 CSR 单元。
+- Commands and gate results:
+  - 锁定 Scala 4/4 PASS；Python automation 307/307 PASS。
+  - DIFFTEST off/on 各两次生成可复现；端口 55/55、81/81 exact PASS。
+  - Yosys PASS；Verilator CSR 静态检查 PASS（8 个逐文件 legacy waiver，无未批准 warning）。
+  - CSR 逐拍差分 `4174/4174` edges、51 个输出字段，未发现 mismatch；CPUCFG1 负控在 cycle 59、CSR `0x00b1` 检出 mismatch。
+  - locked mixed overlay 编译命令返回 0，但全核严格 warning gate 失败（历史记录 145 条）；本次官方 smoke 报告统计 DUT 273、官方环境 364 条 warning，故不宣称集成通过。
+  - 官方 smoke：configure/build/simulation 各执行 1 次且命令返回 0；功能结果 `failed=1`，DUT `t0=0x00000008`、golden `0x000006e2`，PC=`0x1c07c79c`，总计 172552 instructions / 602903 cycles。
+- Functional/performance/resource delta: 仅证明 CSR 组件生成、接口、静态和逐拍差分；未运行 58/81 全集、随机多 seed、性能、U-Boot、Linux 或 Vivado implementation/timing/bitstream。官方 smoke 失败，不能扩展为 CPU 功能 PASS。
+- Evidence: `evidence/chiplab-doctor.json`、`evidence/chiplab-overlay.json`、`evidence/chiplab-overlay-manifest.json`、`evidence/rtl-smoke.json`、`evidence/gates.json`；原始构建/波形在 `/tmp/csr-gates-final` 与 `/tmp/nscscc-csr-work`，只记录摘要及哈希。
+- Independent review: 本地只读审查确认 replacement 绑定、warning 和 baseline 失败均未被夸大；Claude bridge 在本机缺少可用凭据/模型启动前失败，已在 `reviews/claude-summary.*` 如实标记 `unavailable`，没有把降级审查称为 Claude 结论。
+- Residual risks: CSR 与流水线异常优先级、TLB/地址转换、完整 CommitEvent/DiffTest 尚未整合；whole-core warning 和 baseline mismatch 未解决。
+- Rollback: revert 本迭代提交，删除 `csr.json` replacement overlay，恢复锁定 `rtl/csr.v`；不改写 main 历史。
+- PR URL or awaiting state: awaiting_push（已尝试推送，若网络失败保持本地分支；不自动创建或合并 PR）。
+- Next unblocked candidates: TLB entry/地址转换 typed wrapper，随后异常/CSR pipeline integration；任何 candidate 必须继续使用独立分支和日志。

@@ -1,12 +1,17 @@
-{"command":"git status --short --branch","exit_code":0,"result":"clean iteration branch"}
-{"command":"git rev-parse HEAD","exit_code":0,"result":"f621c7a1e056b9f128b86efddbdd2598b3692ecc"}
-{"command":"git rev-parse --verify origin/main","exit_code":0,"result":"20cae5fd66391f4a1bccc1b87035be421039144b"}
-{"command":"git remote -v","exit_code":0,"result":"origin github Maotechh/nscscc-cpu"}
-{"command":"make scala-check (native WSL clone, locked tool root)","exit_code":0,"result":"4/4 PASS"}
-{"command":"GenerateOpenLa500Csr off/on, two runs each","exit_code":0,"result":"reproducible; 55/81 port variants"}
-{"command":"csr_gate.py port-check off/on","exit_code":0,"result":"55/55 and 81/81 exact ports"}
-{"command":"csr_gate.py static","exit_code":0,"result":"Yosys PASS; Verilator PASS with 8 recorded legacy waivers"}
-{"command":"csr_gate.py diff --cycles 4096","exit_code":0,"result":"CSR_DIFF_PASS cycles=4174"}
-{"command":"csr_gate.py diff against CPUCFG1 mutant","exit_code":1,"result":"expected negative-control mismatch cycle 59 at CSR 0x00b1"}
-{"command":"python3 -I -m unittest discover -s tests","exit_code":0,"result":"307/307 PASS"}
-{"command":"locked myCPU Verilator compile with csr replacement","exit_code":0,"result":"compile compatible; 145 warnings mean strict integrated gate FAIL"}
+{"argv":["git","status","--short","--branch"],"cwd":"csr worktree","exit_code":0,"elapsed_seconds":0.1,"evidence":"clean iteration branch before implementation"}
+{"argv":["git","rev-parse","HEAD"],"cwd":"csr worktree","exit_code":0,"elapsed_seconds":0.1,"evidence":"base f621c7a1e056b9f128b86efddbdd2598b3692ecc"}
+{"argv":["git","rev-parse","--verify","origin/main"],"cwd":"csr worktree","exit_code":0,"elapsed_seconds":0.1,"evidence":"protected origin/main 20cae5fd66391f4a1bccc1b87035be421039144b"}
+{"argv":["git","remote","-v"],"cwd":"csr worktree","exit_code":0,"elapsed_seconds":0.1,"evidence":"origin github Maotechh/nscscc-cpu"}
+{"argv":["make","scala-check","OUT_DIR=/tmp/csr-scala-final"],"cwd":"native Linux source clone","exit_code":0,"elapsed_seconds":0.1,"evidence":"4/4 locked Scala checks PASS"}
+{"argv":["make","csr-generate","OUT_DIR=/tmp/csr-gates-final"],"cwd":"native Linux source clone","exit_code":0,"elapsed_seconds":0.1,"evidence":"off/on each generated twice reproducibly"}
+{"argv":["make","csr-port-check","OUT_DIR=/tmp/csr-gates-final"],"cwd":"native Linux source clone","exit_code":0,"elapsed_seconds":0.1,"evidence":"55/55 and 81/81 exact ports"}
+{"argv":["make","csr-static","OUT_DIR=/tmp/csr-gates-final"],"cwd":"native Linux source clone","exit_code":0,"elapsed_seconds":0.1,"evidence":"Yosys PASS and Verilator PASS with 8 narrow legacy waivers"}
+{"argv":["make","csr-unit","OUT_DIR=/tmp/csr-gates-final"],"cwd":"native Linux source clone","exit_code":0,"elapsed_seconds":0.1,"evidence":"4174/4174 edges and 51 output fields matched"}
+{"argv":["python3","-I","tools/csr_gate.py","diff","--mutant","CPUCFG1"],"cwd":"native Linux source clone","exit_code":1,"elapsed_seconds":0.1,"evidence":"expected negative-control mismatch at cycle 59 / CSR 0x00b1"}
+{"argv":["python3","-I","-m","unittest","discover","-s","tests"],"cwd":"native Linux source clone","exit_code":0,"elapsed_seconds":0.1,"evidence":"307/307 automation tests PASS"}
+{"argv":["python3","-I","tools/refactor.py","chiplab-doctor","--out-dir","/tmp/csr-gates-final","--chiplab-ref","/tmp/chiplab-csr-ref-upstream","--tool-root","/opt/chiplab-tools/root"],"cwd":"native Linux source clone","exit_code":0,"elapsed_seconds":2.8,"evidence":"evidence/chiplab-doctor.json"}
+{"argv":["python3","-I","tools/refactor.py","chiplab-overlay","--dut-source","mixed","--replacement-spec","reference/component-replacements/csr.json","--source-head","9d319136ce20a7bf8547896fb29a58e2f86ce4f4","--diagnostic"],"cwd":"native Linux source clone","exit_code":0,"elapsed_seconds":5.0,"evidence":"evidence/chiplab-overlay.json; replacement_count=1; gate_eligible=false"}
+{"argv":["./configure.sh","--run","func/func_lab19"],"cwd":"isolated chiplab sims/verilator/run_prog","exit_code":0,"elapsed_seconds":0.008,"evidence":"evidence/rtl-smoke.json command 1"}
+{"argv":["make","verilator","testbench","soft_compile"],"cwd":"isolated chiplab sims/verilator/run_prog","exit_code":0,"elapsed_seconds":75.805,"evidence":"evidence/rtl-smoke.json; warning policy fails with DUT 273 and official 364"}
+{"argv":["make","simulation_run_prog"],"cwd":"isolated chiplab sims/verilator/run_prog","exit_code":0,"elapsed_seconds":6.861,"evidence":"evidence/rtl-smoke.json; parser functional FAIL at PC 0x1c07c79c"}
+{"argv":["claude-review","review_start","--tools="],"cwd":"review bridge","exit_code":2,"elapsed_seconds":0.0,"evidence":"job 34823ce9b6b14baea3a28c1beb6c6389 failed before model: missing GEEKPIE_CLAUDE_API_KEY"}

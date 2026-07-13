@@ -2,7 +2,10 @@
   "schema_version": 1,
   "artifacts": [
     {"path": "reference/component-replacements/csr.v", "sha256": "fe93577ac086c395fb043d2bdd8dc712811ad1042fef5797c3fed14eabd0095e", "size": 24118, "retention": "git"},
-    {"path": "/tmp/csr-gates-final", "retention": "local temporary", "description": "raw port/static/diff logs and Verilator build"},
-    {"path": "/tmp/csr-scala-final", "retention": "local temporary", "description": "locked Scala raw logs"}
+    {"path": "logs/refactor/20260713-0729-csr-spinal/evidence/gates.json", "sha256": "af3fa657b25626dec32192ce6bdbe50a51f757a4a20e82d5498cabcaaa4680ea", "size": 1834, "retention": "git"},
+    {"path": "logs/refactor/20260713-0729-csr-spinal/evidence/chiplab-doctor.json", "sha256": "528e1f5f8d54a0657f3dba6ed004f58b6dbfee6dbdab4ff4b5ed0820254966fa", "size": 16196, "retention": "git"},
+    {"path": "logs/refactor/20260713-0729-csr-spinal/evidence/chiplab-overlay.json", "sha256": "46ab03a8f65bd96db3e91b4a78475ee61ab499cffc4a88b6174df9eeb4f86ae0", "size": 2603, "retention": "git"},
+    {"path": "logs/refactor/20260713-0729-csr-spinal/evidence/chiplab-overlay-manifest.json", "sha256": "5f9e89ed154d8366303b75b9a906469c148abf72b7dfbedb4d82c083781aafa2", "size": 26557, "retention": "git"},
+    {"path": "logs/refactor/20260713-0729-csr-spinal/evidence/rtl-smoke.json", "sha256": "14301042a1176cf62ff26e941968607658567228410a77f00fa9b84a5b1bd6e3", "size": 179736, "retention": "git"}
   ]
 }

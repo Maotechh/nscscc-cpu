@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "iteration_id": "20260713-0729-csr-spinal",
+  "status": "unavailable",
+  "job_id": "34823ce9b6b14baea3a28c1beb6c6389",
+  "provider": null,
+  "model": null,
+  "reviewed_head_sha": null,
+  "raw_sha256": "f3c40f00fdefd3fbfd2df77ce7be49d093db7c03448b722f909df478d27abb04",
+  "error": "Required provider environment variable is not set: GEEKPIE_CLAUDE_API_KEY",
+  "open_blocking_count": 1,
+  "fresh_against_head": false,
+  "allow_ready": false,
+  "allow_status_promotion": false,
+  "attempts": 2,
+  "model_started": false,
+  "provenance": {
+    "source": "claude-review-mcp",
+    "raw_path": "reviews/claude-raw.md",
+    "raw_sha256": "f3c40f00fdefd3fbfd2df77ce7be49d093db7c03448b722f909df478d27abb04",
+    "job_id": "34823ce9b6b14baea3a28c1beb6c6389",
+    "provider": null,
+    "model": null,
+    "reviewed_head_sha": null
+  },
+  "issues": [
+    {"id": "claude_unavailable", "status": "open", "detail": "review bridge failed before model start"},
+    {"id": "rtl_smoke", "status": "open", "detail": "first DiffTest mismatch at PC 0x1c07c79c"},
+    {"id": "warning_policy", "status": "open", "detail": "273 DUT and 364 official warnings"}
+  ],
+  "fallback": "independent_local_read_only_review"
+}
