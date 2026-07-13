@@ -28,5 +28,5 @@
     {"name": "claim_review", "status": "unavailable", "evidence": "reviews/claude-summary.json", "reason": "GEEKPIE_CLAUDE_API_KEY missing; local review retained"}
   ],
   "counts": {"planned": 16, "executed": 14, "passed": 11, "failed": 0, "skipped": 2},
-  "pr": {"status": "awaiting_pr", "url": "https://github.com/Maotechh/nscscc-cpu/pull/new/refactor/20260713-1415-icache-spinal", "draft_only": true, "auto_merge": false, "created": false}
+  "pr": {"status": "awaiting_push", "url": "https://github.com/Maotechh/nscscc-cpu/pull/new/refactor/20260713-1415-icache-spinal", "draft_only": true, "auto_merge": false, "created": false, "push_attempted": true, "push_error": "connection reset while pushing metadata commit 0e0c60f"}
 }
