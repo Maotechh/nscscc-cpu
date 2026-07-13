@@ -40,6 +40,10 @@ AXI_BRIDGE_CYCLES ?= 8192
 AXI_BRIDGE_RANDOM_SEED ?= 0x158aa8
 AXI_BRIDGE_GENERATE_DIR ?= $(OUT_DIR)/axi_bridge/generate
 AXI_BRIDGE_RTL ?= $(AXI_BRIDGE_GENERATE_DIR)/rtl/axi_bridge.v
+CSR_GENERATE_DIR ?= $(OUT_DIR)/csr/generate
+CSR_RTL ?= $(CSR_GENERATE_DIR)/rtl/csr.v
+CSR_DIFF_GENERATE_DIR ?= $(OUT_DIR)/csr/generate-diff
+CSR_DIFF_RTL ?= $(CSR_DIFF_GENERATE_DIR)/rtl/csr.v
 CORE_TOP_PORTS ?= reference/core-top.ports.json
 CORE_TOP_GENERATE_DIR ?= $(OUT_DIR)/core_top/generate
 CORE_TOP_WRAPPER_RTL ?= $(CORE_TOP_GENERATE_DIR)/rtl/core_top.v
@@ -49,7 +53,7 @@ CORE_TOP_TRACKED_RTL ?= reference/component-replacements/mycpu_top.v
 CORE_TOP_REPLACEMENT_SPEC ?= reference/component-replacements/core-top.json
 LINT_WAIVERS ?= lint-waivers.yml
 
-.PHONY: doctor scala-cache-bootstrap scala-check elaborate generate port-check lint yosys-check unit formal core-contract-check core-top-contract core-top-package core-top-publish-check mul-contract mul-golden-unit mul-candidate-unit div-contract div-golden-unit div-candidate-unit axi-bridge-contract axi-bridge-candidate-unit chiplab-doctor golden-export chiplab-overlay rtl-smoke identity-compare evidence-check test-automation
+.PHONY: doctor scala-cache-bootstrap scala-check elaborate generate port-check lint yosys-check unit formal core-contract-check core-top-contract core-top-package core-top-publish-check mul-contract mul-golden-unit mul-candidate-unit div-contract div-golden-unit div-candidate-unit axi-bridge-contract axi-bridge-candidate-unit csr-generate csr-port-check csr-static csr-unit chiplab-doctor golden-export chiplab-overlay rtl-smoke identity-compare evidence-check test-automation
 
 doctor:
 	$(PYTHON) -I tools/refactor.py doctor --out-dir "$(OUT_DIR)" $(if $(VIVADO_HOME),--vivado-home "$(VIVADO_HOME)",)
@@ -196,6 +200,20 @@ axi-bridge-contract:
 
 axi-bridge-candidate-unit:
 	$(PYTHON) -I tools/axi_bridge_gate.py diff --contract "$(AXI_BRIDGE_CONTRACT)" --rtl "$(AXI_BRIDGE_RTL)" --out-dir "$(OUT_DIR)/axi_bridge/unit" --cycles "$(AXI_BRIDGE_CYCLES)" --seed "$(AXI_BRIDGE_RANDOM_SEED)"
+
+csr-generate:
+	$(PYTHON) -I tools/spinal_generate.py --manifest "reference/manifest.lock" --spinal-dir "spinal" --tool-root "$(CHIPLAB_TOOL_ROOT)" --main-class "openla500.privileged.GenerateOpenLa500Csr" --expected-module "csr" --expected-file "csr.v" --out-dir "$(CSR_GENERATE_DIR)" --runs 2
+	$(PYTHON) -I tools/spinal_generate.py --manifest "reference/manifest.lock" --spinal-dir "spinal" --tool-root "$(CHIPLAB_TOOL_ROOT)" --main-class "openla500.privileged.GenerateOpenLa500CsrDiff" --expected-module "csr" --expected-file "csr.v" --out-dir "$(CSR_DIFF_GENERATE_DIR)" --runs 2
+
+csr-port-check:
+	$(PYTHON) -I tools/csr_gate.py port-check --rtl "$(CSR_RTL)" --out-dir "$(OUT_DIR)/csr/port-off"
+	$(PYTHON) -I tools/csr_gate.py port-check --diff-test --rtl "$(CSR_DIFF_RTL)" --out-dir "$(OUT_DIR)/csr/port-on"
+
+csr-static:
+	$(PYTHON) -I tools/csr_gate.py static --rtl "$(CSR_DIFF_RTL)" --out-dir "$(OUT_DIR)/csr/static"
+
+csr-unit:
+	$(PYTHON) -I tools/csr_gate.py diff --repo "." --rtl "$(CSR_DIFF_RTL)" --out-dir "$(OUT_DIR)/csr/unit" --cycles 4096
 
 chiplab-doctor:
 	$(PYTHON) -I tools/refactor.py chiplab-doctor --out-dir "$(OUT_DIR)" --chiplab-ref "$(CHIPLAB_REFERENCE)" --tool-root "$(CHIPLAB_TOOL_ROOT)"

@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "iteration_id": "20260713-0729-csr-spinal",
+  "source_head": "pending",
+  "golden": {
+    "commit": "a158aa8ab4d49cece1a0fe488d7ac7dc02bd8cf6",
+    "path": "rtl/csr.v",
+    "git_blob": "8d64a8af6c92b3ea0c35d10ced5e06bd12e574f8",
+    "sha256": "7349b5b83975b6da8efe69f42d8ee43d93312f7e13def4ed2f6c48a3a868c433"
+  },
+  "scala": {"status": "pass", "executed": 4, "passed": 4, "failed": 0, "skipped": 0},
+  "python_automation": {"status": "pass", "executed": 307, "passed": 307, "failed": 0, "skipped": 0},
+  "generation": {
+    "difftest_off": {"status": "pass", "runs": 2, "sha256": "e5a3acb43fcc1150ee39b395fa47ce13b0c98bdeea5fb3b1a0a1ffc9bccf6d16", "size": 22077},
+    "difftest_on": {"status": "pass", "runs": 2, "sha256": "fe93577ac086c395fb043d2bdd8dc712811ad1042fef5797c3fed14eabd0095e", "size": 24118}
+  },
+  "port_contract": {
+    "difftest_off": {"status": "pass", "ports": 55},
+    "difftest_on": {"status": "pass", "ports": 81}
+  },
+  "rtl_static": {
+    "status": "pass",
+    "yosys": "pass",
+    "verilator": "pass_with_8_narrow_waivers",
+    "unapproved_warnings": 0
+  },
+  "cycle_differential": {
+    "status": "pass",
+    "edges": 4174,
+    "random_edges": 4096,
+    "compared_outputs": 51,
+    "first_mismatch": null,
+    "x_model": "verilator_2_state_x_initial_zero"
+  },
+  "negative_control": {
+    "status": "detected",
+    "mutation": "CPUCFG1 reset constant 0x0001f1f4 -> 0x0001f1f5",
+    "first_mismatch_cycle": 59,
+    "rd_addr": "0x00b1"
+  },
+  "mixed_compile": {
+    "status": "compile_compatible_only",
+    "locked_chiplab_commit": "a2e11b38bc5c85abb4408a8e0c0f5ce903c7ba31",
+    "locked_mycpu_gitlink": "aa3bde1f3e720e71c2c78d6b81930d797b810149",
+    "verilator_returncode": 0,
+    "warning_count": 145,
+    "strict_gate_status": "fail_due_to_unapproved_whole_core_warnings"
+  }
+}

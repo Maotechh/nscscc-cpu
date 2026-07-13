@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "replacements": [
+    {
+      "target": "rtl/csr.v",
+      "source": "reference/component-replacements/csr.v",
+      "base_sha256": "7349b5b83975b6da8efe69f42d8ee43d93312f7e13def4ed2f6c48a3a868c433",
+      "replacement_sha256": "fe93577ac086c395fb043d2bdd8dc712811ad1042fef5797c3fed14eabd0095e"
+    }
+  ]
+}

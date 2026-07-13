@@ -44,6 +44,94 @@
       "reason": "Golden intentionally truncates TmpR from 33 to 32 output bits. This waiver applies only to the locked golden oracle.",
       "owner": "verification",
       "expires_when": "golden div oracle is retired after a release-gate-equivalent Spinal replacement"
+    },
+    {
+      "id": "csr-legacy-unused-tlbehi-input-bits",
+      "rule": "UNUSEDSIGNAL",
+      "file": "generated csr.v",
+      "line": 58,
+      "source_sha256": "fe93577ac086c395fb043d2bdd8dc712811ad1042fef5797c3fed14eabd0095e",
+      "scope": "candidate_csr_static_lint",
+      "reason": "The exact legacy TLBEHI read port includes reserved bits which a158aa8 intentionally does not consume; changing its width would break the csr port contract.",
+      "owner": "privileged",
+      "expires_when": "the locked csr interface changes or the legacy TLB fields consume these reserved bits"
+    },
+    {
+      "id": "csr-legacy-unused-tlbelo0-input-bits",
+      "rule": "UNUSEDSIGNAL",
+      "file": "generated csr.v",
+      "line": 59,
+      "source_sha256": "fe93577ac086c395fb043d2bdd8dc712811ad1042fef5797c3fed14eabd0095e",
+      "scope": "candidate_csr_static_lint",
+      "reason": "The exact legacy TLBELO0 read port includes reserved bits which a158aa8 intentionally does not consume; changing its width would break the csr port contract.",
+      "owner": "privileged",
+      "expires_when": "the locked csr interface changes or the legacy TLB fields consume these reserved bits"
+    },
+    {
+      "id": "csr-legacy-unused-tlbelo1-input-bits",
+      "rule": "UNUSEDSIGNAL",
+      "file": "generated csr.v",
+      "line": 60,
+      "source_sha256": "fe93577ac086c395fb043d2bdd8dc712811ad1042fef5797c3fed14eabd0095e",
+      "scope": "candidate_csr_static_lint",
+      "reason": "The exact legacy TLBELO1 read port includes reserved bits which a158aa8 intentionally does not consume; changing its width would break the csr port contract.",
+      "owner": "privileged",
+      "expires_when": "the locked csr interface changes or the legacy TLB fields consume these reserved bits"
+    },
+    {
+      "id": "csr-legacy-unused-tlbidx-input-bits",
+      "rule": "UNUSEDSIGNAL",
+      "file": "generated csr.v",
+      "line": 61,
+      "source_sha256": "fe93577ac086c395fb043d2bdd8dc712811ad1042fef5797c3fed14eabd0095e",
+      "scope": "candidate_csr_static_lint",
+      "reason": "The exact legacy TLBIDX read port includes reserved bits which a158aa8 intentionally does not consume; changing its width would break the csr port contract.",
+      "owner": "privileged",
+      "expires_when": "the locked csr interface changes or the legacy TLB fields consume these reserved bits"
+    },
+    {
+      "id": "csr-legacy-unused-brk-state",
+      "rule": "UNUSEDSIGNAL",
+      "file": "generated csr.v",
+      "line": 124,
+      "source_sha256": "fe93577ac086c395fb043d2bdd8dc712811ad1042fef5797c3fed14eabd0095e",
+      "scope": "candidate_csr_static_lint",
+      "reason": "BRK is a write-only chipscope software hook in the active golden RTL and therefore has no architectural output.",
+      "owner": "privileged",
+      "expires_when": "BRK gains an approved observable contract or is removed from the active golden behavior"
+    },
+    {
+      "id": "csr-legacy-disable-cache-upper-bits",
+      "rule": "UNUSEDSIGNAL",
+      "file": "generated csr.v",
+      "line": 125,
+      "source_sha256": "fe93577ac086c395fb043d2bdd8dc712811ad1042fef5797c3fed14eabd0095e",
+      "scope": "candidate_csr_static_lint",
+      "reason": "The legacy CSR stores all 32 written bits but exposes only bit zero as disable_cache_out.",
+      "owner": "privileged",
+      "expires_when": "the disable-cache CSR receives a defined readback or wider output contract"
+    },
+    {
+      "id": "csr-legacy-interrupt-port-name",
+      "rule": "SYMRSVDWORD",
+      "file": "generated csr.v",
+      "line": 18,
+      "source_sha256": "fe93577ac086c395fb043d2bdd8dc712811ad1042fef5797c3fed14eabd0095e",
+      "scope": "candidate_csr_static_lint",
+      "reason": "interrupt is the exact active Verilog port name; renaming it would break the replacement contract.",
+      "owner": "privileged",
+      "expires_when": "the locked csr port contract permits renaming interrupt"
+    },
+    {
+      "id": "csr-locked-tlbnum-compat-parameter",
+      "rule": "UNUSEDPARAM",
+      "file": "generated csr.v",
+      "line": 7,
+      "source_sha256": "fe93577ac086c395fb043d2bdd8dc712811ad1042fef5797c3fed14eabd0095e",
+      "scope": "candidate_csr_static_lint",
+      "reason": "The active mycpu_top passes TLBNUM positionally; the locked replacement supports TLBNUM=32 and retains the parameter solely for source compatibility.",
+      "owner": "privileged",
+      "expires_when": "mycpu_top no longer parameterizes csr or the CSR implementation supports a variable TLB entry count"
     }
   ]
 }
