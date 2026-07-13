@@ -60,6 +60,12 @@
       "source": "reference/component-replacements/addr_trans.v",
       "base_sha256": "b25c7585ca410363cbbb25e6669687083687fed1a0641a91ff58b7837c371697",
       "replacement_sha256": "c7920aa144dfafb60ce89cca9f8267c185909437cf86124d187dd49ba0a532f1"
+    },
+    {
+      "target": "rtl/wb_stage.v",
+      "source": "reference/component-replacements/wb_stage.v",
+      "base_sha256": "8a6f6cb282d152e4b43673397b8c00f598e3d116589e5797fb6feaadbc032a09",
+      "replacement_sha256": "a7899e91ba02dec7b2c4cd798969ae012c0c2bee5efe83bda224896f406373bc"
     }
   ]
 }
