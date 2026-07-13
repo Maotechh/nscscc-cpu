@@ -145,6 +145,8 @@
       "expires_when": "the generator and overlay support a manifest-verified multi-file component package"
     },
     {
+      "id": "axi-bridge-inst-write-dead-compat",
+      "rule": "UNUSEDSIGNAL",
       "file": "reference/component-replacements/axi_bridge.v",
       "line": 52,
       "source_sha256": "4c307033b1d79da6cc257d314d92ef69830ed87cddc24eb7269ff278927e70a0",
@@ -163,6 +165,72 @@
       "reason": "The locked instruction cache captures but never consumes op/wstrb/wdata and never consumes wr_rdy; exact 34-port compatibility requires retaining these four dead inputs.",
       "owner": "memory",
       "expires_when": "the legacy I-cache compatibility boundary is retired"
+    },
+    {
+      "id": "addr-trans-single-file-child-module-name",
+      "rule": "DECLFILENAME",
+      "file": "generated addr_trans.v:268",
+      "line": 268,
+      "source_sha256": "c7920aa144dfafb60ce89cca9f8267c185909437cf86124d187dd49ba0a532f1",
+      "scope": "candidate_addr_trans_static_lint",
+      "reason": "单文件 replacement 必须同时携带 addr_trans 顶层和 Spinal 内嵌的 openla500_tlb_entry_impl；拆分文件会破坏官方 overlay 的单文件依赖合同。",
+      "owner": "privileged",
+      "expires_when": "official overlay permits a separate committed TLB dependency file"
+    },
+    {
+      "id": "addr-trans-legacy-unused-tlbehi-reserved",
+      "rule": "UNUSEDSIGNAL",
+      "file": "generated addr_trans.v:42",
+      "line": 42,
+      "source_sha256": "c7920aa144dfafb60ce89cca9f8267c185909437cf86124d187dd49ba0a532f1",
+      "scope": "candidate_addr_trans_static_lint",
+      "reason": "精确保留 TLBEHI 32-bit 端口，活动逻辑只消费 VPPN[31:13]。",
+      "owner": "privileged",
+      "expires_when": "legacy addr_trans port contract changes"
+    },
+    {
+      "id": "addr-trans-legacy-unused-tlbelo-reserved",
+      "rule": "UNUSEDSIGNAL",
+      "file": "generated addr_trans.v:43-44",
+      "line": 43,
+      "source_sha256": "c7920aa144dfafb60ce89cca9f8267c185909437cf86124d187dd49ba0a532f1",
+      "scope": "candidate_addr_trans_static_lint",
+      "reason": "精确保留 TLBELO0/TLBELO1 端口，reserved bits 不进入活动字段。",
+      "owner": "privileged",
+      "expires_when": "legacy addr_trans port contract changes"
+    },
+    {
+      "id": "addr-trans-legacy-unused-tlbidx-reserved",
+      "rule": "UNUSEDSIGNAL",
+      "file": "generated addr_trans.v:45",
+      "line": 45,
+      "source_sha256": "c7920aa144dfafb60ce89cca9f8267c185909437cf86124d187dd49ba0a532f1",
+      "scope": "candidate_addr_trans_static_lint",
+      "reason": "精确保留 TLBIDX 端口，活动逻辑只消费 index/PS/E 字段。",
+      "owner": "privileged",
+      "expires_when": "legacy addr_trans port contract changes"
+    },
+    {
+      "id": "addr-trans-legacy-unused-dmw-reserved",
+      "rule": "UNUSEDSIGNAL",
+      "file": "generated addr_trans.v:56-57",
+      "line": 56,
+      "source_sha256": "c7920aa144dfafb60ce89cca9f8267c185909437cf86124d187dd49ba0a532f1",
+      "scope": "candidate_addr_trans_static_lint",
+      "reason": "精确保留 DMW CSR 32-bit 端口，实际物理 tag 只消费窗口域字段。",
+      "owner": "privileged",
+      "expires_when": "DMW contract changes"
+    },
+    {
+      "id": "addr-trans-physical-low-offset",
+      "rule": "UNUSEDSIGNAL",
+      "file": "generated addr_trans.v:116-117",
+      "line": 116,
+      "source_sha256": "c7920aa144dfafb60ce89cca9f8267c185909437cf86124d187dd49ba0a532f1",
+      "scope": "candidate_addr_trans_static_lint",
+      "reason": "物理地址寄存器低 12 位由 index/offset 独立端口表达，保持 exact golden 组合合同。",
+      "owner": "privileged",
+      "expires_when": "addr_trans exposes a full physical address contract"
     }
   ]
 }

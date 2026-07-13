@@ -52,6 +52,9 @@ ICACHE_CONTRACT ?= reference/component-contracts/icache.json
 ICACHE_CYCLES ?= 12000
 ICACHE_GENERATE_DIR ?= $(OUT_DIR)/icache/generate
 ICACHE_RTL ?= $(ICACHE_GENERATE_DIR)/rtl/icache.v
+TLB_RTL ?= reference/component-replacements/tlb_entry.v
+TLB_CYCLES ?= 8192
+TLB_RANDOM_SEED ?= 0x158aa8
 CORE_TOP_PORTS ?= reference/core-top.ports.json
 CORE_TOP_GENERATE_DIR ?= $(OUT_DIR)/core_top/generate
 CORE_TOP_WRAPPER_RTL ?= $(CORE_TOP_GENERATE_DIR)/rtl/core_top.v
@@ -182,8 +185,10 @@ else ifeq ($(TARGET),icache)
 	$(PYTHON) -I tools/icache_gate.py diff --contract "$(ICACHE_CONTRACT)" --rtl "$(ICACHE_RTL)" --out-dir "$(OUT_DIR)/icache/unit" --cycles "$(ICACHE_CYCLES)"
 else ifeq ($(TARGET),alu)
 	$(PYTHON) -I tools/alu_gate.py unit --target "$(TARGET)" --manifest "reference/manifest.lock" --spinal-dir "spinal" --tool-root "$(CHIPLAB_TOOL_ROOT)" --out-dir "$(OUT_DIR)/alu/unit" $(if $(JAVA_HOME),--java-home "$(JAVA_HOME)",)
+else ifeq ($(TARGET),tlb)
+	$(PYTHON) -I tools/tlb_gate.py diff --repo "." --rtl "$(TLB_RTL)" --out-dir "$(OUT_DIR)/tlb/unit" --cycles "$(TLB_CYCLES)" --seed "$(TLB_RANDOM_SEED)"
 else
-	@echo "ERROR: unsupported TARGET=$(TARGET); expected alu, mul, or div" >&2; exit 2
+	@echo "ERROR: unsupported TARGET=$(TARGET); expected alu, mul, div, or tlb" >&2; exit 2
 endif
 
 formal:
