@@ -4,7 +4,7 @@
   "status": "differential_pass",
   "branch": "refactor/20260713-2119-mem-stage-spinal",
   "base_sha": "b2946f8ac93fc9ccfa9c8748bb53f444976c36cb",
-  "head_sha": null,
+  "head_sha": "81bb0c4",
   "boundary": "memory_stage",
   "golden": {
     "revision": "a158aa8ab4d49cece1a0fe488d7ac7dc02bd8cf6",
@@ -36,5 +36,9 @@
     "official_func_pass": false,
     "complete_refactor": false
   },
-  "pr_state": "awaiting_push"
+  "review": {
+    "claude": "tool_error_missing_GEEKPIE_CLAUDE_API_KEY",
+    "claim_review_passed": false
+  },
+  "pr_state": "draft_awaiting_local_review"
 }
