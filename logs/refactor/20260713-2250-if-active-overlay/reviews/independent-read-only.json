@@ -1,0 +1,9 @@
+{
+  "schema_version": 1,
+  "status": "completed",
+  "reviewed_source_head": "f0b5e2410fccba7c69f143dabed3e50da841b5b4",
+  "blocking_fixed": ["evidence tracked in final commit","summary gate states corrected","status source_head corrected","diagnostic/official claims constrained"],
+  "open": ["official func_lab19 mismatch at 0x1c07c79c","245 DUT warnings","373 environment warnings","Claude bridge unavailable","full regression not executed"],
+  "allowed_claims": ["13-item static reachability","13 committed blobs accepted by diagnostic overlay","no earlier visible divergence in this one baseline-matching trace"],
+  "forbidden_claims": ["active integration pass","official smoke pass","whole-core IF equivalence","complete refactor"]
+}

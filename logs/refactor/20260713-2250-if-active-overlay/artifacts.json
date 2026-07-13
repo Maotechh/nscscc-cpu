@@ -1,5 +1,21 @@
 {
   "schema_version": 1,
   "iteration_id": "20260713-2250-if-active-overlay",
-  "artifacts": []
+  "artifacts": [
+    {"path":"evidence/reachability.json","sha256":"36669826434916b453b5cacd8fb840187332bd041005fb91860e25ee370e5661","size":479,"source_sha256":"ee61a79519824e08d257ff1b1ee3ad003c72585f438c0a08e9dbf94cfe7c6a04","retention":"git","gate_eligible":true},
+    {"path":"evidence/scala-summary.json","sha256":"742adc4af9f8b8fe3868bfad64af1b8e817ca35dbd3719f3eb9e3be6e3b00464","size":280,"source_sha256":"eef7cb729617eec7657df135769a92f108b1835749ad5c9177352b0ea44f73ef","retention":"git","gate_eligible":true},
+    {"path":"evidence/chiplab-doctor-summary.json","sha256":"567d277ef93f8e5023d87d08ec8feb35a8c9939f68d6ec16a28bd3007b6ca8fe","size":396,"source_sha256":"72f79b33230fe5754f0cd22cfa051db202058d34d2adf9c1e7896ec0c406beb3","retention":"git","gate_eligible":true},
+    {"path":"evidence/chiplab-overlay.json","sha256":"378664a09ddd966ad49a4a261ccb362abce1757643a9c53695723455116731bc","size":884,"source_sha256":"e800aefaadaddd98b72b602108ed077fa2ee2217ed02f9e0dc0d86438ef1d0ba","retention":"git","gate_eligible":false},
+    {"path":"evidence/rtl-smoke.json","sha256":"ad319dcc29ad665ee75ed55d8fe977ada853d3eb742725fca78fec8393d865e5","size":952,"source_sha256":"002a06c2611d73b5dc7cefb3b244a7f2f193d572c808e004ee098fc3c3a44ff9","retention":"git","gate_eligible":false},
+    {"path":"reviews/independent-read-only.json","sha256":"47d536023b48064f5d45466f890ef89a0558e095226f9baa4572e40367e9d699","size":740,"retention":"git","gate_eligible":false}
+  ],
+  "external_locators": [
+    {"path":"/tmp/if-active-reachability/replacement-reachability/reachability.json","sha256":"ee61a79519824e08d257ff1b1ee3ad003c72585f438c0a08e9dbf94cfe7c6a04","size":2149,"retention":"local-until-explicit-clean"},
+    {"path":"/tmp/if-active-scala/scala-check/summary.json","sha256":"eef7cb729617eec7657df135769a92f108b1835749ad5c9177352b0ea44f73ef","size":94907,"retention":"local-until-explicit-clean"},
+    {"path":"/tmp/if-active-chiplab/reports/chiplab-doctor.json","sha256":"72f79b33230fe5754f0cd22cfa051db202058d34d2adf9c1e7896ec0c406beb3","size":16175,"retention":"local-until-explicit-clean"},
+    {"path":"/tmp/if-active-chiplab/reports/iterations/20260713-2250-if-active-overlay/chiplab-overlay.json","sha256":"e800aefaadaddd98b72b602108ed077fa2ee2217ed02f9e0dc0d86438ef1d0ba","size":7806,"retention":"local-until-explicit-clean"},
+    {"path":"/tmp/if-active-chiplab/reports/iterations/20260713-2250-if-active-overlay/chiplab-overlay-manifest.json","sha256":"4b112c897a89a7935b1a5e700fbf3d45a9457261ef54575ca504c5972a27d93c","size":38551,"retention":"local-until-explicit-clean"},
+    {"path":"/tmp/if-active-chiplab/reports/iterations/20260713-2250-if-active-overlay/rtl-smoke.json","sha256":"002a06c2611d73b5dc7cefb3b244a7f2f193d572c808e004ee098fc3c3a44ff9","size":188734,"retention":"local-until-explicit-clean"},
+    {"path":"/tmp/nscscc-refactor-work/20260713-2250-if-active-overlay/sims/verilator/run_prog/log/func/func_lab19_log/simu_trace.txt","sha256":"8efa7942ab6d4702129dc0c7eb0676c6cfcd87361ee8ecf99411567c3db38acb","size":13805441,"retention":"local-until-explicit-clean"}
+  ]
 }

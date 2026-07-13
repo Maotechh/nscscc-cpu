@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "iteration_id": "20260713-2250-if-active-overlay",
+  "status": "failed",
+  "job_id": "6962eeba98f34f4a888c13ab6d3f7638",
+  "raw_sha256": "45145843e6343ff7c82ef793312746e9698046babbe8f7e38535382645e802f6",
+  "provider": null,
+  "model": null,
+  "reviewed_head_sha": null,
+  "error": "Required provider environment variable is not set: GEEKPIE_CLAUDE_API_KEY",
+  "open_blocking_count": 1,
+  "fresh_against_head": false,
+  "allow_ready": false,
+  "allow_status_promotion": false,
+  "provenance": {"source":"claude-review-mcp","raw_path":"reviews/claude-raw.md","raw_sha256":"45145843e6343ff7c82ef793312746e9698046babbe8f7e38535382645e802f6","job_id":"6962eeba98f34f4a888c13ab6d3f7638","provider":null,"model":null,"reviewed_head_sha":null}
+}

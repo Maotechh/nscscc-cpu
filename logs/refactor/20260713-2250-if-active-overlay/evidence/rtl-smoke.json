@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "status": "fail",
+  "actual_case": "func/func_lab19",
+  "functional": {"planned":1,"executed":1,"passed":0,"failed":1,"skipped":0},
+  "native_commands": {"configure_exit":0,"build_exit":0,"simulation_exit":0},
+  "instructions": 172552,
+  "first_mismatch_pc": "0x1c07c79c",
+  "first_mismatch": "t0(r12) different at pc = 0x1c07c79c, right= 0x000006e2, wrong = 0x00000008",
+  "trace_sha256": "8efa7942ab6d4702129dc0c7eb0676c6cfcd87361ee8ecf99411567c3db38acb",
+  "baseline_trace_same": true,
+  "dut_warnings": 245,
+  "official_environment_warnings": 373,
+  "warning_policy": "fail: no file/line-specific approved waivers",
+  "source_report": "/tmp/if-active-chiplab/reports/iterations/20260713-2250-if-active-overlay/rtl-smoke.json",
+  "source_sha256": "002a06c2611d73b5dc7cefb3b244a7f2f193d572c808e004ee098fc3c3a44ff9",
+  "claim_scope": "no earlier visible divergence observed in this one trace; official smoke did not pass"
+}

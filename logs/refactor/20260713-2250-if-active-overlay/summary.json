@@ -4,16 +4,23 @@
   "status": "draft",
   "branch": "refactor/20260713-2250-if-active-overlay",
   "base_sha": "95da435a537703c091fa97bf6b4d352255207556",
-  "head_sha": "14036534e2b148223370e6a145dabdc3b3110418",
+  "head_sha": "f0b5e2410fccba7c69f143dabed3e50da841b5b4",
   "selected_boundary": "if_stage_active_replacement",
   "gates": {
-    "reachability": {"status":"pending","planned":13,"executed":0,"passed":0,"failed":0,"skipped":13},
-    "scala": {"status":"pending","planned":4,"executed":0,"passed":0,"failed":0,"skipped":4},
-    "automation_tests": {"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":1},
-    "chiplab_doctor": {"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":1},
-    "diagnostic_overlay": {"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":1},
-    "func_smoke": {"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":1},
-    "claim_review": {"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":1}
+    "reachability": {"status":"pass","planned":13,"executed":13,"passed":13,"failed":0,"skipped":0,"evidence":"evidence/reachability.json"},
+    "scala": {"status":"pass","planned":4,"executed":4,"passed":4,"failed":0,"skipped":0,"evidence":"evidence/scala-summary.json"},
+    "automation_tests": {"status":"warning","planned":666,"executed":656,"passed":656,"failed":0,"skipped":10,"evidence":"commands.jsonl"},
+    "chiplab_doctor": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0,"evidence":"evidence/chiplab-doctor-summary.json"},
+    "diagnostic_overlay": {"status":"warning","planned":1,"executed":1,"passed":0,"failed":1,"skipped":0,"gate_eligible":false,"replacement_count":13,"evidence":"evidence/chiplab-overlay.json"},
+    "func_smoke": {"status":"fail","planned":1,"executed":1,"passed":0,"failed":1,"skipped":0,"first_mismatch_pc":"0x1c07c79c","instructions":172552,"dut_warnings":245,"official_environment_warnings":373,"evidence":"evidence/rtl-smoke.json"},
+    "claim_review": {"status":"warning","planned":1,"executed":1,"passed":0,"failed":1,"skipped":0,"evidence":"reviews/claude-summary.json","reason":"Claude bridge missing GEEKPIE_CLAUDE_API_KEY"}
   },
-  "required_gates":["reachability","scala","automation_tests","chiplab_doctor","diagnostic_overlay","func_smoke","claim_review"]
+  "required_gates":["reachability","scala","automation_tests","chiplab_doctor","diagnostic_overlay","func_smoke","claim_review"],
+  "claims":[
+    {"claim":"13 committed replacements including if_stage are statically reachable and accepted by a clean diagnostic overlay","support":"partial","evidence":["evidence/reachability.json","evidence/chiplab-overlay.json"]},
+    {"claim":"this single func_lab19 trace observed no divergence earlier than the locked baseline mismatch","support":"partial","evidence":["evidence/rtl-smoke.json","../20260710-2026-baseline/evidence/rtl-smoke-summary.json"]},
+    {"claim":"official func_smoke passes","support":"unsupported","evidence":"evidence/rtl-smoke.json"},
+    {"claim":"IF is integrated_pass or the SpinalHDL refactor is complete","support":"unsupported","evidence":null}
+  ],
+  "residual_risks":["official baseline mismatch at 0x1c07c79c","245 unapproved DUT warnings","diagnostic overlay is gate_eligible=false","Claude API key unavailable","full regression not executed"]
 }

@@ -1,0 +1,9 @@
+{
+  "schema_version": 1,
+  "status": "pass",
+  "selected_count": 13,
+  "if_stage": {"target":"rtl/if_stage.v","module":"if_stage","reachable":true,"replacement_sha256":"4d86248239becafcbbe605a4c80f059c3cacc8f2ae7d34af50b6b68fe1713b1a"},
+  "source_report": "/tmp/if-active-reachability/replacement-reachability/reachability.json",
+  "source_sha256": "ee61a79519824e08d257ff1b1ee3ad003c72585f438c0a08e9dbf94cfe7c6a04",
+  "claim_scope": "static locked-topology reachability only"
+}

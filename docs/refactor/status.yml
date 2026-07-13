@@ -2,7 +2,7 @@ schema_version: 1
 updated_at: "2026-07-13T22:50:00+08:00"
 active_iteration: "20260713-2250-if-active-overlay"
 active_branch: "refactor/20260713-2250-if-active-overlay"
-source_head: "95da435a537703c091fa97bf6b4d352255207556"
+source_head: "f0b5e2410fccba7c69f143dabed3e50da841b5b4"
 
 boundaries:
   legacy_shell_active_replacement_overlay:

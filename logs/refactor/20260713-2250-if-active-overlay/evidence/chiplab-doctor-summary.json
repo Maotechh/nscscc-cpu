@@ -1,0 +1,9 @@
+{
+  "schema_version": 1,
+  "status": "pass",
+  "chiplab_commit": "a2e11b38bc5c85abb4408a8e0c0f5ce903c7ba31",
+  "mycpu_gitlink": "aa3bde1f3e720e71c2c78d6b81930d797b810149",
+  "repo_head_sha": "f0b5e2410fccba7c69f143dabed3e50da841b5b4",
+  "source_report": "/tmp/if-active-chiplab/reports/chiplab-doctor.json",
+  "source_sha256": "72f79b33230fe5754f0cd22cfa051db202058d34d2adf9c1e7896ec0c406beb3"
+}

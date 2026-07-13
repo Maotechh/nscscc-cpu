@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "status": "diagnostic",
+  "gate_eligible": false,
+  "source_head": "f0b5e2410fccba7c69f143dabed3e50da841b5b4",
+  "worktree_clean": true,
+  "replacement_count": 13,
+  "if_stage": {"source":"reference/component-replacements/if_stage.v","source_oid":"95eaa38771727841abc467eedd5ff899b1af86f6","replacement_sha256":"4d86248239becafcbbe605a4c80f059c3cacc8f2ae7d34af50b6b68fe1713b1a","size":24687},
+  "overlay_manifest_sha256": "4b112c897a89a7935b1a5e700fbf3d45a9457261ef54575ca504c5972a27d93c",
+  "selection_sha256": "af1d7fd03fcb7dddbc9777f7724d77cd9cff68640af4f65859208ababeb18532",
+  "source_report": "/tmp/if-active-chiplab/reports/iterations/20260713-2250-if-active-overlay/chiplab-overlay.json",
+  "source_sha256": "e800aefaadaddd98b72b602108ed077fa2ee2217ed02f9e0dc0d86438ef1d0ba",
+  "claim_scope": "diagnostic overlay acceptance only; not a gate pass"
+}
