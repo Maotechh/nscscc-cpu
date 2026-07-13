@@ -1,7 +1,7 @@
 # 20260713-2215-if-stage-spinal
 
 - Status: `differential_pass`（等待人工评审，不自动合并）
-- Branch / Base SHA / Head SHA: `refactor/20260713-2215-if-stage-spinal` / `b2946f8ac93fc9ccfa9c8748bb53f444976c36cb` / 待提交
+- Branch / Base SHA / Head SHA: `refactor/20260713-2215-if-stage-spinal` / `b2946f8ac93fc9ccfa9c8748bb53f444976c36cb` / `b004cbbcae53df48de034e6a0ae2504e900bbbbb`（实现提交；后续仅证据元数据提交）
 - Owner / Agent: Codex `/root/if_stage_spinal`
 - Selected boundary and selection reason: IF 是当前活动 core_top 仍依赖的最小流水边界；先建立 49 端口、109-bit payload 和 golden harness，解除后续流水集成阻塞。
 - Golden reference and locked tool versions: `a158aa8:rtl/if_stage.v`；JDK 17.0.19、Scala 2.13.16、SBT 1.10.11、SpinalHDL 1.14.2、Verilator 5.020、Yosys（chiplab 工具根）。
