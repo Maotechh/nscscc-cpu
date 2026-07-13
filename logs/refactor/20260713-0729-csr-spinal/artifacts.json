@@ -1,0 +1,8 @@
+{
+  "schema_version": 1,
+  "artifacts": [
+    {"path": "reference/component-replacements/csr.v", "sha256": "fe93577ac086c395fb043d2bdd8dc712811ad1042fef5797c3fed14eabd0095e", "size": 24118, "retention": "git"},
+    {"path": "/tmp/csr-gates-final", "retention": "local temporary", "description": "raw port/static/diff logs and Verilator build"},
+    {"path": "/tmp/csr-scala-final", "retention": "local temporary", "description": "locked Scala raw logs"}
+  ]
+}

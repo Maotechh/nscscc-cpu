@@ -306,20 +306,22 @@ boundaries:
 
   privileged:
     owner: privileged
-    state: not_started
-    golden_ref: a158aa8:rtl
+    state: implementation_in_review
+    golden_ref: a158aa8:rtl/csr.v
     dependencies:
       - core_contracts
-    contract: null
+    contract: docs/contracts/csr.md
     required_gates:
       - unit_diff
       - func_full
       - random
       - claim_review
-    evidence: []
+    evidence:
+      - logs/refactor/20260713-0729-csr-spinal/iteration.md
+      - logs/refactor/20260713-0729-csr-spinal/summary.json
     active_pr: null
     blocked_by: []
-    last_iteration: null
+    last_iteration: "20260713-0729-csr-spinal"
 
   memory_system:
     owner: memory

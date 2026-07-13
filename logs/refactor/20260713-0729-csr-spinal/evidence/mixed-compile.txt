@@ -1,0 +1,9 @@
+Locked chiplab: a2e11b38bc5c85abb4408a8e0c0f5ce903c7ba31
+Locked myCPU: aa3bde1f3e720e71c2c78d6b81930d797b810149
+Replacement: rtl/csr.v
+Base SHA256: 7349b5b83975b6da8efe69f42d8ee43d93312f7e13def4ed2f6c48a3a868c433
+Replacement SHA256: fe93577ac086c395fb043d2bdd8dc712811ad1042fef5797c3fed14eabd0095e
+Command: verilator --lint-only -Wall --Wno-fatal --top-module core_top -I. *.v cache_sram.v
+Return code: 0
+Warning count: 145
+Conclusion: parameterized csr instance compiles; strict integrated RTL gate does not pass because warnings are not waived.

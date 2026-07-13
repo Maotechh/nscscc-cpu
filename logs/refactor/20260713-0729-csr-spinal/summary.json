@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "iteration_id": "20260713-0729-csr-spinal",
+  "branch": "refactor/20260713-0729-csr-spinal",
+  "base_sha": "f621c7a1e056b9f128b86efddbdd2598b3692ecc",
+  "head_sha": null,
+  "status": "implementation_in_review",
+  "gates": [
+    {"id": "scala", "executed": 4, "passed": 4, "failed": 0, "skipped": 0},
+    {"id": "automation", "executed": 307, "passed": 307, "failed": 0, "skipped": 0},
+    {"id": "generate", "executed": 4, "passed": 4, "failed": 0, "skipped": 0},
+    {"id": "port", "executed": 2, "passed": 2, "failed": 0, "skipped": 0},
+    {"id": "rtl_static", "executed": 2, "passed": 2, "failed": 0, "skipped": 0},
+    {"id": "cycle_diff", "executed": 4174, "passed": 4174, "failed": 0, "skipped": 0},
+    {"id": "mixed_compile", "executed": 1, "passed": 0, "failed": 1, "skipped": 0, "reason": "145 unapproved whole-core warnings"}
+  ]
+}
