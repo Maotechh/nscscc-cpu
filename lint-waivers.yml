@@ -231,6 +231,61 @@
       "reason": "物理地址寄存器低 12 位由 index/offset 独立端口表达，保持 exact golden 组合合同。",
       "owner": "privileged",
       "expires_when": "addr_trans exposes a full physical address contract"
+    },
+    {
+      "id": "wb-stage-difftest-unused-exception-bit",
+      "rule": "UNUSEDSIGNAL",
+      "file": "generated wb_stage.v:payload_exceptionCode[10]",
+      "line": 508,
+      "source_sha256": "a7899e91ba02dec7b2c4cd798969ae012c0c2bee5efe83bda224896f406373bc",
+      "scope": "candidate_wb_stage_difftest_static_lint",
+      "reason": "The locked exception vector reserves bit 10; the writeback contract consumes the same exception bits as the golden RTL and must retain the 16-bit payload.",
+      "owner": "pipeline",
+      "expires_when": "the locked wb_stage exception payload width or bit-10 semantics change"
+    },
+    {
+      "id": "wb-stage-difftest-unused-physical-offset",
+      "rule": "UNUSEDSIGNAL",
+      "file": "generated wb_stage.v:payload_physicalAddress[3:0]",
+      "line": 530,
+      "source_sha256": "a7899e91ba02dec7b2c4cd798969ae012c0c2bee5efe83bda224896f406373bc",
+      "scope": "candidate_wb_stage_difftest_static_lint",
+      "reason": "LL/SC reservation exports a line address and therefore intentionally does not consume the low four physical-address bits; the full input remains in the locked payload contract.",
+      "owner": "pipeline",
+      "expires_when": "the locked wb_stage reservation address contract changes"
+    },
+    {
+      "id": "wb-stage-normal-profile-elided-observation",
+      "rule": "UNUSEDSIGNAL",
+      "file": "generated wb_stage.v:normal profile payload observation fields",
+      "line": 457,
+      "source_sha256": "4f37e07bbbba77e8af966ab8d9016aec1010863ad0c5fc6caa35c71f36624887",
+      "scope": "candidate_wb_stage_normal_static_lint",
+      "reason": "The ordinary profile deliberately omits DIFFTEST outputs; the exact unused set is checked by wb_stage_gate.py rather than globally disabling UNUSEDSIGNAL.",
+      "owner": "pipeline",
+      "expires_when": "ordinary wb_stage exposes the observation contract"
+    },
+    {
+      "id": "wb-stage-one-file-component-name-normal",
+      "rule": "DECLFILENAME",
+      "file": "generated wb_stage.v",
+      "line": 1,
+      "source_sha256": "4f37e07bbbba77e8af966ab8d9016aec1010863ad0c5fc6caa35c71f36624887",
+      "scope": "candidate_wb_stage_normal_static_lint",
+      "reason": "One reproducible SpinalHDL file contains the public wb_stage and typed WritebackStage modules; the filename intentionally follows the public module.",
+      "owner": "pipeline",
+      "expires_when": "the generated component package is split into filename-matching modules"
+    },
+    {
+      "id": "wb-stage-one-file-component-name-difftest",
+      "rule": "DECLFILENAME",
+      "file": "generated wb_stage.v",
+      "line": 1,
+      "source_sha256": "a7899e91ba02dec7b2c4cd798969ae012c0c2bee5efe83bda224896f406373bc",
+      "scope": "candidate_wb_stage_difftest_static_lint",
+      "reason": "One reproducible SpinalHDL file contains the public wb_stage and typed WritebackStage modules; the filename intentionally follows the public module.",
+      "owner": "pipeline",
+      "expires_when": "the generated component package is split into filename-matching modules"
     }
   ]
 }

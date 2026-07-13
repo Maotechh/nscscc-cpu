@@ -1,0 +1,108 @@
+{
+  "schema_version": 1,
+  "target": "wb_stage",
+  "module": "wb_stage",
+  "golden": {
+    "commit_key": "team_golden_candidate",
+    "path": "rtl/wb_stage.v",
+    "git_blob_sha1": "90ae54b4ea13298aa64ee83aa33eee14813392d7",
+    "sha256": "8a6f6cb282d152e4b43673397b8c00f598e3d116589e5797fb6feaadbc032a09",
+    "size": 12315,
+    "csr_header": {
+      "path": "rtl/csr.h",
+      "git_blob_sha1": "a1d8a4389e2b45afee520d5c70d728d14404e13c",
+      "sha256": "11f5550b887a2b507a5b916340069d6d127848c66c761f07d0303c7cc201026d",
+      "size": 1409
+    }
+  },
+  "bus_widths": {
+    "MS_TO_WS_BUS_WD": 493,
+    "WS_TO_RF_BUS_WD": 38
+  },
+  "profiles": {
+    "normal": {
+      "defines": [],
+      "port_count": 52
+    },
+    "difftest": {
+      "defines": ["DIFFTEST_EN"],
+      "port_count": 64
+    }
+  },
+  "ports": {
+    "common": {
+      "clk": {"direction": "input", "width": 1},
+      "reset": {"direction": "input", "width": 1},
+      "ws_allowin": {"direction": "output", "width": 1},
+      "ms_to_ws_valid": {"direction": "input", "width": 1},
+      "ms_to_ws_bus": {"direction": "input", "width": 493},
+      "ws_to_rf_bus": {"direction": "output", "width": 38},
+      "ws_to_ds_valid": {"direction": "output", "width": 1},
+      "csr_era": {"direction": "output", "width": 32},
+      "csr_esubcode": {"direction": "output", "width": 9},
+      "csr_ecode": {"direction": "output", "width": 6},
+      "excp_flush": {"direction": "output", "width": 1},
+      "ertn_flush": {"direction": "output", "width": 1},
+      "refetch_flush": {"direction": "output", "width": 1},
+      "icacop_flush": {"direction": "output", "width": 1},
+      "csr_wr_en": {"direction": "output", "width": 1},
+      "wr_csr_addr": {"direction": "output", "width": 14},
+      "wr_csr_data": {"direction": "output", "width": 32},
+      "va_error": {"direction": "output", "width": 1},
+      "bad_va": {"direction": "output", "width": 32},
+      "excp_tlbrefill": {"direction": "output", "width": 1},
+      "excp_tlb": {"direction": "output", "width": 1},
+      "excp_tlb_vppn": {"direction": "output", "width": 19},
+      "idle_flush": {"direction": "output", "width": 1},
+      "ws_llbit_set": {"direction": "output", "width": 1},
+      "ws_llbit": {"direction": "output", "width": 1},
+      "ws_lladdr_set": {"direction": "output", "width": 1},
+      "ws_lladdr": {"direction": "output", "width": 28},
+      "tlb_inst_stall": {"direction": "output", "width": 1},
+      "tlbsrch_en": {"direction": "output", "width": 1},
+      "tlbsrch_found": {"direction": "output", "width": 1},
+      "tlbsrch_index": {"direction": "output", "width": 5},
+      "tlbfill_en": {"direction": "output", "width": 1},
+      "tlbwr_en": {"direction": "output", "width": 1},
+      "tlbrd_en": {"direction": "output", "width": 1},
+      "invtlb_en": {"direction": "output", "width": 1},
+      "invtlb_asid": {"direction": "output", "width": 10},
+      "invtlb_vpn": {"direction": "output", "width": 19},
+      "invtlb_op": {"direction": "output", "width": 5},
+      "real_valid": {"direction": "output", "width": 1},
+      "real_br_inst": {"direction": "output", "width": 1},
+      "real_icache_miss": {"direction": "output", "width": 1},
+      "real_dcache_miss": {"direction": "output", "width": 1},
+      "real_mem_inst": {"direction": "output", "width": 1},
+      "real_br_pre": {"direction": "output", "width": 1},
+      "real_br_pre_error": {"direction": "output", "width": 1},
+      "debug_ws_valid": {"direction": "output", "width": 1},
+      "debug_break_point": {"direction": "input", "width": 1},
+      "debug_wb_pc": {"direction": "output", "width": 32},
+      "debug_wb_rf_wen": {"direction": "output", "width": 4},
+      "debug_wb_rf_wnum": {"direction": "output", "width": 5},
+      "debug_wb_rf_wdata": {"direction": "output", "width": 32},
+      "debug_wb_inst": {"direction": "output", "width": 32}
+    },
+    "difftest_extra": {
+      "ws_valid_diff": {"direction": "output", "width": 1},
+      "ws_cnt_inst_diff": {"direction": "output", "width": 1},
+      "ws_timer_64_diff": {"direction": "output", "width": 64},
+      "ws_inst_ld_en_diff": {"direction": "output", "width": 8},
+      "ws_ld_paddr_diff": {"direction": "output", "width": 32},
+      "ws_ld_vaddr_diff": {"direction": "output", "width": 32},
+      "ws_inst_st_en_diff": {"direction": "output", "width": 8},
+      "ws_st_paddr_diff": {"direction": "output", "width": 32},
+      "ws_st_vaddr_diff": {"direction": "output", "width": 32},
+      "ws_st_data_diff": {"direction": "output", "width": 32},
+      "ws_csr_rstat_en_diff": {"direction": "output", "width": 1},
+      "ws_csr_data_diff": {"direction": "output", "width": 32}
+    }
+  },
+  "differential": {
+    "minimum_cycles": 8192,
+    "seed": "0x0158aa8c",
+    "compare_difftest_payload_while_stalled": true,
+    "negative_control_required": true
+  }
+}
