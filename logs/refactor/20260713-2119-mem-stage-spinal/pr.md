@@ -1,6 +1,6 @@
 # Draft PR: refactor MEM stage to typed SpinalHDL
 
-状态：draft；Claude bridge tool error，独立降级审查仅支持 scoped leaf claim；活动集成与官方影响矩阵门禁未完成，不得自动合并。
+状态：`awaiting_pr` draft；分支已推送，未创建 PR。Claude bridge tool error，独立降级审查仅支持 scoped leaf claim；活动集成与官方影响矩阵门禁未完成，不得自动合并。
 
 ## 行为合同
 
