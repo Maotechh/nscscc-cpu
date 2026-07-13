@@ -12,7 +12,7 @@
     "chiplab_doctor": {"status":"passed","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0,"evidence":"/tmp/id-active-doctor/reports/chiplab-doctor.json"},
     "vivado_doctor": {"status":"passed","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0,"evidence":"/tmp/id-active-vivado-doctor/reports/doctor.json"},
     "id_difftest_unit": {"status":"passed","planned":8192,"executed":8192,"passed":8192,"failed":0,"skipped":0,"evidence":"/tmp/id-active-fix-check/id_stage/difftest/unit/cycle-diff.json"},
-    "diagnostic_overlay": {"status":"rerun_required_after_fix","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0,"evidence":"/tmp/id-active-clean/reports/iterations/20260713-2255-id-active-overlay/chiplab-overlay.json"},
+    "diagnostic_overlay": {"status":"rerun_required_after_packaging_fix","planned":1,"executed":2,"passed":1,"failed":1,"skipped":0,"evidence":"second attempt rejected before DUT build because source basename differed from target"},
     "func_smoke": {"status":"failed_compile","planned":1,"executed":1,"passed":0,"failed":1,"skipped":1,"evidence":"/tmp/id-active-clean/reports/iterations/20260713-2255-id-active-overlay/rtl-smoke.json"},
     "claim_review": {"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":0,"evidence":null}
   },

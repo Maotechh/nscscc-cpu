@@ -54,7 +54,7 @@ class ReplacementReachabilityTest(unittest.TestCase):
             )
             self.assertEqual(
                 id_replacement["source"],
-                "reference/component-replacements/id_stage_difftest.v",
+                "reference/component-replacements/difftest/id_stage.v",
             )
             self.assertNotIn("lacc_core", report["reachable_modules"])
 

@@ -75,7 +75,7 @@
     },
     {
       "target": "rtl/id_stage.v",
-      "source": "reference/component-replacements/id_stage_difftest.v",
+      "source": "reference/component-replacements/difftest/id_stage.v",
       "base_sha256": "dcd896a12fda42faff9f7c1bcd43de3bbd7bb181be688b0cef21dded5e05d807",
       "replacement_sha256": "0148176ca9cbc477aa07363e5d0fcc897881a01da6481b66095c61a94331853b"
     }
