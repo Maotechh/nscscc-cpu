@@ -379,6 +379,41 @@ boundaries:
       - 627_unapproved_verilator_warnings_in_mixed_compile
     last_iteration: "20260713-1829-wb-stage-spinal"
 
+  memory_stage:
+    owner: pipeline
+    state: differential_pass
+    golden_ref: a158aa8:rtl/mem_stage.v
+    dependencies:
+      - core_contracts
+    contract: docs/contracts/mem-stage.md
+    required_gates:
+      - scala
+      - elaborate
+      - generate
+      - port_check
+      - lint
+      - yosys_check
+      - unit_diff
+      - diagnostic_overlay
+      - func_smoke
+      - claim_review
+    evidence:
+      - logs/refactor/20260713-2119-mem-stage-spinal/iteration.md
+      - logs/refactor/20260713-2119-mem-stage-spinal/summary.json
+      - logs/refactor/20260713-2119-mem-stage-spinal/evidence/generate.json
+      - logs/refactor/20260713-2119-mem-stage-spinal/evidence/contract.json
+      - logs/refactor/20260713-2119-mem-stage-spinal/evidence/port.json
+      - logs/refactor/20260713-2119-mem-stage-spinal/evidence/lint.json
+      - logs/refactor/20260713-2119-mem-stage-spinal/evidence/yosys.json
+      - logs/refactor/20260713-2119-mem-stage-spinal/evidence/diff.json
+      - logs/refactor/20260713-2119-mem-stage-spinal/evidence/scala.json
+    active_pr: null
+    blocked_by:
+      - active_overlay_integration_pending
+      - official_func_smoke_pending
+      - claude_claim_review_pending
+    last_iteration: "20260713-2119-mem-stage-spinal"
+
   regfile:
     owner: pipeline
     state: implementation_in_review

@@ -51,6 +51,11 @@ WB_STAGE_GENERATE_DIR ?= $(OUT_DIR)/wb_stage/generate
 WB_STAGE_RTL ?= $(WB_STAGE_GENERATE_DIR)/rtl/wb_stage.v
 WB_STAGE_DIFF_GENERATE_DIR ?= $(OUT_DIR)/wb_stage/generate-diff
 WB_STAGE_DIFF_RTL ?= $(WB_STAGE_DIFF_GENERATE_DIR)/rtl/wb_stage.v
+MEM_STAGE_CONTRACT ?= reference/component-contracts/mem-stage.json
+MEM_STAGE_CYCLES ?= 8192
+MEM_STAGE_RANDOM_SEED ?= 0x0158aa8d
+MEM_STAGE_GENERATE_DIR ?= $(OUT_DIR)/mem_stage/generate
+MEM_STAGE_RTL ?= $(MEM_STAGE_GENERATE_DIR)/rtl/mem_stage.v
 EXE_STAGE_PROFILE ?= lacc_off
 EXE_STAGE_MAIN = $(if $(filter lacc_on,$(EXE_STAGE_PROFILE)),openla500.pipeline.GenerateOpenLa500ExecuteStageWithLacc,openla500.pipeline.GenerateOpenLa500ExecuteStage)
 EXE_STAGE_GENERATE_DIR ?= $(OUT_DIR)/exe_stage/$(EXE_STAGE_PROFILE)/generate
@@ -78,7 +83,7 @@ CORE_TOP_TRACKED_RTL ?= reference/component-replacements/mycpu_top.v
 CORE_TOP_REPLACEMENT_SPEC ?= reference/component-replacements/core-top.json
 LINT_WAIVERS ?= lint-waivers.yml
 
-.PHONY: doctor scala-cache-bootstrap scala-check elaborate generate port-check lint yosys-check unit formal core-contract-check core-top-contract core-top-package core-top-publish-check mul-contract mul-golden-unit mul-candidate-unit div-contract div-golden-unit div-candidate-unit axi-bridge-contract axi-bridge-candidate-unit csr-generate csr-port-check csr-static csr-unit wb-stage-contract wb-stage-candidate-unit exe-stage-negative-control icache-contract icache-candidate-unit dcache-contract dcache-candidate-unit replacement-reachability chiplab-doctor golden-export chiplab-overlay rtl-smoke identity-compare evidence-check test-automation
+.PHONY: doctor scala-cache-bootstrap scala-check elaborate generate port-check lint yosys-check unit formal core-contract-check core-top-contract core-top-package core-top-publish-check mul-contract mul-golden-unit mul-candidate-unit div-contract div-golden-unit div-candidate-unit axi-bridge-contract axi-bridge-candidate-unit csr-generate csr-port-check csr-static csr-unit wb-stage-contract wb-stage-candidate-unit mem-stage-contract mem-stage-candidate-unit exe-stage-negative-control icache-contract icache-candidate-unit dcache-contract dcache-candidate-unit replacement-reachability chiplab-doctor golden-export chiplab-overlay rtl-smoke identity-compare evidence-check test-automation
 
 doctor:
 	$(PYTHON) -I tools/refactor.py doctor --out-dir "$(OUT_DIR)" $(if $(VIVADO_HOME),--vivado-home "$(VIVADO_HOME)",)
@@ -111,10 +116,12 @@ else ifeq ($(TARGET),addr_trans)
 else ifeq ($(TARGET),wb_stage)
 	$(PYTHON) -I tools/spinal_generate.py --manifest "reference/manifest.lock" --spinal-dir "spinal" --tool-root "$(CHIPLAB_TOOL_ROOT)" --main-class "openla500.pipeline.GenerateOpenLa500WritebackStage" --expected-module "wb_stage" --expected-file "wb_stage.v" --out-dir "$(OUT_DIR)/wb_stage/elaborate" --runs 2 $(if $(JAVA_HOME),--java-home "$(JAVA_HOME)",)
 	$(PYTHON) -I tools/spinal_generate.py --manifest "reference/manifest.lock" --spinal-dir "spinal" --tool-root "$(CHIPLAB_TOOL_ROOT)" --main-class "openla500.pipeline.GenerateOpenLa500WritebackStageDiff" --expected-module "wb_stage" --expected-file "wb_stage.v" --out-dir "$(OUT_DIR)/wb_stage/elaborate-diff" --runs 2 $(if $(JAVA_HOME),--java-home "$(JAVA_HOME)",)
+else ifeq ($(TARGET),mem_stage)
+	$(PYTHON) -I tools/spinal_generate.py --manifest "reference/manifest.lock" --spinal-dir "spinal" --tool-root "$(CHIPLAB_TOOL_ROOT)" --main-class "openla500.pipeline.GenerateOpenLa500MemoryStage" --expected-module "mem_stage" --expected-file "mem_stage.v" --out-dir "$(OUT_DIR)/mem_stage/elaborate" --runs 2 $(if $(JAVA_HOME),--java-home "$(JAVA_HOME)",)
 else ifeq ($(TARGET),alu)
 	$(PYTHON) -I tools/alu_gate.py elaborate --target "$(TARGET)" --manifest "reference/manifest.lock" --spinal-dir "spinal" --tool-root "$(CHIPLAB_TOOL_ROOT)" --out-dir "$(OUT_DIR)/alu/elaborate" $(if $(JAVA_HOME),--java-home "$(JAVA_HOME)",)
 else
-	@echo "ERROR: unsupported TARGET=$(TARGET); expected core_top, alu, mul, div, axi_bridge, exe_stage, icache, tlb, addr_trans, or wb_stage" >&2; exit 2
+	@echo "ERROR: unsupported TARGET=$(TARGET); expected core_top, alu, mul, div, axi_bridge, exe_stage, mem_stage, icache, tlb, addr_trans, or wb_stage" >&2; exit 2
 endif
 
 generate:
@@ -141,6 +148,8 @@ else ifeq ($(TARGET),addr_trans)
 else ifeq ($(TARGET),wb_stage)
 	$(PYTHON) -I tools/spinal_generate.py --manifest "reference/manifest.lock" --spinal-dir "spinal" --tool-root "$(CHIPLAB_TOOL_ROOT)" --main-class "openla500.pipeline.GenerateOpenLa500WritebackStage" --expected-module "wb_stage" --expected-file "wb_stage.v" --out-dir "$(WB_STAGE_GENERATE_DIR)" --runs 2 $(if $(JAVA_HOME),--java-home "$(JAVA_HOME)",)
 	$(PYTHON) -I tools/spinal_generate.py --manifest "reference/manifest.lock" --spinal-dir "spinal" --tool-root "$(CHIPLAB_TOOL_ROOT)" --main-class "openla500.pipeline.GenerateOpenLa500WritebackStageDiff" --expected-module "wb_stage" --expected-file "wb_stage.v" --out-dir "$(WB_STAGE_DIFF_GENERATE_DIR)" --runs 2 $(if $(JAVA_HOME),--java-home "$(JAVA_HOME)",)
+else ifeq ($(TARGET),mem_stage)
+	$(PYTHON) -I tools/spinal_generate.py --manifest "reference/manifest.lock" --spinal-dir "spinal" --tool-root "$(CHIPLAB_TOOL_ROOT)" --main-class "openla500.pipeline.GenerateOpenLa500MemoryStage" --expected-module "mem_stage" --expected-file "mem_stage.v" --out-dir "$(MEM_STAGE_GENERATE_DIR)" --runs 2 $(if $(JAVA_HOME),--java-home "$(JAVA_HOME)",)
 else ifeq ($(TARGET),alu)
 	$(PYTHON) -I tools/alu_gate.py generate --target "$(TARGET)" --manifest "reference/manifest.lock" --spinal-dir "spinal" --tool-root "$(CHIPLAB_TOOL_ROOT)" --out-dir "$(ALU_GENERATE_DIR)" $(if $(JAVA_HOME),--java-home "$(JAVA_HOME)",)
 else
@@ -165,6 +174,8 @@ else ifeq ($(TARGET),dcache)
 else ifeq ($(TARGET),wb_stage)
 	$(PYTHON) -I tools/wb_stage_gate.py port-check --repo "." --contract "$(WB_STAGE_CONTRACT)" --profile normal --rtl "$(WB_STAGE_RTL)" --out-dir "$(OUT_DIR)/wb_stage/port-normal"
 	$(PYTHON) -I tools/wb_stage_gate.py port-check --repo "." --contract "$(WB_STAGE_CONTRACT)" --profile difftest --rtl "$(WB_STAGE_DIFF_RTL)" --out-dir "$(OUT_DIR)/wb_stage/port-difftest"
+else ifeq ($(TARGET),mem_stage)
+	$(PYTHON) -I tools/mem_stage_gate.py port-check --repo "." --contract "$(MEM_STAGE_CONTRACT)" --rtl "$(MEM_STAGE_RTL)" --out-dir "$(OUT_DIR)/mem_stage/port-check"
 else ifeq ($(TARGET),alu)
 	$(PYTHON) -I tools/alu_gate.py port-check --target "$(TARGET)" --manifest "reference/manifest.lock" --rtl "$(ALU_RTL)" --out-dir "$(OUT_DIR)/alu/port-check"
 else
@@ -189,6 +200,8 @@ else ifeq ($(TARGET),dcache)
 else ifeq ($(TARGET),wb_stage)
 	$(PYTHON) -I tools/wb_stage_gate.py lint --repo "." --contract "$(WB_STAGE_CONTRACT)" --profile normal --rtl "$(WB_STAGE_RTL)" --out-dir "$(OUT_DIR)/wb_stage/lint-normal"
 	$(PYTHON) -I tools/wb_stage_gate.py lint --repo "." --contract "$(WB_STAGE_CONTRACT)" --profile difftest --rtl "$(WB_STAGE_DIFF_RTL)" --out-dir "$(OUT_DIR)/wb_stage/lint-difftest"
+else ifeq ($(TARGET),mem_stage)
+	$(PYTHON) -I tools/mem_stage_gate.py lint --repo "." --contract "$(MEM_STAGE_CONTRACT)" --rtl "$(MEM_STAGE_RTL)" --out-dir "$(OUT_DIR)/mem_stage/lint"
 else ifeq ($(TARGET),alu)
 	$(PYTHON) -I tools/alu_gate.py lint --target "$(TARGET)" --manifest "reference/manifest.lock" --rtl "$(ALU_RTL)" --out-dir "$(OUT_DIR)/alu/lint"
 else
@@ -213,6 +226,8 @@ else ifeq ($(TARGET),dcache)
 else ifeq ($(TARGET),wb_stage)
 	$(PYTHON) -I tools/wb_stage_gate.py yosys-check --repo "." --contract "$(WB_STAGE_CONTRACT)" --profile normal --rtl "$(WB_STAGE_RTL)" --out-dir "$(OUT_DIR)/wb_stage/yosys-normal"
 	$(PYTHON) -I tools/wb_stage_gate.py yosys-check --repo "." --contract "$(WB_STAGE_CONTRACT)" --profile difftest --rtl "$(WB_STAGE_DIFF_RTL)" --out-dir "$(OUT_DIR)/wb_stage/yosys-difftest"
+else ifeq ($(TARGET),mem_stage)
+	$(PYTHON) -I tools/mem_stage_gate.py yosys-check --repo "." --contract "$(MEM_STAGE_CONTRACT)" --rtl "$(MEM_STAGE_RTL)" --out-dir "$(OUT_DIR)/mem_stage/yosys-check"
 else ifeq ($(TARGET),alu)
 	$(PYTHON) -I tools/alu_gate.py yosys-check --target "$(TARGET)" --manifest "reference/manifest.lock" --rtl "$(ALU_RTL)" --out-dir "$(OUT_DIR)/alu/yosys-check"
 else
@@ -238,8 +253,10 @@ else ifeq ($(TARGET),tlb)
 	$(PYTHON) -I tools/tlb_gate.py diff --repo "." --rtl "$(TLB_RTL)" --out-dir "$(OUT_DIR)/tlb/unit" --cycles "$(TLB_CYCLES)" --seed "$(TLB_RANDOM_SEED)"
 else ifeq ($(TARGET),wb_stage)
 	$(PYTHON) -I tools/wb_stage_gate.py diff --repo "." --contract "$(WB_STAGE_CONTRACT)" --rtl "$(WB_STAGE_DIFF_RTL)" --out-dir "$(OUT_DIR)/wb_stage/unit" --cycles "$(WB_STAGE_CYCLES)" --seed "$(WB_STAGE_RANDOM_SEED)"
+else ifeq ($(TARGET),mem_stage)
+	$(PYTHON) -I tools/mem_stage_gate.py diff --repo "." --contract "$(MEM_STAGE_CONTRACT)" --rtl "$(MEM_STAGE_RTL)" --out-dir "$(OUT_DIR)/mem_stage/unit" --cycles "$(MEM_STAGE_CYCLES)" --seed "$(MEM_STAGE_RANDOM_SEED)"
 else
-	@echo "ERROR: unsupported TARGET=$(TARGET); expected alu, mul, div, tlb, or wb_stage" >&2; exit 2
+	@echo "ERROR: unsupported TARGET=$(TARGET); expected alu, mul, div, tlb, mem_stage, or wb_stage" >&2; exit 2
 endif
 
 formal:
@@ -308,6 +325,12 @@ wb-stage-contract:
 
 wb-stage-candidate-unit:
 	$(PYTHON) -I tools/wb_stage_gate.py diff --repo "." --contract "$(WB_STAGE_CONTRACT)" --rtl "$(WB_STAGE_DIFF_RTL)" --out-dir "$(OUT_DIR)/wb_stage/unit" --cycles "$(WB_STAGE_CYCLES)" --seed "$(WB_STAGE_RANDOM_SEED)"
+
+mem-stage-contract:
+	$(PYTHON) -I tools/mem_stage_gate.py contract --repo "." --contract "$(MEM_STAGE_CONTRACT)" --out-dir "$(OUT_DIR)/mem_stage/contract"
+
+mem-stage-candidate-unit:
+	$(PYTHON) -I tools/mem_stage_gate.py diff --repo "." --contract "$(MEM_STAGE_CONTRACT)" --rtl "$(MEM_STAGE_RTL)" --out-dir "$(OUT_DIR)/mem_stage/unit" --cycles "$(MEM_STAGE_CYCLES)" --seed "$(MEM_STAGE_RANDOM_SEED)"
 
 exe-stage-negative-control:
 	$(PYTHON) -I tools/exe_stage_diff.py --rtl "$(EXE_STAGE_RTL)" --profile "$(EXE_STAGE_PROFILE)" --out-dir "$(OUT_DIR)/exe_stage/$(EXE_STAGE_PROFILE)/negative-control" --negative-control

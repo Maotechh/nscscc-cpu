@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "iteration_id": "20260713-2119-mem-stage-spinal",
+  "status": "differential_pass",
+  "branch": "refactor/20260713-2119-mem-stage-spinal",
+  "base_sha": "b2946f8ac93fc9ccfa9c8748bb53f444976c36cb",
+  "head_sha": null,
+  "boundary": "memory_stage",
+  "golden": {
+    "revision": "a158aa8ab4d49cece1a0fe488d7ac7dc02bd8cf6",
+    "path": "rtl/mem_stage.v",
+    "sha256": "86592ed33afd5dde9e944860c7088ad70e5d62ee22f72999e336a64902d881a7"
+  },
+  "candidate": {
+    "path": "reference/component-replacements/mem_stage.v",
+    "sha256": "37d0cba5ca2f8e901f77aaa26e56360e9205c4732f49ecd9c3189499f03e9bb1"
+  },
+  "gates": {
+    "executed": 9,
+    "passed": 9,
+    "failed": 0,
+    "skipped": 0,
+    "scala": "pass",
+    "automation_tests": "pass_333",
+    "generate": "pass_2_of_2",
+    "contract": "pass_49_of_49",
+    "port_check": "pass_49_of_49",
+    "lint": "pass_exact_allowlist_3",
+    "yosys": "pass",
+    "unit_diff": "pass_8235_cycles",
+    "negative_control": "pass_cycle_3_phase_1"
+  },
+  "claims": {
+    "leaf_differential_pass": true,
+    "active_overlay_integrated": false,
+    "official_func_pass": false,
+    "complete_refactor": false
+  },
+  "pr_state": "awaiting_push"
+}
