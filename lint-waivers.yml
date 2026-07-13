@@ -132,6 +132,17 @@
       "reason": "The active mycpu_top passes TLBNUM positionally; the locked replacement supports TLBNUM=32 and retains the parameter solely for source compatibility.",
       "owner": "privileged",
       "expires_when": "mycpu_top no longer parameterizes csr or the CSR implementation supports a variable TLB entry count"
+    },
+    {
+      "id": "exe-stage-one-file-component-names",
+      "rule": "DECLFILENAME",
+      "file": "generated:exe_stage.v",
+      "line": 1,
+      "source_sha256": "839d5932db50baac933205c26765549344147a58ab056a886a374c0d694351aa",
+      "scope": "candidate_exe_stage_lint_only",
+      "reason": "The reproducible one-file generator emits exact top exe_stage together with typed ExecuteStage and OpenLa500Alu modules; module names intentionally differ from the package filename.",
+      "owner": "execute",
+      "expires_when": "the generator and overlay support a manifest-verified multi-file component package"
     }
   ]
 }

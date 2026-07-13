@@ -289,20 +289,22 @@ boundaries:
 
   pipeline:
     owner: pipeline
-    state: not_started
-    golden_ref: a158aa8:rtl
+    state: implementation_in_review
+    golden_ref: a158aa8:rtl/exe_stage.v
     dependencies:
       - core_contracts
-    contract: null
+    contract: docs/contracts/exe-stage.md
     required_gates:
       - unit_diff
       - func_full
       - random
       - claim_review
-    evidence: []
+    evidence:
+      - logs/refactor/20260713-0729-exe-stage-spinal/iteration.md
+      - logs/refactor/20260713-0729-exe-stage-spinal/summary.json
     active_pr: null
     blocked_by: []
-    last_iteration: null
+    last_iteration: "20260713-0729-exe-stage-spinal"
 
   regfile:
     owner: pipeline

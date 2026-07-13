@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "iteration_id": "20260713-0729-exe-stage-spinal",
+  "reviewer": {"source": "claude-review-mcp", "provider": null, "model": null},
+  "status": "unavailable",
+  "job_id": "318317eda1234ab1bd00711454c02053",
+  "raw_sha256": "6b322897ca0f881ecc17b8ea18c0bd9c3d1fa8decbb0640036007474edd7cbb7",
+  "provider": null,
+  "model": null,
+  "reviewed_head_sha": null,
+  "provenance": {
+    "source": "claude-review-mcp",
+    "raw_path": "reviews/claude-raw.md",
+    "raw_sha256": "6b322897ca0f881ecc17b8ea18c0bd9c3d1fa8decbb0640036007474edd7cbb7",
+    "job_id": "318317eda1234ab1bd00711454c02053",
+    "provider": null,
+    "model": null,
+    "reviewed_head_sha": null
+  },
+  "open_blocking_count": 4,
+  "fresh_against_head": false,
+  "allow_ready": false,
+  "allow_status_promotion": false,
+  "error": "Required provider environment variable is not set: GEEKPIE_CLAUDE_API_KEY",
+  "items": [
+    {"id":"C1-cycle-diff","verdict":"open","reason":"Claude did not run; local evidence is recorded separately."},
+    {"id":"C2-static-gates","verdict":"open","reason":"Claude did not run; local evidence is recorded separately."},
+    {"id":"C3-lacc-four-state","verdict":"open","reason":"Golden lacc_flush is undriven; no four-state equivalence claim is allowed."},
+    {"id":"C4-integrated-function","verdict":"open","reason":"func_full/random/system/FPGA gates are not executed in this leaf iteration."}
+  ],
+  "claim_effect": "No claim may be upgraded based on this unavailable review."
+}
