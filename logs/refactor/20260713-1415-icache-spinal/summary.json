@@ -21,9 +21,11 @@
     {"name": "yosys_check", "status": "pass", "evidence": "evidence/yosys.json"},
     {"name": "unit_diff", "status": "pass", "executed": 16096, "passed": 16096, "failed": 0, "skipped": 0, "evidence": "evidence/cycle-diff.json"},
     {"name": "negative_control", "status": "pass", "evidence": "evidence/cycle-diff.json"},
-    {"name": "func_smoke", "status": "not_run", "reason": "committed overlay is run after this commit"},
+    {"name": "chiplab_doctor", "status": "pass", "evidence": "evidence/chiplab/chiplab-doctor.json"},
+    {"name": "chiplab_overlay", "status": "diagnostic", "evidence": "evidence/chiplab/chiplab-overlay.json", "gate_eligible": false},
+    {"name": "func_smoke", "status": "diagnostic", "evidence": "evidence/chiplab/rtl-smoke.json", "gate_eligible": false, "reason": "official wrapper reports candidate_locked=false, baseline_exact=false"},
     {"name": "vivado_leaf", "status": "not_run", "reason": "I-cache leaf has no locked FPGA wrapper; Vivado doctor probe passed"},
-    {"name": "claim_review", "status": "pending", "reason": "Claude bridge availability checked after local evidence"}
+    {"name": "claim_review", "status": "unavailable", "evidence": "reviews/claude-summary.json", "reason": "GEEKPIE_CLAUDE_API_KEY missing; local review retained"}
   ],
-  "counts": {"planned": 13, "executed": 11, "passed": 11, "failed": 0, "skipped": 2}
+  "counts": {"planned": 16, "executed": 14, "passed": 11, "failed": 0, "skipped": 2}
 }

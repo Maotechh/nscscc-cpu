@@ -400,7 +400,12 @@ boundaries:
       - diagnostic_overlay
       - func_smoke
       - claim_review
-    evidence: []
+    evidence:
+      - logs/refactor/20260713-1415-icache-spinal/iteration.md
+      - logs/refactor/20260713-1415-icache-spinal/summary.json
+      - logs/refactor/20260713-1415-icache-spinal/evidence/cycle-diff.json
+      - logs/refactor/20260713-1415-icache-spinal/evidence/chiplab/rtl-smoke.json
+      - logs/refactor/20260713-1415-icache-spinal/reviews/claude-summary.json
     active_pr: null
     blocked_by: []
     last_iteration: "20260713-1415-icache-spinal"
