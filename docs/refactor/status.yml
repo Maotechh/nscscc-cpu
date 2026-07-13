@@ -348,6 +348,33 @@ boundaries:
     blocked_by: []
     last_iteration: "20260713-0729-exe-stage-spinal"
 
+  id_stage:
+    owner: pipeline
+    state: implementation_in_review
+    golden_ref: a158aa8:rtl/id_stage.v
+    dependencies:
+      - core_contracts
+      - regfile
+    contract: reference/component-contracts/id-stage.json
+    required_gates:
+      - scala
+      - elaborate
+      - generate
+      - port_check
+      - lint
+      - yosys_check
+      - unit_diff
+      - diagnostic_overlay
+      - func_smoke
+      - claim_review
+    evidence:
+      - logs/refactor/20260713-2120-id-stage-spinal/iteration.md
+    active_pr: null
+    blocked_by:
+      - active_core_top_overlay_not_executed
+      - func_full_and_random_not_executed
+    last_iteration: "20260713-2255-id-active-overlay"
+
   writeback_stage:
     owner: pipeline
     state: differential_pass

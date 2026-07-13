@@ -56,6 +56,11 @@ MEM_STAGE_CYCLES ?= 8192
 MEM_STAGE_RANDOM_SEED ?= 0x0158aa8d
 MEM_STAGE_GENERATE_DIR ?= $(OUT_DIR)/mem_stage/generate
 MEM_STAGE_RTL ?= $(MEM_STAGE_GENERATE_DIR)/rtl/mem_stage.v
+ID_STAGE_PROFILE ?= normal
+ID_STAGE_MAIN = $(if $(filter normal,$(ID_STAGE_PROFILE)),openla500.pipeline.GenerateOpenLa500DecodeStage,$(if $(filter difftest,$(ID_STAGE_PROFILE)),openla500.pipeline.GenerateOpenLa500DecodeStageDiff,$(if $(filter lacc,$(ID_STAGE_PROFILE)),openla500.pipeline.GenerateOpenLa500DecodeStageWithLacc,openla500.pipeline.GenerateOpenLa500DecodeStageWithLaccDiff)))
+ID_STAGE_GENERATE_DIR ?= $(OUT_DIR)/id_stage/$(ID_STAGE_PROFILE)/generate
+ID_STAGE_RTL ?= $(ID_STAGE_GENERATE_DIR)/rtl/id_stage.v
+ID_STAGE_CYCLES ?= 8192
 EXE_STAGE_PROFILE ?= lacc_off
 EXE_STAGE_MAIN = $(if $(filter lacc_on,$(EXE_STAGE_PROFILE)),openla500.pipeline.GenerateOpenLa500ExecuteStageWithLacc,openla500.pipeline.GenerateOpenLa500ExecuteStage)
 EXE_STAGE_GENERATE_DIR ?= $(OUT_DIR)/exe_stage/$(EXE_STAGE_PROFILE)/generate
@@ -118,6 +123,8 @@ else ifeq ($(TARGET),wb_stage)
 	$(PYTHON) -I tools/spinal_generate.py --manifest "reference/manifest.lock" --spinal-dir "spinal" --tool-root "$(CHIPLAB_TOOL_ROOT)" --main-class "openla500.pipeline.GenerateOpenLa500WritebackStageDiff" --expected-module "wb_stage" --expected-file "wb_stage.v" --out-dir "$(OUT_DIR)/wb_stage/elaborate-diff" --runs 2 $(if $(JAVA_HOME),--java-home "$(JAVA_HOME)",)
 else ifeq ($(TARGET),mem_stage)
 	$(PYTHON) -I tools/spinal_generate.py --manifest "reference/manifest.lock" --spinal-dir "spinal" --tool-root "$(CHIPLAB_TOOL_ROOT)" --main-class "openla500.pipeline.GenerateOpenLa500MemoryStage" --expected-module "mem_stage" --expected-file "mem_stage.v" --out-dir "$(OUT_DIR)/mem_stage/elaborate" --runs 2 $(if $(JAVA_HOME),--java-home "$(JAVA_HOME)",)
+else ifeq ($(TARGET),id_stage)
+	$(PYTHON) -I tools/spinal_generate.py --manifest "reference/manifest.lock" --spinal-dir "spinal" --tool-root "$(CHIPLAB_TOOL_ROOT)" --main-class "$(ID_STAGE_MAIN)" --expected-module "id_stage" --expected-file "id_stage.v" --out-dir "$(OUT_DIR)/id_stage/$(ID_STAGE_PROFILE)/elaborate" --runs 2 $(if $(JAVA_HOME),--java-home "$(JAVA_HOME)",)
 else ifeq ($(TARGET),alu)
 	$(PYTHON) -I tools/alu_gate.py elaborate --target "$(TARGET)" --manifest "reference/manifest.lock" --spinal-dir "spinal" --tool-root "$(CHIPLAB_TOOL_ROOT)" --out-dir "$(OUT_DIR)/alu/elaborate" $(if $(JAVA_HOME),--java-home "$(JAVA_HOME)",)
 else
@@ -150,6 +157,8 @@ else ifeq ($(TARGET),wb_stage)
 	$(PYTHON) -I tools/spinal_generate.py --manifest "reference/manifest.lock" --spinal-dir "spinal" --tool-root "$(CHIPLAB_TOOL_ROOT)" --main-class "openla500.pipeline.GenerateOpenLa500WritebackStageDiff" --expected-module "wb_stage" --expected-file "wb_stage.v" --out-dir "$(WB_STAGE_DIFF_GENERATE_DIR)" --runs 2 $(if $(JAVA_HOME),--java-home "$(JAVA_HOME)",)
 else ifeq ($(TARGET),mem_stage)
 	$(PYTHON) -I tools/spinal_generate.py --manifest "reference/manifest.lock" --spinal-dir "spinal" --tool-root "$(CHIPLAB_TOOL_ROOT)" --main-class "openla500.pipeline.GenerateOpenLa500MemoryStage" --expected-module "mem_stage" --expected-file "mem_stage.v" --out-dir "$(MEM_STAGE_GENERATE_DIR)" --runs 2 $(if $(JAVA_HOME),--java-home "$(JAVA_HOME)",)
+else ifeq ($(TARGET),id_stage)
+	$(PYTHON) -I tools/spinal_generate.py --manifest "reference/manifest.lock" --spinal-dir "spinal" --tool-root "$(CHIPLAB_TOOL_ROOT)" --main-class "$(ID_STAGE_MAIN)" --expected-module "id_stage" --expected-file "id_stage.v" --out-dir "$(ID_STAGE_GENERATE_DIR)" --runs 2 $(if $(JAVA_HOME),--java-home "$(JAVA_HOME)",)
 else ifeq ($(TARGET),alu)
 	$(PYTHON) -I tools/alu_gate.py generate --target "$(TARGET)" --manifest "reference/manifest.lock" --spinal-dir "spinal" --tool-root "$(CHIPLAB_TOOL_ROOT)" --out-dir "$(ALU_GENERATE_DIR)" $(if $(JAVA_HOME),--java-home "$(JAVA_HOME)",)
 else
@@ -255,8 +264,10 @@ else ifeq ($(TARGET),wb_stage)
 	$(PYTHON) -I tools/wb_stage_gate.py diff --repo "." --contract "$(WB_STAGE_CONTRACT)" --rtl "$(WB_STAGE_DIFF_RTL)" --out-dir "$(OUT_DIR)/wb_stage/unit" --cycles "$(WB_STAGE_CYCLES)" --seed "$(WB_STAGE_RANDOM_SEED)"
 else ifeq ($(TARGET),mem_stage)
 	$(PYTHON) -I tools/mem_stage_gate.py diff --repo "." --contract "$(MEM_STAGE_CONTRACT)" --rtl "$(MEM_STAGE_RTL)" --out-dir "$(OUT_DIR)/mem_stage/unit" --cycles "$(MEM_STAGE_CYCLES)" --seed "$(MEM_STAGE_RANDOM_SEED)"
+else ifeq ($(TARGET),id_stage)
+	$(PYTHON) -I tools/id_stage_gate.py --repo "." --rtl "$(ID_STAGE_RTL)" --profile "$(ID_STAGE_PROFILE)" --out-dir "$(OUT_DIR)/id_stage/$(ID_STAGE_PROFILE)/unit" --cycles "$(ID_STAGE_CYCLES)"
 else
-	@echo "ERROR: unsupported TARGET=$(TARGET); expected alu, mul, div, tlb, mem_stage, or wb_stage" >&2; exit 2
+	@echo "ERROR: unsupported TARGET=$(TARGET); expected alu, mul, div, tlb, id_stage, mem_stage, or wb_stage" >&2; exit 2
 endif
 
 formal:
