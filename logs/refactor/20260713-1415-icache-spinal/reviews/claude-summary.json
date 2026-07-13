@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "reviewer": "claude",
+  "status": "unavailable",
+  "findings": [
+    {"id": "bridge", "disposition": "open", "text": "GEEKPIE_CLAUDE_API_KEY 未配置，调用在模型启动前失败。"},
+    {"id": "claim-scope", "disposition": "accepted", "text": "局部差分不得扩展为 func/58/81/random/Linux/Vivado PASS。"}
+  ],
+  "blocking": true
+}

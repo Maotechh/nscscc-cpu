@@ -2,7 +2,7 @@ schema_version: 1
 updated_at: "2026-07-13T07:48:00+08:00"
 active_iteration: "20260713-1415-icache-spinal"
 active_branch: "refactor/20260713-1415-icache-spinal"
-source_head: "fb5a63fbb3c5378a0d99d6122c0cf66b89a332c5"
+source_head: "528b79ca2af86f9b71277de91e8fa5811e18a900"
 
 boundaries:
   component_replacement_overlay:
@@ -381,7 +381,12 @@ boundaries:
       - diagnostic_overlay
       - func_smoke
       - claim_review
-    evidence: []
+    evidence:
+      - logs/refactor/20260713-1415-icache-spinal/iteration.md
+      - logs/refactor/20260713-1415-icache-spinal/summary.json
+      - logs/refactor/20260713-1415-icache-spinal/evidence/cycle-diff.json
+      - logs/refactor/20260713-1415-icache-spinal/evidence/chiplab/rtl-smoke.json
+      - logs/refactor/20260713-1415-icache-spinal/reviews/claude-summary.json
     active_pr: null
     blocked_by: []
     last_iteration: "20260713-1415-icache-spinal"

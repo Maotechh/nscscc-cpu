@@ -4,3 +4,7 @@
 {"command":"make icache-contract port-check lint yosys-check unit TARGET=icache OUT_DIR=/tmp/nscscc-icache-final ICACHE_CYCLES=12000","exit_code":0,"result":"34-port exact; lint approved dead inputs only; Yosys pass; 16096/16096 differential and negative control"}
 {"command":"python3 -I -m unittest discover -s tests -p test_*.py","exit_code":0,"result":"Ran 309 tests in 12.092s; OK"}
 {"command":"python -I tools/refactor.py doctor --out-dir build/icache/doctor --vivado-home D:/Xilinx/Vivado/2023.2","exit_code":0,"result":"19/19 checks pass; Vivado 2023.2 ML Standard probe pass"}
+{"command":"make chiplab-doctor CHIPLAB_REFERENCE=/tmp/chiplab-clean-a2e11b3-exe CHIPLAB_TOOL_ROOT=/opt/chiplab-tools/root","exit_code":0,"result":"locked chiplab/a2e11b3, gitlink, symlinks and tools pass"}
+{"command":"make chiplab-overlay ... DUT_SOURCE=mixed REPLACEMENT_SPEC=reference/component-replacements/icache.json SOURCE_HEAD=528b79ca... DIAGNOSTIC=1","exit_code":0,"result":"committed replacement overlay created; diagnostic gate_eligible=false"}
+{"command":"make rtl-smoke ... ITERATION_ID=20260713-1415-icache-mixed DIAGNOSTIC=1","exit_code":1,"result":"configure/build/simulation commands exit 0; wrapper returns diagnostic because candidate_locked=false and baseline_exact=false; existing func_lab19 baseline mismatch is not attributed to I-cache"}
+{"command":"mcp__claude_review__review","exit_code":1,"result":"Required provider environment variable is not set: GEEKPIE_CLAUDE_API_KEY"}
