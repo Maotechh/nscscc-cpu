@@ -418,6 +418,36 @@ boundaries:
       - claude_bridge_missing_GEEKPIE_CLAUDE_API_KEY
     last_iteration: "20260713-2119-mem-stage-spinal"
 
+  if_stage:
+    owner: pipeline
+    state: differential_pass
+    golden_ref: a158aa8:rtl/if_stage.v
+    dependencies:
+      - core_contracts
+    contract: docs/contracts/if-stage.md
+    required_gates:
+      - scala
+      - generate
+      - port_check
+      - lint
+      - yosys_check
+      - unit_diff
+      - func_full
+      - random
+      - claim_review
+    evidence:
+      - logs/refactor/20260713-2215-if-stage-spinal/iteration.md
+      - logs/refactor/20260713-2215-if-stage-spinal/summary.json
+      - logs/refactor/20260713-2215-if-stage-spinal/artifacts.json
+      - logs/refactor/20260713-2215-if-stage-spinal/reviews/local-independent-review.md
+    active_pr: null
+    blocked_by:
+      - official_overlay_not_enabled
+      - func_full_and_random_not_executed
+      - multi_seed_and_idle_icacop_interrupt_reset_coverage_pending
+      - claude_bridge_missing_GEEKPIE_CLAUDE_API_KEY
+    last_iteration: "20260713-2215-if-stage-spinal"
+
   regfile:
     owner: pipeline
     state: implementation_in_review

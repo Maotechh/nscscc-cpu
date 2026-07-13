@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "iteration_id": "20260713-2215-if-stage-spinal",
+  "status": "failed",
+  "job_id": "4d7d9cf103484d50b1eeec11773b5262",
+  "raw_sha256": "73d72ebe2ab255f36695f672080075e785b93071374d7b48cb486b3084a21324",
+  "provider": null,
+  "model": null,
+  "reviewed_head_sha": null,
+  "error": "Required provider environment variable is not set: GEEKPIE_CLAUDE_API_KEY",
+  "open_blocking_count": 1,
+  "fresh_against_head": false,
+  "allow_ready": false,
+  "allow_status_promotion": false,
+  "provenance": {
+    "source": "claude-review-mcp",
+    "raw_path": "reviews/claude-raw.md",
+    "raw_sha256": "73d72ebe2ab255f36695f672080075e785b93071374d7b48cb486b3084a21324",
+    "job_id": "4d7d9cf103484d50b1eeec11773b5262",
+    "provider": null,
+    "model": null,
+    "reviewed_head_sha": null
+  },
+  "local_review": "logs/refactor/20260713-2215-if-stage-spinal/reviews/local-independent-review.md"
+}
