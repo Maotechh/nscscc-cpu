@@ -9,7 +9,7 @@
     },
     {
       "target": "rtl/div.v",
-      "source": "reference/component-replacements/retired-div.v",
+      "source": "reference/component-replacements/difftest/div.v",
       "base_sha256": "7e499f4c43c92154d1d4e21be2f269ac140b4f2b2d944677c71f6f4213b66dc6",
       "replacement_sha256": "3cbd0370718c501cc2d01b47858ee4bf036c430fce4d85aced5b7224a04df9ac"
     }
