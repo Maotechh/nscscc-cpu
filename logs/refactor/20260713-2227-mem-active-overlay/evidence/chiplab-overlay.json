@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "status": "diagnostic",
+  "gate_eligible": false,
+  "iteration_id": "20260713-2227-mem-active-overlay",
+  "source_head": "a874bd96360346aa9c706bf7fe8531cf82c6860c",
+  "source_tree": "20f859b41158371c947123c7d78410b73d6e4f1c",
+  "chiplab_commit": "a2e11b38bc5c85abb4408a8e0c0f5ce903c7ba31",
+  "mycpu_gitlink": "aa3bde1f3e720e71c2c78d6b81930d797b810149",
+  "replacement_count": 12,
+  "worktree_clean": true,
+  "replacement_spec_sha256": "f9a93eed9c79729418dfc9dd2ed38f62f1ebc9db347bbfe52ff1902245915181",
+  "selection_sha256": "f6429fade00e2a42940dd422f6ede7e610bf4fe650a4c574dbdee75699eeeec9",
+  "full_overlay_manifest_sha256": "f8af573be849ef077c9fc367c0a92c14fd2aaa8cdbf57fcf84f1f2fb436166ba",
+  "full_overlay_manifest": "/tmp/mem-active-clean/reports/iterations/20260713-2227-mem-active-overlay/chiplab-overlay-manifest.json"
+}

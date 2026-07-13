@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "status": "fail",
+  "mode": "diagnostic",
+  "gate_eligible": false,
+  "case": "func/func_lab19",
+  "commands": {"configure_exit": 0, "build_exit": 0, "simulation_exit": 0},
+  "counts": {"planned": 1, "executed": 1, "passed": 0, "failed": 1, "skipped": 0},
+  "functional_status": "fail",
+  "warning_policy": {"status": "fail", "dut": 253, "official_environment": 373},
+  "parser": {"status": "fail", "instructions": 172552, "clocks": 602903, "first_mismatch_pc": "0x1c07c79c", "first_mismatch": "t0(r12) different at pc = 0x1c07c79c, right= 0x000006e2, wrong = 0x00000008", "failure_excerpt": ["t0(r12) different at pc = 0x1c07c79c, right= 0x000006e2, wrong = 0x00000008", "this_pc different at pc = 0x1c07c79c, right= 0x1c07c79c, wrong = 0x1c07c7a4", "Both Error(Code:0x700)"]},
+  "build_integrity_status": "pass",
+  "post_run_dut_verification": "pass",
+  "compile_log_sha256": "735dd45252434e51463e19facdf1a357edc560737ae5fc974814f8f0f1c2fd3d",
+  "trace_sha256": "8efa7942ab6d4702129dc0c7eb0676c6cfcd87361ee8ecf99411567c3db38acb",
+  "full_report": "/tmp/mem-active-clean/reports/iterations/20260713-2227-mem-active-overlay/rtl-smoke.json"
+}

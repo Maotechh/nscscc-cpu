@@ -6,7 +6,7 @@
 
 范围：把已完成 `mem_stage` 叶子差分的 replacement 加入锁定 `core_top` reachable overlay，并同步 12 项 reachability 合同与测试计数。
 
-证据：见 `iteration.md`、`summary.json`、`commands.jsonl`。Scala、chiplab doctor、Vivado doctor、reachability 和恢复 Windows gitdir 后的 323/333 自动化测试通过；官方 overlay/smoke 尚待 clean commit 执行。
+证据：见 `iteration.md`、`summary.json`、`commands.jsonl`。Scala、chiplab doctor、Vivado doctor、reachability 和恢复 Windows gitdir 后的 323/333 自动化测试通过；clean commit 的 diagnostic overlay 接受 12 个 replacement。官方 smoke 严格 FAIL：功能 0/1、253 个 DUT warning、373 个官方环境 warning，首个 mismatch 与 baseline 同为 `0x1c07c79c`。
 
 限制：不声称 58/81 功能、随机 DiffTest、性能、Linux、Vivado implementation/timing 或完整 SpinalHDL 重构通过。已知 baseline `func_lab19` mismatch 仍需单独归因。
 

@@ -1,25 +1,26 @@
 {
   "schema_version": 1,
   "iteration_id": "20260713-2227-mem-active-overlay",
-  "status": "implementation_in_review",
+  "status": "draft",
   "branch": "refactor/20260713-2227-mem-active-overlay",
   "base_sha": "da44b6dea9d3b5adefb583b2399f67e43913d372",
-  "head_sha_before_commit": "9511dc5e78bac8f6aa7cc6ad3bf17b16caae74df",
+  "head_sha": "a874bd96360346aa9c706bf7fe8531cf82c6860c",
   "selected_boundary": "memory_stage_active_replacement",
   "gates": {
-    "reachability": {"planned": 12, "executed": 12, "passed": 12, "failed": 0, "skipped": 0, "evidence": "/tmp/mem-active-reachability/replacement-reachability/reachability.json"},
-    "scala": {"planned": 4, "executed": 4, "passed": 4, "failed": 0, "skipped": 0, "evidence": "/tmp/mem-active-scala/scala-check/summary.json"},
-    "automation_tests": {"planned": 333, "executed": 333, "passed": 323, "failed": 0, "skipped": 10, "evidence": "commands.jsonl"},
-    "chiplab_doctor": {"planned": 1, "executed": 1, "passed": 1, "failed": 0, "skipped": 0, "evidence": "/tmp/mem-active-overlay/reports/chiplab-doctor.json"},
-    "vivado_doctor": {"planned": 1, "executed": 1, "passed": 1, "failed": 0, "skipped": 0, "evidence": "/tmp/mem-active-vivado-doctor/reports/doctor.json"},
-    "diagnostic_overlay": {"planned": 1, "executed": 0, "passed": 0, "failed": 0, "skipped": 1, "evidence": null, "reason": "clean source commit required before overlay"},
-    "func_smoke": {"planned": 1, "executed": 0, "passed": 0, "failed": 0, "skipped": 1, "evidence": null, "reason": "overlay prerequisite not yet complete"},
-    "claim_review": {"planned": 1, "executed": 0, "passed": 0, "failed": 0, "skipped": 1, "evidence": null, "reason": "run after clean-head evidence"}
+    "reachability": {"status": "pass", "planned": 12, "executed": 12, "passed": 12, "failed": 0, "skipped": 0, "evidence": "evidence/reachability.json"},
+    "scala": {"status": "pass", "planned": 4, "executed": 4, "passed": 4, "failed": 0, "skipped": 0, "evidence": "evidence/scala-summary.json"},
+    "automation_tests": {"status": "warning", "planned": 333, "executed": 323, "passed": 323, "failed": 0, "skipped": 10, "evidence": "commands.jsonl"},
+    "chiplab_doctor": {"status": "pass", "planned": 1, "executed": 1, "passed": 1, "failed": 0, "skipped": 0, "evidence": "evidence/chiplab-doctor-summary.json"},
+    "vivado_doctor": {"status": "pass", "planned": 1, "executed": 1, "passed": 1, "failed": 0, "skipped": 0, "evidence": "evidence/vivado-doctor-summary.json"},
+    "diagnostic_overlay": {"status": "warning", "planned": 1, "executed": 1, "passed": 0, "failed": 1, "skipped": 0, "gate_eligible": false, "replacement_count": 12, "evidence": "evidence/chiplab-overlay.json"},
+    "func_smoke": {"status": "fail", "planned": 1, "executed": 1, "passed": 0, "failed": 1, "skipped": 0, "first_mismatch_pc": "0x1c07c79c", "instructions": 172552, "dut_warnings": 253, "official_environment_warnings": 373, "evidence": "evidence/rtl-smoke.json"},
+    "claim_review": {"status": "warning", "planned": 1, "executed": 1, "passed": 0, "failed": 1, "skipped": 0, "evidence": "reviews/claude-summary.json", "reason": "Claude bridge missing GEEKPIE_CLAUDE_API_KEY"}
   },
   "claims": [
-    {"claim": "mem_stage replacement is reachable from core_top in the locked mixed overlay spec", "support": "partial", "evidence": "/tmp/mem-active-reachability/replacement-reachability/reachability.json"},
-    {"claim": "official func_smoke passes", "support": "unsupported", "evidence": null},
+    {"claim": "mem_stage is statically reachable and selected as replacement, and 12 committed blobs load in the locked diagnostic overlay", "support": "partial", "evidence": ["evidence/reachability.json", "evidence/chiplab-overlay.json"]},
+    {"claim": "the mixed overlay reached the same first observable mismatch point as the locked baseline", "support": "partial", "evidence": ["evidence/rtl-smoke.json", "../20260710-2026-baseline/evidence/rtl-smoke-summary.json"]},
+    {"claim": "official func_smoke passes", "support": "unsupported", "evidence": "evidence/rtl-smoke.json"},
     {"claim": "complete SpinalHDL refactor", "support": "unsupported", "evidence": null}
   ],
-  "residual_risks": ["official baseline mismatch at 0x1c07c79c", "legacy Verilog backend active", "Claude API key unavailable"]
+  "residual_risks": ["official baseline mismatch at 0x1c07c79c", "253 unapproved DUT warnings", "legacy Verilog backend active", "Claude API key unavailable", "full regression not executed"]
 }

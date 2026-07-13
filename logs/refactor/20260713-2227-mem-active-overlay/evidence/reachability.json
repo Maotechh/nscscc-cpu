@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "status": "pass",
+  "root_module": "core_top",
+  "profile": "legacy_lacc_off_difftest_on",
+  "golden_commit": "a158aa8ab4d49cece1a0fe488d7ac7dc02bd8cf6",
+  "selected_count": 12,
+  "selected_target_modules": {"rtl/mycpu_top.v":"core_top", "rtl/mul.v":"mul", "rtl/div.v":"div", "rtl/exe_stage.v":"exe_stage", "rtl/regfile.v":"regfile", "rtl/csr.v":"csr", "rtl/axi_bridge.v":"axi_bridge", "rtl/icache.v":"icache", "rtl/dcache.v":"dcache", "rtl/addr_trans.v":"addr_trans", "rtl/wb_stage.v":"wb_stage", "rtl/mem_stage.v":"mem_stage"},
+  "deferred_count": 2,
+  "deferred": {"rtl/alu.v":"internal exe_stage implementation", "rtl/tlb_entry.v":"internal addr_trans implementation"},
+  "source_report": "/tmp/mem-active-reachability/replacement-reachability/reachability.json",
+  "source_report_sha256": "0c84e03b015818ee9f787f3487c1a4eb89756f2baa37b56ba0e496a5dbc19d38"
+}
