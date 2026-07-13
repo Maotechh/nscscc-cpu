@@ -4,8 +4,10 @@
   "status": "draft",
   "branch": "refactor/20260713-0729-exe-stage-spinal",
   "base_sha": "f621c7a1e056b9f128b86efddbdd2598b3692ecc",
-  "head_sha": "f621c7a1e056b9f128b86efddbdd2598b3692ecc",
-  "review_target_sha": "f621c7a1e056b9f128b86efddbdd2598b3692ecc",
+  "head_sha": "4c73068aad5a81b34181138b20184f894016f327",
+  "review_target_sha": "4c73068aad5a81b34181138b20184f894016f327",
+  "implementation_commit": "4c73068aad5a81b34181138b20184f894016f327",
+  "implementation_tested_sha": "4c73068aad5a81b34181138b20184f894016f327",
   "selected_boundary": "exe_stage",
   "boundary_state": "implementation_in_review",
   "required_gates": [
@@ -17,6 +19,9 @@
     "lint",
     "yosys_check",
     "unit_diff",
+    "chiplab_doctor",
+    "diagnostic_overlay",
+    "func_smoke",
     "func_full",
     "random",
     "claim_review"
@@ -31,9 +36,13 @@
     "yosys_check": {"status": "pass", "planned": 2, "executed": 2, "passed": 2, "failed": 0, "skipped": 0},
     "unit_diff": {"status": "pass", "planned": 16384, "executed": 16384, "passed": 16384, "failed": 0, "skipped": 0, "detail": "8192 cycles each for LACC off/on"},
     "negative_controls": {"status": "pass", "planned": 2, "executed": 2, "passed": 2, "failed": 0, "skipped": 0},
+    "chiplab_doctor": {"status": "pass", "planned": 1, "executed": 1, "passed": 1, "failed": 0, "skipped": 0, "detail": "locked chiplab/myCPU, Linux filesystem, symlink and tool fingerprints pass"},
+    "diagnostic_overlay": {"status": "pass", "planned": 1, "executed": 1, "passed": 1, "failed": 0, "skipped": 0, "detail": "mixed overlay binds source head 4c73068 and exactly one exe_stage replacement; diagnostic is not gate-eligible"},
+    "func_smoke": {"status": "fail", "planned": 1, "executed": 1, "passed": 0, "failed": 1, "skipped": 0, "detail": "same 0x1c07c79c first mismatch and exact trace SHA as locked baseline; 278 DUT + 364 official warnings"},
     "func_full": {"status": "skipped", "planned": 139, "executed": 0, "passed": 0, "failed": 0, "skipped": 139},
     "random": {"status": "skipped", "planned": 1, "executed": 0, "passed": 0, "failed": 0, "skipped": 1},
-    "claim_review": {"status": "unavailable", "planned": 2, "executed": 2, "passed": 1, "failed": 1, "skipped": 0, "detail": "Claude failed before model start because GEEKPIE_CLAUDE_API_KEY is absent; local independent review completed"}
+    "claim_review": {"status": "unavailable", "planned": 3, "executed": 3, "passed": 0, "failed": 3, "skipped": 0, "detail": "Claude produced no review: two attempts lacked provider env in the bridge process and one responses-backend attempt rejected reviewer tools"},
+    "local_claim_audit": {"status": "pass", "planned": 1, "executed": 1, "passed": 1, "failed": 0, "skipped": 0, "detail": "independent read-only fallback; explicitly not Claude"}
   },
   "claims": [
     {
@@ -63,15 +72,30 @@
       "lacc_on": {"cycles": 8192, "candidate_sha256": "3c48600bddd14fea696767e85c9941de45d765959c5d31392be43903b14e7e57", "candidate_lint_warnings": 0}
     },
     "negative_control_first_mismatch_cycle": 0,
-    "vivado_version": "2023.2 ML Standard"
+    "vivado_version": "2023.2 ML Standard",
+    "chiplab": {
+      "case": "func/func_lab19",
+      "mixed_functional_status": "fail",
+      "locked_functional_status": "fail",
+      "instructions": 172552,
+      "clocks": 602903,
+      "first_mismatch": "t0(r12) different at pc = 0x1c07c79c, right= 0x000006e2, wrong = 0x00000008",
+      "mixed_trace_sha256": "8efa7942ab6d4702129dc0c7eb0676c6cfcd87361ee8ecf99411567c3db38acb",
+      "locked_trace_sha256": "8efa7942ab6d4702129dc0c7eb0676c6cfcd87361ee8ecf99411567c3db38acb",
+      "trace_identical": true,
+      "warning_counts": {"dut": 278, "official_environment": 364},
+      "warning_policy": "fail"
+    }
   },
   "blocked_by": [
     "func_lab19_locked_and_mixed_mismatch_at_1c07c79c",
-    "legacy_mem_csr_tlb_cache_axi_still_active",
+    "legacy_mem_csr_tlb_cache_still_active",
+    "642_unapproved_verilator_warnings_in_mixed_compile",
+    "func_full_and_random_not_executed",
     "lacc_flush_four_state_semantics_unproven",
     "claude_bridge_missing_GEEKPIE_CLAUDE_API_KEY"
   ],
   "not_executed": ["func58", "func81", "multi_seed_random_difftest", "perf20", "uboot", "linux", "vivado_implementation", "bitstream", "remote_fpga_board"],
-  "pr": {"status": "awaiting_commit", "url": null, "draft_only": true, "auto_merge": false, "created": false, "branch_pushed": false},
-  "updated_at": "2026-07-13T14:10:00+08:00"
+  "pr": {"status": "awaiting_evidence_commit", "url": null, "draft_only": true, "auto_merge": false, "created": false, "branch_pushed": false},
+  "updated_at": "2026-07-13T14:42:55+08:00"
 }

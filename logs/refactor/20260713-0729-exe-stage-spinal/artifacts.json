@@ -15,11 +15,15 @@
     {"id":"port-off","path":"evidence/port-off.json","sha256":"a2468d9ce753867e62fc2addd498a2cf7dbc5e9f5f0cd228049ddc1302e370d4","size":13374,"tracked":true},
     {"id":"port-on","path":"evidence/port-on.json","sha256":"cfc685e86914a096be1a7bf536a62ba5549cff9a8770bbc1c3d6474dcb8f2d9c","size":18477,"tracked":true},
     {"id":"yosys","path":"evidence/yosys.json","sha256":"fc8c5c6d514ef07640b44a691dc1547da23511d4bbd4edcd7ce5450981f11203","size":294,"tracked":true},
-    {"id":"doctor","path":"evidence/doctor.json","sha256":"01c902d82c06686d2d43764f831dfcc9e530057eca1de97a5a491547e66d6aaf","size":1537,"tracked":true}
+    {"id":"doctor","path":"evidence/doctor.json","sha256":"01c902d82c06686d2d43764f831dfcc9e530057eca1de97a5a491547e66d6aaf","size":1537,"tracked":true},
+    {"id":"chiplab-comparison","path":"evidence/chiplab-comparison.json","sha256":"e0c059b9ce97be6d11be620cf959aea38c94cf15b3ef7c1c4142784472be0a3a","size":3265,"tracked":true}
   ],
   "external_artifacts": [
     {"id":"automation-log","path":"/tmp/nscscc-exe-stage-automation2.log","sha256":"f92ce7f9483e647f71d9b5766763c9b7f9dc1a39b17e763ec5eaf825d5f243b0","size":24244,"tracked":false},
     {"id":"generated-off-rtl","path":"/tmp/nscscc-exe-stage-gen-current/exe_stage/lacc_off/generate/rtl/exe_stage.v","sha256":"839d5932db50baac933205c26765549344147a58ab056a886a374c0d694351aa","size":58153,"tracked":false},
-    {"id":"generated-on-rtl","path":"/tmp/nscscc-exe-stage-gen-current/exe_stage/lacc_on/generate/rtl/exe_stage.v","sha256":"3c48600bddd14fea696767e85c9941de45d765959c5d31392be43903b14e7e57","size":63049,"tracked":false}
+    {"id":"generated-on-rtl","path":"/tmp/nscscc-exe-stage-gen-current/exe_stage/lacc_on/generate/rtl/exe_stage.v","sha256":"3c48600bddd14fea696767e85c9941de45d765959c5d31392be43903b14e7e57","size":63049,"tracked":false},
+    {"id":"chiplab-doctor-raw","path":"/tmp/nscscc-exe-stage-chiplab-4c73068-overlay/reports/chiplab-doctor.json","sha256":"51217b11e81d4435a1cd5d2fedf0719637af3aef16c20e11b34b427bd2ff24b0","size":16199,"tracked":false},
+    {"id":"chiplab-overlay-raw","path":"/tmp/nscscc-exe-stage-chiplab-4c73068-overlay/reports/iterations/20260713-0729-exe-stage-spinal/chiplab-overlay.json","sha256":"ab1ab81465d77209626cdba244bbc54f492a4013443bddb49a072b327081b72e","size":2698,"tracked":false},
+    {"id":"chiplab-smoke-raw","path":"/tmp/nscscc-exe-stage-chiplab-4c73068-overlay/reports/iterations/20260713-0729-exe-stage-spinal/rtl-smoke.json","sha256":"bb54a3b1f7c1050d54acec8e49de708211cec63dd70e79fe09444af184b747b4","size":185473,"tracked":false}
   ]
 }

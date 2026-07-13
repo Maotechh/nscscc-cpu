@@ -1,8 +1,8 @@
 schema_version: 1
-updated_at: "2026-07-13T06:13:00+08:00"
+updated_at: "2026-07-13T14:42:55+08:00"
 active_iteration: "20260713-0729-exe-stage-spinal"
 active_branch: "refactor/20260713-0729-exe-stage-spinal"
-source_head: "5848f94a331ff2064a36a1ddc7a5e0b438e24964"
+source_head: "4c73068aad5a81b34181138b20184f894016f327"
 
 boundaries:
   component_replacement_overlay:
@@ -302,8 +302,14 @@ boundaries:
     evidence:
       - logs/refactor/20260713-0729-exe-stage-spinal/iteration.md
       - logs/refactor/20260713-0729-exe-stage-spinal/summary.json
+      - logs/refactor/20260713-0729-exe-stage-spinal/evidence/chiplab-comparison.json
     active_pr: null
-    blocked_by: []
+    blocked_by:
+      - func_lab19_locked_and_mixed_mismatch_at_1c07c79c
+      - 642_unapproved_verilator_warnings_in_mixed_compile
+      - func_full_and_random_not_executed
+      - lacc_flush_four_state_semantics_unproven
+      - claude_bridge_missing_GEEKPIE_CLAUDE_API_KEY
     last_iteration: "20260713-0729-exe-stage-spinal"
 
   privileged:

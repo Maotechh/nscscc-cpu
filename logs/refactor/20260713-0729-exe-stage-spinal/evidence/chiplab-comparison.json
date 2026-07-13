@@ -1,0 +1,78 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-07-13T14:42:55+08:00",
+  "source_head": "4c73068aad5a81b34181138b20184f894016f327",
+  "case": "func/func_lab19",
+  "environment": {
+    "chiplab_commit": "a2e11b38bc5c85abb4408a8e0c0f5ce903c7ba31",
+    "mycpu_gitlink": "aa3bde1f3e720e71c2c78d6b81930d797b810149",
+    "filesystem": "ext2/ext3",
+    "verilator": "5.020",
+    "yosys": "0.33",
+    "jdk": "17.0.19",
+    "python": "3.12.3"
+  },
+  "replacement": {
+    "spec": "4c73068aad5a81b34181138b20184f894016f327:reference/component-replacements/exe-stage.json",
+    "target": "rtl/exe_stage.v",
+    "base_sha256": "cab20e05205c6bddff19f01fd15ad4cb671144debf0836982b45b334c686f526",
+    "replacement_sha256": "839d5932db50baac933205c26765549344147a58ab056a886a374c0d694351aa",
+    "selection_sha256": "edb57ceeb26c83a2bd6852ea5eebe38654744c169e7ee39d238f718e6256828b"
+  },
+  "external_reports": {
+    "root": "/tmp/nscscc-exe-stage-chiplab-4c73068-overlay",
+    "doctor": {
+      "status": "pass",
+      "path": "reports/chiplab-doctor.json",
+      "sha256": "51217b11e81d4435a1cd5d2fedf0719637af3aef16c20e11b34b427bd2ff24b0",
+      "size": 16199
+    },
+    "overlay": {
+      "status": "diagnostic",
+      "gate_eligible": false,
+      "path": "reports/iterations/20260713-0729-exe-stage-spinal/chiplab-overlay.json",
+      "sha256": "ab1ab81465d77209626cdba244bbc54f492a4013443bddb49a072b327081b72e",
+      "size": 2698
+    },
+    "overlay_manifest": {
+      "path": "reports/iterations/20260713-0729-exe-stage-spinal/chiplab-overlay-manifest.json",
+      "sha256": "1284c1c38ba54ec0886857a12cf69b6971fc2a4bef891765ac7d89b3194160d9",
+      "size": 26658
+    },
+    "rtl_smoke": {
+      "status": "diagnostic",
+      "gate_result": "fail",
+      "path": "reports/iterations/20260713-0729-exe-stage-spinal/rtl-smoke.json",
+      "sha256": "bb54a3b1f7c1050d54acec8e49de708211cec63dd70e79fe09444af184b747b4",
+      "size": 185473
+    }
+  },
+  "comparison": {
+    "locked_baseline_report_sha256": "2360489c56046b3e6a04bfcc640da7a37af2d1e47bd1fbc702e33d4b762a5ec1",
+    "locked_functional_status": "fail",
+    "mixed_functional_status": "fail",
+    "locked_instructions": 172552,
+    "mixed_instructions": 172552,
+    "locked_clocks": 602903,
+    "mixed_clocks": 602903,
+    "locked_first_mismatch": "t0(r12) different at pc = 0x1c07c79c, right= 0x000006e2, wrong = 0x00000008",
+    "mixed_first_mismatch": "t0(r12) different at pc = 0x1c07c79c, right= 0x000006e2, wrong = 0x00000008",
+    "locked_trace_sha256": "8efa7942ab6d4702129dc0c7eb0676c6cfcd87361ee8ecf99411567c3db38acb",
+    "mixed_trace_sha256": "8efa7942ab6d4702129dc0c7eb0676c6cfcd87361ee8ecf99411567c3db38acb",
+    "trace_identical": true,
+    "first_mismatch_identical": true,
+    "locked_warning_counts": {"dut": 280, "official_environment": 364},
+    "mixed_warning_counts": {"dut": 278, "official_environment": 364},
+    "warning_policy": "fail"
+  },
+  "claim": {
+    "supported": "在该固定 func_lab19 运行中，EXE replacement 没有改变到已知 baseline 首错为止的架构 trace。",
+    "not_supported": [
+      "official functional PASS",
+      "58 或 81 项功能集通过",
+      "随机 DiffTest 通过",
+      "整机 warning policy 通过",
+      "完整 CPU 等价"
+    ]
+  }
+}
