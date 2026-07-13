@@ -17,10 +17,8 @@ from pathlib import Path
 from typing import Any
 
 
-MODULE_RE = re.compile(r"\bmodule\s+([A-Za-z_$][\w$]*)\b")
-INSTANCE_RE = re.compile(
-    r"^\s*(?!module\b)([A-Za-z_$][\w$]*)\s+(?:#\s*\([^)]*\)\s*)?"
-    r"([A-Za-z_$][\w$]*)\s*\("
+MODULE_BLOCK_RE = re.compile(
+    r"\bmodule\s+([A-Za-z_$][\w$]*)\b(.*?)\bendmodule\b", re.DOTALL
 )
 
 
@@ -48,34 +46,70 @@ def read_json(path: Path) -> dict[str, Any]:
     return value
 
 
-def build_graph(repo: Path, commit: str, paths: list[str]) -> tuple[dict[str, str], dict[str, set[str]]]:
+def preprocess(text: str, defined_macros: set[str]) -> str:
+    output: list[str] = []
+    stack: list[tuple[bool, bool]] = []
+    active = True
+    directive = re.compile(r"`(ifdef|ifndef|else|endif)\b\s*([A-Za-z_$][\w$]*)?")
+    for line in text.splitlines(keepends=True):
+        cursor = 0
+        for match in directive.finditer(line):
+            if active:
+                output.append(line[cursor : match.start()])
+            kind, macro = match.groups()
+            if kind in {"ifdef", "ifndef"}:
+                condition = macro in defined_macros
+                if kind == "ifndef":
+                    condition = not condition
+                stack.append((active, condition))
+                active = active and condition
+            elif kind == "else":
+                if not stack:
+                    raise ValueError("unmatched `else in golden Verilog")
+                parent, condition = stack[-1]
+                stack[-1] = (parent, not condition)
+                active = parent and not condition
+            else:
+                if not stack:
+                    raise ValueError("unmatched `endif in golden Verilog")
+                parent, _ = stack.pop()
+                active = parent
+            cursor = match.end()
+        if active:
+            output.append(line[cursor:])
+    if stack:
+        raise ValueError("unterminated conditional in golden Verilog")
+    return "".join(output)
+
+
+def strip_comments(text: str) -> str:
+    text = re.sub(r"/\*.*?\*/", lambda match: "\n" * match.group(0).count("\n"), text, flags=re.DOTALL)
+    return re.sub(r"//[^\r\n]*", "", text)
+
+
+def build_graph(
+    repo: Path, commit: str, paths: list[str], defined_macros: set[str]
+) -> tuple[dict[str, str], dict[str, set[str]]]:
     module_file: dict[str, str] = {}
-    graph: dict[str, set[str]] = {}
+    module_body: dict[str, str] = {}
     for path in paths:
-        text = git_show(repo, commit, path)
-        modules = MODULE_RE.findall(text)
-        if not modules:
-            continue
-        for module in modules:
+        text = strip_comments(preprocess(git_show(repo, commit, path), defined_macros))
+        for match in MODULE_BLOCK_RE.finditer(text):
+            module, body = match.groups()
+            if module in module_file:
+                raise ValueError(f"duplicate module definition in golden closure: {module}")
             module_file[module] = path
-            graph.setdefault(module, set())
-            for line in text.splitlines():
-                match = INSTANCE_RE.match(line)
-                if match and match.group(1) in module_file or match and match.group(1) in modules:
-                    graph[module].add(match.group(1))
-    # The first pass can encounter a child definition after its parent.  Re-run
-    # instance extraction with the complete module vocabulary for deterministic
-    # closure construction.
+            module_body[module] = body
     known = set(module_file)
-    for path in paths:
-        text = git_show(repo, commit, path)
-        modules = MODULE_RE.findall(text)
-        for module in modules:
-            children = graph.setdefault(module, set())
-            for line in text.splitlines():
-                match = INSTANCE_RE.match(line)
-                if match and match.group(1) in known:
-                    children.add(match.group(1))
+    graph: dict[str, set[str]] = {module: set() for module in known}
+    for module, body in module_body.items():
+        for child in known:
+            instance_re = re.compile(
+                rf"(?m)^[ \t]*{re.escape(child)}\b[ \t]*"
+                rf"(?:#\s*\([^;]*?\)[ \t]*)?([A-Za-z_$][\w$]*)\s*\("
+            )
+            if instance_re.search(body):
+                graph[module].add(child)
     return module_file, graph
 
 
@@ -118,7 +152,15 @@ def main() -> int:
     if not isinstance(expected, list) or set(expected) != selected_set:
         raise ValueError("metadata selected_replacements differs from aggregate replacement spec")
 
-    module_file, graph = build_graph(repo, golden_commit, golden_files)
+    defined_macros = metadata.get("defined_macros", [])
+    undefined_macros = metadata.get("undefined_macros", [])
+    if not isinstance(defined_macros, list) or not all(isinstance(item, str) for item in defined_macros):
+        raise ValueError("defined_macros must be a string list")
+    if not isinstance(undefined_macros, list) or not all(isinstance(item, str) for item in undefined_macros):
+        raise ValueError("undefined_macros must be a string list")
+    if set(defined_macros) & set(undefined_macros):
+        raise ValueError("macro cannot be both defined and undefined")
+    module_file, graph = build_graph(repo, golden_commit, golden_files, set(defined_macros))
     root = str(metadata.get("root_module", ""))
     if root not in graph:
         raise ValueError(f"root module is not present in golden files: {root}")
@@ -155,6 +197,9 @@ def main() -> int:
         "schema_version": 1,
         "status": "pass",
         "root_module": root,
+        "profile": metadata.get("profile"),
+        "defined_macros": defined_macros,
+        "undefined_macros": undefined_macros,
         "golden_commit": golden_commit,
         "golden_file_count": len(golden_files),
         "reachable_modules": sorted(reachable),

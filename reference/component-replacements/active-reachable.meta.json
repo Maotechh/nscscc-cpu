@@ -2,6 +2,13 @@
   "schema_version": 1,
   "root_module": "core_top",
   "golden_commit_key": "team_golden_candidate",
+  "profile": "legacy_lacc_off_difftest_on",
+  "defined_macros": [
+    "DIFFTEST_EN"
+  ],
+  "undefined_macros": [
+    "HAS_LACC"
+  ],
   "selected_replacements": [
     "rtl/mycpu_top.v",
     "rtl/mul.v",
@@ -19,6 +26,7 @@
     "rtl/tlb_entry.v": "内部 addr_trans 实现；本迭代不重复计入 replacement"
   },
   "unreachable_or_backup": [
+    "rtl/lacc_core.v",
     "rtl/lacc_demo.v"
   ]
 }
