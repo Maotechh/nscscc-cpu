@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "iteration_id": "20260713-2215-if-stage-spinal",
+  "status": "draft",
+  "branch": "refactor/20260713-2215-if-stage-spinal",
+  "base_sha": "b2946f8ac93fc9ccfa9c8748bb53f444976c36cb",
+  "head_sha": "b2946f8ac93fc9ccfa9c8748bb53f444976c36cb",
+  "golden": {
+    "commit": "a158aa8ab4d49cece1a0fe488d7ac7dc02bd8cf6",
+    "path": "rtl/if_stage.v",
+    "sha256": "9fcc66200e549825c89737b420c68e97a22af1082e370536ad67e3d72e035547",
+    "size": 12929
+  },
+  "candidate": {
+    "path": "reference/component-replacements/if_stage.v",
+    "sha256": "4d86248239becafcbbe605a4c80f059c3cacc8f2ae7d34af50b6b68fe1713b1a",
+    "size": 24687
+  },
+  "evidence": {
+    "generator": {"status":"pass","runs":2,"summary":"logs/refactor/20260713-2215-if-stage-spinal/artifacts.json","local_summary":"/tmp/if-gen-final2/summary.json","sha256":"67f719f46420f31582ba016c343173c3bf66a93bdc6d7b522859a9d7f7bf60c6"},
+    "scala_check": {"status":"pass","summary":"/tmp/if-scala-final3/scala-check/summary.json","sha256":"ac293e2724eaab8ab4a7f062382274b5eb1199c363f603be1118e8022314c616"},
+    "python_tests": {"status":"pass","core_contract_tests":8,"discovered_tests":328},
+    "if_stage_gate": {"status":"pass","summary":"/tmp/if-gate-final4/summary.json","sha256":"a876cfb2cc0edde80c87ce46fbe4dfb7fd6f163c9d7c951ce7c0017f47848079","seed":"20260713","cycles":2048,"negative_control":"IF_MISMATCH/nonzero","warning_policy":{"simulation":["WIDTHTRUNC"],"lint":["DECLFILENAME","UNUSEDSIGNAL"]}}
+  },
+  "gates": {
+    "scala_check": {"status":"pass","planned":4,"executed":4,"passed":4,"failed":0,"skipped":0},
+    "python_tests": {"status":"pass","planned":337,"executed":337,"passed":337,"failed":0,"skipped":0},
+    "generate": {"status":"pass","planned":2,"executed":2,"passed":2,"failed":0,"skipped":0},
+    "if_stage_gate": {"status":"pass","planned":5,"executed":5,"passed":5,"failed":0,"skipped":0},
+    "claim_review": {"status":"unavailable","planned":1,"executed":0,"passed":0,"failed":0,"skipped":1},
+    "official_regression": {"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":1}
+  },
+  "required_gates": ["scala_check","python_tests","generate","if_stage_gate","claim_review","official_regression"],
+  "claims": [
+    {"claim":"candidate is reproducibly generated under locked local toolchain","supported":true},
+    {"claim":"candidate matches locked golden on the recorded fixed-seed 2048-cycle isolated IF trace and negative control detects mismatch","supported":true},
+    {"claim":"active overlay, official chiplab, 58/81 functions, NEMU random DiffTest, Vivado, full CPU equivalence or complete refactor","supported":false}
+  ],
+  "unexecuted":["official chiplab overlay","58/81 func","random NEMU DiffTest","performance","U-Boot/Linux","Vivado","full sequential formal equivalence"],
+  "review":{"claude":"failed_missing_GEEKPIE_CLAUDE_API_KEY","local_independent":"completed","status":"open"},
+  "pr":{"state":"awaiting_push","url":null}
+}
