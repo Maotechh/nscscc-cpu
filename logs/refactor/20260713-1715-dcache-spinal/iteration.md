@@ -1,6 +1,6 @@
 # 20260713-1715-dcache-spinal
 
-- Status: implementation_in_review / awaiting push、PR 和外部审核
+- Status: implementation_in_review / branch pushed，awaiting PR 和外部审核
 - Branch / Base SHA / Head SHA: `refactor/20260713-1715-dcache-spinal` / `a6788aaf36cea5a90512d60194c9e41a5c127860` / `f13b4509a147180d796c1b1d2555ceba8f358b1b`
 - Owner / Agent: memory / Codex（实现代理：dcache_contract；只读审核：dcache_review）
 - Selected boundary and selection reason: D-cache/uncached 是 MEM stage 与已迁移 AXI bridge 之间的主要活动阻塞，锁定 golden 可执行，且不要求同时修改流水或顶层公开合同。
@@ -9,7 +9,7 @@
 - Files changed: Scala D-cache 与生成器、可复现 replacement RTL/spec、合同、Makefile gate、Python 差分门禁及自测、status 和本日志。
 - Functional/performance/resource delta: 只证明固定 seed 的 12000-cycle 2-state 叶子差分；未执行整机功能、perf、Vivado 资源或 Fmax。
 - Rollback: revert 本迭代 PR；活动 `core_top` 尚未引用该 replacement，参赛稳定线不受影响。
-- PR URL or awaiting state: awaiting push/PR；实现提交和收尾证据提交后推送分支，不自动创建或合并 PR。
+- PR URL or awaiting state: 分支已推送到 `origin/refactor/20260713-1715-dcache-spinal`；等待维护者决定是否创建 PR，不自动创建或合并 PR。
 - Next unblocked candidates: MEM stage 与 D-cache/AXI transaction 的活动集成；之后再推进完整 memory subsystem。
 
 ## Attempts and failures

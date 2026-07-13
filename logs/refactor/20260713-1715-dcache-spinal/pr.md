@@ -20,4 +20,4 @@
 
 ## State
 
-Draft only；等待 push、外部 claim 审核和维护者决定是否创建 PR。禁止自动合并。
+Draft only；分支已推送，等待外部 claim 审核和维护者决定是否创建 PR。禁止自动合并。
