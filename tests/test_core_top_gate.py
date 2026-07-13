@@ -92,6 +92,25 @@ class CoreTopContractTests(unittest.TestCase):
         self.assertEqual(("output", 8), projection["awlen"])
         self.assertEqual(("output", 4), projection["debug0_wb_rf_wen"])
         self.assertEqual([{"name": "TLBNUM", "default": 32}], value["parameters"])
+        self.assertEqual(core_top_gate.EXPECTED_CLOCK_RESET, value["clock_reset"])
+
+    def test_changed_clock_reset_metadata_is_rejected(self) -> None:
+        mutations = {
+            "edge": "falling",
+            "external_reset_active_level": "high",
+            "wrapper_latency_cycles": 1,
+        }
+        for field, replacement in mutations.items():
+            with self.subTest(field=field):
+                value = copy.deepcopy(contract())
+                value["clock_reset"][field] = replacement
+                with tempfile.TemporaryDirectory() as temporary:
+                    path = Path(temporary) / "mutated.json"
+                    path.write_text(json.dumps(value), encoding="utf-8")
+                    with self.assertRaisesRegex(
+                        core_top_gate.CoreTopGateError, "clock/reset contract differs"
+                    ):
+                        core_top_gate.load_port_contract(path)
 
     def test_locked_team_git_object_is_verified(self) -> None:
         value = contract()

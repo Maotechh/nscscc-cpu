@@ -30,6 +30,14 @@ BACKEND_MODULE = "openla500_legacy_core"
 EXPECTED_PORT_COUNT = 49
 EXPECTED_INPUT_COUNT = 17
 EXPECTED_OUTPUT_COUNT = 32
+EXPECTED_CLOCK_RESET = {
+    "clock": "aclk",
+    "edge": "rising",
+    "external_reset": "aresetn",
+    "external_reset_active_level": "low",
+    "legacy_internal_behavior": "posedge aclk registers ~aresetn into synchronous active-high reset",
+    "wrapper_latency_cycles": 0,
+}
 PUBLISHED_TARGET = "rtl/mycpu_top.v"
 PUBLISHED_SOURCE = "reference/component-replacements/mycpu_top.v"
 ALLOWED_CONTRACT_KEYS = {
@@ -258,6 +266,9 @@ def load_port_contract(path: Path) -> dict[str, Any]:
     parameters = _require_list(contract.get("parameters"), "parameters")
     if parameters != [{"name": "TLBNUM", "default": 32}]:
         raise CoreTopGateError("the only supported top parameter is TLBNUM=32")
+    clock_reset = _require_dict(contract.get("clock_reset"), "clock_reset")
+    if clock_reset != EXPECTED_CLOCK_RESET:
+        raise CoreTopGateError("core_top clock/reset contract differs from the locked boundary")
     ports = _require_list(contract.get("ports"), "ports")
     if len(ports) != EXPECTED_PORT_COUNT:
         raise CoreTopGateError("ports array does not contain exactly 49 entries")
