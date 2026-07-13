@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "gate": "id-stage-static",
+  "status": "pass_with_tool_limitation",
+  "executed": 8,
+  "passed": 8,
+  "failed": 0,
+  "skipped": 0,
+  "profiles": {
+    "normal": {"verilator_lint": "pass", "yosys_hierarchy_proc_check": "pass"},
+    "lacc": {"verilator_lint": "pass", "yosys_hierarchy_proc_check": "pass"},
+    "difftest": {"verilator_lint": "pass", "yosys_flattened_projection": "pass"},
+    "lacc_difftest": {"verilator_lint": "pass", "yosys_flattened_projection": "pass"}
+  },
+  "tool_limitation": {
+    "tool": "yosys 0.33",
+    "issue": "does not parse the locked SystemVerilog unpacked rf_to_diff[31:0] top-level port",
+    "mitigation": "Yosys hierarchy/proc/check was run on an exact flattened projection; Verilator lint used the committed unpacked-array RTL",
+    "direct_unpacked_yosys": "not_claimed"
+  }
+}

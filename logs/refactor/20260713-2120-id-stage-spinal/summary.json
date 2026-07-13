@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "iteration_id": "20260713-2120-id-stage-spinal",
+  "status": "differential_pass",
+  "branch": "refactor/20260713-2120-id-stage-spinal",
+  "base_sha": "b2946f8ac93fc9ccfa9c8748bb53f444976c36cb",
+  "head_sha": null,
+  "golden": {"commit": "a158aa8ab4d49cece1a0fe488d7ac7dc02bd8cf6", "path": "rtl/id_stage.v", "blob_sha1": "93bb0283a06a0f4e88b5c37022f550b45ea4e6ed", "sha256": "dcd896a12fda42faff9f7c1bcd43de3bbd7bb181be688b0cef21dded5e05d807"},
+  "gates": {"scala": {"executed": 4, "passed": 4, "failed": 0, "skipped": 0}, "generation": {"executed": 8, "passed": 8, "failed": 0, "skipped": 0}, "cycle_diff": {"profiles": 4, "cycles_per_profile": 8259, "passed": 4, "failed": 0, "skipped": 0}, "negative_control": {"profiles": 4, "first_mismatch_cycle": 0, "passed": 4}, "static": {"executed": 8, "passed": 8, "failed": 0, "skipped": 0, "direct_unpacked_yosys": "not_claimed"}},
+  "generated_sha256": {"normal": "0a3c8434d828ad5d10f6c6431c0f811a8a476f67ed67160bcb5efa0c7cdfe516", "difftest": "0148176ca9cbc477aa07363e5d0fcc897881a01da6481b66095c61a94331853b", "lacc": "f5a31ac2ced0fdca59156daf83454aa25abae7b5736787d219926f4a748a6ab0", "lacc_difftest": "3406117b8022ad8bc9813307bc37788e0b1b404befabe5bd128dc8c077ec7582"},
+  "claims": {"id_stage_local_differential": "supported", "active_core_top_integration": "not_run", "func_58_81": "not_run", "random_nemu": "not_run", "perf20": "not_run", "linux": "not_run", "vivado": "not_run", "complete_refactor": "not_supported"},
+  "active_pr": null,
+  "awaiting": "manual PR creation/review; no automatic merge"
+}

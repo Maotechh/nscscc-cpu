@@ -1,0 +1,11 @@
+{"command":"git status --short --branch && git rev-parse HEAD && git rev-parse --verify origin/main","exit_code":0,"result":"base b2946f8"}
+{"command":"sbt -batch compile","exit_code":0,"result":"Scala compile passed"}
+{"command":"make scala-check OUT_DIR=/tmp/id-scala-final CHIPLAB_TOOL_ROOT=/opt/chiplab-tools/root","exit_code":0,"result":"scalafmt/compile/test compile/test passed"}
+{"command":"spinal_generate.py x4 profiles --runs 2","exit_code":0,"result":"normal,diff,lacc,lacc-diff each 2/2 reproducible; skipped=0"}
+{"command":"id_stage_gate.py --profile normal --cycles 8192","exit_code":0,"result":"8259 cycles pass; negative first mismatch cycle 0"}
+{"command":"id_stage_gate.py --profile difftest --cycles 8192","exit_code":0,"result":"8259 cycles and 32 GPR arrays pass; negative first mismatch cycle 0"}
+{"command":"id_stage_gate.py --profile lacc --cycles 8192","exit_code":0,"result":"8259 cycles pass; negative first mismatch cycle 0"}
+{"command":"id_stage_gate.py --profile lacc-difftest --cycles 8192","exit_code":0,"result":"8259 cycles and 32 GPR arrays pass; negative first mismatch cycle 0"}
+{"command":"Verilator lint x4; Yosys normal/LACC and flattened DiffTest projections","exit_code":0,"result":"all executed static checks pass; direct unpacked-array Yosys not claimed"}
+{"command":"python3 -I tests/test_iteration_validation.py && python3 -I tests/test_refactor.py","exit_code":0,"result":"12 + 77 tests passed"}
+{"command":"mcp__claude_review__review_start + review_status","exit_code":1,"result":"GEEKPIE_CLAUDE_API_KEY missing; degraded local review recorded"}
