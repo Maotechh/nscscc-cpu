@@ -1,7 +1,7 @@
 # 20260713-2119-mem-stage-spinal
 
 - Status: `differential_pass`，等待活动 overlay 集成与官方整机门禁
-- Branch / Base SHA / Head SHA: `refactor/20260713-2119-mem-stage-spinal` / `b2946f8ac93fc9ccfa9c8748bb53f444976c36cb` / 提交后补充
+- Branch / Base SHA / Reviewed source SHA: `refactor/20260713-2119-mem-stage-spinal` / `b2946f8ac93fc9ccfa9c8748bb53f444976c36cb` / `81bb0c4`
 - Owner / Agent: pipeline / Codex + 独立 gate 子代理
 - Selected boundary and selection reason: 选择活动 `mem_stage`。其 EX/MEM 与 MEM/WB 总线、TLB/DMW、load 数据整形和 backpressure 合同均可由锁定 Verilog单独执行，且能直接解除五级流水线集成的后续阻塞。
 - Golden reference and locked tool versions: `a158aa8:rtl/mem_stage.v`，SHA256 `86592ed3...`; Scala 2.13.16、SBT 1.10.11、SpinalHDL 1.14.2、JDK 17.0.19、Verilator 5.020。
@@ -31,5 +31,6 @@
 - Yosys: hierarchy/proc/opt/check PASS。
 - cycle differential: 8192 random + 43 directed/setup = 8235 cycles，每周期 3 phase 比较全部 15 输出，PASS。
 - negative control: cycle 3 / phase 1 首错，`ms_to_ws_valid g=1 c=0`，PASS。
+- Claude claim review: 已调用，但因缺少 `GEEKPIE_CLAUDE_API_KEY` 在产生响应前失败；原始错误已保存，不能声明 Claude PASS。
 
 以上证据只支持“MEM 叶子在本合同覆盖范围内达到 differential pass”，不支持活动整机或完全 SpinalHDL 重构完成。

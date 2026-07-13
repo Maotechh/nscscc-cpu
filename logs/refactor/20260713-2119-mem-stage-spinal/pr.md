@@ -1,6 +1,6 @@
 # Draft PR: refactor MEM stage to typed SpinalHDL
 
-状态：`awaiting_push` / draft；不得自动合并。
+状态：draft，Claude bridge tool error，等待独立只读审查；不得自动合并。
 
 ## 行为合同
 
