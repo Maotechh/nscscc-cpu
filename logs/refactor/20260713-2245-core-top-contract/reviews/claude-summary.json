@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "iteration_id": "20260713-2245-core-top-contract",
+  "status": "unavailable",
+  "job_id": "c69a87a68a234c398fc9ac264f4adfed",
+  "provider": null,
+  "model": null,
+  "reviewed_head_sha": null,
+  "raw_sha256": "8190414d28c35a9d12dba20f523046b367950dd7e7f590576cf30d59db60965b",
+  "error": "Required provider environment variable is not set: GEEKPIE_CLAUDE_API_KEY",
+  "open_blocking_count": 1,
+  "fresh_against_head": false,
+  "allow_ready": false,
+  "allow_status_promotion": false,
+  "provenance": {
+    "source": "claude-review-mcp",
+    "raw_path": "reviews/claude-raw.md",
+    "raw_sha256": "8190414d28c35a9d12dba20f523046b367950dd7e7f590576cf30d59db60965b",
+    "job_id": "c69a87a68a234c398fc9ac264f4adfed",
+    "provider": null,
+    "model": null,
+    "reviewed_head_sha": null
+  },
+  "claims": [
+    {"id":"C1","status":"open","reason":"Claude model did not start; local evidence audit cannot replace required external review."},
+    {"id":"C2","status":"open","reason":"Claude model did not start; local evidence audit cannot replace required external review."},
+    {"id":"C3","status":"accepted_as_scope_limit","reason":"The iteration remains draft and explicitly excludes whole-CPU claims."}
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "iteration_id": "20260713-2245-core-top-contract",
+  "reviewer": "independent-read-only-agent",
+  "status": "pass_with_open_scope_limits",
+  "findings": [
+    {"id":"L1","status":"accepted","claim":"locked 49-port interface shape and transparent same-name connectivity"},
+    {"id":"L2","status":"fixed","claim":"clock_reset metadata is fail-closed","evidence":["tools/core_top_gate.py","tests/test_core_top_gate.py","evidence/contract.json"]},
+    {"id":"L3","status":"open","claim":"dynamic reset/AXI/debug behavior is equivalent","reason":"not tested"},
+    {"id":"L4","status":"open","claim":"whole CPU or complete Spinal refactor","reason":"legacy Verilog backend remains active"}
+  ],
+  "allow_draft": true,
+  "allow_ready": false,
+  "claude_equivalent": false
+}

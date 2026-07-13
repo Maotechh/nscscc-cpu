@@ -1,0 +1,29 @@
+{
+  "base_sha256": "ff286f559dbc9131349c9fb8c842110569d231b6a34e76ded172c403d8f90afa",
+  "fresh_package": "/mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260713-2245-core-top-contract/build/contract-gate-v2/core_top/package/rtl/mycpu_top.v",
+  "gate": "publish-check",
+  "generated_at": "2026-07-13T23:05:03+08:00",
+  "package_sha256": "fec641117e538dfb79eedb0e4afffeb3690594e84ffb9799c5409d8f690258a3",
+  "package_size": 54777,
+  "provenance": {
+    "evaluator": "/mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260713-2245-core-top-contract/tools/core_top_gate.py",
+    "evaluator_sha256": "4424290fdb8d6da65764b7f701bf19cbd71c44b9d4d214f6dc3843c3f3d9a3fb",
+    "manifest": "/mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260713-2245-core-top-contract/reference/manifest.lock",
+    "manifest_sha256": "743dd7e58d77e456cfe664d80c2e6614ab426f72bfecd9088ff18d702afa2f20",
+    "ports_contract": "/mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260713-2245-core-top-contract/reference/core-top.ports.json",
+    "ports_contract_sha256": "effa486ff707e480ff8ee13d7f20b2d524bd26908726915c99abf1b37eeab576",
+    "repository": "/mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260713-2245-core-top-contract",
+    "repository_head": "b2946f8ac93fc9ccfa9c8748bb53f444976c36cb",
+    "repository_status_sha256": "8153a00cfb1ea56b0f2c39c1350f82afcf2e1bd3647d919f9604dc13b178842c"
+  },
+  "published_source": "reference/component-replacements/mycpu_top.v",
+  "published_target": "rtl/mycpu_top.v",
+  "replacement_sha256": "fec641117e538dfb79eedb0e4afffeb3690594e84ffb9799c5409d8f690258a3",
+  "replacement_spec": "/mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260713-2245-core-top-contract/reference/component-replacements/core-top.json",
+  "replacement_spec_sha256": "a392643cc3ba9ec05c48c714ed670ae5e593f67c06bfb4ad5899bad8a77f412e",
+  "schema_version": 1,
+  "scope": "publication-consistency",
+  "status": "pass",
+  "target": "core-top-compat",
+  "tracked_package": "/mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260713-2245-core-top-contract/reference/component-replacements/mycpu_top.v"
+}

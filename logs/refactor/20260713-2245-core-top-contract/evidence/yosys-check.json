@@ -1,0 +1,52 @@
+{
+  "full_package_static_validated": false,
+  "full_package_validation_gate": "official-chiplab-compile",
+  "gate": "wrapper-yosys-check",
+  "generated_at": "2026-07-13T23:05:08+08:00",
+  "input": {
+    "backend_stub": "/mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260713-2245-core-top-contract/build/contract-gate-v2/core_top/yosys-check/input/openla500_legacy_core.v",
+    "backend_stub_sha256": "4ab04e28a2179019631b0aca8b477ee661cb99d2a52756238941ec42530d2166",
+    "original_package": "/mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260713-2245-core-top-contract/build/contract-gate-v2/core_top/package/rtl/mycpu_top.v",
+    "original_package_sha256": "fec641117e538dfb79eedb0e4afffeb3690594e84ffb9799c5409d8f690258a3",
+    "original_package_size": 54777,
+    "wrapper_sha256": "342d89e7b6fc766c29d5ed1c301202858f346c7634763296ac8771995542176b",
+    "wrapper_snapshot": "/mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260713-2245-core-top-contract/build/contract-gate-v2/core_top/yosys-check/input/core_top.v",
+    "wrapper_snapshot_sha256": "3cb92bcca25d107d61a8b6e8e3ac489b298d1facd53fac058ad3992dab5f1dc9"
+  },
+  "provenance": {
+    "evaluator": "/mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260713-2245-core-top-contract/tools/core_top_gate.py",
+    "evaluator_sha256": "4424290fdb8d6da65764b7f701bf19cbd71c44b9d4d214f6dc3843c3f3d9a3fb",
+    "manifest": "/mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260713-2245-core-top-contract/reference/manifest.lock",
+    "manifest_sha256": "743dd7e58d77e456cfe664d80c2e6614ab426f72bfecd9088ff18d702afa2f20",
+    "ports_contract": "/mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260713-2245-core-top-contract/reference/core-top.ports.json",
+    "ports_contract_sha256": "effa486ff707e480ff8ee13d7f20b2d524bd26908726915c99abf1b37eeab576",
+    "repository": "/mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260713-2245-core-top-contract",
+    "repository_head": "b2946f8ac93fc9ccfa9c8748bb53f444976c36cb",
+    "repository_status_sha256": "8153a00cfb1ea56b0f2c39c1350f82afcf2e1bd3647d919f9604dc13b178842c"
+  },
+  "schema_version": 1,
+  "scope": "compat-wrapper-only",
+  "status": "pass",
+  "target": "core-top-compat",
+  "yosys": {
+    "argv": [
+      "/usr/bin/yosys",
+      "-l",
+      "/mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260713-2245-core-top-contract/build/contract-gate-v2/core_top/yosys-check/yosys.log",
+      "-s",
+      "/mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260713-2245-core-top-contract/build/contract-gate-v2/core_top/yosys-check/gate.ys"
+    ],
+    "elapsed_seconds": 0.023,
+    "log": "/mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260713-2245-core-top-contract/build/contract-gate-v2/core_top/yosys-check/yosys.log",
+    "log_sha256": "706cd1ff3fe1c591c8d3d26e9b722edc13481b5c7e23dfceaae218bdf0a1e959",
+    "returncode": 0,
+    "skip_markers": [],
+    "timed_out": false,
+    "tool": {
+      "path": "/usr/bin/yosys",
+      "sha256": "88c0a12bb814a1a8716b1ae10b482e35d3005ed558e1f5f626b3dc983ea3abd0",
+      "version": "Yosys 0.33 (git sha1 2584903a060)"
+    },
+    "warnings": []
+  }
+}

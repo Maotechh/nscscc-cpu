@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "iteration_id": "20260713-2245-core-top-contract",
+  "artifacts": [
+    {"id":"chiplab-doctor","path":"evidence/chiplab-doctor.json","sha256":"636495a549bf14763d82f91f50f64ed0c8a836d8e5936f844226a1bff24b7741","size":16175},
+    {"id":"contract","path":"evidence/contract.json","sha256":"42d66523fd84097b1f3bc81d6acc7f62cc70705184ce67deb89b4df5b15e01b9","size":11261},
+    {"id":"doctor","path":"evidence/doctor.json","sha256":"a8c0f824e306614108f7e774cdee98116ccf06dd43a7412fb7b7426fb40d43d6","size":5787},
+    {"id":"generate","path":"evidence/generate.json","sha256":"0bfdfb2a8c9c8c88e70bc0b6a0b292579866a5b7a3ecb21fd57fac81a9cddecd","size":88177},
+    {"id":"lint","path":"evidence/lint.json","sha256":"9f057c20d5e0956cfce52c0999e5683a0dffa0d6dedc18c0ac3fe30abc7b4d11","size":2814},
+    {"id":"package","path":"evidence/package.json","sha256":"9f851f7ac11780cdd14814b90009bf4c0807751a186f1d9497bec487efa895f1","size":2622},
+    {"id":"port-check","path":"evidence/port-check.json","sha256":"a646eedd9e363233978d05678cc4283efaf79c655eaa3d69c96e76304b641888","size":8058},
+    {"id":"publish-check","path":"evidence/publish-check.json","sha256":"3640238194ba97351132626393b0c75fb2c5fddf3fb6ebc40f2a4f5378e94a46","size":2181},
+    {"id":"scala","path":"evidence/scala.json","sha256":"c162c2f84e610acd9268bed362ac6968f4e526ba15ab67071c9bc36c9c745b3f","size":92304},
+    {"id":"yosys-check","path":"evidence/yosys-check.json","sha256":"55c9f14fc24d6e05a1b94633fcc0a4fa917d2f6b901d6ea8dee8d3656ed34470","size":3222}
+  ],
+  "committed_evidence_root": "logs/refactor/20260713-2245-core-top-contract/evidence",
+  "uncommitted_artifact_root": "build/contract-gate",
+  "retention": "local until PR review completes",
+  "notes": [
+    "Generated RTL, tool logs and temporary Linux clone are not committed.",
+    "Committed JSON files are gate summaries and provenance records only."
+  ]
+}

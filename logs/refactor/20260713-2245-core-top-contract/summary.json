@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "iteration_id": "20260713-2245-core-top-contract",
+  "status": "draft",
+  "branch": "refactor/20260713-2245-core-top-contract",
+  "base_sha": "b2946f8ac93fc9ccfa9c8748bb53f444976c36cb",
+  "head_sha": "72dc250fa7fd10e7535b1ef52912b10562c6d159",
+  "review_target_sha": "72dc250fa7fd10e7535b1ef52912b10562c6d159",
+  "implementation_tested_sha": "72dc250fa7fd10e7535b1ef52912b10562c6d159",
+  "selected_boundary": "core_top_compat_contract_audit",
+  "boundary_state": "audit_pass",
+  "code_changed": true,
+  "gates": {
+    "doctor": {"status": "pass", "planned": 1, "executed": 1, "passed": 1, "failed": 0, "skipped": 0},
+    "chiplab_doctor": {"status": "pass", "planned": 1, "executed": 1, "passed": 1, "failed": 0, "skipped": 0, "detail": "commit-bound Linux clone passed; earlier Windows worktree path failure remains in commands.jsonl"},
+    "contract": {"status": "pass", "planned": 2, "executed": 2, "passed": 2, "failed": 0, "skipped": 0},
+    "generation": {"status": "pass", "planned": 2, "executed": 2, "passed": 2, "failed": 0, "skipped": 0},
+    "package_publish": {"status": "pass", "planned": 2, "executed": 2, "passed": 2, "failed": 0, "skipped": 0},
+    "port_check": {"status": "pass", "planned": 49, "executed": 49, "passed": 49, "failed": 0, "skipped": 0},
+    "rtl_static": {"status": "pass", "planned": 2, "executed": 2, "passed": 2, "failed": 0, "skipped": 0},
+    "scala": {"status": "pass", "planned": 4, "executed": 4, "passed": 4, "failed": 0, "skipped": 0},
+    "python_tests": {"status": "pass", "planned": 37, "executed": 37, "passed": 37, "failed": 0, "skipped": 0},
+    "automation_tests": {"status": "warning", "planned": 329, "executed": 319, "passed": 319, "failed": 0, "skipped": 10, "detail": "full discovery exited 0; ten pre-existing platform/optional skips are not claimed as a required passing gate"},
+    "claude_review": {"status": "unavailable", "planned": 1, "executed": 1, "passed": 0, "failed": 1, "skipped": 0, "detail": "missing GEEKPIE_CLAUDE_API_KEY"},
+    "func_smoke": {"status": "unavailable", "planned": 1, "executed": 0, "passed": 0, "failed": 0, "skipped": 1, "detail": "no RTL behavior changed; active overlay smoke not run in this contract-only prerequisite"}
+  },
+  "observations": {
+    "ports": {"total": 49, "inputs": 17, "outputs": 32, "same_name_connections": 49},
+    "normalized_header_sha256": "43c1c564fe0288dca984a01fd8cffc6d385c4d5c7c0839fab3dd41103b4fc309",
+    "wrapper_sha256": "2bf5d47273ffd49e37580da5d7c04dcb0b24987461dd94663afcf14c43604704",
+    "package_sha256": "fec641117e538dfb79eedb0e4afffeb3690594e84ffb9799c5409d8f690258a3"
+  },
+  "fixed_findings": [
+    "clock_reset metadata is now checked against the exact locked schema and values",
+    "edge, active-level and wrapper-latency mutations are rejected by negative tests"
+  ],
+  "claims": {
+    "locked_external_contract": "supported",
+    "wrapper_connectivity": "supported",
+    "clock_reset_state_equivalence": "not_proved",
+    "axi_debug_behavior": "not_proved",
+    "whole_cpu_function": "not_run",
+    "complete_spinal_refactor": "not_supported"
+  },
+  "active_pr": null,
+  "awaiting": "log commit, push, manual draft PR"
+}
