@@ -1,8 +1,8 @@
 schema_version: 1
-updated_at: "2026-07-13T06:13:00+08:00"
-active_iteration: "20260713-0613-core-contracts"
-active_branch: "refactor/20260713-0613-core-contracts"
-source_head: "5848f94a331ff2064a36a1ddc7a5e0b438e24964"
+updated_at: "2026-07-13T07:35:00+08:00"
+active_iteration: "20260713-0735-regfile-spinal"
+active_branch: "refactor/20260713-0735-regfile-spinal"
+source_head: "f621c7a1e056b9f128b86efddbdd2598b3692ecc"
 
 boundaries:
   component_replacement_overlay:
@@ -303,6 +303,27 @@ boundaries:
     active_pr: null
     blocked_by: []
     last_iteration: null
+
+  regfile:
+    owner: pipeline
+    state: implementation_in_review
+    golden_ref: a158aa8:rtl/regfile.v
+    dependencies:
+      - core_contracts
+    contract: docs/contracts/regfile.md
+    required_gates:
+      - doctor
+      - scala
+      - port_check
+      - lint
+      - yosys_check
+      - unit_diff
+      - diagnostic_overlay
+      - claim_review
+    evidence: []
+    active_pr: null
+    blocked_by: []
+    last_iteration: "20260713-0735-regfile-spinal"
 
   privileged:
     owner: privileged

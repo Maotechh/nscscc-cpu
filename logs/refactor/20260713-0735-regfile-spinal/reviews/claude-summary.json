@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "iteration_id": "20260713-0735-regfile-spinal",
+  "status": "unavailable",
+  "job_id": "b276ef43ef0e43f8a5021fae7e2d41b2",
+  "provider": null,
+  "model": null,
+  "reviewed_head_sha": null,
+  "raw_path": "reviews/claude-raw.md",
+  "raw_sha256": "53d0c47d01de1fa0a356d411ad6beea2ac9ba97862df9fbd8b0d3ce3179fbccc",
+  "error": "Required provider environment variable is not set: GEEKPIE_CLAUDE_API_KEY",
+  "open_blocking_count": 1,
+  "fresh_against_head": false,
+  "allow_ready": false,
+  "allow_status_promotion": false,
+  "findings": [
+    {"id": "CLAUDE-UNAVAILABLE", "status": "open", "blocking": true, "detail": "Bridge 在 reviewer 模型启动前失败，没有 Claude 审核结论。"}
+  ],
+  "fallback": {
+    "kind": "local_independent_read_only_review",
+    "paths": ["reviews/claude-summary.md"],
+    "is_claude_review": false
+  },
+  "provenance": {
+    "source": "claude-review-mcp",
+    "raw_path": "reviews/claude-raw.md",
+    "raw_sha256": "53d0c47d01de1fa0a356d411ad6beea2ac9ba97862df9fbd8b0d3ce3179fbccc",
+    "job_id": "b276ef43ef0e43f8a5021fae7e2d41b2",
+    "provider": null,
+    "model": null,
+    "reviewed_head_sha": null
+  }
+}
