@@ -10,7 +10,7 @@
 - Functional/performance/resource delta: 叶子合同、静态检查和 8235 周期锁步通过；尚未运行活动 overlay、官方功能、性能或 Vivado，不能声明整机收益或无回退。
 - Residual risks: 官方 `func_lab19` baseline 仍在 `0x1c07c79c` 失败；活动 overlay 集成、58/81、random DiffTest、perf、Linux 和 FPGA 均未完成。
 - Rollback: revert 本迭代提交；活动 overlay 尚未引用 `mem-stage.json`，不会影响稳定线。
-- PR URL or awaiting state: `awaiting_push`，推送后保持 draft 草稿，不自动创建或合并 PR。
+- PR URL or awaiting state: 分支已推送，`awaiting_pr`；仅保留 `pr.md` 草稿，不自动创建或合并 PR。
 - Next unblocked candidates: 将 `mem_stage` 加入活动 replacement overlay；并行完成 IF/ID 的 golden lockstep。
 
 ## 尝试与失败

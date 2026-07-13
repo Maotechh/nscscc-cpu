@@ -41,5 +41,10 @@
     "local_independent": "pass_scoped_claim",
     "claim_review_passed": true
   },
-  "pr_state": "draft_missing_integration_and_official_gates"
+  "push": {
+    "remote": "origin",
+    "pushed_head": "4ab84ee",
+    "status": "success"
+  },
+  "pr_state": "awaiting_pr_draft_missing_integration_and_official_gates"
 }
