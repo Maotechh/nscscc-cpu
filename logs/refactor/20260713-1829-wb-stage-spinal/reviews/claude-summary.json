@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "iteration_id": "20260713-1829-wb-stage-spinal",
+  "status": "unavailable",
+  "job_id": "wb-claude-unavailable",
+  "provider": "claude-review-mcp",
+  "model": "claude-unavailable",
+  "reviewed_head_sha": null,
+  "raw_sha256": "57f01b4ab1ea1f402051373a87cd175b1b32cb515a8ce9b2d887e8b9bb7a359d",
+  "error": "Required provider environment variable is not set: GEEKPIE_CLAUDE_API_KEY",
+  "open_blocking_count": 1,
+  "fresh_against_head": false,
+  "allow_ready": false,
+  "allow_status_promotion": false,
+  "provenance": {
+    "source": "claude-review-mcp",
+    "raw_path": "reviews/claude-raw.md",
+    "raw_sha256": "57f01b4ab1ea1f402051373a87cd175b1b32cb515a8ce9b2d887e8b9bb7a359d",
+    "job_id": "wb-claude-unavailable",
+    "provider": "claude-review-mcp",
+    "model": "claude-unavailable",
+    "reviewed_head_sha": null
+  },
+  "local_review": {"contract_claim": "accepted", "system_completion_claim": "open", "active_overlay": "open"},
+  "claims_allowed": ["local WB differential evidence only"],
+  "claims_forbidden": ["full CPU SpinalHDL rewrite", "official func pass", "Linux pass", "Vivado release pass"]
+}

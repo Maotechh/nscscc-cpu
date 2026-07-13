@@ -1,0 +1,27 @@
+{
+  "actual_count": 64,
+  "command": {
+    "argv": [
+      "/usr/bin/yosys",
+      "-q",
+      "-p",
+      "read_verilog  /tmp/wb-final/wb_stage/generate-diff/rtl/wb_stage.v; hierarchy -check -top wb_stage; proc; write_json /tmp/wb-gates-final/wb_stage/port-difftest/ports-normal.json"
+    ],
+    "elapsed_seconds": 0.069,
+    "returncode": 0,
+    "stdout": "",
+    "timed_out": false
+  },
+  "executed": 1,
+  "expected_count": 64,
+  "failed": 0,
+  "gate": "wb-stage-port-difftest",
+  "generated_at": "2026-07-13T19:23:53+08:00",
+  "matched": true,
+  "passed": 1,
+  "profile": "difftest",
+  "rtl_sha256": "a7899e91ba02dec7b2c4cd798969ae012c0c2bee5efe83bda224896f406373bc",
+  "schema_version": 1,
+  "skipped": 0,
+  "status": "pass"
+}

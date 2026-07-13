@@ -1,8 +1,8 @@
 schema_version: 1
-updated_at: "2026-07-13T15:05:00+08:00"
-active_iteration: "20260713-1505-component-integration"
-active_branch: "refactor/20260713-1505-component-integration"
-source_head: "d32352d0f670ec6a590aa4a34bf2dfef11d0e4fc"
+updated_at: "2026-07-13T19:45:00+08:00"
+active_iteration: "20260713-1829-wb-stage-spinal"
+active_branch: "refactor/20260713-1829-wb-stage-spinal"
+source_head: "4d03454359c73854ffecf25a529d820b89fa285e"
 
 boundaries:
   component_replacement_overlay:
@@ -305,6 +305,38 @@ boundaries:
     active_pr: null
     blocked_by: []
     last_iteration: "20260713-0729-exe-stage-spinal"
+
+  writeback_stage:
+    owner: pipeline
+    state: differential_pass
+    golden_ref: a158aa8:rtl/wb_stage.v
+    dependencies:
+      - core_contracts
+      - observability_contracts
+    contract: docs/contracts/wb-stage.md
+    required_gates:
+      - doctor
+      - scala
+      - elaborate
+      - generate
+      - port_check
+      - lint
+      - yosys_check
+      - unit_diff
+      - negative_control
+      - claim_review
+    evidence:
+      - logs/refactor/20260713-1829-wb-stage-spinal/iteration.md
+      - logs/refactor/20260713-1829-wb-stage-spinal/summary.json
+      - logs/refactor/20260713-1829-wb-stage-spinal/evidence/scala-check.json
+      - logs/refactor/20260713-1829-wb-stage-spinal/evidence/unit-diff.json
+      - logs/refactor/20260713-1829-wb-stage-spinal/reviews/claude-summary.json
+    active_pr: null
+    blocked_by:
+      - claude_bridge_missing_GEEKPIE_CLAUDE_API_KEY
+      - official_func_smoke_pending
+      - wb_stage_not_yet_in_active_overlay
+    last_iteration: "20260713-1829-wb-stage-spinal"
 
   regfile:
     owner: pipeline

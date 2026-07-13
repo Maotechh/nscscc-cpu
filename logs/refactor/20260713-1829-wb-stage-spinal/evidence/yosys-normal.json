@@ -1,0 +1,25 @@
+{
+  "command": {
+    "argv": [
+      "/usr/bin/yosys",
+      "-q",
+      "-p",
+      "read_verilog /tmp/wb-final/wb_stage/generate/rtl/wb_stage.v; hierarchy -check -top wb_stage; proc; opt; check -assert"
+    ],
+    "elapsed_seconds": 0.118,
+    "returncode": 0,
+    "stdout": "",
+    "timed_out": false
+  },
+  "diagnostics": [],
+  "executed": 1,
+  "failed": 0,
+  "gate": "wb-stage-yosys-normal",
+  "generated_at": "2026-07-13T19:23:54+08:00",
+  "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "passed": 1,
+  "profile": "normal",
+  "schema_version": 1,
+  "skipped": 0,
+  "status": "pass"
+}

@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "iteration_id": "20260713-1829-wb-stage-spinal",
+  "status": "draft",
+  "branch": "refactor/20260713-1829-wb-stage-spinal",
+  "base_sha": "a6788aaf36cea5a90512d60194c9e41a5c127860",
+  "head_sha": "4d03454359c73854ffecf25a529d820b89fa285e",
+  "boundary": "writeback_stage",
+  "claims": [
+    "Scala WritebackStage generates reproducible normal and DIFFTEST wb_stage RTL with 52/64 locked ports",
+    "candidate matches the locked WB golden for 8238 directed/random cycles and the negative control detects the mutation"
+  ],
+  "gates": {
+    "scala_check": {"status": "pass", "planned": 4, "executed": 4, "passed": 4, "failed": 0, "skipped": 0, "evidence": "evidence/scala-check.json"},
+    "contract": {"status": "pass", "planned": 1, "executed": 1, "passed": 1, "failed": 0, "skipped": 0, "evidence": "evidence/contract.json"},
+    "generate": {"status": "pass", "planned": 4, "executed": 4, "passed": 4, "failed": 0, "skipped": 0, "evidence": ["evidence/generate-normal.json", "evidence/generate-difftest.json"]},
+    "port_check": {"status": "pass", "planned": 2, "executed": 2, "passed": 2, "failed": 0, "skipped": 0, "profiles": ["normal", "difftest"], "evidence": ["evidence/port-normal.json", "evidence/port-difftest.json"]},
+    "lint": {"status": "pass", "planned": 2, "executed": 2, "passed": 2, "failed": 0, "skipped": 0, "profiles": ["normal", "difftest"], "evidence": ["evidence/lint-normal.json", "evidence/lint-difftest.json"]},
+    "yosys_check": {"status": "pass", "planned": 2, "executed": 2, "passed": 2, "failed": 0, "skipped": 0, "profiles": ["normal", "difftest"], "evidence": ["evidence/yosys-normal.json", "evidence/yosys-difftest.json"]},
+    "unit_diff": {"status": "pass", "planned": 8238, "executed": 8238, "passed": 8238, "failed": 0, "skipped": 0, "cycles": 8238, "evidence": "evidence/unit-diff.json"},
+    "negative_control": {"status": "pass", "planned": 1, "executed": 1, "passed": 1, "failed": 0, "skipped": 0, "first_mismatch": {"cycle": 3, "phase": 1}, "evidence": "evidence/unit-diff.json"},
+    "claim_review": {"status": "unavailable", "planned": 1, "executed": 0, "passed": 0, "failed": 0, "skipped": 1, "reason": "GEEKPIE_CLAUDE_API_KEY missing; local independent review retained", "evidence": "reviews/claude-summary.json"},
+    "official_func_smoke": {"status": "unavailable", "planned": 1, "executed": 0, "passed": 0, "failed": 0, "skipped": 1, "reason": "WB replacement is not yet in active overlay"},
+    "vivado": {"status": "unavailable", "planned": 1, "executed": 0, "passed": 0, "failed": 0, "skipped": 1, "reason": "leaf replacement is not yet an FPGA top"}
+  },
+  "counts": {"planned": 8257, "executed": 8254, "passed": 8254, "failed": 0, "skipped": 3},
+  "pr": {"status": "awaiting_pr", "url": "https://github.com/Maotechh/nscscc-cpu/pull/new/refactor/20260713-1829-wb-stage-spinal", "created": false, "auto_merge": false}
+}

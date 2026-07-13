@@ -1,0 +1,157 @@
+{
+  "approved_unused": [
+    {
+      "bits": "",
+      "category": "UNUSEDSIGNAL",
+      "signal": "area_stage_io_realValid"
+    },
+    {
+      "bits": "",
+      "category": "UNUSEDSIGNAL",
+      "signal": "payload_csrData"
+    },
+    {
+      "bits": "",
+      "category": "UNUSEDSIGNAL",
+      "signal": "payload_csrRstatEvent"
+    },
+    {
+      "bits": "[10]",
+      "category": "UNUSEDSIGNAL",
+      "signal": "payload_exceptionCode"
+    },
+    {
+      "bits": "",
+      "category": "UNUSEDSIGNAL",
+      "signal": "payload_isCounterInstruction"
+    },
+    {
+      "bits": "",
+      "category": "UNUSEDSIGNAL",
+      "signal": "payload_loadEvent"
+    },
+    {
+      "bits": "",
+      "category": "UNUSEDSIGNAL",
+      "signal": "payload_memoryPhysicalAddress"
+    },
+    {
+      "bits": "",
+      "category": "UNUSEDSIGNAL",
+      "signal": "payload_memoryVirtualAddress"
+    },
+    {
+      "bits": "[3:0]",
+      "category": "UNUSEDSIGNAL",
+      "signal": "payload_physicalAddress"
+    },
+    {
+      "bits": "",
+      "category": "UNUSEDSIGNAL",
+      "signal": "payload_storeData"
+    },
+    {
+      "bits": "",
+      "category": "UNUSEDSIGNAL",
+      "signal": "payload_storeEvent"
+    },
+    {
+      "bits": "",
+      "category": "UNUSEDSIGNAL",
+      "signal": "payload_timer"
+    }
+  ],
+  "command": {
+    "argv": [
+      "/usr/bin/verilator",
+      "--lint-only",
+      "--top-module",
+      "wb_stage",
+      "-Wall",
+      "-Wno-fatal",
+      "-Wno-DECLFILENAME",
+      "/tmp/wb-final/wb_stage/generate/rtl/wb_stage.v"
+    ],
+    "elapsed_seconds": 0.046,
+    "returncode": 0,
+    "stdout": "%Warning-UNUSEDSIGNAL: /tmp/wb-final/wb_stage/generate/rtl/wb_stage.v:63:23: Signal is not used: 'area_stage_io_realValid'\n                                                                           : ... note: In instance 'wb_stage'\n   63 |   wire                area_stage_io_realValid;\n      |                       ^~~~~~~~~~~~~~~~~~~~~~~\n                       ... For warning description see https://verilator.org/warn/UNUSEDSIGNAL?v=5.020\n                       ... Use \"/* verilator lint_off UNUSEDSIGNAL */\" and lint_on around source to disable this message.\n%Warning-UNUSEDSIGNAL: /tmp/wb-final/wb_stage/generate/rtl/wb_stage.v:457:23: Bits of signal are not used: 'payload_exceptionCode'[10]\n                                                                            : ... note: In instance 'wb_stage.area_stage'\n  457 |   reg        [15:0]   payload_exceptionCode;\n      |                       ^~~~~~~~~~~~~~~~~~~~~\n%Warning-UNUSEDSIGNAL: /tmp/wb-final/wb_stage/generate/rtl/wb_stage.v:479:23: Bits of signal are not used: 'payload_physicalAddress'[3:0]\n                                                                            : ... note: In instance 'wb_stage.area_stage'\n  479 |   reg        [31:0]   payload_physicalAddress;\n      |                       ^~~~~~~~~~~~~~~~~~~~~~~\n%Warning-UNUSEDSIGNAL: /tmp/wb-final/wb_stage/generate/rtl/wb_stage.v:482:23: Signal is not used: 'payload_timer'\n                                                                            : ... note: In instance 'wb_stage.area_stage'\n  482 |   reg        [63:0]   payload_timer;\n      |                       ^~~~~~~~~~~~~\n%Warning-UNUSEDSIGNAL: /tmp/wb-final/wb_stage/generate/rtl/wb_stage.v:483:23: Signal is not used: 'payload_isCounterInstruction'\n                                                                            : ... note: In instance 'wb_stage.area_stage'\n  483 |   reg                 payload_isCounterInstruction;\n      |                       ^~~~~~~~~~~~~~~~~~~~~~~~~~~~\n%Warning-UNUSEDSIGNAL: /tmp/wb-final/wb_stage/generate/rtl/wb_stage.v:484:23: Signal is not used: 'payload_loadEvent'\n                                                                            : ... note: In instance 'wb_stage.area_stage'\n  484 |   reg        [7:0]    payload_loadEvent;\n      |                       ^~~~~~~~~~~~~~~~~\n%Warning-UNUSEDSIGNAL: /tmp/wb-final/wb_stage/generate/rtl/wb_stage.v:485:23: Signal is not used: 'payload_memoryPhysicalAddress'\n                                                                            : ... note: In instance 'wb_stage.area_stage'\n  485 |   reg        [31:0]   payload_memoryPhysicalAddress;\n      |                       ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n%Warning-UNUSEDSIGNAL: /tmp/wb-final/wb_stage/generate/rtl/wb_stage.v:486:23: Signal is not used: 'payload_memoryVirtualAddress'\n                                                                            : ... note: In instance 'wb_stage.area_stage'\n  486 |   reg        [31:0]   payload_memoryVirtualAddress;\n      |                       ^~~~~~~~~~~~~~~~~~~~~~~~~~~~\n%Warning-UNUSEDSIGNAL: /tmp/wb-final/wb_stage/generate/rtl/wb_stage.v:487:23: Signal is not used: 'payload_storeEvent'\n                                                                            : ... note: In instance 'wb_stage.area_stage'\n  487 |   reg        [7:0]    payload_storeEvent;\n      |                       ^~~~~~~~~~~~~~~~~~\n%Warning-UNUSEDSIGNAL: /tmp/wb-final/wb_stage/generate/rtl/wb_stage.v:488:23: Signal is not used: 'payload_storeData'\n                                                                            : ... note: In instance 'wb_stage.area_stage'\n  488 |   reg        [31:0]   payload_storeData;\n      |                       ^~~~~~~~~~~~~~~~~\n%Warning-UNUSEDSIGNAL: /tmp/wb-final/wb_stage/generate/rtl/wb_stage.v:489:23: Signal is not used: 'payload_csrRstatEvent'\n                                                                            : ... note: In instance 'wb_stage.area_stage'\n  489 |   reg                 payload_csrRstatEvent;\n      |                       ^~~~~~~~~~~~~~~~~~~~~\n%Warning-UNUSEDSIGNAL: /tmp/wb-final/wb_stage/generate/rtl/wb_stage.v:490:23: Signal is not used: 'payload_csrData'\n                                                                            : ... note: In instance 'wb_stage.area_stage'\n  490 |   reg        [31:0]   payload_csrData;\n      |                       ^~~~~~~~~~~~~~~\n",
+    "timed_out": false
+  },
+  "diagnostics": [
+    {
+      "bits": "",
+      "category": "UNUSEDSIGNAL",
+      "signal": "area_stage_io_realValid"
+    },
+    {
+      "bits": "[10]",
+      "category": "UNUSEDSIGNAL",
+      "signal": "payload_exceptionCode"
+    },
+    {
+      "bits": "[3:0]",
+      "category": "UNUSEDSIGNAL",
+      "signal": "payload_physicalAddress"
+    },
+    {
+      "bits": "",
+      "category": "UNUSEDSIGNAL",
+      "signal": "payload_timer"
+    },
+    {
+      "bits": "",
+      "category": "UNUSEDSIGNAL",
+      "signal": "payload_isCounterInstruction"
+    },
+    {
+      "bits": "",
+      "category": "UNUSEDSIGNAL",
+      "signal": "payload_loadEvent"
+    },
+    {
+      "bits": "",
+      "category": "UNUSEDSIGNAL",
+      "signal": "payload_memoryPhysicalAddress"
+    },
+    {
+      "bits": "",
+      "category": "UNUSEDSIGNAL",
+      "signal": "payload_memoryVirtualAddress"
+    },
+    {
+      "bits": "",
+      "category": "UNUSEDSIGNAL",
+      "signal": "payload_storeEvent"
+    },
+    {
+      "bits": "",
+      "category": "UNUSEDSIGNAL",
+      "signal": "payload_storeData"
+    },
+    {
+      "bits": "",
+      "category": "UNUSEDSIGNAL",
+      "signal": "payload_csrRstatEvent"
+    },
+    {
+      "bits": "",
+      "category": "UNUSEDSIGNAL",
+      "signal": "payload_csrData"
+    }
+  ],
+  "executed": 1,
+  "failed": 0,
+  "gate": "wb-stage-lint-normal",
+  "generated_at": "2026-07-13T19:23:53+08:00",
+  "log_sha256": "24a1fe25209b78d8e3b1f304af301295fd8485605ebc85b30a8944169467b51b",
+  "missing_expected": [],
+  "passed": 1,
+  "profile": "normal",
+  "schema_version": 1,
+  "skipped": 0,
+  "status": "pass",
+  "suppressed_at_tool": [
+    "DECLFILENAME only: reproducible one-file SpinalHDL component output"
+  ],
+  "unapproved": []
+}
