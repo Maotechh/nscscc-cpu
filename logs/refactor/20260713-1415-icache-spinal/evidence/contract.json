@@ -1,0 +1,12 @@
+{
+  "gate": "icache-contract",
+  "generated_at": "2026-07-13T14:51:59+08:00",
+  "golden_sha256": "85ba1acc69616dd8b19dae1578fc7e002c83fd435f90227f54068e4fa492675b",
+  "ports": {
+    "actual": 34,
+    "expected": 34,
+    "matched": true
+  },
+  "schema_version": 1,
+  "status": "pass"
+}

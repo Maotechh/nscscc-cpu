@@ -48,6 +48,10 @@ EXE_STAGE_PROFILE ?= lacc_off
 EXE_STAGE_MAIN = $(if $(filter lacc_on,$(EXE_STAGE_PROFILE)),openla500.pipeline.GenerateOpenLa500ExecuteStageWithLacc,openla500.pipeline.GenerateOpenLa500ExecuteStage)
 EXE_STAGE_GENERATE_DIR ?= $(OUT_DIR)/exe_stage/$(EXE_STAGE_PROFILE)/generate
 EXE_STAGE_RTL ?= $(EXE_STAGE_GENERATE_DIR)/rtl/exe_stage.v
+ICACHE_CONTRACT ?= reference/component-contracts/icache.json
+ICACHE_CYCLES ?= 12000
+ICACHE_GENERATE_DIR ?= $(OUT_DIR)/icache/generate
+ICACHE_RTL ?= $(ICACHE_GENERATE_DIR)/rtl/icache.v
 CORE_TOP_PORTS ?= reference/core-top.ports.json
 CORE_TOP_GENERATE_DIR ?= $(OUT_DIR)/core_top/generate
 CORE_TOP_WRAPPER_RTL ?= $(CORE_TOP_GENERATE_DIR)/rtl/core_top.v
@@ -57,7 +61,7 @@ CORE_TOP_TRACKED_RTL ?= reference/component-replacements/mycpu_top.v
 CORE_TOP_REPLACEMENT_SPEC ?= reference/component-replacements/core-top.json
 LINT_WAIVERS ?= lint-waivers.yml
 
-.PHONY: doctor scala-cache-bootstrap scala-check elaborate generate port-check lint yosys-check unit formal core-contract-check core-top-contract core-top-package core-top-publish-check mul-contract mul-golden-unit mul-candidate-unit div-contract div-golden-unit div-candidate-unit axi-bridge-contract axi-bridge-candidate-unit csr-generate csr-port-check csr-static csr-unit exe-stage-negative-control chiplab-doctor golden-export chiplab-overlay rtl-smoke identity-compare evidence-check test-automation
+.PHONY: doctor scala-cache-bootstrap scala-check elaborate generate port-check lint yosys-check unit formal core-contract-check core-top-contract core-top-package core-top-publish-check mul-contract mul-golden-unit mul-candidate-unit div-contract div-golden-unit div-candidate-unit axi-bridge-contract axi-bridge-candidate-unit csr-generate csr-port-check csr-static csr-unit exe-stage-negative-control icache-contract icache-candidate-unit chiplab-doctor golden-export chiplab-overlay rtl-smoke identity-compare evidence-check test-automation
 
 doctor:
 	$(PYTHON) -I tools/refactor.py doctor --out-dir "$(OUT_DIR)" $(if $(VIVADO_HOME),--vivado-home "$(VIVADO_HOME)",)
@@ -79,6 +83,8 @@ else ifeq ($(TARGET),axi_bridge)
 	$(PYTHON) -I tools/spinal_generate.py --manifest "reference/manifest.lock" --spinal-dir "spinal" --tool-root "$(CHIPLAB_TOOL_ROOT)" --main-class "openla500.memory.GenerateOpenLa500AxiBridge" --expected-module "axi_bridge" --expected-file "axi_bridge.v" --out-dir "$(OUT_DIR)/axi_bridge/elaborate" --runs 2 $(if $(JAVA_HOME),--java-home "$(JAVA_HOME)",)
 else ifeq ($(TARGET),exe_stage)
 	$(PYTHON) -I tools/spinal_generate.py --manifest "reference/manifest.lock" --spinal-dir "spinal" --tool-root "$(CHIPLAB_TOOL_ROOT)" --main-class "$(EXE_STAGE_MAIN)" --expected-module "exe_stage" --expected-file "exe_stage.v" --out-dir "$(OUT_DIR)/exe_stage/$(EXE_STAGE_PROFILE)/elaborate" --runs 2 $(if $(JAVA_HOME),--java-home "$(JAVA_HOME)",)
+else ifeq ($(TARGET),icache)
+	$(PYTHON) -I tools/spinal_generate.py --manifest "reference/manifest.lock" --spinal-dir "spinal" --tool-root "$(CHIPLAB_TOOL_ROOT)" --main-class "openla500.memory.GenerateOpenLa500ICache" --expected-module "icache" --expected-file "icache.v" --out-dir "$(OUT_DIR)/icache/elaborate" --runs 2 $(if $(JAVA_HOME),--java-home "$(JAVA_HOME)",)
 else ifeq ($(TARGET),alu)
 	$(PYTHON) -I tools/alu_gate.py elaborate --target "$(TARGET)" --manifest "reference/manifest.lock" --spinal-dir "spinal" --tool-root "$(CHIPLAB_TOOL_ROOT)" --out-dir "$(OUT_DIR)/alu/elaborate" $(if $(JAVA_HOME),--java-home "$(JAVA_HOME)",)
 else
@@ -98,6 +104,8 @@ else ifeq ($(TARGET),axi_bridge)
 	$(PYTHON) -I tools/spinal_generate.py --manifest "reference/manifest.lock" --spinal-dir "spinal" --tool-root "$(CHIPLAB_TOOL_ROOT)" --main-class "openla500.memory.GenerateOpenLa500AxiBridge" --expected-module "axi_bridge" --expected-file "axi_bridge.v" --out-dir "$(AXI_BRIDGE_GENERATE_DIR)" --runs 2 $(if $(JAVA_HOME),--java-home "$(JAVA_HOME)",)
 else ifeq ($(TARGET),exe_stage)
 	$(PYTHON) -I tools/spinal_generate.py --manifest "reference/manifest.lock" --spinal-dir "spinal" --tool-root "$(CHIPLAB_TOOL_ROOT)" --main-class "$(EXE_STAGE_MAIN)" --expected-module "exe_stage" --expected-file "exe_stage.v" --out-dir "$(EXE_STAGE_GENERATE_DIR)" --runs 2 $(if $(JAVA_HOME),--java-home "$(JAVA_HOME)",)
+else ifeq ($(TARGET),icache)
+	$(PYTHON) -I tools/spinal_generate.py --manifest "reference/manifest.lock" --spinal-dir "spinal" --tool-root "$(CHIPLAB_TOOL_ROOT)" --main-class "openla500.memory.GenerateOpenLa500ICache" --expected-module "icache" --expected-file "icache.v" --out-dir "$(ICACHE_GENERATE_DIR)" --runs 2 $(if $(JAVA_HOME),--java-home "$(JAVA_HOME)",)
 else ifeq ($(TARGET),alu)
 	$(PYTHON) -I tools/alu_gate.py generate --target "$(TARGET)" --manifest "reference/manifest.lock" --spinal-dir "spinal" --tool-root "$(CHIPLAB_TOOL_ROOT)" --out-dir "$(ALU_GENERATE_DIR)" $(if $(JAVA_HOME),--java-home "$(JAVA_HOME)",)
 else
@@ -115,6 +123,8 @@ else ifeq ($(TARGET),axi_bridge)
 	$(PYTHON) -I tools/axi_bridge_gate.py port-check --contract "$(AXI_BRIDGE_CONTRACT)" --rtl "$(AXI_BRIDGE_RTL)" --out-dir "$(OUT_DIR)/axi_bridge/port-check"
 else ifeq ($(TARGET),exe_stage)
 	$(PYTHON) -I tools/exe_stage_ports.py --rtl "$(EXE_STAGE_RTL)" --profile "$(EXE_STAGE_PROFILE)" --out-dir "$(OUT_DIR)/exe_stage/$(EXE_STAGE_PROFILE)/port-check"
+else ifeq ($(TARGET),icache)
+	$(PYTHON) -I tools/icache_gate.py port-check --contract "$(ICACHE_CONTRACT)" --rtl "$(ICACHE_RTL)" --out-dir "$(OUT_DIR)/icache/port-check"
 else ifeq ($(TARGET),alu)
 	$(PYTHON) -I tools/alu_gate.py port-check --target "$(TARGET)" --manifest "reference/manifest.lock" --rtl "$(ALU_RTL)" --out-dir "$(OUT_DIR)/alu/port-check"
 else
@@ -132,6 +142,8 @@ else ifeq ($(TARGET),axi_bridge)
 	$(PYTHON) -I tools/axi_bridge_gate.py lint --contract "$(AXI_BRIDGE_CONTRACT)" --rtl "$(AXI_BRIDGE_RTL)" --out-dir "$(OUT_DIR)/axi_bridge/lint"
 else ifeq ($(TARGET),exe_stage)
 	verilator --lint-only -Wall -Wno-DECLFILENAME --top-module exe_stage "$(EXE_STAGE_RTL)"
+else ifeq ($(TARGET),icache)
+	$(PYTHON) -I tools/icache_gate.py lint --contract "$(ICACHE_CONTRACT)" --rtl "$(ICACHE_RTL)" --out-dir "$(OUT_DIR)/icache/lint"
 else ifeq ($(TARGET),alu)
 	$(PYTHON) -I tools/alu_gate.py lint --target "$(TARGET)" --manifest "reference/manifest.lock" --rtl "$(ALU_RTL)" --out-dir "$(OUT_DIR)/alu/lint"
 else
@@ -149,6 +161,8 @@ else ifeq ($(TARGET),axi_bridge)
 	$(PYTHON) -I tools/axi_bridge_gate.py yosys-check --contract "$(AXI_BRIDGE_CONTRACT)" --rtl "$(AXI_BRIDGE_RTL)" --out-dir "$(OUT_DIR)/axi_bridge/yosys-check"
 else ifeq ($(TARGET),exe_stage)
 	yosys -q -p 'read_verilog "$(EXE_STAGE_RTL)"; hierarchy -check -top exe_stage; proc; check -assert'
+else ifeq ($(TARGET),icache)
+	$(PYTHON) -I tools/icache_gate.py yosys-check --contract "$(ICACHE_CONTRACT)" --rtl "$(ICACHE_RTL)" --out-dir "$(OUT_DIR)/icache/yosys-check"
 else ifeq ($(TARGET),alu)
 	$(PYTHON) -I tools/alu_gate.py yosys-check --target "$(TARGET)" --manifest "reference/manifest.lock" --rtl "$(ALU_RTL)" --out-dir "$(OUT_DIR)/alu/yosys-check"
 else
@@ -164,6 +178,8 @@ else ifeq ($(TARGET),axi_bridge)
 	$(PYTHON) -I tools/axi_bridge_gate.py diff --contract "$(AXI_BRIDGE_CONTRACT)" --rtl "$(AXI_BRIDGE_RTL)" --out-dir "$(OUT_DIR)/axi_bridge/unit" --cycles "$(AXI_BRIDGE_CYCLES)" --seed "$(AXI_BRIDGE_RANDOM_SEED)"
 else ifeq ($(TARGET),exe_stage)
 	$(PYTHON) -I tools/exe_stage_diff.py --rtl "$(EXE_STAGE_RTL)" --profile "$(EXE_STAGE_PROFILE)" --out-dir "$(OUT_DIR)/exe_stage/$(EXE_STAGE_PROFILE)/unit"
+else ifeq ($(TARGET),icache)
+	$(PYTHON) -I tools/icache_gate.py diff --contract "$(ICACHE_CONTRACT)" --rtl "$(ICACHE_RTL)" --out-dir "$(OUT_DIR)/icache/unit" --cycles "$(ICACHE_CYCLES)"
 else ifeq ($(TARGET),alu)
 	$(PYTHON) -I tools/alu_gate.py unit --target "$(TARGET)" --manifest "reference/manifest.lock" --spinal-dir "spinal" --tool-root "$(CHIPLAB_TOOL_ROOT)" --out-dir "$(OUT_DIR)/alu/unit" $(if $(JAVA_HOME),--java-home "$(JAVA_HOME)",)
 else
@@ -233,6 +249,12 @@ csr-unit:
 
 exe-stage-negative-control:
 	$(PYTHON) -I tools/exe_stage_diff.py --rtl "$(EXE_STAGE_RTL)" --profile "$(EXE_STAGE_PROFILE)" --out-dir "$(OUT_DIR)/exe_stage/$(EXE_STAGE_PROFILE)/negative-control" --negative-control
+
+icache-contract:
+	$(PYTHON) -I tools/icache_gate.py contract --contract "$(ICACHE_CONTRACT)" --out-dir "$(OUT_DIR)/icache/contract"
+
+icache-candidate-unit:
+	$(PYTHON) -I tools/icache_gate.py diff --contract "$(ICACHE_CONTRACT)" --rtl "$(ICACHE_RTL)" --out-dir "$(OUT_DIR)/icache/unit" --cycles "$(ICACHE_CYCLES)"
 
 chiplab-doctor:
 	$(PYTHON) -I tools/refactor.py chiplab-doctor --out-dir "$(OUT_DIR)" --chiplab-ref "$(CHIPLAB_REFERENCE)" --tool-root "$(CHIPLAB_TOOL_ROOT)"

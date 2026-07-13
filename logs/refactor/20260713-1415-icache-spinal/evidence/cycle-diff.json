@@ -1,0 +1,20 @@
+{
+  "counts": {
+    "executed": 16096,
+    "failed": 0,
+    "passed": 16096,
+    "planned": 16096,
+    "skipped": 0
+  },
+  "cycles": 12000,
+  "gate": "icache-cycle-diff",
+  "generated_at": "2026-07-13T14:52:15+08:00",
+  "mismatches": 0,
+  "negative_control": {
+    "candidate": "7 0 0 0 0 0 4 f254ec00 0 0 0 0 0 0 0 0 0",
+    "cycle": 7,
+    "golden": "7 0 0 0 0 1 4 f254ec00 0 0 0 0 0 0 0 0 0"
+  },
+  "schema_version": 1,
+  "status": "pass"
+}

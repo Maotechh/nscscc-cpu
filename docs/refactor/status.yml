@@ -377,6 +377,34 @@ boundaries:
       - claude_claim_review_pending
     last_iteration: "20260713-0729-axi-bridge-spinal"
 
+  icache:
+    owner: memory
+    state: implementation_in_review
+    golden_ref: a158aa8:rtl/icache.v
+    dependencies:
+      - core_contracts
+      - axi_bridge
+    contract: docs/contracts/icache.md
+    required_gates:
+      - doctor
+      - automation_tests
+      - contract
+      - scala
+      - elaborate
+      - generate
+      - port_check
+      - lint
+      - yosys_check
+      - unit_diff
+      - random_backpressure_diff
+      - diagnostic_overlay
+      - func_smoke
+      - claim_review
+    evidence: []
+    active_pr: null
+    blocked_by: []
+    last_iteration: "20260713-1415-icache-spinal"
+
   memory_system:
     owner: memory
     state: not_started
