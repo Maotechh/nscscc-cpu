@@ -1,0 +1,10 @@
+{"argv":["git","status","--short","--branch"],"cwd":".","exit_code":0,"elapsed_seconds":0,"result":"branch/base recorded","evidence":"iteration.md"}
+{"argv":["make","scala-check","OUT_DIR=/tmp/wb-scala-final2"],"cwd":".","exit_code":1,"elapsed_seconds":70,"result":"all Scala tasks pass; integrity failed because generated test Verilator flags were incomplete","evidence":"evidence/scala-check.json"}
+{"argv":["make","scala-check","OUT_DIR=/tmp/wb-scala-final3"],"cwd":".","exit_code":1,"elapsed_seconds":56,"result":"all Scala tasks pass; test wrapper hierarchy/unused warnings exposed","evidence":"evidence/scala-check.json"}
+{"argv":["make","scala-check","OUT_DIR=/tmp/wb-scala-final5"],"cwd":".","exit_code":0,"elapsed_seconds":58,"result":"scalafmt compile test-compile test all pass; integrity_error null","evidence":"evidence/scala-check.json"}
+{"argv":["make","wb-stage-contract","OUT_DIR=/tmp/wb-contract"],"cwd":".","exit_code":0,"elapsed_seconds":1,"result":"golden manifest and schema pass","evidence":"evidence/contract.json"}
+{"argv":["make","generate","TARGET=wb_stage","OUT_DIR=/tmp/wb-final"],"cwd":".","exit_code":0,"elapsed_seconds":40,"result":"normal and DIFFTEST RTL reproducible","evidence":"evidence/generate-normal.json"}
+{"argv":["make","port-check","TARGET=wb_stage","OUT_DIR=/tmp/wb-gates-final"],"cwd":".","exit_code":0,"elapsed_seconds":2,"result":"52/52 and 64/64 ports pass","evidence":"evidence/port-normal.json"}
+{"argv":["make","lint","TARGET=wb_stage","OUT_DIR=/tmp/wb-gates-final"],"cwd":".","exit_code":0,"elapsed_seconds":3,"result":"both profiles pass","evidence":"evidence/lint-normal.json"}
+{"argv":["make","unit","TARGET=wb_stage","OUT_DIR=/tmp/wb-gates-final"],"cwd":".","exit_code":0,"elapsed_seconds":27,"result":"8238 cycles pass; negative control first mismatch cycle 3 phase 1","evidence":"evidence/unit-diff.json"}
+{"argv":["claude-review"],"cwd":".","exit_code":1,"elapsed_seconds":0,"result":"unavailable: GEEKPIE_CLAUDE_API_KEY missing; downgraded local review recorded","evidence":"reviews/claude-raw.md"}
