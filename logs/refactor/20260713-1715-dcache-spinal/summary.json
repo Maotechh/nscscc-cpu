@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "iteration_id": "20260713-1715-dcache-spinal",
+  "status": "implementation_in_review",
+  "branch": "refactor/20260713-1715-dcache-spinal",
+  "base_sha": "a6788aaf36cea5a90512d60194c9e41a5c127860",
+  "head_sha": null,
+  "selected_boundary": "dcache",
+  "required_gates": ["scala", "elaborate", "port", "lint", "yosys", "cycle_diff", "claim_review"],
+  "gates": {
+    "scala": {"status": "pass", "planned": 4, "executed": 4, "passed": 4, "failed": 0, "skipped": 0, "evidence": "evidence/scala.json"},
+    "elaborate": {"status": "pass", "planned": 2, "executed": 2, "passed": 2, "failed": 0, "skipped": 0, "evidence": "evidence/generate.json"},
+    "port": {"status": "pass", "planned": 35, "executed": 35, "passed": 35, "failed": 0, "skipped": 0, "evidence": "evidence/port.json"},
+    "lint": {"status": "pass", "planned": 2, "executed": 2, "passed": 2, "failed": 0, "skipped": 0, "evidence": "evidence/lint.json"},
+    "yosys": {"status": "pass", "planned": 1, "executed": 1, "passed": 1, "failed": 0, "skipped": 0, "evidence": "evidence/yosys.json"},
+    "cycle_diff": {"status": "pass", "planned": 16096, "executed": 16096, "passed": 16096, "failed": 0, "skipped": 0, "evidence": "evidence/cycle-diff.json"},
+    "claim_review": {"status": "unavailable", "planned": 1, "executed": 1, "passed": 0, "failed": 1, "skipped": 0, "evidence": "reviews/claude-summary.json"}
+  },
+  "claims": [
+    "Spinal D-cache generation is reproducible and its generated module matches the locked golden port contract.",
+    "The candidate is cycle-equivalent to the golden for one fixed 12000-cycle randomized trace plus a negative control.",
+    "This does not establish full D-cache scenario coverage, chiplab functionality, performance, FPGA timing, Linux, or complete CPU refactoring."
+  ],
+  "artifacts": {
+    "generated_rtl_sha256": "35f56d5d919f8b9164bf3636fb6950e8f43ae2571b2c2b10c1caec92f174b082",
+    "generated_rtl_size": 163732,
+    "tool_output_root": "/tmp/nscscc-dcache-12000-generate",
+    "diff_output_root": "/tmp/nscscc-dcache-12000-unit"
+  },
+  "blocked_by": ["claude_bridge_unavailable", "parent_commit_and_push_pending"],
+  "push_status": "awaiting_push",
+  "updated_at": "2026-07-13T18:14:37+08:00"
+}

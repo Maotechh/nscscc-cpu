@@ -1,0 +1,13 @@
+{
+  "gate": "dcache-port",
+  "generated_at": "2026-07-13T18:14:29+08:00",
+  "ports": {
+    "actual": 35,
+    "expected": 35,
+    "matched": true
+  },
+  "rtl_sha256": "35f56d5d919f8b9164bf3636fb6950e8f43ae2571b2c2b10c1caec92f174b082",
+  "rtl_size": 163732,
+  "schema_version": 1,
+  "status": "pass"
+}

@@ -1,0 +1,15 @@
+{
+  "approved_unused_signals": [
+    "preld_hint"
+  ],
+  "gate": "dcache-lint",
+  "generated_at": "2026-07-13T18:01:24+08:00",
+  "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "schema_version": 1,
+  "status": "pass",
+  "unwaived_log_sha256": "a1752309ec7255da8935cc3bcea316b052b351d5ec537c51b83f8c090aec59db",
+  "warnings": {
+    "approved": 1,
+    "unapproved": 0
+  }
+}

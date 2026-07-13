@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "replacements": [
+    {
+      "target": "rtl/dcache.v",
+      "source": "reference/component-replacements/dcache.v",
+      "base_sha256": "8c9c968723710ca741bb5253cc0a1f29c9c6f9f8b3e5e2b14b69f11483e60e97",
+      "replacement_sha256": "35f56d5d919f8b9164bf3636fb6950e8f43ae2571b2c2b10c1caec92f174b082"
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{"argv":["git","status/rev-parse/remote","preflight"],"exit_code":0,"elapsed_seconds":3.1,"evidence":["iteration.md"]}
+{"argv":["make","generate","TARGET=dcache","OUT_DIR=build/dcache-run1"],"exit_code":2,"elapsed_seconds":4.4,"summary":"Windows default mapped /opt tool root to D:/opt; locked cache missing"}
+{"argv":["make","generate","TARGET=dcache","OUT_DIR=/tmp/dcache-20260713-a"],"exit_code":0,"elapsed_seconds":60.3,"summary":"superseded implementation generated reproducibly"}
+{"argv":["dcache_gate.py","lint","candidate-a"],"exit_code":1,"elapsed_seconds":3.8,"summary":"unexpected unused signals exposed incomplete implementation"}
+{"argv":["make","generate","TARGET=dcache","OUT_DIR=/tmp/dcache-20260713-c"],"exit_code":1,"elapsed_seconds":61.1,"summary":"source_stable=false while implementation agent was still editing"}
+{"argv":["make","generate","TARGET=dcache","OUT_DIR=/tmp/dcache-20260713-d"],"exit_code":0,"elapsed_seconds":66.2,"evidence":["evidence/generate-12000.json"]}
+{"argv":["dcache_gate.py","port-check/lint/yosys-check","candidate-d"],"exit_code":0,"elapsed_seconds":5.0,"evidence":["evidence/port-12000.json","evidence/lint-12000.json","evidence/yosys-12000.json"]}
+{"argv":["dcache_gate.py","diff","--cycles","12000"],"exit_code":0,"elapsed_seconds":19.7,"evidence":["evidence/cycle-diff-12000.json"]}
+{"argv":["python","-I","tests/test_dcache_gate.py"],"exit_code":0,"elapsed_seconds":2.9,"summary":"5/5 PASS"}
+{"argv":["make","test-automation"],"exit_code":0,"elapsed_seconds":22.1,"evidence":["iteration.md"],"summary":"321 tests; 311 pass, 10 known skips"}
+{"argv":["make","scala-check"],"exit_code":0,"elapsed_seconds":68.9,"evidence":["evidence/scala.json"]}
+{"argv":["make","chiplab-doctor","with inherited GIT_DIR"],"exit_code":1,"elapsed_seconds":8.1,"summary":"execution environment contaminated chiplab git resolution"}
+{"argv":["make","chiplab-doctor","after temporary worktree pointer fix"],"exit_code":0,"elapsed_seconds":4.2,"evidence":["evidence/chiplab-doctor.json"]}

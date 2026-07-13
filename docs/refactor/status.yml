@@ -1,8 +1,8 @@
 schema_version: 1
-updated_at: "2026-07-13T15:05:00+08:00"
-active_iteration: "20260713-1505-component-integration"
-active_branch: "refactor/20260713-1505-component-integration"
-source_head: "d32352d0f670ec6a590aa4a34bf2dfef11d0e4fc"
+updated_at: "2026-07-13T18:12:00+08:00"
+active_iteration: "20260713-1715-dcache-spinal"
+active_branch: "refactor/20260713-1715-dcache-spinal"
+source_head: "a6788aaf36cea5a90512d60194c9e41a5c127860"
 
 boundaries:
   component_replacement_overlay:
@@ -409,6 +409,44 @@ boundaries:
     active_pr: null
     blocked_by: []
     last_iteration: "20260713-1415-icache-spinal"
+
+  dcache:
+    owner: memory
+    state: differential_pass
+    golden_ref: a158aa8:rtl/dcache.v
+    dependencies:
+      - core_contracts
+      - axi_bridge
+    contract: docs/contracts/dcache.md
+    required_gates:
+      - doctor
+      - automation_tests
+      - contract
+      - scala
+      - elaborate
+      - generate
+      - port_check
+      - lint
+      - yosys_check
+      - unit_diff
+      - random_backpressure_diff
+      - diagnostic_overlay
+      - func_smoke
+      - perf
+      - claim_review
+    evidence:
+      - logs/refactor/20260713-1715-dcache-spinal/iteration.md
+      - logs/refactor/20260713-1715-dcache-spinal/summary.json
+      - logs/refactor/20260713-1715-dcache-spinal/evidence/scala.json
+      - logs/refactor/20260713-1715-dcache-spinal/evidence/generate.json
+      - logs/refactor/20260713-1715-dcache-spinal/evidence/cycle-diff.json
+    active_pr: null
+    blocked_by:
+      - official_func_smoke_pending
+      - perf_not_executed
+      - claude_claim_review_pending
+    last_iteration: "20260713-1715-dcache-spinal"
+
   addr_translation:
     owner: privileged
     state: implementation_in_review
