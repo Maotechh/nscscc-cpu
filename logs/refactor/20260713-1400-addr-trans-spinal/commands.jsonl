@@ -6,3 +6,4 @@
 {"command":"make unit TARGET=tlb OUT_DIR=/tmp/addrtrans-make-gates TLB_CYCLES=8192","exit_code":0,"result":"8258 cycles; 16577 checks; negative control detected"}
 {"command":"python -I -m unittest discover -s tests -p test_*.py","exit_code":0,"result":"311 discovered; 301 pass; 10 existing skips; 0 fail"}
 {"command":"mcp__claude_review__review","exit_code":1,"result":"GEEKPIE_CLAUDE_API_KEY missing"}
+{"command":"git push -u origin refactor/20260713-1400-addr-trans-spinal","exit_code":1,"result":"GitHub HTTPS Recv failure: Connection was reset after 52 seconds"}

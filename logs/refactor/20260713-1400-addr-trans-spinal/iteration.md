@@ -12,5 +12,5 @@
 - Functional/performance/resource delta: 未运行整机功能、性能、Linux 或 Vivado implementation；官方 `func_lab19` 仍在基线首错 `0x1c07c79c`，不能扩展为整机通过。
 - Residual risks: addr_trans 尚缺独立 cycle-diff；仅有 Verilator 2-state，不是 4-state 或形式等价；TLBNUM 锁定 32；未接入活动 core_top。
 - Rollback: revert 本迭代提交，继续使用 CSR 分支上的遗留 `rtl/tlb_entry.v`/`rtl/addr_trans.v`。
-- PR URL or awaiting state: awaiting_push；Claude bridge unavailable，PR 保持 draft。
+- PR URL or awaiting state: `git push -u origin refactor/20260713-1400-addr-trans-spinal` 在 52 秒后被 GitHub HTTPS connection reset，保持 awaiting_push；Claude bridge unavailable，PR 保持 draft。
 - Next unblocked candidates: addr_trans cycle-diff、I-cache/D-cache、流水线 stage integration。
