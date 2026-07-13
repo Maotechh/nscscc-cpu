@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "root_module": "core_top",
+  "golden_commit_key": "team_golden_candidate",
+  "selected_replacements": [
+    "rtl/mycpu_top.v",
+    "rtl/mul.v",
+    "rtl/div.v",
+    "rtl/exe_stage.v",
+    "rtl/regfile.v",
+    "rtl/csr.v",
+    "rtl/axi_bridge.v",
+    "rtl/icache.v",
+    "rtl/dcache.v",
+    "rtl/addr_trans.v"
+  ],
+  "deferred_reachable": {
+    "rtl/alu.v": "内部 exe_stage 实现；本迭代不重复计入 replacement",
+    "rtl/tlb_entry.v": "内部 addr_trans 实现；本迭代不重复计入 replacement"
+  },
+  "unreachable_or_backup": [
+    "rtl/lacc_demo.v"
+  ]
+}

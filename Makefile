@@ -71,7 +71,7 @@ CORE_TOP_TRACKED_RTL ?= reference/component-replacements/mycpu_top.v
 CORE_TOP_REPLACEMENT_SPEC ?= reference/component-replacements/core-top.json
 LINT_WAIVERS ?= lint-waivers.yml
 
-.PHONY: doctor scala-cache-bootstrap scala-check elaborate generate port-check lint yosys-check unit formal core-contract-check core-top-contract core-top-package core-top-publish-check mul-contract mul-golden-unit mul-candidate-unit div-contract div-golden-unit div-candidate-unit axi-bridge-contract axi-bridge-candidate-unit csr-generate csr-port-check csr-static csr-unit exe-stage-negative-control icache-contract icache-candidate-unit dcache-contract dcache-candidate-unit chiplab-doctor golden-export chiplab-overlay rtl-smoke identity-compare evidence-check test-automation
+.PHONY: doctor scala-cache-bootstrap scala-check elaborate generate port-check lint yosys-check unit formal core-contract-check core-top-contract core-top-package core-top-publish-check mul-contract mul-golden-unit mul-candidate-unit div-contract div-golden-unit div-candidate-unit axi-bridge-contract axi-bridge-candidate-unit csr-generate csr-port-check csr-static csr-unit exe-stage-negative-control icache-contract icache-candidate-unit dcache-contract dcache-candidate-unit replacement-reachability chiplab-doctor golden-export chiplab-overlay rtl-smoke identity-compare evidence-check test-automation
 
 doctor:
 	$(PYTHON) -I tools/refactor.py doctor --out-dir "$(OUT_DIR)" $(if $(VIVADO_HOME),--vivado-home "$(VIVADO_HOME)",)
@@ -293,6 +293,9 @@ dcache-contract:
 
 dcache-candidate-unit:
 	$(PYTHON) -I tools/dcache_gate.py diff --contract "$(DCACHE_CONTRACT)" --rtl "$(DCACHE_RTL)" --out-dir "$(OUT_DIR)/dcache/unit" --cycles "$(DCACHE_CYCLES)"
+
+replacement-reachability:
+	$(PYTHON) -I tools/replacement_reachability.py --repo-root "." --manifest "reference/manifest.lock" --spec "reference/component-replacements/active-reachable.json" --metadata "reference/component-replacements/active-reachable.meta.json" --out-dir "$(OUT_DIR)/replacement-reachability"
 
 chiplab-doctor:
 	$(PYTHON) -I tools/refactor.py chiplab-doctor --out-dir "$(OUT_DIR)" --chiplab-ref "$(CHIPLAB_REFERENCE)" --tool-root "$(CHIPLAB_TOOL_ROOT)"
