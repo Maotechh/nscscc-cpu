@@ -5,7 +5,7 @@
   "branch": "refactor/20260713-1847-active-overlay",
   "base_sha": "d128e7bb17bd1386e54af0a4b79bc0c768f41ce4",
   "source_head_sha": "1d0cd288419e430042b8a116d6df291fbc0df3ba",
-  "head_sha": "1d0cd288419e430042b8a116d6df291fbc0df3ba",
+  "head_sha": "6d045ceca17e8ca335c8611efc2f5f2771772c41",
   "selected_boundary": "legacy_shell_active_replacement_overlay",
   "required_gates": ["reachability", "scala", "automation_tests", "chiplab_doctor", "strict_overlay", "rtl_smoke", "claim_review"],
   "gates": {
@@ -25,7 +25,8 @@
     "This legacy-shell integration does not make Scala the only active CPU source and is not complete refactoring."
   ],
   "blocked_by": ["func_lab19_fail_at_1c07c79c", "626_unapproved_verilator_warnings", "claude_bridge_missing_GEEKPIE_CLAUDE_API_KEY", "full_regression_not_executed"],
-  "push_status": "awaiting_push",
+  "push_status": "pushed",
+  "pushed_commit": "6d045ceca17e8ca335c8611efc2f5f2771772c41",
   "remote_ref": "origin/refactor/20260713-1847-active-overlay",
-  "updated_at": "2026-07-13T19:30:00+08:00"
+  "updated_at": "2026-07-13T19:32:00+08:00"
 }

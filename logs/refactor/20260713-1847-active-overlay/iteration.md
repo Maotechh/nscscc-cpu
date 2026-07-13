@@ -59,5 +59,5 @@ Revert 本迭代提交，恢复逐个 replacement spec；stable/main 分支未�
 
 ## PR / next
 
-- PR: `awaiting_push`，不自动创建或合并。
+- PR: 分支已推送，`awaiting_pr`；不自动创建或合并。
 - Next unblocked candidates: 先定位并消除 aggregate overlay 相对 baseline 的 warning/trace 差异证据，再进入尚未迁移的活动流水级；当前不能把同点失败升级为 `integrated_pass`。

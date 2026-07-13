@@ -18,4 +18,4 @@
 
 ## State
 
-保持 draft/awaiting PR；代理不创建、不合并 PR。
+远端分支已推送，保持 draft/awaiting PR；代理不创建、不合并 PR。
