@@ -1,0 +1,91 @@
+{
+  "schema_version": 1,
+  "status": "pass",
+  "root_module": "core_top",
+  "profile": "legacy_lacc_off_difftest_on",
+  "defined_macros": [
+    "DIFFTEST_EN"
+  ],
+  "undefined_macros": [
+    "HAS_LACC"
+  ],
+  "golden_commit": "a158aa8ab4d49cece1a0fe488d7ac7dc02bd8cf6",
+  "golden_file_count": 21,
+  "reachable_modules": [
+    "BoothBase",
+    "BoothInterBase",
+    "WallaceTreeBase",
+    "YDecoder",
+    "addr",
+    "addr_trans",
+    "alu",
+    "axi_bridge",
+    "btb",
+    "core_top",
+    "csr",
+    "dcache",
+    "decoder_2_4",
+    "decoder_4_16",
+    "decoder_5_32",
+    "decoder_6_64",
+    "div",
+    "encoder_16_4",
+    "encoder_32_5",
+    "encoder_4_2",
+    "encoder_64_6",
+    "exe_stage",
+    "icache",
+    "id_stage",
+    "if_stage",
+    "lfsr",
+    "mem_stage",
+    "mul",
+    "one_valid_16",
+    "one_valid_64",
+    "one_valid_n",
+    "perf_counter",
+    "regfile",
+    "tlb_entry",
+    "wb_stage"
+  ],
+  "selected_replacements": [
+    "rtl/mycpu_top.v",
+    "rtl/mul.v",
+    "rtl/div.v",
+    "rtl/exe_stage.v",
+    "rtl/regfile.v",
+    "rtl/csr.v",
+    "rtl/axi_bridge.v",
+    "rtl/icache.v",
+    "rtl/dcache.v",
+    "rtl/addr_trans.v",
+    "rtl/wb_stage.v"
+  ],
+  "selected_target_modules": {
+    "rtl/mycpu_top.v": "core_top",
+    "rtl/mul.v": "mul",
+    "rtl/div.v": "div",
+    "rtl/exe_stage.v": "exe_stage",
+    "rtl/regfile.v": "regfile",
+    "rtl/csr.v": "csr",
+    "rtl/axi_bridge.v": "axi_bridge",
+    "rtl/icache.v": "icache",
+    "rtl/dcache.v": "dcache",
+    "rtl/addr_trans.v": "addr_trans",
+    "rtl/wb_stage.v": "wb_stage"
+  },
+  "deferred_reachable": {
+    "rtl/alu.v": {
+      "module": "alu",
+      "reachable": true,
+      "reason": "\u5185\u90e8 exe_stage \u5b9e\u73b0\uff1b\u672c\u8fed\u4ee3\u4e0d\u91cd\u590d\u8ba1\u5165 replacement"
+    },
+    "rtl/tlb_entry.v": {
+      "module": "tlb_entry",
+      "reachable": true,
+      "reason": "\u5185\u90e8 addr_trans \u5b9e\u73b0\uff1b\u672c\u8fed\u4ee3\u4e0d\u91cd\u590d\u8ba1\u5165 replacement"
+    }
+  },
+  "selected_count": 11,
+  "deferred_count": 2
+}

@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "iteration_id": "20260713-2059-wb-active-overlay",
+  "status": "draft",
+  "branch": "refactor/20260713-2059-wb-active-overlay",
+  "base_sha": "288c4c834244b4b3e6ee03198124a82774d52002",
+  "head_sha": "464ccd3d200aa281749322229e913c3ef275bcc5",
+  "boundary": "legacy_shell_active_replacement_overlay",
+  "claims": [
+    "11 committed replacement blobs are accepted by the strict diagnostic overlay loader and are reachable from core_top",
+    "the official full hierarchy builds and runs, but strict warning policy and func_lab19 fail at the known baseline mismatch",
+    "this is not a complete SpinalHDL rewrite or full functional equivalence proof"
+  ],
+  "gates": {
+    "reachability": {"status":"pass","planned":11,"executed":11,"passed":11,"failed":0,"skipped":0,"evidence":"evidence/reachability.json"},
+    "scala": {"status":"pass","planned":4,"executed":4,"passed":4,"failed":0,"skipped":0,"evidence":"evidence/scala.json"},
+    "automation_tests": {"status":"warning","planned":328,"executed":318,"passed":318,"failed":0,"skipped":10,"evidence":"commands.jsonl"},
+    "chiplab_doctor": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0,"evidence":"evidence/chiplab-doctor.json"},
+    "vivado_doctor": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0,"evidence":"evidence/doctor-vivado.json"},
+    "strict_overlay": {"status":"warning","planned":11,"executed":11,"passed":11,"failed":0,"skipped":0,"gate_eligible":false,"evidence":"evidence/chiplab-overlay-manifest.json"},
+    "full_hierarchy_build": {"status":"fail","planned":1,"executed":1,"passed":0,"failed":1,"skipped":0,"native_build_exit_code":0,"dut_warnings":254,"official_environment_warnings":373,"evidence":"evidence/rtl-smoke.json"},
+    "rtl_smoke": {"status":"fail","planned":1,"executed":1,"passed":0,"failed":1,"skipped":0,"first_mismatch_pc":"0x1c07c79c","evidence":"evidence/rtl-smoke.json"},
+    "claim_review": {"status":"unavailable","planned":1,"executed":0,"passed":0,"failed":0,"skipped":1,"evidence":"reviews/claude-summary.json"}
+  },
+  "counts": {"planned":359,"executed":348,"passed":346,"failed":2,"skipped":11},
+  "pr": {"status":"awaiting_pr","created":false,"auto_merge":false}
+}

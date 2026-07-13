@@ -21,6 +21,7 @@ boundaries:
       - icache
       - dcache
       - addr_translation
+      - writeback_stage
     contract: reference/component-replacements/active-reachable.meta.json
     required_gates:
       - reachability
@@ -31,19 +32,19 @@ boundaries:
       - func_smoke
       - claim_review
     evidence:
-      - logs/refactor/20260713-1847-active-overlay/iteration.md
-      - logs/refactor/20260713-1847-active-overlay/summary.json
-      - logs/refactor/20260713-1847-active-overlay/evidence/reachability.json
-      - logs/refactor/20260713-1847-active-overlay/evidence/chiplab-overlay-manifest.json
-      - logs/refactor/20260713-1847-active-overlay/evidence/rtl-smoke-summary.json
-      - logs/refactor/20260713-1847-active-overlay/reviews/claude-summary.json
+      - logs/refactor/20260713-2059-wb-active-overlay/iteration.md
+      - logs/refactor/20260713-2059-wb-active-overlay/summary.json
+      - logs/refactor/20260713-2059-wb-active-overlay/evidence/reachability.json
+      - logs/refactor/20260713-2059-wb-active-overlay/evidence/chiplab-overlay-manifest.json
+      - logs/refactor/20260713-2059-wb-active-overlay/evidence/rtl-smoke.json
+      - logs/refactor/20260713-2059-wb-active-overlay/reviews/claude-summary.json
     active_pr: null
     blocked_by:
       - func_lab19_fail_at_1c07c79c
-      - 626_unapproved_verilator_warnings
+      - 627_unapproved_verilator_warnings
       - claude_bridge_missing_GEEKPIE_CLAUDE_API_KEY
       - full_regression_not_executed
-    last_iteration: "20260713-1847-active-overlay"
+    last_iteration: "20260713-2059-wb-active-overlay"
 
   component_replacement_overlay:
     owner: verification
@@ -374,8 +375,8 @@ boundaries:
     active_pr: null
     blocked_by:
       - claude_bridge_missing_GEEKPIE_CLAUDE_API_KEY
-      - official_func_smoke_pending
-      - wb_stage_not_yet_in_active_overlay
+      - official_func_smoke_failed_at_1c07c79c
+      - 627_unapproved_verilator_warnings_in_mixed_compile
     last_iteration: "20260713-1829-wb-stage-spinal"
 
   regfile:
