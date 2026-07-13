@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "iteration_id": "20260713-1847-active-overlay",
+  "artifacts": [
+    {"id":"chiplab-doctor","path":"evidence/chiplab-doctor.json","retention":"git"},
+    {"id":"chiplab-overlay-manifest","path":"evidence/chiplab-overlay-manifest.json","retention":"git","gate_eligible":false},
+    {"id":"rtl-smoke-summary","path":"evidence/rtl-smoke-summary.json","retention":"git","gate_eligible":false},
+    {"id":"raw-chiplab","path":"/tmp/active-overlay-final-20260713","retention":"local-temporary"},
+    {"id":"raw-worktree","path":"/tmp/nscscc-refactor-work/20260713-1847-active-overlay-final","retention":"local-temporary"}
+  ]
+}

@@ -1,0 +1,7 @@
+{"argv":["git","status/rev-parse/remote","preflight"],"exit_code":0,"summary":"clean refactor branch at d128e7b; origin/main=20cae5f"}
+{"argv":["python","-I","tools/replacement_reachability.py"],"exit_code":0,"summary":"10/10 selected replacements reachable under legacy_lacc_off_difftest_on"}
+{"argv":["python","-I","tests/test_replacement_reachability.py"],"exit_code":0,"elapsed_seconds":1.962,"summary":"3/3 PASS including deferred-ALU and LACC-off negative controls"}
+{"argv":["make","chiplab-doctor","OUT_DIR=/tmp/active-overlay-final-20260713"],"exit_code":0,"elapsed_seconds":4.7,"evidence":["evidence/chiplab-doctor.json"]}
+{"argv":["make","chiplab-overlay","DUT_SOURCE=mixed","DIAGNOSTIC=1","REPLACEMENT_SPEC=reference/component-replacements/active-reachable.json","SOURCE_HEAD=cc077967955f2e435b720e747fac7675833002e1"],"exit_code":0,"elapsed_seconds":28.2,"evidence":["evidence/chiplab-overlay-manifest.json"],"summary":"10 committed replacements accepted; gate_eligible=false"}
+{"argv":["make","rtl-smoke","DIAGNOSTIC=1","ITERATION_ID=20260713-1847-active-overlay-final"],"exit_code":2,"elapsed_seconds":58.8,"evidence":["evidence/rtl-smoke-summary.json"],"summary":"native configure/build/simulation exit 0; strict gate FAIL on 626 warnings and func_lab19 mismatch at 0x1c07c79c"}
+{"argv":["claude-review","review_start/status","job=8052f9033715467b851e52aa67b326d1"],"exit_code":1,"summary":"GEEKPIE_CLAUDE_API_KEY missing before model execution"}
