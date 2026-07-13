@@ -11,6 +11,7 @@
 - 端口/静态：35/35，Verilator/Yosys PASS
 - 差分：12000 candidate cycles + 4096 negative-control cycles，16096/16096，0 mismatch
 - 官方环境：locked chiplab doctor PASS
+- strict overlay：replacement loader PASS（diagnostic only，`gate_eligible=false`）
 - 未执行：官方 func、58/81、random DiffTest、perf20、U-Boot/Linux、Vivado/FPGA
 
 ## Risk and rollback
@@ -19,4 +20,4 @@
 
 ## State
 
-Draft only；等待 push、strict overlay、外部 claim 审核和维护者决定是否创建 PR。禁止自动合并。
+Draft only；等待 push、外部 claim 审核和维护者决定是否创建 PR。禁止自动合并。

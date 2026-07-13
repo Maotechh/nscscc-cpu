@@ -4,6 +4,7 @@
   "artifacts": [
     {"id":"generated-rtl","path":"reference/component-replacements/dcache.v","sha256":"35f56d5d919f8b9164bf3636fb6950e8f43ae2571b2c2b10c1caec92f174b082","size":163732,"retention":"git"},
     {"id":"cycle-diff","path":"evidence/cycle-diff-12000.json","sha256":"3c6d63b885c002d6b1a37aa383367ea47abb50a76dadab41a833fd141f8cedeb","size":433,"retention":"git"},
+    {"id":"chiplab-overlay-manifest","path":"evidence/chiplab-overlay-manifest.json","sha256":"587692764134c2de488a36558933a0f63f37b4ed06acca3cc260c65b1dde2d16","size":26605,"retention":"git","gate_eligible":false},
     {"id":"raw-generation","path":"/tmp/dcache-20260713-d","retention":"local-temporary"},
     {"id":"raw-gates","path":"/tmp/dcache-final","retention":"local-temporary"}
   ]

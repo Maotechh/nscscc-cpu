@@ -1,8 +1,8 @@
 schema_version: 1
-updated_at: "2026-07-13T18:12:00+08:00"
+updated_at: "2026-07-13T18:34:00+08:00"
 active_iteration: "20260713-1715-dcache-spinal"
 active_branch: "refactor/20260713-1715-dcache-spinal"
-source_head: "a6788aaf36cea5a90512d60194c9e41a5c127860"
+source_head: "f13b4509a147180d796c1b1d2555ceba8f358b1b"
 
 boundaries:
   component_replacement_overlay:

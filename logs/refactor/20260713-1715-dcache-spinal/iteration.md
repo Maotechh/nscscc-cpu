@@ -1,7 +1,7 @@
 # 20260713-1715-dcache-spinal
 
-- Status: draft / awaiting commit、push、PR 和外部审核
-- Branch / Base SHA / Head SHA: `refactor/20260713-1715-dcache-spinal` / `a6788aaf36cea5a90512d60194c9e41a5c127860` / 待首次提交后回填
+- Status: implementation_in_review / awaiting push、PR 和外部审核
+- Branch / Base SHA / Head SHA: `refactor/20260713-1715-dcache-spinal` / `a6788aaf36cea5a90512d60194c9e41a5c127860` / `f13b4509a147180d796c1b1d2555ceba8f358b1b`
 - Owner / Agent: memory / Codex（实现代理：dcache_contract；只读审核：dcache_review）
 - Selected boundary and selection reason: D-cache/uncached 是 MEM stage 与已迁移 AXI bridge 之间的主要活动阻塞，锁定 golden 可执行，且不要求同时修改流水或顶层公开合同。
 - Golden reference and locked tool versions: `a158aa8ab4d49cece1a0fe488d7ac7dc02bd8cf6:rtl/dcache.v`，blob `755b5087d0321ab5a41596465c2352dd3ee98a4e`；JDK 17.0.19、Scala 2.13.16、sbt 1.10.11、SpinalHDL 1.14.2、Verilator 5.020、Yosys 0.33。
@@ -9,7 +9,7 @@
 - Files changed: Scala D-cache 与生成器、可复现 replacement RTL/spec、合同、Makefile gate、Python 差分门禁及自测、status 和本日志。
 - Functional/performance/resource delta: 只证明固定 seed 的 12000-cycle 2-state 叶子差分；未执行整机功能、perf、Vivado 资源或 Fmax。
 - Rollback: revert 本迭代 PR；活动 `core_top` 尚未引用该 replacement，参赛稳定线不受影响。
-- PR URL or awaiting state: awaiting commit/push；不自动创建或合并 PR。
+- PR URL or awaiting state: awaiting push/PR；实现提交和收尾证据提交后推送分支，不自动创建或合并 PR。
 - Next unblocked candidates: MEM stage 与 D-cache/AXI transaction 的活动集成；之后再推进完整 memory subsystem。
 
 ## Attempts and failures
@@ -33,11 +33,12 @@
 | port/lint/yosys | PASS | 35/35；仅批准 golden 未使用的 `preld_hint`；Yosys check 无告警 |
 | cycle diff | PASS | 12000 candidate + 4096 negative，16096/16096，0 mismatch，负控 cycle 8 命中 |
 | D-cache gate tests | PASS | 5/5 |
+| finalization checks | PASS | 16 个 JSON、15 条 JSONL 均可解析；`git diff --check` 通过；overlay SHA256 与 artifact 声明一致 |
 | automation | PASS with known skips | 321 tests OK；311 pass，10 个既有平台/可选工具 skip |
 | chiplab doctor | PASS | locked commit/gitlink、symlink、工具版本与哈希匹配 |
-| diagnostic overlay | PENDING | 需先提交 replacement 后从完整 commit 加载 |
+| diagnostic overlay | PASS (diagnostic only) | committed replacement spec 被 strict loader 接受，`gate_eligible=false` |
 | official func/perf/Vivado | NOT EXECUTED | 该叶子尚未进入活动 `core_top`，不能形成整机 claim |
-| Claude review | PENDING | 提交后提供完整 base/head diff；不可用时按契约记录错误 |
+| Claude review | UNAVAILABLE / FAILED | bridge 已调用，但 `GEEKPIE_CLAUDE_API_KEY` 未设置；没有 reviewer findings，不能称为 Claude 审核通过 |
 
 ## Claim boundary and residual risks
 
@@ -50,5 +51,6 @@
 - driver 使用受控小 working set 和固定 seed，不是形式证明或多 seed random；
 - invalid channel payload 不参与比较，符合握手协议，但不能用于声明内部节点逐位等价；
 - automation 有 10 个既有 skip，未被本迭代消除；
-- replacement 尚未从提交后的 strict overlay loader 验证；
+- replacement 已被提交后的 strict overlay loader 接受，但仍是 diagnostic，不能替代官方功能 smoke；
+- Claude bridge 不可用，本迭代只有已记录的独立只读审核，claim 仍保持 `partial`；
 - D-cache 仍未被活动 `core_top` 实例化。

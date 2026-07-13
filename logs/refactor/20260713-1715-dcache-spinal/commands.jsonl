@@ -11,3 +11,9 @@
 {"argv":["make","scala-check"],"exit_code":0,"elapsed_seconds":68.9,"evidence":["evidence/scala.json"]}
 {"argv":["make","chiplab-doctor","with inherited GIT_DIR"],"exit_code":1,"elapsed_seconds":8.1,"summary":"execution environment contaminated chiplab git resolution"}
 {"argv":["make","chiplab-doctor","after temporary worktree pointer fix"],"exit_code":0,"elapsed_seconds":4.2,"evidence":["evidence/chiplab-doctor.json"]}
+{"argv":["make","chiplab-doctor","after commit f13b450"],"exit_code":0,"elapsed_seconds":4.2,"evidence":["evidence/chiplab-doctor.json"]}
+{"argv":["make","chiplab-overlay","DUT_SOURCE=mixed","DIAGNOSTIC=1","REPLACEMENT_SPEC=reference/component-replacements/dcache.json","SOURCE_HEAD=f13b4509a147180d796c1b1d2555ceba8f358b1b"],"exit_code":0,"elapsed_seconds":32.3,"evidence":["evidence/chiplab-overlay-manifest.json"],"summary":"strict replacement loader accepted; diagnostic only"}
+{"argv":["python","-I","tests/test_dcache_gate.py"],"exit_code":0,"elapsed_seconds":2.5,"summary":"finalization rerun: 5/5 PASS"}
+{"argv":["python","-I","-c","validate iteration JSON and JSONL"],"exit_code":0,"elapsed_seconds":2.6,"summary":"16 JSON and 15 JSONL records parsed"}
+{"argv":["git","diff","--check"],"exit_code":0,"elapsed_seconds":2.4,"summary":"PASS"}
+{"argv":["Get-FileHash","-Algorithm","SHA256","evidence/chiplab-overlay-manifest.json"],"exit_code":0,"elapsed_seconds":2.5,"summary":"artifact SHA256 matched 587692764134c2de488a36558933a0f63f37b4ed06acca3cc260c65b1dde2d16"}
