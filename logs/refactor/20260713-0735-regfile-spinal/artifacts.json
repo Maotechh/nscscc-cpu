@@ -1,1 +1,19 @@
-{"schema_version":1,"iteration_id":"20260713-0735-regfile-spinal","retention":"local_until_explicit_clean","artifacts":[{"path":"reference/component-replacements/regfile.v","sha256":"6e60ffa098c734ce915721288d5c2c9fcaf0a3d61d0e09f44b57249562a39ecf","size":10069,"retention":"git"}],"external_artifacts":[{"path":"/tmp/regfile-diff8/regfile-diff.json","sha256":"e7644d9b3e2f077073748dc5fd3bc271ee24cf01eb1423e0a344ae2916f94748","size":3546,"retention":"local_until_explicit_clean"},{"path":"/tmp/nscscc-regfile-gates3/scala-check/summary.json","sha256":"2c1611ae2c9a191528cd7795968fea7435ef7c45ea4c758cf12c91f0a463093d","size":73890,"retention":"local_until_explicit_clean"},{"path":"build/regfile-doctor/reports/doctor.json","sha256":"313cd3d76c6838a0a167b1ec079d3759328329d0a966c41a7383a20bbc441a77","size":5047,"retention":"local_until_explicit_clean"}]}
+{
+  "schema_version": 1,
+  "iteration_id": "20260713-0735-regfile-spinal",
+  "retention": "local_until_explicit_clean",
+  "artifacts": [
+    {"path": "reference/component-replacements/regfile.v", "sha256": "6e60ffa098c734ce915721288d5c2c9fcaf0a3d61d0e09f44b57249562a39ecf", "size": 10069, "retention": "git"}
+  ],
+  "external_artifacts": [
+    {"path": "/tmp/regfile-diff8/regfile-diff.json", "sha256": "e7644d9b3e2f077073748dc5fd3bc271ee24cf01eb1423e0a344ae2916f94748", "size": 3546, "retention": "local_until_explicit_clean"},
+    {"path": "/tmp/nscscc-regfile-gates3/scala-check/summary.json", "sha256": "2c1611ae2c9a191528cd7795968fea7435ef7c45ea4c758cf12c91f0a463093d", "size": 73890, "retention": "local_until_explicit_clean"},
+    {"path": "build/regfile-doctor/reports/doctor.json", "sha256": "313cd3d76c6838a0a167b1ec079d3759328329d0a966c41a7383a20bbc441a77", "size": 5047, "retention": "local_until_explicit_clean"},
+    {"path": "/tmp/nscscc-regfile-41b93e5-chiplab/reports/chiplab-doctor.json", "sha256": "6ef50024560d35e8f437618fdb0a4688f74782f1f434219ce0c8922404acf4d2", "size": 16175, "retention": "local_until_explicit_clean"},
+    {"path": "/tmp/nscscc-regfile-41b93e5-chiplab/reports/iterations/20260713-0735-regfile-locked-41b93e5/chiplab-overlay.json", "sha256": "5e5c22a47b7af29e8e5f0a760f2c58832fae9e9f279c97042fed2069e1d7d2f3", "size": 1331, "retention": "local_until_explicit_clean"},
+    {"path": "/tmp/nscscc-regfile-41b93e5-chiplab/reports/iterations/20260713-0735-regfile-mixed-41b93e5/chiplab-overlay.json", "sha256": "4a8e6a7fbd1dcfef13fe04c866c0bbd7ccdf47f1c01d84bf4e0c4b1c23bf6bb8", "size": 2712, "retention": "local_until_explicit_clean"},
+    {"path": "/tmp/nscscc-regfile-41b93e5-chiplab/reports/iterations/20260713-0735-regfile-locked-41b93e5/rtl-smoke.json", "sha256": "9c5aef687cf15c75026d4e24bf592c55821d571e972e867faf2bf48bef77746e", "size": 201250, "retention": "local_until_explicit_clean"},
+    {"path": "/tmp/nscscc-regfile-41b93e5-chiplab/reports/iterations/20260713-0735-regfile-mixed-41b93e5/rtl-smoke.json", "sha256": "48e22842b9594867e7acdde853e88088e37139ae2558a92c6f41f3341ff4ba1f", "size": 211224, "retention": "local_until_explicit_clean"},
+    {"path": "/tmp/nscscc-regfile-41b93e5-chiplab/reports/iterations/20260713-0735-regfile-mixed-41b93e5/identity-comparison.json", "sha256": "a2247ddb161ce71089e5b87f939f0cf34bd692f1d6ed89e627229204fa652821", "size": 8363, "retention": "local_until_explicit_clean"}
+  ]
+}

@@ -28,7 +28,11 @@ Golden 为 `a158aa8:rtl/regfile.v`。Spinal 实现保留 2R1W、组合读、上�
 - Yosys 非 DiffTest 活动综合配置：PASS；DiffTest unpacked-array 端口：工具解析限制，未通过。
 - Locked full Scala gate：4/4 PASS，生成 RTL 两次字节一致。
 - Windows doctor：PASS，实际探测 Vivado 2023.2；仓库 Python automation：304/304 PASS。
+- committed-source chiplab doctor：PASS（commit `a2e11b38...`、myCPU gitlink、工具 SHA 全匹配）。
+- locked baseline overlay：PASS、0 replacement；mixed overlay：1 个 committed replacement，`status=diagnostic`、`gate_eligible=false`。
+- 官方 `func/func_lab19` locked/mixed 均执行 1/1、0 skip；两者均在 `0x1c07c79c` 首个 DiffTest mismatch 失败（172552 instructions、602903 cycles、trace SHA 相同）。locked warning 644 条，mixed 677 条，均未通过 warning policy。
+- identity comparison 的 parser/trace/UART/ROM/ELF 观察相同，但 replacement identity 和 warning counts 不同，故 gate FAIL；这只支持“本次叶子未改变已知基线首错”，不支持整机正确性。
 
 ## 回退与风险
 
-回退为 revert 本迭代 PR。活动 overlay 和官方 smoke 尚待首次提交后运行；在此之前状态不超过 `implementation_in_review`。本轮不做 regfile 性能优化，也不把 leaf 差分扩大成整机功能 claim。
+回退为 revert 本迭代 PR。overlay 和官方 smoke 已运行但基线本身失败，故状态保持 `implementation_in_review`，不得标记 ready。原始报告保存在外部 artifact locator；本轮不做 regfile 性能优化，也不把 leaf 差分扩大成整机功能 claim。

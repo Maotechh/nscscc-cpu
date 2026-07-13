@@ -70,9 +70,10 @@ boundaries:
     dependencies:
       - component_replacement_overlay
     contract: docs/contracts/alu.md
-    required_gates:
-      - doctor
-      - scala
+      required_gates:
+        - doctor
+        - chiplab_doctor
+        - scala
       - elaborate
       - generate
       - port_check
@@ -317,10 +318,16 @@ boundaries:
       - port_check
       - lint
       - yosys_check
-      - unit_diff
-      - diagnostic_overlay
-      - claim_review
-    evidence: []
+        - unit_diff
+        - diagnostic_overlay
+        - func_smoke
+        - identity_compare
+        - claim_review
+      evidence:
+        - logs/refactor/20260713-0735-regfile-spinal/summary.json
+        - /tmp/nscscc-regfile-41b93e5-chiplab/reports/iterations/20260713-0735-regfile-mixed-41b93e5/chiplab-overlay.json
+        - /tmp/nscscc-regfile-41b93e5-chiplab/reports/iterations/20260713-0735-regfile-mixed-41b93e5/rtl-smoke.json
+        - /tmp/nscscc-regfile-41b93e5-chiplab/reports/iterations/20260713-0735-regfile-mixed-41b93e5/identity-comparison.json
     active_pr: null
     blocked_by: []
     last_iteration: "20260713-0735-regfile-spinal"
