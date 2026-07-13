@@ -28,5 +28,5 @@
     "tlb_generate_summary": "logs/refactor/20260713-1400-addr-trans-spinal/evidence/generate-tlb.json",
     "tlb_diff_summary": "logs/refactor/20260713-1400-addr-trans-spinal/evidence/tlb-diff.json"
   },
-  "pr": {"status": "awaiting_push", "url": null, "draft_only": true, "auto_merge": false, "created": false}
+  "pr": {"status": "awaiting_push", "url": null, "draft_only": true, "auto_merge": false, "created": false, "push_attempted": true, "push_error": "GitHub HTTPS Recv failure: Connection was reset"}
 }
