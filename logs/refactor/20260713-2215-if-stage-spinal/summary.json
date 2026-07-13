@@ -4,7 +4,7 @@
   "status": "draft",
   "branch": "refactor/20260713-2215-if-stage-spinal",
   "base_sha": "b2946f8ac93fc9ccfa9c8748bb53f444976c36cb",
-  "head_sha": "b2946f8ac93fc9ccfa9c8748bb53f444976c36cb",
+  "head_sha": "b004cbbcae53df48de034e6a0ae2504e900bbbbb",
   "golden": {
     "commit": "a158aa8ab4d49cece1a0fe488d7ac7dc02bd8cf6",
     "path": "rtl/if_stage.v",
