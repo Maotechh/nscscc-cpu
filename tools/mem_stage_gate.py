@@ -96,6 +96,12 @@ LINT_ALLOWLIST = {
     ("UNUSEDSIGNAL", "csr_dmw1", "[28:6,2:1]"),
     ("UNUSEDSIGNAL", "payload_preload", ""),
 }
+CENTRAL_WAIVER_IDS = {
+    "mem-stage-legacy-dmw0-reserved-bits",
+    "mem-stage-legacy-dmw1-reserved-bits",
+    "mem-stage-preload-payload-compat",
+    "mem-stage-one-file-component-name",
+}
 
 
 class GateError(RuntimeError):
@@ -177,6 +183,25 @@ def expected_ports() -> dict[str, dict[str, object]]:
     return ports
 
 
+def load_central_waivers(repo: Path) -> dict[str, dict[str, object]]:
+    document = json.loads((repo / "lint-waivers.yml").read_text(encoding="utf-8"))
+    if document.get("schema_version") != 1 or not isinstance(document.get("waivers"), list):
+        raise GateError("invalid lint-waivers.yml schema")
+    indexed = {item.get("id"): item for item in document["waivers"] if isinstance(item, dict)}
+    if not CENTRAL_WAIVER_IDS.issubset(indexed):
+        raise GateError("central mem_stage lint waivers are missing")
+    for waiver_id in CENTRAL_WAIVER_IDS:
+        waiver = indexed[waiver_id]
+        if (
+            waiver.get("owner") != "pipeline"
+            or not waiver.get("reason")
+            or not waiver.get("expires_when")
+            or waiver.get("source_sha256") != sha256_file(repo / "reference/component-replacements/mem_stage.v")
+        ):
+            raise GateError(f"invalid central lint waiver: {waiver_id}")
+    return indexed
+
+
 def load_contract(repo: Path, path: Path) -> tuple[dict[str, object], bytes, bytes]:
     data = json.loads(path.read_text(encoding="utf-8"))
     identity = {
@@ -220,6 +245,7 @@ def load_contract(repo: Path, path: Path) -> tuple[dict[str, object], bytes, byt
     ]
     if data.get("lint_allowlist") != expected_lint:
         raise GateError("mem_stage lint allowlist mismatch")
+    load_central_waivers(repo)
 
     manifest: dict[str, str] = {}
     for raw in (repo / "reference" / "manifest.lock").read_text(encoding="utf-8").splitlines():
@@ -342,7 +368,9 @@ def command_port(args: argparse.Namespace) -> int:
 
 def command_lint(args: argparse.Namespace) -> int:
     out = fresh(args.out_dir)
-    load_contract(args.repo.resolve(), args.contract.resolve())
+    repo = args.repo.resolve()
+    load_contract(repo, args.contract.resolve())
+    central_waivers = load_central_waivers(repo)
     verilator = shutil.which("verilator")
     if not verilator:
         raise GateError("verilator is not on PATH")
@@ -400,6 +428,10 @@ def command_lint(args: argparse.Namespace) -> int:
             "suppressed_at_tool": [
                 "DECLFILENAME only: reproducible one-file SpinalHDL component output"
             ],
+            "central_waiver_ids": sorted(CENTRAL_WAIVER_IDS),
+            "central_waiver_source_sha256": central_waivers[
+                "mem-stage-one-file-component-name"
+            ]["source_sha256"],
             "command": command,
             "log_sha256": sha256_file(out / "verilator.log"),
         }
@@ -533,8 +565,13 @@ def testbench(cycles: int, seed: int) -> str:
             "    csr_da=0; csr_pg=1; data_tlb_found=0; data_tlb_v=0; es_to_ms_bus=0; es_to_ms_bus[70]=1; es_to_ms_bus[214:183]=32'h81234004; es_to_ms_valid=1; step; clear_controls; step;",
             "    data_tlb_found=1; data_tlb_v=1; csr_dmw0=32'h80000001; csr_datm=1; es_to_ms_bus=0; es_to_ms_bus[70]=1; es_to_ms_bus[214:183]=32'h81234004; es_to_ms_valid=1; data_data_ok=1; step; clear_controls; step;",
             "    csr_dmw0=0; csr_da=1; csr_pg=0; csr_datm=0; lladdr=28'h1234567; data_tlb_ppn=20'h76543; es_to_ms_bus=0; es_to_ms_bus[137]=1; es_to_ms_bus[138]=1; es_to_ms_bus[214:183]=32'h00000010; es_to_ms_valid=1; step; clear_controls; step;",
-            "    // Each external flush must kill the resident entry.",
-            "    es_to_ms_bus=0; es_to_ms_bus[31:0]=32'h1c005000; es_to_ms_valid=1; step; es_to_ms_valid=0; excp_flush=1; step; clear_controls;",
+            "    // Each external flush kills a resident entry even with a coincident input/response/stall.",
+            "    for (i=0; i<5; i=i+1) begin",
+            "      ws_allowin=0; es_to_ms_bus=0; es_to_ms_bus[70]=1; es_to_ms_bus[31:0]=32'h1c005000+i; es_to_ms_valid=1; step;",
+            "      es_to_ms_bus[31:0]=32'h1c005100+i; data_data_ok=1; data_rdata=32'hcafe0000+i;",
+            "      excp_flush=(i==0); ertn_flush=(i==1); refetch_flush=(i==2); icacop_flush=(i==3); idle_flush=(i==4); step;",
+            "      clear_controls; ws_allowin=1; step;",
+            "    end",
             f"    for (i=0; i<{cycles}; i=i+1) begin",
             "      randomize_inputs; reset=(i==2047 || i==6143); step;",
             "    end",

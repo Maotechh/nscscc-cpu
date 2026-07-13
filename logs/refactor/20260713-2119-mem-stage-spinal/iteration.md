@@ -29,8 +29,9 @@
 - contract / port: golden 49/49、candidate 49/49 PASS。
 - Verilator lint: PASS，3 项精确 allowlist，未批准项 0。
 - Yosys: hierarchy/proc/opt/check PASS。
-- cycle differential: 8192 random + 43 directed/setup = 8235 cycles，每周期 3 phase 比较全部 15 输出，PASS。
+- cycle differential: 8192 random + 56 directed/setup = 8248 cycles，每周期 3 phase 比较全部 15 输出，PASS；五类 external flush 均含同周期 input/data response/WB stall directed 覆盖。
 - negative control: cycle 3 / phase 1 首错，`ms_to_ws_valid g=1 c=0`，PASS。
 - Claude claim review: 已调用，但因缺少 `GEEKPIE_CLAUDE_API_KEY` 在产生响应前失败；原始错误已保存，不能声明 Claude PASS。
+- 独立降级审查: 未发现 Scala 时序 blocking bug；指出的五类 flush directed coverage 与中心 lint waiver 两项已修复。审查确认最窄 claim 只能是本固定 seed/轨迹下的叶子 differential pass，PR 继续保持 draft。
 
 以上证据只支持“MEM 叶子在本合同覆盖范围内达到 differential pass”，不支持活动整机或完全 SpinalHDL 重构完成。

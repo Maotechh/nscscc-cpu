@@ -1,6 +1,6 @@
 # Draft PR: refactor MEM stage to typed SpinalHDL
 
-状态：draft，Claude bridge tool error，等待独立只读审查；不得自动合并。
+状态：draft；Claude bridge tool error，独立降级审查仅支持 scoped leaf claim；活动集成与官方影响矩阵门禁未完成，不得自动合并。
 
 ## 行为合同
 
@@ -8,7 +8,7 @@
 
 ## 验证
 
-Scala 4/4、Python 333、reproducible generate 2/2、49/49 contract/port、lint、Yosys、8235-cycle lockstep 和负控均通过。详见 `logs/refactor/20260713-2119-mem-stage-spinal/`。
+Scala 4/4、Python 333、reproducible generate 2/2、49/49 contract/port、lint、Yosys、8248-cycle lockstep 和负控均通过。五类 flush 已逐项 directed 覆盖；详见 `logs/refactor/20260713-2119-mem-stage-spinal/`。
 
 ## 未完成与风险
 

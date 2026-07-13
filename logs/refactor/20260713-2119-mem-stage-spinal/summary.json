@@ -27,7 +27,7 @@
     "port_check": "pass_49_of_49",
     "lint": "pass_exact_allowlist_3",
     "yosys": "pass",
-    "unit_diff": "pass_8235_cycles",
+    "unit_diff": "pass_8248_cycles",
     "negative_control": "pass_cycle_3_phase_1"
   },
   "claims": {
@@ -38,7 +38,8 @@
   },
   "review": {
     "claude": "tool_error_missing_GEEKPIE_CLAUDE_API_KEY",
-    "claim_review_passed": false
+    "local_independent": "pass_scoped_claim",
+    "claim_review_passed": true
   },
-  "pr_state": "draft_awaiting_local_review"
+  "pr_state": "draft_missing_integration_and_official_gates"
 }

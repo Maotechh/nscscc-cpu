@@ -286,6 +286,50 @@
       "reason": "One reproducible SpinalHDL file contains the public wb_stage and typed WritebackStage modules; the filename intentionally follows the public module.",
       "owner": "pipeline",
       "expires_when": "the generated component package is split into filename-matching modules"
+    },
+    {
+      "id": "mem-stage-legacy-dmw0-reserved-bits",
+      "rule": "UNUSEDSIGNAL",
+      "file": "generated mem_stage.v:csr_dmw0[28:6,2:1]",
+      "line": 36,
+      "source_sha256": "37d0cba5ca2f8e901f77aaa26e56360e9205c4732f49ecd9c3189499f03e9bb1",
+      "scope": "candidate_mem_stage_static_lint",
+      "reason": "The locked 32-bit DMW0 compatibility port contains reserved fields; MEM consumes only PLV0, PLV3, MAT and VSEG exactly as the golden RTL.",
+      "owner": "pipeline",
+      "expires_when": "the legacy mem_stage DMW port contract changes or the reserved fields gain active semantics"
+    },
+    {
+      "id": "mem-stage-legacy-dmw1-reserved-bits",
+      "rule": "UNUSEDSIGNAL",
+      "file": "generated mem_stage.v:csr_dmw1[28:6,2:1]",
+      "line": 37,
+      "source_sha256": "37d0cba5ca2f8e901f77aaa26e56360e9205c4732f49ecd9c3189499f03e9bb1",
+      "scope": "candidate_mem_stage_static_lint",
+      "reason": "The locked 32-bit DMW1 compatibility port contains reserved fields; MEM consumes only PLV0, PLV3, MAT and VSEG exactly as the golden RTL.",
+      "owner": "pipeline",
+      "expires_when": "the legacy mem_stage DMW port contract changes or the reserved fields gain active semantics"
+    },
+    {
+      "id": "mem-stage-preload-payload-compat",
+      "rule": "UNUSEDSIGNAL",
+      "file": "generated mem_stage.v:payload_preload",
+      "line": 581,
+      "source_sha256": "37d0cba5ca2f8e901f77aaa26e56360e9205c4732f49ecd9c3189499f03e9bb1",
+      "scope": "candidate_mem_stage_static_lint",
+      "reason": "The 425-bit legacy payload carries PRELD through EX, while the locked golden MEM stage latches but does not consume that field.",
+      "owner": "pipeline",
+      "expires_when": "PRELD gains a MEM-stage behavior or the legacy payload field is retired"
+    },
+    {
+      "id": "mem-stage-one-file-component-name",
+      "rule": "DECLFILENAME",
+      "file": "generated mem_stage.v",
+      "line": 1,
+      "source_sha256": "37d0cba5ca2f8e901f77aaa26e56360e9205c4732f49ecd9c3189499f03e9bb1",
+      "scope": "candidate_mem_stage_static_lint",
+      "reason": "One reproducible SpinalHDL file contains the public mem_stage and typed MemoryStage modules; the filename follows the public replacement module.",
+      "owner": "pipeline",
+      "expires_when": "the generated component package is split into filename-matching modules"
     }
   ]
 }
