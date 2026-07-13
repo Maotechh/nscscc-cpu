@@ -1,0 +1,11 @@
+{"argv":["git","worktree","add","-b","refactor/20260714-0302-spinal-active-backend","78efdf97b6208da3806fcbc02dca69061284d3b7"],"cwd":"nscscc-cpu","exit_code":0,"result":"从已推送 ID active overlay HEAD 创建独立 worktree","evidence":"iteration.md"}
+{"argv":["git","cherry-pick","f0240f2047104ad0f30c2edd128f9006478e0323"],"cwd":".","exit_code":0,"result":"纳入 IF stage Spinal 实现、合同和差分测试资产","evidence":"iteration.md"}
+{"argv":["make","scala-check"],"cwd":"Windows worktree","exit_code":1,"result":"Windows 无 /opt/chiplab-tools 锁定 SBT，未执行 Scala","evidence":"iteration.md"}
+{"argv":["make","scala-check"],"cwd":"WSL native validation clone","exit_code":1,"result":"compile/test 通过，仅 SpinalCoreBackend scalafmt 失败","evidence":"iteration.md"}
+{"argv":["make","scala-check"],"cwd":"WSL native validation clone","exit_code":0,"result":"format/compile/test-compile/test 4/4 通过","evidence":"evidence/scala.json"}
+{"argv":["make","generate","TARGET=core_top"],"cwd":"WSL native validation clone","exit_code":0,"result":"2/2 可复现；纯 Spinal package 和 publish-check 通过","evidence":"evidence/generate.json"}
+{"argv":["core_top_gate.py","port-check"],"cwd":"WSL native validation clone","exit_code":1,"result":"gate 缺少 proc，Yosys write_json 拒绝行为 process","evidence":"iteration.md"}
+{"argv":["core_top_gate.py","port-check"],"cwd":"WSL native validation clone","exit_code":0,"result":"49/49 端口与 TLBNUM 合同通过，无 legacy backend","evidence":"evidence/port-check.json"}
+{"argv":["core_top_gate.py","yosys-check"],"cwd":"WSL native validation clone","exit_code":0,"result":"hierarchy/proc/check -assert 通过且无 warning","evidence":"evidence/yosys.json"}
+{"argv":["core_top_gate.py","lint"],"cwd":"WSL native validation clone","exit_code":1,"result":"严格 lint 失败：85 UNUSEDSIGNAL、1 UNUSEDPARAM、1 DECLFILENAME","evidence":"evidence/lint.json"}
+{"argv":["python","-m","pytest","-q"],"cwd":"Windows worktree","exit_code":0,"result":"326 passed, 10 platform skips","evidence":"iteration.md"}

@@ -1,10 +1,5 @@
 #!/usr/bin/env python3
-"""Fail-closed contract, packaging, and static gates for ``core_top``.
-
-The packaged RTL intentionally keeps the locked Verilog CPU as a temporary
-backend.  Static checks in this file isolate the zero-latency compatibility
-wrapper with a complete backend stub; whole-CPU RTL is checked by chiplab.
-"""
+"""Fail-closed contract, packaging, and whole-RTL static gates for ``core_top``."""
 
 from __future__ import annotations
 
@@ -26,7 +21,7 @@ from typing import Any
 
 TARGET = "core-top-compat"
 TOP_MODULE = "core_top"
-BACKEND_MODULE = "openla500_legacy_core"
+FORBIDDEN_LEGACY_MARKER = "openla500_legacy_core"
 EXPECTED_PORT_COUNT = 49
 EXPECTED_INPUT_COUNT = 17
 EXPECTED_OUTPUT_COUNT = 32
@@ -339,7 +334,7 @@ def extract_normalized_header(payload: bytes) -> str:
 
 def parse_header_contract(header: str) -> tuple[list[dict[str, Any]], int]:
     masked = mask_verilog_comments(header)
-    parameter = re.search(r"\bparameter\s+TLBNUM\s*=\s*(\d+)\b", masked)
+    parameter = re.search(r"\bparameter\s+(?:integer\s+)?TLBNUM\s*=\s*(\d+)\b", masked)
     if parameter is None:
         raise CoreTopGateError("core_top header does not declare TLBNUM")
     ports: list[dict[str, Any]] = []
@@ -492,96 +487,68 @@ def add_top_parameter(wrapper: str) -> tuple[str, int]:
     return wrapper[: match.start()] + replacement + wrapper[match.end() :], 1
 
 
-def forward_backend_parameter(wrapper: str) -> tuple[str, int]:
-    pattern = re.compile(r"\.TLBNUM\s*\(\s*(?P<value>32)\s*\)")
-    matches = uncommented_matches(pattern, wrapper)
-    if len(matches) != 1:
-        raise CoreTopGateError(f"backend .TLBNUM(32) binding is not unique: {len(matches)}")
-    value_start, value_end = matches[0].span("value")
-    return wrapper[:value_start] + "TLBNUM" + wrapper[value_end:], 1
-
-
-def uncommented_tlbnum_binding_count(wrapper: str, value: str) -> int:
-    pattern = re.compile(rf"\.TLBNUM\s*\(\s*{re.escape(value)}\s*\)")
-    return len(uncommented_matches(pattern, wrapper))
-
-
 def has_uncommented_top_tlbnum_default(wrapper: str) -> bool:
     masked = mask_verilog_comments(wrapper)
     return bool(
         re.search(
-            r"(?s)module\s+core_top\s*#\s*\(.*?parameter\s+TLBNUM\s*=\s*32\b",
+            r"(?s)module\s+core_top\s*#\s*\(.*?parameter\s+(?:integer\s+)?TLBNUM\s*=\s*32\b",
             masked,
         )
     )
 
 
-def rename_legacy_module(payload: bytes) -> tuple[bytes, int]:
-    try:
-        text = payload.decode("utf-8")
-    except UnicodeError as error:
-        raise CoreTopGateError(f"legacy core source is not UTF-8: {error}") from error
-    if module_declaration_count(text, BACKEND_MODULE):
-        raise CoreTopGateError("legacy source already defines openla500_legacy_core")
-    pattern = re.compile(r"(?m)^[ \t]*module\s+(?P<name>core_top)\b")
-    matches = uncommented_matches(pattern, text)
-    if len(matches) != 1:
-        raise CoreTopGateError(f"legacy core_top declaration is not unique: {len(matches)}")
-    name_start, name_end = matches[0].span("name")
-    renamed = text[:name_start] + BACKEND_MODULE + text[name_end:]
-    renamed_matches = uncommented_matches(
-        re.compile(rf"(?m)^[ \t]*module\s+(?P<name>{re.escape(BACKEND_MODULE)})\b"),
-        renamed,
-    )
-    if len(renamed_matches) != 1:
-        raise CoreTopGateError("renamed legacy module declaration is not unique")
-    restored_start, restored_end = renamed_matches[0].span("name")
-    restored = renamed[:restored_start] + TOP_MODULE + renamed[restored_end:]
-    if restored.encode("utf-8") != payload:
-        raise CoreTopGateError("legacy module rename changed bytes outside the module identifier")
-    return renamed.encode("utf-8"), 1
+def ensure_top_parameter(rtl: str) -> tuple[str, int]:
+    """Expose the locked top parameter while leaving all generated RTL intact."""
+
+    top = extract_module(rtl, TOP_MODULE)
+    masked_top = mask_verilog_comments(top)
+    if re.search(r"\bparameter\s+(?:integer\s+)?TLBNUM\b", masked_top):
+        if not has_uncommented_top_tlbnum_default(top):
+            raise CoreTopGateError("generated core_top declares TLBNUM with an unsupported default")
+        return rtl, 0
+    return add_top_parameter(rtl)
+
+
+def verify_complete_rtl(text: str, contract: dict[str, Any]) -> dict[str, Any]:
+    if module_declaration_count(text, TOP_MODULE) != 1:
+        raise CoreTopGateError("complete Spinal RTL must define exactly one core_top")
+    if FORBIDDEN_LEGACY_MARKER in text:
+        raise CoreTopGateError("complete Spinal RTL must not contain openla500_legacy_core")
+    header = extract_normalized_header(text.encode("utf-8"))
+    ports, tlbnum = parse_header_contract(header)
+    if ports != contract["ports"]:
+        raise CoreTopGateError("complete Spinal core_top ports differ from the 49-port contract")
+    if tlbnum != 32:
+        raise CoreTopGateError("complete Spinal core_top TLBNUM default differs from 32")
+    return {
+        "module_count": module_declaration_count(text, TOP_MODULE),
+        "port_count": len(ports),
+        "input_count": sum(port["direction"] == "input" for port in ports),
+        "output_count": sum(port["direction"] == "output" for port in ports),
+        "tlbnum_default": tlbnum,
+        "legacy_backend_absent": True,
+        "header_sha256": sha256_bytes(header.encode("utf-8")),
+    }
 
 
 def package_gate(args: argparse.Namespace) -> dict[str, Any]:
     manifest_path = checked_regular_file(args.manifest, "manifest.lock")
     ports_path = checked_regular_file(args.ports, "ports contract")
-    rtl_path = checked_regular_file(args.rtl, "Spinal wrapper RTL")
+    rtl_path = checked_regular_file(args.rtl, "complete Spinal RTL")
     repo_root = checked_directory(args.repo_root, "repository root")
     out_dir = validated_out(args, "package")
-    values = parse_lock(manifest_path)
+    parse_lock(manifest_path)
     contract = load_port_contract(ports_path)
-    wrapper_payload = rtl_path.read_bytes()
+    input_payload = rtl_path.read_bytes()
     try:
-        wrapper = wrapper_payload.decode("utf-8")
+        input_rtl = input_payload.decode("utf-8")
     except UnicodeError as error:
-        raise CoreTopGateError(f"Spinal wrapper RTL is not UTF-8: {error}") from error
-    if module_declaration_count(wrapper, TOP_MODULE) != 1:
-        raise CoreTopGateError("Spinal wrapper must define exactly one core_top")
-    if module_declaration_count(wrapper, BACKEND_MODULE) != 0:
-        raise CoreTopGateError("Spinal wrapper must not define the legacy backend")
-    parameterized, top_count = add_top_parameter(wrapper)
-    forwarded, backend_count = forward_backend_parameter(parameterized)
-    if not has_uncommented_top_tlbnum_default(forwarded):
-        raise CoreTopGateError("packaged wrapper does not expose TLBNUM=32")
-    if uncommented_tlbnum_binding_count(forwarded, "TLBNUM") != 1:
-        raise CoreTopGateError("packaged wrapper does not forward TLBNUM symbolically exactly once")
-    team_revision = values.get("team_golden_candidate", "")
-    if not re.fullmatch(r"[0-9a-f]{40}", team_revision):
-        raise CoreTopGateError("manifest.lock team_golden_candidate must be a full SHA")
-    team = verify_locked_source(
-        repo_root, team_revision, contract["sources"]["team_golden"], contract
-    )
-    renamed, rename_count = rename_legacy_module(team["payload"])
-    wrapper_after = forwarded.encode("utf-8")
-    separator = (
-        b"\n" if not wrapper_after.endswith((b"\n", b"\r")) else b""
-    ) + b"\n// Locked transitional legacy backend; generated from the manifest Git object.\n"
-    packaged = wrapper_after + separator + renamed
+        raise CoreTopGateError(f"complete Spinal RTL is not UTF-8: {error}") from error
+    transformed, top_count = ensure_top_parameter(input_rtl)
+    contract_check = verify_complete_rtl(transformed, contract)
+    packaged = transformed.encode("utf-8")
     packaged_text = packaged.decode("utf-8")
-    if module_declaration_count(packaged_text, TOP_MODULE) != 1:
-        raise CoreTopGateError("packaged RTL must define exactly one core_top")
-    if module_declaration_count(packaged_text, BACKEND_MODULE) != 1:
-        raise CoreTopGateError("packaged RTL must define exactly one legacy backend")
+    verify_complete_rtl(packaged_text, contract)
     published = out_dir / "rtl" / "mycpu_top.v"
     published.parent.mkdir()
     temporary = published.with_suffix(".v.tmp")
@@ -590,37 +557,29 @@ def package_gate(args: argparse.Namespace) -> dict[str, Any]:
     if sha256_file(published) != sha256_bytes(packaged):
         raise CoreTopGateError("published package changed while it was written")
     source_stable = bool(
-        not stat.S_ISLNK(_lstat(rtl_path, "Spinal wrapper RTL").st_mode)
-        and rtl_path.stat().st_size == len(wrapper_payload)
-        and sha256_file(rtl_path) == sha256_bytes(wrapper_payload)
+        not stat.S_ISLNK(_lstat(rtl_path, "complete Spinal RTL").st_mode)
+        and rtl_path.stat().st_size == len(input_payload)
+        and sha256_file(rtl_path) == sha256_bytes(input_payload)
     )
     if not source_stable:
-        raise CoreTopGateError("Spinal wrapper RTL changed during packaging")
+        raise CoreTopGateError("complete Spinal RTL changed during packaging")
     summary = {
         "schema_version": 1,
         "gate": "core-top-package",
         "target": TARGET,
-        "scope": "package-construction-only",
-        "full_package_static_validated": False,
-        "full_package_validation_gate": "official-chiplab-compile",
+        "scope": "complete-spinal-rtl-publication",
         "status": "pass",
         "generated_at": now_iso(),
-        "input_wrapper": {
+        "input_rtl": {
             "path": str(rtl_path),
-            "sha256": sha256_bytes(wrapper_payload),
-            "size": len(wrapper_payload),
+            "sha256": sha256_bytes(input_payload),
+            "size": len(input_payload),
             "stable": source_stable,
         },
         "transformations": {
             "top_parameter_insertions": top_count,
-            "backend_parameter_rewrites": backend_count,
-            "legacy_module_renames": rename_count,
         },
-        "legacy_source": {
-            key: value for key, value in team.items() if key not in {"payload", "header", "ports"}
-        },
-        "renamed_legacy_sha256": sha256_bytes(renamed),
-        "wrapper_after_sha256": sha256_bytes(wrapper_after),
+        "contract": contract_check,
         "published_rtl": str(published),
         "published_sha256": sha256_file(published),
         "published_size": published.stat().st_size,
@@ -707,65 +666,39 @@ def publish_check_gate(args: argparse.Namespace) -> dict[str, Any]:
     return summary
 
 
-def verilog_range(width: int) -> str:
-    return "" if width == 1 else f" [{width - 1}:0]"
-
-
-def backend_stub(contract: dict[str, Any]) -> str:
-    declarations = []
-    inputs = []
-    outputs = []
-    for port in contract["ports"]:
-        declarations.append(
-            f"  {port['direction']} wire{verilog_range(port['width'])} {port['name']}"
-        )
-        (inputs if port["direction"] == "input" else outputs).append(port)
-    lines = [
-        f"module {BACKEND_MODULE} #(parameter TLBNUM = 32) (",
-        ",\n".join(declarations),
-        ");",
-        "  wire stub_mix = (TLBNUM != 0) ^ ^{" + ", ".join(port["name"] for port in inputs) + "};",
-    ]
-    for port in outputs:
-        lines.append(f"  assign {port['name']} = {{{port['width']}{{stub_mix}}}};")
-    lines.extend(("endmodule", ""))
-    return "\n".join(lines)
-
-
-def prepare_wrapper_harness(
+def prepare_complete_rtl(
     args: argparse.Namespace, gate: str
-) -> tuple[Path, Path, Path, dict[str, Any], dict[str, str], dict[str, Any]]:
+) -> tuple[Path, Path, dict[str, Any], dict[str, str], dict[str, Any]]:
     manifest = checked_regular_file(args.manifest, "manifest.lock")
     ports = checked_regular_file(args.ports, "ports contract")
-    rtl = checked_regular_file(args.rtl, "packaged RTL")
+    rtl = checked_regular_file(args.rtl, "complete packaged RTL")
     checked_directory(args.repo_root, "repository root")
     out_dir = validated_out(args, gate)
     contract = load_port_contract(ports)
     values = parse_lock(manifest)
     payload = rtl.read_bytes()
     text = payload.decode("utf-8", errors="strict")
-    wrapper = extract_module(text, TOP_MODULE)
-    extract_module(text, BACKEND_MODULE)
-    if not has_uncommented_top_tlbnum_default(wrapper):
-        raise CoreTopGateError("packaged core_top has no TLBNUM=32 parameter")
-    if uncommented_tlbnum_binding_count(wrapper, "TLBNUM") != 1:
-        raise CoreTopGateError("packaged core_top does not forward TLBNUM exactly once")
-    wrapper_snapshot = out_dir / "input" / "core_top.v"
-    stub_snapshot = out_dir / "input" / "openla500_legacy_core.v"
-    wrapper_snapshot.parent.mkdir()
-    wrapper_snapshot.write_text(wrapper.rstrip() + "\n", encoding="utf-8")
-    stub_snapshot.write_text(backend_stub(contract), encoding="utf-8")
+    contract_check = verify_complete_rtl(text, contract)
+    rtl_snapshot = out_dir / "input" / "core_top.v"
+    rtl_snapshot.parent.mkdir()
+    rtl_snapshot.write_bytes(payload)
+    source_stable = bool(
+        not stat.S_ISLNK(_lstat(rtl, "complete packaged RTL").st_mode)
+        and rtl.stat().st_size == len(payload)
+        and sha256_file(rtl) == sha256_bytes(payload)
+    )
+    if not source_stable or rtl_snapshot.read_bytes() != payload:
+        raise CoreTopGateError("complete packaged RTL changed while preparing static checks")
     identity = {
-        "original_package": str(rtl),
-        "original_package_sha256": sha256_bytes(payload),
-        "original_package_size": len(payload),
-        "wrapper_sha256": sha256_bytes(wrapper.encode("utf-8")),
-        "wrapper_snapshot": str(wrapper_snapshot),
-        "wrapper_snapshot_sha256": sha256_file(wrapper_snapshot),
-        "backend_stub": str(stub_snapshot),
-        "backend_stub_sha256": sha256_file(stub_snapshot),
+        "complete_rtl": str(rtl),
+        "complete_rtl_sha256": sha256_bytes(payload),
+        "complete_rtl_size": len(payload),
+        "stable": source_stable,
+        "snapshot": str(rtl_snapshot),
+        "snapshot_sha256": sha256_file(rtl_snapshot),
+        "contract": contract_check,
     }
-    return out_dir, wrapper_snapshot, stub_snapshot, contract, values, identity
+    return out_dir, rtl_snapshot, contract, values, identity
 
 
 def resolve_executable(value: str | None, fallback: str) -> Path:
@@ -895,53 +828,27 @@ def yosys_binary_int(value: Any, label: str) -> int:
     return int(value, 2)
 
 
-def validate_connectivity(document: dict[str, Any], contract: dict[str, Any]) -> dict[str, Any]:
+def validate_top_contract(document: dict[str, Any], contract: dict[str, Any]) -> dict[str, Any]:
     modules = _require_dict(document.get("modules"), "Yosys modules")
     top = _require_dict(modules.get(TOP_MODULE), "Yosys core_top")
     actual_ports = project_ports(top)
     if actual_ports != contract["ports"]:
         raise CoreTopGateError("Yosys core_top ports differ from the 49-port contract")
-    cells = _require_dict(top.get("cells"), "Yosys core_top cells")
-    candidates = []
-    for cell_name, raw in cells.items():
-        cell = _require_dict(raw, f"Yosys cell {cell_name}")
-        cell_type = str(cell.get("type", ""))
-        if BACKEND_MODULE in cell_type:
-            candidates.append((cell_name, cell))
-    if len(candidates) != 1:
-        raise CoreTopGateError(f"expected one legacy backend cell, found {len(candidates)}")
-    cell_name, cell = candidates[0]
     top_parameters = _require_dict(
         top.get("parameter_default_values"), "core_top parameter defaults"
     )
-    backend_parameters = _require_dict(cell.get("parameters"), "backend parameters")
     top_tlbnum = yosys_binary_int(top_parameters.get("TLBNUM"), "core_top TLBNUM")
-    backend_tlbnum = yosys_binary_int(backend_parameters.get("TLBNUM"), "backend TLBNUM")
-    if top_tlbnum != 32 or backend_tlbnum != top_tlbnum:
-        raise CoreTopGateError(
-            f"TLBNUM parameter mismatch: top={top_tlbnum} backend={backend_tlbnum}"
-        )
-    connections = _require_dict(cell.get("connections"), "backend connections")
-    if set(connections) != {port["name"] for port in contract["ports"]}:
-        raise CoreTopGateError("backend connection names differ from the 49-port contract")
-    top_ports = _require_dict(top.get("ports"), "Yosys top ports")
-    mismatches = []
-    for port in contract["ports"]:
-        name = port["name"]
-        if connections[name] != top_ports[name]["bits"]:
-            mismatches.append(name)
-    if mismatches:
-        raise CoreTopGateError("backend is not connected to same-name top nets: " + ", ".join(mismatches))
-    if len(cells) != 1:
-        raise CoreTopGateError("compat wrapper contains logic/cells beyond the legacy backend")
+    if top_tlbnum != 32:
+        raise CoreTopGateError(f"core_top TLBNUM parameter mismatch: {top_tlbnum}")
+    if FORBIDDEN_LEGACY_MARKER in modules:
+        raise CoreTopGateError("Yosys design still contains openla500_legacy_core")
+    cells = _require_dict(top.get("cells", {}), "Yosys core_top cells")
     return {
         "actual_ports": actual_ports,
-        "backend_cell": cell_name,
-        "backend_cell_type": cell.get("type"),
         "top_tlbnum": top_tlbnum,
-        "backend_tlbnum": backend_tlbnum,
-        "same_name_connections": EXPECTED_PORT_COUNT,
         "top_cell_count": len(cells),
+        "design_module_count": len(modules),
+        "legacy_backend_absent": True,
     }
 
 
@@ -954,14 +861,13 @@ def gate_provenance(args: argparse.Namespace) -> dict[str, Any]:
 
 
 def port_check_gate(args: argparse.Namespace) -> dict[str, Any]:
-    out_dir, wrapper, stub, contract, values, identity = prepare_wrapper_harness(
-        args, "port-check"
-    )
+    out_dir, rtl, contract, values, identity = prepare_complete_rtl(args, "port-check")
     json_path = out_dir / "core_top-raw.json"
     script = (
-        f"read_verilog -sv {yosys_quote(wrapper)} {yosys_quote(stub)}\n"
-        f"write_json {yosys_quote(json_path)}\n"
+        f"read_verilog -sv {yosys_quote(rtl)}\n"
         f"hierarchy -check -top {TOP_MODULE}\n"
+        "proc\n"
+        f"write_json {yosys_quote(json_path)}\n"
     )
     result = run_yosys(values, args.yosys, script, out_dir, args.timeout)
     if (
@@ -974,18 +880,16 @@ def port_check_gate(args: argparse.Namespace) -> dict[str, Any]:
     if not json_path.is_file():
         raise CoreTopGateError("Yosys did not produce the connectivity JSON")
     document = load_json_strict(json_path)
-    connectivity = validate_connectivity(document, contract)
+    top_contract = validate_top_contract(document, contract)
     summary = {
         "schema_version": 1,
-        "gate": "wrapper-port-check",
+        "gate": "core-top-port-check",
         "target": TARGET,
-        "scope": "compat-wrapper-only",
-        "full_package_static_validated": False,
-        "full_package_validation_gate": "official-chiplab-compile",
+        "scope": "complete-spinal-rtl",
         "status": "pass",
         "generated_at": now_iso(),
         "input": identity,
-        "connectivity": connectivity,
+        "contract": top_contract,
         "yosys": {key: value for key, value in result.items() if key != "stdout"},
         "provenance": gate_provenance(args),
     }
@@ -994,7 +898,7 @@ def port_check_gate(args: argparse.Namespace) -> dict[str, Any]:
 
 
 def lint_gate(args: argparse.Namespace) -> dict[str, Any]:
-    out_dir, wrapper, stub, _, values, identity = prepare_wrapper_harness(args, "lint")
+    out_dir, rtl, _, values, identity = prepare_complete_rtl(args, "lint")
     verilator = checked_tool(values, args.verilator, "verilator", "verilator_binary_sha256")
     version = run_command([str(verilator), "--version"], cwd=out_dir, timeout=args.timeout)
     if version["returncode"] != 0 or version["timed_out"]:
@@ -1011,8 +915,7 @@ def lint_gate(args: argparse.Namespace) -> dict[str, Any]:
             "-Wall",
             "--top-module",
             TOP_MODULE,
-            str(wrapper),
-            str(stub),
+            str(rtl),
         ],
         cwd=out_dir,
         timeout=args.timeout,
@@ -1022,14 +925,12 @@ def lint_gate(args: argparse.Namespace) -> dict[str, Any]:
     warnings = warning_lines(str(result["stdout"]))
     skips = skip_lines(str(result["stdout"]))
     if result["returncode"] != 0 or result["timed_out"] or warnings or skips:
-        raise CoreTopGateError("Verilator wrapper lint failed or warned")
+        raise CoreTopGateError("Verilator complete core_top lint failed or warned")
     summary = {
         "schema_version": 1,
-        "gate": "wrapper-lint",
+        "gate": "core-top-lint",
         "target": TARGET,
-        "scope": "compat-wrapper-only",
-        "full_package_static_validated": False,
-        "full_package_validation_gate": "official-chiplab-compile",
+        "scope": "complete-spinal-rtl",
         "status": "pass",
         "generated_at": now_iso(),
         "input": identity,
@@ -1052,9 +953,9 @@ def lint_gate(args: argparse.Namespace) -> dict[str, Any]:
 
 
 def yosys_check_gate(args: argparse.Namespace) -> dict[str, Any]:
-    out_dir, wrapper, stub, _, values, identity = prepare_wrapper_harness(args, "yosys-check")
+    out_dir, rtl, _, values, identity = prepare_complete_rtl(args, "yosys-check")
     script = (
-        f"read_verilog -sv {yosys_quote(wrapper)} {yosys_quote(stub)}\n"
+        f"read_verilog -sv {yosys_quote(rtl)}\n"
         f"hierarchy -check -top {TOP_MODULE}\n"
         "proc\n"
         "opt_clean\n"
@@ -1068,14 +969,12 @@ def yosys_check_gate(args: argparse.Namespace) -> dict[str, Any]:
         or result["warnings"]
         or result["skip_markers"]
     ):
-        raise CoreTopGateError("Yosys wrapper check failed or warned")
+        raise CoreTopGateError("Yosys complete core_top check failed or warned")
     summary = {
         "schema_version": 1,
-        "gate": "wrapper-yosys-check",
+        "gate": "core-top-yosys-check",
         "target": TARGET,
-        "scope": "compat-wrapper-only",
-        "full_package_static_validated": False,
-        "full_package_validation_gate": "official-chiplab-compile",
+        "scope": "complete-spinal-rtl",
         "status": "pass",
         "generated_at": now_iso(),
         "input": identity,

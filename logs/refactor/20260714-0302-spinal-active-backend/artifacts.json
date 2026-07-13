@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "iteration_id": "20260714-0302-spinal-active-backend",
+  "artifacts": [
+    {"path":"evidence/scala.json","sha256":"8c1e9482cb5c0d5f5ef19ad9b595cc8720e9f2fd281645389918c49be5488304","size":98906,"retention":"git","gate_eligible":false},
+    {"path":"evidence/generate.json","sha256":"b02d80b514af7d5f67986468e447a33dfd64277ef9cf03c9b157a28814f6016d","size":97342,"retention":"git","gate_eligible":false},
+    {"path":"evidence/package.json","sha256":"883a07529eb70be631384d9ad421acb369ab510701f284bcae1b803587980a95","size":1729,"retention":"git","gate_eligible":false},
+    {"path":"evidence/publish-check.json","sha256":"0985c30df8679383abf4151db56280b20fb347615b537903a4046e158311264b","size":1748,"retention":"git","gate_eligible":false},
+    {"path":"evidence/port-check.json","sha256":"c04936f0c45135f71ad6a05f35f27d3b00367523f588a04227c9df79a9ac5ba9","size":7048,"retention":"git","gate_eligible":false},
+    {"path":"evidence/yosys.json","sha256":"8ee3d68547740d84378e40b8c863b0038e59c94de378f73a8903932dda92f232","size":2294,"retention":"git","gate_eligible":false},
+    {"path":"evidence/lint.json","sha256":"7e7bca6876b631674686ed60d73c3546ebd8baf64dc104e01e4e8cc9650f340e","size":296,"retention":"git","gate_eligible":false},
+    {"path":"evidence/reachability.json","sha256":"49f1b39a1da108c242f631a0d148ed5c7e967bc805a81a396980cde38ae4c5d7","size":4002,"retention":"git","gate_eligible":false}
+  ],
+  "external_locators": [
+    {"path":"/tmp/spinal-active-backend-scala2-0318/scala-check","retention":"local-until-explicit-clean"},
+    {"path":"/tmp/spinal-active-backend-generate-0327/core_top","retention":"local-until-explicit-clean"},
+    {"path":"/tmp/spinal-active-backend-lint-0318/verilator.log","retention":"local-until-explicit-clean"}
+  ]
+}

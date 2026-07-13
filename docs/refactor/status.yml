@@ -293,16 +293,16 @@ boundaries:
       - logs/refactor/20260713-0410-core-top-compat/evidence/publish-check.json
       - logs/refactor/20260713-0410-core-top-compat/evidence/chiplab-comparison.json
       - logs/refactor/20260713-0410-core-top-compat/evidence/vivado.json
+      - logs/refactor/20260714-0302-spinal-active-backend/iteration.md
     active_pr: null
     blocked_by:
-      - legacy_verilog_backend_still_active
-      - func_lab19_locked_and_mixed_mismatch_at_1c07c79c
-      - 635_unapproved_verilator_warnings_in_mixed_compile
+      - pure_spinal_func_smoke_not_executed
+      - 87_unapproved_verilator_warnings_in_complete_spinal_rtl
       - func_full_and_random_wrappers_not_implemented
-      - vivado_post_route_drc_has_46_unapproved_warnings
-      - identity_comparison_fail
+      - vivado_complete_spinal_rtl_not_executed
+      - 64_entry_btb_lacc_difftest_and_perf_integration_pending
       - claude_bridge_missing_GEEKPIE_CLAUDE_API_KEY
-    last_iteration: "20260713-0410-core-top-compat"
+    last_iteration: "20260714-0302-spinal-active-backend"
 
   core_contracts:
     owner: architecture
@@ -651,7 +651,7 @@ boundaries:
 
   memory_system:
     owner: memory
-    state: not_started
+    state: implementation_in_review
     golden_ref: a158aa8:rtl
     dependencies:
       - core_contracts
@@ -663,10 +663,13 @@ boundaries:
       - random
       - perf
       - claim_review
-    evidence: []
+    evidence:
+      - logs/refactor/20260714-0302-spinal-active-backend/iteration.md
     active_pr: null
-    blocked_by: []
-    last_iteration: null
+    blocked_by:
+      - whole_core_func_smoke_not_executed
+      - random_backpressure_and_perf_not_executed
+    last_iteration: "20260714-0302-spinal-active-backend"
 
   observability:
     owner: observe

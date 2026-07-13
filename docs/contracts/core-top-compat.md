@@ -14,7 +14,13 @@ Debug 包含 `break_point/infor_flag/reg_num`、`ws_valid/rf_rdata` 和五个 `d
 
 ## 迁移状态
 
-本轮允许 `CoreTopCompat` 临时实例化机械改名的 `openla500_legacy_core`，状态只能是 `wrapped_golden` 或更低。该后端用于证明壳的零周期连接与官方可运行性，不属于最终 Spinal 实现。完全重构前必须用 typed pipeline/memory/commit backend 替换它，并移除原 CPU Verilog 依赖。
+当前 `CoreTopCompat` 已实例化 `SpinalCoreBackend`，完整生成 RTL 不再定义或实例化
+`openla500_legacy_core`。完整 package 是单一生成文件，内嵌 typed 流水、CSR/TLB、Cache、
+AXI bridge、mul/div 等 Spinal 组件；overlay 只能替换 `rtl/mycpu_top.v`，不得同时 overlay
+旧叶子 replacement 造成重复模块定义。
+
+这一结构事实只证明活动手写真源已切换，不证明功能等价。64-entry BTB、LACC、完整 DiffTest/
+ArchState、perf 以及官方 func/random/system/FPGA 门禁仍须分别取得证据。
 
 `TLBNUM` 历史默认值为 32。打包后的顶层保留该参数并原样转发给兼容后端；本轮只验证默认值 32，Scala API 也暂时拒绝其他值。可配置的 immutable `CoreConfig` 和配置矩阵由后续整机 PR 建立，不据此声称统一配置已经完成。
 
@@ -25,5 +31,5 @@ Debug 包含 `break_point/infor_flag/reg_num`、`ws_valid/rf_rdata` 和五个 `d
 - 结构化 Yosys netlist 证明每个顶层端口与后端同名端口一一连接，且无额外逻辑/寄存器。
 - Verilator/Yosys 对壳和审计 stub 零 error；这是 wrapper-only 结构检查，不替代官方 chiplab 对完整 package 的编译。
 - fresh package、提交的 `mycpu_top.v` 和累计 replacement spec 必须逐字节及 SHA256 一致。
-- 打包 overlay 恰有一个 `core_top` 和一个 `openla500_legacy_core`，机械改名之外 legacy bytes 不变。
+- 打包 overlay 恰有一个 `core_top`，并且全文不存在 `openla500_legacy_core` 标记。
 - 官方 locked/mixed smoke 都实际运行；已有 baseline 失败必须与壳引入的新失败分开报告。

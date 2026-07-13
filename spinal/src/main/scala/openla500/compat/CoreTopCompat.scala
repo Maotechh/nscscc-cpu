@@ -2,79 +2,9 @@ package openla500.compat
 
 import spinal.core._
 
-/** Locked compatibility boundary for the chiplab core_top interface.
-  *
-  * The wrapper preserves the legacy AXI3/WID and debug ports without adding latency or policy. Its
-  * temporary legacy backend is a migration aid only; replacing that backend with typed SpinalHDL
-  * pipeline, memory, and commit contracts is required before the CPU can be called fully
-  * refactored.
-  */
+/** Locked compatibility boundary for the chiplab core_top interface. */
 final case class CoreTopCompatConfig(tlbEntries: Int = 32) {
   require(tlbEntries == 32, "only the locked TLBNUM=32 configuration is currently verified")
-}
-
-private[compat] final class LegacyCoreBackend(config: CoreTopCompatConfig) extends BlackBox {
-  val io = new Bundle {
-    val aclk = in Bool ()
-    val aresetn = in Bool ()
-    val intrpt = in Bits (8 bits)
-
-    val arid = out Bits (4 bits)
-    val araddr = out Bits (32 bits)
-    val arlen = out Bits (8 bits)
-    val arsize = out Bits (3 bits)
-    val arburst = out Bits (2 bits)
-    val arlock = out Bits (2 bits)
-    val arcache = out Bits (4 bits)
-    val arprot = out Bits (3 bits)
-    val arvalid = out Bool ()
-    val arready = in Bool ()
-
-    val rid = in Bits (4 bits)
-    val rdata = in Bits (32 bits)
-    val rresp = in Bits (2 bits)
-    val rlast = in Bool ()
-    val rvalid = in Bool ()
-    val rready = out Bool ()
-
-    val awid = out Bits (4 bits)
-    val awaddr = out Bits (32 bits)
-    val awlen = out Bits (8 bits)
-    val awsize = out Bits (3 bits)
-    val awburst = out Bits (2 bits)
-    val awlock = out Bits (2 bits)
-    val awcache = out Bits (4 bits)
-    val awprot = out Bits (3 bits)
-    val awvalid = out Bool ()
-    val awready = in Bool ()
-
-    val wid = out Bits (4 bits)
-    val wdata = out Bits (32 bits)
-    val wstrb = out Bits (4 bits)
-    val wlast = out Bool ()
-    val wvalid = out Bool ()
-    val wready = in Bool ()
-
-    val bid = in Bits (4 bits)
-    val bresp = in Bits (2 bits)
-    val bvalid = in Bool ()
-    val bready = out Bool ()
-
-    val break_point = in Bool ()
-    val infor_flag = in Bool ()
-    val reg_num = in Bits (5 bits)
-    val ws_valid = out Bool ()
-    val rf_rdata = out Bits (32 bits)
-    val debug0_wb_pc = out Bits (32 bits)
-    val debug0_wb_rf_wen = out Bits (4 bits)
-    val debug0_wb_rf_wnum = out Bits (5 bits)
-    val debug0_wb_rf_wdata = out Bits (32 bits)
-    val debug0_wb_inst = out Bits (32 bits)
-  }
-
-  noIoPrefix()
-  setBlackBoxName("openla500_legacy_core")
-  addGeneric("TLBNUM", config.tlbEntries)
 }
 
 final class CoreTopCompat(config: CoreTopCompatConfig = CoreTopCompatConfig()) extends Component {
@@ -138,25 +68,35 @@ final class CoreTopCompat(config: CoreTopCompatConfig = CoreTopCompatConfig()) e
 
   noIoPrefix()
 
+  // The golden wrapper registers ~aresetn once before presenting a synchronous active-high reset
+  // to the core. The capture register intentionally has no reset or initialization of its own.
+  val resetCaptureDomain = ClockDomain(
+    clock = io.aclk,
+    config = ClockDomainConfig(clockEdge = RISING)
+  )
+  val resetCapture = new ClockingArea(resetCaptureDomain) {
+    val delayedActiveHigh = RegNext(!io.aresetn)
+  }
+
   val coreClockDomain = ClockDomain(
     clock = io.aclk,
-    reset = io.aresetn,
+    reset = resetCapture.delayedActiveHigh,
     config = ClockDomainConfig(
       clockEdge = RISING,
       resetKind = SYNC,
-      resetActiveLevel = LOW
+      resetActiveLevel = HIGH
     )
   )
 
-  // The wrapper owns no state: the legacy backend receives raw aclk/aresetn and retains its
-  // historical one-edge reset registration. Future Spinal state must model that delay explicitly.
   val backendArea = new ClockingArea(coreClockDomain) {
-    val core = new LegacyCoreBackend(config)
+    val core = new SpinalCoreBackend(
+      openla500.config.CoreConfig.Locked.copy(tlbEntries = config.tlbEntries)
+    )
   }
   val core = backendArea.core
 
   core.io.aclk := coreClockDomain.clock
-  core.io.aresetn := coreClockDomain.reset
+  core.io.aresetn := !coreClockDomain.reset
   core.io.intrpt := io.intrpt
   core.io.arready := io.arready
   core.io.rid := io.rid

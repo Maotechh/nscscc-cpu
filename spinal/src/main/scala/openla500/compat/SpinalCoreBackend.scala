@@ -1,0 +1,438 @@
+package openla500.compat
+
+import openla500.config.CoreConfig
+import openla500.execute.{OpenLa500Div, OpenLa500Mul}
+import openla500.memory.{OpenLa500AxiBridge, OpenLa500DCache, OpenLa500ICache}
+import openla500.pipeline._
+import openla500.privileged.{OpenLa500AddrTrans, OpenLa500Csr}
+import spinal.core._
+
+/** Active SpinalHDL implementation behind the locked chiplab compatibility boundary.
+  *
+  * The component owns the complete pipeline and the active memory/privileged leaf components.
+  * External protocol adaptation remains in [[CoreTopCompat]]. There is one architectural clock;
+  * leaf components that retain legacy clock/reset ports receive that same clock and reset.
+  */
+private[compat] final class SpinalCoreBackend(
+    config: CoreConfig = CoreConfig.Locked
+) extends Component {
+  require(!config.laccEnabled, "the active backend does not yet include the external LACC core")
+
+  val io = new Bundle {
+    val aclk = in Bool ()
+    val aresetn = in Bool ()
+    val intrpt = in Bits (8 bits)
+
+    val arid = out Bits (4 bits)
+    val araddr = out Bits (32 bits)
+    val arlen = out Bits (8 bits)
+    val arsize = out Bits (3 bits)
+    val arburst = out Bits (2 bits)
+    val arlock = out Bits (2 bits)
+    val arcache = out Bits (4 bits)
+    val arprot = out Bits (3 bits)
+    val arvalid = out Bool ()
+    val arready = in Bool ()
+
+    val rid = in Bits (4 bits)
+    val rdata = in Bits (32 bits)
+    val rresp = in Bits (2 bits)
+    val rlast = in Bool ()
+    val rvalid = in Bool ()
+    val rready = out Bool ()
+
+    val awid = out Bits (4 bits)
+    val awaddr = out Bits (32 bits)
+    val awlen = out Bits (8 bits)
+    val awsize = out Bits (3 bits)
+    val awburst = out Bits (2 bits)
+    val awlock = out Bits (2 bits)
+    val awcache = out Bits (4 bits)
+    val awprot = out Bits (3 bits)
+    val awvalid = out Bool ()
+    val awready = in Bool ()
+
+    val wid = out Bits (4 bits)
+    val wdata = out Bits (32 bits)
+    val wstrb = out Bits (4 bits)
+    val wlast = out Bool ()
+    val wvalid = out Bool ()
+    val wready = in Bool ()
+
+    val bid = in Bits (4 bits)
+    val bresp = in Bits (2 bits)
+    val bvalid = in Bool ()
+    val bready = out Bool ()
+
+    val break_point = in Bool ()
+    val infor_flag = in Bool ()
+    val reg_num = in Bits (5 bits)
+    val ws_valid = out Bool ()
+    val rf_rdata = out Bits (32 bits)
+    val debug0_wb_pc = out Bits (32 bits)
+    val debug0_wb_rf_wen = out Bits (4 bits)
+    val debug0_wb_rf_wnum = out Bits (5 bits)
+    val debug0_wb_rf_wdata = out Bits (32 bits)
+    val debug0_wb_inst = out Bits (32 bits)
+  }
+  noIoPrefix()
+
+  val reset = !io.aresetn
+
+  val fetch = new FetchStage(config)
+  val decode = new DecodeStage(config)
+  val execute = new ExecuteStage(config)
+  val memory = new MemoryStage
+  val writeback = new WritebackStage(emitCommit = true, exposeObservation = false)
+
+  fetch.io.downstream >> decode.io.input
+  decode.io.output >> execute.io.input
+  execute.io.output >> memory.io.input
+  memory.io.output >> writeback.io.input
+
+  val csr = new OpenLa500Csr(diffTestEnabled = config.diffTestEnabled, tlbNum = config.tlbEntries)
+  val addressTranslation = new OpenLa500AddrTrans
+  val instructionCache = new OpenLa500ICache
+  val dataCache = new OpenLa500DCache
+  val axiBridge = new OpenLa500AxiBridge
+  val divider = new OpenLa500Div
+  val multiplier = new OpenLa500Mul
+
+  for (
+    clocked <- Seq(
+      csr.io.clk,
+      addressTranslation.io.clk,
+      instructionCache.io.clk,
+      dataCache.io.clk,
+      axiBridge.io.clk,
+      divider.io.div_clk,
+      multiplier.io.mul_clk
+    )
+  ) {
+    clocked := io.aclk
+  }
+  csr.io.reset := reset
+  instructionCache.io.reset := reset
+  dataCache.io.reset := reset
+  axiBridge.io.reset := reset
+  divider.io.reset := reset
+  multiplier.io.reset := reset
+
+  // Writeback is the only producer of architectural state changes and global pipeline flushes.
+  writeback.io.debugBreakPoint := io.break_point
+  decode.io.registerWrite.valid := writeback.io.registerWrite.valid
+  decode.io.registerWrite.destination := writeback.io.registerWrite.index
+  decode.io.registerWrite.data := writeback.io.registerWrite.data
+
+  decode.io.flush.exception := writeback.io.flush.exception
+  decode.io.flush.ertn := writeback.io.flush.ertn
+  decode.io.flush.refetch := writeback.io.flush.refetch
+  decode.io.flush.instructionCacheOperation := writeback.io.flush.instructionCacheOperation
+  decode.io.flush.idle := writeback.io.flush.idle
+  execute.io.flush.exception := writeback.io.flush.exception
+  execute.io.flush.ertn := writeback.io.flush.ertn
+  execute.io.flush.refetch := writeback.io.flush.refetch
+  execute.io.flush.instructionCacheOperation := writeback.io.flush.instructionCacheOperation
+  execute.io.flush.idle := writeback.io.flush.idle
+  memory.io.flush.exception := writeback.io.flush.exception
+  memory.io.flush.ertn := writeback.io.flush.ertn
+  memory.io.flush.refetch := writeback.io.flush.refetch
+  memory.io.flush.instructionCacheOperation := writeback.io.flush.instructionCacheOperation
+  memory.io.flush.idle := writeback.io.flush.idle
+
+  fetch.io.exceptionFlush := writeback.io.flush.exception
+  fetch.io.ertnFlush := writeback.io.flush.ertn
+  fetch.io.refetchFlush := writeback.io.flush.refetch
+  fetch.io.instructionCacheFlush := writeback.io.flush.instructionCacheOperation
+  fetch.io.idleFlush := writeback.io.flush.idle
+  fetch.io.writebackPc := writeback.io.debug.pc
+
+  decode.io.executeForward.valid := execute.io.forward.valid
+  decode.io.executeForward.dependencyNeedsStall := execute.io.forward.dependencyNeedsStall
+  decode.io.executeForward.destination := execute.io.forward.destination
+  decode.io.executeForward.data := execute.io.forward.result
+  decode.io.memoryForward.valid := memory.io.forward.valid
+  decode.io.memoryForward.dependencyNeedsStall := memory.io.forward.dependencyNeedsStall
+  decode.io.memoryForward.destination := memory.io.forward.destination
+  decode.io.memoryForward.data := memory.io.forward.result
+  decode.io.executeTlbStall := execute.io.tlbInstructionStall
+  decode.io.memoryTlbStall := memory.io.tlbInstructionStall
+  decode.io.writebackTlbStall := writeback.io.tlb.instructionStall
+  decode.io.executeOccupied := execute.io.forward.valid
+  decode.io.memoryOccupied := memory.io.forward.valid
+  decode.io.writebackOccupied := writeback.io.stageValid
+
+  fetch.io.branchRepair := decode.io.branchRepair.active
+  fetch.io.branchTarget := decode.io.branchRepair.target
+
+  // The current typed fetch contract exposes the historical five-bit index. Keep a local
+  // direct-mapped predictor until the 64-entry predictor contract is migrated independently.
+  val btbValid = Vec.fill(32)(Reg(Bool()) init (False))
+  val btbTag = Vec.fill(32)(Reg(UInt(25 bits)))
+  val btbTarget = Vec.fill(32)(Reg(UInt(32 bits)))
+  // Registering the lookup address matches the synchronous predictor boundary and prevents the
+  // prediction target from feeding combinationally back into FetchStage.nextPc.
+  val btbLookupPc = RegNext(fetch.io.fetchPc) init (U(config.resetVector, 32 bits))
+  val lookupIndex = btbLookupPc(6 downto 2)
+  val lookupHit = btbValid(lookupIndex) && btbTag(lookupIndex) === btbLookupPc(31 downto 7)
+  fetch.io.btbEnabled := lookupHit
+  fetch.io.btbTaken := lookupHit
+  fetch.io.btbIndex := lookupIndex
+  fetch.io.btbTarget := Mux(lookupHit, btbTarget(lookupIndex), btbLookupPc + 4)
+  when(decode.io.btb.enable) {
+    val updateIndex = decode.io.btb.pc(6 downto 2)
+    when(decode.io.btb.actualTaken || decode.io.btb.addEntry) {
+      btbValid(updateIndex) := True
+      btbTag(updateIndex) := decode.io.btb.pc(31 downto 7)
+      btbTarget(updateIndex) := decode.io.btb.actualTarget
+    }.elsewhen(decode.io.btb.deleteEntry) {
+      btbValid(updateIndex) := False
+    }
+  }
+
+  // CSR and precise exception/state-update wiring.
+  csr.io.rd_addr := decode.io.csrReadAddress.asBits
+  decode.io.csrReadData := csr.io.rd_data
+  decode.io.csrPrivilege := csr.io.plv_out
+  decode.io.timer := csr.io.timer_64_out
+  decode.io.timerId := csr.io.tid_out
+  decode.io.reservationValid := csr.io.llbit_out
+  decode.io.interruptPending := csr.io.has_int
+  fetch.io.interrupt := csr.io.has_int
+  csr.io.csr_wr_en := writeback.io.csrWrite.valid
+  csr.io.wr_addr := writeback.io.csrWrite.address.asBits
+  csr.io.wr_data := writeback.io.csrWrite.data
+  csr.io.interrupt := io.intrpt
+  csr.io.excp_flush := writeback.io.flush.exception
+  csr.io.ertn_flush := writeback.io.flush.ertn
+  csr.io.era_in := writeback.io.debug.pc.asBits
+  csr.io.esubcode_in := writeback.io.exception.esubcode.asBits
+  csr.io.ecode_in := writeback.io.exception.ecode.asBits
+  csr.io.va_error_in := writeback.io.exception.badVAddrValid
+  csr.io.bad_va_in := writeback.io.exception.badVAddr.asBits
+  csr.io.tlbsrch_en := writeback.io.tlb.search
+  csr.io.tlbsrch_found := writeback.io.tlb.searchFound
+  csr.io.tlbsrch_index := writeback.io.tlb.searchIndex.asBits
+  csr.io.excp_tlbrefill := writeback.io.exception.tlbRefill
+  csr.io.excp_tlb := writeback.io.exception.tlbException
+  csr.io.excp_tlb_vppn := writeback.io.exception.tlbVppn.asBits
+  csr.io.llbit_in := writeback.io.reservation.bitValue
+  csr.io.llbit_set_in := writeback.io.reservation.bitSet
+  csr.io.lladdr_in := writeback.io.reservation.lineAddress.asBits
+  csr.io.lladdr_set_in := writeback.io.reservation.addressSet
+  fetch.io.exceptionEntry := csr.io.eentry_out.asUInt
+  fetch.io.exceptionEra := csr.io.era_out.asUInt
+  fetch.io.exceptionTlbRefill := writeback.io.exception.tlbRefill
+  fetch.io.tlbRefillEntry := csr.io.tlbrentry_out.asUInt
+
+  fetch.io.paging := csr.io.pg_out
+  fetch.io.directAddress := csr.io.da_out
+  fetch.io.dmw0 := csr.io.dmw0_out
+  fetch.io.dmw1 := csr.io.dmw1_out
+  fetch.io.currentPlv := csr.io.plv_out.asUInt
+  fetch.io.directFetchMat := csr.io.datf_out
+  fetch.io.disableCache := csr.io.disable_cache_out
+  execute.io.csrVirtualPageNumber := csr.io.vppn_out.asUInt
+  memory.io.csrPage := csr.io.pg_out
+  memory.io.csrDirectAddress := csr.io.da_out
+  memory.io.csrDmw0Plv0 := csr.io.dmw0_out(0)
+  memory.io.csrDmw0Plv3 := csr.io.dmw0_out(3)
+  memory.io.csrDmw0VirtualSegment := csr.io.dmw0_out(31 downto 29)
+  memory.io.csrDmw0MemoryAttribute := csr.io.dmw0_out(5 downto 4)
+  memory.io.csrDmw1Plv0 := csr.io.dmw1_out(0)
+  memory.io.csrDmw1Plv3 := csr.io.dmw1_out(3)
+  memory.io.csrDmw1VirtualSegment := csr.io.dmw1_out(31 downto 29)
+  memory.io.csrDmw1MemoryAttribute := csr.io.dmw1_out(5 downto 4)
+  memory.io.csrPlv := csr.io.plv_out
+  memory.io.csrDatm := csr.io.datm_out
+  memory.io.disableCache := csr.io.disable_cache_out
+  memory.io.llAddress := csr.io.lladdr_out
+
+  // TLB ownership and address translation.
+  addressTranslation.io.asid := csr.io.asid_out
+  addressTranslation.io.inst_addr_trans_en := fetch.io.addressTranslation
+  addressTranslation.io.inst_fetch := fetch.io.fetchEnable
+  addressTranslation.io.inst_vaddr := fetch.io.instructionAddress.asBits
+  addressTranslation.io.inst_dmw0_en := fetch.io.dmw0Enabled
+  addressTranslation.io.inst_dmw1_en := fetch.io.dmw1Enabled
+  fetch.io.tlbFound := addressTranslation.io.inst_tlb_found
+  fetch.io.tlbValid := addressTranslation.io.inst_tlb_v
+  fetch.io.tlbMat := addressTranslation.io.inst_tlb_mat
+  fetch.io.tlbPlv := addressTranslation.io.inst_tlb_plv.asUInt
+
+  addressTranslation.io.data_addr_trans_en := memory.io.dataAddressTranslationEnable
+  addressTranslation.io.data_fetch := execute.io.dataFetch
+  addressTranslation.io.data_vaddr := execute.io.memory.virtualAddress.asBits
+  addressTranslation.io.data_dmw0_en := memory.io.dmw0Enable
+  addressTranslation.io.data_dmw1_en := memory.io.dmw1Enable
+  addressTranslation.io.cacop_op_mode_di := memory.io.cacopModeDi
+  memory.io.dataIndexDiff := addressTranslation.io.data_index
+  memory.io.dataTagDiff := addressTranslation.io.data_tag
+  memory.io.dataOffsetDiff := addressTranslation.io.data_offset
+  memory.io.dataTlbFound := addressTranslation.io.data_tlb_found
+  memory.io.dataTlbIndex := addressTranslation.io.data_tlb_index.asUInt
+  memory.io.dataTlbValid := addressTranslation.io.data_tlb_v
+  memory.io.dataTlbDirty := addressTranslation.io.data_tlb_d
+  memory.io.dataTlbMat := addressTranslation.io.data_tlb_mat
+  memory.io.dataTlbPlv := addressTranslation.io.data_tlb_plv
+  memory.io.dataTlbPpn := addressTranslation.io.data_tag
+
+  addressTranslation.io.tlbfill_en := writeback.io.tlb.fill
+  addressTranslation.io.tlbwr_en := writeback.io.tlb.write
+  addressTranslation.io.rand_index := csr.io.rand_index.asUInt
+  addressTranslation.io.tlbehi_in := csr.io.tlbehi_out
+  addressTranslation.io.tlbelo0_in := csr.io.tlbelo0_out
+  addressTranslation.io.tlbelo1_in := csr.io.tlbelo1_out
+  addressTranslation.io.tlbidx_in := csr.io.tlbidx_out
+  addressTranslation.io.ecode_in := csr.io.ecode_out
+  addressTranslation.io.invtlb_en := writeback.io.tlb.invalidate
+  addressTranslation.io.invtlb_asid := writeback.io.tlb.invalidateAsid
+  addressTranslation.io.invtlb_vpn := writeback.io.tlb.invalidateVpn
+  addressTranslation.io.invtlb_op := writeback.io.tlb.invalidateOperation
+  addressTranslation.io.csr_dmw0 := csr.io.dmw0_out
+  addressTranslation.io.csr_dmw1 := csr.io.dmw1_out
+  addressTranslation.io.csr_da := csr.io.da_out
+  addressTranslation.io.csr_pg := csr.io.pg_out
+  csr.io.tlbrd_en := writeback.io.tlb.read
+  csr.io.tlbehi_in := addressTranslation.io.tlbehi_out
+  csr.io.tlbelo0_in := addressTranslation.io.tlbelo0_out
+  csr.io.tlbelo1_in := addressTranslation.io.tlbelo1_out
+  csr.io.tlbidx_in := addressTranslation.io.tlbidx_out
+  csr.io.asid_in := addressTranslation.io.asid_out
+
+  // Instruction cache request/response and its bridge-side refill channels.
+  instructionCache.io.valid := fetch.io.instructionRequest
+  instructionCache.io.op := False
+  instructionCache.io.index := addressTranslation.io.inst_index
+  instructionCache.io.tag := addressTranslation.io.inst_tag
+  instructionCache.io.offset := addressTranslation.io.inst_offset
+  instructionCache.io.wstrb := 0
+  instructionCache.io.wdata := 0
+  instructionCache.io.uncache_en := fetch.io.instructionUncached
+  instructionCache.io.icacop_op_en := execute.io.cache.instructionOperationEnable
+  instructionCache.io.cacop_op_mode := execute.io.cache.operationMode
+  instructionCache.io.cacop_op_addr_index := addressTranslation.io.data_index
+  instructionCache.io.cacop_op_addr_tag := addressTranslation.io.data_tag
+  instructionCache.io.cacop_op_addr_offset := addressTranslation.io.data_offset
+  instructionCache.io.tlb_excp_cancel_req := fetch.io.tlbCancel
+  fetch.io.instructionAddressAccepted := instructionCache.io.addr_ok
+  fetch.io.instructionDataValid := instructionCache.io.data_ok
+  fetch.io.instructionData := instructionCache.io.rdata
+  fetch.io.instructionMiss := instructionCache.io.cache_miss
+  execute.io.instructionCacheUnbusy := instructionCache.io.icache_unbusy
+
+  // Data cache request/response. EXE owns request creation; MEM owns translation/cancellation.
+  dataCache.io.valid := execute.io.memory.valid
+  dataCache.io.op := execute.io.memory.isWrite
+  dataCache.io.size := execute.io.memory.size
+  dataCache.io.index := addressTranslation.io.data_index
+  dataCache.io.tag := addressTranslation.io.data_tag
+  dataCache.io.offset := addressTranslation.io.data_offset
+  dataCache.io.wstrb := execute.io.memory.byteMask
+  dataCache.io.wdata := execute.io.memory.writeData
+  dataCache.io.uncache_en := memory.io.dataUncached
+  dataCache.io.dcacop_op_en := execute.io.cache.dataOperationEnable
+  dataCache.io.cacop_op_mode := execute.io.cache.operationMode
+  dataCache.io.preld_hint := execute.io.cache.preloadHint
+  dataCache.io.preld_en := execute.io.cache.preloadEnable
+  dataCache.io.tlb_excp_cancel_req := memory.io.tlbExceptionCancel
+  dataCache.io.sc_cancel_req := memory.io.scCancel
+  execute.io.memoryAddressAccepted := dataCache.io.addr_ok
+  memory.io.dataDataOk := dataCache.io.data_ok
+  memory.io.dcacheMiss := dataCache.io.cache_miss
+  memory.io.dataReadData := dataCache.io.rdata
+  decode.io.dataCacheEmpty := dataCache.io.dcache_empty
+  execute.io.memoryWritesTlbEntryHigh := memory.io.writeTlbEntryHigh
+  execute.io.memoryFlush := memory.io.stageFlush
+
+  // Divider and multiplier retain their verified cycle-level leaf contracts.
+  divider.io.div := execute.io.mulDiv.divideEnable
+  divider.io.div_signed := execute.io.mulDiv.signed
+  divider.io.x := execute.io.mulDiv.operandJ
+  divider.io.y := execute.io.mulDiv.operandKOrD
+  execute.io.divideComplete := divider.io.complete
+  multiplier.io.mul_signed := execute.io.mulDiv.signed
+  multiplier.io.x := execute.io.mulDiv.operandJ
+  multiplier.io.y := execute.io.mulDiv.operandKOrD
+  memory.io.divResult := divider.io.s
+  memory.io.modResult := divider.io.r
+  memory.io.mulResult := multiplier.io.result
+
+  // Cache refill/writeback channels are arbitrated only by the verified AXI bridge.
+  axiBridge.io.inst_rd_req := instructionCache.io.rd_req
+  axiBridge.io.inst_rd_type := instructionCache.io.rd_type
+  axiBridge.io.inst_rd_addr := instructionCache.io.rd_addr
+  instructionCache.io.rd_rdy := axiBridge.io.inst_rd_rdy
+  instructionCache.io.ret_valid := axiBridge.io.inst_ret_valid
+  instructionCache.io.ret_last := axiBridge.io.inst_ret_last
+  instructionCache.io.ret_data := axiBridge.io.inst_ret_data
+  axiBridge.io.inst_wr_req := instructionCache.io.wr_req
+  axiBridge.io.inst_wr_type := instructionCache.io.wr_type
+  axiBridge.io.inst_wr_addr := instructionCache.io.wr_addr
+  axiBridge.io.inst_wr_wstrb := instructionCache.io.wr_wstrb
+  axiBridge.io.inst_wr_data := instructionCache.io.wr_data
+  instructionCache.io.wr_rdy := axiBridge.io.inst_wr_rdy
+
+  axiBridge.io.data_rd_req := dataCache.io.rd_req
+  axiBridge.io.data_rd_type := dataCache.io.rd_type
+  axiBridge.io.data_rd_addr := dataCache.io.rd_addr
+  dataCache.io.rd_rdy := axiBridge.io.data_rd_rdy
+  dataCache.io.ret_valid := axiBridge.io.data_ret_valid
+  dataCache.io.ret_last := axiBridge.io.data_ret_last
+  dataCache.io.ret_data := axiBridge.io.data_ret_data
+  axiBridge.io.data_wr_req := dataCache.io.wr_req
+  axiBridge.io.data_wr_type := dataCache.io.wr_type
+  axiBridge.io.data_wr_addr := dataCache.io.wr_addr
+  axiBridge.io.data_wr_wstrb := dataCache.io.wr_wstrb
+  axiBridge.io.data_wr_data := dataCache.io.wr_data
+  dataCache.io.wr_rdy := axiBridge.io.data_wr_rdy
+  decode.io.writeBufferEmpty := axiBridge.io.write_buffer_empty
+
+  // Locked external AXI3/WID boundary.
+  axiBridge.io.arready := io.arready
+  axiBridge.io.rid := io.rid
+  axiBridge.io.rdata := io.rdata
+  axiBridge.io.rresp := io.rresp
+  axiBridge.io.rlast := io.rlast
+  axiBridge.io.rvalid := io.rvalid
+  axiBridge.io.awready := io.awready
+  axiBridge.io.wready := io.wready
+  axiBridge.io.bid := io.bid
+  axiBridge.io.bresp := io.bresp
+  axiBridge.io.bvalid := io.bvalid
+  io.arid := axiBridge.io.arid
+  io.araddr := axiBridge.io.araddr
+  io.arlen := axiBridge.io.arlen
+  io.arsize := axiBridge.io.arsize
+  io.arburst := axiBridge.io.arburst
+  io.arlock := axiBridge.io.arlock
+  io.arcache := axiBridge.io.arcache
+  io.arprot := axiBridge.io.arprot
+  io.arvalid := axiBridge.io.arvalid
+  io.rready := axiBridge.io.rready
+  io.awid := axiBridge.io.awid
+  io.awaddr := axiBridge.io.awaddr
+  io.awlen := axiBridge.io.awlen
+  io.awsize := axiBridge.io.awsize
+  io.awburst := axiBridge.io.awburst
+  io.awlock := axiBridge.io.awlock
+  io.awcache := axiBridge.io.awcache
+  io.awprot := axiBridge.io.awprot
+  io.awvalid := axiBridge.io.awvalid
+  io.wid := axiBridge.io.wid
+  io.wdata := axiBridge.io.wdata
+  io.wstrb := axiBridge.io.wstrb
+  io.wlast := axiBridge.io.wlast
+  io.wvalid := axiBridge.io.wvalid
+  io.bready := axiBridge.io.bready
+
+  decode.io.debugReadSelect := io.infor_flag
+  decode.io.debugReadAddress := io.reg_num.asUInt
+  io.rf_rdata := decode.io.debugLegacyValue
+  io.ws_valid := writeback.io.debug.stageValid
+  io.debug0_wb_pc := writeback.io.debug.pc.asBits
+  io.debug0_wb_rf_wen := writeback.io.debug.gprWriteMask
+  io.debug0_wb_rf_wnum := writeback.io.debug.gprIndex.asBits
+  io.debug0_wb_rf_wdata := writeback.io.debug.gprData
+  io.debug0_wb_inst := writeback.io.debug.instruction
+}

@@ -5,25 +5,7 @@
       "target": "rtl/mycpu_top.v",
       "source": "reference/component-replacements/mycpu_top.v",
       "base_sha256": "ff286f559dbc9131349c9fb8c842110569d231b6a34e76ded172c403d8f90afa",
-      "replacement_sha256": "fec641117e538dfb79eedb0e4afffeb3690594e84ffb9799c5409d8f690258a3"
-    },
-    {
-      "target": "rtl/alu.v",
-      "source": "reference/component-replacements/alu.v",
-      "base_sha256": "5d73aa7f57367311f5d6f6fad5f750e5f97bc2bd1e52c7d0b9e543596ffc7d32",
-      "replacement_sha256": "1349173904c772225ed4184a7e65aa88f7278fbcd060d33d81c966954c128146"
-    },
-    {
-      "target": "rtl/mul.v",
-      "source": "reference/component-replacements/mul.v",
-      "base_sha256": "251d2bba3e659c294c9a004bbb2b542435fcfa0b0c1582cc1a7a3edca765a4c0",
-      "replacement_sha256": "5ff75243dd504bf74c01645862364cd416dffc554d64c82dea6be8f7181660d6"
-    },
-    {
-      "target": "rtl/div.v",
-      "source": "reference/component-replacements/div.v",
-      "base_sha256": "7e499f4c43c92154d1d4e21be2f269ac140b4f2b2d944677c71f6f4213b66dc6",
-      "replacement_sha256": "0c022398490e29cb92cd7adc31d2e35b26e47c3ea5a4b84316a54cfbbae0f349"
+      "replacement_sha256": "90215fc955f98323de1c3c73a582431a608a0f7b5718b8d3b1387169e5b6e687"
     }
   ]
 }

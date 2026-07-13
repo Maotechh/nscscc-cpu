@@ -24,25 +24,26 @@ def contract() -> dict[str, object]:
     return core_top_gate.load_port_contract(PORTS_PATH)
 
 
-def top_wrapper_text(value: dict[str, object]) -> str:
+def complete_top_text(value: dict[str, object], *, parameter: bool = True) -> str:
     ports = value["ports"]
     assert isinstance(ports, list)
     declarations = []
-    connections = []
     for raw in ports:
         assert isinstance(raw, dict)
         width = int(raw["width"])
         bit_range = "" if width == 1 else f" [{width - 1}:0]"
         declarations.append(f"  {raw['direction']} wire{bit_range} {raw['name']}")
-        connections.append(f"    .{raw['name']}({raw['name']})")
+    top = "module core_top"
+    if parameter:
+        top += " #(parameter TLBNUM = 32)"
     return (
-        "module core_top #(parameter TLBNUM = 32) (\n"
+        top
+        + " (\n"
         + ",\n".join(declarations)
         + "\n);\n"
-        + "  openla500_legacy_core #(.TLBNUM(TLBNUM)) backend (\n"
-        + ",\n".join(connections)
-        + "\n  );\nendmodule\n\n"
-        + "module openla500_legacy_core #(parameter TLBNUM = 32) ();\nendmodule\n"
+        + "  reg activity;\n"
+        + "  always @(posedge aclk) activity <= ~activity;\n"
+        + "endmodule\n"
     )
 
 
@@ -50,7 +51,6 @@ def yosys_document(value: dict[str, object]) -> dict[str, object]:
     ports = value["ports"]
     assert isinstance(ports, list)
     top_ports: dict[str, object] = {}
-    connections: dict[str, object] = {}
     next_bit = 2
     for raw in ports:
         assert isinstance(raw, dict)
@@ -58,7 +58,6 @@ def yosys_document(value: dict[str, object]) -> dict[str, object]:
         bits = list(range(next_bit, next_bit + width))
         next_bit += width
         top_ports[str(raw["name"])] = {"direction": raw["direction"], "bits": bits}
-        connections[str(raw["name"])] = list(bits)
     return {
         "modules": {
             "core_top": {
@@ -67,12 +66,10 @@ def yosys_document(value: dict[str, object]) -> dict[str, object]:
                     "TLBNUM": "00000000000000000000000000100000"
                 },
                 "cells": {
-                    "backend": {
-                        "type": "openla500_legacy_core",
-                        "parameters": {
-                            "TLBNUM": "00000000000000000000000000100000"
-                        },
-                        "connections": connections,
+                    "state": {
+                        "type": "$dff",
+                        "parameters": {},
+                        "connections": {},
                     }
                 },
             }
@@ -139,59 +136,27 @@ class CoreTopContractTests(unittest.TestCase):
 
 
 class CoreTopPackagingTests(unittest.TestCase):
-    def test_top_parameter_and_backend_binding_are_deterministic(self) -> None:
-        source = (
-            "module core_top (\n  input wire aclk\n);\n"
-            "  openla500_legacy_core #(\n    .TLBNUM(32)\n  ) backend ();\n"
-            "endmodule\n"
-        )
-        parameterized, top_count = core_top_gate.add_top_parameter(source)
-        forwarded, backend_count = core_top_gate.forward_backend_parameter(parameterized)
+    def test_top_parameter_insertion_is_deterministic(self) -> None:
+        source = "module core_top (\n  input wire aclk\n);\nendmodule\n"
+        parameterized, top_count = core_top_gate.ensure_top_parameter(source)
         self.assertEqual(1, top_count)
-        self.assertEqual(1, backend_count)
-        self.assertIn("parameter TLBNUM = 32", forwarded)
-        self.assertIn(".TLBNUM(TLBNUM)", forwarded)
-        self.assertNotIn(".TLBNUM(32)", forwarded)
+        self.assertIn("parameter TLBNUM = 32", parameterized)
 
-    def test_tlbnum_in_comments_is_not_counted_or_rewritten(self) -> None:
+    def test_existing_top_parameter_is_preserved_byte_for_byte(self) -> None:
         source = (
-            "/* .TLBNUM(32) */\n"
-            "// .TLBNUM(32)\n"
-            "module core_top (\n);\n"
-            "  openla500_legacy_core #(\n    .TLBNUM(32)\n  ) backend ();\n"
-            "endmodule\n"
+            "module core_top #(\n  parameter integer TLBNUM = 32\n) (\n);\nendmodule\n"
         )
-        parameterized, _ = core_top_gate.add_top_parameter(source)
-        forwarded, _ = core_top_gate.forward_backend_parameter(parameterized)
-        self.assertIn("/* .TLBNUM(32) */", forwarded)
-        self.assertIn("// .TLBNUM(32)", forwarded)
-        self.assertEqual(1, core_top_gate.uncommented_tlbnum_binding_count(forwarded, "TLBNUM"))
-        comments_only = "/*\n.TLBNUM(32)\n*/\n"
-        with self.assertRaisesRegex(core_top_gate.CoreTopGateError, "not unique"):
-            core_top_gate.forward_backend_parameter(comments_only)
+        transformed, count = core_top_gate.ensure_top_parameter(source)
+        self.assertEqual(0, count)
+        self.assertEqual(source, transformed)
 
-    def test_legacy_rename_changes_only_the_unique_module_identifier(self) -> None:
-        source = b"module core_top #(parameter TLBNUM=32) ();\r\nendmodule\r\n"
-        renamed, count = core_top_gate.rename_legacy_module(source)
-        self.assertEqual(1, count)
-        self.assertIn(b"module openla500_legacy_core", renamed)
-        restored = renamed.replace(b"openla500_legacy_core", b"core_top", 1)
-        self.assertEqual(source, restored)
+    def test_wrong_existing_top_parameter_is_rejected(self) -> None:
+        source = "module core_top #(parameter TLBNUM = 16) ();\nendmodule\n"
+        with self.assertRaisesRegex(core_top_gate.CoreTopGateError, "unsupported default"):
+            core_top_gate.ensure_top_parameter(source)
 
-    def test_legacy_non_unique_rename_is_rejected(self) -> None:
-        duplicate = b"module core_top; endmodule\nmodule core_top; endmodule\n"
-        missing = b"module another; endmodule\n"
-        for payload in (duplicate, missing):
-            with self.subTest(payload=payload):
-                with self.assertRaisesRegex(core_top_gate.CoreTopGateError, "not unique"):
-                    core_top_gate.rename_legacy_module(payload)
-
-    def test_package_uses_locked_legacy_blob(self) -> None:
-        generated = (
-            "module core_top (\n  input wire aclk\n);\n"
-            "  openla500_legacy_core #(\n    .TLBNUM(32)\n  ) backend ();\n"
-            "endmodule\n"
-        )
+    def test_package_publishes_only_complete_spinal_rtl(self) -> None:
+        generated = complete_top_text(contract(), parameter=False)
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             rtl = root / "generated.v"
@@ -208,67 +173,75 @@ class CoreTopPackagingTests(unittest.TestCase):
             packaged = packaged_bytes.decode("utf-8")
         self.assertEqual("pass", summary["status"])
         self.assertEqual(1, packaged.count("module core_top #("))
-        self.assertEqual(1, packaged.count("module openla500_legacy_core"))
-        self.assertIn(".TLBNUM(TLBNUM)", packaged)
-        expected_legacy, _ = core_top_gate.rename_legacy_module(
-            core_top_gate.git_blob(
-                REPOSITORY_ROOT,
-                core_top_gate.parse_lock(MANIFEST_PATH)["team_golden_candidate"],
-                "rtl/mycpu_top.v",
-            )[0]
-        )
-        self.assertTrue(packaged_bytes.endswith(expected_legacy))
-        self.assertTrue(summary["input_wrapper"]["stable"])
-        self.assertEqual("ff286f559dbc9131349c9fb8c842110569d231b6a34e76ded172c403d8f90afa", summary["legacy_source"]["raw_sha256"])
+        self.assertNotIn("openla500_legacy_core", packaged)
+        self.assertIn("always @(posedge aclk)", packaged)
+        self.assertTrue(summary["input_rtl"]["stable"])
+        self.assertTrue(summary["contract"]["legacy_backend_absent"])
+        self.assertEqual(49, summary["contract"]["port_count"])
+
+    def test_package_rejects_any_legacy_backend_marker(self) -> None:
+        generated = complete_top_text(contract(), parameter=False) + "// openla500_legacy_core\n"
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            rtl = root / "generated.v"
+            rtl.write_text(generated, encoding="utf-8")
+            args = SimpleNamespace(
+                out_dir=root / "package",
+                repo_root=REPOSITORY_ROOT,
+                manifest=MANIFEST_PATH,
+                ports=PORTS_PATH,
+                rtl=rtl,
+            )
+            with self.assertRaisesRegex(core_top_gate.CoreTopGateError, "must not contain"):
+                core_top_gate.package_gate(args)
 
 
 class CoreTopConnectivityTests(unittest.TestCase):
-    def test_exact_same_name_connectivity_passes(self) -> None:
+    def test_exact_top_contract_with_internal_logic_passes(self) -> None:
         value = contract()
-        result = core_top_gate.validate_connectivity(yosys_document(value), value)
-        self.assertEqual(49, result["same_name_connections"])
+        result = core_top_gate.validate_top_contract(yosys_document(value), value)
         self.assertEqual(1, result["top_cell_count"])
+        self.assertTrue(result["legacy_backend_absent"])
 
     def test_port_width_mismatch_is_rejected(self) -> None:
         value = contract()
         document = yosys_document(value)
         document["modules"]["core_top"]["ports"]["arlen"]["bits"] = [1, 2, 3, 4]
         with self.assertRaisesRegex(core_top_gate.CoreTopGateError, "ports differ"):
-            core_top_gate.validate_connectivity(document, value)
+            core_top_gate.validate_top_contract(document, value)
 
-    def test_missing_or_crossed_connection_is_rejected(self) -> None:
+    def test_legacy_module_is_rejected(self) -> None:
         value = contract()
         document = yosys_document(value)
-        top = document["modules"]["core_top"]
-        top["cells"]["backend"]["connections"]["arready"] = top["ports"]["wready"]["bits"]
-        with self.assertRaisesRegex(core_top_gate.CoreTopGateError, "same-name"):
-            core_top_gate.validate_connectivity(document, value)
+        document["modules"]["openla500_legacy_core"] = {"ports": {}}
+        with self.assertRaisesRegex(core_top_gate.CoreTopGateError, "still contains"):
+            core_top_gate.validate_top_contract(document, value)
 
-    def test_extra_wrapper_logic_is_rejected(self) -> None:
+    def test_arbitrary_internal_logic_is_allowed(self) -> None:
         value = contract()
         document = yosys_document(value)
         document["modules"]["core_top"]["cells"]["extra"] = {
             "type": "$not",
             "connections": {},
         }
-        with self.assertRaisesRegex(core_top_gate.CoreTopGateError, "beyond"):
-            core_top_gate.validate_connectivity(document, value)
+        result = core_top_gate.validate_top_contract(document, value)
+        self.assertEqual(2, result["top_cell_count"])
 
-    def test_backend_tlbnum_mismatch_is_rejected(self) -> None:
+    def test_top_tlbnum_mismatch_is_rejected(self) -> None:
         value = contract()
         document = yosys_document(value)
-        document["modules"]["core_top"]["cells"]["backend"]["parameters"][
-            "TLBNUM"
-        ] = "00000000000000000000000000011111"
+        document["modules"]["core_top"]["parameter_default_values"]["TLBNUM"] = (
+            "00000000000000000000000000011111"
+        )
         with self.assertRaisesRegex(core_top_gate.CoreTopGateError, "TLBNUM parameter mismatch"):
-            core_top_gate.validate_connectivity(document, value)
+            core_top_gate.validate_top_contract(document, value)
 
     def test_tool_failure_cannot_be_reported_as_port_pass(self) -> None:
         value = contract()
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             rtl = root / "mycpu_top.v"
-            rtl.write_text(top_wrapper_text(value), encoding="utf-8")
+            rtl.write_text(complete_top_text(value), encoding="utf-8")
             manifest = root / "manifest.lock"
             manifest.write_text("yosys_binary_sha256=" + "0" * 64 + "\n", encoding="utf-8")
             args = SimpleNamespace(
@@ -290,6 +263,108 @@ class CoreTopConnectivityTests(unittest.TestCase):
             with mock.patch.object(core_top_gate, "run_yosys", return_value=failure):
                 with self.assertRaisesRegex(core_top_gate.CoreTopGateError, "failed or warned"):
                     core_top_gate.port_check_gate(args)
+
+    def test_port_check_reads_complete_rtl_without_a_backend_stub(self) -> None:
+        value = contract()
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            rtl = root / "mycpu_top.v"
+            rtl.write_text(complete_top_text(value) + "module helper; endmodule\n", encoding="utf-8")
+            args = SimpleNamespace(
+                out_dir=root / "port",
+                repo_root=REPOSITORY_ROOT,
+                manifest=MANIFEST_PATH,
+                ports=PORTS_PATH,
+                rtl=rtl,
+                yosys=None,
+                timeout=10,
+            )
+            captured: dict[str, str] = {}
+
+            def fake_yosys(_values, _supplied, script, out_dir, _timeout):
+                captured["script"] = script
+                (out_dir / "core_top-raw.json").write_text(
+                    json.dumps(yosys_document(value)), encoding="utf-8"
+                )
+                return {
+                    "returncode": 0,
+                    "timed_out": False,
+                    "warnings": [],
+                    "skip_markers": [],
+                    "stdout": "",
+                }
+
+            with mock.patch.object(core_top_gate, "run_yosys", side_effect=fake_yosys):
+                summary = core_top_gate.port_check_gate(args)
+        self.assertEqual("complete-spinal-rtl", summary["scope"])
+        self.assertEqual(1, captured["script"].count("read_verilog"))
+        self.assertNotIn("openla500_legacy_core", captured["script"])
+        self.assertTrue(summary["input"]["stable"])
+
+
+class CoreTopStaticGateTests(unittest.TestCase):
+    def _args(self, root: Path, command: str) -> SimpleNamespace:
+        rtl = root / "mycpu_top.v"
+        rtl.write_text(complete_top_text(contract()), encoding="utf-8")
+        return SimpleNamespace(
+            out_dir=root / command,
+            repo_root=REPOSITORY_ROOT,
+            manifest=MANIFEST_PATH,
+            ports=PORTS_PATH,
+            rtl=rtl,
+            verilator=None,
+            yosys=None,
+            timeout=10,
+        )
+
+    def test_lint_invokes_verilator_on_one_complete_rtl_file(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            args = self._args(Path(temporary), "lint")
+            commands: list[list[str]] = []
+            version = core_top_gate.parse_lock(MANIFEST_PATH)["verilator"]
+
+            def fake_command(argv, *, cwd, timeout):
+                commands.append(argv)
+                stdout = f"Verilator {version}\n" if "--version" in argv else ""
+                return {
+                    "argv": argv,
+                    "returncode": 0,
+                    "stdout": stdout,
+                    "timed_out": False,
+                    "elapsed_seconds": 0.01,
+                }
+
+            with mock.patch.object(
+                core_top_gate, "checked_tool", return_value=Path(sys.executable)
+            ), mock.patch.object(core_top_gate, "run_command", side_effect=fake_command):
+                summary = core_top_gate.lint_gate(args)
+        lint_argv = commands[1]
+        self.assertEqual(1, sum(item.endswith("core_top.v") for item in lint_argv))
+        self.assertFalse(any("legacy" in item for item in lint_argv))
+        self.assertEqual("complete-spinal-rtl", summary["scope"])
+
+    def test_yosys_check_reads_one_complete_rtl_file(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            args = self._args(Path(temporary), "yosys")
+            captured: dict[str, str] = {}
+
+            def fake_yosys(_values, _supplied, script, _out_dir, _timeout):
+                captured["script"] = script
+                return {
+                    "returncode": 0,
+                    "timed_out": False,
+                    "warnings": [],
+                    "skip_markers": [],
+                    "stdout": "",
+                }
+
+            with mock.patch.object(core_top_gate, "run_yosys", side_effect=fake_yosys):
+                summary = core_top_gate.yosys_check_gate(args)
+        self.assertEqual(1, captured["script"].count("read_verilog"))
+        self.assertNotIn("openla500_legacy_core", captured["script"])
+        self.assertIn("hierarchy -check -top core_top", captured["script"])
+        self.assertIn("\nproc\n", captured["script"])
+        self.assertEqual("complete-spinal-rtl", summary["scope"])
 
 
 class CoreTopSafetyTests(unittest.TestCase):

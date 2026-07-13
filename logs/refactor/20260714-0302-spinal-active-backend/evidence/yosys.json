@@ -1,0 +1,57 @@
+{
+  "gate": "core-top-yosys-check",
+  "generated_at": "2026-07-14T03:23:52+08:00",
+  "input": {
+    "complete_rtl": "/tmp/spinal-active-backend-package-0318/rtl/mycpu_top.v",
+    "complete_rtl_sha256": "90215fc955f98323de1c3c73a582431a608a0f7b5718b8d3b1387169e5b6e687",
+    "complete_rtl_size": 716184,
+    "contract": {
+      "header_sha256": "b2db20e7012ff21e931738a624a964274f779e3f3de664150f3cec40e87b9a79",
+      "input_count": 17,
+      "legacy_backend_absent": true,
+      "module_count": 1,
+      "output_count": 32,
+      "port_count": 49,
+      "tlbnum_default": 32
+    },
+    "snapshot": "/tmp/spinal-active-backend-yosys-0318/input/core_top.v",
+    "snapshot_sha256": "90215fc955f98323de1c3c73a582431a608a0f7b5718b8d3b1387169e5b6e687",
+    "stable": true
+  },
+  "provenance": {
+    "evaluator": "/tmp/spinal-active-backend-0318/tools/core_top_gate.py",
+    "evaluator_sha256": "63490b44b7c4e9eee730281a4a12ad62eeea238aeb7031df05f7bf2fc4e33641",
+    "manifest": "/tmp/spinal-active-backend-0318/reference/manifest.lock",
+    "manifest_sha256": "743dd7e58d77e456cfe664d80c2e6614ab426f72bfecd9088ff18d702afa2f20",
+    "ports_contract": "/tmp/spinal-active-backend-0318/reference/core-top.ports.json",
+    "ports_contract_sha256": "effa486ff707e480ff8ee13d7f20b2d524bd26908726915c99abf1b37eeab576",
+    "repository": "/tmp/spinal-active-backend-0318",
+    "repository_head": "91f7d19f52e50dc5e324ff9554a04b0cff2f51f0",
+    "repository_status_sha256": "352d5468722c103470623b3a240374d74d769560483a3e91c44832feeda479fc"
+  },
+  "schema_version": 1,
+  "scope": "complete-spinal-rtl",
+  "status": "pass",
+  "target": "core-top-compat",
+  "yosys": {
+    "argv": [
+      "/usr/bin/yosys",
+      "-l",
+      "/tmp/spinal-active-backend-yosys-0318/yosys.log",
+      "-s",
+      "/tmp/spinal-active-backend-yosys-0318/gate.ys"
+    ],
+    "elapsed_seconds": 2.316,
+    "log": "/tmp/spinal-active-backend-yosys-0318/yosys.log",
+    "log_sha256": "3bb745c858acea3b88afe7ffaf98bfb9e63f78ab78ffc9296df399b21360f788",
+    "returncode": 0,
+    "skip_markers": [],
+    "timed_out": false,
+    "tool": {
+      "path": "/usr/bin/yosys",
+      "sha256": "88c0a12bb814a1a8716b1ae10b482e35d3005ed558e1f5f626b3dc983ea3abd0",
+      "version": "Yosys 0.33 (git sha1 2584903a060)"
+    },
+    "warnings": []
+  }
+}

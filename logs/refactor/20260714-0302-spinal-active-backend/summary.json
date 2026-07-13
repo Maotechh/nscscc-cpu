@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "iteration_id": "20260714-0302-spinal-active-backend",
+  "status": "implementation_in_review",
+  "branch": "refactor/20260714-0302-spinal-active-backend",
+  "base_sha": "78efdf97b6208da3806fcbc02dca69061284d3b7",
+  "head_sha": null,
+  "source_head": null,
+  "selected_boundary": "spinal_active_backend",
+  "gates": {
+    "scala": {"status":"pass","planned":4,"executed":4,"passed":4,"failed":0,"skipped":0,"evidence":"evidence/scala.json"},
+    "generate": {"status":"pass","planned":2,"executed":2,"passed":2,"failed":0,"skipped":0,"evidence":"evidence/generate.json"},
+    "package": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0,"evidence":"evidence/package.json"},
+    "publish_check": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0,"evidence":"evidence/publish-check.json"},
+    "port_check": {"status":"pass","planned":49,"executed":49,"passed":49,"failed":0,"skipped":0,"evidence":"evidence/port-check.json"},
+    "yosys": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0,"evidence":"evidence/yosys.json"},
+    "lint": {"status":"fail","planned":1,"executed":1,"passed":0,"failed":1,"skipped":0,"evidence":"evidence/lint.json"},
+    "reachability": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0,"evidence":"evidence/reachability.json"},
+    "automation_tests": {"status":"warning","planned":336,"executed":326,"passed":326,"failed":0,"skipped":10,"evidence":"iteration.md"},
+    "func_smoke": {"status":"not_executed","planned":1,"executed":0,"passed":0,"failed":0,"skipped":1,"evidence":"iteration.md"},
+    "claim_review": {"status":"not_executed","planned":1,"executed":0,"passed":0,"failed":0,"skipped":1,"evidence":"iteration.md"}
+  },
+  "required_gates": ["doctor","scala","contract","rtl_static","func_smoke","func_full","random","fpga","claim_review"],
+  "claims": [
+    {"claim":"生成 core_top 的活动 backend 不再依赖 legacy CPU Verilog BlackBox","support":"yes","evidence":"evidence/package.json"},
+    {"claim":"完整生成 RTL 的官方 49 端口合同和 Yosys hierarchy/check 通过","support":"yes","evidence":"evidence/port-check.json"},
+    {"claim":"纯 Spinal 整机功能等价","support":"no","evidence":"iteration.md"}
+  ],
+  "residual_risks": [
+    "strict Verilator lint fails with 87 warnings",
+    "official func smoke is not yet executed",
+    "64-entry BTB/RAS, LACC, complete DiffTest/ArchState, and perf integration remain",
+    "full func/random/perf/system/fpga gates are not executed"
+  ]
+}
