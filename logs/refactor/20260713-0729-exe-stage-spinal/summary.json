@@ -4,7 +4,7 @@
   "status": "draft",
   "branch": "refactor/20260713-0729-exe-stage-spinal",
   "base_sha": "f621c7a1e056b9f128b86efddbdd2598b3692ecc",
-  "head_sha": "4c73068aad5a81b34181138b20184f894016f327",
+  "head_sha": "f4959f542186e4b8311e1f5d7ecf0865f1cc86e3",
   "review_target_sha": "4c73068aad5a81b34181138b20184f894016f327",
   "implementation_commit": "4c73068aad5a81b34181138b20184f894016f327",
   "implementation_tested_sha": "4c73068aad5a81b34181138b20184f894016f327",
@@ -42,7 +42,8 @@
     "func_full": {"status": "skipped", "planned": 139, "executed": 0, "passed": 0, "failed": 0, "skipped": 139},
     "random": {"status": "skipped", "planned": 1, "executed": 0, "passed": 0, "failed": 0, "skipped": 1},
     "claim_review": {"status": "unavailable", "planned": 3, "executed": 3, "passed": 0, "failed": 3, "skipped": 0, "detail": "Claude produced no review: two attempts lacked provider env in the bridge process and one responses-backend attempt rejected reviewer tools"},
-    "local_claim_audit": {"status": "pass", "planned": 1, "executed": 1, "passed": 1, "failed": 0, "skipped": 0, "detail": "independent read-only fallback; explicitly not Claude"}
+    "local_claim_audit": {"status": "pass", "planned": 1, "executed": 1, "passed": 1, "failed": 0, "skipped": 0, "detail": "independent read-only fallback; explicitly not Claude"},
+    "push": {"status": "fail", "planned": 1, "executed": 1, "passed": 0, "failed": 1, "skipped": 0, "detail": "GitHub HTTPS reset and SSH port 22 timeout; local branch remains awaiting_push"}
   },
   "claims": [
     {
@@ -96,6 +97,6 @@
     "claude_bridge_missing_GEEKPIE_CLAUDE_API_KEY"
   ],
   "not_executed": ["func58", "func81", "multi_seed_random_difftest", "perf20", "uboot", "linux", "vivado_implementation", "bitstream", "remote_fpga_board"],
-  "pr": {"status": "awaiting_evidence_commit", "url": null, "draft_only": true, "auto_merge": false, "created": false, "branch_pushed": false},
-  "updated_at": "2026-07-13T14:42:55+08:00"
+  "pr": {"status": "awaiting_push", "url": null, "draft_only": true, "auto_merge": false, "created": false, "branch_pushed": false},
+  "updated_at": "2026-07-13T14:56:30+08:00"
 }

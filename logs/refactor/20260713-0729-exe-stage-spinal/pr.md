@@ -1,6 +1,6 @@
 # Draft PR: 迁移活动 EXE stage 到 SpinalHDL
 
-状态：仅草稿；实现提交 `4c73068aad5a81b34181138b20184f894016f327` 已完成提交绑定验证，分支待推送；不创建或合并 PR。
+状态：仅草稿；实现提交 `4c73068aad5a81b34181138b20184f894016f327` 和证据提交 `f4959f542186e4b8311e1f5d7ecf0865f1cc86e3` 已完成；GitHub push 被网络 reset，分支保持 `awaiting_push`；不创建或合并 PR。
 
 ## 范围
 

@@ -15,5 +15,5 @@
 - 功能/性能/资源：本迭代只声明 EXE 单模块 2-state 逐拍差分；未运行性能、完整功能集、随机 DiffTest、U-Boot/Linux 或 Vivado implementation/timing/bitstream。
 - 残余风险：LACC 历史 `lacc_flush` 在 golden 中未驱动，重构保持确定性 0，仅有 2-state 输出一致证据，不代表四态等价；整机 MEM/CSR/TLB/cache 等仍有 legacy 实现；mixed warning policy、func_full、随机 DiffTest 和 golden 顺序形式等价均未通过。
 - 回退：revert 本迭代提交，或删除 replacement spec 中 `rtl/exe_stage.v` overlay；旧 Verilog 保持为参赛稳定线。
-- PR 状态：证据提交后推送分支；不创建或合并 PR。
+- PR 状态：证据 commit `f4959f542186e4b8311e1f5d7ecf0865f1cc86e3` 已本地提交；HTTPS push、ls-remote 和 SSH fallback 均因 GitHub 网络不可达失败，状态 `awaiting_push`；不创建或合并 PR。
 - 下一候选：把已独立审核的 EXE、CSR、AddrTrans、AXI 和 cache replacement 放入非 main staging overlay，随后迁移 IF/ID/MEM/WB 活动流水级。
