@@ -1,7 +1,7 @@
 # 20260713-1400-addr-trans-spinal
 
 - Status: implementation_in_review
-- Branch / Base SHA / Head SHA: `refactor/20260713-1400-addr-trans-spinal` / `9d319136ce20a7bf8547896fb29a58e2f86ce4f4` / pending
+- Branch / Base SHA / Head SHA: `refactor/20260713-1400-addr-trans-spinal` / `9d319136ce20a7bf8547896fb29a58e2f86ce4f4` / `3f10123`
 - Owner / Agent: privileged / Codex
 - Selected boundary and selection reason: 在 CSR 之后迁移活动 TLB 与地址转换，解除特权、缓存和流水线集成的依赖；两个模块均有锁定 golden RTL 和可执行行为合同。
 - Golden reference and locked tool versions: `a158aa8:rtl/tlb_entry.v` SHA256 `a3e3508a0c755375336ba6db392f9038e1d793042fc21b7cd088fde9febcba1f`；`a158aa8:rtl/addr_trans.v` SHA256 `b25c7585ca410363cbbb25e6669687083687fed1a0641a91ff58b7837c371697`；JDK 17.0.19、SBT 1.10.11、Scala 2.13.16、SpinalHDL 1.14.2、Verilator 5.020、Yosys 0.33。
