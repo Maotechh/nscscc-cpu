@@ -6,5 +6,10 @@
     {"name":"cycle-diff-summary","path":"logs/refactor/20260713-0729-axi-bridge-spinal/evidence/cycle-diff.json","sha256":"da85411909a0c1db4ccd998f3c47d5324092684d2a6d352d0b927cdfdb238368","size":3109,"retention":"git"},
     {"name":"raw-cycle-traces","path":"/tmp/axi-unified/axi_bridge/unit/{golden,candidate}/trace.txt","sha256":"d940e413491705cf70504fb2fdbb96e2738080ecf29ad6849a07f2cf8a9e93f8","retention":"local temporary artifact"},
     {"name":"local-gates","path":"/tmp/axi-unified","retention":"local temporary artifact"}
+    ,{"name":"official-chiplab-summary","path":"logs/refactor/20260713-0729-axi-bridge-spinal/evidence/chiplab-comparison.json","retention":"git"}
+    ,{"name":"official-chiplab-raw","path":"/tmp/axi-commit-gates and /tmp/axi-chiplab-work","retention":"local temporary artifact"}
+    ,{"name":"independent-claim-audit","path":"logs/refactor/20260713-0729-axi-bridge-spinal/evidence/independent-claim-audit.json","sha256":"cbc7c8199d1b29476c218301b3760cf9212cac71c92d5c670a8be9e44a7a03fe","size":4210,"retention":"git"}
+    ,{"name":"independent-claim-review","path":"logs/refactor/20260713-0729-axi-bridge-spinal/reviews/independent-claim-audit.md","sha256":"9c97b2bec786c6eb2e5123b05a0b589f5136415d24c34eae455ad0b8baf093f3","size":1868,"retention":"git"}
+    ,{"name":"local-claim-audit","path":"logs/refactor/20260713-0729-axi-bridge-spinal/reviews/local-claim-audit.md","sha256":"675e02856b217d2f883b5e15b584f75c9e019ae9dbc401d5d7aef5534faa53bb","size":2375,"retention":"git"}
   ]
 }

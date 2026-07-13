@@ -54,7 +54,22 @@ class AxiBridgeGateTests(unittest.TestCase):
         self.assertIn("d.awvalid ? d.awaddr : 0", axi_bridge_gate.DRIVER)
         self.assertIn("d.wvalid ? d.wdata : 0", axi_bridge_gate.DRIVER)
 
+    def test_candidate_unused_waiver_is_exactly_the_legacy_dead_boundary(self) -> None:
+        self.assertEqual(
+            axi_bridge_gate.EXPECTED_COMPAT_UNUSED,
+            {
+                "rid",
+                "rresp",
+                "bid",
+                "bresp",
+                "inst_wr_req",
+                "inst_wr_type",
+                "inst_wr_addr",
+                "inst_wr_wstrb",
+                "inst_wr_data",
+            },
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
-

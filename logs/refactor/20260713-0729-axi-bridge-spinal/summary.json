@@ -5,6 +5,9 @@
   "branch": "refactor/20260713-0729-axi-bridge-spinal",
   "base_sha": "f621c7a1e056b9f128b86efddbdd2598b3692ecc",
   "head_sha": null,
+  "review_target_sha": "bb2dbff743216e83eeb15f98f0651f717c1b4cc8",
+  "implementation_commit": "bb2dbff743216e83eeb15f98f0651f717c1b4cc8",
+  "implementation_tested_sha": "bb2dbff743216e83eeb15f98f0651f717c1b4cc8",
   "selected_boundary": "axi_bridge",
   "boundary_state": "differential_pass",
   "required_gates": [
@@ -21,7 +24,8 @@
     "random_backpressure_diff",
     "diagnostic_overlay",
     "func_smoke",
-    "claim_review"
+    "claim_review",
+    "independent_claim_audit"
   ],
   "gates": {
     "doctor": {"status":"pass","planned":2,"executed":2,"passed":2,"failed":0,"skipped":0},
@@ -36,9 +40,13 @@
     "unit_diff": {"status":"pass","planned":8192,"executed":8192,"passed":8192,"failed":0,"skipped":0},
     "random_backpressure_diff": {"status":"pass","planned":8192,"executed":8192,"passed":8192,"failed":0,"skipped":0,"detail":"fixed seed shares the directed prefix and randomized suffix with unit_diff; it is one execution, not an additional 8192 cycles"},
     "oracle_negative_controls": {"status":"pass","planned":3,"executed":3,"passed":3,"failed":0,"skipped":0},
-    "diagnostic_overlay": {"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":0},
-    "func_smoke": {"status":"pending","planned":2,"executed":0,"passed":0,"failed":0,"skipped":0},
-    "claim_review": {"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":0}
+    "diagnostic_overlay": {"status":"pass","planned":2,"executed":2,"passed":2,"failed":0,"skipped":0,"detail":"locked 0 replacement; mixed exactly one committed axi_bridge replacement"},
+    "func_smoke": {"status":"fail","planned":2,"executed":2,"passed":0,"failed":2,"skipped":0,"detail":"locked/mixed both fail at PC 0x1c07c79c and warning policy"},
+    "identity_compare": {"status":"fail","planned":1,"executed":1,"passed":0,"failed":1,"skipped":0,"detail":"parser/trace/ROM/ELF equal, but replacement bytes/RTL projection/warning counts differ"},
+    "local_claim_audit": {"status":"pass_with_scope_warning","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0,"detail":"executor-local, not an independent reviewer"},
+    "independent_claim_audit": {"status":"pass_with_scope_warning","planned":6,"executed":6,"passed":6,"failed":0,"skipped":0,"detail":"four extra seeds, one multi-reset trace, and driver/overlay provenance review; finite 2-state evidence only"},
+    "claim_review": {"status":"unavailable","planned":1,"executed":1,"passed":0,"failed":1,"skipped":0,"detail":"claude-review MCP not exposed; reviewer model did not start"},
+    "push": {"status":"fail","planned":1,"executed":1,"passed":0,"failed":1,"skipped":0,"detail":"GitHub port 443 unavailable"}
   },
   "observations": {
     "golden_sha256": "07c30c8e5e99373ecb988b2a5cc03e4e8cb7b6e22af26b1b37171a808b144f9e",
@@ -50,13 +58,26 @@
     "cycles": 8192,
     "trace_sha256": "d940e413491705cf70504fb2fdbb96e2738080ecf29ad6849a07f2cf8a9e93f8",
     "mismatches": 0,
-    "negative_controls_detected": 3
+    "negative_controls_detected": 3,
+    "additional_seeds": ["0x1","0xdeadbeef","0xc001d00d","0x7fffffff"],
+    "additional_seed_mismatches": [0,0,0,0],
+    "reset_audit_cycles": 2048,
+    "reset_audit_cycles_asserted": [0,1,2,40,41,150,151,300,301,500],
+    "reset_audit_trace_sha256": "9c3cfc14dac247da439936fd70ad07fb1e9618f17c73616cb903b5204947bb85",
+    "case": "func/func_lab19",
+    "locked_status": "fail",
+    "mixed_status": "diagnostic_fail",
+    "instructions": 172552,
+    "official_cycles": 602903,
+    "first_mismatch": "t0(r12) different at pc = 0x1c07c79c, right= 0x000006e2, wrong = 0x00000008",
+    "official_trace_sha256": "8efa7942ab6d4702129dc0c7eb0676c6cfcd87361ee8ecf99411567c3db38acb",
+    "warnings": {"locked":{"total":644,"dut":280,"official_environment":364},"mixed":{"total":641,"dut":277,"official_environment":364}}
   },
   "claims": [
     {"id":"C1","status":"supported_with_narrow_scope","text":"锁定 golden 与本轮 Spinal-generated axi_bridge 在固定 seed 的 8192 拍、valid-window 观察合同上逐拍一致。","excludes":["4-state invalid payload equivalence","all-sequence formal equivalence","whole-CPU correctness","official func PASS"]}
   ],
-  "blocked_by": ["official_func_smoke_pending","claim_review_pending"],
+  "blocked_by": ["func_lab19_locked_and_mixed_mismatch_at_1c07c79c","641_unapproved_verilator_warnings_in_mixed_compile","identity_comparison_fail","claude_review_mcp_unavailable","github_push_443_unavailable"],
   "not_executed": ["func58", "func81", "multi_seed_random_difftest", "perf20", "uboot", "linux", "vivado_implementation", "bitstream", "remote_fpga_board"],
   "pr": {"status":"awaiting_push","url":null,"draft_only":true,"auto_merge":false,"created":false,"branch_pushed":false},
-  "updated_at": "2026-07-13T07:56:00+08:00"
+  "updated_at": "2026-07-13T13:55:00+08:00"
 }

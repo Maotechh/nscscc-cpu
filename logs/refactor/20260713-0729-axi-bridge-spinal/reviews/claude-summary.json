@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "reviewer": "claude-review",
+  "status": "unavailable",
+  "model_started": false,
+  "job_id": null,
+  "reason": "claude-review MCP tools are not exposed in this session",
+  "disposition": [
+    {"claim":"C1","status":"open","detail":"keep Draft and narrow to fixed 2-state cycle evidence"}
+  ]
+}
+

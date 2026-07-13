@@ -221,6 +221,17 @@ def command_port(args: argparse.Namespace) -> dict[str, Any]:
 
 
 COMPAT_WARNING_OPTIONS = ["-Wno-UNUSEDSIGNAL"]
+EXPECTED_COMPAT_UNUSED = {
+    "rid",
+    "rresp",
+    "bid",
+    "bresp",
+    "inst_wr_req",
+    "inst_wr_type",
+    "inst_wr_addr",
+    "inst_wr_wstrb",
+    "inst_wr_data",
+}
 
 
 def command_lint(args: argparse.Namespace) -> dict[str, Any]:
@@ -229,17 +240,44 @@ def command_lint(args: argparse.Namespace) -> dict[str, Any]:
     verilator = shutil.which("verilator")
     if not verilator:
         raise GateError("verilator is unavailable")
-    argv = [
+    base_argv = [
         verilator,
         "--lint-only",
         "--top-module",
         "axi_bridge",
         "-Wall",
         "-Wno-fatal",
-        *COMPAT_WARNING_OPTIONS,
         str(args.rtl.resolve()),
     ]
-    result = run(argv, args.repo.resolve())
+    unwaived = run(base_argv, args.repo.resolve())
+    unwaived_log = unwaived.stdout.decode("utf-8", errors="replace")
+    (out / "verilator-unwaived.log").write_text(
+        unwaived_log, encoding="utf-8", newline="\n"
+    )
+    warning_blocks = re.findall(
+        r"(?ms)^%Warning-([A-Z0-9_]+): (.*?)(?=^%Warning-|\Z)", unwaived_log
+    )
+    categories = [category for category, _ in warning_blocks]
+    signals = []
+    for _, block in warning_blocks:
+        match = re.search(
+            r"(?:Bits of signal are|Signal is) not used: '([^']+)'", block
+        )
+        if match:
+            signals.append(match.group(1))
+    if (
+        unwaived.returncode != 0
+        or categories != ["UNUSEDSIGNAL"] * len(EXPECTED_COMPAT_UNUSED)
+        or set(signals) != EXPECTED_COMPAT_UNUSED
+        or len(signals) != len(EXPECTED_COMPAT_UNUSED)
+        or "%Error" in unwaived_log
+    ):
+        raise GateError(
+            "unwaived lint warning set changed: "
+            f"rc={unwaived.returncode}, categories={categories}, signals={signals}"
+        )
+
+    result = run(base_argv[:-1] + COMPAT_WARNING_OPTIONS + base_argv[-1:], args.repo.resolve())
     log = result.stdout.decode("utf-8", errors="replace")
     (out / "verilator.log").write_text(log, encoding="utf-8", newline="\n")
     warnings = re.findall(r"(?m)^%Warning-([A-Z0-9_]+):", log)
@@ -251,7 +289,8 @@ def command_lint(args: argparse.Namespace) -> dict[str, Any]:
         "status": "pass",
         "generated_at": now_iso(),
         "returncode": result.returncode,
-        "warnings": 0,
+        "warnings": {"approved": 9, "unapproved": 0},
+        "approved_unused_signals": sorted(EXPECTED_COMPAT_UNUSED),
         "compatibility_waivers": [
             {
                 "rule": "UNUSEDSIGNAL",
@@ -260,6 +299,7 @@ def command_lint(args: argparse.Namespace) -> dict[str, Any]:
             }
         ],
         "log_sha256": sha256_file(out / "verilator.log"),
+        "unwaived_log_sha256": sha256_file(out / "verilator-unwaived.log"),
     }
     write_json(out / "summary.json", summary)
     return summary

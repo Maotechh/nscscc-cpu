@@ -12,3 +12,15 @@
 {"at":"2026-07-13T07:51:00+08:00","command":"Windows doctor + chiplab doctor + locked scala-check","exit_code":0,"summary":"Vivado 2023.2 and locked chiplab/toolchain pass; Scala 4/4"}
 {"at":"2026-07-13T07:54:00+08:00","command":"make elaborate TARGET=axi_bridge, first attempt","exit_code":2,"summary":"generic reproducibility gate rejects --runs 1"}
 {"at":"2026-07-13T07:55:00+08:00","command":"make elaborate TARGET=axi_bridge --runs 2","exit_code":0,"summary":"2/2 reproducible elaboration/generation pass"}
+{"at":"2026-07-13T07:57:00+08:00","command":"git commit -m refactor: migrate active AXI bridge to SpinalHDL","exit_code":0,"summary":"implementation commit bb2dbff743216e83eeb15f98f0651f717c1b4cc8"}
+{"at":"2026-07-13T07:58:00+08:00","command":"git push -u origin refactor/20260713-0729-axi-bridge-spinal","exit_code":1,"summary":"GitHub port 443 unavailable; awaiting_push"}
+{"at":"2026-07-13T08:00:00+08:00","command":"committed locked chiplab overlay","exit_code":0,"summary":"0 replacement; baseline candidate gate eligible"}
+{"at":"2026-07-13T08:00:00+08:00","command":"committed mixed chiplab overlay, first attempt","exit_code":2,"summary":"fail-closed because temporary source clone was detached HEAD"}
+{"at":"2026-07-13T08:01:00+08:00","command":"committed mixed chiplab overlay from refactor branch","exit_code":0,"summary":"exact one committed rtl/axi_bridge.v replacement; diagnostic"}
+{"at":"2026-07-13T08:02:00+08:00","command":"locked and mixed rtl-smoke func/func_lab19","exit_code":1,"summary":"both executed and failed at PC 0x1c07c79c; trace/instruction/cycle equal; warning gates fail"}
+{"at":"2026-07-13T08:03:00+08:00","command":"identity-compare","exit_code":1,"summary":"parser/trace/ROM/ELF equal; RTL projection/replacement bytes/warning counts differ"}
+{"at":"2026-07-13T08:04:00+08:00","command":"claude claim review","exit_code":1,"summary":"tool unavailable before model start; no job id or response"}
+{"at":"2026-07-13T13:51:47+08:00","command":"independent WSL-native axi_bridge contract/port/lint/yosys/diff","exit_code":0,"summary":"65 ports, static gates and 8192-cycle seed 0x158aa8 differential pass; 3 negative controls detected"}
+{"at":"2026-07-13T13:52:58+08:00","command":"independent multi-seed axi_bridge differential","exit_code":0,"summary":"seeds 0x1, 0xdeadbeef, 0xc001d00d, 0x7fffffff each 8192 cycles; all 0 mismatch and 3 negative controls"}
+{"at":"2026-07-13T13:53:30+08:00","command":"independent multi-reset period audit","exit_code":0,"summary":"2048 cycles with reset at 0/1/2,40/41,150/151,300/301,500; golden/candidate trace SHA256 equal"}
+{"at":"2026-07-13T13:55:00+08:00","command":"independent claim audit artifact update","exit_code":0,"summary":"driver masking, reset/period and overlay provenance findings recorded; release scope remains narrow"}

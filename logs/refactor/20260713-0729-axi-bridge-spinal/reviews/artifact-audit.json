@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "auditor": "executor-local-not-independent",
+  "status": "pass_with_scope_warning",
+  "checks": {
+    "result_files_exist": "pass",
+    "claimed_numbers_match": "pass",
+    "oracle_is_locked_git_blob": "pass",
+    "negative_controls_executed": "pass",
+    "official_fail_not_misreported": "pass",
+    "scope_language": "warn_fixed_seed_2state_only",
+    "cross_model_experiment_audit": "unavailable"
+  },
+  "claim_impact": {"C1":"supported_with_narrow_scope","official_func_pass":"unsupported","identity_pass":"unsupported"}
+}
+

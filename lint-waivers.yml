@@ -44,6 +44,39 @@
       "reason": "Golden intentionally truncates TmpR from 33 to 32 output bits. This waiver applies only to the locked golden oracle.",
       "owner": "verification",
       "expires_when": "golden div oracle is retired after a release-gate-equivalent Spinal replacement"
+    },
+    {
+      "id": "axi-bridge-rid-upper-bits-compat",
+      "rule": "UNUSEDSIGNAL",
+      "file": "reference/component-replacements/axi_bridge.v",
+      "line": 19,
+      "source_sha256": "4c307033b1d79da6cc257d314d92ef69830ed87cddc24eb7269ff278927e70a0",
+      "scope": "candidate_axi_bridge_standalone_lint",
+      "reason": "The locked bridge routes responses by rid[0]; rid[3:1] remain required by the exact AXI3 compatibility port.",
+      "owner": "memory",
+      "expires_when": "the legacy 65-port bridge boundary is retired"
+    },
+    {
+      "id": "axi-bridge-response-metadata-compat",
+      "rule": "UNUSEDSIGNAL",
+      "file": "reference/component-replacements/axi_bridge.v",
+      "line": 21,
+      "source_sha256": "4c307033b1d79da6cc257d314d92ef69830ed87cddc24eb7269ff278927e70a0",
+      "scope": "candidate_axi_bridge_standalone_lint",
+      "reason": "rresp, bid, and bresp are exact legacy AXI3 ports but the locked bridge intentionally ignores response metadata.",
+      "owner": "memory",
+      "expires_when": "the legacy 65-port bridge boundary is retired"
+    },
+    {
+      "id": "axi-bridge-inst-write-dead-compat",
+      "rule": "UNUSEDSIGNAL",
+      "file": "reference/component-replacements/axi_bridge.v",
+      "line": 52,
+      "source_sha256": "4c307033b1d79da6cc257d314d92ef69830ed87cddc24eb7269ff278927e70a0",
+      "scope": "candidate_axi_bridge_standalone_lint",
+      "reason": "The five instruction-write inputs are dead in the locked active bridge while inst_wr_rdy is tied high; exact port compatibility requires retaining them.",
+      "owner": "memory",
+      "expires_when": "the legacy 65-port bridge boundary is retired"
     }
   ]
 }

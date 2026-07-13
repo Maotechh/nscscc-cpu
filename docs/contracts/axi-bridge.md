@@ -43,4 +43,3 @@ Golden 是待复测 candidate，不是体系结构规范。差分只证明固定
 ## 完成范围
 
 本边界通过要求：exact 65-port、locked Scala 生成、Verilator/Yosys 静态检查、directed + 固定 seed 随机逐拍 differential。单模块 overlay 的 `func_lab19` 只用于判断是否比已知 baseline 更早分岔；不得据此声明整机、58/81、random DiffTest、性能、Linux 或 FPGA PASS。
-

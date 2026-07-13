@@ -1,0 +1,75 @@
+{
+  "schema_version": 1,
+  "auditor": "/root/axi_audit_finish",
+  "audit_type": "independent_read_only_claim_audit",
+  "source_head": "bb2dbff743216e83eeb15f98f0651f717c1b4cc8",
+  "candidate": {
+    "path": "reference/component-replacements/axi_bridge.v",
+    "sha256": "4c307033b1d79da6cc257d314d92ef69830ed87cddc24eb7269ff278927e70a0",
+    "size": 10819
+  },
+  "checks": {
+    "clock_reset": {
+      "status": "pass_for_locked_contract",
+      "clock": "posedge clk",
+      "reset": "synchronous active-high reset",
+      "multi_reset_trace": {
+        "seed": "0x13579bdf",
+        "cycles": 2048,
+        "reset_cycles": [0, 1, 2, 40, 41, 150, 151, 300, 301, 500],
+        "golden_trace_sha256": "9c3cfc14dac247da439936fd70ad07fb1e9618f17c73616cb903b5204947bb85",
+        "candidate_trace_sha256": "9c3cfc14dac247da439936fd70ad07fb1e9618f17c73616cb903b5204947bb85",
+        "mismatches": 0,
+        "artifact_locator": "/tmp/axi-reset-audit"
+      }
+    },
+    "ports": {
+      "status": "pass",
+      "expected": 65,
+      "actual": 65,
+      "module_count": 1,
+      "contract_artifact": "logs/refactor/20260713-0729-axi-bridge-spinal/evidence/port.json"
+    },
+    "multi_seed_cycle_diff": {
+      "status": "pass",
+      "cycles_per_seed": 8192,
+      "seeds": [
+        {"seed": "0x1", "trace_sha256": "89b5ea3a1618b3df71e0f40e652dd5fca6f9931f319516d3cabd33a9ab82a8c5", "mismatches": 0, "negative_controls": 3},
+        {"seed": "0xdeadbeef", "trace_sha256": "2d8148dcf0d283c6a51dab6ad350ad17c0a611d710733bf35f176dcacd7107eb", "mismatches": 0, "negative_controls": 3},
+        {"seed": "0xc001d00d", "trace_sha256": "7ead56a5efb7aced15d68cbac2dfdb74b27a785aaaa3069f1a35e08b392c6eb0", "mismatches": 0, "negative_controls": 3},
+        {"seed": "0x7fffffff", "trace_sha256": "3ff4a5a453f6ef7473a3f9fd2f459433e97ac1f293f19060d2bc450370e6d379", "mismatches": 0, "negative_controls": 3}
+      ],
+      "artifact_locator": "/tmp/axi-independent-seeds-0x1, /tmp/axi-independent-seeds-0xdeadbeef, /tmp/axi-independent-seeds-0xc001d00d, /tmp/axi-independent-seeds-0x7fffffff"
+    },
+    "driver_masking": {
+      "status": "pass",
+      "checked": [
+        "AR payload is compared only when arvalid is high",
+        "AW payload is compared only when awvalid is high",
+        "W payload/data/strb/last is compared only when wvalid is high",
+        "valid/ready/response routing signals are compared every cycle"
+      ],
+      "static_test": "tests/test_axi_bridge_gate.py::test_driver_masks_payload_when_channel_is_invalid",
+      "source": "tools/axi_bridge_gate.py:DRIVER"
+    },
+    "overlay_provenance": {
+      "status": "pass_for_diagnostic_overlay",
+      "source_head": "bb2dbff743216e83eeb15f98f0651f717c1b4cc8",
+      "replacement_spec": "reference/component-replacements/axi-bridge.json",
+      "replacement_sha256": "4c307033b1d79da6cc257d314d92ef69830ed87cddc24eb7269ff278927e70a0",
+      "locked_replacements": 0,
+      "mixed_replacements": 1,
+      "mixed_target": "rtl/axi_bridge.v",
+      "comparison_artifact": "logs/refactor/20260713-0729-axi-bridge-spinal/evidence/chiplab-comparison.json",
+      "claim": "overlay provenance is reproducible; it does not establish official functional PASS"
+    }
+  },
+  "findings": [
+    {"severity": "none", "id": "AXI-AUDIT-001", "text": "No mismatch found in the tested reset/period traces or four additional fixed seeds."},
+    {"severity": "blocking_for_release", "id": "AXI-AUDIT-002", "text": "Evidence remains finite 2-state simulation; it is not all-sequence formal equivalence, 4-state equivalence, or whole-CPU correctness."},
+    {"severity": "blocking_for_release", "id": "AXI-AUDIT-003", "text": "Official func_lab19 locked and mixed runs fail at the known baseline PC and warning policy; no func/58/81/Linux/Vivado PASS claim is supported."},
+    {"severity": "blocking_for_pr_ready", "id": "AXI-AUDIT-004", "text": "Claude review MCP was unavailable and the branch push previously failed; keep the PR draft/awaiting_push."}
+  ],
+  "overall": "supported_with_narrow_scope",
+  "limitations": ["2-state Verilator only", "finite seeds and directed reset schedule", "no formal equivalence", "no official functional or FPGA release gate"]
+}

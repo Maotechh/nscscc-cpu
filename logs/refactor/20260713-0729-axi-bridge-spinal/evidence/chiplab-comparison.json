@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "source_head": "bb2dbff743216e83eeb15f98f0651f717c1b4cc8",
+  "case": "func/func_lab19",
+  "locked": {
+    "iteration_id": "20260713-0729-axi-locked-bb2dbff",
+    "replacement_count": 0,
+    "gate_eligible": true,
+    "gate_result": "fail",
+    "functional_status": "fail",
+    "instructions": 172552,
+    "cycles": 602903,
+    "first_mismatch": "t0(r12) different at pc = 0x1c07c79c, right= 0x000006e2, wrong = 0x00000008",
+    "trace_sha256": "8efa7942ab6d4702129dc0c7eb0676c6cfcd87361ee8ecf99411567c3db38acb",
+    "warnings": {"total":644,"dut":280,"official_environment":364},
+    "overlay_report_sha256": "1b8947a6fc1b02e718ec119b0130e873fbdb8900788318bcd27c29f071c77fc2",
+    "smoke_report_sha256": "9faedbf5dfc87dfcf56ffdf140745836300e737171661d4153b7319ec7a6ecd0"
+  },
+  "mixed": {
+    "iteration_id": "20260713-0729-axi-mixed-bb2dbff",
+    "replacement_count": 1,
+    "replacement_target": "rtl/axi_bridge.v",
+    "replacement_sha256": "4c307033b1d79da6cc257d314d92ef69830ed87cddc24eb7269ff278927e70a0",
+    "replacement_payload_source": "committed_git_blobs",
+    "gate_eligible": false,
+    "mode": "diagnostic",
+    "gate_result": "fail",
+    "functional_status": "fail",
+    "instructions": 172552,
+    "cycles": 602903,
+    "first_mismatch": "t0(r12) different at pc = 0x1c07c79c, right= 0x000006e2, wrong = 0x00000008",
+    "trace_sha256": "8efa7942ab6d4702129dc0c7eb0676c6cfcd87361ee8ecf99411567c3db38acb",
+    "warnings": {"total":641,"dut":277,"official_environment":364},
+    "overlay_report_sha256": "820524e09674efae83d0385c32dceea0c5448dce9b0289aa4cf1864aad633c52",
+    "smoke_report_sha256": "9f19ccaf4163de29b6108cf3215f648565fcac9697129a5e1c560ec7ea531b26"
+  },
+  "identity": {
+    "status": "fail",
+    "parser_equal": true,
+    "trace_uart_equal": true,
+    "rom_equal": true,
+    "elf_equal": true,
+    "rtl_file_union_equal": false,
+    "identity_replacement": false,
+    "warning_counts_equal": false
+  },
+  "claim": "只支持该已知失败 case 没有出现更早的选定可观察分岔；不支持 func smoke、identity 或整机功能 PASS。",
+  "raw_artifact_locator": "/tmp/axi-commit-gates and /tmp/axi-chiplab-work"
+}
+
