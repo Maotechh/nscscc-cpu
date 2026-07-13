@@ -323,6 +323,32 @@ boundaries:
     blocked_by: []
     last_iteration: "20260713-0729-csr-spinal"
 
+  addr_translation:
+    owner: privileged
+    state: implementation_in_review
+    golden_ref: a158aa8:rtl/{tlb_entry,addr_trans}.v
+    dependencies:
+      - privileged
+    contract: docs/contracts/addr_trans.md
+    required_gates:
+      - scala
+      - generate
+      - rtl_static
+      - unit_diff
+      - func_full
+      - random
+      - claim_review
+    evidence:
+      - logs/refactor/20260713-1400-addr-trans-spinal/iteration.md
+      - logs/refactor/20260713-1400-addr-trans-spinal/summary.json
+      - logs/refactor/20260713-1400-addr-trans-spinal/reviews/claude-summary.json
+    active_pr: null
+    blocked_by:
+      - addr_trans_top_cycle_diff_not_executed
+      - func_full_and_random_not_executed
+      - claude_bridge_missing_GEEKPIE_CLAUDE_API_KEY
+    last_iteration: "20260713-1400-addr-trans-spinal"
+
   memory_system:
     owner: memory
     state: not_started

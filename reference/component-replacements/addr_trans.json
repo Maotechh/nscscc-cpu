@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "replacements": [
+    {
+      "target": "addr_trans.v",
+      "source": "reference/component-replacements/addr_trans.v",
+      "base_sha256": "b25c7585ca410363cbbb25e6669687083687fed1a0641a91ff58b7837c371697",
+      "replacement_sha256": "c7920aa144dfafb60ce89cca9f8267c185909437cf86124d187dd49ba0a532f1",
+      "golden_blob": "e03fafbc6e05dc6a3abddc7808b58c24cb2875d8"
+    }
+  ]
+}

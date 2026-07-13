@@ -39,6 +39,9 @@ CSR_GENERATE_DIR ?= $(OUT_DIR)/csr/generate
 CSR_RTL ?= $(CSR_GENERATE_DIR)/rtl/csr.v
 CSR_DIFF_GENERATE_DIR ?= $(OUT_DIR)/csr/generate-diff
 CSR_DIFF_RTL ?= $(CSR_DIFF_GENERATE_DIR)/rtl/csr.v
+TLB_RTL ?= reference/component-replacements/tlb_entry.v
+TLB_CYCLES ?= 8192
+TLB_RANDOM_SEED ?= 0x158aa8
 CORE_TOP_PORTS ?= reference/core-top.ports.json
 CORE_TOP_GENERATE_DIR ?= $(OUT_DIR)/core_top/generate
 CORE_TOP_WRAPPER_RTL ?= $(CORE_TOP_GENERATE_DIR)/rtl/core_top.v
@@ -133,8 +136,10 @@ else ifeq ($(TARGET),div)
 	$(PYTHON) -I tools/div_diff.py candidate --contract "$(DIV_CONTRACT)" --manifest "reference/manifest.lock" --rtl "$(DIV_RTL)" --out-dir "$(OUT_DIR)/div/unit" --vector-count "$(DIV_VECTOR_COUNT)" --seed "$(DIV_RANDOM_SEED)"
 else ifeq ($(TARGET),alu)
 	$(PYTHON) -I tools/alu_gate.py unit --target "$(TARGET)" --manifest "reference/manifest.lock" --spinal-dir "spinal" --tool-root "$(CHIPLAB_TOOL_ROOT)" --out-dir "$(OUT_DIR)/alu/unit" $(if $(JAVA_HOME),--java-home "$(JAVA_HOME)",)
+else ifeq ($(TARGET),tlb)
+	$(PYTHON) -I tools/tlb_gate.py diff --repo "." --rtl "$(TLB_RTL)" --out-dir "$(OUT_DIR)/tlb/unit" --cycles "$(TLB_CYCLES)" --seed "$(TLB_RANDOM_SEED)"
 else
-	@echo "ERROR: unsupported TARGET=$(TARGET); expected alu, mul, or div" >&2; exit 2
+	@echo "ERROR: unsupported TARGET=$(TARGET); expected alu, mul, div, or tlb" >&2; exit 2
 endif
 
 formal:

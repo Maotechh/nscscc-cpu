@@ -1,0 +1,134 @@
+{
+  "candidate": {
+    "path": "/mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260713-1400-addr-trans-spinal/reference/component-replacements/tlb_entry.v",
+    "sha256": "710a0e5644f4c93c7e77d03afd79d3cf725080fcdd080fcc09322f598bffa531",
+    "size": 184164
+  },
+  "configuration": {
+    "random_cycles": 8192,
+    "seed": 1411752,
+    "tlb_entries": 32
+  },
+  "directed_coverage": [
+    "initialize_and_read_all_32_entries",
+    "dual_registered_search_ports",
+    "small_page_explicit_odd_page",
+    "large_page_vppn_bit_8",
+    "asid_and_global_match",
+    "multi_match_bitwise_or_index",
+    "invalidate_op_0_through_6",
+    "simultaneous_write_invalidate_priority"
+  ],
+  "gate": "tlb-entry-cycle-diff",
+  "generated_at": "2026-07-13T14:47:44+08:00",
+  "golden": {
+    "commit": "a158aa8ab4d49cece1a0fe488d7ac7dc02bd8cf6",
+    "git_blob_sha1": "0dad79a3947675efc2115a10d6dfcbdbb4038a5a",
+    "path": "rtl/tlb_entry.v",
+    "sha256": "a3e3508a0c755375336ba6db392f9038e1d793042fc21b7cd088fde9febcba1f",
+    "size": 9268,
+    "tools_git_blob_sha1": "e4599aa111da7a9a84d417bd4f5b4a820c9fbc95",
+    "tools_path": "rtl/tools.v"
+  },
+  "main": {
+    "build": {
+      "argv": [
+        "/usr/bin/verilator",
+        "--binary",
+        "-j",
+        "0",
+        "--timing",
+        "--top-module",
+        "tb",
+        "-Wall",
+        "-Wno-fatal",
+        "-Wno-DECLFILENAME",
+        "-Wno-UNUSEDSIGNAL",
+        "--x-initial",
+        "0",
+        "--x-assign",
+        "0",
+        "--Mdir",
+        "/tmp/addrtrans-make-gates/tlb/unit/main/obj",
+        "/tmp/addrtrans-make-gates/tlb/unit/main/tb.sv",
+        "/tmp/addrtrans-make-gates/tlb/unit/main/golden.v",
+        "/tmp/addrtrans-make-gates/tlb/unit/main/candidate.v",
+        "/tmp/addrtrans-make-gates/tlb/unit/main/tools.v"
+      ],
+      "elapsed_seconds": 26.749,
+      "returncode": 0,
+      "timed_out": false
+    },
+    "compile_log_sha256": "296a983b7c527627ce91b437c8304f632bb0256dba0e173000cc956e26641d9a",
+    "simulation": {
+      "argv": [
+        "/tmp/addrtrans-make-gates/tlb/unit/main/obj/Vtb"
+      ],
+      "elapsed_seconds": 0.019,
+      "returncode": 0,
+      "timed_out": false
+    },
+    "simulation_log_sha256": "19aa3b3d3a636f6e628f96318c4f5c1b256c2fc4dd37627e2b8eaeca37e8fe6d",
+    "simulation_tail": [
+      "TLB_DIFF_PASS cycles=8258 checks=16577 random_cycles=8192",
+      "- /tmp/addrtrans-make-gates/tlb/unit/main/tb.sv:198: Verilog $finish"
+    ],
+    "warning_categories": []
+  },
+  "negative_controls": [
+    {
+      "detected": true,
+      "name": "invalidate_overrides_simultaneous_write",
+      "result": {
+        "build": {
+          "argv": [
+            "/usr/bin/verilator",
+            "--binary",
+            "-j",
+            "0",
+            "--timing",
+            "--top-module",
+            "tb",
+            "-Wall",
+            "-Wno-fatal",
+            "-Wno-DECLFILENAME",
+            "-Wno-UNUSEDSIGNAL",
+            "--x-initial",
+            "0",
+            "--x-assign",
+            "0",
+            "--Mdir",
+            "/tmp/addrtrans-make-gates/tlb/unit/negative-invalidate_overrides_simultaneous_write/obj",
+            "/tmp/addrtrans-make-gates/tlb/unit/negative-invalidate_overrides_simultaneous_write/tb.sv",
+            "/tmp/addrtrans-make-gates/tlb/unit/negative-invalidate_overrides_simultaneous_write/golden.v",
+            "/tmp/addrtrans-make-gates/tlb/unit/negative-invalidate_overrides_simultaneous_write/candidate.v",
+            "/tmp/addrtrans-make-gates/tlb/unit/negative-invalidate_overrides_simultaneous_write/tools.v"
+          ],
+          "elapsed_seconds": 41.078,
+          "returncode": 0,
+          "timed_out": false
+        },
+        "compile_log_sha256": "64eb9dcb933260c8f49984560588e734cbea1d300926a9085cb8281c7a9247c0",
+        "simulation": {
+          "argv": [
+            "/tmp/addrtrans-make-gates/tlb/unit/negative-invalidate_overrides_simultaneous_write/obj/Vtb"
+          ],
+          "elapsed_seconds": 0.455,
+          "returncode": -6,
+          "timed_out": false
+        },
+        "simulation_log_sha256": "fb72a236d25b5bda7b45dbc67d4da7c98a3d0c0bf1447bddf7c0430065ef0c52",
+        "simulation_tail": [
+          "TLB_MISMATCH cycle=66 checks=191 s0=00/00 s1=00/00 r=12",
+          "golden=0018200000006100007e733301219eeaf37a6def01 candidate=0018200000006100007e733301218eeaf37a6def01",
+          "[588000] %Fatal: tb.sv:111: Assertion failed in TOP.tb.compare",
+          "%Error: /tmp/addrtrans-make-gates/tlb/unit/negative-invalidate_overrides_simultaneous_write/tb.sv:111: Verilog $stop",
+          "Aborting..."
+        ],
+        "warning_categories": []
+      }
+    }
+  ],
+  "schema_version": 1,
+  "status": "pass"
+}
