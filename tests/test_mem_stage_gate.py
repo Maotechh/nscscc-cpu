@@ -31,6 +31,8 @@ class MemoryStageGateTests(unittest.TestCase):
         self.assertEqual(8192, contract["differential"]["minimum_cycles"])
         self.assertTrue(contract["differential"]["compare_all_outputs_every_phase"])
         self.assertEqual(3, len(contract["lint_allowlist"]))
+        waivers = mem_stage_gate.load_central_waivers(root)
+        self.assertTrue(mem_stage_gate.CENTRAL_WAIVER_IDS.issubset(waivers))
 
     def test_module_rename_is_unique(self) -> None:
         renamed = mem_stage_gate.renamed_module(
@@ -55,6 +57,9 @@ class MemoryStageGateTests(unittest.TestCase):
             self.assertIn(f"c_{output}", source)
         self.assertIn("Capture a returning load while WB is stalled", source)
         self.assertIn("Paging/TLB exception, DMW uncached", source)
+        self.assertIn("for (i=0; i<5", source)
+        self.assertIn("excp_flush=(i==0)", source)
+        self.assertIn("idle_flush=(i==4)", source)
         self.assertIn("MEM_MISMATCH cycle=%0d phase=%0d", source)
         self.assertIn("MEM_OUTPUT_MISMATCH output=ms_to_ws_bus", source)
         self.assertIn("negative_control & c_ms_to_ws_valid", source)

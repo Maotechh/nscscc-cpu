@@ -16,6 +16,13 @@
       "signal": "payload_preload"
     }
   ],
+  "central_waiver_ids": [
+    "mem-stage-legacy-dmw0-reserved-bits",
+    "mem-stage-legacy-dmw1-reserved-bits",
+    "mem-stage-one-file-component-name",
+    "mem-stage-preload-payload-compat"
+  ],
+  "central_waiver_source_sha256": "37d0cba5ca2f8e901f77aaa26e56360e9205c4732f49ecd9c3189499f03e9bb1",
   "command": {
     "argv": [
       "/usr/bin/verilator",
@@ -25,11 +32,11 @@
       "-Wall",
       "-Wno-fatal",
       "-Wno-DECLFILENAME",
-      "/tmp/mem-generate6/rtl/mem_stage.v"
+      "/mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260713-2119-mem-stage-spinal/reference/component-replacements/mem_stage.v"
     ],
-    "elapsed_seconds": 0.062,
+    "elapsed_seconds": 0.069,
     "returncode": 0,
-    "stdout": "%Warning-UNUSEDSIGNAL: /tmp/mem-generate6/rtl/mem_stage.v:36:24: Bits of signal are not used: 'csr_dmw0'[28:6,2:1]\n                                                               : ... note: In instance 'mem_stage'\n   36 |   input  wire [31:0]   csr_dmw0,\n      |                        ^~~~~~~~\n                       ... For warning description see https://verilator.org/warn/UNUSEDSIGNAL?v=5.020\n                       ... Use \"/* verilator lint_off UNUSEDSIGNAL */\" and lint_on around source to disable this message.\n%Warning-UNUSEDSIGNAL: /tmp/mem-generate6/rtl/mem_stage.v:37:24: Bits of signal are not used: 'csr_dmw1'[28:6,2:1]\n                                                               : ... note: In instance 'mem_stage'\n   37 |   input  wire [31:0]   csr_dmw1,\n      |                        ^~~~~~~~\n%Warning-UNUSEDSIGNAL: /tmp/mem-generate6/rtl/mem_stage.v:581:23: Signal is not used: 'payload_preload'\n                                                                : ... note: In instance 'mem_stage.area_stage'\n  581 |   reg                 payload_preload;\n      |                       ^~~~~~~~~~~~~~~\n",
+    "stdout": "%Warning-UNUSEDSIGNAL: /mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260713-2119-mem-stage-spinal/reference/component-replacements/mem_stage.v:36:24: Bits of signal are not used: 'csr_dmw0'[28:6,2:1]\n                                                                                                                                                                    : ... note: In instance 'mem_stage'\n   36 |   input  wire [31:0]   csr_dmw0,\n      |                        ^~~~~~~~\n                       ... For warning description see https://verilator.org/warn/UNUSEDSIGNAL?v=5.020\n                       ... Use \"/* verilator lint_off UNUSEDSIGNAL */\" and lint_on around source to disable this message.\n%Warning-UNUSEDSIGNAL: /mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260713-2119-mem-stage-spinal/reference/component-replacements/mem_stage.v:37:24: Bits of signal are not used: 'csr_dmw1'[28:6,2:1]\n                                                                                                                                                                    : ... note: In instance 'mem_stage'\n   37 |   input  wire [31:0]   csr_dmw1,\n      |                        ^~~~~~~~\n%Warning-UNUSEDSIGNAL: /mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260713-2119-mem-stage-spinal/reference/component-replacements/mem_stage.v:581:23: Signal is not used: 'payload_preload'\n                                                                                                                                                                     : ... note: In instance 'mem_stage.area_stage'\n  581 |   reg                 payload_preload;\n      |                       ^~~~~~~~~~~~~~~\n",
     "timed_out": false
   },
   "diagnostics": [
@@ -52,8 +59,8 @@
   "executed": 1,
   "failed": 0,
   "gate": "mem-stage-lint",
-  "generated_at": "2026-07-13T21:52:30+08:00",
-  "log_sha256": "c7bb50b81c128e36136c97e9d723a27a4410d2afc74c3693310d27adab2e2aec",
+  "generated_at": "2026-07-13T22:21:22+08:00",
+  "log_sha256": "911a5e1566b2e6db0d9974c523acc0e17abdacbafe6a92fd23fdbed363a16c88",
   "missing_expected": [],
   "passed": 1,
   "schema_version": 1,

@@ -4,11 +4,11 @@
   "artifacts": [
     {"name":"generated_mem_stage","locator":"reference/component-replacements/mem_stage.v","sha256":"37d0cba5ca2f8e901f77aaa26e56360e9205c4732f49ecd9c3189499f03e9bb1","committed":true},
     {"name":"generate_summary","locator":"evidence/generate.json","sha256":"89eee235e08f748939960079f0891012b6927f753e7cb05723fc9cb678b1e387","committed":true},
-    {"name":"contract_summary","locator":"evidence/contract.json","sha256":"285a4c94c9b90c1843cd6e723bb60e061b6f6beaa2f15236ea81edf3dfd17a49","committed":true},
+    {"name":"contract_summary","locator":"evidence/contract.json","sha256":"0b808b1902f8b0b14d689d6d48367951b57b99b87e686a817f654c70b63b1050","committed":true},
     {"name":"port_summary","locator":"evidence/port.json","sha256":"e4da01dc75b5bc3b4294e0fdc2491a5aa0493dedd28bf9e7c965e4ce9ca8b6cd","committed":true},
-    {"name":"lint_summary","locator":"evidence/lint.json","sha256":"78e4af0cac67fb71a5e641766c9012a3f3d12a0829093b4047f5d498ca0d771f","committed":true},
+    {"name":"lint_summary","locator":"evidence/lint.json","sha256":"2f90421220920c5be3509d144d91fb4e924a5c2da8ccf517c00947e4f5917c07","committed":true},
     {"name":"yosys_summary","locator":"evidence/yosys.json","sha256":"ebd45c3dc4852b5d3d447aff257397313d7b6b0a36ca4211ccda0882681484e4","committed":true},
-    {"name":"diff_summary","locator":"evidence/diff.json","sha256":"b21a34bd9ec23e348a41edf7fcdd782983115a32a82618471717e70cc8b31572","committed":true},
+    {"name":"diff_summary","locator":"evidence/diff.json","sha256":"19cafa6481815c194a91964dcdadd4ee11fa3eb18da43a5587a3d95631533c3a","committed":true},
     {"name":"scala_summary","locator":"evidence/scala.json","sha256":"503c0cf881c14c17faea86e219db7815dcb3699b817e11a8288ec403259dda85","committed":true},
     {"name":"automation_raw_log","locator":"/tmp/mem-tests-final.log","sha256":"d52cbc3e4dfd026d14139cf0dafc3d019d385ecfdd056729224cd83b6d5861e3","committed":false,"retention":"local temporary"}
   ]
