@@ -15,3 +15,4 @@
 {"argv":["make","verilator","testbench","soft_compile"],"cwd":"isolated chiplab sims/verilator/run_prog","exit_code":0,"elapsed_seconds":75.805,"evidence":"evidence/rtl-smoke.json; warning policy fails with DUT 273 and official 364"}
 {"argv":["make","simulation_run_prog"],"cwd":"isolated chiplab sims/verilator/run_prog","exit_code":0,"elapsed_seconds":6.861,"evidence":"evidence/rtl-smoke.json; parser functional FAIL at PC 0x1c07c79c"}
 {"argv":["claude-review","review_start","--tools="],"cwd":"review bridge","exit_code":2,"elapsed_seconds":0.0,"evidence":"job 34823ce9b6b14baea3a28c1beb6c6389 failed before model: missing GEEKPIE_CLAUDE_API_KEY"}
+{"argv":["git","push","--set-upstream","origin","refactor/20260713-0729-csr-spinal"],"cwd":"csr worktree","exit_code":0,"elapsed_seconds":6.1,"evidence":"remote branch created; no PR opened or merged"}

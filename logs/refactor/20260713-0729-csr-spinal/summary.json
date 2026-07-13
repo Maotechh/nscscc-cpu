@@ -3,7 +3,7 @@
   "iteration_id": "20260713-0729-csr-spinal",
   "branch": "refactor/20260713-0729-csr-spinal",
   "base_sha": "f621c7a1e056b9f128b86efddbdd2598b3692ecc",
-  "head_sha": "9d319136ce20a7bf8547896fb29a58e2f86ce4f4",
+  "head_sha": "5dc96b0386271e3e520b420d6f7178bd9a513a33",
   "review_target_sha": "9d319136ce20a7bf8547896fb29a58e2f86ce4f4",
   "status": "draft",
   "required_gates": ["scala", "automation", "generate", "port", "rtl_static", "cycle_diff", "negative_control", "chiplab_doctor", "mixed_overlay", "mixed_compile", "rtl_smoke"],

@@ -23,4 +23,4 @@
 
 ## Rollback and review
 
-回退本迭代提交并移除 `csr.json` overlay 即可恢复 golden。Claude bridge 不可用，已保留 `reviews/claude-raw.md` 与 `claude-summary.json`；PR 必须保持 draft，等待人工/CI 审核。推送失败时状态为 `awaiting_push`，不自动创建或合并 PR。
+回退本迭代提交并移除 `csr.json` overlay 即可恢复 golden。Claude bridge 不可用，已保留 `reviews/claude-raw.md` 与 `claude-summary.json`；PR 必须保持 draft，等待人工/CI 审核。远端分支已推送，状态为 `awaiting_pr`，不自动创建或合并 PR。

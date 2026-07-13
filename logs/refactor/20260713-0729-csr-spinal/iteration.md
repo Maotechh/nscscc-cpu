@@ -23,5 +23,5 @@
 - Independent review: 本地只读审查确认 replacement 绑定、warning 和 baseline 失败均未被夸大；Claude bridge 在本机缺少可用凭据/模型启动前失败，已在 `reviews/claude-summary.*` 如实标记 `unavailable`，没有把降级审查称为 Claude 结论。
 - Residual risks: CSR 与流水线异常优先级、TLB/地址转换、完整 CommitEvent/DiffTest 尚未整合；whole-core warning 和 baseline mismatch 未解决。
 - Rollback: revert 本迭代提交，删除 `csr.json` replacement overlay，恢复锁定 `rtl/csr.v`；不改写 main 历史。
-- PR URL or awaiting state: awaiting_push（已尝试推送，若网络失败保持本地分支；不自动创建或合并 PR）。
+- PR URL or awaiting state: awaiting_pr；远端分支 `origin/refactor/20260713-0729-csr-spinal` 已推送，不自动创建或合并 PR。
 - Next unblocked candidates: TLB entry/地址转换 typed wrapper，随后异常/CSR pipeline integration；任何 candidate 必须继续使用独立分支和日志。
