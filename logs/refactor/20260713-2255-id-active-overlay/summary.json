@@ -11,10 +11,11 @@
     "automation_tests": {"status":"passed_with_platform_exclusions","planned":323,"executed":323,"passed":323,"failed":0,"skipped":10,"evidence":"Windows pytest terminal result; platform exclusions are not required gate executions"},
     "chiplab_doctor": {"status":"passed","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0,"evidence":"/tmp/id-active-doctor/reports/chiplab-doctor.json"},
     "vivado_doctor": {"status":"passed","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0,"evidence":"/tmp/id-active-vivado-doctor/reports/doctor.json"},
-    "diagnostic_overlay": {"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":0,"evidence":null},
-    "func_smoke": {"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":0,"evidence":null},
+    "id_difftest_unit": {"status":"passed","planned":8192,"executed":8192,"passed":8192,"failed":0,"skipped":0,"evidence":"/tmp/id-active-fix-check/id_stage/difftest/unit/cycle-diff.json"},
+    "diagnostic_overlay": {"status":"rerun_required_after_fix","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0,"evidence":"/tmp/id-active-clean/reports/iterations/20260713-2255-id-active-overlay/chiplab-overlay.json"},
+    "func_smoke": {"status":"failed_compile","planned":1,"executed":1,"passed":0,"failed":1,"skipped":1,"evidence":"/tmp/id-active-clean/reports/iterations/20260713-2255-id-active-overlay/rtl-smoke.json"},
     "claim_review": {"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":0,"evidence":null}
   },
-  "claims": [{"claim":"id_stage replacement is statically reachable and selected as the thirteenth active replacement","support":"partial","evidence":"/tmp/id-active-reachability/replacement-reachability/reachability.json"}],
-  "residual_risks": ["legacy Verilog backend active", "baseline func_lab19 mismatch", "full regression not executed"]
+  "claims": [{"claim":"id_stage difftest-profile replacement is selected as the thirteenth active replacement","support":"pending_rerun","evidence":null}],
+  "residual_risks": ["fixed overlay and smoke rerun pending", "LACC-on active overlay not executed", "legacy Verilog backend active", "baseline func_lab19 mismatch", "full regression not executed"]
 }

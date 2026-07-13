@@ -48,6 +48,14 @@ class ReplacementReachabilityTest(unittest.TestCase):
             self.assertEqual(report["selected_target_modules"]["rtl/wb_stage.v"], "wb_stage")
             self.assertEqual(report["selected_target_modules"]["rtl/mem_stage.v"], "mem_stage")
             self.assertEqual(report["selected_target_modules"]["rtl/id_stage.v"], "id_stage")
+            id_replacement = next(
+                item for item in json.loads(SPEC.read_text(encoding="utf-8"))["replacements"]
+                if item["target"] == "rtl/id_stage.v"
+            )
+            self.assertEqual(
+                id_replacement["source"],
+                "reference/component-replacements/id_stage_difftest.v",
+            )
             self.assertNotIn("lacc_core", report["reachable_modules"])
 
     def test_deferred_alu_cannot_be_duplicated(self) -> None:
