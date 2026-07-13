@@ -1,0 +1,24 @@
+{
+  "command": {
+    "argv": [
+      "/usr/bin/yosys",
+      "-q",
+      "-p",
+      "read_verilog /tmp/mem-generate6/rtl/mem_stage.v; hierarchy -check -top mem_stage; proc; opt; check -assert"
+    ],
+    "elapsed_seconds": 0.098,
+    "returncode": 0,
+    "stdout": "",
+    "timed_out": false
+  },
+  "diagnostics": [],
+  "executed": 1,
+  "failed": 0,
+  "gate": "mem-stage-yosys",
+  "generated_at": "2026-07-13T21:52:40+08:00",
+  "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "passed": 1,
+  "schema_version": 1,
+  "skipped": 0,
+  "status": "pass"
+}

@@ -1,0 +1,66 @@
+{
+  "approved_unused": [
+    {
+      "bits": "[28:6,2:1]",
+      "category": "UNUSEDSIGNAL",
+      "signal": "csr_dmw0"
+    },
+    {
+      "bits": "[28:6,2:1]",
+      "category": "UNUSEDSIGNAL",
+      "signal": "csr_dmw1"
+    },
+    {
+      "bits": "",
+      "category": "UNUSEDSIGNAL",
+      "signal": "payload_preload"
+    }
+  ],
+  "command": {
+    "argv": [
+      "/usr/bin/verilator",
+      "--lint-only",
+      "--top-module",
+      "mem_stage",
+      "-Wall",
+      "-Wno-fatal",
+      "-Wno-DECLFILENAME",
+      "/tmp/mem-generate6/rtl/mem_stage.v"
+    ],
+    "elapsed_seconds": 0.062,
+    "returncode": 0,
+    "stdout": "%Warning-UNUSEDSIGNAL: /tmp/mem-generate6/rtl/mem_stage.v:36:24: Bits of signal are not used: 'csr_dmw0'[28:6,2:1]\n                                                               : ... note: In instance 'mem_stage'\n   36 |   input  wire [31:0]   csr_dmw0,\n      |                        ^~~~~~~~\n                       ... For warning description see https://verilator.org/warn/UNUSEDSIGNAL?v=5.020\n                       ... Use \"/* verilator lint_off UNUSEDSIGNAL */\" and lint_on around source to disable this message.\n%Warning-UNUSEDSIGNAL: /tmp/mem-generate6/rtl/mem_stage.v:37:24: Bits of signal are not used: 'csr_dmw1'[28:6,2:1]\n                                                               : ... note: In instance 'mem_stage'\n   37 |   input  wire [31:0]   csr_dmw1,\n      |                        ^~~~~~~~\n%Warning-UNUSEDSIGNAL: /tmp/mem-generate6/rtl/mem_stage.v:581:23: Signal is not used: 'payload_preload'\n                                                                : ... note: In instance 'mem_stage.area_stage'\n  581 |   reg                 payload_preload;\n      |                       ^~~~~~~~~~~~~~~\n",
+    "timed_out": false
+  },
+  "diagnostics": [
+    {
+      "bits": "[28:6,2:1]",
+      "category": "UNUSEDSIGNAL",
+      "signal": "csr_dmw0"
+    },
+    {
+      "bits": "[28:6,2:1]",
+      "category": "UNUSEDSIGNAL",
+      "signal": "csr_dmw1"
+    },
+    {
+      "bits": "",
+      "category": "UNUSEDSIGNAL",
+      "signal": "payload_preload"
+    }
+  ],
+  "executed": 1,
+  "failed": 0,
+  "gate": "mem-stage-lint",
+  "generated_at": "2026-07-13T21:52:30+08:00",
+  "log_sha256": "c7bb50b81c128e36136c97e9d723a27a4410d2afc74c3693310d27adab2e2aec",
+  "missing_expected": [],
+  "passed": 1,
+  "schema_version": 1,
+  "skipped": 0,
+  "status": "pass",
+  "suppressed_at_tool": [
+    "DECLFILENAME only: reproducible one-file SpinalHDL component output"
+  ],
+  "unapproved": []
+}

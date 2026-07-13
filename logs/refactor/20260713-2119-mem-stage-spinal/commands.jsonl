@@ -1,0 +1,9 @@
+{"command":"git status --short --branch; git rev-parse HEAD; git rev-parse --verify origin/main; git remote -v","exit_code":0,"result":"branch/base/remote recorded before edits"}
+{"command":"make scala-check OUT_DIR=/tmp/mem-final-scala CHIPLAB_TOOL_ROOT=/opt/chiplab-tools/root","exit_code":0,"duration_seconds":81.1,"result":"4/4 PASS"}
+{"command":"python3 -m unittest discover -s tests -v","exit_code":0,"duration_seconds":26.9,"result":"333 tests PASS"}
+{"command":"python3 -I tools/spinal_generate.py ... --main-class openla500.pipeline.GenerateOpenLa500MemoryStage --out-dir /tmp/mem-generate6 --runs 2","exit_code":0,"duration_seconds":60.3,"result":"2/2 reproducible PASS"}
+{"command":"python3 -I tools/mem_stage_gate.py contract ...","exit_code":0,"result":"golden 49/49 PASS"}
+{"command":"python3 -I tools/mem_stage_gate.py port-check ...","exit_code":0,"result":"candidate 49/49 PASS"}
+{"command":"python3 -I tools/mem_stage_gate.py lint ...","exit_code":0,"result":"exact allowlist PASS, unapproved=0"}
+{"command":"python3 -I tools/mem_stage_gate.py yosys-check ...","exit_code":0,"result":"PASS"}
+{"command":"python3 -I tools/mem_stage_gate.py diff ... --cycles 8192 --seed 0x0158aa8d","exit_code":0,"duration_seconds":29.3,"result":"8235 total cycles PASS; negative control detected"}
