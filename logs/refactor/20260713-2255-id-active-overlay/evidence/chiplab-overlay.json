@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "status": "diagnostic",
+  "gate_eligible": false,
+  "source_head": "8f18ff7b7a01fce0ab5b21f6a71680a3fb8540c3",
+  "worktree_clean": true,
+  "replacement_count": 13,
+  "id_stage": {"source":"reference/component-replacements/difftest/id_stage.v","source_oid":"431c2b4f7a76f02892cd98d0586192a16e9ca276","replacement_sha256":"0148176ca9cbc477aa07363e5d0fcc897881a01da6481b66095c61a94331853b","size":78054},
+  "overlay_manifest_sha256": "abc6edc626113271a17839e6f523f67b2cc4393c2c658d6850c130f231ad063b",
+  "overlay_manifest_size": 38586,
+  "selection_sha256": "728b29cbef48b226704ef3eb4f3b756e71e03e531d02eb06b5d0f81d2d4ee46c",
+  "source_report": "/tmp/id-active-clean3/reports/iterations/20260713-2255-id-active-overlay/chiplab-overlay.json",
+  "source_sha256": "ae7293e71b2a7f00905a6417a05adac87399d5b1d30e1d8e7d318a287eb8dbe1",
+  "source_size": 7816,
+  "claim_scope": "diagnostic overlay acceptance only; not a gate pass"
+}

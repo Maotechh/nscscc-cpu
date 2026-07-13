@@ -1,0 +1,9 @@
+{
+  "schema_version": 1,
+  "status": "conditional_acceptance",
+  "reviewed_source_head": "8f18ff7b7a01fce0ab5b21f6a71680a3fb8540c3",
+  "fixed": ["phantom unit evidence path corrected","8259 total cycles distinguished from 8192 requested random cycles","final source reachability rerun","final source Windows automation rerun","three failed attempts recorded","status source updated"],
+  "open": ["official func_lab19 mismatch at 0x1c07c79c","619 unapproved warnings","active rtl-static not executed","58/81/random/perf/system/fpga not executed","Claude bridge unavailable"],
+  "allowed_claims": ["13-item static reachability","13 committed blobs accepted by diagnostic overlay","single failed trace artifact is byte-identical to locked baseline and shows no earlier visible divergence"],
+  "forbidden_claims": ["active integration pass","official smoke pass","whole-core sequential equivalence","complete refactor"]
+}

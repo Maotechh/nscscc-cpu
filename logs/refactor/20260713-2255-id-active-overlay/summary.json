@@ -1,21 +1,24 @@
 {
   "schema_version": 1,
   "iteration_id": "20260713-2255-id-active-overlay",
-  "status": "implementation_in_review",
+  "status": "draft",
   "branch": "refactor/20260713-2255-id-active-overlay",
   "base_sha": "95da435a537703c091fa97bf6b4d352255207556",
+  "head_sha": "8f18ff7b7a01fce0ab5b21f6a71680a3fb8540c3",
+  "source_head": "8f18ff7b7a01fce0ab5b21f6a71680a3fb8540c3",
   "selected_boundary": "id_stage_active_replacement",
   "gates": {
-    "reachability": {"status":"passed","planned":13,"executed":13,"passed":13,"failed":0,"skipped":0,"evidence":"/tmp/id-active-reachability/replacement-reachability/reachability.json"},
-    "scala": {"status":"passed","planned":4,"executed":4,"passed":4,"failed":0,"skipped":0,"evidence":"/tmp/id-active-scala/scala-check/summary.json"},
-    "automation_tests": {"status":"passed_with_platform_exclusions","planned":323,"executed":323,"passed":323,"failed":0,"skipped":10,"evidence":"Windows pytest terminal result; platform exclusions are not required gate executions"},
-    "chiplab_doctor": {"status":"passed","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0,"evidence":"/tmp/id-active-doctor/reports/chiplab-doctor.json"},
-    "vivado_doctor": {"status":"passed","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0,"evidence":"/tmp/id-active-vivado-doctor/reports/doctor.json"},
-    "id_difftest_unit": {"status":"passed","planned":8192,"executed":8192,"passed":8192,"failed":0,"skipped":0,"evidence":"/tmp/id-active-fix-check/id_stage/difftest/unit/cycle-diff.json"},
-    "diagnostic_overlay": {"status":"rerun_required_after_packaging_fix","planned":1,"executed":2,"passed":1,"failed":1,"skipped":0,"evidence":"second attempt rejected before DUT build because source basename differed from target"},
-    "func_smoke": {"status":"failed_compile","planned":1,"executed":1,"passed":0,"failed":1,"skipped":1,"evidence":"/tmp/id-active-clean/reports/iterations/20260713-2255-id-active-overlay/rtl-smoke.json"},
-    "claim_review": {"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":0,"evidence":null}
+    "reachability": {"status":"pass","planned":13,"executed":13,"passed":13,"failed":0,"skipped":0,"evidence":"evidence/reachability.json"},
+    "scala": {"status":"pass","planned":4,"executed":4,"passed":4,"failed":0,"skipped":0,"evidence":"evidence/scala.json"},
+    "automation_tests": {"status":"warning","planned":333,"executed":323,"passed":323,"failed":0,"skipped":10,"evidence":"evidence/automation.json"},
+    "chiplab_doctor": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0,"evidence":"evidence/chiplab-doctor.json"},
+    "vivado_doctor": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0,"evidence":"evidence/vivado-doctor.json"},
+    "id_difftest_unit": {"status":"pass","planned":2,"executed":2,"passed":2,"failed":0,"skipped":0,"evidence":"evidence/id-unit.json"},
+    "diagnostic_overlay": {"status":"warning","planned":1,"executed":1,"passed":0,"failed":1,"skipped":0,"evidence":"evidence/chiplab-overlay.json"},
+    "func_smoke": {"status":"fail","planned":1,"executed":1,"passed":0,"failed":1,"skipped":0,"evidence":"evidence/rtl-smoke.json"},
+    "claim_review": {"status":"warning","planned":1,"executed":1,"passed":0,"failed":1,"skipped":0,"evidence":"reviews/claude-summary.json"}
   },
-  "claims": [{"claim":"id_stage difftest-profile replacement is selected as the thirteenth active replacement","support":"pending_rerun","evidence":null}],
-  "residual_risks": ["fixed overlay and smoke rerun pending", "LACC-on active overlay not executed", "legacy Verilog backend active", "baseline func_lab19 mismatch", "full regression not executed"]
+  "required_gates": ["reachability","scala","automation_tests","chiplab_doctor","id_difftest_unit","diagnostic_overlay","func_smoke","claim_review"],
+  "claims": [{"claim":"clean diagnostic overlay accepted the difftest-profile id_stage as replacement 13","support":"partial","evidence":"evidence/chiplab-overlay.json"},{"claim":"the single failed func_lab19 trace shows no earlier visible divergence than locked baseline","support":"partial","evidence":"evidence/baseline-comparison.json"}],
+  "residual_risks": ["official func_lab19 fails at 0x1c07c79c", "619 unapproved warnings", "LACC-on active overlay not executed", "legacy Verilog backend active", "rtl-static/full func/random/perf/system/fpga gates not executed", "Claude bridge unavailable"]
 }

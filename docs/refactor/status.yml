@@ -1,8 +1,8 @@
 schema_version: 1
-updated_at: "2026-07-13T21:10:00+08:00"
-active_iteration: "20260713-2059-wb-active-overlay"
-active_branch: "refactor/20260713-2059-wb-active-overlay"
-source_head: "b2946f8ac93fc9ccfa9c8748bb53f444976c36cb"
+updated_at: "2026-07-14T02:48:14+08:00"
+active_iteration: "20260713-2255-id-active-overlay"
+active_branch: "refactor/20260713-2255-id-active-overlay"
+source_head: "8f18ff7b7a01fce0ab5b21f6a71680a3fb8540c3"
 
 boundaries:
   legacy_shell_active_replacement_overlay:
@@ -23,6 +23,7 @@ boundaries:
       - addr_translation
       - writeback_stage
       - memory_stage
+      - id_stage
     contract: reference/component-replacements/active-reachable.meta.json
     required_gates:
       - reachability
@@ -33,19 +34,19 @@ boundaries:
       - func_smoke
       - claim_review
     evidence:
-      - logs/refactor/20260713-2059-wb-active-overlay/iteration.md
-      - logs/refactor/20260713-2059-wb-active-overlay/summary.json
-      - logs/refactor/20260713-2059-wb-active-overlay/evidence/reachability.json
-      - logs/refactor/20260713-2059-wb-active-overlay/evidence/chiplab-overlay-manifest.json
-      - logs/refactor/20260713-2059-wb-active-overlay/evidence/rtl-smoke.json
-      - logs/refactor/20260713-2059-wb-active-overlay/reviews/claude-summary.json
+      - logs/refactor/20260713-2255-id-active-overlay/iteration.md
+      - logs/refactor/20260713-2255-id-active-overlay/summary.json
+      - logs/refactor/20260713-2255-id-active-overlay/evidence/reachability.json
+      - logs/refactor/20260713-2255-id-active-overlay/evidence/chiplab-overlay.json
+      - logs/refactor/20260713-2255-id-active-overlay/evidence/rtl-smoke.json
+      - logs/refactor/20260713-2255-id-active-overlay/reviews/claude-summary.json
     active_pr: null
     blocked_by:
       - func_lab19_fail_at_1c07c79c
-      - 627_unapproved_verilator_warnings
+      - 619_unapproved_verilator_warnings
       - claude_bridge_missing_GEEKPIE_CLAUDE_API_KEY
       - full_regression_not_executed
-    last_iteration: "20260713-2059-wb-active-overlay"
+    last_iteration: "20260713-2255-id-active-overlay"
 
   component_replacement_overlay:
     owner: verification
@@ -369,9 +370,15 @@ boundaries:
       - claim_review
     evidence:
       - logs/refactor/20260713-2120-id-stage-spinal/iteration.md
+      - logs/refactor/20260713-2255-id-active-overlay/iteration.md
+      - logs/refactor/20260713-2255-id-active-overlay/evidence/id-unit.json
+      - logs/refactor/20260713-2255-id-active-overlay/evidence/chiplab-overlay.json
+      - logs/refactor/20260713-2255-id-active-overlay/evidence/rtl-smoke.json
     active_pr: null
     blocked_by:
-      - active_core_top_overlay_not_executed
+      - func_lab19_fail_at_1c07c79c
+      - 619_unapproved_verilator_warnings
+      - rtl_static_not_executed_for_active_overlay
       - func_full_and_random_not_executed
     last_iteration: "20260713-2255-id-active-overlay"
 

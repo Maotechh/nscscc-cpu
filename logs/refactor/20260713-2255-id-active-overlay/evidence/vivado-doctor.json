@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "status": "pass",
+  "vivado_version": "2023.2",
+  "vivado_build": "4029153",
+  "vivado_home": "D:/Xilinx/Vivado/2023.2",
+  "scope": "doctor and binary hash only; synth/implementation/timing/bitstream not executed",
+  "source_report": "/tmp/id-active-vivado-doctor/reports/doctor.json",
+  "source_sha256": "4c1d418d144f33e11d5b6af9179c5356c347686a1903eb355201c37c2ed0654f",
+  "source_size": 4094
+}

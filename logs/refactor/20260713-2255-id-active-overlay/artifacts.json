@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "iteration_id": "20260713-2255-id-active-overlay",
+  "artifacts": [
+    {"path":"evidence/reachability.json","sha256":"0f41037f0706845228806a1017f76ed422fc9493c580188f2a4799a1f58ea8c4","size":664,"source_sha256":"bd2011cc8365070a2f8208fd7a2263342a1b2321d1928f99c94c4d9862274888","retention":"git","gate_eligible":true},
+    {"path":"evidence/automation.json","sha256":"3b4357bb83f409be0220897a097a0588196d22f1959ffe10364d1f7d19e35be8","size":433,"source_sha256":"54ae6eb8b3add4dcb99a35fdfcf91565e7828db550985bfa8c8ae92576702883","retention":"git","gate_eligible":true},
+    {"path":"evidence/id-unit.json","sha256":"3956ac1ec304defd2f7595b095d1446e2844752e80ce63134b63e6fdc2a4488c","size":639,"source_sha256":"310ae2e263a8f88a10828cafb16498c3a20581dfa883d21ea437a39ba796e0ad","retention":"git","gate_eligible":true},
+    {"path":"evidence/scala.json","sha256":"2e77eb148658875f42426982553b4b850a4476389be64db7724c64f6bc0dddf8","size":288,"source_sha256":"f9dbdff6104a6c07cad98dc9f1ea35c509d182cd293fc6a7f954f67261c83bff","retention":"git","gate_eligible":true},
+    {"path":"evidence/chiplab-doctor.json","sha256":"39e90449290ec7fe3a8e141620983ffddb64c2ffb368091b4319f201aef961d9","size":354,"source_sha256":"ae4baec46d6b067f59512277bf22e0185b8e2d7b32749a495efbefae722f896f","retention":"git","gate_eligible":true},
+    {"path":"evidence/vivado-doctor.json","sha256":"8c4087ef9df3016bc4d89865126082fb702197069130e3e89c24ebc1eb1e3e6a","size":424,"source_sha256":"4c1d418d144f33e11d5b6af9179c5356c347686a1903eb355201c37c2ed0654f","retention":"git","gate_eligible":true},
+    {"path":"evidence/chiplab-overlay.json","sha256":"91dd1891f86a7ddc042e6fe95ebc75db9b69ad159a88ae716f363658731ab1e4","size":949,"source_sha256":"ae7293e71b2a7f00905a6417a05adac87399d5b1d30e1d8e7d318a287eb8dbe1","retention":"git","gate_eligible":false},
+    {"path":"evidence/rtl-smoke.json","sha256":"ac3ec90a187e338706372c154db2bc24941d495d66cb6dadcdb99f9370a58364","size":1066,"source_sha256":"69aa044c4f8c9fa616a396a76d5c1d99eec56e872f9ba1194a12f3fec75e8a90","retention":"git","gate_eligible":false},
+    {"path":"evidence/baseline-comparison.json","sha256":"06356dcfd3266e4488e37d78834520c257a09f8e5db666a66b2778d7ef8f13af","size":976,"retention":"git","gate_eligible":false},
+    {"path":"reviews/independent-read-only.json","sha256":"26ec7d05d14e5f9ce1ab7c69f4bb1f4e831cd0f779bb5b62eb44c11b6f1c0acc","size":918,"retention":"git","gate_eligible":false},
+    {"path":"reviews/experiment-audit.json","sha256":"ee7057b1cb5c3be60966242ea58970cf8923d3516a01e1f54172de729fac456c","size":1339,"retention":"git","gate_eligible":false}
+  ],
+  "external_locators": [
+    {"path":"/tmp/id-active-final/replacement-reachability/reachability.json","sha256":"bd2011cc8365070a2f8208fd7a2263342a1b2321d1928f99c94c4d9862274888","size":2149,"retention":"local-until-explicit-clean"},
+    {"path":"%TEMP%/id-active-final-pytest.txt","sha256":"54ae6eb8b3add4dcb99a35fdfcf91565e7828db550985bfa8c8ae92576702883","size":880,"retention":"local-until-explicit-clean"},
+    {"path":"/tmp/id-active-fix-check/id_stage/difftest/unit/summary.json","sha256":"310ae2e263a8f88a10828cafb16498c3a20581dfa883d21ea437a39ba796e0ad","size":13180,"retention":"local-until-explicit-clean"},
+    {"path":"/tmp/id-active-scala/scala-check/summary.json","sha256":"f9dbdff6104a6c07cad98dc9f1ea35c509d182cd293fc6a7f954f67261c83bff","size":94983,"retention":"local-until-explicit-clean"},
+    {"path":"/tmp/id-active-clean3/reports/chiplab-doctor.json","sha256":"ae4baec46d6b067f59512277bf22e0185b8e2d7b32749a495efbefae722f896f","size":16175,"retention":"local-until-explicit-clean"},
+    {"path":"/tmp/id-active-clean3/reports/iterations/20260713-2255-id-active-overlay/chiplab-overlay.json","sha256":"ae7293e71b2a7f00905a6417a05adac87399d5b1d30e1d8e7d318a287eb8dbe1","size":7816,"retention":"local-until-explicit-clean"},
+    {"path":"/tmp/id-active-clean3/reports/iterations/20260713-2255-id-active-overlay/chiplab-overlay-manifest.json","sha256":"abc6edc626113271a17839e6f523f67b2cc4393c2c658d6850c130f231ad063b","size":38586,"retention":"local-until-explicit-clean"},
+    {"path":"/tmp/id-active-clean3/reports/iterations/20260713-2255-id-active-overlay/rtl-smoke.json","sha256":"69aa044c4f8c9fa616a396a76d5c1d99eec56e872f9ba1194a12f3fec75e8a90","size":190534,"retention":"local-until-explicit-clean"},
+    {"path":"/tmp/nscscc-refactor-idfix2/20260713-2255-id-active-overlay/sims/verilator/run_prog/log/func/func_lab19_log/simu_trace.txt","sha256":"8efa7942ab6d4702129dc0c7eb0676c6cfcd87361ee8ecf99411567c3db38acb","size":13805441,"retention":"local-until-explicit-clean"},
+    {"path":"/tmp/id-active-vivado-doctor/reports/doctor.json","sha256":"4c1d418d144f33e11d5b6af9179c5356c347686a1903eb355201c37c2ed0654f","size":4094,"retention":"local-until-explicit-clean"}
+  ]
+}

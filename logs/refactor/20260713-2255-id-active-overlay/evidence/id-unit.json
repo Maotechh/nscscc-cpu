@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "status": "pass",
+  "profile": "difftest",
+  "candidate_sha256": "0148176ca9cbc477aa07363e5d0fcc897881a01da6481b66095c61a94331853b",
+  "golden_sha256": "dcd896a12fda42faff9f7c1bcd43de3bbd7bb181be688b0cef21dded5e05d807",
+  "random_cycles_requested": 8192,
+  "total_cycles_reported": 8259,
+  "compared_legacy_outputs": 18,
+  "compared_gpr_state": true,
+  "negative_control": {"status":"pass","first_mismatch_cycle":0},
+  "source_report": "/tmp/id-active-fix-check/id_stage/difftest/unit/summary.json",
+  "source_sha256": "310ae2e263a8f88a10828cafb16498c3a20581dfa883d21ea437a39ba796e0ad",
+  "source_size": 13180
+}

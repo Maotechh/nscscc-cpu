@@ -1,19 +1,23 @@
 # 20260713-2255-id-active-overlay
 
-- 状态：draft；本地 source integration gate 已完成，等待以 clean commit 运行官方 overlay/smoke。
+- 状态：draft / `awaiting_pr`；clean diagnostic overlay 与官方 smoke 已完成，严格 smoke 失败，禁止标记 ready。
 - 分支 / Base SHA：`refactor/20260713-2255-id-active-overlay` / `95da435a537703c091fa97bf6b4d352255207556`。
 - 选择边界：把已完成四配置 ID leaf differential 的 `id_stage.v` 加入活动 replacement；不修改 MEM 分支、不混入 IF。
-- Golden：`a158aa8ab4d49cece1a0fe488d7ac7dc02bd8cf6:rtl/id_stage.v`；replacement SHA `0a3c8434d828ad5d10f6c6431c0f811a8a476f67ed67160bcb5efa0c7cdfe516`。
+- Golden：`a158aa8ab4d49cece1a0fe488d7ac7dc02bd8cf6:rtl/id_stage.v`；normal leaf SHA `0a3c8434d828ad5d10f6c6431c0f811a8a476f67ed67160bcb5efa0c7cdfe516`；active difftest-profile SHA `0148176ca9cbc477aa07363e5d0fcc897881a01da6481b66095c61a94331853b`。
 - 已有 leaf 证据：normal/difftest/lacc/lacc-difftest 各 8259 cycles lockstep，完整 32x32 GPR diff，negative controls cycle 0，Scala/generation 2/2 reproducible。
 - 尝试与失败：首次 Windows 自动化回归为 `1 failed, 322 passed, 10 skipped`，失败原因是 reachability 测试仍断言旧的 12 项计数；更新为 13 项并增加 `id_stage` module 断言后复测通过。10 项 skip 均为已有的非 Windows 平台测试，不计为 required gate PASS。
 - 集成失败与修复：clean commit `636503abb67a4b913e459766b74638531800248b` 的首轮官方 smoke 在编译阶段严格失败，`mycpu_top.v:684` 报 `PINNOTFOUND rf_to_diff`，功能执行数为 0、skip 为 1，另有 32 条 DUT 和 103 条官方环境 warning。原因是 active metadata 明确锁定 `DIFFTEST_EN`，但 spec 误用了 normal-profile 生成物。修复为复现生成的 difftest-profile RTL（SHA256 `0148176ca9cbc477aa07363e5d0fcc897881a01da6481b66095c61a94331853b`），并增加 source-profile 回归断言；修复后必须重新形成 clean commit 和新 overlay，旧运行不得用于功能 claim。
-- 修复验证：replacement reachability 重新 `13/13` PASS；difftest-profile ID 单元差分 `8192` cycles PASS；Windows 全量自动化回归 `323 passed, 10 platform skips`。normal-profile `id_stage.v` 保持原 SHA，不用 difftest 文件覆盖叶子合同。
+- 修复验证：最终 source HEAD `8f18ff7b7a01fce0ab5b21f6a71680a3fb8540c3` 上 replacement reachability `13/13` PASS；difftest-profile ID 请求 8192 个随机周期，正常 lockstep 实际总计 `8259` cycles PASS，负控在 cycle 0 命中；Windows 全量自动化回归 `323 passed, 10 platform skips`。normal-profile `id_stage.v` 保持原 SHA，不用 difftest 文件覆盖叶子合同。
 - 第二次 overlay 尝试在 provenance 校验阶段退出码 2：source basename `id_stage_difftest.v` 与 target basename `id_stage.v` 不同，DUT 尚未构建。将同一 SHA 的生成物改放到 `reference/component-replacements/difftest/id_stage.v`，既保留 profile 隔离也满足 overlay basename 合同；需以新提交重跑。
-- 已完成 gate：replacement reachability `13/13` PASS；Windows `pytest` 为 `323 passed, 10 platform skips`；Scala 四配置 `4/4` PASS（摘要 SHA256 `35676ee5ac04dcf24851f086c0c40c67d6816e364a35fbe5c2aa4fd0bd736322` 对应 evaluator）；锁定 chiplab doctor PASS（结果 SHA256 `70c193b0937ae42596c2bddb4d90542f4c2ff7ad712895777a504407042b34d3`）；Vivado 2023.2 doctor/hash PASS（结果 SHA256 `4c1d418d144f33e11d5b6af9179c5356c347686a1903eb355201c37c2ed0654f`）。
-- 待完成 gate：修复后的 reachability/automation/ID difftest unit，随后以新 clean source commit 重建 diagnostic overlay 和官方 `func_lab19`，再完成 Claude 调用/降级独立审核、evidence-check、最终日志提交和 push。
+- Clean overlay：source HEAD `8f18ff7b7a01fce0ab5b21f6a71680a3fb8540c3` 的 13 个 committed replacement 被 diagnostic overlay 接受；`gate_eligible=false`，仅证明组装与 provenance。
+- 官方 smoke：`func/func_lab19` planned/executed/passed/failed/skipped 为 `1/1/0/1/0`；configure/build/simulation 原生命令均为 0，但严格结果 FAIL。运行 `172552` instructions、`602903` clocks 后在 PC `0x1c07c79c` 首错，`t0/r12` right `0x000006e2`、wrong `0x00000008`；DUT warning `246`、官方环境 warning `373`，共 `619` 条未批准 warning。
+- Baseline 比较：本次 trace SHA256/size 为 `8efa7942ab6d4702129dc0c7eb0676c6cfcd87361ee8ecf99411567c3db38acb` / `13805441`，与锁定 baseline 报告完全相同。只允许声明该单一失败观测未出现更早可见差异，不构成功能通过或顺序等价。
+- 已完成 gate：最终 source HEAD 上 reachability `13/13`、Windows pytest `323 passed`（10 个非 Windows 平台排除）、Scala `4/4`、ID difftest leaf、锁定 chiplab doctor、Vivado 2023.2 doctor/hash、diagnostic overlay 和一次官方 smoke 均有结构化证据。
+- 未完成 gate：active RTL static、58/81 full func、random multi-seed、perf20、U-Boot、Linux、Vivado synth/implementation/timing/bitstream、完整顺序/形式等价；状态不得提升。
 - Claim 限制：不宣称 active integration、func PASS、58/81、random、perf、Linux、Vivado 或完整重构。
-- Claude：必须调用并原样记录；缺 key 时降级为独立只读审核。
+- Claim 审核：Claude job `ec6d83c8876b43179550e8b669578fb2` 因缺少 `GEEKPIE_CLAUDE_API_KEY` 失败，已原样记录；降级独立只读审核有条件接受有限 claim，不得表述为 Claude PASS。
+- Evidence schema：`make evidence-check` PASS，校验 13 条命令、9 个 gate、11 个提交内 artifact；iteration 保持 `draft`，review 保持 `failed`。
 - 回退：revert 本迭代提交即可移除 ID replacement 与状态计数。
 - 性能/资源：本迭代尚未运行 performance 或 Vivado implementation，不作任何周期、Fmax、LUT/FF/BRAM claim。
-- 后续候选：IF active overlay（并行独立分支）或纯 Spinal active backend prerequisite；必须按实际依赖与证据重新选择。
+- 后续候选：IF active overlay 已在独立分支收口；主线应转向移除 legacy `core_top` backend 的纯 Spinal active integration prerequisite，并继续保持每个 contract 的独立验证。
 - PR：`awaiting_pr`，代理不创建/不合并。

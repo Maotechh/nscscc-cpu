@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "status": "fail",
+  "actual_case": "func/func_lab19",
+  "functional": {"planned":1,"executed":1,"passed":0,"failed":1,"skipped":0},
+  "native_commands": {"configure_exit":0,"build_exit":0,"simulation_exit":0},
+  "instructions": 172552,
+  "clocks": 602903,
+  "first_mismatch_pc": "0x1c07c79c",
+  "first_mismatch": "t0(r12) different at pc = 0x1c07c79c, right= 0x000006e2, wrong = 0x00000008",
+  "trace_sha256": "8efa7942ab6d4702129dc0c7eb0676c6cfcd87361ee8ecf99411567c3db38acb",
+  "trace_size": 13805441,
+  "dut_warnings": 246,
+  "official_environment_warnings": 373,
+  "warning_policy": "fail: no file/line-specific approved waivers",
+  "rtl_static_gate": "not_executed_by_rtl_smoke",
+  "source_report": "/tmp/id-active-clean3/reports/iterations/20260713-2255-id-active-overlay/rtl-smoke.json",
+  "source_sha256": "69aa044c4f8c9fa616a396a76d5c1d99eec56e872f9ba1194a12f3fec75e8a90",
+  "source_size": 190534,
+  "claim_scope": "no earlier visible divergence observed in this one baseline-matching failed trace; official smoke did not pass"
+}
