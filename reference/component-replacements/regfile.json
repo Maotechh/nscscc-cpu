@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "replacements": [
+    {
+      "target": "rtl/regfile.v",
+      "source": "reference/component-replacements/regfile.v",
+      "base_sha256": "e98d043d5166f8c2baf33692e74e3e2f203c8a80a3a2fae6b0f913ffb45d1203",
+      "replacement_sha256": "6e60ffa098c734ce915721288d5c2c9fcaf0a3d61d0e09f44b57249562a39ecf"
+    }
+  ]
+}

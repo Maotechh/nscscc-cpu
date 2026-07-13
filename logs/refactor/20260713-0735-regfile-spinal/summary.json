@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "iteration_id": "20260713-0735-regfile-spinal",
+  "status": "draft",
+  "branch": "refactor/20260713-0735-regfile-spinal",
+  "base_sha": "f621c7a1e056b9f128b86efddbdd2598b3692ecc",
+  "head_sha": "f621c7a1e056b9f128b86efddbdd2598b3692ecc",
+  "selected_boundary": "regfile",
+  "required_gates": [
+    "doctor",
+    "scala",
+    "port_check",
+    "lint",
+    "yosys_check",
+    "unit_diff",
+    "diagnostic_overlay",
+    "claim_review"
+  ],
+  "gates": {
+    "doctor": {"status": "pass", "planned": 1, "executed": 1, "passed": 1, "failed": 0, "skipped": 0},
+    "scala": {"status": "pass", "planned": 4, "executed": 4, "passed": 4, "failed": 0, "skipped": 0},
+    "port_check": {"status": "pass", "planned": 2, "executed": 2, "passed": 2, "failed": 0, "skipped": 0},
+    "lint": {"status": "pass", "planned": 2, "executed": 2, "passed": 2, "failed": 0, "skipped": 0},
+    "yosys_check": {"status": "warning", "planned": 2, "executed": 2, "passed": 1, "failed": 1, "skipped": 0},
+    "unit_diff": {"status": "pass", "planned": 4096, "executed": 4096, "passed": 4096, "failed": 0, "skipped": 0},
+    "diagnostic_overlay": {"status": "pending", "planned": 1, "executed": 0, "passed": 0, "failed": 0, "skipped": 1},
+    "independent_claim_review": {"status": "pass", "planned": 1, "executed": 1, "passed": 1, "failed": 0, "skipped": 0},
+    "claim_review": {"status": "unavailable", "planned": 1, "executed": 1, "passed": 0, "failed": 1, "skipped": 0, "detail": "Claude job b276ef43ef0e43f8a5021fae7e2d41b2 在模型启动前缺少 GEEKPIE_CLAUDE_API_KEY。"}
+  },
+  "blocked_by": [],
+  "updated_at": "2026-07-13T08:06:00+08:00"
+}
