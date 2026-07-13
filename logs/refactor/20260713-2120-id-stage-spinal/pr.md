@@ -6,5 +6,5 @@
 - Evidence: `logs/refactor/20260713-2120-id-stage-spinal/`.
 - Supported claim: four locked LACC/DiffTest configurations pass 8259-cycle local golden lockstep and negative control; generated RTL is reproducible.
 - Explicit non-claims: no active core_top integration, official func/random/perf/Linux/Vivado result, or complete Spinal refactor claim.
-- Review: awaiting Claude review result and maintainer review.
+- Review: Claude bridge unavailable (`GEEKPIE_CLAUDE_API_KEY` missing); raw error and local downgrade review are recorded under `reviews/`. Maintainer review and manual PR creation remain pending.
 - Rollback: revert this PR; remove `id_stage` replacement from dependent overlay.
