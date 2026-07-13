@@ -4,7 +4,7 @@
   "status": "implementation_in_review",
   "branch": "refactor/20260713-1415-icache-spinal",
   "base_sha": "fb5a63fbb3c5378a0d99d6122c0cf66b89a332c5",
-  "head_sha": "65d183294d495bcc110c24dc565172dabacb7842",
+  "head_sha": "e9c4946f033bc0f6e685042fc616eb523a9dc34b",
   "boundary": "icache",
   "claims": [
     "Scala OpenLa500ICache generates one exact 34-port icache module",
