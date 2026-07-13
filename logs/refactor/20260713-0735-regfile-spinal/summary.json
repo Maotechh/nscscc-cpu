@@ -4,7 +4,10 @@
   "status": "draft",
   "branch": "refactor/20260713-0735-regfile-spinal",
   "base_sha": "f621c7a1e056b9f128b86efddbdd2598b3692ecc",
-  "head_sha": "41b93e5ca0b9239a8277f268441abb75e9d92215",
+  "head_sha": "1fc62c2c6728ab2304b092ef65de26ee629a3686",
+  "review_target_sha": "41b93e5ca0b9239a8277f268441abb75e9d92215",
+  "implementation_commit": "41b93e5ca0b9239a8277f268441abb75e9d92215",
+  "evidence_commit": "1fc62c2c6728ab2304b092ef65de26ee629a3686",
   "selected_boundary": "regfile",
   "required_gates": ["doctor", "chiplab_doctor", "scala", "port_check", "lint", "yosys_check", "unit_diff", "diagnostic_overlay", "func_smoke", "identity_compare", "claim_review"],
   "gates": {
