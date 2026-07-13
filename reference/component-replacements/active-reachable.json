@@ -66,6 +66,12 @@
       "source": "reference/component-replacements/wb_stage.v",
       "base_sha256": "8a6f6cb282d152e4b43673397b8c00f598e3d116589e5797fb6feaadbc032a09",
       "replacement_sha256": "a7899e91ba02dec7b2c4cd798969ae012c0c2bee5efe83bda224896f406373bc"
+    },
+    {
+      "target": "rtl/mem_stage.v",
+      "source": "reference/component-replacements/mem_stage.v",
+      "base_sha256": "86592ed33afd5dde9e944860c7088ad70e5d62ee22f72999e336a64902d881a7",
+      "replacement_sha256": "37d0cba5ca2f8e901f77aaa26e56360e9205c4732f49ecd9c3189499f03e9bb1"
     }
   ]
 }

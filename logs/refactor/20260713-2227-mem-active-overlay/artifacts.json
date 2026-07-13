@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "iteration_id": "20260713-2227-mem-active-overlay",
+  "artifacts": [
+    {"path":"/tmp/mem-active-scala/scala-check/summary.json","retention":"local","gate_eligible":true},
+    {"path":"/tmp/mem-active-doctor/reports/chiplab-doctor.json","retention":"local","gate_eligible":true},
+    {"path":"/tmp/mem-active-vivado-doctor/reports/doctor.json","retention":"local","gate_eligible":true},
+    {"path":"/tmp/mem-active-reachability/replacement-reachability/reachability.json","retention":"local","gate_eligible":true}
+  ]
+}

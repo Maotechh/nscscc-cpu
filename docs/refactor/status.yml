@@ -22,6 +22,7 @@ boundaries:
       - dcache
       - addr_translation
       - writeback_stage
+      - memory_stage
     contract: reference/component-replacements/active-reachable.meta.json
     required_gates:
       - reachability
