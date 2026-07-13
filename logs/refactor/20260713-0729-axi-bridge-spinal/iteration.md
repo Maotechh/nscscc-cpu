@@ -4,7 +4,7 @@
 - 分支：`refactor/20260713-0729-axi-bridge-spinal`
 - Base SHA：`f621c7a1e056b9f128b86efddbdd2598b3692ecc`
 - Implementation / tested SHA：`bb2dbff743216e83eeb15f98f0651f717c1b4cc8`
-- Evidence Head SHA：待证据提交
+- Evidence Head SHA：`60b5d9f66ece8c80e815767f4e5e833e75a4dc2a`（元数据提交不改变实现证据）
 - Owner / Agent：Codex（memory）
 - 选择边界：活动 `a158aa8:rtl/axi_bridge.v`
 - 选择原因：该桥是 I/D Cache 进入官方 AXI3/WID 的唯一活动转换点；完成它可以解除存储系统纵向集成阻塞，并且 golden RTL 可独立逐拍执行。

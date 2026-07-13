@@ -4,7 +4,7 @@
   "status": "draft",
   "branch": "refactor/20260713-0729-axi-bridge-spinal",
   "base_sha": "f621c7a1e056b9f128b86efddbdd2598b3692ecc",
-  "head_sha": null,
+  "head_sha": "60b5d9f66ece8c80e815767f4e5e833e75a4dc2a",
   "review_target_sha": "bb2dbff743216e83eeb15f98f0651f717c1b4cc8",
   "implementation_commit": "bb2dbff743216e83eeb15f98f0651f717c1b4cc8",
   "implementation_tested_sha": "bb2dbff743216e83eeb15f98f0651f717c1b4cc8",
@@ -79,5 +79,5 @@
   "blocked_by": ["func_lab19_locked_and_mixed_mismatch_at_1c07c79c","641_unapproved_verilator_warnings_in_mixed_compile","identity_comparison_fail","claude_review_mcp_unavailable","github_push_443_unavailable"],
   "not_executed": ["func58", "func81", "multi_seed_random_difftest", "perf20", "uboot", "linux", "vivado_implementation", "bitstream", "remote_fpga_board"],
   "pr": {"status":"awaiting_push","url":null,"draft_only":true,"auto_merge":false,"created":false,"branch_pushed":false},
-  "updated_at": "2026-07-13T13:55:00+08:00"
+  "updated_at": "2026-07-13T14:03:06+08:00"
 }
