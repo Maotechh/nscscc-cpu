@@ -1,7 +1,7 @@
 # 20260713-1415-icache-spinal
 
 - Status: implementation_in_review
-- Branch / Base SHA / Head SHA: `refactor/20260713-1415-icache-spinal` / `fb5a63fbb3c5378a0d99d6122c0cf66b89a332c5` / `65d183294d495bcc110c24dc565172dabacb7842`
+- Branch / Base SHA / Head SHA: `refactor/20260713-1415-icache-spinal` / `fb5a63fbb3c5378a0d99d6122c0cf66b89a332c5` / `e9c4946f033bc0f6e685042fc616eb523a9dc34b`
 - Owner / Agent: memory / icache_spinal
 - Selected boundary and selection reason: AXI bridge 已有审计提交，I-cache 是解除 IF 到 AXI 集成阻塞的最短活动存储边界；本迭代只迁移 I-cache，不做性能优化。
 - Golden reference and locked tool versions: `a158aa8:rtl/icache.v`; Scala 2.13.16、SBT 1.10.11、SpinalHDL 1.14.2、Verilator 5.020、Yosys 0.33、Vivado 2023.2。
