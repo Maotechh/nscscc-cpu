@@ -14,3 +14,5 @@
 - Rollback: revert 本迭代 PR，恢复 golden `rtl/icache.v` overlay。
 - PR URL or awaiting state: awaiting_push（不自动创建或合并 PR）；Claude bridge unavailable（缺少 `GEEKPIE_CLAUDE_API_KEY`）。
 - Next unblocked candidates: D-cache、IF/cache typed adapter；func smoke 需在 committed head overlay 后补录。
+
+补充：分支已推送，远端返回 `https://github.com/Maotechh/nscscc-cpu/pull/new/refactor/20260713-1415-icache-spinal`。按协作规则保持 awaiting_pr，不自动创建或合并 PR。
