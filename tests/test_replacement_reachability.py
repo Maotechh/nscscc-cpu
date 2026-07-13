@@ -44,9 +44,10 @@ class ReplacementReachabilityTest(unittest.TestCase):
             result = self.run_gate(SPEC, METADATA, Path(directory) / "out")
             self.assertEqual(result.returncode, 0, result.stdout)
             report = json.loads((Path(directory) / "out" / "reachability.json").read_text())
-            self.assertEqual(report["selected_count"], 12)
+            self.assertEqual(report["selected_count"], 13)
             self.assertEqual(report["selected_target_modules"]["rtl/wb_stage.v"], "wb_stage")
             self.assertEqual(report["selected_target_modules"]["rtl/mem_stage.v"], "mem_stage")
+            self.assertEqual(report["selected_target_modules"]["rtl/if_stage.v"], "if_stage")
             self.assertNotIn("lacc_core", report["reachable_modules"])
 
     def test_deferred_alu_cannot_be_duplicated(self) -> None:

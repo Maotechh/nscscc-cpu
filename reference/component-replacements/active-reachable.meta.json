@@ -21,7 +21,8 @@
     "rtl/dcache.v",
     "rtl/addr_trans.v",
     "rtl/wb_stage.v",
-    "rtl/mem_stage.v"
+    "rtl/mem_stage.v",
+    "rtl/if_stage.v"
   ],
   "deferred_reachable": {
     "rtl/alu.v": "内部 exe_stage 实现；本迭代不重复计入 replacement",

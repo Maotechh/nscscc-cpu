@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "iteration_id": "20260713-2250-if-active-overlay",
+  "status": "draft",
+  "branch": "refactor/20260713-2250-if-active-overlay",
+  "base_sha": "95da435a537703c091fa97bf6b4d352255207556",
+  "head_sha": "14036534e2b148223370e6a145dabdc3b3110418",
+  "selected_boundary": "if_stage_active_replacement",
+  "gates": {
+    "reachability": {"status":"pending","planned":13,"executed":0,"passed":0,"failed":0,"skipped":13},
+    "scala": {"status":"pending","planned":4,"executed":0,"passed":0,"failed":0,"skipped":4},
+    "automation_tests": {"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":1},
+    "chiplab_doctor": {"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":1},
+    "diagnostic_overlay": {"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":1},
+    "func_smoke": {"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":1},
+    "claim_review": {"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":1}
+  },
+  "required_gates":["reachability","scala","automation_tests","chiplab_doctor","diagnostic_overlay","func_smoke","claim_review"]
+}

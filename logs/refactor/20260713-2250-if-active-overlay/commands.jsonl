@@ -1,0 +1,4 @@
+{"argv":["git","status","--short","--branch"],"cwd":".","exit_code":0,"elapsed_seconds":0.1,"evidence":{"result":"new independent worktree at fixed base"}}
+{"argv":["git","rev-parse","HEAD"],"cwd":".","exit_code":0,"elapsed_seconds":0.1,"evidence":{"result":"95da435a537703c091fa97bf6b4d352255207556 before cherry-pick"}}
+{"argv":["git","rev-parse","--verify","origin/main"],"cwd":".","exit_code":0,"elapsed_seconds":0.1,"evidence":{"result":"20cae5fd66391f4a1bccc1b87035be421039144b"}}
+{"argv":["git","remote","-v"],"cwd":".","exit_code":0,"elapsed_seconds":0.1,"evidence":{"result":"origin GitHub fetch/push recorded"}}
