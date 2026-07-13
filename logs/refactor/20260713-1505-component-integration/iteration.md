@@ -1,7 +1,7 @@
 # 20260713-1505-component-integration
 
-- Status: local_gates_passed / awaiting_push / awaiting_pr
-- Branch / Base SHA / Head SHA: `refactor/20260713-1505-component-integration` / `f621c7a1e056b9f128b86efddbdd2598b3692ecc` / 实现证据头 `2421849dc4f92178b85a594320824b7cfb109351`
+- Status: draft / awaiting_push / awaiting_pr
+- Branch / Base SHA / Head SHA: `refactor/20260713-1505-component-integration` / `f621c7a1e056b9f128b86efddbdd2598b3692ecc` / `d32352d0f670ec6a590aa4a34bf2dfef11d0e4fc`
 - Owner / Agent: integration / Codex
 - Selected boundary and selection reason: 把已经分别审计的 AXI bridge、CSR、RegFile、EXE stage、I-cache、TLB/AddrTrans 放进同一分支，先消除组件分支彼此孤立和 Makefile/status/waiver 冲突，再进入整机兼容壳与流水集成。
 - Golden reference and locked tool versions: `a158aa8`；Scala 2.13.16、sbt 1.10.11、SpinalHDL 1.14.2、JDK 17.0.19、Verilator 5.020；chiplab `a2e11b38bc5c85abb4408a8e0c0f5ce903c7ba31`。
@@ -43,6 +43,7 @@
 | TLB entry | PASS | 8192 random cycles；8258 total cycles；16577 checks；negative control detected |
 | TLB/AddrTrans generation | PASS | 两者均 2-run reproducible，产物哈希与 tracked replacement 一致 |
 | chiplab doctor | PASS | locked reference、gitlink、tool/file hashes matched |
+| TLB/AddrTrans overlay loader | DIAGNOSTIC PASS | 两个 committed spec 均被 strict loader 接受；`gate_eligible=false`，不是功能 PASS |
 | official func smoke | NOT EXECUTED | integration head 没有可证明的活动 `core_top` overlay |
 | 58/81/random/perf/system/fpga | NOT EXECUTED | 仍被整机活动集成阻塞 |
 

@@ -2,7 +2,7 @@ schema_version: 1
 updated_at: "2026-07-13T15:05:00+08:00"
 active_iteration: "20260713-1505-component-integration"
 active_branch: "refactor/20260713-1505-component-integration"
-source_head: "f621c7a1e056b9f128b86efddbdd2598b3692ecc"
+source_head: "d32352d0f670ec6a590aa4a34bf2dfef11d0e4fc"
 
 boundaries:
   component_replacement_overlay:

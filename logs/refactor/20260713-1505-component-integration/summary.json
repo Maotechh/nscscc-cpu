@@ -5,7 +5,7 @@
   "branch": "refactor/20260713-1505-component-integration",
   "base_sha": "f621c7a1e056b9f128b86efddbdd2598b3692ecc",
   "implementation_head_sha": "2421849dc4f92178b85a594320824b7cfb109351",
-  "head_sha": "2421849dc4f92178b85a594320824b7cfb109351",
+  "head_sha": "d32352d0f670ec6a590aa4a34bf2dfef11d0e4fc",
   "claim": "已审计叶子组件可在同一分支共存，实际重跑的本地组件 gate 未发现回归",
   "claim_supported": "partial",
   "gates": {
@@ -20,6 +20,7 @@
     "tlb_generate": {"status": "pass", "planned": 2, "executed": 2, "passed": 2, "failed": 0, "skipped": 0},
     "addr_trans_generate": {"status": "pass", "planned": 2, "executed": 2, "passed": 2, "failed": 0, "skipped": 0},
     "chiplab_doctor": {"status": "pass", "planned": 1, "executed": 1, "passed": 1, "failed": 0, "skipped": 0},
+    "replacement_overlay_schema": {"status": "pass", "planned": 2, "executed": 2, "passed": 2, "failed": 0, "skipped": 0},
     "official_integration_smoke": {"status": "unavailable", "planned": 1, "executed": 0, "passed": 0, "failed": 0, "skipped": 1},
     "release_gates": {"status": "unavailable", "planned": 1, "executed": 0, "passed": 0, "failed": 0, "skipped": 1},
     "claim_review": {"status": "unavailable", "planned": 1, "executed": 0, "passed": 0, "failed": 0, "skipped": 1}
@@ -35,7 +36,8 @@
     "tlb_entry": "pass",
     "tlb_generate": "pass",
     "addr_trans_generate": "pass",
-    "chiplab_doctor": "pass"
+    "chiplab_doctor": "pass",
+    "replacement_overlay_schema": "pass_diagnostic_only"
   },
   "not_executed": [
     "core_top_contract",
