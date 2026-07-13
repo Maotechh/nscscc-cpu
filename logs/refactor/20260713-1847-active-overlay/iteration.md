@@ -1,7 +1,7 @@
 # 20260713-1847-active-overlay
 
 - Status: `implementation_in_review`，仅累积集成诊断，不是功能 PASS。
-- Branch / Base SHA / Source SHA: `refactor/20260713-1847-active-overlay` / `d128e7bb17bd1386e54af0a4b79bc0c768f41ce4` / `cc077967955f2e435b720e747fac7675833002e1`
+- Branch / Base SHA / Overlay source SHA: `refactor/20260713-1847-active-overlay` / `d128e7bb17bd1386e54af0a4b79bc0c768f41ce4` / `1d0cd288419e430042b8a116d6df291fbc0df3ba`
 - Owner / Agent: Codex active-overlay iteration
 - Selected boundary and selection reason: 激活 legacy `core_top` 壳下已分别完成差分的可达 Spinal replacement，尽早暴露跨模块接口与官方层级编译问题；不迁移新功能，不做性能优化。
 - Golden reference and locked tool versions: `a158aa8ab4d49cece1a0fe488d7ac7dc02bd8cf6`，chiplab `a2e11b38...`，Verilator 5.020，Vivado 2023.2（本迭代未运行）。
@@ -33,6 +33,8 @@
 | Gate | 结果 | 证据 |
 |---|---|---|
 | replacement reachability | PASS | 10/10 target 可达；3 个测试含 deferred 与 LACC 负控 |
+| Scala format/compile/test | PASS | 4/4，锁定 SBT/Spinal cache |
+| automation tests | PASS | 324 tests；314 pass，10 个既有平台/可选工具 skip |
 | chiplab doctor | PASS | `evidence/chiplab-doctor.json` |
 | strict aggregate overlay | PASS（diagnostic only） | 10 个 committed blob；`gate_eligible=false` |
 | official full hierarchy build | 原生命令 exit 0；严格 gate FAIL | fresh build artifact 完整；626 条未批准 warning |

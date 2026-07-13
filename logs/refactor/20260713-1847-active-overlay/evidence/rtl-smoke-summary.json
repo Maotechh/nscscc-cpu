@@ -1,0 +1,196 @@
+{
+    "schema_version":  1,
+    "status":  "diagnostic",
+    "gate_result":  "fail",
+    "gate_eligible":  false,
+    "mode":  "diagnostic",
+    "dut_source":  "mixed",
+    "iteration_id":  "20260713-1847-active-overlay",
+    "selection_sha256":  "38148a1db4c48992b93f82779e418d341789fd68b1b9044e74f8007e8f32c70e",
+    "counts":  {
+                   "executed":  1,
+                   "failed":  1,
+                   "passed":  0,
+                   "planned":  1,
+                   "skipped":  0
+               },
+    "functional_counts":  {
+                              "executed":  0,
+                              "failed":  0,
+                              "passed":  0,
+                              "planned":  1,
+                              "skipped":  1
+                          },
+    "verilator_compile_counts":  {
+                                     "executed":  1,
+                                     "failed":  1,
+                                     "passed":  0,
+                                     "planned":  1,
+                                     "skipped":  0
+                                 },
+    "verilator_compile_status":  "fail",
+    "compile_warning_policy":  {
+                                   "counts_by_scope":  {
+                                                           "dut":  0,
+                                                           "official_environment":  0
+                                                       },
+                                   "rule":  "No warning is accepted without a file/line-specific reviewed waiver.",
+                                   "status":  "fail"
+                               },
+    "parser":  {
+                   "clocks":  0,
+                   "failure_excerpt":  [
+
+                                       ],
+                   "failures":  [
+
+                                ],
+                   "first_mismatch":  null,
+                   "instructions":  0,
+                   "markers":  {
+                                   "difftest_enabled":  false,
+                                   "difftest_library_loaded":  false,
+                                   "end_by_syscall":  false,
+                                   "good_trap":  false,
+                                   "nonzero_clocks":  false,
+                                   "nonzero_instructions":  false,
+                                   "reached_test_end":  false
+                               },
+                   "status":  "fail"
+               },
+    "commands":  [
+                     {
+                         "command":  [
+                                         "./configure.sh",
+                                         "--run",
+                                         "func/func_lab19"
+                                     ],
+                         "cwd":  "/tmp/nscscc-refactor-work-exact2/20260713-1847-active-overlay/sims/verilator/run_prog",
+                         "elapsed_seconds":  0.007,
+                         "exit_code":  0,
+                         "log_path":  "/tmp/active-overlay-exact2-20260713/raw/iterations/20260713-1847-active-overlay/rtl-smoke/1783941496547786061-566526/01-configure.log",
+                         "log_sha256":  "88d0d2b3bea4d22c370a255b232d9a1fe6037cbc0a1b785d84411e4f51bd6e2f",
+                         "timed_out":  false
+                     },
+                     {
+                         "command":  [
+                                         "make",
+                                         "verilator",
+                                         "testbench",
+                                         "soft_compile"
+                                     ],
+                         "cwd":  "/tmp/nscscc-refactor-work-exact2/20260713-1847-active-overlay/sims/verilator/run_prog",
+                         "elapsed_seconds":  39.732,
+                         "exit_code":  0,
+                         "log_path":  "/tmp/active-overlay-exact2-20260713/raw/iterations/20260713-1847-active-overlay/rtl-smoke/1783941496547786061-566526/02-build.log",
+                         "log_sha256":  "12222a9288c76f4439fbff483dd4965be9d518239b595949f30e4bdcbe044ff8",
+                         "timed_out":  false
+                     }
+                 ],
+    "build_integrity_status":  "fail",
+    "build_artifacts_fresh":  false,
+    "build_artifacts":  [
+                            {
+                                "exists":  true,
+                                "fresh":  false,
+                                "path":  "/tmp/nscscc-refactor-work-exact2/20260713-1847-active-overlay/sims/verilator/run_prog/log/compile.log",
+                                "sha256":  "e319f6ba1c8a9966ac3479274b63aefa53a5399bd3a7884920470f701ad4067b",
+                                "size":  289903
+                            },
+                            {
+                                "exists":  true,
+                                "fresh":  false,
+                                "path":  "/tmp/nscscc-refactor-work-exact2/20260713-1847-active-overlay/sims/verilator/run_prog/obj_dir/Vsimu_top.mk",
+                                "sha256":  "717a288a7854a238b61a60c8038233aa0b9920668665dace6733602528f319fb",
+                                "size":  1694
+                            },
+                            {
+                                "exists":  true,
+                                "fresh":  true,
+                                "path":  "/tmp/nscscc-refactor-work-exact2/20260713-1847-active-overlay/sims/verilator/run_prog/obj_dir/Vsimu_top__ALL.a",
+                                "sha256":  "62b4e9f06cfcb0de2647881794c0d9a4800dcd8487820e58620136dccf9e7648",
+                                "size":  2566446
+                            },
+                            {
+                                "exists":  true,
+                                "fresh":  true,
+                                "path":  "/tmp/nscscc-refactor-work-exact2/20260713-1847-active-overlay/sims/verilator/run_prog/output",
+                                "sha256":  "97bdca3f4bbd50274f15544264482e05515ba2973b6d3211a29b437431dd7007",
+                                "size":  2270224
+                            },
+                            {
+                                "exists":  true,
+                                "fresh":  true,
+                                "path":  "/tmp/nscscc-refactor-work-exact2/20260713-1847-active-overlay/sims/verilator/run_prog/obj/func/func_lab19_obj/obj/main.elf",
+                                "sha256":  "139f8bed74e0a1a6da04ad8df58cfc7527c9393d93f635afcfe5e18db7c96cbe",
+                                "size":  556872
+                            },
+                            {
+                                "exists":  true,
+                                "fresh":  true,
+                                "path":  "/tmp/nscscc-refactor-work-exact2/20260713-1847-active-overlay/sims/verilator/run_prog/obj/func/func_lab19_obj/obj/rom.vlog",
+                                "sha256":  "b916b85553da2795d6d80332c40056f960c6c4fd36ae341eb7d8cf494b26281e",
+                                "size":  1627045
+                            }
+                        ],
+    "component_replacement":  {
+                                  "source_head":  "1d0cd288419e430042b8a116d6df291fbc0df3ba",
+                                  "replacement_count":  10,
+                                  "spec_sha256":  "249fee09c4c18a3d9825ad61e5f3fec00f788309eb96b6d910a1afc583b38d58"
+                              },
+    "post_run_dut_verification":  {
+                                      "generated_path_exclusions":  [
+                                                                        "sims/verilator/run_prog/config-software.mak",
+                                                                        "sims/verilator/run_prog/config.log",
+                                                                        "sims/verilator/run_prog/log/compile.log",
+                                                                        "sims/verilator/run_prog/log/func/func_lab19_log",
+                                                                        "sims/verilator/run_prog/obj/func/func_lab19_obj",
+                                                                        "sims/verilator/run_prog/obj_dir",
+                                                                        "sims/verilator/run_prog/output",
+                                                                        "sims/verilator/run_prog/tmp",
+                                                                        "software/examples/func/func_lab19/obj"
+                                                                    ],
+                                      "official_workspace_fingerprint":  {
+                                                                             "entry_count":  1535,
+                                                                             "sha256":  "a089db6e8f4fc1cffdfc46d4f76b1233b1004c127a87b03a3feac0ca35eb26b8"
+                                                                         },
+                                      "overlay_manifest_sha256":  "8f11f5f33ba34cf208fe4a190ee0c68a745c8a458d41852d3ef42a1fa1842b4f",
+                                      "overlay_report_sha256":  "d26f50f30a81b09dbf9ddda6f46f799be40f5985a203d5e0f5eb408b1294d337",
+                                      "selection_sha256":  "38148a1db4c48992b93f82779e418d341789fd68b1b9044e74f8007e8f32c70e",
+                                      "status":  "pass",
+                                      "work_marker_sha256":  "8f11f5f33ba34cf208fe4a190ee0c68a745c8a458d41852d3ef42a1fa1842b4f"
+                                  },
+    "raw_dir":  "/tmp/active-overlay-exact2-20260713/raw/iterations/20260713-1847-active-overlay/rtl-smoke/1783941496547786061-566526",
+    "artifacts":  [
+                      {
+                          "path":  "/tmp/nscscc-refactor-work-exact2/20260713-1847-active-overlay/sims/verilator/run_prog/log/compile.log",
+                          "sha256":  "e319f6ba1c8a9966ac3479274b63aefa53a5399bd3a7884920470f701ad4067b",
+                          "size":  289903
+                      },
+                      {
+                          "path":  "/tmp/nscscc-refactor-work-exact2/20260713-1847-active-overlay/sims/verilator/run_prog/obj_dir/Vsimu_top.mk",
+                          "sha256":  "717a288a7854a238b61a60c8038233aa0b9920668665dace6733602528f319fb",
+                          "size":  1694
+                      },
+                      {
+                          "path":  "/tmp/nscscc-refactor-work-exact2/20260713-1847-active-overlay/sims/verilator/run_prog/obj_dir/Vsimu_top__ALL.a",
+                          "sha256":  "62b4e9f06cfcb0de2647881794c0d9a4800dcd8487820e58620136dccf9e7648",
+                          "size":  2566446
+                      },
+                      {
+                          "path":  "/tmp/nscscc-refactor-work-exact2/20260713-1847-active-overlay/sims/verilator/run_prog/output",
+                          "sha256":  "97bdca3f4bbd50274f15544264482e05515ba2973b6d3211a29b437431dd7007",
+                          "size":  2270224
+                      },
+                      {
+                          "path":  "/tmp/nscscc-refactor-work-exact2/20260713-1847-active-overlay/sims/verilator/run_prog/obj/func/func_lab19_obj/obj/main.elf",
+                          "sha256":  "139f8bed74e0a1a6da04ad8df58cfc7527c9393d93f635afcfe5e18db7c96cbe",
+                          "size":  556872
+                      },
+                      {
+                          "path":  "/tmp/nscscc-refactor-work-exact2/20260713-1847-active-overlay/sims/verilator/run_prog/obj/func/func_lab19_obj/obj/rom.vlog",
+                          "sha256":  "b916b85553da2795d6d80332c40056f960c6c4fd36ae341eb7d8cf494b26281e",
+                          "size":  1627045
+                      }
+                  ]
+}

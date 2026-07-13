@@ -1,10 +1,50 @@
 schema_version: 1
-updated_at: "2026-07-13T18:34:00+08:00"
-active_iteration: "20260713-1715-dcache-spinal"
-active_branch: "refactor/20260713-1715-dcache-spinal"
-source_head: "f13b4509a147180d796c1b1d2555ceba8f358b1b"
+updated_at: "2026-07-13T19:20:00+08:00"
+active_iteration: "20260713-1847-active-overlay"
+active_branch: "refactor/20260713-1847-active-overlay"
+source_head: "1d0cd288419e430042b8a116d6df291fbc0df3ba"
 
 boundaries:
+  legacy_shell_active_replacement_overlay:
+    owner: integration
+    state: implementation_in_review
+    golden_ref: a158aa8:rtl/mycpu_top.v
+    dependencies:
+      - component_replacement_overlay
+      - core_top_compat
+      - mul
+      - div
+      - pipeline
+      - regfile
+      - privileged
+      - axi_bridge
+      - icache
+      - dcache
+      - addr_translation
+    contract: reference/component-replacements/active-reachable.meta.json
+    required_gates:
+      - reachability
+      - scala
+      - automation_tests
+      - chiplab_doctor
+      - diagnostic_overlay
+      - func_smoke
+      - claim_review
+    evidence:
+      - logs/refactor/20260713-1847-active-overlay/iteration.md
+      - logs/refactor/20260713-1847-active-overlay/summary.json
+      - logs/refactor/20260713-1847-active-overlay/evidence/reachability.json
+      - logs/refactor/20260713-1847-active-overlay/evidence/chiplab-overlay-manifest.json
+      - logs/refactor/20260713-1847-active-overlay/evidence/rtl-smoke-summary.json
+      - logs/refactor/20260713-1847-active-overlay/reviews/claude-summary.json
+    active_pr: null
+    blocked_by:
+      - func_lab19_fail_at_1c07c79c
+      - 626_unapproved_verilator_warnings
+      - claude_bridge_missing_GEEKPIE_CLAUDE_API_KEY
+      - full_regression_not_executed
+    last_iteration: "20260713-1847-active-overlay"
+
   component_replacement_overlay:
     owner: verification
     state: wrapped_golden

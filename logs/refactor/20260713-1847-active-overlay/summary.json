@@ -1,21 +1,23 @@
 {
   "schema_version": 1,
   "iteration_id": "20260713-1847-active-overlay",
-  "status": "implementation_in_review",
+  "status": "draft",
   "branch": "refactor/20260713-1847-active-overlay",
   "base_sha": "d128e7bb17bd1386e54af0a4b79bc0c768f41ce4",
-  "source_head_sha": "cc077967955f2e435b720e747fac7675833002e1",
-  "head_sha": null,
+  "source_head_sha": "1d0cd288419e430042b8a116d6df291fbc0df3ba",
+  "head_sha": "1d0cd288419e430042b8a116d6df291fbc0df3ba",
   "selected_boundary": "legacy_shell_active_replacement_overlay",
-  "required_gates": ["reachability", "automation_tests", "chiplab_doctor", "strict_overlay", "rtl_smoke", "claim_review"],
+  "required_gates": ["reachability", "scala", "automation_tests", "chiplab_doctor", "strict_overlay", "rtl_smoke", "claim_review"],
   "gates": {
     "reachability": {"status":"pass","planned":10,"executed":10,"passed":10,"failed":0,"skipped":0,"evidence":"evidence/reachability.json"},
-    "automation_tests": {"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":0,"evidence":"commands.jsonl"},
+    "scala": {"status":"pass","planned":4,"executed":4,"passed":4,"failed":0,"skipped":0,"evidence":"evidence/scala.json"},
+    "automation_tests": {"status":"warning","planned":324,"executed":314,"passed":314,"failed":0,"skipped":10,"evidence":"commands.jsonl","note":"10 repository-known platform/optional-tool skips; not counted as official RTL gates"},
     "chiplab_doctor": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0,"evidence":"evidence/chiplab-doctor.json"},
-    "strict_overlay": {"status":"pass_diagnostic_only","planned":10,"executed":10,"passed":10,"failed":0,"skipped":0,"evidence":"evidence/chiplab-overlay-manifest.json","gate_eligible":false},
-    "full_hierarchy_build": {"status":"fail_warning_policy","planned":1,"executed":1,"passed":0,"failed":1,"skipped":0,"evidence":"evidence/rtl-smoke-summary.json","native_build_exit_code":0,"dut_warnings":253,"official_environment_warnings":373},
+    "strict_overlay": {"status":"warning","planned":10,"executed":10,"passed":10,"failed":0,"skipped":0,"evidence":"evidence/chiplab-overlay-manifest.json","gate_eligible":false,"note":"strict loader pass, diagnostic only"},
+    "full_hierarchy_build": {"status":"fail","planned":1,"executed":1,"passed":0,"failed":1,"skipped":0,"evidence":"evidence/rtl-smoke-summary.json","native_build_exit_code":0,"dut_warnings":253,"official_environment_warnings":373},
     "rtl_smoke": {"status":"fail","planned":1,"executed":1,"passed":0,"failed":1,"skipped":0,"evidence":"evidence/rtl-smoke-summary.json","first_mismatch_pc":"0x1c07c79c"},
-    "claim_review": {"status":"unavailable","planned":1,"executed":1,"passed":0,"failed":1,"skipped":0,"evidence":"reviews/claude-summary.json"}
+    "claim_review": {"status":"unavailable","planned":1,"executed":1,"passed":0,"failed":1,"skipped":0,"evidence":"reviews/claude-summary.json"},
+    "finalization_checks": {"status":"pass","planned":3,"executed":3,"passed":3,"failed":0,"skipped":0,"evidence":"commands.jsonl"}
   },
   "claims": [
     "Ten committed replacement blobs are accepted together by the strict diagnostic overlay loader and compile in the official full hierarchy.",
@@ -25,5 +27,5 @@
   "blocked_by": ["func_lab19_fail_at_1c07c79c", "626_unapproved_verilator_warnings", "claude_bridge_missing_GEEKPIE_CLAUDE_API_KEY", "full_regression_not_executed"],
   "push_status": "awaiting_push",
   "remote_ref": "origin/refactor/20260713-1847-active-overlay",
-  "updated_at": "2026-07-13T19:13:00+08:00"
+  "updated_at": "2026-07-13T19:30:00+08:00"
 }
