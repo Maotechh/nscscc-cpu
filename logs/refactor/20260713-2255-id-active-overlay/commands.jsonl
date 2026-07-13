@@ -1,0 +1,8 @@
+{"argv":["git","worktree add","-b","refactor/20260713-2255-id-active-overlay","95da435a537703c091fa97bf6b4d352255207556"],"cwd":".","exit_code":0,"elapsed_seconds":3.4,"result":"isolated worktree created","evidence":"iteration.md"}
+{"argv":["git","cherry-pick","7d6bb36","80beb76"],"cwd":".","exit_code":1,"elapsed_seconds":3.3,"result":"Makefile/status conflict; resolved by preserving MEM base and adding ID targets","evidence":"commands.jsonl"}
+{"argv":["python","-m","pytest","-q"],"cwd":".","exit_code":1,"result":"1 failed, 322 passed, 10 skipped; stale selected_count=12 assertion","evidence":"terminal result"}
+{"argv":["python","-m","pytest","-q"],"cwd":".","exit_code":0,"result":"323 passed, 10 platform skips","evidence":"terminal result"}
+{"argv":["make","replacement-reachability","OUT_DIR=/tmp/id-active-reachability"],"cwd":".","exit_code":0,"result":"13/13 replacements reachable","evidence":"/tmp/id-active-reachability/replacement-reachability/reachability.json"}
+{"argv":["make","scala-check","OUT_DIR=/tmp/id-active-scala"],"cwd":".","exit_code":0,"elapsed_seconds":64.168,"result":"4/4 profiles passed","evidence":"/tmp/id-active-scala/scala-check/summary.json"}
+{"argv":["make","chiplab-doctor","OUT_DIR=/tmp/id-active-doctor"],"cwd":".","exit_code":0,"result":"locked chiplab/toolchain checks passed","evidence":"/tmp/id-active-doctor/reports/chiplab-doctor.json"}
+{"argv":["make","doctor","VIVADO_HOME=/mnt/d/Xilinx/Vivado/2023.2","OUT_DIR=/tmp/id-active-vivado-doctor"],"cwd":".","exit_code":0,"result":"Vivado 2023.2 build 4029153 and hashes passed","evidence":"/tmp/id-active-vivado-doctor/reports/doctor.json"}
