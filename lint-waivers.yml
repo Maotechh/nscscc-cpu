@@ -77,6 +77,17 @@
       "reason": "The five instruction-write inputs are dead in the locked active bridge while inst_wr_rdy is tied high; exact port compatibility requires retaining them.",
       "owner": "memory",
       "expires_when": "the legacy 65-port bridge boundary is retired"
+    },
+    {
+      "id": "icache-dead-write-interface-compat",
+      "rule": "UNUSEDSIGNAL",
+      "file": "reference/component-replacements/icache.v",
+      "line": 10,
+      "source_sha256": "1e4c4f10db5a99f12b263c95f4dd61e7a51f298e8c15cc193ac01fc72b7680c5",
+      "scope": "candidate_icache_standalone_lint",
+      "reason": "The locked instruction cache captures but never consumes op/wstrb/wdata and never consumes wr_rdy; exact 34-port compatibility requires retaining these four dead inputs.",
+      "owner": "memory",
+      "expires_when": "the legacy I-cache compatibility boundary is retired"
     }
   ]
 }

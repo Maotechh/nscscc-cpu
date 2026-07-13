@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "iteration_id": "20260713-1415-icache-spinal",
+  "status": "implementation_in_review",
+  "branch": "refactor/20260713-1415-icache-spinal",
+  "base_sha": "fb5a63fbb3c5378a0d99d6122c0cf66b89a332c5",
+  "head_sha": "65d183294d495bcc110c24dc565172dabacb7842",
+  "boundary": "icache",
+  "claims": [
+    "Scala OpenLa500ICache generates one exact 34-port icache module",
+    "candidate matches locked golden for the executed 12000-cycle 2-state trace"
+  ],
+  "gates": [
+    {"name": "doctor", "status": "pass", "evidence": "evidence/doctor.json"},
+    {"name": "automation_tests", "status": "pass", "executed": 309, "passed": 309, "failed": 0, "skipped": 0, "evidence": "evidence/automation-tests.log"},
+    {"name": "scala", "status": "pass", "evidence": "evidence/scala-check.json"},
+    {"name": "generate", "status": "pass", "executed": 2, "passed": 2, "failed": 0, "skipped": 0, "evidence": "evidence/generate.json"},
+    {"name": "contract", "status": "pass", "evidence": "evidence/contract.json"},
+    {"name": "port_check", "status": "pass", "evidence": "evidence/port-check.json"},
+    {"name": "lint", "status": "pass", "evidence": "evidence/lint.json"},
+    {"name": "yosys_check", "status": "pass", "evidence": "evidence/yosys.json"},
+    {"name": "unit_diff", "status": "pass", "executed": 16096, "passed": 16096, "failed": 0, "skipped": 0, "evidence": "evidence/cycle-diff.json"},
+    {"name": "negative_control", "status": "pass", "evidence": "evidence/cycle-diff.json"},
+    {"name": "func_smoke", "status": "not_run", "reason": "committed overlay is run after this commit"},
+    {"name": "vivado_leaf", "status": "not_run", "reason": "I-cache leaf has no locked FPGA wrapper; Vivado doctor probe passed"},
+    {"name": "claim_review", "status": "pending", "reason": "Claude bridge availability checked after local evidence"}
+  ],
+  "counts": {"planned": 13, "executed": 11, "passed": 11, "failed": 0, "skipped": 2}
+}
