@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "gate": "exe-stage-yosys-check",
+  "status": "pass",
+  "profiles": {
+    "lacc_off": {"hierarchy_check": "pass", "proc": "pass", "check_assert": "pass"},
+    "lacc_on": {"hierarchy_check": "pass", "proc": "pass", "check_assert": "pass"}
+  },
+  "tool": "Yosys 0.33"
+}

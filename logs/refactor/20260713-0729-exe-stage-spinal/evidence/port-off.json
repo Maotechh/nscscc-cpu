@@ -1,0 +1,315 @@
+﻿{
+    "actual":  {
+                   "cacop_op_mode":  [
+                                         "output",
+                                         2
+                                     ],
+                   "clk":  [
+                               "input",
+                               1
+                           ],
+                   "csr_vppn":  [
+                                    "input",
+                                    19
+                                ],
+                   "data_addr":  [
+                                     "output",
+                                     32
+                                 ],
+                   "data_addr_ok":  [
+                                        "input",
+                                        1
+                                    ],
+                   "data_fetch":  [
+                                      "output",
+                                      1
+                                  ],
+                   "data_op":  [
+                                   "output",
+                                   1
+                               ],
+                   "data_size":  [
+                                     "output",
+                                     3
+                                 ],
+                   "data_valid":  [
+                                      "output",
+                                      1
+                                  ],
+                   "data_wdata":  [
+                                      "output",
+                                      32
+                                  ],
+                   "data_wstrb":  [
+                                      "output",
+                                      4
+                                  ],
+                   "dcacop_op_en":  [
+                                        "output",
+                                        1
+                                    ],
+                   "div_complete":  [
+                                        "input",
+                                        1
+                                    ],
+                   "ds_to_es_bus":  [
+                                        "input",
+                                        350
+                                    ],
+                   "ds_to_es_valid":  [
+                                          "input",
+                                          1
+                                      ],
+                   "ertn_flush":  [
+                                      "input",
+                                      1
+                                  ],
+                   "es_allowin":  [
+                                      "output",
+                                      1
+                                  ],
+                   "es_div_enable":  [
+                                         "output",
+                                         1
+                                     ],
+                   "es_mul_div_sign":  [
+                                           "output",
+                                           1
+                                       ],
+                   "es_rj_value":  [
+                                       "output",
+                                       32
+                                   ],
+                   "es_rkd_value":  [
+                                        "output",
+                                        32
+                                    ],
+                   "es_to_ds_forward_bus":  [
+                                                "output",
+                                                39
+                                            ],
+                   "es_to_ds_valid":  [
+                                          "output",
+                                          1
+                                      ],
+                   "es_to_ms_bus":  [
+                                        "output",
+                                        425
+                                    ],
+                   "es_to_ms_valid":  [
+                                          "output",
+                                          1
+                                      ],
+                   "excp_flush":  [
+                                      "input",
+                                      1
+                                  ],
+                   "icache_unbusy":  [
+                                         "input",
+                                         1
+                                     ],
+                   "icacop_flush":  [
+                                        "input",
+                                        1
+                                    ],
+                   "icacop_op_en":  [
+                                        "output",
+                                        1
+                                    ],
+                   "idle_flush":  [
+                                      "input",
+                                      1
+                                  ],
+                   "ms_allowin":  [
+                                      "input",
+                                      1
+                                  ],
+                   "ms_flush":  [
+                                    "input",
+                                    1
+                                ],
+                   "ms_wr_tlbehi":  [
+                                        "input",
+                                        1
+                                    ],
+                   "preld_en":  [
+                                    "output",
+                                    1
+                                ],
+                   "preld_hint":  [
+                                      "output",
+                                      5
+                                  ],
+                   "refetch_flush":  [
+                                         "input",
+                                         1
+                                     ],
+                   "reset":  [
+                                 "input",
+                                 1
+                             ],
+                   "tlb_inst_stall":  [
+                                          "output",
+                                          1
+                                      ]
+               },
+    "expected":  {
+                     "cacop_op_mode":  [
+                                           "output",
+                                           2
+                                       ],
+                     "clk":  [
+                                 "input",
+                                 1
+                             ],
+                     "csr_vppn":  [
+                                      "input",
+                                      19
+                                  ],
+                     "data_addr":  [
+                                       "output",
+                                       32
+                                   ],
+                     "data_addr_ok":  [
+                                          "input",
+                                          1
+                                      ],
+                     "data_fetch":  [
+                                        "output",
+                                        1
+                                    ],
+                     "data_op":  [
+                                     "output",
+                                     1
+                                 ],
+                     "data_size":  [
+                                       "output",
+                                       3
+                                   ],
+                     "data_valid":  [
+                                        "output",
+                                        1
+                                    ],
+                     "data_wdata":  [
+                                        "output",
+                                        32
+                                    ],
+                     "data_wstrb":  [
+                                        "output",
+                                        4
+                                    ],
+                     "dcacop_op_en":  [
+                                          "output",
+                                          1
+                                      ],
+                     "div_complete":  [
+                                          "input",
+                                          1
+                                      ],
+                     "ds_to_es_bus":  [
+                                          "input",
+                                          350
+                                      ],
+                     "ds_to_es_valid":  [
+                                            "input",
+                                            1
+                                        ],
+                     "ertn_flush":  [
+                                        "input",
+                                        1
+                                    ],
+                     "es_allowin":  [
+                                        "output",
+                                        1
+                                    ],
+                     "es_div_enable":  [
+                                           "output",
+                                           1
+                                       ],
+                     "es_mul_div_sign":  [
+                                             "output",
+                                             1
+                                         ],
+                     "es_rj_value":  [
+                                         "output",
+                                         32
+                                     ],
+                     "es_rkd_value":  [
+                                          "output",
+                                          32
+                                      ],
+                     "es_to_ds_forward_bus":  [
+                                                  "output",
+                                                  39
+                                              ],
+                     "es_to_ds_valid":  [
+                                            "output",
+                                            1
+                                        ],
+                     "es_to_ms_bus":  [
+                                          "output",
+                                          425
+                                      ],
+                     "es_to_ms_valid":  [
+                                            "output",
+                                            1
+                                        ],
+                     "excp_flush":  [
+                                        "input",
+                                        1
+                                    ],
+                     "icache_unbusy":  [
+                                           "input",
+                                           1
+                                       ],
+                     "icacop_flush":  [
+                                          "input",
+                                          1
+                                      ],
+                     "icacop_op_en":  [
+                                          "output",
+                                          1
+                                      ],
+                     "idle_flush":  [
+                                        "input",
+                                        1
+                                    ],
+                     "ms_allowin":  [
+                                        "input",
+                                        1
+                                    ],
+                     "ms_flush":  [
+                                      "input",
+                                      1
+                                  ],
+                     "ms_wr_tlbehi":  [
+                                          "input",
+                                          1
+                                      ],
+                     "preld_en":  [
+                                      "output",
+                                      1
+                                  ],
+                     "preld_hint":  [
+                                        "output",
+                                        5
+                                    ],
+                     "refetch_flush":  [
+                                           "input",
+                                           1
+                                       ],
+                     "reset":  [
+                                   "input",
+                                   1
+                               ],
+                     "tlb_inst_stall":  [
+                                            "output",
+                                            1
+                                        ]
+                 },
+    "gate":  "exe-stage-port-check",
+    "profile":  "lacc_off",
+    "schema_version":  1,
+    "status":  "pass",
+    "yosys_exit_code":  0
+}

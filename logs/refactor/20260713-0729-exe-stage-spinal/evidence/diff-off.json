@@ -1,0 +1,25 @@
+﻿{
+    "schema_version":  1,
+    "status":  "pass",
+    "gate":  "exe-stage-cycle-lockstep",
+    "profile":  "lacc_off",
+    "cycles":  8192,
+    "seed":  "0x00158aa8",
+    "negative_control":  false,
+    "compile_exit_code":  0,
+    "simulation_exit_code":  0,
+    "mismatch_detected":  false,
+    "compile_warning_count":  16,
+    "compile_warning_scope":  "golden_or_harness_only",
+    "compile_warning_ids":  [
+                                "BLKSEQ",
+                                "UNUSEDSIGNAL",
+                                "WIDTHEXPAND",
+                                "WIDTHTRUNC"
+                            ],
+    "candidate_lint_exit_code":  0,
+    "candidate_lint_warning_count":  0,
+    "candidate_sha256":  "839d5932db50baac933205c26765549344147a58ab056a886a374c0d694351aa",
+    "golden_sha256":  "cab20e05205c6bddff19f01fd15ad4cb671144debf0836982b45b334c686f526",
+    "verilator":  "Verilator 5.020 2024-01-01 rev (Debian 5.020-1)"
+}

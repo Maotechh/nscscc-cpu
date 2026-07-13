@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "gate": "exe-stage-local-gates",
+  "status": "pass",
+  "profiles": ["lacc_off", "lacc_on"],
+  "planned": 15,
+  "executed": 15,
+  "passed": 15,
+  "failed": 0,
+  "skipped": 0,
+  "gates": {
+    "scala": {"status": "pass", "profiles": 2},
+    "generate": {"status": "pass", "profiles": 2, "runs_per_profile": 2},
+    "port_check": {"status": "pass", "profiles": 2},
+    "verilator_candidate_lint": {"status": "pass", "profiles": 2, "warnings": 0},
+    "yosys": {"status": "pass", "profiles": 2},
+    "cycle_lockstep": {"status": "pass", "profiles": 2, "cycles_per_profile": 8192},
+    "negative_control": {"status": "pass", "profiles": 2, "mismatch_cycle": 0}
+  },
+  "not_executed": ["func_full", "random_difftest", "perf", "uboot", "linux", "vivado_implementation", "bitstream"]
+}

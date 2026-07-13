@@ -44,6 +44,17 @@
       "reason": "Golden intentionally truncates TmpR from 33 to 32 output bits. This waiver applies only to the locked golden oracle.",
       "owner": "verification",
       "expires_when": "golden div oracle is retired after a release-gate-equivalent Spinal replacement"
+    },
+    {
+      "id": "exe-stage-one-file-component-names",
+      "rule": "DECLFILENAME",
+      "file": "generated:exe_stage.v",
+      "line": 1,
+      "source_sha256": "839d5932db50baac933205c26765549344147a58ab056a886a374c0d694351aa",
+      "scope": "candidate_exe_stage_lint_only",
+      "reason": "The reproducible one-file generator emits exact top exe_stage together with typed ExecuteStage and OpenLa500Alu modules; module names intentionally differ from the package filename.",
+      "owner": "execute",
+      "expires_when": "the generator and overlay support a manifest-verified multi-file component package"
     }
   ]
 }

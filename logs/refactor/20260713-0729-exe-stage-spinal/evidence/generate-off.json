@@ -1,0 +1,27 @@
+﻿{
+    "schema_version":  1,
+    "status":  "pass",
+    "gate":  "spinal-generate",
+    "main_class":  "openla500.pipeline.GenerateOpenLa500ExecuteStage",
+    "expected_module":  "exe_stage",
+    "expected_file":  "exe_stage.v",
+    "reproducible":  true,
+    "published_sha256":  "839d5932db50baac933205c26765549344147a58ab056a886a374c0d694351aa",
+    "published_size":  58153,
+    "runs":  [
+                 {
+                     "run":  1,
+                     "passed":  true,
+                     "returncode":  0,
+                     "rtl_sha256":  "839d5932db50baac933205c26765549344147a58ab056a886a374c0d694351aa",
+                     "rtl_size":  58153
+                 },
+                 {
+                     "run":  2,
+                     "passed":  true,
+                     "returncode":  0,
+                     "rtl_sha256":  "839d5932db50baac933205c26765549344147a58ab056a886a374c0d694351aa",
+                     "rtl_size":  58153
+                 }
+             ]
+}

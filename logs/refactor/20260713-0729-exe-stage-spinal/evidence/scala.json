@@ -1,0 +1,97 @@
+﻿{
+    "schema_version":  1,
+    "status":  "pass",
+    "counts":  null,
+    "elapsed_seconds":  56.766,
+    "toolchain":  {
+                      "coursier_cache":  "/opt/chiplab-tools/root/scala-cache-sbt1.10.11-spinal1.14.2/coursier/v1",
+                      "dependency_artifact_count":  426,
+                      "dependency_artifacts_sha256":  "f84701a4773644e383c0c658a264d00f04fcbf5e8d03c358af56569a17eb3a35",
+                      "dependency_cache_root":  "/opt/chiplab-tools/root/scala-cache-sbt1.10.11-spinal1.14.2",
+                      "dependency_lock":  "/tmp/nscscc-exe-stage-dev-0729/reference/scala-dependencies.lock.json",
+                      "dependency_lock_sha256":  "0a5b155ce209d52cb12f24006be105b498796c7a6906c1981093c935fc4aa51d",
+                      "environment":  {
+                                          "COURSIER_CACHE":  "/opt/chiplab-tools/root/scala-cache-sbt1.10.11-spinal1.14.2/coursier/v1",
+                                          "COURSIER_MODE":  "offline",
+                                          "HOME":  "/tmp/nsg-0531017a9d05/home",
+                                          "JAVA_HOME":  "/usr/lib/jvm/java-17-openjdk-amd64",
+                                          "JAVA_TOOL_OPTIONS":  "-Djava.io.tmpdir=\"/tmp/nsg-0531017a9d05/tmp\" -Djna.tmpdir=\"/tmp/nsg-0531017a9d05/jna\" -Duser.home=\"/tmp/nsg-0531017a9d05/home\"",
+                                          "LANG":  "C.UTF-8",
+                                          "LC_ALL":  "C.UTF-8",
+                                          "PATH":  "/usr/lib/jvm/java-17-openjdk-amd64/bin:/usr/bin:/opt/chiplab-tools/root/sbt-1.10.11/bin:/usr/bin:/bin",
+                                          "SPINAL_SIM_WORKSPACE":  "/tmp/nscscc-exe-stage-run4/scala-check/workspaces/1783922275017088415-491169/sim-workspace",
+                                          "TZ":  "UTC"
+                                      },
+                      "environment_sha256":  "1b8bd644255772e78cf1ee560e6875e99852ef9a518ce2c08cf568e3482104fc",
+                      "isolated_home":  "/tmp/nsg-0531017a9d05/home",
+                      "isolated_jna_tmp":  "/tmp/nsg-0531017a9d05/jna",
+                      "isolated_tmp":  "/tmp/nsg-0531017a9d05/tmp",
+                      "ivy_home":  "/opt/chiplab-tools/root/scala-cache-sbt1.10.11-spinal1.14.2/ivy2",
+                      "java":  "/usr/lib/jvm/java-17-openjdk-amd64/bin/java",
+                      "java_sha256":  "c0a86c03d2acbe2f389d5198142309f8e61db0c498920893977a494c4e9fd69b",
+                      "jdk_modules_sha256":  "2d9de349be2aaa70adf53f78a88b8ca9bff70e910795655022808b4f61cbdc15",
+                      "jdk_version":  "17.0.19+10",
+                      "jvm_runtime_workspace":  "/tmp/nsg-0531017a9d05",
+                      "jvm_runtime_workspace_retention":  "deleted after ScalaTest XML verification",
+                      "manifest":  "/tmp/nscscc-exe-stage-dev-0729/reference/manifest.lock",
+                      "native_tools":  {
+                                           "ar":  {
+                                                      "path":  "/usr/bin/x86_64-linux-gnu-ar",
+                                                      "sha256":  "534681ac11c18868cfc4fdf98770aa0ba8973eedc90c231e94e6ba96e1a04f27"
+                                                  },
+                                           "gpp":  {
+                                                       "path":  "/usr/bin/x86_64-linux-gnu-g++-13",
+                                                       "sha256":  "1353e9bdd29a7295c7226bf6c63abccce056d8cac31f112e5cdbecc3f28c2769"
+                                                   },
+                                           "ld":  {
+                                                      "path":  "/usr/bin/x86_64-linux-gnu-ld.bfd",
+                                                      "sha256":  "e46a122cc3a29feba3b1d0fc2a274b6e46538be016ebe381370c0801bb98b0b8"
+                                                  },
+                                           "make":  {
+                                                        "path":  "/usr/bin/make",
+                                                        "sha256":  "d78b8f1d099fbcfb6f2f49ab87223b9b68fb3956642f92d6ec6de812e8afa965"
+                                                    },
+                                           "perl":  {
+                                                        "path":  "/usr/bin/perl",
+                                                        "sha256":  "56e5ea41974eb1eff0f7ea64677578b1938053d29818c2810bcb21e2ca68cafa"
+                                                    },
+                                           "sh":  {
+                                                      "path":  "/usr/bin/dash",
+                                                      "sha256":  "86d31f6fb799e91fa21bad341484564510ca287703a16e9e46c53338776f4f42"
+                                                  }
+                                       },
+                      "python":  "/usr/bin/python3.12",
+                      "python_sha256":  "1643dacd9feaedc58f3cc581e4d22577dfe25c09b10282936186ccf0f2e61118",
+                      "python_version":  "3.12.3",
+                      "sbt":  "/opt/chiplab-tools/root/sbt-1.10.11/bin/sbt",
+                      "sbt_boot":  "/opt/chiplab-tools/root/scala-cache-sbt1.10.11-spinal1.14.2/sbt-boot",
+                      "sbt_launch_jar_sha256":  "e988d533a020e5b60ec22c3b5df4cd3e3df465f4fdc3951c63036e21483978e4",
+                      "sbt_scalafmt_version":  "2.5.2",
+                      "sbt_sha256":  "b9732e3e9673acf5e7c8e604dd50f7d2ca719c91b47c33f4af42fdaf1dedaf02",
+                      "sbt_version":  "1.10.11",
+                      "scala_version":  "2.13.16",
+                      "scalafmt_version":  "3.8.3",
+                      "scalatest_version":  "3.2.19",
+                      "simulation_workspace":  "/tmp/nscscc-exe-stage-run4/scala-check/workspaces/1783922275017088415-491169/sim-workspace",
+                      "spinalhdl_version":  "1.14.2",
+                      "tool_trees":  {
+                                         "jdk_include":  {
+                                                             "entry_count":  6,
+                                                             "sha256":  "179fd5ec60cc403fa79ac4874d66d13256c04c0ba04c2971fd727111a7966490"
+                                                         },
+                                         "jdk_lib":  {
+                                                         "entry_count":  55,
+                                                         "sha256":  "c0e924679eeabef422bfd83774e15d2e560d3125ca54d9d78428f40551a8b434"
+                                                     },
+                                         "verilator_include":  {
+                                                                   "entry_count":  54,
+                                                                   "sha256":  "dfb993c4f8716c12b4a4bdf489bd0cee66ca9cf01e07e95e95a462e95d5e8b82"
+                                                               }
+                                     },
+                      "verilator":  "/usr/bin/verilator",
+                      "verilator_engine_sha256":  "25f33046f0055a6982c67cdc55081685a844abb50d044cfda087bd418db9be6c",
+                      "verilator_runtime_sha256":  "b784038c3cf821588ff4576653b540355889c0621bc258d1b349c29a63836c35",
+                      "verilator_sha256":  "4c6292ab82e57b7f34ab26dbae86ba9c494bacfb088b6ff34be93c553d1301b1",
+                      "verilator_version":  "5.020"
+                  }
+}

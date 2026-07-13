@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "target": "exe_stage",
+  "module": "exe_stage",
+  "ports_manifest": "reference/component-contracts/exe-stage-ports.json",
+  "generator_main": "openla500.pipeline.GenerateOpenLa500ExecuteStage",
+  "golden": {
+    "commit": "a158aa8ab4d49cece1a0fe488d7ac7dc02bd8cf6",
+    "path": "rtl/exe_stage.v",
+    "git_blob_sha1": "e95171aba43330a3b0bf267d3bdd45162889cb3b",
+    "sha256": "cab20e05205c6bddff19f01fd15ad4cb671144debf0836982b45b334c686f526",
+    "size": 16242
+  },
+  "widths": {
+    "decode_lacc_off": 350,
+    "decode_lacc_on": 353,
+    "execute": 425,
+    "forward": 39
+  },
+  "clock": {"signal": "clk", "edge": "rising"},
+  "reset": {"signal": "reset", "active_level": 1, "kind": "synchronous"},
+  "profiles": ["lacc_off", "lacc_on"],
+  "differential": {
+    "cycle_exact": true,
+    "seed": "0x158aa8",
+    "minimum_cycles": 4096,
+    "required_scenarios": [
+      "reset", "flush", "backpressure", "alu", "csr_mask", "alignment",
+      "load_store", "division_wait", "tlb_stall", "cacop", "preld"
+    ]
+  }
+}

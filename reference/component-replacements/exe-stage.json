@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "replacements": [
+    {
+      "target": "rtl/exe_stage.v",
+      "source": "reference/component-replacements/exe_stage.v",
+      "base_sha256": "cab20e05205c6bddff19f01fd15ad4cb671144debf0836982b45b334c686f526",
+      "replacement_sha256": "839d5932db50baac933205c26765549344147a58ab056a886a374c0d694351aa"
+    }
+  ]
+}
