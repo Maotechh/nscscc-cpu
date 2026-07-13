@@ -55,6 +55,9 @@ ICACHE_RTL ?= $(ICACHE_GENERATE_DIR)/rtl/icache.v
 TLB_RTL ?= reference/component-replacements/tlb_entry.v
 TLB_CYCLES ?= 8192
 TLB_RANDOM_SEED ?= 0x158aa8
+TLB_GENERATE_DIR ?= $(OUT_DIR)/tlb/generate
+ADDR_TRANS_GENERATE_DIR ?= $(OUT_DIR)/addr_trans/generate
+ADDR_TRANS_RTL ?= $(ADDR_TRANS_GENERATE_DIR)/rtl/addr_trans.v
 CORE_TOP_PORTS ?= reference/core-top.ports.json
 CORE_TOP_GENERATE_DIR ?= $(OUT_DIR)/core_top/generate
 CORE_TOP_WRAPPER_RTL ?= $(CORE_TOP_GENERATE_DIR)/rtl/core_top.v
@@ -88,10 +91,14 @@ else ifeq ($(TARGET),exe_stage)
 	$(PYTHON) -I tools/spinal_generate.py --manifest "reference/manifest.lock" --spinal-dir "spinal" --tool-root "$(CHIPLAB_TOOL_ROOT)" --main-class "$(EXE_STAGE_MAIN)" --expected-module "exe_stage" --expected-file "exe_stage.v" --out-dir "$(OUT_DIR)/exe_stage/$(EXE_STAGE_PROFILE)/elaborate" --runs 2 $(if $(JAVA_HOME),--java-home "$(JAVA_HOME)",)
 else ifeq ($(TARGET),icache)
 	$(PYTHON) -I tools/spinal_generate.py --manifest "reference/manifest.lock" --spinal-dir "spinal" --tool-root "$(CHIPLAB_TOOL_ROOT)" --main-class "openla500.memory.GenerateOpenLa500ICache" --expected-module "icache" --expected-file "icache.v" --out-dir "$(OUT_DIR)/icache/elaborate" --runs 2 $(if $(JAVA_HOME),--java-home "$(JAVA_HOME)",)
+else ifeq ($(TARGET),tlb)
+	$(PYTHON) -I tools/spinal_generate.py --manifest "reference/manifest.lock" --spinal-dir "spinal" --tool-root "$(CHIPLAB_TOOL_ROOT)" --main-class "openla500.privileged.GenerateOpenLa500TlbEntry" --expected-module "tlb_entry" --expected-file "tlb_entry.v" --out-dir "$(TLB_GENERATE_DIR)/elaborate" --runs 2 $(if $(JAVA_HOME),--java-home "$(JAVA_HOME)",)
+else ifeq ($(TARGET),addr_trans)
+	$(PYTHON) -I tools/spinal_generate.py --manifest "reference/manifest.lock" --spinal-dir "spinal" --tool-root "$(CHIPLAB_TOOL_ROOT)" --main-class "openla500.privileged.GenerateOpenLa500AddrTrans" --expected-module "addr_trans" --expected-file "addr_trans.v" --out-dir "$(ADDR_TRANS_GENERATE_DIR)/elaborate" --runs 2 $(if $(JAVA_HOME),--java-home "$(JAVA_HOME)",)
 else ifeq ($(TARGET),alu)
 	$(PYTHON) -I tools/alu_gate.py elaborate --target "$(TARGET)" --manifest "reference/manifest.lock" --spinal-dir "spinal" --tool-root "$(CHIPLAB_TOOL_ROOT)" --out-dir "$(OUT_DIR)/alu/elaborate" $(if $(JAVA_HOME),--java-home "$(JAVA_HOME)",)
 else
-	@echo "ERROR: unsupported TARGET=$(TARGET); expected core_top, alu, mul, or div" >&2; exit 2
+	@echo "ERROR: unsupported TARGET=$(TARGET); expected core_top, alu, mul, div, axi_bridge, exe_stage, icache, tlb, or addr_trans" >&2; exit 2
 endif
 
 generate:
@@ -109,10 +116,14 @@ else ifeq ($(TARGET),exe_stage)
 	$(PYTHON) -I tools/spinal_generate.py --manifest "reference/manifest.lock" --spinal-dir "spinal" --tool-root "$(CHIPLAB_TOOL_ROOT)" --main-class "$(EXE_STAGE_MAIN)" --expected-module "exe_stage" --expected-file "exe_stage.v" --out-dir "$(EXE_STAGE_GENERATE_DIR)" --runs 2 $(if $(JAVA_HOME),--java-home "$(JAVA_HOME)",)
 else ifeq ($(TARGET),icache)
 	$(PYTHON) -I tools/spinal_generate.py --manifest "reference/manifest.lock" --spinal-dir "spinal" --tool-root "$(CHIPLAB_TOOL_ROOT)" --main-class "openla500.memory.GenerateOpenLa500ICache" --expected-module "icache" --expected-file "icache.v" --out-dir "$(ICACHE_GENERATE_DIR)" --runs 2 $(if $(JAVA_HOME),--java-home "$(JAVA_HOME)",)
+else ifeq ($(TARGET),tlb)
+	$(PYTHON) -I tools/spinal_generate.py --manifest "reference/manifest.lock" --spinal-dir "spinal" --tool-root "$(CHIPLAB_TOOL_ROOT)" --main-class "openla500.privileged.GenerateOpenLa500TlbEntry" --expected-module "tlb_entry" --expected-file "tlb_entry.v" --out-dir "$(TLB_GENERATE_DIR)" --runs 2 $(if $(JAVA_HOME),--java-home "$(JAVA_HOME)",)
+else ifeq ($(TARGET),addr_trans)
+	$(PYTHON) -I tools/spinal_generate.py --manifest "reference/manifest.lock" --spinal-dir "spinal" --tool-root "$(CHIPLAB_TOOL_ROOT)" --main-class "openla500.privileged.GenerateOpenLa500AddrTrans" --expected-module "addr_trans" --expected-file "addr_trans.v" --out-dir "$(ADDR_TRANS_GENERATE_DIR)" --runs 2 $(if $(JAVA_HOME),--java-home "$(JAVA_HOME)",)
 else ifeq ($(TARGET),alu)
 	$(PYTHON) -I tools/alu_gate.py generate --target "$(TARGET)" --manifest "reference/manifest.lock" --spinal-dir "spinal" --tool-root "$(CHIPLAB_TOOL_ROOT)" --out-dir "$(ALU_GENERATE_DIR)" $(if $(JAVA_HOME),--java-home "$(JAVA_HOME)",)
 else
-	@echo "ERROR: unsupported TARGET=$(TARGET); expected core_top, alu, mul, or div" >&2; exit 2
+	@echo "ERROR: unsupported TARGET=$(TARGET); use a target-specific gate or add a prerequisite target" >&2; exit 2
 endif
 
 port-check:
@@ -131,7 +142,7 @@ else ifeq ($(TARGET),icache)
 else ifeq ($(TARGET),alu)
 	$(PYTHON) -I tools/alu_gate.py port-check --target "$(TARGET)" --manifest "reference/manifest.lock" --rtl "$(ALU_RTL)" --out-dir "$(OUT_DIR)/alu/port-check"
 else
-	@echo "ERROR: unsupported TARGET=$(TARGET); expected core_top, alu, mul, or div" >&2; exit 2
+	@echo "ERROR: unsupported TARGET=$(TARGET); use a target-specific port gate or add a prerequisite target" >&2; exit 2
 endif
 
 lint:
@@ -150,7 +161,7 @@ else ifeq ($(TARGET),icache)
 else ifeq ($(TARGET),alu)
 	$(PYTHON) -I tools/alu_gate.py lint --target "$(TARGET)" --manifest "reference/manifest.lock" --rtl "$(ALU_RTL)" --out-dir "$(OUT_DIR)/alu/lint"
 else
-	@echo "ERROR: unsupported TARGET=$(TARGET); expected core_top, alu, mul, or div" >&2; exit 2
+	@echo "ERROR: unsupported TARGET=$(TARGET); use a target-specific lint gate or add a prerequisite target" >&2; exit 2
 endif
 
 yosys-check:
@@ -169,7 +180,7 @@ else ifeq ($(TARGET),icache)
 else ifeq ($(TARGET),alu)
 	$(PYTHON) -I tools/alu_gate.py yosys-check --target "$(TARGET)" --manifest "reference/manifest.lock" --rtl "$(ALU_RTL)" --out-dir "$(OUT_DIR)/alu/yosys-check"
 else
-	@echo "ERROR: unsupported TARGET=$(TARGET); expected core_top, alu, mul, or div" >&2; exit 2
+	@echo "ERROR: unsupported TARGET=$(TARGET); use a target-specific Yosys gate or add a prerequisite target" >&2; exit 2
 endif
 
 unit:

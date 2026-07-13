@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "source_head": "2421849dc4f92178b85a594320824b7cfb109351",
+  "results": [
+    {"gate": "scala-check", "status": "pass", "executed": 4, "passed": 4, "sha256": "4e0f267d1e50e63263a5106738e109c545f06107929d3325f37cf866bffaa516"},
+    {"gate": "automation", "status": "pass", "tests": 316, "failures": 0, "errors": 0},
+    {"gate": "axi-bridge-cycle-diff", "status": "pass", "executed": 8195, "passed": 8195, "mismatches": 0, "sha256": "aa744077d18883229f5324f6d7735774714162352bf583c1f9f343fcbff3b257"},
+    {"gate": "csr-cycle-diff", "status": "pass", "cycles_requested": 4096, "cycles_observed": 4174, "sha256": "3ab3c308524ed37378d9cc0d5ddd4ab9f207bb89583f8ae188fa436f3d3938b8"},
+    {"gate": "exe-stage-cycle-lockstep", "profile": "lacc_off", "status": "pass", "cycles": 8192, "model": "2-state", "sha256": "dd6f8f7e464cbd8171f3ffa1ae5ccb999ad0b341342055eb6cddaf19f8def8fb"},
+    {"gate": "exe-stage-cycle-lockstep", "profile": "lacc_on", "status": "pass", "cycles": 8192, "model": "2-state", "sha256": "aafd1841a1004634fa68f3ee4232db7817bb234432420e48602e2c037eb97422"},
+    {"gate": "icache-cycle-diff", "status": "pass", "random_cycles": 12000, "executed": 16096, "passed": 16096, "mismatches": 0, "negative_control_cycle": 7, "sha256": "90204956479a2d902ebea0a472849b213bba799fbba2c08ecbef55e05c0f9dd7"},
+    {"gate": "tlb-entry-cycle-diff", "status": "pass", "random_cycles": 8192, "total_cycles": 8258, "checks": 16577, "mismatches": 0, "negative_control_detected": true, "sha256": "2634b7edadd0f0db57339138212a4635751867d5c1793d562dbbbc67bfdf3f15"},
+    {"gate": "tlb-entry-generate", "status": "pass", "executed": 2, "passed": 2, "published_sha256": "710a0e5644f4c93c7e77d03afd79d3cf725080fcdd080fcc09322f598bffa531", "summary_sha256": "ae61423f8a11fd00c78f7a06f1a3f7a32dca27251e93d6d655b2ab1b41835f75"},
+    {"gate": "addr-trans-generate", "status": "pass", "executed": 2, "passed": 2, "published_sha256": "c7920aa144dfafb60ce89cca9f8267c185909437cf86124d187dd49ba0a532f1", "summary_sha256": "8a669acb21e3608758ef426eb88c308f3dada618bc9a0c1a76912102d50c5202"},
+    {"gate": "chiplab-doctor", "status": "pass", "reference": "a2e11b38bc5c85abb4408a8e0c0f5ce903c7ba31", "sha256": "2bd762c0d6d0a1ad238b66d9c3ff2c5369ed530977dbf15ed57ef35bdadebee8"}
+  ]
+}

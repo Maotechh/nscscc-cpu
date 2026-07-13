@@ -9,4 +9,3 @@
 ## 验证、风险与回退
 
 验证结果完成后从本轮结构化证据生成。回退方式是 revert 本 PR，并恢复 golden `rtl/axi_bridge.v` overlay。
-

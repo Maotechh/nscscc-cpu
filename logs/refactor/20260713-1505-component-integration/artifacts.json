@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "iteration_id": "20260713-1505-component-integration",
+  "artifacts": [
+    {
+      "id": "component-gates",
+      "path": "evidence/component-gates.json",
+      "sha256": "c8076266cc6ae809df714c618642a63e1ad8d8dd1e567881af9d206baa80fc8d",
+      "size": 2288
+    }
+  ]
+}
