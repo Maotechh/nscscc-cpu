@@ -4,7 +4,7 @@
   "status": "implementation_in_review",
   "branch": "refactor/20260713-1400-addr-trans-spinal",
   "base_sha": "9d319136ce20a7bf8547896fb29a58e2f86ce4f4",
-  "head_sha": null,
+  "head_sha": "3f10123",
   "boundary": "tlb_addr_trans",
   "gates": {
     "automation_tests": {"status": "pass_with_existing_skips", "planned": 311, "executed": 301, "passed": 301, "failed": 0, "skipped": 10, "detail": "unittest discover return code 0; existing environment-dependent skips retained"},
