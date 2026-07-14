@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "status": "root_cause_confirmed_unit_fix_passed",
+  "status": "root_cause_confirmed_unit_and_integrated_fix_observed",
   "candidate_head": "39501d16928d75d20465f6125009dc3bc2812bd5",
   "case": "func/func_lab19",
   "first_mismatch": {
@@ -26,6 +26,12 @@
   "fix": "DecodeForward now exposes writeEnabled; backend connects ExecuteForward.writeEnabled and MemoryForward.writeEnabled. Legacy bus bit 37 remains the forwarding write-enable source.",
   "directed_test": "openla500.pipeline.DecodeForwardingSpec",
   "directed_test_result": "pass",
-  "integrated_smoke_after_fix": "not_executed_before_commit"
+  "fixed_head": "2e5409a73841424540978e8dc43f6ba8b576a31e",
+  "integrated_smoke_after_fix": {
+    "status": "fail_at_same_known_baseline_failure",
+    "evidence": "evidence/rtl-smoke-2e5409a.json",
+    "comparison": "evidence/baseline-forwarding-comparison.json",
+    "old_mismatch_observed": false,
+    "first_mismatch_pc": "0x1c07c79c"
+  }
 }
-

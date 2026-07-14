@@ -17,7 +17,12 @@
 - 双次生成可复现；package SHA256 `2646383fc6e201c0108c018c780fb4240301beb53e8dfc6eacf00149ab5586cc`。
 - 49/49 端口、publish consistency、Yosys hierarchy/check PASS。
 - 严格 Verilator lint FAIL，86 条未批准 warning。
-- `39501d1` 官方 smoke 已推进 162,373 条真实 DiffTest 提交，首错已定位并完成 unit fix；修复后的官方 smoke 待新提交 overlay 复测。
+- `2e5409a` 官方 smoke 已越过原 `0x1c0752b8`，推进 172,548 条提交后在 baseline 已知的 `0x1c07c79c` 以相同寄存器/PC 状态失败。
+- 因此只声明 forwarding 回归已修复；`func_lab19` 仍为 FAIL，不声明整机等价。
+- 独立只读审核支持上述窄 claim；Claude bridge 不可用，因此 claim review 为降级 warning，PR 不得标记 ready。
+- 降级 experiment audit 核对了结果存在性、数字和范围，结论为 `WARN`；它不是跨模型审核。
+- Baseline/candidate 提交计数相差 4，末尾 30 行相同不能解释为完整顺序 trace 等价。
+- 仓库 `evidence-check` 因早期 `commands.jsonl` 缺少实测 duration 而失败；未伪造历史耗时，PR 保持 draft。
 - func-full、random、perf、Linux、Vivado implementation/bitstream 均未通过，不作完成声明。
 
 ## 风险与回退

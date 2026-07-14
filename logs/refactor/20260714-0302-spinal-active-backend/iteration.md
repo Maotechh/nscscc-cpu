@@ -1,7 +1,7 @@
 # 20260714-0302-spinal-active-backend
 
 - Status: `implementation_in_review`
-- Branch / Base SHA / Head SHA: `refactor/20260714-0302-spinal-active-backend` / `78efdf97b6208da3806fcbc02dca69061284d3b7` / `pending`
+- Branch / Base SHA / Head SHA: `refactor/20260714-0302-spinal-active-backend` / `78efdf97b6208da3806fcbc02dca69061284d3b7` / `2e5409a73841424540978e8dc43f6ba8b576a31e`
 - Owner / Agent: Codex `/root`
 - Selected boundary and selection reason: 活动整机 backend。该边界把已经迁移的 IF/ID/EX/MEM/WB、CSR、TLB、Cache、AXI 和 mul/div 连接为官方 `core_top`，并直接解除活动顶层对 legacy CPU Verilog BlackBox 的依赖。
 - Golden reference and locked tool versions: `a158aa8:rtl/`；工具版本见 `reference/manifest.lock`；Vivado 固定为 2023.2。
@@ -32,6 +32,9 @@
 - 根因不是 DPI 调度或第一条 store event 丢失，而是 backend 把 EX/MEM 的 stage-valid 接到了 Decode forwarding enable。前一条 store 的 destination 字段恰为 r19，导致其 ALU 地址 `0x1d0004` 被错误旁路为 r19，再加立即数 4。
 - 新测试首次运行时功能断言通过，但 gate 因 93 个测试顶层裁剪 warning 失败；补 `keepAlive` 后 warning 消失。第二次仍因测试 Verilator 未显式重新启用四项 locked warning 而被策略拒绝；补齐 `-Wwarn-*` 后严格 gate 通过。
 - 更新 Scala 后首次 `generate` 的 publish-check 按设计拒绝旧 tracked package；替换生成 RTL并同步 manifest hash 后通过。
+- `2e5409a` 的第一次 overlay 因临时 clone 是 detached HEAD 被来源保护拒绝；在临时 clone 建立同名 `refactor/*` 分支后，doctor 和 mixed diagnostic overlay 通过，DUT payload 来自 committed Git blob。
+- 修复后的官方 smoke 编译和仿真均正常退出，推进到 172,548 条提交、603,892 clocks；原 `0x1c0752b8` store mismatch 不再出现。
+- 新首错为 `0x1c07c79c` 的 r12/PC mismatch。它与锁定 baseline 的首错、错误寄存器值、下一 PC 和末尾架构状态一致；末尾 30 行去除时间戳后 SHA256 同为 `757266c1...7fea8`。完整比较见 `evidence/baseline-forwarding-comparison.json`。
 
 ## 门禁结果
 
@@ -42,23 +45,31 @@
 - 严格 Verilator lint: FAIL，86 条未批准 warning；不标记 PASS。
 - Python 自动化: 327 PASS，0 FAIL，10 个平台互斥测试 skip；该项保持 warning，不用 skip 冒充全通过。证据：`evidence/automation-forwarding-fix.json`。
 - Vivado ML Standard 2023.2 build 4029153 doctor: PASS；本次尚未重跑 implementation/bitstream。
-- 官方 smoke: `39501d1` FAIL，但已经从 0 提交超时推进到 162,373 条真实 DiffTest 提交。forwarding 修复需在干净提交的新 overlay 中复测。
+- chiplab doctor / overlay: PASS；锁定 `a2e11b3`、myCPU gitlink 和工具哈希一致，overlay 绑定干净提交 `2e5409a`。证据：`evidence/chiplab-doctor-2e5409a.json`、`evidence/chiplab-overlay-2e5409a.json`。
+- 官方 smoke: 仍为 FAIL，不能声称 `func_lab19` 通过；但已越过本轮回归点并到达与 baseline 相同的已知首错 `0x1c07c79c`。证据：`evidence/rtl-smoke-2e5409a.json`、`evidence/baseline-forwarding-comparison.json`。
+- 最终 Python 回归: 327 PASS、10 个平台互斥 skip，用时 23.99 秒。
+- `make evidence-check`: FAIL。validator 在 `commands.jsonl:1` 发现早期历史记录缺少 `started_at/finished_at` 或 `elapsed_seconds`。原始执行时长没有可恢复证据，本轮不伪造耗时、不删除失败记录，因此保持 draft 并把该项列为 open blocker。
 
 ## 功能、性能与资源变化
 
-- 定向行为已证明连续 store 不会因非写指令产生伪 forwarding；整机 smoke 尚未对本修复复测，因此只声明 unit contract 通过。
+- 定向测试和官方整机 DiffTest 均证明本轮连续 store 伪 forwarding 回归已消失；这不等于 `func_lab19` PASS，也不等于完整整机等价。
 - 未运行性能、资源、timing 或 bitstream，不作相关声明。
 
 ## 残余风险
 
-- forwarding 修复后的官方 smoke 尚未运行；后续 mismatch 未知。
+- 官方 smoke 仍在 baseline 已知的 `0x1c07c79c` 失败；在 baseline oracle 修复或规范澄清前，不能把该点后的行为升级为等价证据。
 - 严格 lint 仍有 86 条未批准 warning。
 - Golden 可观察的 BTB/RAS 行为、LACC、完整随机 DiffTest、perf、Linux 和 FPGA release gate 尚未完成。
 - 锁定 baseline 自身最终在 `0x1c07c79c` 失败；candidate 达到该点后仍需区分 baseline 缺陷与重构回归。
 - Claude bridge 缺少可用后端/API key；本次按契约降级为独立子代理只读审查，不能表述为 Claude 审核。
+- 历史 `commands.jsonl` 缺少持续时间，仓库 `evidence-check` 仍失败；后续迭代必须从创建日志起由 wrapper 自动记录精确时间。
+- 独立审核支持本轮窄 claim；最新干净重跑 Scala evidence 的 `repo_head_sha` 和完整源码快照均绑定 `2e5409a`，此前的 provenance 限制已闭合。
+- Baseline 与 candidate 的提交计数相差 4、周期数也不同；末尾 30 行相同不能外推为完整顺序 trace 等价。
 
 ## 回退与下一步
 
 - 回退方式：revert 本迭代提交；不修改或合并 `main`。
 - PR 状态：`awaiting_next_push` / draft；代理不自动创建、标记 ready 或合并 PR。
-- 下一步：提交并推送本修复，从提交 SHA 创建全新 locked overlay，复跑官方 `func/func_lab19`；只根据新的首个真实 mismatch 继续修复。
+- Claim review：Claude 两次调用均失败，状态为 `unavailable`；降级独立只读审核为 `accepted_with_open_limits`。详见 `reviews/`，本轮保持 draft，不允许状态提升。
+- Experiment audit：按完整性清单执行的降级只读审计为 `WARN`；结果文件与数字匹配，但范围仅覆盖本轮 forwarding 回归和 baseline 已知首错，且完整回归未执行。详见 `reviews/experiment-audit.md`。
+- 下一步：提交并推送日志；随后把 `0x1c07c79c` 作为 baseline-validation 边界单独处理，不在本 forwarding 修复中混入新的功能改动。

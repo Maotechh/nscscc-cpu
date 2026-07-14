@@ -5,7 +5,7 @@
   "status": "warning",
   "command": "python -I -m unittest discover -s tests -p test_*.py",
   "planned": 337,
-  "executed": 337,
+  "executed": 327,
   "passed": 327,
   "failed": 0,
   "skipped": 10,

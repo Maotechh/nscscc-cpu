@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "date": "2026-07-14",
+  "iteration_id": "20260714-0302-spinal-active-backend",
+  "reviewed_head_sha": "2e5409a73841424540978e8dc43f6ba8b576a31e",
+  "auditor": "independent-codex-read-only-degraded",
+  "cross_model_reviewer": "unavailable",
+  "overall_verdict": "warn",
+  "integrity_status": "warn",
+  "checks": {
+    "golden_provenance": {
+      "status": "pass",
+      "details": "Locked a158aa8/chiplab baseline; candidate output is not used as golden truth."
+    },
+    "score_normalization": {
+      "status": "pass",
+      "details": "Raw instruction/clock/mismatch values are reported; timestamp normalization is limited to a 30-line suffix equality check."
+    },
+    "result_existence": {
+      "status": "pass",
+      "details": "Referenced smoke, comparison and diagnosis files exist and their indexed hashes match."
+    },
+    "execution_chain": {
+      "status": "warn",
+      "details": "Smoke and local gates were executed, but lint fails and full suites/system/FPGA gates are not executed; historical command durations are incomplete."
+    },
+    "scope": {
+      "status": "warn",
+      "details": "Evidence covers one forwarding regression and arrival at a known baseline failure only."
+    },
+    "evaluation_type": "simulation_only_locked_reference_diff"
+  },
+  "claims": [
+    {"id": "C1", "impact": "supported", "claim": "The 0x1c0752b8 false store forwarding regression is fixed."},
+    {"id": "C2", "impact": "supported_with_scope_limit", "claim": "The candidate reaches the locked baseline mismatch at 0x1c07c79c."},
+    {"id": "C3", "impact": "unsupported", "claim": "func_lab19 passes."},
+    {"id": "C4", "impact": "unsupported", "claim": "Complete sequential trace equivalence, whole-core equivalence, or complete refactor."}
+  ],
+  "allow_ready": false,
+  "allow_status_promotion": false
+}

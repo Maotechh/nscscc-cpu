@@ -1,8 +1,8 @@
 {
   "gate": "core-top-yosys-check",
-  "generated_at": "2026-07-14T12:18:04+08:00",
+  "generated_at": "2026-07-14T12:51:01+08:00",
   "input": {
-    "complete_rtl": "/tmp/spinal-store-forwarding-coretop3-20260714/core_top/package/rtl/mycpu_top.v",
+    "complete_rtl": "/tmp/spinal-forward-clean-coretop-2e5409a/package/rtl/mycpu_top.v",
     "complete_rtl_sha256": "2646383fc6e201c0108c018c780fb4240301beb53e8dfc6eacf00149ab5586cc",
     "complete_rtl_size": 766189,
     "contract": {
@@ -14,20 +14,20 @@
       "port_count": 49,
       "tlbnum_default": 32
     },
-    "snapshot": "/tmp/spinal-store-forwarding-coretop3-20260714/core_top/yosys-check/input/core_top.v",
+    "snapshot": "/tmp/spinal-forward-clean-coretop-2e5409a/yosys-check/input/core_top.v",
     "snapshot_sha256": "2646383fc6e201c0108c018c780fb4240301beb53e8dfc6eacf00149ab5586cc",
     "stable": true
   },
   "provenance": {
-    "evaluator": "/tmp/spinal-store-forwarding-20260714/tools/core_top_gate.py",
+    "evaluator": "/tmp/spinal-forward-smoke-2e5409a-src/tools/core_top_gate.py",
     "evaluator_sha256": "63490b44b7c4e9eee730281a4a12ad62eeea238aeb7031df05f7bf2fc4e33641",
-    "manifest": "/tmp/spinal-store-forwarding-20260714/reference/manifest.lock",
+    "manifest": "/tmp/spinal-forward-smoke-2e5409a-src/reference/manifest.lock",
     "manifest_sha256": "743dd7e58d77e456cfe664d80c2e6614ab426f72bfecd9088ff18d702afa2f20",
-    "ports_contract": "/tmp/spinal-store-forwarding-20260714/reference/core-top.ports.json",
+    "ports_contract": "/tmp/spinal-forward-smoke-2e5409a-src/reference/core-top.ports.json",
     "ports_contract_sha256": "effa486ff707e480ff8ee13d7f20b2d524bd26908726915c99abf1b37eeab576",
-    "repository": "/tmp/spinal-store-forwarding-20260714",
-    "repository_head": "39501d16928d75d20465f6125009dc3bc2812bd5",
-    "repository_status_sha256": "08f0d8b71aacbcd2e132176f3a5df9b7577bd7e6f4d66746c02dbab18e842aa2"
+    "repository": "/tmp/spinal-forward-smoke-2e5409a-src",
+    "repository_head": "2e5409a73841424540978e8dc43f6ba8b576a31e",
+    "repository_status_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
   },
   "schema_version": 1,
   "scope": "complete-spinal-rtl",
@@ -37,13 +37,13 @@
     "argv": [
       "/usr/bin/yosys",
       "-l",
-      "/tmp/spinal-store-forwarding-coretop3-20260714/core_top/yosys-check/yosys.log",
+      "/tmp/spinal-forward-clean-coretop-2e5409a/yosys-check/yosys.log",
       "-s",
-      "/tmp/spinal-store-forwarding-coretop3-20260714/core_top/yosys-check/gate.ys"
+      "/tmp/spinal-forward-clean-coretop-2e5409a/yosys-check/gate.ys"
     ],
-    "elapsed_seconds": 2.477,
-    "log": "/tmp/spinal-store-forwarding-coretop3-20260714/core_top/yosys-check/yosys.log",
-    "log_sha256": "dda96da4cd5faf91b5200df121ea28c91569b17c900b61103954c0347017529b",
+    "elapsed_seconds": 2.047,
+    "log": "/tmp/spinal-forward-clean-coretop-2e5409a/yosys-check/yosys.log",
+    "log_sha256": "9e421f61d06da0a39e0469afc6734b2c7928ba056be60fd99c9bba91c0fba880",
     "returncode": 0,
     "skip_markers": [],
     "timed_out": false,

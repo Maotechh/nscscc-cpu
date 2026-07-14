@@ -4,8 +4,8 @@
   "status": "draft",
   "branch": "refactor/20260714-0302-spinal-active-backend",
   "base_sha": "78efdf97b6208da3806fcbc02dca69061284d3b7",
-  "head_sha": null,
-  "source_head": null,
+  "head_sha": "2e5409a73841424540978e8dc43f6ba8b576a31e",
+  "source_head": "2e5409a73841424540978e8dc43f6ba8b576a31e",
   "selected_boundary": "spinal_active_backend",
   "gates": {
     "doctor": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0,"evidence":"evidence/doctor-forwarding-fix.json"},
@@ -14,24 +14,36 @@
     "package": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0,"evidence":"evidence/package-forwarding-fix.json"},
     "publish_check": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0,"evidence":"evidence/publish-check-forwarding-fix.json"},
     "port_check": {"status":"pass","planned":49,"executed":49,"passed":49,"failed":0,"skipped":0,"evidence":"evidence/port-check-forwarding-fix.json"},
+    "contract": {"status":"pass","planned":49,"executed":49,"passed":49,"failed":0,"skipped":0,"evidence":"evidence/port-check-forwarding-fix.json"},
     "yosys": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0,"evidence":"evidence/yosys-forwarding-fix.json"},
     "lint": {"status":"fail","planned":1,"executed":1,"passed":0,"failed":1,"skipped":0,"evidence":"evidence/lint-forwarding-fix.json"},
-    "automation_tests": {"status":"warning","planned":337,"executed":337,"passed":327,"failed":0,"skipped":10,"evidence":"evidence/automation-forwarding-fix.json"},
-    "func_smoke": {"status":"fail","planned":1,"executed":1,"passed":0,"failed":1,"skipped":0,"evidence":"evidence/rtl-smoke-39501d1.json"},
-    "claim_review": {"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":0,"evidence":"iteration.md"}
+    "rtl_static": {"status":"fail","planned":2,"executed":2,"passed":1,"failed":1,"skipped":0,"evidence":"evidence/lint-forwarding-fix.json"},
+    "automation_tests": {"status":"warning","planned":337,"executed":327,"passed":327,"failed":0,"skipped":10,"evidence":"evidence/automation-forwarding-fix.json"},
+    "chiplab_doctor": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0,"evidence":"evidence/chiplab-doctor-2e5409a.json"},
+    "chiplab_overlay": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0,"evidence":"evidence/chiplab-overlay-2e5409a.json"},
+    "func_smoke": {"status":"fail","planned":1,"executed":1,"passed":0,"failed":1,"skipped":0,"evidence":"evidence/rtl-smoke-2e5409a.json"},
+    "func_full": {"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":1,"evidence":"iteration.md"},
+    "random": {"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":1,"evidence":"iteration.md"},
+    "fpga": {"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":1,"evidence":"iteration.md"},
+    "evidence_check": {"status":"fail","planned":1,"executed":1,"passed":0,"failed":1,"skipped":0,"evidence":"iteration.md"},
+    "claim_review": {"status":"warning","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0,"evidence":"reviews/independent-summary.json"},
+    "experiment_audit": {"status":"warning","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0,"evidence":"reviews/experiment-audit.json"}
   },
   "required_gates": ["doctor","scala","contract","rtl_static","func_smoke","func_full","random","fpga","claim_review"],
   "claims": [
     {"claim":"活动 core_top backend 不依赖 legacy CPU Verilog BlackBox","support":"yes","evidence":"evidence/package-forwarding-fix.json"},
     {"claim":"完整生成 RTL通过官方 49 端口合同和 Yosys hierarchy/check","support":"yes","evidence":"evidence/port-check-forwarding-fix.json"},
     {"claim":"39501d1 的官方 DiffTest 实际推进 162373 条提交","support":"yes","evidence":"evidence/rtl-smoke-39501d1.json"},
-    {"claim":"非写 store 不再产生伪 GPR forwarding","support":"partial","evidence":"evidence/scala-forwarding-fix.json"},
+    {"claim":"非写 store 不再产生伪 GPR forwarding，官方 smoke 已越过原首错并到达 baseline 已知首错","support":"yes","evidence":"evidence/baseline-forwarding-comparison.json"},
     {"claim":"纯 Spinal 整机功能等价或完全重构完成","support":"no","evidence":"iteration.md"}
   ],
   "residual_risks": [
-    "forwarding 修复尚未在新的官方 smoke overlay 中复测",
+    "official func_lab19 still fails at the locked baseline's known 0x1c07c79c mismatch",
     "strict Verilator lint fails with 86 unwaived warnings",
     "golden-observable BTB/RAS behavior, LACC, random DiffTest, perf and system gates remain",
-    "func-full/random/perf/Linux/fpga release gates are not executed"
+    "func-full/random/perf/Linux/fpga release gates are not executed",
+    "Claude review is unavailable; the claim review is a degraded independent read-only review",
+    "baseline and candidate instruction counts differ by four, so complete sequential trace equivalence is not established"
+    ,"historical commands.jsonl entries lack measured durations, so the repository evidence-check remains failed"
   ]
 }

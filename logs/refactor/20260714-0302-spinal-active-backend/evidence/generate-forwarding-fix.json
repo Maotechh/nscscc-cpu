@@ -7,13 +7,13 @@
     "planned": 2,
     "skipped": 0
   },
-  "elapsed_seconds": 49.768,
+  "elapsed_seconds": 59.104,
   "evaluator_sha256": "903792c3160c8ac73f109fa352abf2a94ae9c61d50b8192324d3fd5d0c2e8723",
   "evaluator_sha256_after": "903792c3160c8ac73f109fa352abf2a94ae9c61d50b8192324d3fd5d0c2e8723",
   "expected_file": "core_top.v",
   "expected_module": "core_top",
   "gate": "spinal-generate",
-  "generated_at": "2026-07-14T12:15:43+08:00",
+  "generated_at": "2026-07-14T12:50:16+08:00",
   "isolated_snapshots_match_source": true,
   "main_class": "openla500.compat.GenerateCoreTopCompat",
   "main_source": {
@@ -53,12 +53,12 @@
     "sha256": "04d9007efd4b00223618987311cc64af5e3000df70b3aa0d7c7387967c4cf43b"
   },
   "protected_rtl_stable": true,
-  "published_rtl": "/tmp/spinal-store-forwarding-coretop3-20260714/core_top/generate/rtl/core_top.v",
+  "published_rtl": "/tmp/spinal-forward-clean-generate-2e5409a/rtl/core_top.v",
   "published_sha256": "97486e9577f2cebbc5d1b604fddee75f131e80bc8602e6951fee1efd2de7cbf8",
   "published_size": 766160,
-  "repo_head_after": "39501d16928d75d20465f6125009dc3bc2812bd5",
-  "repo_head_before": "39501d16928d75d20465f6125009dc3bc2812bd5",
-  "repo_head_sha": "39501d16928d75d20465f6125009dc3bc2812bd5",
+  "repo_head_after": "2e5409a73841424540978e8dc43f6ba8b576a31e",
+  "repo_head_before": "2e5409a73841424540978e8dc43f6ba8b576a31e",
+  "repo_head_sha": "2e5409a73841424540978e8dc43f6ba8b576a31e",
   "reproducible": true,
   "runs": [
     {
@@ -66,7 +66,7 @@
       "command": {
         "argv": [
           "/usr/lib/jvm/java-17-openjdk-amd64/bin/java",
-          "-Dsbt.global.base=/tmp/nscscc-spinalgen-ceeebe5706b3/sbt-global",
+          "-Dsbt.global.base=/tmp/nscscc-spinalgen-98fc12ab52da/sbt-global",
           "-Dsbt.boot.directory=/opt/chiplab-tools/root/scala-cache-sbt1.10.11-spinal1.14.2/sbt-boot",
           "-Dsbt.ivy.home=/opt/chiplab-tools/root/scala-cache-sbt1.10.11-spinal1.14.2/ivy2",
           "-Dsbt.offline=true",
@@ -74,17 +74,17 @@
           "-Dsbt.log.noformat=true",
           "-jar",
           "/opt/chiplab-tools/root/sbt-1.10.11/bin/sbt-launch.jar",
-          "Compile / runMain openla500.compat.GenerateCoreTopCompat --out-dir \"/tmp/spinal-store-forwarding-coretop3-20260714/core_top/generate/generated/run-1\""
+          "Compile / runMain openla500.compat.GenerateCoreTopCompat --out-dir \"/tmp/spinal-forward-clean-generate-2e5409a/generated/run-1\""
         ],
-        "elapsed_seconds": 24.94,
+        "elapsed_seconds": 27.97,
         "returncode": 0,
         "timed_out": false
       },
-      "elapsed_seconds": 24.94,
+      "elapsed_seconds": 27.97,
       "failure_markers": [],
       "isolated_locks_stable": true,
-      "log": "/tmp/spinal-store-forwarding-coretop3-20260714/core_top/generate/generate-1.log",
-      "log_sha256": "befb866f8d5c4c5d72b4ca86d5de88d8a2f808eb73f4acc4044ca95737f2286b",
+      "log": "/tmp/spinal-forward-clean-generate-2e5409a/generate-1.log",
+      "log_sha256": "425c534e12bd1e3228eba940a8e883dc6613bf335fff630fbdc2c0956ee7d31d",
       "output_error": null,
       "passed": true,
       "returncode": 0,
@@ -116,7 +116,7 @@
         "size": 766160
       },
       "run": 1,
-      "runtime_workspace": "/tmp/nscscc-spinalgen-ceeebe5706b3",
+      "runtime_workspace": "/tmp/nscscc-spinalgen-98fc12ab52da",
       "runtime_workspace_cleaned": true,
       "snapshot_after": {
         "files": [
@@ -878,7 +878,7 @@
       "command": {
         "argv": [
           "/usr/lib/jvm/java-17-openjdk-amd64/bin/java",
-          "-Dsbt.global.base=/tmp/nscscc-spinalgen-70ea8de0481f/sbt-global",
+          "-Dsbt.global.base=/tmp/nscscc-spinalgen-bd2c3d6f3131/sbt-global",
           "-Dsbt.boot.directory=/opt/chiplab-tools/root/scala-cache-sbt1.10.11-spinal1.14.2/sbt-boot",
           "-Dsbt.ivy.home=/opt/chiplab-tools/root/scala-cache-sbt1.10.11-spinal1.14.2/ivy2",
           "-Dsbt.offline=true",
@@ -886,17 +886,17 @@
           "-Dsbt.log.noformat=true",
           "-jar",
           "/opt/chiplab-tools/root/sbt-1.10.11/bin/sbt-launch.jar",
-          "Compile / runMain openla500.compat.GenerateCoreTopCompat --out-dir \"/tmp/spinal-store-forwarding-coretop3-20260714/core_top/generate/generated/run-2\""
+          "Compile / runMain openla500.compat.GenerateCoreTopCompat --out-dir \"/tmp/spinal-forward-clean-generate-2e5409a/generated/run-2\""
         ],
-        "elapsed_seconds": 24.176,
+        "elapsed_seconds": 29.098,
         "returncode": 0,
         "timed_out": false
       },
-      "elapsed_seconds": 24.176,
+      "elapsed_seconds": 29.098,
       "failure_markers": [],
       "isolated_locks_stable": true,
-      "log": "/tmp/spinal-store-forwarding-coretop3-20260714/core_top/generate/generate-2.log",
-      "log_sha256": "76c43d1e65760fad0e4ee2e1e94e063846c2a5cdc13ad9494bda810657d0870f",
+      "log": "/tmp/spinal-forward-clean-generate-2e5409a/generate-2.log",
+      "log_sha256": "92a7a1f018bb0cc0865831df40e3dbc9a86fb9fddc590c90c4efe4a4dbd6edcf",
       "output_error": null,
       "passed": true,
       "returncode": 0,
@@ -928,7 +928,7 @@
         "size": 766160
       },
       "run": 2,
-      "runtime_workspace": "/tmp/nscscc-spinalgen-70ea8de0481f",
+      "runtime_workspace": "/tmp/nscscc-spinalgen-bd2c3d6f3131",
       "runtime_workspace_cleaned": true,
       "snapshot_after": {
         "files": [
@@ -1690,19 +1690,19 @@
     "artifact_count": 426,
     "artifacts_sha256": "f84701a4773644e383c0c658a264d00f04fcbf5e8d03c358af56569a17eb3a35",
     "cache_root": "/opt/chiplab-tools/root/scala-cache-sbt1.10.11-spinal1.14.2",
-    "lock_path": "/tmp/spinal-store-forwarding-20260714/reference/scala-dependencies.lock.json",
+    "lock_path": "/tmp/spinal-forward-smoke-2e5409a-src/reference/scala-dependencies.lock.json",
     "lock_sha256": "0a5b155ce209d52cb12f24006be105b498796c7a6906c1981093c935fc4aa51d"
   },
   "scala_dependencies_before": {
     "artifact_count": 426,
     "artifacts_sha256": "f84701a4773644e383c0c658a264d00f04fcbf5e8d03c358af56569a17eb3a35",
     "cache_root": "/opt/chiplab-tools/root/scala-cache-sbt1.10.11-spinal1.14.2",
-    "lock_path": "/tmp/spinal-store-forwarding-20260714/reference/scala-dependencies.lock.json",
+    "lock_path": "/tmp/spinal-forward-smoke-2e5409a-src/reference/scala-dependencies.lock.json",
     "lock_sha256": "0a5b155ce209d52cb12f24006be105b498796c7a6906c1981093c935fc4aa51d"
   },
   "scala_dependencies_stable": true,
   "scala_policy": {
-    "path": "/tmp/spinal-store-forwarding-20260714/tools/scala_gate.py",
+    "path": "/tmp/spinal-forward-smoke-2e5409a-src/tools/scala_gate.py",
     "sha256": "35676ee5ac04dcf24851f086c0c40c67d6816e364a35fbe5c2aa4fd0bd736322"
   },
   "schema_version": 1,

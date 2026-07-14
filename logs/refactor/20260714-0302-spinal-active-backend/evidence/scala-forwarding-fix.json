@@ -1,12 +1,12 @@
 {
-  "build_workspace": "/tmp/spinal-store-forwarding-gate3-20260714/workspaces/1784002426271762725-710541",
+  "build_workspace": "/tmp/spinal-forward-clean-scala-2e5409a/workspaces/1784004560699402049-714664",
   "dependency_cache_stable": true,
-  "elapsed_seconds": 61.764,
+  "elapsed_seconds": 76.779,
   "evaluator_sha256": "35676ee5ac04dcf24851f086c0c40c67d6816e364a35fbe5c2aa4fd0bd736322",
   "executed": 4,
   "failed": 0,
   "gate": "scala-check",
-  "generated_at": "2026-07-14T12:13:46+08:00",
+  "generated_at": "2026-07-14T12:49:20+08:00",
   "isolated_source_after": {
     "files": [
       {
@@ -757,365 +757,365 @@
     ],
     "sha256": "b1fc7672531cea736b9e7459af7863d82d01b4ec8c65fa2cd55d957a46c54500"
   },
-  "manifest": "/tmp/spinal-store-forwarding-20260714/reference/manifest.lock",
+  "manifest": "/tmp/spinal-forward-smoke-2e5409a-src/reference/manifest.lock",
   "manifest_sha256": "743dd7e58d77e456cfe664d80c2e6614ab426f72bfecd9088ff18d702afa2f20",
   "passed": 4,
   "planned": 4,
-  "repo_head_sha": "39501d16928d75d20465f6125009dc3bc2812bd5",
+  "repo_head_sha": "2e5409a73841424540978e8dc43f6ba8b576a31e",
   "runtime_workspace_cleaned": true,
   "schema_version": 1,
   "simulation_artifacts": [
     {
       "executable": false,
-      "path": "/tmp/spinal-store-forwarding-gate3-20260714/workspaces/1784002426271762725-710541/sim-workspace/ALUSimTop/rtl/ALU.v",
+      "path": "/tmp/spinal-forward-clean-scala-2e5409a/workspaces/1784004560699402049-714664/sim-workspace/ALUSimTop/rtl/ALU.v",
       "sha256": "145bcd411c4181e26598430a0d7811cd2a1e3228cd8b85ad11ba10892831ce3a",
       "size": 4250
     },
     {
       "executable": false,
-      "path": "/tmp/spinal-store-forwarding-gate3-20260714/workspaces/1784002426271762725-710541/sim-workspace/ALUSimTop/rtl/ALUSimTop.v",
+      "path": "/tmp/spinal-forward-clean-scala-2e5409a/workspaces/1784004560699402049-714664/sim-workspace/ALUSimTop/rtl/ALUSimTop.v",
       "sha256": "4194027a38f322dc38ca9231432584e02f9a80ad006950d2ab55db6d1d4d5dda",
       "size": 1226
     },
     {
       "executable": true,
-      "path": "/tmp/spinal-store-forwarding-gate3-20260714/workspaces/1784002426271762725-710541/sim-workspace/ALUSimTop/verilator/VALUSimTop",
-      "sha256": "2ed7f115e813ac5f76848334703932f098d50fceb69147f06411ac51a82013c6",
+      "path": "/tmp/spinal-forward-clean-scala-2e5409a/workspaces/1784004560699402049-714664/sim-workspace/ALUSimTop/verilator/VALUSimTop",
+      "sha256": "c10d3ee497f0c759d5b5db31ba17b482d8ce019b158cbfb9013e39afda3923ad",
       "size": 649320
     },
     {
       "executable": true,
-      "path": "/tmp/spinal-store-forwarding-gate3-20260714/workspaces/1784002426271762725-710541/sim-workspace/ALUSimTop/verilator/verilator_6.so",
-      "sha256": "2ed7f115e813ac5f76848334703932f098d50fceb69147f06411ac51a82013c6",
+      "path": "/tmp/spinal-forward-clean-scala-2e5409a/workspaces/1784004560699402049-714664/sim-workspace/ALUSimTop/verilator/verilator_6.so",
+      "sha256": "c10d3ee497f0c759d5b5db31ba17b482d8ce019b158cbfb9013e39afda3923ad",
       "size": 649320
     },
     {
       "executable": false,
-      "path": "/tmp/spinal-store-forwarding-gate3-20260714/workspaces/1784002426271762725-710541/sim-workspace/ALUSimTop/verilatorScript.sh",
-      "sha256": "a2aa33fb716aff934a6eee03736d4ed89aa1d6b912a9935787cc961de0bf0737",
-      "size": 944
+      "path": "/tmp/spinal-forward-clean-scala-2e5409a/workspaces/1784004560699402049-714664/sim-workspace/ALUSimTop/verilatorScript.sh",
+      "sha256": "37fd734c5dd541b03ff94520a2425a40a1bb6b6749ff64ba890f8768e097804b",
+      "size": 936
     },
     {
       "executable": false,
-      "path": "/tmp/spinal-store-forwarding-gate3-20260714/workspaces/1784002426271762725-710541/sim-workspace/decode-store-forwarding/DecodeForwardingSimTop/rtl/DecodeForwardingSimTop.v",
+      "path": "/tmp/spinal-forward-clean-scala-2e5409a/workspaces/1784004560699402049-714664/sim-workspace/decode-store-forwarding/DecodeForwardingSimTop/rtl/DecodeForwardingSimTop.v",
       "sha256": "8dd4d22239162c1c91cd5ed5df461ab9846820cf6ef8afde23c646213955766a",
       "size": 22144
     },
     {
       "executable": false,
-      "path": "/tmp/spinal-store-forwarding-gate3-20260714/workspaces/1784002426271762725-710541/sim-workspace/decode-store-forwarding/DecodeForwardingSimTop/rtl/DecodeStage.v",
+      "path": "/tmp/spinal-forward-clean-scala-2e5409a/workspaces/1784004560699402049-714664/sim-workspace/decode-store-forwarding/DecodeForwardingSimTop/rtl/DecodeStage.v",
       "sha256": "f7f23d77f81fc1fb7a0fa53963b6d296fcddd20cdde5cb75c6c5e1e6851862cb",
       "size": 45904
     },
     {
       "executable": true,
-      "path": "/tmp/spinal-store-forwarding-gate3-20260714/workspaces/1784002426271762725-710541/sim-workspace/decode-store-forwarding/DecodeForwardingSimTop/verilator/VDecodeForwardingSimTop",
-      "sha256": "1d16742e8c5231f59f20ec0eb8049351c92968c3a5213aebcb873b0cdfb67b1a",
+      "path": "/tmp/spinal-forward-clean-scala-2e5409a/workspaces/1784004560699402049-714664/sim-workspace/decode-store-forwarding/DecodeForwardingSimTop/verilator/VDecodeForwardingSimTop",
+      "sha256": "ff53f322bfdf6fdd34521ef6ef4e9ae4b0eaa33c584f8e130f6b4a1bb6a72cd7",
       "size": 694992
     },
     {
       "executable": true,
-      "path": "/tmp/spinal-store-forwarding-gate3-20260714/workspaces/1784002426271762725-710541/sim-workspace/decode-store-forwarding/DecodeForwardingSimTop/verilator/verilator_3.so",
-      "sha256": "1d16742e8c5231f59f20ec0eb8049351c92968c3a5213aebcb873b0cdfb67b1a",
+      "path": "/tmp/spinal-forward-clean-scala-2e5409a/workspaces/1784004560699402049-714664/sim-workspace/decode-store-forwarding/DecodeForwardingSimTop/verilator/verilator_3.so",
+      "sha256": "ff53f322bfdf6fdd34521ef6ef4e9ae4b0eaa33c584f8e130f6b4a1bb6a72cd7",
       "size": 694992
     },
     {
       "executable": false,
-      "path": "/tmp/spinal-store-forwarding-gate3-20260714/workspaces/1784002426271762725-710541/sim-workspace/decode-store-forwarding/DecodeForwardingSimTop/verilatorScript.sh",
-      "sha256": "9b3b2c520d4114e439f8b116b0f5a3a540d03186eb35ecba3f9325c25a2de70f",
-      "size": 1057
+      "path": "/tmp/spinal-forward-clean-scala-2e5409a/workspaces/1784004560699402049-714664/sim-workspace/decode-store-forwarding/DecodeForwardingSimTop/verilatorScript.sh",
+      "sha256": "44e12c96299ec255bdf302656d5c444ac1d64c53856b59fa1b09c2a159e00b41",
+      "size": 1049
     },
     {
       "executable": false,
-      "path": "/tmp/spinal-store-forwarding-gate3-20260714/workspaces/1784002426271762725-710541/sim-workspace/decode-store-forwarding/tmp/job_3/DecodeForwardingSimTop.v",
+      "path": "/tmp/spinal-forward-clean-scala-2e5409a/workspaces/1784004560699402049-714664/sim-workspace/decode-store-forwarding/tmp/job_3/DecodeForwardingSimTop.v",
       "sha256": "8dd4d22239162c1c91cd5ed5df461ab9846820cf6ef8afde23c646213955766a",
       "size": 22144
     },
     {
       "executable": false,
-      "path": "/tmp/spinal-store-forwarding-gate3-20260714/workspaces/1784002426271762725-710541/sim-workspace/decode-store-forwarding/tmp/job_3/DecodeStage.v",
+      "path": "/tmp/spinal-forward-clean-scala-2e5409a/workspaces/1784004560699402049-714664/sim-workspace/decode-store-forwarding/tmp/job_3/DecodeStage.v",
       "sha256": "f7f23d77f81fc1fb7a0fa53963b6d296fcddd20cdde5cb75c6c5e1e6851862cb",
       "size": 45904
     },
     {
       "executable": false,
-      "path": "/tmp/spinal-store-forwarding-gate3-20260714/workspaces/1784002426271762725-710541/sim-workspace/openla500-alu-directed/OpenLa500AluSimTop/rtl/OpenLa500Alu.v",
+      "path": "/tmp/spinal-forward-clean-scala-2e5409a/workspaces/1784004560699402049-714664/sim-workspace/openla500-alu-directed/OpenLa500AluSimTop/rtl/OpenLa500Alu.v",
       "sha256": "b256cba25c65aa2a9f23a0f8bb4d09f8a048c321dd3faae6fb89e550bf5b4edb",
       "size": 6434
     },
     {
       "executable": false,
-      "path": "/tmp/spinal-store-forwarding-gate3-20260714/workspaces/1784002426271762725-710541/sim-workspace/openla500-alu-directed/OpenLa500AluSimTop/rtl/OpenLa500AluSimTop.v",
+      "path": "/tmp/spinal-forward-clean-scala-2e5409a/workspaces/1784004560699402049-714664/sim-workspace/openla500-alu-directed/OpenLa500AluSimTop/rtl/OpenLa500AluSimTop.v",
       "sha256": "361e56a922519b75fff0926fcee22d5365af9c366b0f001053ecf5bd5ffb945c",
       "size": 917
     },
     {
       "executable": true,
-      "path": "/tmp/spinal-store-forwarding-gate3-20260714/workspaces/1784002426271762725-710541/sim-workspace/openla500-alu-directed/OpenLa500AluSimTop/verilator/VOpenLa500AluSimTop",
-      "sha256": "7500b07a4bca6b12250a481eb0d5f1f462c1df9b6e5425dfe23557a6b5f399f9",
+      "path": "/tmp/spinal-forward-clean-scala-2e5409a/workspaces/1784004560699402049-714664/sim-workspace/openla500-alu-directed/OpenLa500AluSimTop/verilator/VOpenLa500AluSimTop",
+      "sha256": "98cb28a44af4d42a55dce41912ed2c46d2c1da57f62e5babb401bbe293e51a0a",
       "size": 650440
     },
     {
       "executable": true,
-      "path": "/tmp/spinal-store-forwarding-gate3-20260714/workspaces/1784002426271762725-710541/sim-workspace/openla500-alu-directed/OpenLa500AluSimTop/verilator/verilator_7.so",
-      "sha256": "7500b07a4bca6b12250a481eb0d5f1f462c1df9b6e5425dfe23557a6b5f399f9",
+      "path": "/tmp/spinal-forward-clean-scala-2e5409a/workspaces/1784004560699402049-714664/sim-workspace/openla500-alu-directed/OpenLa500AluSimTop/verilator/verilator_7.so",
+      "sha256": "98cb28a44af4d42a55dce41912ed2c46d2c1da57f62e5babb401bbe293e51a0a",
       "size": 650440
     },
     {
       "executable": false,
-      "path": "/tmp/spinal-store-forwarding-gate3-20260714/workspaces/1784002426271762725-710541/sim-workspace/openla500-alu-directed/OpenLa500AluSimTop/verilatorScript.sh",
-      "sha256": "7ef3d75269775a136d0e9ac2ab468655dbda962166e7cf9eff2843d67885fd74",
-      "size": 1026
+      "path": "/tmp/spinal-forward-clean-scala-2e5409a/workspaces/1784004560699402049-714664/sim-workspace/openla500-alu-directed/OpenLa500AluSimTop/verilatorScript.sh",
+      "sha256": "de321f9f466c09d351e7d93e72f1c49548a8d0d3b9887ef2abc2648feabe9b71",
+      "size": 1018
     },
     {
       "executable": false,
-      "path": "/tmp/spinal-store-forwarding-gate3-20260714/workspaces/1784002426271762725-710541/sim-workspace/openla500-alu-directed/tmp/job_7/OpenLa500Alu.v",
+      "path": "/tmp/spinal-forward-clean-scala-2e5409a/workspaces/1784004560699402049-714664/sim-workspace/openla500-alu-directed/tmp/job_7/OpenLa500Alu.v",
       "sha256": "b256cba25c65aa2a9f23a0f8bb4d09f8a048c321dd3faae6fb89e550bf5b4edb",
       "size": 6434
     },
     {
       "executable": false,
-      "path": "/tmp/spinal-store-forwarding-gate3-20260714/workspaces/1784002426271762725-710541/sim-workspace/openla500-alu-directed/tmp/job_7/OpenLa500AluSimTop.v",
+      "path": "/tmp/spinal-forward-clean-scala-2e5409a/workspaces/1784004560699402049-714664/sim-workspace/openla500-alu-directed/tmp/job_7/OpenLa500AluSimTop.v",
       "sha256": "361e56a922519b75fff0926fcee22d5365af9c366b0f001053ecf5bd5ffb945c",
       "size": 917
     },
     {
       "executable": false,
-      "path": "/tmp/spinal-store-forwarding-gate3-20260714/workspaces/1784002426271762725-710541/sim-workspace/openla500-alu-random/OpenLa500AluSimTop/rtl/OpenLa500Alu.v",
+      "path": "/tmp/spinal-forward-clean-scala-2e5409a/workspaces/1784004560699402049-714664/sim-workspace/openla500-alu-random/OpenLa500AluSimTop/rtl/OpenLa500Alu.v",
       "sha256": "b256cba25c65aa2a9f23a0f8bb4d09f8a048c321dd3faae6fb89e550bf5b4edb",
       "size": 6434
     },
     {
       "executable": false,
-      "path": "/tmp/spinal-store-forwarding-gate3-20260714/workspaces/1784002426271762725-710541/sim-workspace/openla500-alu-random/OpenLa500AluSimTop/rtl/OpenLa500AluSimTop.v",
+      "path": "/tmp/spinal-forward-clean-scala-2e5409a/workspaces/1784004560699402049-714664/sim-workspace/openla500-alu-random/OpenLa500AluSimTop/rtl/OpenLa500AluSimTop.v",
       "sha256": "361e56a922519b75fff0926fcee22d5365af9c366b0f001053ecf5bd5ffb945c",
       "size": 917
     },
     {
       "executable": true,
-      "path": "/tmp/spinal-store-forwarding-gate3-20260714/workspaces/1784002426271762725-710541/sim-workspace/openla500-alu-random/OpenLa500AluSimTop/verilator/VOpenLa500AluSimTop",
-      "sha256": "35cf790d94bfed2619e8395c90e814af583a966d5be9a4a87a46fa8a34c8e680",
+      "path": "/tmp/spinal-forward-clean-scala-2e5409a/workspaces/1784004560699402049-714664/sim-workspace/openla500-alu-random/OpenLa500AluSimTop/verilator/VOpenLa500AluSimTop",
+      "sha256": "41fbaa79baacdb4ca33be86a451925da963b4d32c79ef32b61079b379f8a9413",
       "size": 650440
     },
     {
       "executable": true,
-      "path": "/tmp/spinal-store-forwarding-gate3-20260714/workspaces/1784002426271762725-710541/sim-workspace/openla500-alu-random/OpenLa500AluSimTop/verilator/verilator_8.so",
-      "sha256": "35cf790d94bfed2619e8395c90e814af583a966d5be9a4a87a46fa8a34c8e680",
+      "path": "/tmp/spinal-forward-clean-scala-2e5409a/workspaces/1784004560699402049-714664/sim-workspace/openla500-alu-random/OpenLa500AluSimTop/verilator/verilator_8.so",
+      "sha256": "41fbaa79baacdb4ca33be86a451925da963b4d32c79ef32b61079b379f8a9413",
       "size": 650440
     },
     {
       "executable": false,
-      "path": "/tmp/spinal-store-forwarding-gate3-20260714/workspaces/1784002426271762725-710541/sim-workspace/openla500-alu-random/OpenLa500AluSimTop/verilatorScript.sh",
-      "sha256": "6d247ee8665d428deed4e7b58d261cf976c10fa6c66d0165fb79a1c27d81f4f7",
-      "size": 1022
+      "path": "/tmp/spinal-forward-clean-scala-2e5409a/workspaces/1784004560699402049-714664/sim-workspace/openla500-alu-random/OpenLa500AluSimTop/verilatorScript.sh",
+      "sha256": "5f7c22cd1aede7b1f59be6e1d498f400b96bc48c65b329278d0fa7719ab7660c",
+      "size": 1014
     },
     {
       "executable": false,
-      "path": "/tmp/spinal-store-forwarding-gate3-20260714/workspaces/1784002426271762725-710541/sim-workspace/openla500-alu-random/tmp/job_8/OpenLa500Alu.v",
+      "path": "/tmp/spinal-forward-clean-scala-2e5409a/workspaces/1784004560699402049-714664/sim-workspace/openla500-alu-random/tmp/job_8/OpenLa500Alu.v",
       "sha256": "b256cba25c65aa2a9f23a0f8bb4d09f8a048c321dd3faae6fb89e550bf5b4edb",
       "size": 6434
     },
     {
       "executable": false,
-      "path": "/tmp/spinal-store-forwarding-gate3-20260714/workspaces/1784002426271762725-710541/sim-workspace/openla500-alu-random/tmp/job_8/OpenLa500AluSimTop.v",
+      "path": "/tmp/spinal-forward-clean-scala-2e5409a/workspaces/1784004560699402049-714664/sim-workspace/openla500-alu-random/tmp/job_8/OpenLa500AluSimTop.v",
       "sha256": "361e56a922519b75fff0926fcee22d5365af9c366b0f001053ecf5bd5ffb945c",
       "size": 917
     },
     {
       "executable": false,
-      "path": "/tmp/spinal-store-forwarding-gate3-20260714/workspaces/1784002426271762725-710541/sim-workspace/openla500-mul-cycle-contract/OpenLa500MulSimTop/rtl/OpenLa500Mul.v",
+      "path": "/tmp/spinal-forward-clean-scala-2e5409a/workspaces/1784004560699402049-714664/sim-workspace/openla500-mul-cycle-contract/OpenLa500MulSimTop/rtl/OpenLa500Mul.v",
       "sha256": "0b222e0655b7920476bdd4cf51f1fbc7e7b7354547232cf2e5407cd4a157267b",
       "size": 1296
     },
     {
       "executable": false,
-      "path": "/tmp/spinal-store-forwarding-gate3-20260714/workspaces/1784002426271762725-710541/sim-workspace/openla500-mul-cycle-contract/OpenLa500MulSimTop/rtl/OpenLa500MulSimTop.v",
+      "path": "/tmp/spinal-forward-clean-scala-2e5409a/workspaces/1784004560699402049-714664/sim-workspace/openla500-mul-cycle-contract/OpenLa500MulSimTop/rtl/OpenLa500MulSimTop.v",
       "sha256": "4d055e7e70960ac89a61c479ef0a1b96f75fbb2418e6e760f7a6b1bd1d9384b8",
       "size": 1034
     },
     {
       "executable": true,
-      "path": "/tmp/spinal-store-forwarding-gate3-20260714/workspaces/1784002426271762725-710541/sim-workspace/openla500-mul-cycle-contract/OpenLa500MulSimTop/verilator/VOpenLa500MulSimTop",
-      "sha256": "3adc0ec39f1cbfba4f519a21b3d05293abf83cf43280ae9509f88c82e0624023",
+      "path": "/tmp/spinal-forward-clean-scala-2e5409a/workspaces/1784004560699402049-714664/sim-workspace/openla500-mul-cycle-contract/OpenLa500MulSimTop/verilator/VOpenLa500MulSimTop",
+      "sha256": "1155f14a6fbc74819f645d9ef55554589b7993e15b2baa987ec0b7a97a9a9e86",
       "size": 646416
     },
     {
       "executable": true,
-      "path": "/tmp/spinal-store-forwarding-gate3-20260714/workspaces/1784002426271762725-710541/sim-workspace/openla500-mul-cycle-contract/OpenLa500MulSimTop/verilator/verilator_5.so",
-      "sha256": "3adc0ec39f1cbfba4f519a21b3d05293abf83cf43280ae9509f88c82e0624023",
+      "path": "/tmp/spinal-forward-clean-scala-2e5409a/workspaces/1784004560699402049-714664/sim-workspace/openla500-mul-cycle-contract/OpenLa500MulSimTop/verilator/verilator_5.so",
+      "sha256": "1155f14a6fbc74819f645d9ef55554589b7993e15b2baa987ec0b7a97a9a9e86",
       "size": 646416
     },
     {
       "executable": false,
-      "path": "/tmp/spinal-store-forwarding-gate3-20260714/workspaces/1784002426271762725-710541/sim-workspace/openla500-mul-cycle-contract/OpenLa500MulSimTop/verilatorScript.sh",
-      "sha256": "6fc05ad408f6e8481cdd4448996343b8ce4fdb043e026bd10a42417b91470986",
-      "size": 1038
+      "path": "/tmp/spinal-forward-clean-scala-2e5409a/workspaces/1784004560699402049-714664/sim-workspace/openla500-mul-cycle-contract/OpenLa500MulSimTop/verilatorScript.sh",
+      "sha256": "b41e45f3cee06bfe86135a1376298f5cf323316f74f8d00b3ea946645e37a606",
+      "size": 1030
     },
     {
       "executable": false,
-      "path": "/tmp/spinal-store-forwarding-gate3-20260714/workspaces/1784002426271762725-710541/sim-workspace/openla500-mul-cycle-contract/tmp/job_5/OpenLa500Mul.v",
+      "path": "/tmp/spinal-forward-clean-scala-2e5409a/workspaces/1784004560699402049-714664/sim-workspace/openla500-mul-cycle-contract/tmp/job_5/OpenLa500Mul.v",
       "sha256": "0b222e0655b7920476bdd4cf51f1fbc7e7b7354547232cf2e5407cd4a157267b",
       "size": 1296
     },
     {
       "executable": false,
-      "path": "/tmp/spinal-store-forwarding-gate3-20260714/workspaces/1784002426271762725-710541/sim-workspace/openla500-mul-cycle-contract/tmp/job_5/OpenLa500MulSimTop.v",
+      "path": "/tmp/spinal-forward-clean-scala-2e5409a/workspaces/1784004560699402049-714664/sim-workspace/openla500-mul-cycle-contract/tmp/job_5/OpenLa500MulSimTop.v",
       "sha256": "4d055e7e70960ac89a61c479ef0a1b96f75fbb2418e6e760f7a6b1bd1d9384b8",
       "size": 1034
     },
     {
       "executable": false,
-      "path": "/tmp/spinal-store-forwarding-gate3-20260714/workspaces/1784002426271762725-710541/sim-workspace/pipeline-ctrl/PipelineCtrlProbe/rtl/PipelineCtrlProbe.v",
+      "path": "/tmp/spinal-forward-clean-scala-2e5409a/workspaces/1784004560699402049-714664/sim-workspace/pipeline-ctrl/PipelineCtrlProbe/rtl/PipelineCtrlProbe.v",
       "sha256": "7297b1bc64a3d8375b4e54681c564e1190f06561da7d75864944103b331c960c",
       "size": 2223
     },
     {
       "executable": true,
-      "path": "/tmp/spinal-store-forwarding-gate3-20260714/workspaces/1784002426271762725-710541/sim-workspace/pipeline-ctrl/PipelineCtrlProbe/verilator/VPipelineCtrlProbe",
-      "sha256": "b936f7b5eec33bc10e4db3c92a6407da87547e11e8bd417620384f00c53c5643",
+      "path": "/tmp/spinal-forward-clean-scala-2e5409a/workspaces/1784004560699402049-714664/sim-workspace/pipeline-ctrl/PipelineCtrlProbe/verilator/VPipelineCtrlProbe",
+      "sha256": "4ac43afe609441e9d8c397a387255178a4fec6d059bb1e166752e98654886d79",
       "size": 649752
     },
     {
       "executable": true,
-      "path": "/tmp/spinal-store-forwarding-gate3-20260714/workspaces/1784002426271762725-710541/sim-workspace/pipeline-ctrl/PipelineCtrlProbe/verilator/verilator_1.so",
-      "sha256": "b936f7b5eec33bc10e4db3c92a6407da87547e11e8bd417620384f00c53c5643",
+      "path": "/tmp/spinal-forward-clean-scala-2e5409a/workspaces/1784004560699402049-714664/sim-workspace/pipeline-ctrl/PipelineCtrlProbe/verilator/verilator_1.so",
+      "sha256": "4ac43afe609441e9d8c397a387255178a4fec6d059bb1e166752e98654886d79",
       "size": 649752
     },
     {
       "executable": false,
-      "path": "/tmp/spinal-store-forwarding-gate3-20260714/workspaces/1784002426271762725-710541/sim-workspace/pipeline-ctrl/PipelineCtrlProbe/verilatorScript.sh",
-      "sha256": "15d8b58fb50a97363e59dacd8c65b771d56483f303366736e5f58b885fdd07aa",
-      "size": 868
+      "path": "/tmp/spinal-forward-clean-scala-2e5409a/workspaces/1784004560699402049-714664/sim-workspace/pipeline-ctrl/PipelineCtrlProbe/verilatorScript.sh",
+      "sha256": "108dd8931c010d6284bd538a8fda2922c36fa19c1fe4f1a22cf1812be7410341",
+      "size": 864
     },
     {
       "executable": false,
-      "path": "/tmp/spinal-store-forwarding-gate3-20260714/workspaces/1784002426271762725-710541/sim-workspace/pipeline-ctrl/tmp/job_1/PipelineCtrlProbe.v",
+      "path": "/tmp/spinal-forward-clean-scala-2e5409a/workspaces/1784004560699402049-714664/sim-workspace/pipeline-ctrl/tmp/job_1/PipelineCtrlProbe.v",
       "sha256": "7297b1bc64a3d8375b4e54681c564e1190f06561da7d75864944103b331c960c",
       "size": 2223
     },
     {
       "executable": false,
-      "path": "/tmp/spinal-store-forwarding-gate3-20260714/workspaces/1784002426271762725-710541/sim-workspace/pipeline-payloads/PipelinePayloadRoundTripTop/rtl/PipelinePayloadRoundTripTop.v",
+      "path": "/tmp/spinal-forward-clean-scala-2e5409a/workspaces/1784004560699402049-714664/sim-workspace/pipeline-payloads/PipelinePayloadRoundTripTop/rtl/PipelinePayloadRoundTripTop.v",
       "sha256": "dd4b6d82eafac39d70008a1f6db340abda2f85681f41704d83ea7f13c611b970",
       "size": 85364
     },
     {
       "executable": true,
-      "path": "/tmp/spinal-store-forwarding-gate3-20260714/workspaces/1784002426271762725-710541/sim-workspace/pipeline-payloads/PipelinePayloadRoundTripTop/verilator/VPipelinePayloadRoundTripTop",
-      "sha256": "8028f6bd1ef65e4796b124e8fd7ecbf368921547c9a1f143af5ce779a2e93385",
+      "path": "/tmp/spinal-forward-clean-scala-2e5409a/workspaces/1784004560699402049-714664/sim-workspace/pipeline-payloads/PipelinePayloadRoundTripTop/verilator/VPipelinePayloadRoundTripTop",
+      "sha256": "def59bf46971b00dd7fd73252a4d07b91a4214de6f017ac0a9999c0e8ae8e1aa",
       "size": 667656
     },
     {
       "executable": true,
-      "path": "/tmp/spinal-store-forwarding-gate3-20260714/workspaces/1784002426271762725-710541/sim-workspace/pipeline-payloads/PipelinePayloadRoundTripTop/verilator/verilator_4.so",
-      "sha256": "8028f6bd1ef65e4796b124e8fd7ecbf368921547c9a1f143af5ce779a2e93385",
+      "path": "/tmp/spinal-forward-clean-scala-2e5409a/workspaces/1784004560699402049-714664/sim-workspace/pipeline-payloads/PipelinePayloadRoundTripTop/verilator/verilator_4.so",
+      "sha256": "def59bf46971b00dd7fd73252a4d07b91a4214de6f017ac0a9999c0e8ae8e1aa",
       "size": 667656
     },
     {
       "executable": false,
-      "path": "/tmp/spinal-store-forwarding-gate3-20260714/workspaces/1784002426271762725-710541/sim-workspace/pipeline-payloads/PipelinePayloadRoundTripTop/verilatorScript.sh",
-      "sha256": "e72bdc0adeadbe62e8a857ccad229fa7b734398eb843516a4378273d886d37fb",
-      "size": 902
+      "path": "/tmp/spinal-forward-clean-scala-2e5409a/workspaces/1784004560699402049-714664/sim-workspace/pipeline-payloads/PipelinePayloadRoundTripTop/verilatorScript.sh",
+      "sha256": "0de5a199a6b071dc3568f70dde809f1757bf8c59ee4a727f5f4502326f856d72",
+      "size": 898
     },
     {
       "executable": false,
-      "path": "/tmp/spinal-store-forwarding-gate3-20260714/workspaces/1784002426271762725-710541/sim-workspace/pipeline-payloads/tmp/job_4/PipelinePayloadRoundTripTop.v",
+      "path": "/tmp/spinal-forward-clean-scala-2e5409a/workspaces/1784004560699402049-714664/sim-workspace/pipeline-payloads/tmp/job_4/PipelinePayloadRoundTripTop.v",
       "sha256": "dd4b6d82eafac39d70008a1f6db340abda2f85681f41704d83ea7f13c611b970",
       "size": 85364
     },
     {
       "executable": false,
-      "path": "/tmp/spinal-store-forwarding-gate3-20260714/workspaces/1784002426271762725-710541/sim-workspace/regfile/OpenLa500RegFileSimTop/rtl/OpenLa500RegFileSimTop.v",
+      "path": "/tmp/spinal-forward-clean-scala-2e5409a/workspaces/1784004560699402049-714664/sim-workspace/regfile/OpenLa500RegFileSimTop/rtl/OpenLa500RegFileSimTop.v",
       "sha256": "ba78868de90bcd8d1aabaef46349764ec6d36b0da7a910e0341ebf94fcf16c5f",
       "size": 5997
     },
     {
       "executable": false,
-      "path": "/tmp/spinal-store-forwarding-gate3-20260714/workspaces/1784002426271762725-710541/sim-workspace/regfile/OpenLa500RegFileSimTop/rtl/regfile.v",
+      "path": "/tmp/spinal-forward-clean-scala-2e5409a/workspaces/1784004560699402049-714664/sim-workspace/regfile/OpenLa500RegFileSimTop/rtl/regfile.v",
       "sha256": "aee1e57741aaf09d781224848e6279a163aab34369a694e6abe01d90f0e9d4a9",
       "size": 10301
     },
     {
       "executable": true,
-      "path": "/tmp/spinal-store-forwarding-gate3-20260714/workspaces/1784002426271762725-710541/sim-workspace/regfile/OpenLa500RegFileSimTop/verilator/VOpenLa500RegFileSimTop",
-      "sha256": "85fd6cbbf221ecb54e17f5e1a655d43aacfd04abc947979ca4494a51a44078fd",
+      "path": "/tmp/spinal-forward-clean-scala-2e5409a/workspaces/1784004560699402049-714664/sim-workspace/regfile/OpenLa500RegFileSimTop/verilator/VOpenLa500RegFileSimTop",
+      "sha256": "a8fa1ac7fd4f08b2da4b6415e3c767c5c18d931fc54cd8b7f1b7bdd9f9fad1ae",
       "size": 659040
     },
     {
       "executable": true,
-      "path": "/tmp/spinal-store-forwarding-gate3-20260714/workspaces/1784002426271762725-710541/sim-workspace/regfile/OpenLa500RegFileSimTop/verilator/verilator_2.so",
-      "sha256": "85fd6cbbf221ecb54e17f5e1a655d43aacfd04abc947979ca4494a51a44078fd",
+      "path": "/tmp/spinal-forward-clean-scala-2e5409a/workspaces/1784004560699402049-714664/sim-workspace/regfile/OpenLa500RegFileSimTop/verilator/verilator_2.so",
+      "sha256": "a8fa1ac7fd4f08b2da4b6415e3c767c5c18d931fc54cd8b7f1b7bdd9f9fad1ae",
       "size": 659040
     },
     {
       "executable": false,
-      "path": "/tmp/spinal-store-forwarding-gate3-20260714/workspaces/1784002426271762725-710541/sim-workspace/regfile/OpenLa500RegFileSimTop/verilatorScript.sh",
-      "sha256": "04851acf9f32fc5776d626c147e09908a0a628d7773592b12e1857b98ab497e9",
-      "size": 1003
+      "path": "/tmp/spinal-forward-clean-scala-2e5409a/workspaces/1784004560699402049-714664/sim-workspace/regfile/OpenLa500RegFileSimTop/verilatorScript.sh",
+      "sha256": "a6865fb236f2b37976eb0159e6774da1d1ec574428a385d31efb5918d02ff6a6",
+      "size": 995
     },
     {
       "executable": false,
-      "path": "/tmp/spinal-store-forwarding-gate3-20260714/workspaces/1784002426271762725-710541/sim-workspace/regfile/tmp/job_2/OpenLa500RegFileSimTop.v",
+      "path": "/tmp/spinal-forward-clean-scala-2e5409a/workspaces/1784004560699402049-714664/sim-workspace/regfile/tmp/job_2/OpenLa500RegFileSimTop.v",
       "sha256": "ba78868de90bcd8d1aabaef46349764ec6d36b0da7a910e0341ebf94fcf16c5f",
       "size": 5997
     },
     {
       "executable": false,
-      "path": "/tmp/spinal-store-forwarding-gate3-20260714/workspaces/1784002426271762725-710541/sim-workspace/regfile/tmp/job_2/regfile.v",
+      "path": "/tmp/spinal-forward-clean-scala-2e5409a/workspaces/1784004560699402049-714664/sim-workspace/regfile/tmp/job_2/regfile.v",
       "sha256": "aee1e57741aaf09d781224848e6279a163aab34369a694e6abe01d90f0e9d4a9",
       "size": 10301
     },
     {
       "executable": false,
-      "path": "/tmp/spinal-store-forwarding-gate3-20260714/workspaces/1784002426271762725-710541/sim-workspace/tmp/job_6/ALU.v",
+      "path": "/tmp/spinal-forward-clean-scala-2e5409a/workspaces/1784004560699402049-714664/sim-workspace/tmp/job_6/ALU.v",
       "sha256": "145bcd411c4181e26598430a0d7811cd2a1e3228cd8b85ad11ba10892831ce3a",
       "size": 4250
     },
     {
       "executable": false,
-      "path": "/tmp/spinal-store-forwarding-gate3-20260714/workspaces/1784002426271762725-710541/sim-workspace/tmp/job_6/ALUSimTop.v",
+      "path": "/tmp/spinal-forward-clean-scala-2e5409a/workspaces/1784004560699402049-714664/sim-workspace/tmp/job_6/ALUSimTop.v",
       "sha256": "4194027a38f322dc38ca9231432584e02f9a80ad006950d2ab55db6d1d4d5dda",
       "size": 1226
     },
     {
       "executable": false,
-      "path": "/tmp/spinal-store-forwarding-gate3-20260714/workspaces/1784002426271762725-710541/sim-workspace/writeback-commit-contract/WritebackStageSimTop/rtl/WritebackStage.v",
+      "path": "/tmp/spinal-forward-clean-scala-2e5409a/workspaces/1784004560699402049-714664/sim-workspace/writeback-commit-contract/WritebackStageSimTop/rtl/WritebackStage.v",
       "sha256": "cbc441bd189e69a7f6711604e88c30fb1308d30a362b99ad8e3df9a46ed1fdad",
       "size": 31496
     },
     {
       "executable": false,
-      "path": "/tmp/spinal-store-forwarding-gate3-20260714/workspaces/1784002426271762725-710541/sim-workspace/writeback-commit-contract/WritebackStageSimTop/rtl/WritebackStageSimTop.v",
+      "path": "/tmp/spinal-forward-clean-scala-2e5409a/workspaces/1784004560699402049-714664/sim-workspace/writeback-commit-contract/WritebackStageSimTop/rtl/WritebackStageSimTop.v",
       "sha256": "b670666250b509a1196b32875c9fd00576cbcf7bfec75bd460c7655fdc84fb1d",
       "size": 33576
     },
     {
       "executable": true,
-      "path": "/tmp/spinal-store-forwarding-gate3-20260714/workspaces/1784002426271762725-710541/sim-workspace/writeback-commit-contract/WritebackStageSimTop/verilator/VWritebackStageSimTop",
-      "sha256": "e99de942172e683dfe89eca1b87b1a890a1d46e19e2b7d3de2f4873f0c5d1548",
+      "path": "/tmp/spinal-forward-clean-scala-2e5409a/workspaces/1784004560699402049-714664/sim-workspace/writeback-commit-contract/WritebackStageSimTop/verilator/VWritebackStageSimTop",
+      "sha256": "6311258479da2ff70f6694a7138388c0835377eb2c4a87781728de88a3ae56ed",
       "size": 672384
     },
     {
       "executable": true,
-      "path": "/tmp/spinal-store-forwarding-gate3-20260714/workspaces/1784002426271762725-710541/sim-workspace/writeback-commit-contract/WritebackStageSimTop/verilator/verilator_9.so",
-      "sha256": "e99de942172e683dfe89eca1b87b1a890a1d46e19e2b7d3de2f4873f0c5d1548",
+      "path": "/tmp/spinal-forward-clean-scala-2e5409a/workspaces/1784004560699402049-714664/sim-workspace/writeback-commit-contract/WritebackStageSimTop/verilator/verilator_9.so",
+      "sha256": "6311258479da2ff70f6694a7138388c0835377eb2c4a87781728de88a3ae56ed",
       "size": 672384
     },
     {
       "executable": false,
-      "path": "/tmp/spinal-store-forwarding-gate3-20260714/workspaces/1784002426271762725-710541/sim-workspace/writeback-commit-contract/WritebackStageSimTop/verilatorScript.sh",
-      "sha256": "747a4f296df26756236bc690d8b9d7c73475df640d7668fe282b445a2f3f5093",
-      "size": 1058
+      "path": "/tmp/spinal-forward-clean-scala-2e5409a/workspaces/1784004560699402049-714664/sim-workspace/writeback-commit-contract/WritebackStageSimTop/verilatorScript.sh",
+      "sha256": "d2e2b162354cabec5a7da564c0a741a78fe4c9d1abd1766888d3766cbc06dd4a",
+      "size": 1050
     },
     {
       "executable": false,
-      "path": "/tmp/spinal-store-forwarding-gate3-20260714/workspaces/1784002426271762725-710541/sim-workspace/writeback-commit-contract/tmp/job_9/WritebackStage.v",
+      "path": "/tmp/spinal-forward-clean-scala-2e5409a/workspaces/1784004560699402049-714664/sim-workspace/writeback-commit-contract/tmp/job_9/WritebackStage.v",
       "sha256": "cbc441bd189e69a7f6711604e88c30fb1308d30a362b99ad8e3df9a46ed1fdad",
       "size": 31496
     },
     {
       "executable": false,
-      "path": "/tmp/spinal-store-forwarding-gate3-20260714/workspaces/1784002426271762725-710541/sim-workspace/writeback-commit-contract/tmp/job_9/WritebackStageSimTop.v",
+      "path": "/tmp/spinal-forward-clean-scala-2e5409a/workspaces/1784004560699402049-714664/sim-workspace/writeback-commit-contract/tmp/job_9/WritebackStageSimTop.v",
       "sha256": "b670666250b509a1196b32875c9fd00576cbcf7bfec75bd460c7655fdc84fb1d",
       "size": 33576
     }
@@ -1142,14 +1142,14 @@
       "missing_rtl_inputs": [],
       "parse_error": null,
       "passed": true,
-      "path": "/tmp/spinal-store-forwarding-gate3-20260714/workspaces/1784002426271762725-710541/sim-workspace/ALUSimTop/verilatorScript.sh",
+      "path": "/tmp/spinal-forward-clean-scala-2e5409a/workspaces/1784004560699402049-714664/sim-workspace/ALUSimTop/verilatorScript.sh",
       "prohibited_suppressions": [],
       "response_file_tokens": [],
       "scanned_rtl_inputs": [
-        "/tmp/spinal-store-forwarding-gate3-20260714/workspaces/1784002426271762725-710541/sim-workspace/tmp/job_6/ALU.v",
-        "/tmp/spinal-store-forwarding-gate3-20260714/workspaces/1784002426271762725-710541/sim-workspace/tmp/job_6/ALUSimTop.v"
+        "/tmp/spinal-forward-clean-scala-2e5409a/workspaces/1784004560699402049-714664/sim-workspace/tmp/job_6/ALU.v",
+        "/tmp/spinal-forward-clean-scala-2e5409a/workspaces/1784004560699402049-714664/sim-workspace/tmp/job_6/ALUSimTop.v"
       ],
-      "sha256": "a2aa33fb716aff934a6eee03736d4ed89aa1d6b912a9935787cc961de0bf0737",
+      "sha256": "37fd734c5dd541b03ff94520a2425a40a1bb6b6749ff64ba890f8768e097804b",
       "unresolved_include_directives": [],
       "wall_enabled": true
     },
@@ -1175,14 +1175,14 @@
       "missing_rtl_inputs": [],
       "parse_error": null,
       "passed": true,
-      "path": "/tmp/spinal-store-forwarding-gate3-20260714/workspaces/1784002426271762725-710541/sim-workspace/decode-store-forwarding/DecodeForwardingSimTop/verilatorScript.sh",
+      "path": "/tmp/spinal-forward-clean-scala-2e5409a/workspaces/1784004560699402049-714664/sim-workspace/decode-store-forwarding/DecodeForwardingSimTop/verilatorScript.sh",
       "prohibited_suppressions": [],
       "response_file_tokens": [],
       "scanned_rtl_inputs": [
-        "/tmp/spinal-store-forwarding-gate3-20260714/workspaces/1784002426271762725-710541/sim-workspace/decode-store-forwarding/tmp/job_3/DecodeForwardingSimTop.v",
-        "/tmp/spinal-store-forwarding-gate3-20260714/workspaces/1784002426271762725-710541/sim-workspace/decode-store-forwarding/tmp/job_3/DecodeStage.v"
+        "/tmp/spinal-forward-clean-scala-2e5409a/workspaces/1784004560699402049-714664/sim-workspace/decode-store-forwarding/tmp/job_3/DecodeForwardingSimTop.v",
+        "/tmp/spinal-forward-clean-scala-2e5409a/workspaces/1784004560699402049-714664/sim-workspace/decode-store-forwarding/tmp/job_3/DecodeStage.v"
       ],
-      "sha256": "9b3b2c520d4114e439f8b116b0f5a3a540d03186eb35ecba3f9325c25a2de70f",
+      "sha256": "44e12c96299ec255bdf302656d5c444ac1d64c53856b59fa1b09c2a159e00b41",
       "unresolved_include_directives": [],
       "wall_enabled": true
     },
@@ -1207,14 +1207,14 @@
       "missing_rtl_inputs": [],
       "parse_error": null,
       "passed": true,
-      "path": "/tmp/spinal-store-forwarding-gate3-20260714/workspaces/1784002426271762725-710541/sim-workspace/openla500-alu-directed/OpenLa500AluSimTop/verilatorScript.sh",
+      "path": "/tmp/spinal-forward-clean-scala-2e5409a/workspaces/1784004560699402049-714664/sim-workspace/openla500-alu-directed/OpenLa500AluSimTop/verilatorScript.sh",
       "prohibited_suppressions": [],
       "response_file_tokens": [],
       "scanned_rtl_inputs": [
-        "/tmp/spinal-store-forwarding-gate3-20260714/workspaces/1784002426271762725-710541/sim-workspace/openla500-alu-directed/tmp/job_7/OpenLa500Alu.v",
-        "/tmp/spinal-store-forwarding-gate3-20260714/workspaces/1784002426271762725-710541/sim-workspace/openla500-alu-directed/tmp/job_7/OpenLa500AluSimTop.v"
+        "/tmp/spinal-forward-clean-scala-2e5409a/workspaces/1784004560699402049-714664/sim-workspace/openla500-alu-directed/tmp/job_7/OpenLa500Alu.v",
+        "/tmp/spinal-forward-clean-scala-2e5409a/workspaces/1784004560699402049-714664/sim-workspace/openla500-alu-directed/tmp/job_7/OpenLa500AluSimTop.v"
       ],
-      "sha256": "7ef3d75269775a136d0e9ac2ab468655dbda962166e7cf9eff2843d67885fd74",
+      "sha256": "de321f9f466c09d351e7d93e72f1c49548a8d0d3b9887ef2abc2648feabe9b71",
       "unresolved_include_directives": [],
       "wall_enabled": true
     },
@@ -1239,14 +1239,14 @@
       "missing_rtl_inputs": [],
       "parse_error": null,
       "passed": true,
-      "path": "/tmp/spinal-store-forwarding-gate3-20260714/workspaces/1784002426271762725-710541/sim-workspace/openla500-alu-random/OpenLa500AluSimTop/verilatorScript.sh",
+      "path": "/tmp/spinal-forward-clean-scala-2e5409a/workspaces/1784004560699402049-714664/sim-workspace/openla500-alu-random/OpenLa500AluSimTop/verilatorScript.sh",
       "prohibited_suppressions": [],
       "response_file_tokens": [],
       "scanned_rtl_inputs": [
-        "/tmp/spinal-store-forwarding-gate3-20260714/workspaces/1784002426271762725-710541/sim-workspace/openla500-alu-random/tmp/job_8/OpenLa500Alu.v",
-        "/tmp/spinal-store-forwarding-gate3-20260714/workspaces/1784002426271762725-710541/sim-workspace/openla500-alu-random/tmp/job_8/OpenLa500AluSimTop.v"
+        "/tmp/spinal-forward-clean-scala-2e5409a/workspaces/1784004560699402049-714664/sim-workspace/openla500-alu-random/tmp/job_8/OpenLa500Alu.v",
+        "/tmp/spinal-forward-clean-scala-2e5409a/workspaces/1784004560699402049-714664/sim-workspace/openla500-alu-random/tmp/job_8/OpenLa500AluSimTop.v"
       ],
-      "sha256": "6d247ee8665d428deed4e7b58d261cf976c10fa6c66d0165fb79a1c27d81f4f7",
+      "sha256": "5f7c22cd1aede7b1f59be6e1d498f400b96bc48c65b329278d0fa7719ab7660c",
       "unresolved_include_directives": [],
       "wall_enabled": true
     },
@@ -1271,14 +1271,14 @@
       "missing_rtl_inputs": [],
       "parse_error": null,
       "passed": true,
-      "path": "/tmp/spinal-store-forwarding-gate3-20260714/workspaces/1784002426271762725-710541/sim-workspace/openla500-mul-cycle-contract/OpenLa500MulSimTop/verilatorScript.sh",
+      "path": "/tmp/spinal-forward-clean-scala-2e5409a/workspaces/1784004560699402049-714664/sim-workspace/openla500-mul-cycle-contract/OpenLa500MulSimTop/verilatorScript.sh",
       "prohibited_suppressions": [],
       "response_file_tokens": [],
       "scanned_rtl_inputs": [
-        "/tmp/spinal-store-forwarding-gate3-20260714/workspaces/1784002426271762725-710541/sim-workspace/openla500-mul-cycle-contract/tmp/job_5/OpenLa500Mul.v",
-        "/tmp/spinal-store-forwarding-gate3-20260714/workspaces/1784002426271762725-710541/sim-workspace/openla500-mul-cycle-contract/tmp/job_5/OpenLa500MulSimTop.v"
+        "/tmp/spinal-forward-clean-scala-2e5409a/workspaces/1784004560699402049-714664/sim-workspace/openla500-mul-cycle-contract/tmp/job_5/OpenLa500Mul.v",
+        "/tmp/spinal-forward-clean-scala-2e5409a/workspaces/1784004560699402049-714664/sim-workspace/openla500-mul-cycle-contract/tmp/job_5/OpenLa500MulSimTop.v"
       ],
-      "sha256": "6fc05ad408f6e8481cdd4448996343b8ce4fdb043e026bd10a42417b91470986",
+      "sha256": "b41e45f3cee06bfe86135a1376298f5cf323316f74f8d00b3ea946645e37a606",
       "unresolved_include_directives": [],
       "wall_enabled": true
     },
@@ -1303,13 +1303,13 @@
       "missing_rtl_inputs": [],
       "parse_error": null,
       "passed": true,
-      "path": "/tmp/spinal-store-forwarding-gate3-20260714/workspaces/1784002426271762725-710541/sim-workspace/pipeline-ctrl/PipelineCtrlProbe/verilatorScript.sh",
+      "path": "/tmp/spinal-forward-clean-scala-2e5409a/workspaces/1784004560699402049-714664/sim-workspace/pipeline-ctrl/PipelineCtrlProbe/verilatorScript.sh",
       "prohibited_suppressions": [],
       "response_file_tokens": [],
       "scanned_rtl_inputs": [
-        "/tmp/spinal-store-forwarding-gate3-20260714/workspaces/1784002426271762725-710541/sim-workspace/pipeline-ctrl/tmp/job_1/PipelineCtrlProbe.v"
+        "/tmp/spinal-forward-clean-scala-2e5409a/workspaces/1784004560699402049-714664/sim-workspace/pipeline-ctrl/tmp/job_1/PipelineCtrlProbe.v"
       ],
-      "sha256": "15d8b58fb50a97363e59dacd8c65b771d56483f303366736e5f58b885fdd07aa",
+      "sha256": "108dd8931c010d6284bd538a8fda2922c36fa19c1fe4f1a22cf1812be7410341",
       "unresolved_include_directives": [],
       "wall_enabled": true
     },
@@ -1334,13 +1334,13 @@
       "missing_rtl_inputs": [],
       "parse_error": null,
       "passed": true,
-      "path": "/tmp/spinal-store-forwarding-gate3-20260714/workspaces/1784002426271762725-710541/sim-workspace/pipeline-payloads/PipelinePayloadRoundTripTop/verilatorScript.sh",
+      "path": "/tmp/spinal-forward-clean-scala-2e5409a/workspaces/1784004560699402049-714664/sim-workspace/pipeline-payloads/PipelinePayloadRoundTripTop/verilatorScript.sh",
       "prohibited_suppressions": [],
       "response_file_tokens": [],
       "scanned_rtl_inputs": [
-        "/tmp/spinal-store-forwarding-gate3-20260714/workspaces/1784002426271762725-710541/sim-workspace/pipeline-payloads/tmp/job_4/PipelinePayloadRoundTripTop.v"
+        "/tmp/spinal-forward-clean-scala-2e5409a/workspaces/1784004560699402049-714664/sim-workspace/pipeline-payloads/tmp/job_4/PipelinePayloadRoundTripTop.v"
       ],
-      "sha256": "e72bdc0adeadbe62e8a857ccad229fa7b734398eb843516a4378273d886d37fb",
+      "sha256": "0de5a199a6b071dc3568f70dde809f1757bf8c59ee4a727f5f4502326f856d72",
       "unresolved_include_directives": [],
       "wall_enabled": true
     },
@@ -1365,14 +1365,14 @@
       "missing_rtl_inputs": [],
       "parse_error": null,
       "passed": true,
-      "path": "/tmp/spinal-store-forwarding-gate3-20260714/workspaces/1784002426271762725-710541/sim-workspace/regfile/OpenLa500RegFileSimTop/verilatorScript.sh",
+      "path": "/tmp/spinal-forward-clean-scala-2e5409a/workspaces/1784004560699402049-714664/sim-workspace/regfile/OpenLa500RegFileSimTop/verilatorScript.sh",
       "prohibited_suppressions": [],
       "response_file_tokens": [],
       "scanned_rtl_inputs": [
-        "/tmp/spinal-store-forwarding-gate3-20260714/workspaces/1784002426271762725-710541/sim-workspace/regfile/tmp/job_2/OpenLa500RegFileSimTop.v",
-        "/tmp/spinal-store-forwarding-gate3-20260714/workspaces/1784002426271762725-710541/sim-workspace/regfile/tmp/job_2/regfile.v"
+        "/tmp/spinal-forward-clean-scala-2e5409a/workspaces/1784004560699402049-714664/sim-workspace/regfile/tmp/job_2/OpenLa500RegFileSimTop.v",
+        "/tmp/spinal-forward-clean-scala-2e5409a/workspaces/1784004560699402049-714664/sim-workspace/regfile/tmp/job_2/regfile.v"
       ],
-      "sha256": "04851acf9f32fc5776d626c147e09908a0a628d7773592b12e1857b98ab497e9",
+      "sha256": "a6865fb236f2b37976eb0159e6774da1d1ec574428a385d31efb5918d02ff6a6",
       "unresolved_include_directives": [],
       "wall_enabled": true
     },
@@ -1398,14 +1398,14 @@
       "missing_rtl_inputs": [],
       "parse_error": null,
       "passed": true,
-      "path": "/tmp/spinal-store-forwarding-gate3-20260714/workspaces/1784002426271762725-710541/sim-workspace/writeback-commit-contract/WritebackStageSimTop/verilatorScript.sh",
+      "path": "/tmp/spinal-forward-clean-scala-2e5409a/workspaces/1784004560699402049-714664/sim-workspace/writeback-commit-contract/WritebackStageSimTop/verilatorScript.sh",
       "prohibited_suppressions": [],
       "response_file_tokens": [],
       "scanned_rtl_inputs": [
-        "/tmp/spinal-store-forwarding-gate3-20260714/workspaces/1784002426271762725-710541/sim-workspace/writeback-commit-contract/tmp/job_9/WritebackStage.v",
-        "/tmp/spinal-store-forwarding-gate3-20260714/workspaces/1784002426271762725-710541/sim-workspace/writeback-commit-contract/tmp/job_9/WritebackStageSimTop.v"
+        "/tmp/spinal-forward-clean-scala-2e5409a/workspaces/1784004560699402049-714664/sim-workspace/writeback-commit-contract/tmp/job_9/WritebackStage.v",
+        "/tmp/spinal-forward-clean-scala-2e5409a/workspaces/1784004560699402049-714664/sim-workspace/writeback-commit-contract/tmp/job_9/WritebackStageSimTop.v"
       ],
-      "sha256": "747a4f296df26756236bc690d8b9d7c73475df640d7668fe282b445a2f3f5093",
+      "sha256": "d2e2b162354cabec5a7da564c0a741a78fe4c9d1abd1766888d3766cbc06dd4a",
       "unresolved_include_directives": [],
       "wall_enabled": true
     }
@@ -2168,7 +2168,7 @@
     {
       "argv": [
         "/usr/lib/jvm/java-17-openjdk-amd64/bin/java",
-        "-Dsbt.global.base=/tmp/spinal-store-forwarding-gate3-20260714/workspaces/1784002426271762725-710541/sbt-global",
+        "-Dsbt.global.base=/tmp/spinal-forward-clean-scala-2e5409a/workspaces/1784004560699402049-714664/sbt-global",
         "-Dsbt.boot.directory=/opt/chiplab-tools/root/scala-cache-sbt1.10.11-spinal1.14.2/sbt-boot",
         "-Dsbt.ivy.home=/opt/chiplab-tools/root/scala-cache-sbt1.10.11-spinal1.14.2/ivy2",
         "-Dsbt.offline=true",
@@ -2179,12 +2179,12 @@
         "scalafmtCheckAll"
       ],
       "compiled_source_count": null,
-      "elapsed_seconds": 10.517,
+      "elapsed_seconds": 12.844,
       "expected_source_count": null,
       "forbidden_warnings": [],
       "id": "scalafmt",
-      "log": "/tmp/spinal-store-forwarding-gate3-20260714/scalafmt.log",
-      "log_sha256": "7685baee8655d3b9779646cf56bb25ce4f9db38aa894342d11677a3c36402178",
+      "log": "/tmp/spinal-forward-clean-scala-2e5409a/scalafmt.log",
+      "log_sha256": "a0f1524e2b44171a8bc7c830d9ba9bcd79c94899c0930ee6c5c7c15c48026fa5",
       "passed": true,
       "returncode": 0,
       "sbt_task": "scalafmtCheckAll",
@@ -2194,7 +2194,7 @@
     {
       "argv": [
         "/usr/lib/jvm/java-17-openjdk-amd64/bin/java",
-        "-Dsbt.global.base=/tmp/spinal-store-forwarding-gate3-20260714/workspaces/1784002426271762725-710541/sbt-global",
+        "-Dsbt.global.base=/tmp/spinal-forward-clean-scala-2e5409a/workspaces/1784004560699402049-714664/sbt-global",
         "-Dsbt.boot.directory=/opt/chiplab-tools/root/scala-cache-sbt1.10.11-spinal1.14.2/sbt-boot",
         "-Dsbt.ivy.home=/opt/chiplab-tools/root/scala-cache-sbt1.10.11-spinal1.14.2/ivy2",
         "-Dsbt.offline=true",
@@ -2205,12 +2205,12 @@
         "Compile / compile"
       ],
       "compiled_source_count": 55,
-      "elapsed_seconds": 18.192,
+      "elapsed_seconds": 22.527,
       "expected_source_count": 55,
       "forbidden_warnings": [],
       "id": "compile",
-      "log": "/tmp/spinal-store-forwarding-gate3-20260714/compile.log",
-      "log_sha256": "db8ef8b845ce79103464d733aeba7f04fdbf7f79268dd61aa3a3f607c8d1cd5b",
+      "log": "/tmp/spinal-forward-clean-scala-2e5409a/compile.log",
+      "log_sha256": "7e062abe277c186fffc9cf7f26aa8795238d1ac254d2e56e7bdd4c9f21654d22",
       "passed": true,
       "returncode": 0,
       "sbt_task": "Compile / compile",
@@ -2220,7 +2220,7 @@
     {
       "argv": [
         "/usr/lib/jvm/java-17-openjdk-amd64/bin/java",
-        "-Dsbt.global.base=/tmp/spinal-store-forwarding-gate3-20260714/workspaces/1784002426271762725-710541/sbt-global",
+        "-Dsbt.global.base=/tmp/spinal-forward-clean-scala-2e5409a/workspaces/1784004560699402049-714664/sbt-global",
         "-Dsbt.boot.directory=/opt/chiplab-tools/root/scala-cache-sbt1.10.11-spinal1.14.2/sbt-boot",
         "-Dsbt.ivy.home=/opt/chiplab-tools/root/scala-cache-sbt1.10.11-spinal1.14.2/ivy2",
         "-Dsbt.offline=true",
@@ -2231,12 +2231,12 @@
         "Test / compile"
       ],
       "compiled_source_count": 15,
-      "elapsed_seconds": 9.729,
+      "elapsed_seconds": 14.441,
       "expected_source_count": 15,
       "forbidden_warnings": [],
       "id": "test-compile",
-      "log": "/tmp/spinal-store-forwarding-gate3-20260714/test-compile.log",
-      "log_sha256": "1252ca8bc6808811dc706d7d243fed85679887a91220f371842cc75675ad7d91",
+      "log": "/tmp/spinal-forward-clean-scala-2e5409a/test-compile.log",
+      "log_sha256": "e4d0a6ae7d8ee022257037533ba68e6fddb253bf8fe136643021981f1dd14399",
       "passed": true,
       "returncode": 0,
       "sbt_task": "Test / compile",
@@ -2246,7 +2246,7 @@
     {
       "argv": [
         "/usr/lib/jvm/java-17-openjdk-amd64/bin/java",
-        "-Dsbt.global.base=/tmp/spinal-store-forwarding-gate3-20260714/workspaces/1784002426271762725-710541/sbt-global",
+        "-Dsbt.global.base=/tmp/spinal-forward-clean-scala-2e5409a/workspaces/1784004560699402049-714664/sbt-global",
         "-Dsbt.boot.directory=/opt/chiplab-tools/root/scala-cache-sbt1.10.11-spinal1.14.2/sbt-boot",
         "-Dsbt.ivy.home=/opt/chiplab-tools/root/scala-cache-sbt1.10.11-spinal1.14.2/ivy2",
         "-Dsbt.offline=true",
@@ -2257,12 +2257,12 @@
         "Test / test"
       ],
       "compiled_source_count": null,
-      "elapsed_seconds": 22.218,
+      "elapsed_seconds": 24.897,
       "expected_source_count": null,
       "forbidden_warnings": [],
       "id": "test",
-      "log": "/tmp/spinal-store-forwarding-gate3-20260714/test.log",
-      "log_sha256": "d78079ff0675449f877eba9a8546e576375dc560d487934e5ef6b9db5388fbfe",
+      "log": "/tmp/spinal-forward-clean-scala-2e5409a/test.log",
+      "log_sha256": "00ce0b8b41ac0bf34d7d9f25d5058a36f19b955e5bd01ebaf1b5432f07aecab4",
       "passed": true,
       "returncode": 0,
       "sbt_task": "Test / test",
@@ -2280,130 +2280,130 @@
   ],
   "test_runtime_isolation": {
     "jnidispatch_paths": [
-      "/tmp/nsg-422db21a9f4b/jna/jna3302676748177285175.tmp",
-      "/tmp/nsg-422db21a9f4b/jna/jna3302676748177285175.tmp",
-      "/tmp/nsg-422db21a9f4b/jna/jna3302676748177285175.tmp",
-      "/tmp/nsg-422db21a9f4b/jna/jna3302676748177285175.tmp",
-      "/tmp/nsg-422db21a9f4b/jna/jna3302676748177285175.tmp",
-      "/tmp/nsg-422db21a9f4b/jna/jna3302676748177285175.tmp",
-      "/tmp/nsg-422db21a9f4b/jna/jna3302676748177285175.tmp",
-      "/tmp/nsg-422db21a9f4b/jna/jna3302676748177285175.tmp",
-      "/tmp/nsg-422db21a9f4b/jna/jna3302676748177285175.tmp",
-      "/tmp/nsg-422db21a9f4b/jna/jna3302676748177285175.tmp",
-      "/tmp/nsg-422db21a9f4b/jna/jna3302676748177285175.tmp",
-      "/tmp/nsg-422db21a9f4b/jna/jna3302676748177285175.tmp",
-      "/tmp/nsg-422db21a9f4b/jna/jna3302676748177285175.tmp",
-      "/tmp/nsg-422db21a9f4b/jna/jna3302676748177285175.tmp",
-      "/tmp/nsg-422db21a9f4b/jna/jna3302676748177285175.tmp"
+      "/tmp/nsg-7609214191de/jna/jna16293552169908585166.tmp",
+      "/tmp/nsg-7609214191de/jna/jna16293552169908585166.tmp",
+      "/tmp/nsg-7609214191de/jna/jna16293552169908585166.tmp",
+      "/tmp/nsg-7609214191de/jna/jna16293552169908585166.tmp",
+      "/tmp/nsg-7609214191de/jna/jna16293552169908585166.tmp",
+      "/tmp/nsg-7609214191de/jna/jna16293552169908585166.tmp",
+      "/tmp/nsg-7609214191de/jna/jna16293552169908585166.tmp",
+      "/tmp/nsg-7609214191de/jna/jna16293552169908585166.tmp",
+      "/tmp/nsg-7609214191de/jna/jna16293552169908585166.tmp",
+      "/tmp/nsg-7609214191de/jna/jna16293552169908585166.tmp",
+      "/tmp/nsg-7609214191de/jna/jna16293552169908585166.tmp",
+      "/tmp/nsg-7609214191de/jna/jna16293552169908585166.tmp",
+      "/tmp/nsg-7609214191de/jna/jna16293552169908585166.tmp",
+      "/tmp/nsg-7609214191de/jna/jna16293552169908585166.tmp",
+      "/tmp/nsg-7609214191de/jna/jna16293552169908585166.tmp"
     ],
     "jnidispatch_paths_within_jna_tmpdir": true,
     "passed": true,
     "report_count": 15,
     "reports": [
       {
-        "jnidispatch_path": "/tmp/nsg-422db21a9f4b/jna/jna3302676748177285175.tmp",
+        "jnidispatch_path": "/tmp/nsg-7609214191de/jna/jna16293552169908585166.tmp",
         "passed": true,
-        "path": "/tmp/spinal-store-forwarding-gate3-20260714/workspaces/1784002426271762725-710541/spinal/target/test-reports/TEST-openla500.ALUSpec.xml",
+        "path": "/tmp/spinal-forward-clean-scala-2e5409a/workspaces/1784004560699402049-714664/spinal/target/test-reports/TEST-openla500.ALUSpec.xml",
         "property_mismatches": {},
-        "sha256": "06b4a4d2b52cb3b46e732da6b1780533e8236b2b1bfd3f823916cfa04dfd8b20"
+        "sha256": "19d9058b2c88b98fa9dfd012a9cf5b668f16cc9a8bf397f6d1425ffe1d87fe31"
       },
       {
-        "jnidispatch_path": "/tmp/nsg-422db21a9f4b/jna/jna3302676748177285175.tmp",
+        "jnidispatch_path": "/tmp/nsg-7609214191de/jna/jna16293552169908585166.tmp",
         "passed": true,
-        "path": "/tmp/spinal-store-forwarding-gate3-20260714/workspaces/1784002426271762725-710541/spinal/target/test-reports/TEST-openla500.compat.Axi3CompatSpec.xml",
+        "path": "/tmp/spinal-forward-clean-scala-2e5409a/workspaces/1784004560699402049-714664/spinal/target/test-reports/TEST-openla500.compat.Axi3CompatSpec.xml",
         "property_mismatches": {},
-        "sha256": "4ded33dda8b49e476b8694e97c1fb4b1242e9acd594e83067e0cb8aa284da8ff"
+        "sha256": "fca9677df23ad035256aeadd1500b6e77f417c2a7c4edb41d8357648404acebc"
       },
       {
-        "jnidispatch_path": "/tmp/nsg-422db21a9f4b/jna/jna3302676748177285175.tmp",
+        "jnidispatch_path": "/tmp/nsg-7609214191de/jna/jna16293552169908585166.tmp",
         "passed": true,
-        "path": "/tmp/spinal-store-forwarding-gate3-20260714/workspaces/1784002426271762725-710541/spinal/target/test-reports/TEST-openla500.config.CoreConfigSpec.xml",
+        "path": "/tmp/spinal-forward-clean-scala-2e5409a/workspaces/1784004560699402049-714664/spinal/target/test-reports/TEST-openla500.config.CoreConfigSpec.xml",
         "property_mismatches": {},
-        "sha256": "70190dc4fa970af82c3ca0a212102a59cc1720a10e3c69917c88658e67f41e82"
+        "sha256": "a59b00f5d46c83e1ff80d4f8647471c9e4a36fa5228f05d92287756f7f49808f"
       },
       {
-        "jnidispatch_path": "/tmp/nsg-422db21a9f4b/jna/jna3302676748177285175.tmp",
+        "jnidispatch_path": "/tmp/nsg-7609214191de/jna/jna16293552169908585166.tmp",
         "passed": true,
-        "path": "/tmp/spinal-store-forwarding-gate3-20260714/workspaces/1784002426271762725-710541/spinal/target/test-reports/TEST-openla500.config.CoreContractsElaborationSpec.xml",
+        "path": "/tmp/spinal-forward-clean-scala-2e5409a/workspaces/1784004560699402049-714664/spinal/target/test-reports/TEST-openla500.config.CoreContractsElaborationSpec.xml",
         "property_mismatches": {},
-        "sha256": "6f8645f0e6cfcc55714b58947a22e7cd8d46a7e7346db79c8a4f716e214e211b"
+        "sha256": "704c987cdf9809deada6d002101627f90446f486a0597363f9f3708fcdb2bf66"
       },
       {
-        "jnidispatch_path": "/tmp/nsg-422db21a9f4b/jna/jna3302676748177285175.tmp",
+        "jnidispatch_path": "/tmp/nsg-7609214191de/jna/jna16293552169908585166.tmp",
         "passed": true,
-        "path": "/tmp/spinal-store-forwarding-gate3-20260714/workspaces/1784002426271762725-710541/spinal/target/test-reports/TEST-openla500.execute.OpenLa500AluSpec.xml",
+        "path": "/tmp/spinal-forward-clean-scala-2e5409a/workspaces/1784004560699402049-714664/spinal/target/test-reports/TEST-openla500.execute.OpenLa500AluSpec.xml",
         "property_mismatches": {},
-        "sha256": "ceb2264f76f3787eeab6c3fa39ba2c7d84bbc7c86a52e8bde06f440d3337fd7f"
+        "sha256": "3e6180b8d691647ef9fe9ae38db72eb4e449603086eb7a9de10dc0b59c6f82e1"
       },
       {
-        "jnidispatch_path": "/tmp/nsg-422db21a9f4b/jna/jna3302676748177285175.tmp",
+        "jnidispatch_path": "/tmp/nsg-7609214191de/jna/jna16293552169908585166.tmp",
         "passed": true,
-        "path": "/tmp/spinal-store-forwarding-gate3-20260714/workspaces/1784002426271762725-710541/spinal/target/test-reports/TEST-openla500.execute.OpenLa500MulSpec.xml",
+        "path": "/tmp/spinal-forward-clean-scala-2e5409a/workspaces/1784004560699402049-714664/spinal/target/test-reports/TEST-openla500.execute.OpenLa500MulSpec.xml",
         "property_mismatches": {},
-        "sha256": "a4deda875821207689743f78d50b826ae0ec531a5b7c36c447018f6647d41246"
+        "sha256": "f20c24d962a038a4319f06078bd3b792d3aa8228e0d942d91bf1f7ab418e2445"
       },
       {
-        "jnidispatch_path": "/tmp/nsg-422db21a9f4b/jna/jna3302676748177285175.tmp",
+        "jnidispatch_path": "/tmp/nsg-7609214191de/jna/jna16293552169908585166.tmp",
         "passed": true,
-        "path": "/tmp/spinal-store-forwarding-gate3-20260714/workspaces/1784002426271762725-710541/spinal/target/test-reports/TEST-openla500.memory.MemoryContractsSpec.xml",
+        "path": "/tmp/spinal-forward-clean-scala-2e5409a/workspaces/1784004560699402049-714664/spinal/target/test-reports/TEST-openla500.memory.MemoryContractsSpec.xml",
         "property_mismatches": {},
-        "sha256": "554d3e70e704eb9107758300ae7859dce09aeced43063ba58e146ab05229abd4"
+        "sha256": "76f65d86c74a5722697c99ca22445452a816ce4445b10cf92490f5a2cdd392e9"
       },
       {
-        "jnidispatch_path": "/tmp/nsg-422db21a9f4b/jna/jna3302676748177285175.tmp",
+        "jnidispatch_path": "/tmp/nsg-7609214191de/jna/jna16293552169908585166.tmp",
         "passed": true,
-        "path": "/tmp/spinal-store-forwarding-gate3-20260714/workspaces/1784002426271762725-710541/spinal/target/test-reports/TEST-openla500.memory.OpenLa500ICacheSpec.xml",
+        "path": "/tmp/spinal-forward-clean-scala-2e5409a/workspaces/1784004560699402049-714664/spinal/target/test-reports/TEST-openla500.memory.OpenLa500ICacheSpec.xml",
         "property_mismatches": {},
-        "sha256": "8891d4670aa54906097696d380e45acf01ce2ea830862268677734a2272752e1"
+        "sha256": "95f3ec7a307252c0e91c6869f5ade66e2dab039a4fe1b61cc97bfbdc8765bb37"
       },
       {
-        "jnidispatch_path": "/tmp/nsg-422db21a9f4b/jna/jna3302676748177285175.tmp",
+        "jnidispatch_path": "/tmp/nsg-7609214191de/jna/jna16293552169908585166.tmp",
         "passed": true,
-        "path": "/tmp/spinal-store-forwarding-gate3-20260714/workspaces/1784002426271762725-710541/spinal/target/test-reports/TEST-openla500.observe.ChiplabDiffTestAdapterSpec.xml",
+        "path": "/tmp/spinal-forward-clean-scala-2e5409a/workspaces/1784004560699402049-714664/spinal/target/test-reports/TEST-openla500.observe.ChiplabDiffTestAdapterSpec.xml",
         "property_mismatches": {},
-        "sha256": "35291749122970409e728a6a4cb50ed27c8c2dddb2430a3e03efffe0fde23b3e"
+        "sha256": "b335b916dfa706004f2f35e16bd98346218c0e74324e84937c93fc7598522e32"
       },
       {
-        "jnidispatch_path": "/tmp/nsg-422db21a9f4b/jna/jna3302676748177285175.tmp",
+        "jnidispatch_path": "/tmp/nsg-7609214191de/jna/jna16293552169908585166.tmp",
         "passed": true,
-        "path": "/tmp/spinal-store-forwarding-gate3-20260714/workspaces/1784002426271762725-710541/spinal/target/test-reports/TEST-openla500.observe.CommitContractsSpec.xml",
+        "path": "/tmp/spinal-forward-clean-scala-2e5409a/workspaces/1784004560699402049-714664/spinal/target/test-reports/TEST-openla500.observe.CommitContractsSpec.xml",
         "property_mismatches": {},
-        "sha256": "9779103428cd73caa2a8bfa4f74680352df60acf66e6e4775b99a1efb075e541"
+        "sha256": "6eb8f62d7743874a9952e985dc136a54662e599d1da0efea5bd5f02dc0cc432d"
       },
       {
-        "jnidispatch_path": "/tmp/nsg-422db21a9f4b/jna/jna3302676748177285175.tmp",
+        "jnidispatch_path": "/tmp/nsg-7609214191de/jna/jna16293552169908585166.tmp",
         "passed": true,
-        "path": "/tmp/spinal-store-forwarding-gate3-20260714/workspaces/1784002426271762725-710541/spinal/target/test-reports/TEST-openla500.pipeline.DecodeForwardingSpec.xml",
+        "path": "/tmp/spinal-forward-clean-scala-2e5409a/workspaces/1784004560699402049-714664/spinal/target/test-reports/TEST-openla500.pipeline.DecodeForwardingSpec.xml",
         "property_mismatches": {},
-        "sha256": "262eb4b637a3b1bd83977ccbcb3965251fd719642c82008115918054d23bfac2"
+        "sha256": "615117a56caa0b8af894f71419f5994fdcd65d5fa5597b161b720fc21b8aa052"
       },
       {
-        "jnidispatch_path": "/tmp/nsg-422db21a9f4b/jna/jna3302676748177285175.tmp",
+        "jnidispatch_path": "/tmp/nsg-7609214191de/jna/jna16293552169908585166.tmp",
         "passed": true,
-        "path": "/tmp/spinal-store-forwarding-gate3-20260714/workspaces/1784002426271762725-710541/spinal/target/test-reports/TEST-openla500.pipeline.OpenLa500RegFileSpec.xml",
+        "path": "/tmp/spinal-forward-clean-scala-2e5409a/workspaces/1784004560699402049-714664/spinal/target/test-reports/TEST-openla500.pipeline.OpenLa500RegFileSpec.xml",
         "property_mismatches": {},
-        "sha256": "ca0876b9f391cb3775a13f6c9d9b5cc17add128c0e9d42bfdaa2885baeb07cc2"
+        "sha256": "e01104093f646c8bd0b20193308b24437ad53314c0cc9ccdb056238750ecb724"
       },
       {
-        "jnidispatch_path": "/tmp/nsg-422db21a9f4b/jna/jna3302676748177285175.tmp",
+        "jnidispatch_path": "/tmp/nsg-7609214191de/jna/jna16293552169908585166.tmp",
         "passed": true,
-        "path": "/tmp/spinal-store-forwarding-gate3-20260714/workspaces/1784002426271762725-710541/spinal/target/test-reports/TEST-openla500.pipeline.PipelineCtrlSpec.xml",
+        "path": "/tmp/spinal-forward-clean-scala-2e5409a/workspaces/1784004560699402049-714664/spinal/target/test-reports/TEST-openla500.pipeline.PipelineCtrlSpec.xml",
         "property_mismatches": {},
-        "sha256": "62ef4f4b6115f7ffbad4f2d1f5a48ed060caa64b34dc958dbb21c1ef3e3740ec"
+        "sha256": "36da7f3df2ac6cb88910c85fa71b793fe87d6d3469ce63f796d2ebf8229d8005"
       },
       {
-        "jnidispatch_path": "/tmp/nsg-422db21a9f4b/jna/jna3302676748177285175.tmp",
+        "jnidispatch_path": "/tmp/nsg-7609214191de/jna/jna16293552169908585166.tmp",
         "passed": true,
-        "path": "/tmp/spinal-store-forwarding-gate3-20260714/workspaces/1784002426271762725-710541/spinal/target/test-reports/TEST-openla500.pipeline.PipelinePayloadsSpec.xml",
+        "path": "/tmp/spinal-forward-clean-scala-2e5409a/workspaces/1784004560699402049-714664/spinal/target/test-reports/TEST-openla500.pipeline.PipelinePayloadsSpec.xml",
         "property_mismatches": {},
-        "sha256": "499a90938c27201c27c8097e6ed9da1dfc21bd5f7216f8d0d625e931dc0018f9"
+        "sha256": "632d5890b61107a23d7a5443ba53768fc6ba81843383b661c2f80d746599d656"
       },
       {
-        "jnidispatch_path": "/tmp/nsg-422db21a9f4b/jna/jna3302676748177285175.tmp",
+        "jnidispatch_path": "/tmp/nsg-7609214191de/jna/jna16293552169908585166.tmp",
         "passed": true,
-        "path": "/tmp/spinal-store-forwarding-gate3-20260714/workspaces/1784002426271762725-710541/spinal/target/test-reports/TEST-openla500.pipeline.WritebackStageSpec.xml",
+        "path": "/tmp/spinal-forward-clean-scala-2e5409a/workspaces/1784004560699402049-714664/spinal/target/test-reports/TEST-openla500.pipeline.WritebackStageSpec.xml",
         "property_mismatches": {},
-        "sha256": "44b078fdb2019c1c10da20d714e845815469d62193916a1b50d8b9012be26fea"
+        "sha256": "2908637415f268b98ad114b3a126493b2a35e788fb577ac7cd6cb8c858aaa8f2"
       }
     ]
   },
@@ -2412,32 +2412,32 @@
     "dependency_artifact_count": 426,
     "dependency_artifacts_sha256": "f84701a4773644e383c0c658a264d00f04fcbf5e8d03c358af56569a17eb3a35",
     "dependency_cache_root": "/opt/chiplab-tools/root/scala-cache-sbt1.10.11-spinal1.14.2",
-    "dependency_lock": "/tmp/spinal-store-forwarding-20260714/reference/scala-dependencies.lock.json",
+    "dependency_lock": "/tmp/spinal-forward-smoke-2e5409a-src/reference/scala-dependencies.lock.json",
     "dependency_lock_sha256": "0a5b155ce209d52cb12f24006be105b498796c7a6906c1981093c935fc4aa51d",
     "environment": {
       "COURSIER_CACHE": "/opt/chiplab-tools/root/scala-cache-sbt1.10.11-spinal1.14.2/coursier/v1",
       "COURSIER_MODE": "offline",
-      "HOME": "/tmp/nsg-422db21a9f4b/home",
+      "HOME": "/tmp/nsg-7609214191de/home",
       "JAVA_HOME": "/usr/lib/jvm/java-17-openjdk-amd64",
-      "JAVA_TOOL_OPTIONS": "-Djava.io.tmpdir=\"/tmp/nsg-422db21a9f4b/tmp\" -Djna.tmpdir=\"/tmp/nsg-422db21a9f4b/jna\" -Duser.home=\"/tmp/nsg-422db21a9f4b/home\"",
+      "JAVA_TOOL_OPTIONS": "-Djava.io.tmpdir=\"/tmp/nsg-7609214191de/tmp\" -Djna.tmpdir=\"/tmp/nsg-7609214191de/jna\" -Duser.home=\"/tmp/nsg-7609214191de/home\"",
       "LANG": "C.UTF-8",
       "LC_ALL": "C.UTF-8",
       "PATH": "/usr/lib/jvm/java-17-openjdk-amd64/bin:/usr/bin:/opt/chiplab-tools/root/sbt-1.10.11/bin:/usr/bin:/bin",
-      "SPINAL_SIM_WORKSPACE": "/tmp/spinal-store-forwarding-gate3-20260714/workspaces/1784002426271762725-710541/sim-workspace",
+      "SPINAL_SIM_WORKSPACE": "/tmp/spinal-forward-clean-scala-2e5409a/workspaces/1784004560699402049-714664/sim-workspace",
       "TZ": "UTC"
     },
-    "environment_sha256": "0b0f42428bc83c0066875f65137fd6cc7d21530f8bd3b0f5885e10ea07ff2208",
-    "isolated_home": "/tmp/nsg-422db21a9f4b/home",
-    "isolated_jna_tmp": "/tmp/nsg-422db21a9f4b/jna",
-    "isolated_tmp": "/tmp/nsg-422db21a9f4b/tmp",
+    "environment_sha256": "4921fbbb26dbdef2ca04c398f1041ac1549682ecdbece835cffd499bd03eb4a7",
+    "isolated_home": "/tmp/nsg-7609214191de/home",
+    "isolated_jna_tmp": "/tmp/nsg-7609214191de/jna",
+    "isolated_tmp": "/tmp/nsg-7609214191de/tmp",
     "ivy_home": "/opt/chiplab-tools/root/scala-cache-sbt1.10.11-spinal1.14.2/ivy2",
     "java": "/usr/lib/jvm/java-17-openjdk-amd64/bin/java",
     "java_sha256": "c0a86c03d2acbe2f389d5198142309f8e61db0c498920893977a494c4e9fd69b",
     "jdk_modules_sha256": "2d9de349be2aaa70adf53f78a88b8ca9bff70e910795655022808b4f61cbdc15",
     "jdk_version": "17.0.19+10",
-    "jvm_runtime_workspace": "/tmp/nsg-422db21a9f4b",
+    "jvm_runtime_workspace": "/tmp/nsg-7609214191de",
     "jvm_runtime_workspace_retention": "deleted after ScalaTest XML verification",
-    "manifest": "/tmp/spinal-store-forwarding-20260714/reference/manifest.lock",
+    "manifest": "/tmp/spinal-forward-smoke-2e5409a-src/reference/manifest.lock",
     "native_tools": {
       "ar": {
         "path": "/usr/bin/x86_64-linux-gnu-ar",
@@ -2476,7 +2476,7 @@
     "scala_version": "2.13.16",
     "scalafmt_version": "3.8.3",
     "scalatest_version": "3.2.19",
-    "simulation_workspace": "/tmp/spinal-store-forwarding-gate3-20260714/workspaces/1784002426271762725-710541/sim-workspace",
+    "simulation_workspace": "/tmp/spinal-forward-clean-scala-2e5409a/workspaces/1784004560699402049-714664/sim-workspace",
     "spinalhdl_version": "1.14.2",
     "tool_trees": {
       "jdk_include": {

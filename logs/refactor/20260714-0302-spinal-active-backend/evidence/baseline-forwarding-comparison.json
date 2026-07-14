@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "status": "same_known_baseline_failure",
+  "source_head": "2e5409a73841424540978e8dc43f6ba8b576a31e",
+  "case": "func/func_lab19",
+  "fixed_regression": {
+    "old_first_mismatch_pc": "0x1c0752b8",
+    "old_candidate_store_paddr": "0x001d0008",
+    "reference_store_paddr": "0x001d0004",
+    "observed_after_fix": "official DiffTest passed this point"
+  },
+  "locked_baseline": {
+    "source": "logs/refactor/20260710-2026-baseline/evidence/rtl-smoke-summary.json",
+    "instructions": 172552,
+    "clocks": 602903,
+    "first_mismatch": "t0(r12) different at pc = 0x1c07c79c, right= 0x000006e2, wrong = 0x00000008",
+    "next_pc": "0x1c07c7a4",
+    "trace_sha256": "8efa7942ab6d4702129dc0c7eb0676c6cfcd87361ee8ecf99411567c3db38acb"
+  },
+  "spinal_candidate": {
+    "source": "evidence/rtl-smoke-2e5409a.json",
+    "instructions": 172548,
+    "clocks": 603892,
+    "first_mismatch": "t0(r12) different at pc = 0x1c07c79c, right= 0x000006e2, wrong = 0x00000008",
+    "next_pc": "0x1c07c7a4",
+    "trace_sha256": "9a238064e2cf27bc52072ad76d44aa058c05749ad43bc5646072ea4986f0d8d9"
+  },
+  "normalized_last_30_lines": {
+    "normalization": "replace leading simulation timestamp with [time]",
+    "baseline_sha256": "757266c1754c435d5ebae2d1c240a11ba57a8293fe78449081c8743f2427fea8",
+    "candidate_sha256": "757266c1754c435d5ebae2d1c240a11ba57a8293fe78449081c8743f2427fea8",
+    "equal": true
+  },
+  "claim_limit": "The forwarding regression is fixed and the candidate reaches the locked baseline's known first architectural failure. func_lab19 still fails; full equivalence is not established."
+}
