@@ -4,22 +4,38 @@
   "status": "draft",
   "branch": "refactor/20260714-1650-consolidated-spinal",
   "base_sha": "cc8e1f30fd27272849d65e0858873c5d2e15f1a3",
-  "head_sha": "508fe52c45d06eed700d94fcf92f77585f35b8db",
+  "head_sha": "eadf4415a94d890a09c382af215fd76f66ef1b54",
   "selected_boundary": "predictor/full_btb_ras",
   "gates": {
     "preflight": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0,"evidence":"iteration.md"},
     "scala": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0,"evidence":"evidence/scala.json"},
     "predictor_directed": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0,"evidence":"evidence/predictor-directed.json"},
-    "generate_publish": {"status":"package_synced_pending_postcommit_check","planned":1,"executed":0,"passed":0,"failed":0,"skipped":1,"evidence":["evidence/generate.json","evidence/package.json"]},
-    "rtl_static": {"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":1,"evidence":["evidence/port-check.json","evidence/lint.json","evidence/yosys-check.json"]},
-    "chiplab_doctor": {"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":1,"evidence":"evidence/chiplab-doctor.json"},
-    "func_smoke": {"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":1,"evidence":"evidence/rtl-smoke.json"},
+    "generate_publish": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0,"evidence":["evidence/generate-final.json","evidence/package-final.json","evidence/publish-check.json"]},
+    "core_top_contract": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0,"evidence":"evidence/core-top-contract.json"},
+    "rtl_static": {"status":"fail","planned":3,"executed":3,"passed":2,"failed":1,"skipped":0,"evidence":["evidence/port-check.json","evidence/lint.json","evidence/yosys-check.json"]},
+    "replacement_reachability": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0,"evidence":"evidence/replacement-reachability.json"},
+    "chiplab_doctor": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0,"evidence":"evidence/chiplab-doctor.json"},
+    "func_smoke": {"status":"fail","planned":1,"executed":1,"passed":0,"failed":1,"skipped":0,"functional_status":"pass","evidence":["evidence/chiplab-overlay.json","evidence/rtl-smoke.json"]},
     "func_full": {"status":"unavailable","planned":2,"executed":0,"passed":0,"failed":0,"skipped":2,"evidence":null},
     "random": {"status":"unavailable","planned":1,"executed":0,"passed":0,"failed":0,"skipped":1,"evidence":null},
-    "claim_review": {"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":1,"evidence":"reviews/claude-raw.md"}
+    "claim_review": {"status":"unavailable","planned":1,"executed":0,"passed":0,"failed":0,"skipped":1,"evidence":["reviews/claude-raw.md","reviews/claude-summary.json","reviews/independent-summary.json"]}
   },
-  "required_gates": ["scala","predictor_directed","generate_publish","rtl_static","chiplab_doctor","func_smoke","func_full","random","claim_review"],
-  "claims": ["predictor directed contract passes in isolated locked Scala gate"],
-  "blocked_by": ["generated_package_not_committed","rtl_func_58_81_targets_missing","rtl_random_target_missing"],
-  "residual_risks": ["a158 predictor width bugs prevent blind sequential equivalence","full official functional and random regression unavailable"]
+  "required_gates": ["scala","predictor_directed","generate_publish","core_top_contract","rtl_static","replacement_reachability","chiplab_doctor","func_smoke","func_full","random","claim_review"],
+  "claims": [
+    {"id":"C1","claim":"predictor 定向合同在锁定 Scala 门禁中通过","support":"supported","evidence":["evidence/predictor-directed.json","evidence/scala.json"]},
+    {"id":"C2","claim":"发布的 Spinal core_top 生成、端口合同和 Yosys 静态检查通过","support":"supported","evidence":["evidence/generate-final.json","evidence/publish-check.json","evidence/core-top-contract.json","evidence/port-check.json","evidence/yosys-check.json"]},
+    {"id":"C3","claim":"mixed func_lab19 功能路径到 syscall 且无 DiffTest mismatch","support":"supported_as_diagnostic_only","evidence":"evidence/rtl-smoke.json"},
+    {"id":"C4","claim":"官方 smoke、完整等价或完整重构已经通过","support":"unsupported","evidence":["evidence/lint.json","evidence/rtl-smoke.json"]}
+  ],
+  "blocked_by": [
+    "strict_lint_failed_with_unapproved_warnings",
+    "smoke_compile_warning_policy_failed",
+    "rtl_func_58_81_targets_missing",
+    "rtl_random_target_missing",
+    "claude_bridge_missing_GEEKPIE_CLAUDE_API_KEY"
+  ],
+  "residual_risks": [
+    "a158 predictor width defects prevent blind sequential equivalence",
+    "full official functional, random and FPGA regressions are unavailable"
+  ]
 }

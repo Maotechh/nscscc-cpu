@@ -1,8 +1,8 @@
 schema_version: 1
-updated_at: "2026-07-14T17:33:00+08:00"
-active_iteration: "20260714-1733-btb-spinal-full"
+updated_at: "2026-07-14T18:50:00+08:00"
+active_iteration: "20260714-1845-refactor-prune"
 active_branch: "refactor/20260714-1650-consolidated-spinal"
-source_head: "cc8e1f30fd27272849d65e0858873c5d2e15f1a3"
+source_head: "eadf4415a94d890a09c382af215fd76f66ef1b54"
 
 boundaries:
   refactor_branch_convergence:
@@ -24,6 +24,8 @@ boundaries:
       - logs/refactor/20260714-1650-refactor-convergence/evidence/content-preservation.json
       - logs/refactor/20260714-1650-refactor-convergence/evidence/scala.json
       - logs/refactor/20260714-1650-refactor-convergence/reviews/claude-summary.json
+      - logs/refactor/20260714-1845-refactor-prune/iteration.md
+      - logs/refactor/20260714-1845-refactor-prune/evidence/branch-map.json
     active_pr: null
     blocked_by:
       - claude_bridge_missing_GEEKPIE_CLAUDE_API_KEY
@@ -764,6 +766,48 @@ boundaries:
       - complete_64_entry_2bit_ras_predictor_not_migrated
       - full_regression_random_and_fpga_not_executed
     last_iteration: "20260714-1534-btb-branch-replay"
+
+  predictor_full:
+    owner: predict
+    state: implementation_in_review
+    golden_ref: a158aa8:rtl/btb.v
+    dependencies:
+      - predictor_branch_replay
+      - if_stage
+      - id_stage
+    contract: docs/contracts/predictor.md
+    required_gates:
+      - scala
+      - predictor_directed
+      - generate_publish
+      - core_top_contract
+      - rtl_static
+      - replacement_reachability
+      - chiplab_doctor
+      - diagnostic_overlay
+      - func_smoke
+      - func_full
+      - random
+      - claim_review
+    evidence:
+      - logs/refactor/20260714-1733-btb-spinal-full/iteration.md
+      - logs/refactor/20260714-1733-btb-spinal-full/summary.json
+      - logs/refactor/20260714-1733-btb-spinal-full/evidence/predictor-directed.json
+      - logs/refactor/20260714-1733-btb-spinal-full/evidence/scala.json
+      - logs/refactor/20260714-1733-btb-spinal-full/evidence/generate-final.json
+      - logs/refactor/20260714-1733-btb-spinal-full/evidence/core-top-contract.json
+      - logs/refactor/20260714-1733-btb-spinal-full/evidence/lint.json
+      - logs/refactor/20260714-1733-btb-spinal-full/evidence/yosys-check.json
+      - logs/refactor/20260714-1733-btb-spinal-full/evidence/rtl-smoke.json
+      - logs/refactor/20260714-1733-btb-spinal-full/reviews/claude-summary.json
+    active_pr: null
+    blocked_by:
+      - strict_lint_failed_with_unapproved_warnings
+      - smoke_compile_warning_policy_failed
+      - rtl_func_58_81_targets_missing
+      - rtl_random_target_missing
+      - claude_bridge_missing_GEEKPIE_CLAUDE_API_KEY
+    last_iteration: "20260714-1733-btb-spinal-full"
 
   observability:
     owner: observe

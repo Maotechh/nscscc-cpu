@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "iteration_id": "20260714-1845-refactor-prune",
+  "status": "draft",
+  "branch": "refactor/20260714-1650-consolidated-spinal",
+  "base_sha": "eadf4415a94d890a09c382af215fd76f66ef1b54",
+  "head_sha": "eadf4415a94d890a09c382af215fd76f66ef1b54",
+  "selected_boundary": "repository/refactor_ref_prune",
+  "gates": {
+    "branch_ancestry": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0,"evidence":"evidence/branch-map.json"},
+    "worktree_cleanliness": {"status":"warning","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0,"evidence":"evidence/branch-map.json"},
+    "remote_convergence": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0,"evidence":"evidence/branch-map.json"},
+    "automation_tests": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0,"suite_skipped":10,"evidence":"iteration.md"},
+    "claim_review": {"status":"unavailable","planned":1,"executed":0,"passed":0,"failed":0,"skipped":1,"evidence":["reviews/claude-raw.md","reviews/claude-summary.json","reviews/independent-summary.json"]}
+  },
+  "claims": [
+    {"id":"C1","claim":"GitHub 远端只剩一个 refactor 集成分支","support":"supported","evidence":"evidence/branch-map.json"},
+    {"id":"C2","claim":"所有被删除旧 ref tip 均已被 eadf441 吸收","support":"supported","evidence":"evidence/branch-map.json"},
+    {"id":"C3","claim":"本地只有一个 worktree","support":"unsupported","evidence":"evidence/branch-map.json"}
+  ],
+  "blocked_by": ["protected_dirty_primary_worktree","claude_bridge_missing_GEEKPIE_CLAUDE_API_KEY"],
+  "residual_risks": ["protected primary worktree remains on an old local branch until its owner handles untracked files"]
+}

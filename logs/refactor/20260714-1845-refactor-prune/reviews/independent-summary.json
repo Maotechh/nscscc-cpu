@@ -1,0 +1,1 @@
+{"schema_version":1,"reviewer":"independent_read_only_agent","status":"accepted_with_protected_exception","claims":{"all_deleted_refs_absorbed":"accepted","remote_single_refactor_branch":"accepted","single_local_worktree":"rejected"},"open":["protected dirty primary worktree requires its owner"]}
