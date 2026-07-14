@@ -992,11 +992,11 @@ module SpinalCoreBackend (
     .io_output_payload_storeEvent           (decode_io_output_payload_storeEvent[7:0]        ), //o
     .io_output_payload_csrRstatEvent        (decode_io_output_payload_csrRstatEvent          ), //o
     .io_executeForward_dependencyNeedsStall (execute_io_forward_dependencyNeedsStall         ), //i
-    .io_executeForward_valid                (execute_io_forward_valid                        ), //i
+    .io_executeForward_writeEnabled         (execute_io_forward_writeEnabled                 ), //i
     .io_executeForward_destination          (execute_io_forward_destination[4:0]             ), //i
     .io_executeForward_data                 (execute_io_forward_result[31:0]                 ), //i
     .io_memoryForward_dependencyNeedsStall  (memory_io_forward_dependencyNeedsStall          ), //i
-    .io_memoryForward_valid                 (memory_io_forward_valid                         ), //i
+    .io_memoryForward_writeEnabled          (memory_io_forward_writeEnabled                  ), //i
     .io_memoryForward_destination           (memory_io_forward_destination[4:0]              ), //i
     .io_memoryForward_data                  (memory_io_forward_result[31:0]                  ), //i
     .io_flush_exception                     (writeback_io_flush_exception                    ), //i
@@ -10878,11 +10878,11 @@ module DecodeStage (
   output wire [7:0]    io_output_payload_storeEvent,
   output wire          io_output_payload_csrRstatEvent,
   input  wire          io_executeForward_dependencyNeedsStall,
-  input  wire          io_executeForward_valid,
+  input  wire          io_executeForward_writeEnabled,
   input  wire [4:0]    io_executeForward_destination,
   input  wire [31:0]   io_executeForward_data,
   input  wire          io_memoryForward_dependencyNeedsStall,
-  input  wire          io_memoryForward_valid,
+  input  wire          io_memoryForward_writeEnabled,
   input  wire [4:0]    io_memoryForward_destination,
   input  wire [31:0]   io_memoryForward_data,
   input  wire          io_flush_exception,
@@ -11191,12 +11191,12 @@ module DecodeStage (
   wire                btbTargetError;
   wire                btbRepair;
   wire       [31:0]   btbRepairTarget;
-  wire                when_DecodeStage_l633;
-  wire                when_DecodeStage_l636;
-  wire                when_DecodeStage_l642;
-  wire                when_DecodeStage_l646;
-  wire                when_DecodeStage_l648;
-  wire                when_DecodeStage_l650;
+  wire                when_DecodeStage_l634;
+  wire                when_DecodeStage_l637;
+  wire                when_DecodeStage_l643;
+  wire                when_DecodeStage_l647;
+  wire                when_DecodeStage_l649;
+  wire                when_DecodeStage_l651;
   wire                counterEnabled;
   wire       [31:0]   counterResult;
   wire       [31:0]   csrData;
@@ -11472,10 +11472,10 @@ module DecodeStage (
   assign registerDataJ = ((readAddressJ == 5'h0) ? 32'h0 : ((io_registerWrite_valid && (readAddressJ == io_registerWrite_destination)) ? io_registerWrite_data : _zz_registerDataJ));
   assign registerDataKOrD = ((readAddressKOrD == 5'h0) ? 32'h0 : ((io_registerWrite_valid && (readAddressKOrD == io_registerWrite_destination)) ? io_registerWrite_data : _zz_registerDataKOrD));
   assign branchNeedsRegisterData = ((((((instBeq || instBne) || instBlt) || instBge) || instBltu) || instBgeu) || instJirl);
-  assign executeJHit = (((readAddressJ == io_executeForward_destination) && io_executeForward_valid) && needRj);
-  assign memoryJHit = (((readAddressJ == io_memoryForward_destination) && io_memoryForward_valid) && needRj);
-  assign executeKHit = (((readAddressKOrD == io_executeForward_destination) && io_executeForward_valid) && needRkd);
-  assign memoryKHit = (((readAddressKOrD == io_memoryForward_destination) && io_memoryForward_valid) && needRkd);
+  assign executeJHit = (((readAddressJ == io_executeForward_destination) && io_executeForward_writeEnabled) && needRj);
+  assign memoryJHit = (((readAddressJ == io_memoryForward_destination) && io_memoryForward_writeEnabled) && needRj);
+  assign executeKHit = (((readAddressKOrD == io_executeForward_destination) && io_executeForward_writeEnabled) && needRkd);
+  assign memoryKHit = (((readAddressKOrD == io_memoryForward_destination) && io_memoryForward_writeEnabled) && needRkd);
   assign valueJ = (executeJHit ? io_executeForward_data : (memoryJHit ? io_memoryForward_data : registerDataJ));
   assign valueKOrD = (executeKHit ? io_executeForward_data : (memoryKHit ? io_memoryForward_data : registerDataKOrD));
   assign branchValueJ = (executeJHit ? io_executeForward_data : registerDataJ);
@@ -11510,12 +11510,12 @@ module DecodeStage (
   assign btbRepairTarget = (branchTaken ? branchTarget : _zz_btbRepairTarget);
   assign io_input_ready = ((! occupied) || (readyGo && io_output_ready));
   assign io_output_valid = (occupied && readyGo);
-  assign when_DecodeStage_l633 = ((((io_flush_exception || io_flush_ertn) || io_flush_refetch) || io_flush_instructionCacheOperation) || io_flush_idle);
-  assign when_DecodeStage_l636 = ((btbRepair && io_output_ready) || branchSlotCancel);
-  assign when_DecodeStage_l642 = (io_input_valid && io_input_ready);
-  assign when_DecodeStage_l646 = ((((io_flush_exception || io_flush_ertn) || io_flush_refetch) || io_flush_instructionCacheOperation) || io_flush_idle);
-  assign when_DecodeStage_l648 = ((btbRepair && io_output_ready) && (! io_input_valid));
-  assign when_DecodeStage_l650 = (branchSlotCancel && io_input_valid);
+  assign when_DecodeStage_l634 = ((((io_flush_exception || io_flush_ertn) || io_flush_refetch) || io_flush_instructionCacheOperation) || io_flush_idle);
+  assign when_DecodeStage_l637 = ((btbRepair && io_output_ready) || branchSlotCancel);
+  assign when_DecodeStage_l643 = (io_input_valid && io_input_ready);
+  assign when_DecodeStage_l647 = ((((io_flush_exception || io_flush_ertn) || io_flush_refetch) || io_flush_instructionCacheOperation) || io_flush_idle);
+  assign when_DecodeStage_l649 = ((btbRepair && io_output_ready) && (! io_input_valid));
+  assign when_DecodeStage_l651 = (branchSlotCancel && io_input_valid);
   assign counterEnabled = ((instRdCntVlW || instRdCntVhW) || instRdCntIdW);
   assign counterResult = (instRdCntVlW ? io_timer[31 : 0] : (instRdCntVhW ? io_timer[63 : 32] : io_timerId));
   assign csrData = (counterEnabled ? counterResult : (instScW ? {31'h0,io_reservationValid} : io_csrReadData));
@@ -11617,24 +11617,24 @@ module DecodeStage (
       occupied <= 1'b0;
       branchSlotCancel <= 1'b0;
     end else begin
-      if(when_DecodeStage_l633) begin
+      if(when_DecodeStage_l634) begin
         occupied <= 1'b0;
       end else begin
         if(io_input_ready) begin
-          if(when_DecodeStage_l636) begin
+          if(when_DecodeStage_l637) begin
             occupied <= 1'b0;
           end else begin
             occupied <= io_input_valid;
           end
         end
       end
-      if(when_DecodeStage_l646) begin
+      if(when_DecodeStage_l647) begin
         branchSlotCancel <= 1'b0;
       end else begin
-        if(when_DecodeStage_l648) begin
+        if(when_DecodeStage_l649) begin
           branchSlotCancel <= 1'b1;
         end else begin
-          if(when_DecodeStage_l650) begin
+          if(when_DecodeStage_l651) begin
             branchSlotCancel <= 1'b0;
           end
         end
@@ -11741,7 +11741,7 @@ module DecodeStage (
         registerFile_31 <= io_registerWrite_data;
       end
     end
-    if(when_DecodeStage_l642) begin
+    if(when_DecodeStage_l643) begin
       fetch_pc <= io_input_payload_pc;
       fetch_instruction <= io_input_payload_instruction;
       fetch_exceptionCode <= io_input_payload_exceptionCode;

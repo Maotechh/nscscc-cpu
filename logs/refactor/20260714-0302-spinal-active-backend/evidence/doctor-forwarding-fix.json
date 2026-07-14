@@ -1,0 +1,165 @@
+{
+  "branch": "refactor/20260714-0302-spinal-active-backend",
+  "checks": [
+    {
+      "actual": [],
+      "expected": "all required",
+      "name": "manifest.required_keys",
+      "status": "pass"
+    },
+    {
+      "actual": [],
+      "expected": [],
+      "name": "manifest.no_pending_values",
+      "status": "pass"
+    },
+    {
+      "actual": "refactor/20260714-0302-spinal-active-backend",
+      "expected": "refactor/* and not main/master",
+      "name": "git.protected_branch",
+      "status": "pass"
+    },
+    {
+      "actual": "39501d16928d75d20465f6125009dc3bc2812bd5",
+      "name": "git.head",
+      "status": "pass"
+    },
+    {
+      "actual": {
+        "dirty": true,
+        "entries": [
+          "M logs/refactor/20260714-0302-spinal-active-backend/commands.jsonl",
+          " M logs/refactor/20260714-0302-spinal-active-backend/iteration.md",
+          " M logs/refactor/20260714-0302-spinal-active-backend/pr.md",
+          " M logs/refactor/20260714-0302-spinal-active-backend/summary.json",
+          " M reference/component-replacements/active-reachable.json",
+          " M reference/component-replacements/core-top.json",
+          " M reference/component-replacements/mycpu_top.v",
+          " M reference/component-replacements/spinal-active-runtime.json",
+          " M spinal/src/main/scala/openla500/compat/SpinalCoreBackend.scala",
+          " M spinal/src/main/scala/openla500/pipeline/DecodeStage.scala",
+          " M spinal/src/main/scala/openla500/pipeline/LegacyDecodeStage.scala",
+          "?? logs/refactor/20260714-0302-spinal-active-backend/evidence/forwarding-diagnosis.json",
+          "?? logs/refactor/20260714-0302-spinal-active-backend/evidence/generate-forwarding-fix.json",
+          "?? logs/refactor/20260714-0302-spinal-active-backend/evidence/lint-forwarding-fix.json",
+          "?? logs/refactor/20260714-0302-spinal-active-backend/evidence/package-forwarding-fix.json",
+          "?? logs/refactor/20260714-0302-spinal-active-backend/evidence/port-check-forwarding-fix.json",
+          "?? logs/refactor/20260714-0302-spinal-active-backend/evidence/publish-check-forwarding-fix.json",
+          "?? logs/refactor/20260714-0302-spinal-active-backend/evidence/rtl-smoke-39501d1.json",
+          "?? logs/refactor/20260714-0302-spinal-active-backend/evidence/scala-forwarding-fix.json",
+          "?? logs/refactor/20260714-0302-spinal-active-backend/evidence/yosys-forwarding-fix.json",
+          "?? spinal/src/test/scala/openla500/pipeline/DecodeForwardingSpec.scala",
+          "?? tests/test_forwarding_integration_contract.py"
+        ]
+      },
+      "detail": "A dirty iteration branch is allowed; the exact entries are evidence.",
+      "name": "git.worktree_recorded",
+      "status": "pass"
+    },
+    {
+      "actual": "a158aa8ab4d49cece1a0fe488d7ac7dc02bd8cf6",
+      "expected": "a158aa8ab4d49cece1a0fe488d7ac7dc02bd8cf6",
+      "name": "golden.commit",
+      "status": "pass"
+    },
+    {
+      "actual": [],
+      "expected": "all locked files",
+      "name": "golden.files_exist",
+      "status": "pass"
+    },
+    {
+      "actual": [],
+      "expected": [
+        "rtl/btb.v.bak",
+        "rtl/regfile_dual.v",
+        "rtl/store_buffer.v"
+      ],
+      "name": "golden.dead_files_excluded",
+      "status": "pass"
+    },
+    {
+      "name": "spinal.scala_version",
+      "status": "pass"
+    },
+    {
+      "name": "spinal.spinalhdl_version",
+      "status": "pass"
+    },
+    {
+      "name": "spinal.scalatest_version",
+      "status": "pass"
+    },
+    {
+      "name": "spinal.sbt_version",
+      "status": "pass"
+    },
+    {
+      "name": "spinal.sbt_scalafmt_version",
+      "status": "pass"
+    },
+    {
+      "name": "spinal.scalafmt_version",
+      "status": "pass"
+    },
+    {
+      "actual": "present",
+      "expected": "matching compilerPlugin declaration",
+      "name": "spinal.idsl_plugin",
+      "status": "pass"
+    },
+    {
+      "actual": "ebc3c5285bce0cf5dd13ad0e96f628ef34734435801c8f0c73d57981a2bfc7e1",
+      "expected": "ebc3c5285bce0cf5dd13ad0e96f628ef34734435801c8f0c73d57981a2bfc7e1",
+      "name": "vivado.launcher_sha256",
+      "status": "pass"
+    },
+    {
+      "actual": "1e40ab45b04a89835068645009a6c72929f416afc27d0fc7672068b197018ce6",
+      "expected": "1e40ab45b04a89835068645009a6c72929f416afc27d0fc7672068b197018ce6",
+      "name": "vivado.binary_sha256",
+      "status": "pass"
+    },
+    {
+      "actual": "ML Standard",
+      "detail": "The product edition is user-confirmed; device/license availability is checked by rtl-fpga.",
+      "expected": "ML Standard",
+      "name": "vivado.edition_lock",
+      "status": "pass"
+    },
+    {
+      "actual": "NSCSCC_VIVADO_VERSION=2023.2",
+      "detail": "Windows launcher output is parsed; WSL validates the same locked Windows files by hash.",
+      "expected": "Vivado v2023.2 SW Build 4029153",
+      "name": "vivado.version_build",
+      "status": "pass"
+    }
+  ],
+  "command": "doctor",
+  "generated_at": "2026-07-14T12:07:42+08:00",
+  "golden_files_sha256": "da1bc6d450c1977a8bc491c9ac10887c30f91253aa75d367c1ae4a250ac1c8db",
+  "head_sha": "39501d16928d75d20465f6125009dc3bc2812bd5",
+  "manifest_sha256": "743dd7e58d77e456cfe664d80c2e6614ab426f72bfecd9088ff18d702afa2f20",
+  "repo": "D:\\schoolworks\\CS110\\longxin\\nscscc-cpu\\.work\\worktrees\\20260714-0302-spinal-active-backend",
+  "schema_version": 1,
+  "status": "pass",
+  "vivado_home": "D:\\Xilinx\\Vivado\\2023.2",
+  "vivado_probe": {
+    "command": [
+      "D:\\Xilinx\\Vivado\\2023.2\\bin\\vivado.bat",
+      "-mode",
+      "batch",
+      "-nolog",
+      "-nojournal",
+      "-notrace",
+      "-source",
+      "D:\\schoolworks\\CS110\\longxin\\nscscc-cpu\\.work\\worktrees\\20260714-0302-spinal-active-backend\\tools\\vivado_probe.tcl"
+    ],
+    "cwd": "D:\\schoolworks\\CS110\\longxin\\nscscc-cpu\\.work\\worktrees\\20260714-0302-spinal-active-backend",
+    "elapsed_seconds": 5.265,
+    "exit_code": 0,
+    "log_path": null,
+    "log_sha256": null,
+    "timed_out": false
+  }
+}

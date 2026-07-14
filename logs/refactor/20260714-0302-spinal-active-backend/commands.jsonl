@@ -1,21 +1,28 @@
-{"argv":["git","worktree","add","-b","refactor/20260714-0302-spinal-active-backend","78efdf97b6208da3806fcbc02dca69061284d3b7"],"cwd":"nscscc-cpu","exit_code":0,"result":"从已推送 ID active overlay HEAD 创建独立 worktree","evidence":"iteration.md"}
-{"argv":["git","cherry-pick","f0240f2047104ad0f30c2edd128f9006478e0323"],"cwd":".","exit_code":0,"result":"纳入 IF stage Spinal 实现、合同和差分测试资产","evidence":"iteration.md"}
-{"argv":["make","scala-check"],"cwd":"Windows worktree","exit_code":1,"result":"Windows 无 /opt/chiplab-tools 锁定 SBT，未执行 Scala","evidence":"iteration.md"}
-{"argv":["make","scala-check"],"cwd":"WSL native validation clone","exit_code":1,"result":"compile/test 通过，仅 SpinalCoreBackend scalafmt 失败","evidence":"iteration.md"}
-{"argv":["make","scala-check"],"cwd":"WSL native validation clone","exit_code":0,"result":"format/compile/test-compile/test 4/4 通过","evidence":"evidence/scala.json"}
-{"argv":["make","generate","TARGET=core_top"],"cwd":"WSL native validation clone","exit_code":0,"result":"2/2 可复现；纯 Spinal package 和 publish-check 通过","evidence":"evidence/generate.json"}
-{"argv":["core_top_gate.py","port-check"],"cwd":"WSL native validation clone","exit_code":1,"result":"gate 缺少 proc，Yosys write_json 拒绝行为 process","evidence":"iteration.md"}
-{"argv":["core_top_gate.py","port-check"],"cwd":"WSL native validation clone","exit_code":0,"result":"49/49 端口与 TLBNUM 合同通过，无 legacy backend","evidence":"evidence/port-check.json"}
-{"argv":["core_top_gate.py","yosys-check"],"cwd":"WSL native validation clone","exit_code":0,"result":"hierarchy/proc/check -assert 通过且无 warning","evidence":"evidence/yosys.json"}
-{"argv":["core_top_gate.py","lint"],"cwd":"WSL native validation clone","exit_code":1,"result":"严格 lint 失败：85 UNUSEDSIGNAL、1 UNUSEDPARAM、1 DECLFILENAME","evidence":"evidence/lint.json"}
-{"argv":["python","-m","pytest","-q"],"cwd":"Windows worktree","exit_code":0,"result":"326 passed, 10 platform skips","evidence":"iteration.md"}
-{"argv":["make","rtl-smoke"],"cwd":"locked chiplab overlay at 210f596","exit_code":1,"result":"Verilator build passed; simulation timed out after 600.054 seconds with zero parser-observed commits","evidence":"evidence/rtl-smoke-210f596.json"}
-{"argv":["make","scala-check"],"cwd":"WSL native validation clone","exit_code":0,"result":"DiffTest adapter 后 format/compile/test-compile/test 4/4，24 tests 通过","evidence":"evidence/scala-difftest.json"}
-{"argv":["make","elaborate","TARGET=core_top"],"cwd":"WSL native validation clone","exit_code":0,"result":"2/2 可复现；生成 RTL SHA256 1f9bec77f851848b5c2fd6ee327db11d424137fa0b64ed9fc2e00a93109b7aeb","evidence":"evidence/generate-difftest.json"}
-{"argv":["make","core-top-package"],"cwd":"WSL native validation clone","exit_code":0,"result":"完整 package SHA256 748b025cedac922dbf6ff2707b61e6e230138b091c89ebe778b0eede446dea41","evidence":"evidence/package-difftest.json"}
-{"argv":["make","port-check","TARGET=core_top"],"cwd":"WSL native validation clone","exit_code":0,"result":"官方 49/49 端口合同通过","evidence":"evidence/port-check-difftest.json"}
-{"argv":["make","yosys-check","TARGET=core_top"],"cwd":"WSL native validation clone","exit_code":0,"result":"hierarchy/proc/check -assert 通过且无 warning","evidence":"evidence/yosys-difftest.json"}
-{"argv":["make","lint","TARGET=core_top"],"cwd":"WSL native validation clone","exit_code":1,"result":"严格 lint 因 88 条 warning 失败，未标记为 PASS","evidence":"evidence/lint-difftest.json"}
-{"argv":["verilator","--lint-only","--sv","-Wall","-Wno-fatal","-DDIFFTEST_EN","--top-module","core_top","mycpu_top.v","difftest.v"],"cwd":"WSL locked chiplab inputs","exit_code":0,"result":"官方七个 DPI 模块静态链接成功；仍有既有 warning","evidence":"iteration.md"}
-{"argv":["python","-m","pytest","-q"],"cwd":"Windows worktree","exit_code":0,"result":"更新后 326 passed, 10 platform skips","evidence":"iteration.md"}
-{"argv":["python","-I","tools/refactor.py","doctor","--vivado-home","D:\\Xilinx\\Vivado\\2023.2"],"cwd":"Windows worktree","exit_code":0,"result":"manifest/golden/branch 和 Vivado ML Standard 2023.2 build 4029153 验证通过","evidence":"iteration.md"}
+{"argv":["git","status","--short","--branch"],"cwd":"nscscc-cpu","exit_code":0,"result":"确认原工作树状态并保留用户改动","evidence":"iteration.md"}
+{"argv":["git","worktree","add","-b","refactor/20260714-0302-spinal-active-backend","78efdf97b6208da3806fcbc02dca69061284d3b7"],"cwd":"nscscc-cpu","exit_code":0,"result":"创建独立重构 worktree","evidence":"iteration.md"}
+{"argv":["make","scala-check"],"cwd":"Windows worktree","exit_code":1,"result":"锁定 SBT 位于 /opt，Windows 环境不可直接执行","evidence":"iteration.md"}
+{"argv":["make","scala-check"],"cwd":"WSL native validation clone","exit_code":0,"result":"初始 backend format/compile/test 全部通过","evidence":"evidence/scala.json"}
+{"argv":["make","generate","TARGET=core_top"],"cwd":"WSL native validation clone","exit_code":0,"result":"初始完整 core_top 双次生成可复现","evidence":"evidence/generate.json"}
+{"argv":["core_top_gate.py","port-check"],"cwd":"WSL native validation clone","exit_code":1,"result":"首次 gate 缺少 Yosys proc，write_json 拒绝未降级 process","evidence":"iteration.md"}
+{"argv":["core_top_gate.py","port-check"],"cwd":"WSL native validation clone","exit_code":0,"result":"修复 gate 后 49/49 端口通过","evidence":"evidence/port-check.json"}
+{"argv":["make","rtl-smoke"],"cwd":"locked chiplab overlay at 210f596","exit_code":1,"result":"Verilator 构建成功，仿真 600.054 秒超时，parser 观察到 0 条提交","evidence":"evidence/rtl-smoke-210f596.json"}
+{"argv":["make","scala-check"],"cwd":"WSL native validation clone","exit_code":0,"result":"加入官方 DiffTest adapter 后 Scala 4/4 通过","evidence":"evidence/scala-difftest.json"}
+{"argv":["make","generate","TARGET=core_top"],"cwd":"WSL native validation clone","exit_code":0,"result":"DiffTest adapter 完整 RTL双次生成可复现","evidence":"evidence/generate-difftest.json"}
+{"argv":["make","lint","TARGET=core_top"],"cwd":"WSL native validation clone","exit_code":1,"result":"严格 lint 因未批准 warning 失败","evidence":"evidence/lint-difftest.json"}
+{"argv":["make","rtl-smoke"],"cwd":"locked chiplab overlay at 39501d1","exit_code":1,"result":"NEMU 实际推进 162373 条提交；首错为 0x1c0752b8 store 地址 0x1d0008 对 0x1d0004","evidence":"evidence/rtl-smoke-39501d1.json"}
+{"argv":["compare","golden/candidate trace and generated Verilator C++"],"cwd":"locked chiplab overlays","exit_code":0,"result":"DPI 调用顺序与 golden 一致；确认 candidate 第二条 store 有效地址错误，排除 store event 丢失假设","evidence":"evidence/forwarding-diagnosis.json"}
+{"argv":["make","scala-check"],"cwd":"WSL native validation clone","exit_code":1,"result":"新增定向测试功能通过，但测试顶层产生 93 个裁剪 warning，严格 gate 拒绝","evidence":"iteration.md"}
+{"argv":["make","scala-check"],"cwd":"WSL native validation clone","exit_code":1,"result":"25 tests 全过，但新仿真未显式重新启用 locked warnings，simulator policy 拒绝","evidence":"iteration.md"}
+{"argv":["make","scala-check"],"cwd":"WSL native validation clone","exit_code":0,"result":"补 keepAlive 和 -Wwarn policy 后 4/4、25 tests 全部通过","evidence":"evidence/scala-forwarding-fix.json"}
+{"argv":["make","generate","TARGET=core_top"],"cwd":"WSL native validation clone","exit_code":1,"result":"双次生成通过，publish-check 正确拒绝旧 tracked package","evidence":"evidence/generate-forwarding-fix.json"}
+{"argv":["core_top_gate.py","package"],"cwd":"WSL native validation clone","exit_code":0,"result":"生成新的完整 package","evidence":"evidence/package-forwarding-fix.json"}
+{"argv":["make","core-top-publish-check"],"cwd":"WSL native validation clone","exit_code":0,"result":"更新 tracked RTL和 manifest hash 后发布一致性通过","evidence":"evidence/publish-check-forwarding-fix.json"}
+{"argv":["make","port-check","TARGET=core_top"],"cwd":"WSL native validation clone","exit_code":0,"result":"官方 49/49 端口和 TLBNUM=32 通过","evidence":"evidence/port-check-forwarding-fix.json"}
+{"argv":["make","yosys-check","TARGET=core_top"],"cwd":"WSL native validation clone","exit_code":0,"result":"hierarchy/proc/check -assert 通过且无 warning","evidence":"evidence/yosys-forwarding-fix.json"}
+{"argv":["make","lint","TARGET=core_top"],"cwd":"WSL native validation clone","exit_code":1,"result":"严格 lint 仍因 86 条未批准 warning 失败","evidence":"evidence/lint-forwarding-fix.json"}
+{"argv":["python","-m","pytest","-q"],"cwd":"Windows worktree","exit_code":0,"result":"326 passed，10 个 platform skips","evidence":"iteration.md"}
+{"argv":["python","-I","tools/refactor.py","doctor","--vivado-home","D:\\Xilinx\\Vivado\\2023.2"],"cwd":"Windows worktree","exit_code":0,"result":"manifest、branch 和 Vivado ML Standard 2023.2 build 4029153 通过","evidence":"iteration.md"}
+{"argv":["python","-I","-m","unittest","discover","-s","tests","-p","test_*.py"],"cwd":"Windows worktree","exit_code":0,"result":"337 tests: 327 PASS、0 FAIL、10 个平台互斥 skip","evidence":"evidence/automation-forwarding-fix.json"}
+{"argv":["python","-I","tools/refactor.py","doctor","--out-dir","build/forwarding-fix-doctor","--vivado-home","D:\\Xilinx\\Vivado\\2023.2"],"cwd":"Windows worktree","exit_code":0,"result":"锁、分支和 Vivado 2023.2 build/hash 通过","evidence":"evidence/doctor-forwarding-fix.json"}
+{"argv":["make","scala-check"],"cwd":"WSL native validation clone","exit_code":0,"result":"测试激励修正后 Scala 4/4、25 tests PASS","evidence":"evidence/scala-forwarding-fix.json"}
+{"argv":["make","generate","TARGET=core_top"],"cwd":"WSL native validation clone","exit_code":1,"result":"双次生成和 package 通过；最终 publish-check 因验证 clone manifest 尚未同步而按设计失败，随后独立 publish-check 通过","evidence":"evidence/generate-forwarding-fix.json"}

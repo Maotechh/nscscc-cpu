@@ -1,0 +1,40 @@
+{
+  "contract": {
+    "header_sha256": "b2db20e7012ff21e931738a624a964274f779e3f3de664150f3cec40e87b9a79",
+    "input_count": 17,
+    "legacy_backend_absent": true,
+    "module_count": 1,
+    "output_count": 32,
+    "port_count": 49,
+    "tlbnum_default": 32
+  },
+  "gate": "core-top-package",
+  "generated_at": "2026-07-14T12:18:00+08:00",
+  "input_rtl": {
+    "path": "/tmp/spinal-store-forwarding-coretop3-20260714/core_top/generate/rtl/core_top.v",
+    "sha256": "97486e9577f2cebbc5d1b604fddee75f131e80bc8602e6951fee1efd2de7cbf8",
+    "size": 766160,
+    "stable": true
+  },
+  "provenance": {
+    "evaluator": "/tmp/spinal-store-forwarding-20260714/tools/core_top_gate.py",
+    "evaluator_sha256": "63490b44b7c4e9eee730281a4a12ad62eeea238aeb7031df05f7bf2fc4e33641",
+    "manifest": "/tmp/spinal-store-forwarding-20260714/reference/manifest.lock",
+    "manifest_sha256": "743dd7e58d77e456cfe664d80c2e6614ab426f72bfecd9088ff18d702afa2f20",
+    "ports_contract": "/tmp/spinal-store-forwarding-20260714/reference/core-top.ports.json",
+    "ports_contract_sha256": "effa486ff707e480ff8ee13d7f20b2d524bd26908726915c99abf1b37eeab576",
+    "repository": "/tmp/spinal-store-forwarding-20260714",
+    "repository_head": "39501d16928d75d20465f6125009dc3bc2812bd5",
+    "repository_status_sha256": "08f0d8b71aacbcd2e132176f3a5df9b7577bd7e6f4d66746c02dbab18e842aa2"
+  },
+  "published_rtl": "/tmp/spinal-store-forwarding-coretop3-20260714/core_top/package/rtl/mycpu_top.v",
+  "published_sha256": "2646383fc6e201c0108c018c780fb4240301beb53e8dfc6eacf00149ab5586cc",
+  "published_size": 766189,
+  "schema_version": 1,
+  "scope": "complete-spinal-rtl-publication",
+  "status": "pass",
+  "target": "core-top-compat",
+  "transformations": {
+    "top_parameter_insertions": 1
+  }
+}

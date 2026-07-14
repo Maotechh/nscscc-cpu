@@ -1,0 +1,29 @@
+{
+  "base_sha256": "ff286f559dbc9131349c9fb8c842110569d231b6a34e76ded172c403d8f90afa",
+  "fresh_package": "/tmp/spinal-store-forwarding-coretop3-20260714/core_top/package/rtl/mycpu_top.v",
+  "gate": "publish-check",
+  "generated_at": "2026-07-14T12:18:00+08:00",
+  "package_sha256": "2646383fc6e201c0108c018c780fb4240301beb53e8dfc6eacf00149ab5586cc",
+  "package_size": 766189,
+  "provenance": {
+    "evaluator": "/tmp/spinal-store-forwarding-20260714/tools/core_top_gate.py",
+    "evaluator_sha256": "63490b44b7c4e9eee730281a4a12ad62eeea238aeb7031df05f7bf2fc4e33641",
+    "manifest": "/tmp/spinal-store-forwarding-20260714/reference/manifest.lock",
+    "manifest_sha256": "743dd7e58d77e456cfe664d80c2e6614ab426f72bfecd9088ff18d702afa2f20",
+    "ports_contract": "/tmp/spinal-store-forwarding-20260714/reference/core-top.ports.json",
+    "ports_contract_sha256": "effa486ff707e480ff8ee13d7f20b2d524bd26908726915c99abf1b37eeab576",
+    "repository": "/tmp/spinal-store-forwarding-20260714",
+    "repository_head": "39501d16928d75d20465f6125009dc3bc2812bd5",
+    "repository_status_sha256": "08f0d8b71aacbcd2e132176f3a5df9b7577bd7e6f4d66746c02dbab18e842aa2"
+  },
+  "published_source": "reference/component-replacements/mycpu_top.v",
+  "published_target": "rtl/mycpu_top.v",
+  "replacement_sha256": "2646383fc6e201c0108c018c780fb4240301beb53e8dfc6eacf00149ab5586cc",
+  "replacement_spec": "/tmp/spinal-store-forwarding-20260714/reference/component-replacements/core-top.json",
+  "replacement_spec_sha256": "6ba358dd4f8dbb9c2a6e3c9a3fcdb1eef3ced253ce20c4cc7dd55c6fccc8304c",
+  "schema_version": 1,
+  "scope": "publication-consistency",
+  "status": "pass",
+  "target": "core-top-compat",
+  "tracked_package": "/tmp/spinal-store-forwarding-20260714/reference/component-replacements/mycpu_top.v"
+}

@@ -5,11 +5,11 @@ import spinal.core._
 import spinal.lib._
 
 /** Forwarding metadata consumed by decode. `dependencyNeedsStall` is the locked load/mul/div
-  * dependency bit; `valid` is the historical forwarding-enable bit.
+  * dependency bit; `writeEnabled` is the historical forwarding-enable bit.
   */
 final case class DecodeForward() extends Bundle {
   val dependencyNeedsStall = Bool()
-  val valid = Bool()
+  val writeEnabled = Bool()
   val destination = UInt(5 bits)
   val data = Bits(32 bits)
 }
@@ -454,12 +454,13 @@ final class DecodeStage(config: CoreConfig = CoreConfig.Locked) extends Componen
     any(instBeq, instBne, instBlt, instBge, instBltu, instBgeu, instJirl)
 
   val executeJHit =
-    readAddressJ === io.executeForward.destination && io.executeForward.valid && needRj
-  val memoryJHit = readAddressJ === io.memoryForward.destination && io.memoryForward.valid && needRj
+    readAddressJ === io.executeForward.destination && io.executeForward.writeEnabled && needRj
+  val memoryJHit =
+    readAddressJ === io.memoryForward.destination && io.memoryForward.writeEnabled && needRj
   val executeKHit =
-    readAddressKOrD === io.executeForward.destination && io.executeForward.valid && needRkd
+    readAddressKOrD === io.executeForward.destination && io.executeForward.writeEnabled && needRkd
   val memoryKHit =
-    readAddressKOrD === io.memoryForward.destination && io.memoryForward.valid && needRkd
+    readAddressKOrD === io.memoryForward.destination && io.memoryForward.writeEnabled && needRkd
   val valueJ =
     Mux(executeJHit, io.executeForward.data, Mux(memoryJHit, io.memoryForward.data, registerDataJ))
   val valueKOrD = Mux(

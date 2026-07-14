@@ -81,11 +81,11 @@ final class LegacyDecodeStage(config: CoreConfig = CoreConfig.Locked) extends Co
   io.ds_to_es_bus := stage.io.output.payload.toLegacyBits
 
   stage.io.executeForward.dependencyNeedsStall := io.es_to_ds_forward_bus(38)
-  stage.io.executeForward.valid := io.es_to_ds_forward_bus(37)
+  stage.io.executeForward.writeEnabled := io.es_to_ds_forward_bus(37)
   stage.io.executeForward.destination := io.es_to_ds_forward_bus(36 downto 32).asUInt
   stage.io.executeForward.data := io.es_to_ds_forward_bus(31 downto 0)
   stage.io.memoryForward.dependencyNeedsStall := io.ms_to_ds_forward_bus(38)
-  stage.io.memoryForward.valid := io.ms_to_ds_forward_bus(37)
+  stage.io.memoryForward.writeEnabled := io.ms_to_ds_forward_bus(37)
   stage.io.memoryForward.destination := io.ms_to_ds_forward_bus(36 downto 32).asUInt
   stage.io.memoryForward.data := io.ms_to_ds_forward_bus(31 downto 0)
 

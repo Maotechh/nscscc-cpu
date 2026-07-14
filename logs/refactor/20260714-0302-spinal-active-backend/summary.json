@@ -1,36 +1,37 @@
 {
   "schema_version": 1,
   "iteration_id": "20260714-0302-spinal-active-backend",
-  "status": "implementation_in_review",
+  "status": "draft",
   "branch": "refactor/20260714-0302-spinal-active-backend",
   "base_sha": "78efdf97b6208da3806fcbc02dca69061284d3b7",
   "head_sha": null,
   "source_head": null,
   "selected_boundary": "spinal_active_backend",
   "gates": {
-    "scala": {"status":"pass","planned":4,"executed":4,"passed":4,"failed":0,"skipped":0,"evidence":"evidence/scala-difftest.json"},
-    "generate": {"status":"pass","planned":2,"executed":2,"passed":2,"failed":0,"skipped":0,"evidence":"evidence/generate-difftest.json"},
-    "package": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0,"evidence":"evidence/package-difftest.json"},
-    "publish_check": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0,"evidence":"evidence/publish-check-difftest.json"},
-    "port_check": {"status":"pass","planned":49,"executed":49,"passed":49,"failed":0,"skipped":0,"evidence":"evidence/port-check-difftest.json"},
-    "yosys": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0,"evidence":"evidence/yosys-difftest.json"},
-    "lint": {"status":"fail","planned":1,"executed":1,"passed":0,"failed":1,"skipped":0,"evidence":"evidence/lint-difftest.json"},
-    "reachability": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0,"evidence":"evidence/reachability.json"},
-    "automation_tests": {"status":"warning","planned":336,"executed":326,"passed":326,"failed":0,"skipped":10,"evidence":"iteration.md"},
-    "func_smoke": {"status":"fail","planned":1,"executed":1,"passed":0,"failed":1,"skipped":0,"evidence":"evidence/rtl-smoke-210f596.json"},
-    "claim_review": {"status":"not_executed","planned":1,"executed":0,"passed":0,"failed":0,"skipped":1,"evidence":"iteration.md"}
+    "doctor": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0,"evidence":"evidence/doctor-forwarding-fix.json"},
+    "scala": {"status":"pass","planned":4,"executed":4,"passed":4,"failed":0,"skipped":0,"evidence":"evidence/scala-forwarding-fix.json"},
+    "generate": {"status":"pass","planned":2,"executed":2,"passed":2,"failed":0,"skipped":0,"evidence":"evidence/generate-forwarding-fix.json"},
+    "package": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0,"evidence":"evidence/package-forwarding-fix.json"},
+    "publish_check": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0,"evidence":"evidence/publish-check-forwarding-fix.json"},
+    "port_check": {"status":"pass","planned":49,"executed":49,"passed":49,"failed":0,"skipped":0,"evidence":"evidence/port-check-forwarding-fix.json"},
+    "yosys": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0,"evidence":"evidence/yosys-forwarding-fix.json"},
+    "lint": {"status":"fail","planned":1,"executed":1,"passed":0,"failed":1,"skipped":0,"evidence":"evidence/lint-forwarding-fix.json"},
+    "automation_tests": {"status":"warning","planned":337,"executed":337,"passed":327,"failed":0,"skipped":10,"evidence":"evidence/automation-forwarding-fix.json"},
+    "func_smoke": {"status":"fail","planned":1,"executed":1,"passed":0,"failed":1,"skipped":0,"evidence":"evidence/rtl-smoke-39501d1.json"},
+    "claim_review": {"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":0,"evidence":"iteration.md"}
   },
   "required_gates": ["doctor","scala","contract","rtl_static","func_smoke","func_full","random","fpga","claim_review"],
   "claims": [
-    {"claim":"生成 core_top 的活动 backend 不再依赖 legacy CPU Verilog BlackBox","support":"yes","evidence":"evidence/package-difftest.json"},
-    {"claim":"完整生成 RTL 的官方 49 端口合同和 Yosys hierarchy/check 通过","support":"yes","evidence":"evidence/port-check-difftest.json"},
-    {"claim":"官方七个 DiffTest 模块已通过条件生成和静态链接","support":"yes","evidence":"evidence/difftest-static-link.json"},
-    {"claim":"纯 Spinal 整机功能等价","support":"no","evidence":"iteration.md"}
+    {"claim":"活动 core_top backend 不依赖 legacy CPU Verilog BlackBox","support":"yes","evidence":"evidence/package-forwarding-fix.json"},
+    {"claim":"完整生成 RTL通过官方 49 端口合同和 Yosys hierarchy/check","support":"yes","evidence":"evidence/port-check-forwarding-fix.json"},
+    {"claim":"39501d1 的官方 DiffTest 实际推进 162373 条提交","support":"yes","evidence":"evidence/rtl-smoke-39501d1.json"},
+    {"claim":"非写 store 不再产生伪 GPR forwarding","support":"partial","evidence":"evidence/scala-forwarding-fix.json"},
+    {"claim":"纯 Spinal 整机功能等价或完全重构完成","support":"no","evidence":"iteration.md"}
   ],
   "residual_risks": [
-    "strict Verilator lint fails with 88 warnings",
-    "official func smoke at 210f596 timed out after 600.054 seconds with zero observed commits; the updated adapter is not yet rerun",
-    "golden-observable BTB/RAS behavior, LACC, random DiffTest, and perf integration remain",
-    "full func/random/perf/system/fpga gates are not executed"
+    "forwarding 修复尚未在新的官方 smoke overlay 中复测",
+    "strict Verilator lint fails with 86 unwaived warnings",
+    "golden-observable BTB/RAS behavior, LACC, random DiffTest, perf and system gates remain",
+    "func-full/random/perf/Linux/fpga release gates are not executed"
   ]
 }

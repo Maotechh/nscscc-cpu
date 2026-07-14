@@ -150,11 +150,11 @@ private[compat] final class SpinalCoreBackend(
   fetch.io.idleFlush := writeback.io.flush.idle
   fetch.io.writebackPc := writeback.io.debug.pc
 
-  decode.io.executeForward.valid := execute.io.forward.valid
+  decode.io.executeForward.writeEnabled := execute.io.forward.writeEnabled
   decode.io.executeForward.dependencyNeedsStall := execute.io.forward.dependencyNeedsStall
   decode.io.executeForward.destination := execute.io.forward.destination
   decode.io.executeForward.data := execute.io.forward.result
-  decode.io.memoryForward.valid := memory.io.forward.valid
+  decode.io.memoryForward.writeEnabled := memory.io.forward.writeEnabled
   decode.io.memoryForward.dependencyNeedsStall := memory.io.forward.dependencyNeedsStall
   decode.io.memoryForward.destination := memory.io.forward.destination
   decode.io.memoryForward.data := memory.io.forward.result

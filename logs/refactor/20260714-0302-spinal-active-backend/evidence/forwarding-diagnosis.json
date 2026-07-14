@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "status": "root_cause_confirmed_unit_fix_passed",
+  "candidate_head": "39501d16928d75d20465f6125009dc3bc2812bd5",
+  "case": "func/func_lab19",
+  "first_mismatch": {
+    "pc": "0x1c0752b8",
+    "instruction": "0x2980127b",
+    "reference_store_paddr": "0x001d0004",
+    "candidate_store_paddr": "0x001d0008",
+    "store_data": "0x3101bbed"
+  },
+  "adjacent_instructions": [
+    {"pc":"0x1c0752b4","instruction":"0x29801273","rj":19,"rd":19,"imm":4},
+    {"pc":"0x1c0752b8","instruction":"0x2980127b","rj":19,"rd":27,"imm":4}
+  ],
+  "golden_observation": {
+    "first_effective_address": "0x001d0004",
+    "second_effective_address": "0x001d0004"
+  },
+  "candidate_observation": {
+    "first_effective_address": "0x001d0004",
+    "second_effective_address": "0x001d0008"
+  },
+  "root_cause": "SpinalCoreBackend connected execute/memory stage occupancy valid to Decode forwarding enable. The first store names r19 in its destination field without writing a GPR, so its effective address was falsely forwarded as r19 to the next store.",
+  "fix": "DecodeForward now exposes writeEnabled; backend connects ExecuteForward.writeEnabled and MemoryForward.writeEnabled. Legacy bus bit 37 remains the forwarding write-enable source.",
+  "directed_test": "openla500.pipeline.DecodeForwardingSpec",
+  "directed_test_result": "pass",
+  "integrated_smoke_after_fix": "not_executed_before_commit"
+}
+
