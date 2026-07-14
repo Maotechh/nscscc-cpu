@@ -1,0 +1,11 @@
+command=make test-automation
+source_sha=09cfa96a1b67e2f5764b1ab015e3e51d307558fa
+environment=Ubuntu WSL clean clone /tmp/refactor-convergence-clean-09cfa96
+exit_code=0
+elapsed_seconds=19.4
+tests_executed=341
+failures=0
+errors=0
+result=OK
+
+说明：输出中的若干 ERROR/fail JSON 是 unittest 的预期负向用例；最终 unittest 汇总为 341/341 OK。

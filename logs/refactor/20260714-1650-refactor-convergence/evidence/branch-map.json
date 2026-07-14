@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "iteration_id": "20260714-1650-refactor-convergence",
+  "base_sha": "ce50a05c87baef28e0eabd95e5b2b27b6820a400",
+  "merge_sha": "09cfa96a1b67e2f5764b1ab015e3e51d307558fa",
+  "strategy": "history_only_ours",
+  "reason": "旧分支活动实现已进入 ce50 或被后续修复取代；普通内容 merge 会回退当前活动 tree。",
+  "merged_maximal_heads": [
+    {"branch":"refactor/20260713-0735-regfile-spinal","tip":"7269b82a51141994ea1b968f207bf5ef6ad2cf79","resolution":"current_tree_contains_integrated_blob"},
+    {"branch":"refactor/20260713-0729-csr-spinal","tip":"dae3c62a859f02504be7aff8b97e5c114a16a8d1","resolution":"current_tree_contains_integrated_blob"},
+    {"branch":"refactor/20260713-0729-exe-stage-spinal","tip":"5bbd276d4d78466befe66e4e80347a747c0edf03","resolution":"current_tree_contains_integrated_blob"},
+    {"branch":"refactor/20260713-1400-addr-trans-spinal","tip":"8dc1770629c00a8db9f26cc69d124031f84bdcc4","resolution":"current_tree_contains_integrated_blob"},
+    {"branch":"refactor/20260713-1415-icache-spinal","tip":"93e271d0800d7b73219ebcb2524d738b3e0a39c6","resolution":"superseded_by_cacop_recovery"},
+    {"branch":"refactor/20260713-1829-wb-stage-spinal","tip":"3441431a1c981e4964adf23bf78e1af17574932c","resolution":"superseded_by_difftest_integration"},
+    {"branch":"refactor/20260713-2119-mem-stage-spinal","tip":"f421f7b5e07f7aab58bf3c0acfcecdb9a754415f","resolution":"current_tree_contains_integrated_blob"},
+    {"branch":"refactor/20260713-2120-id-stage-spinal","tip":"80beb764355cd32375f1a9f40d90556b68c51e28","resolution":"superseded_by_forwarding_fix"},
+    {"branch":"refactor/20260713-2215-if-stage-spinal","tip":"7855437e45663a3a7f01c8b5787386c6b48713d0","resolution":"current_tree_contains_integrated_blob"},
+    {"branch":"refactor/20260713-2245-core-top-contract","tip":"6bddc77df365db513de793bb4f7198ddaf613167","resolution":"superseded_by_active_backend_gate"},
+    {"branch":"refactor/20260713-2250-if-active-overlay","tip":"ca920604ac9ebc4d6fb7dfa117562983b8544a69","resolution":"superseded_by_single_active_mycpu_overlay"}
+  ],
+  "covered_nonmaximal_heads": [
+    {"branch":"refactor/20260713-0729-axi-bridge-spinal","tip":"fb5a63fbb3c5378a0d99d6122c0cf66b89a332c5","covered_by":"refactor/20260713-1415-icache-spinal"}
+  ],
+  "post_merge_ref_scan": {
+    "namespaces": ["refs/heads/refactor", "refs/remotes/origin/refactor"],
+    "total": 60,
+    "ancestors_of_merge_head": 60,
+    "non_ancestors": 0
+  },
+  "active_implementation_commits": {
+    "alu":"154e354",
+    "mul":"dea1b95",
+    "div":"dcd5154",
+    "core_top":"0e2787f",
+    "contracts_and_commit":"5848f94",
+    "axi":"543bb02",
+    "csr":"4a874c6",
+    "regfile":"6a01570",
+    "execute":"847e536",
+    "icache":"6e37a51",
+    "tlb_and_addr_trans":"5d8ce4b",
+    "dcache":"f13b450",
+    "writeback":"e27077a",
+    "memory":"c6ef8c2",
+    "decode":"be8b34f",
+    "fetch":"91f7d19",
+    "active_backend":"305d2cd",
+    "difftest":"9709b10"
+  }
+}

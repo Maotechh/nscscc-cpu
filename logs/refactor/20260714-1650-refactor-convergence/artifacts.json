@@ -1,6 +1,14 @@
 {
   "schema_version": 1,
   "iteration_id": "20260714-1650-refactor-convergence",
-  "artifacts": [],
+  "artifacts": [
+    {
+      "id": "scala-gate-summary",
+      "path": "logs/refactor/20260714-1650-refactor-convergence/evidence/scala.json",
+      "sha256": "3cfcdbfab666b1f5b056aa98ff79138206b016a582a2e09dcfa814d0a8fc99f2",
+      "size": 105966,
+      "retention": "git"
+    }
+  ],
   "external_artifacts": []
 }

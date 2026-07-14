@@ -1,0 +1,15 @@
+{
+  "elapsed_seconds": 7.976,
+  "executed": 0,
+  "failed": 0,
+  "gate": "scala-check",
+  "generated_at": "2026-07-14T17:15:05+08:00",
+  "passed": 0,
+  "planned": 4,
+  "runtime_workspace_cleaned": true,
+  "schema_version": 1,
+  "skipped": 4,
+  "status": "fail",
+  "tasks": [],
+  "toolchain_error": "cannot resolve repository HEAD: fatal: not a git repository: /mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260714-1650-consolidated-spinal/D:/schoolworks/CS110/longxin/nscscc-cpu/.git/worktrees/20260714-1650-btb-spinal-full"
+}

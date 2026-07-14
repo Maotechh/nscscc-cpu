@@ -4,18 +4,23 @@
   "status": "draft",
   "branch": "refactor/20260714-1650-consolidated-spinal",
   "base_sha": "ce50a05c87baef28e0eabd95e5b2b27b6820a400",
-  "head_sha": "ce50a05c87baef28e0eabd95e5b2b27b6820a400",
+  "head_sha": "09cfa96a1b67e2f5764b1ab015e3e51d307558fa",
+  "review_target_sha": "09cfa96a1b67e2f5764b1ab015e3e51d307558fa",
   "selected_boundary": "repository/refactor_branch_convergence",
   "gates": {
     "preflight": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0,"evidence":"iteration.md"},
-    "branch_ancestry": {"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":1,"evidence":"evidence/branch-map.json"},
-    "content_preservation": {"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":1,"evidence":"evidence/content-preservation.json"},
-    "scala": {"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":1,"evidence":"evidence/scala.json"},
-    "automation_tests": {"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":1,"evidence":"evidence/automation-tests.txt"},
-    "claim_review": {"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":1,"evidence":"reviews/claude-raw.md"}
+    "branch_ancestry": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0,"evidence":"evidence/branch-map.json"},
+    "content_preservation": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0,"evidence":"evidence/content-preservation.json"},
+    "scala": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0,"evidence":"evidence/scala.json"},
+    "automation_tests": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0,"evidence":"evidence/automation-tests.txt"},
+    "claim_review": {"status":"unavailable","planned":1,"executed":0,"passed":0,"failed":0,"skipped":1,"evidence":["reviews/claude-raw.md","reviews/claude-summary.json","reviews/branch-convergence-read-only.md","reviews/active-source-read-only.md"]}
   },
   "required_gates": ["branch_ancestry","content_preservation","scala","automation_tests","claim_review"],
-  "claims": [],
-  "blocked_by": ["branch_convergence_not_committed", "claim_review_not_executed"],
+  "claims": [
+    {"id":"C1","claim":"09cfa96 只收敛旧 refactor 分支历史，不改变 50bce6 的 tracked tree","support":"supported","evidence":["evidence/content-preservation.json","evidence/branch-map.json"]},
+    {"id":"C2","claim":"所有已发现本地和 origin refactor ref 都是唯一集成 HEAD 的祖先","support":"supported","evidence":"evidence/branch-map.json"},
+    {"id":"C3","claim":"分支收敛代表完整重构或官方回归通过","support":"unsupported","evidence":["reviews/active-source-read-only.md","iteration.md"]}
+  ],
+  "blocked_by": ["claude_bridge_missing_GEEKPIE_CLAUDE_API_KEY"],
   "residual_risks": ["old branch content must not overwrite later integrated fixes"]
 }

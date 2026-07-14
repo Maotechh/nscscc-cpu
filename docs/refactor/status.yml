@@ -1,10 +1,34 @@
 schema_version: 1
-updated_at: "2026-07-14T16:21:13+08:00"
-active_iteration: "20260714-1534-btb-branch-replay"
-active_branch: "refactor/20260714-1534-btb-branch-replay"
-source_head: "75523504912c1b390dc1d1e3cddb5c3a0cc43a27"
+updated_at: "2026-07-14T17:30:00+08:00"
+active_iteration: "20260714-1650-refactor-convergence"
+active_branch: "refactor/20260714-1650-consolidated-spinal"
+source_head: "09cfa96a1b67e2f5764b1ab015e3e51d307558fa"
 
 boundaries:
+  refactor_branch_convergence:
+    owner: integration
+    state: implementation_in_review
+    golden_ref: ce50a05c87baef28e0eabd95e5b2b27b6820a400
+    dependencies: []
+    contract: docs/adr/0002-single-refactor-integration-branch.md
+    required_gates:
+      - branch_ancestry
+      - content_preservation
+      - scala
+      - automation_tests
+      - claim_review
+    evidence:
+      - logs/refactor/20260714-1650-refactor-convergence/iteration.md
+      - logs/refactor/20260714-1650-refactor-convergence/summary.json
+      - logs/refactor/20260714-1650-refactor-convergence/evidence/branch-map.json
+      - logs/refactor/20260714-1650-refactor-convergence/evidence/content-preservation.json
+      - logs/refactor/20260714-1650-refactor-convergence/evidence/scala.json
+      - logs/refactor/20260714-1650-refactor-convergence/reviews/claude-summary.json
+    active_pr: null
+    blocked_by:
+      - claude_bridge_missing_GEEKPIE_CLAUDE_API_KEY
+    last_iteration: "20260714-1650-refactor-convergence"
+
   legacy_shell_active_replacement_overlay:
     owner: integration
     state: implementation_in_review
