@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "status": "unavailable",
+  "reviewer": "claude",
+  "error": "Required provider environment variable is not set: GEEKPIE_CLAUDE_API_KEY",
+  "claims": [
+    {"claim": "perf_counter active logic migrated", "decision": "accepted"},
+    {"claim": "official func smoke passes", "decision": "open"},
+    {"claim": "whole core release ready", "decision": "open"}
+  ]
+}

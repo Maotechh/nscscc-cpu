@@ -2,12 +2,19 @@
 
 ## 行为合同
 
-- 待验证后填写。
+七个 32 位计数器按 writeback event 独立计数；同步高有效 reset 优先；自然 2^32 回绕；事件可并发；不改变外部 core_top 端口。
 
 ## 验证
 
-- 待执行。
+- Scala / unit differential / port-check / Yosys：PASS，证据见迭代目录。
+- chiplab-doctor：PASS。
+- 官方 `func_lab19`：FAIL，构建与仿真命令返回 0，但 `good_trap=false` 且 warning policy 为 DUT 237、官方 364。
+- 未运行或未通过：58/81 功能集、random、perf20、U-Boot/Linux、Vivado implementation/timing/bitstream。
 
-## 回退与状态
+## 审核与状态
 
-revert 本轮提交即可恢复原 backend 未接线状态。PR 必须保持 draft；代理不自动创建 ready PR 或合并。
+Claude bridge 当前 unavailable（缺少 API key），不得把本地审查标为 Claude 审核。PR 保持 draft/awaiting_pr，由维护者审阅后决定是否创建和合并；代理不自动合并 `main`。
+
+## 回退
+
+revert 本迭代提交即可恢复旧 perf_counter backend 接线；保留 golden 和证据。

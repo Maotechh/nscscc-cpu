@@ -1,8 +1,8 @@
 schema_version: 1
-updated_at: "2026-07-14T23:28:00+08:00"
+updated_at: "2026-07-15T01:30:00+08:00"
 active_iteration: "20260714-2328-perf-counter"
 active_branch: "refactor/20260714-1650-consolidated-spinal"
-source_head: "working-tree"
+source_head: "b015be13f468d34debc912e77db8b8423e846a98"
 
 boundaries:
   refactor_branch_convergence:
@@ -357,8 +357,13 @@ boundaries:
     evidence:
       - logs/refactor/20260714-2328-perf-counter/iteration.md
       - logs/refactor/20260714-2328-perf-counter/summary.json
+      - logs/refactor/20260714-2328-perf-counter/evidence/rtl-smoke-20260715-0118/rtl-smoke.json
+      - logs/refactor/20260714-2328-perf-counter/reviews/claude-summary.json
     active_pr: null
-    blocked_by: []
+    blocked_by:
+      - official_func_lab19_good_trap_false
+      - unapproved_verilator_warnings
+      - claude_bridge_missing_GEEKPIE_CLAUDE_API_KEY
     last_iteration: "20260714-2328-perf-counter"
 
   core_top_compat:

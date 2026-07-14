@@ -1,25 +1,27 @@
 {
   "schema_version": 1,
   "iteration_id": "20260714-2328-perf-counter",
-  "status": "draft",
+  "status": "implementation_in_review",
   "branch": "refactor/20260714-1650-consolidated-spinal",
   "base_sha": "5038a537a02c1778a13ceca6b07d26e311b9afd6",
-  "head_sha": "working-tree",
+  "head_sha": "b015be13f468d34debc912e77db8b8423e846a98",
   "selected_boundary": "observe/perf_counter",
   "gates": {
-    "preflight": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0,"evidence":"iteration.md"},
-    "contract": {"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":0,"evidence":null},
-    "scala": {"status":"pending","planned":4,"executed":0,"passed":0,"failed":0,"skipped":0,"evidence":null},
-    "unit_diff": {"status":"pending","planned":2,"executed":0,"passed":0,"failed":0,"skipped":0,"evidence":null},
-    "core_top": {"status":"pending","planned":4,"executed":0,"passed":0,"failed":0,"skipped":0,"evidence":null},
-    "rtl_static": {"status":"pending","planned":2,"executed":0,"passed":0,"failed":0,"skipped":0,"evidence":null},
-    "func_smoke": {"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":0,"evidence":null},
-    "claude_review": {"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":0,"evidence":null}
+    "preflight": {"status": "pass", "executed": 1, "passed": 1, "failed": 0, "skipped": 0},
+    "contract": {"status": "pass", "executed": 1, "passed": 1, "failed": 0, "skipped": 0, "evidence": "reference/component-contracts/perf-counter.json"},
+    "scala": {"status": "pass", "executed": 4, "passed": 4, "failed": 0, "skipped": 0, "evidence": "build/perf-counter-scala-final-2/scala-check/"},
+    "unit_diff": {"status": "pass", "executed": 2, "passed": 2, "failed": 0, "skipped": 0, "evidence": "logs/refactor/20260714-2328-perf-counter/evidence/"},
+    "rtl_static": {"status": "pass", "executed": 2, "passed": 2, "failed": 0, "skipped": 0, "evidence": "reference/component-replacements/"},
+    "core_top": {"status": "pass", "executed": 4, "passed": 4, "failed": 0, "skipped": 0, "evidence": "reference/component-replacements/core-top.json"},
+    "chiplab_doctor": {"status": "pass", "executed": 1, "passed": 1, "failed": 0, "skipped": 0, "evidence": "evidence/rtl-smoke-20260715-0118/chiplab-doctor.json"},
+    "func_smoke": {"status": "fail", "executed": 3, "passed": 2, "failed": 1, "skipped": 0, "evidence": "evidence/rtl-smoke-20260715-0118/rtl-smoke.json", "reason": "good_trap=false and warning policy failed (DUT 237, official 364)"},
+    "claude_review": {"status": "unavailable", "executed": 0, "passed": 0, "failed": 0, "skipped": 1, "evidence": "reviews/claude-summary.json"}
   },
-  "claims": [],
-  "blocked_by": [],
-  "residual_risks": [
-    "whole-core regression evidence is not established by the leaf migration",
-    "official full suites, random DiffTest, system and FPGA gates remain required"
-  ]
+  "claims": [
+    {"claim": "perf_counter active logic is migrated to SpinalHDL", "status": "supported", "evidence": "OpenLa500PerfCounter.scala and unit differential evidence"},
+    {"claim": "official func_lab19 smoke passes", "status": "unsupported", "evidence": "rtl-smoke.json parser good_trap=false"},
+    {"claim": "whole core is release ready", "status": "unsupported", "evidence": "full suites, random, system and FPGA gates remain"}
+  ],
+  "blocked_by": ["baseline func_lab19 good_trap=false", "unapproved Verilator warnings", "Claude bridge unavailable"],
+  "residual_risks": ["whole-core regression evidence is not established by the leaf migration", "official full suites, random DiffTest, system and FPGA gates remain required"]
 }
