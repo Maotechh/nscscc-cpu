@@ -9,6 +9,7 @@
 - d22/a158 `rtl/btb.v` 仅在 `fetch_en` 时锁存 `fetch_pc`。
 - lookup 只使用上一拍真正接受的 fetch 请求：`fetch_en_r && fetch_pc_r == entry_pc && valid`。
 - `fetch_en=0` 时改变输入 PC 不得产生新的预测事件。
+- lookup 无效或未命中时，返回 target/index 必须为零，避免污染 IF 中按 golden 语义锁存并位或合并的预测结果。
 - 每个接受的指令 token 最多产生一次 commit；flush/redirect 只能杀死更年轻 token。
 
 ## 最小 replay 程序

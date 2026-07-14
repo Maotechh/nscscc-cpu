@@ -185,8 +185,8 @@ private[compat] final class SpinalCoreBackend(
     btbLookupValid && btbValid(lookupIndex) && btbTag(lookupIndex) === btbLookupPc(31 downto 7)
   fetch.io.btbEnabled := lookupHit
   fetch.io.btbTaken := lookupHit
-  fetch.io.btbIndex := lookupIndex
-  fetch.io.btbTarget := Mux(lookupHit, btbTarget(lookupIndex), btbLookupPc + 4)
+  fetch.io.btbIndex := Mux(lookupHit, lookupIndex, U(0, 5 bits))
+  fetch.io.btbTarget := Mux(lookupHit, btbTarget(lookupIndex), U(0, 32 bits))
   when(decode.io.btb.enable) {
     val updateIndex = decode.io.btb.pc(6 downto 2)
     when(decode.io.btb.actualTaken || decode.io.btb.addEntry) {
