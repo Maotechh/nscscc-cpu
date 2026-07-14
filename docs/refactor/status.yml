@@ -296,11 +296,11 @@ boundaries:
       - logs/refactor/20260714-0302-spinal-active-backend/iteration.md
     active_pr: null
     blocked_by:
-      - pure_spinal_func_smoke_not_executed
-      - 87_unapproved_verilator_warnings_in_complete_spinal_rtl
+      - updated_difftest_adapter_func_smoke_pending
+      - 88_unapproved_verilator_warnings_in_complete_spinal_rtl
       - func_full_and_random_wrappers_not_implemented
       - vivado_complete_spinal_rtl_not_executed
-      - 64_entry_btb_lacc_difftest_and_perf_integration_pending
+      - golden_observable_btb_ras_lacc_random_difftest_and_perf_pending
       - claude_bridge_missing_GEEKPIE_CLAUDE_API_KEY
     last_iteration: "20260714-0302-spinal-active-backend"
 
@@ -667,13 +667,13 @@ boundaries:
       - logs/refactor/20260714-0302-spinal-active-backend/iteration.md
     active_pr: null
     blocked_by:
-      - whole_core_func_smoke_not_executed
+      - updated_difftest_adapter_func_smoke_pending
       - random_backpressure_and_perf_not_executed
     last_iteration: "20260714-0302-spinal-active-backend"
 
   observability:
     owner: observe
-    state: not_started
+    state: implementation_in_review
     golden_ref: a158aa8:rtl/mycpu_top.v
     dependencies:
       - core_contracts
@@ -682,7 +682,12 @@ boundaries:
       - contract
       - difftest
       - claim_review
-    evidence: []
+    evidence:
+      - logs/refactor/20260714-0302-spinal-active-backend/evidence/generate-difftest.json
+      - logs/refactor/20260714-0302-spinal-active-backend/evidence/rtl-smoke-210f596.json
     active_pr: null
-    blocked_by: []
-    last_iteration: null
+    blocked_by:
+      - updated_difftest_adapter_func_smoke_pending
+      - random_difftest_not_executed
+      - claude_bridge_missing_GEEKPIE_CLAUDE_API_KEY
+    last_iteration: "20260714-0302-spinal-active-backend"

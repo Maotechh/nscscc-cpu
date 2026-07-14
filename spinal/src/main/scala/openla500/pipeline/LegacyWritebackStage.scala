@@ -95,6 +95,7 @@ final class LegacyWritebackStage(config: CoreConfig = CoreConfig.Locked) extends
   stage.io.input.valid := io.ms_to_ws_valid
   stage.io.input.payload := memoryPayload
   stage.io.debugBreakPoint := io.debug_break_point
+  stage.io.tlbFillIndex := 0
 
   io.ws_allowin := stage.io.input.ready
   io.ws_to_ds_valid := stage.io.stageValid

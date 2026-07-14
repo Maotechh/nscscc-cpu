@@ -25,6 +25,7 @@ private final class WritebackStageSimTop extends Component {
   stage.io.input.valid := io.inputValid
   stage.io.input.payload := MemoryPayload.unpackLegacy(io.inputBits)
   stage.io.debugBreakPoint := io.breakPoint
+  stage.io.tlbFillIndex := 0
 
   io.inputReady := stage.io.input.ready
   io.stageValid := stage.io.stageValid

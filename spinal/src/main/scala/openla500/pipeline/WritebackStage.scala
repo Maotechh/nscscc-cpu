@@ -84,6 +84,7 @@ final class WritebackStage(emitCommit: Boolean = true, exposeObservation: Boolea
   val io = new Bundle {
     val input = slave(Stream(MemoryPayload()))
     val debugBreakPoint = in Bool ()
+    val tlbFillIndex = in UInt (5 bits)
 
     val stageValid = out Bool ()
     val realValid = out Bool ()
@@ -286,7 +287,7 @@ final class WritebackStage(emitCommit: Boolean = true, exposeObservation: Boolea
     io.commit.payload.store.data := payload.storeData
     io.commit.payload.store.byteMask := storeByteMask
     io.commit.payload.tlbFill.valid := io.tlb.fill
-    io.commit.payload.tlbFill.index := payload.tlbIndex
+    io.commit.payload.tlbFill.index := io.tlbFillIndex
   }
 
   when(io.flush.any) {

@@ -9,3 +9,13 @@
 {"argv":["core_top_gate.py","yosys-check"],"cwd":"WSL native validation clone","exit_code":0,"result":"hierarchy/proc/check -assert 通过且无 warning","evidence":"evidence/yosys.json"}
 {"argv":["core_top_gate.py","lint"],"cwd":"WSL native validation clone","exit_code":1,"result":"严格 lint 失败：85 UNUSEDSIGNAL、1 UNUSEDPARAM、1 DECLFILENAME","evidence":"evidence/lint.json"}
 {"argv":["python","-m","pytest","-q"],"cwd":"Windows worktree","exit_code":0,"result":"326 passed, 10 platform skips","evidence":"iteration.md"}
+{"argv":["make","rtl-smoke"],"cwd":"locked chiplab overlay at 210f596","exit_code":1,"result":"Verilator build passed; simulation timed out after 600.054 seconds with zero parser-observed commits","evidence":"evidence/rtl-smoke-210f596.json"}
+{"argv":["make","scala-check"],"cwd":"WSL native validation clone","exit_code":0,"result":"DiffTest adapter 后 format/compile/test-compile/test 4/4，24 tests 通过","evidence":"evidence/scala-difftest.json"}
+{"argv":["make","elaborate","TARGET=core_top"],"cwd":"WSL native validation clone","exit_code":0,"result":"2/2 可复现；生成 RTL SHA256 1f9bec77f851848b5c2fd6ee327db11d424137fa0b64ed9fc2e00a93109b7aeb","evidence":"evidence/generate-difftest.json"}
+{"argv":["make","core-top-package"],"cwd":"WSL native validation clone","exit_code":0,"result":"完整 package SHA256 748b025cedac922dbf6ff2707b61e6e230138b091c89ebe778b0eede446dea41","evidence":"evidence/package-difftest.json"}
+{"argv":["make","port-check","TARGET=core_top"],"cwd":"WSL native validation clone","exit_code":0,"result":"官方 49/49 端口合同通过","evidence":"evidence/port-check-difftest.json"}
+{"argv":["make","yosys-check","TARGET=core_top"],"cwd":"WSL native validation clone","exit_code":0,"result":"hierarchy/proc/check -assert 通过且无 warning","evidence":"evidence/yosys-difftest.json"}
+{"argv":["make","lint","TARGET=core_top"],"cwd":"WSL native validation clone","exit_code":1,"result":"严格 lint 因 88 条 warning 失败，未标记为 PASS","evidence":"evidence/lint-difftest.json"}
+{"argv":["verilator","--lint-only","--sv","-Wall","-Wno-fatal","-DDIFFTEST_EN","--top-module","core_top","mycpu_top.v","difftest.v"],"cwd":"WSL locked chiplab inputs","exit_code":0,"result":"官方七个 DPI 模块静态链接成功；仍有既有 warning","evidence":"iteration.md"}
+{"argv":["python","-m","pytest","-q"],"cwd":"Windows worktree","exit_code":0,"result":"更新后 326 passed, 10 platform skips","evidence":"iteration.md"}
+{"argv":["python","-I","tools/refactor.py","doctor","--vivado-home","D:\\Xilinx\\Vivado\\2023.2"],"cwd":"Windows worktree","exit_code":0,"result":"manifest/golden/branch 和 Vivado ML Standard 2023.2 build 4029153 验证通过","evidence":"iteration.md"}

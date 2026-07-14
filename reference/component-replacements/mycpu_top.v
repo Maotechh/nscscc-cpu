@@ -57,6 +57,7 @@ module core_top #(
   output wire [31:0]   debug0_wb_inst
 );
 
+  wire                backendArea_core_aresetn;
   wire       [3:0]    backendArea_core_arid;
   wire       [31:0]   backendArea_core_araddr;
   wire       [7:0]    backendArea_core_arlen;
@@ -89,60 +90,62 @@ module core_top #(
   wire       [4:0]    backendArea_core_debug0_wb_rf_wnum;
   wire       [31:0]   backendArea_core_debug0_wb_rf_wdata;
   wire       [31:0]   backendArea_core_debug0_wb_inst;
+  reg                 resetCapture_delayedActiveHigh;
 
   SpinalCoreBackend backendArea_core (
-    .aclk               (aclk                                     ), //i
-    .aresetn            (aresetn                                  ), //i
-    .intrpt             (intrpt[7:0]                              ), //i
-    .arid               (backendArea_core_arid[3:0]               ), //o
-    .araddr             (backendArea_core_araddr[31:0]            ), //o
-    .arlen              (backendArea_core_arlen[7:0]              ), //o
-    .arsize             (backendArea_core_arsize[2:0]             ), //o
-    .arburst            (backendArea_core_arburst[1:0]            ), //o
-    .arlock             (backendArea_core_arlock[1:0]             ), //o
-    .arcache            (backendArea_core_arcache[3:0]            ), //o
-    .arprot             (backendArea_core_arprot[2:0]             ), //o
-    .arvalid            (backendArea_core_arvalid                 ), //o
-    .arready            (arready                                  ), //i
-    .rid                (rid[3:0]                                 ), //i
-    .rdata              (rdata[31:0]                              ), //i
-    .rresp              (rresp[1:0]                               ), //i
-    .rlast              (rlast                                    ), //i
-    .rvalid             (rvalid                                   ), //i
-    .rready             (backendArea_core_rready                  ), //o
-    .awid               (backendArea_core_awid[3:0]               ), //o
-    .awaddr             (backendArea_core_awaddr[31:0]            ), //o
-    .awlen              (backendArea_core_awlen[7:0]              ), //o
-    .awsize             (backendArea_core_awsize[2:0]             ), //o
-    .awburst            (backendArea_core_awburst[1:0]            ), //o
-    .awlock             (backendArea_core_awlock[1:0]             ), //o
-    .awcache            (backendArea_core_awcache[3:0]            ), //o
-    .awprot             (backendArea_core_awprot[2:0]             ), //o
-    .awvalid            (backendArea_core_awvalid                 ), //o
-    .awready            (awready                                  ), //i
-    .wid                (backendArea_core_wid[3:0]                ), //o
-    .wdata              (backendArea_core_wdata[31:0]             ), //o
-    .wstrb              (backendArea_core_wstrb[3:0]              ), //o
-    .wlast              (backendArea_core_wlast                   ), //o
-    .wvalid             (backendArea_core_wvalid                  ), //o
-    .wready             (wready                                   ), //i
-    .bid                (bid[3:0]                                 ), //i
-    .bresp              (bresp[1:0]                               ), //i
-    .bvalid             (bvalid                                   ), //i
-    .bready             (backendArea_core_bready                  ), //o
-    .break_point        (break_point                              ), //i
-    .infor_flag         (infor_flag                               ), //i
-    .reg_num            (reg_num[4:0]                             ), //i
-    .ws_valid           (backendArea_core_ws_valid                ), //o
-    .rf_rdata           (backendArea_core_rf_rdata[31:0]          ), //o
-    .debug0_wb_pc       (backendArea_core_debug0_wb_pc[31:0]      ), //o
-    .debug0_wb_rf_wen   (backendArea_core_debug0_wb_rf_wen[3:0]   ), //o
-    .debug0_wb_rf_wnum  (backendArea_core_debug0_wb_rf_wnum[4:0]  ), //o
-    .debug0_wb_rf_wdata (backendArea_core_debug0_wb_rf_wdata[31:0]), //o
-    .debug0_wb_inst     (backendArea_core_debug0_wb_inst[31:0]    ), //o
-    .aclk_1             (aclk                                     ), //i
-    .aresetn_1          (aresetn                                  )  //i
+    .aclk                           (aclk                                     ), //i
+    .aresetn                        (backendArea_core_aresetn                 ), //i
+    .intrpt                         (intrpt[7:0]                              ), //i
+    .arid                           (backendArea_core_arid[3:0]               ), //o
+    .araddr                         (backendArea_core_araddr[31:0]            ), //o
+    .arlen                          (backendArea_core_arlen[7:0]              ), //o
+    .arsize                         (backendArea_core_arsize[2:0]             ), //o
+    .arburst                        (backendArea_core_arburst[1:0]            ), //o
+    .arlock                         (backendArea_core_arlock[1:0]             ), //o
+    .arcache                        (backendArea_core_arcache[3:0]            ), //o
+    .arprot                         (backendArea_core_arprot[2:0]             ), //o
+    .arvalid                        (backendArea_core_arvalid                 ), //o
+    .arready                        (arready                                  ), //i
+    .rid                            (rid[3:0]                                 ), //i
+    .rdata                          (rdata[31:0]                              ), //i
+    .rresp                          (rresp[1:0]                               ), //i
+    .rlast                          (rlast                                    ), //i
+    .rvalid                         (rvalid                                   ), //i
+    .rready                         (backendArea_core_rready                  ), //o
+    .awid                           (backendArea_core_awid[3:0]               ), //o
+    .awaddr                         (backendArea_core_awaddr[31:0]            ), //o
+    .awlen                          (backendArea_core_awlen[7:0]              ), //o
+    .awsize                         (backendArea_core_awsize[2:0]             ), //o
+    .awburst                        (backendArea_core_awburst[1:0]            ), //o
+    .awlock                         (backendArea_core_awlock[1:0]             ), //o
+    .awcache                        (backendArea_core_awcache[3:0]            ), //o
+    .awprot                         (backendArea_core_awprot[2:0]             ), //o
+    .awvalid                        (backendArea_core_awvalid                 ), //o
+    .awready                        (awready                                  ), //i
+    .wid                            (backendArea_core_wid[3:0]                ), //o
+    .wdata                          (backendArea_core_wdata[31:0]             ), //o
+    .wstrb                          (backendArea_core_wstrb[3:0]              ), //o
+    .wlast                          (backendArea_core_wlast                   ), //o
+    .wvalid                         (backendArea_core_wvalid                  ), //o
+    .wready                         (wready                                   ), //i
+    .bid                            (bid[3:0]                                 ), //i
+    .bresp                          (bresp[1:0]                               ), //i
+    .bvalid                         (bvalid                                   ), //i
+    .bready                         (backendArea_core_bready                  ), //o
+    .break_point                    (break_point                              ), //i
+    .infor_flag                     (infor_flag                               ), //i
+    .reg_num                        (reg_num[4:0]                             ), //i
+    .ws_valid                       (backendArea_core_ws_valid                ), //o
+    .rf_rdata                       (backendArea_core_rf_rdata[31:0]          ), //o
+    .debug0_wb_pc                   (backendArea_core_debug0_wb_pc[31:0]      ), //o
+    .debug0_wb_rf_wen               (backendArea_core_debug0_wb_rf_wen[3:0]   ), //o
+    .debug0_wb_rf_wnum              (backendArea_core_debug0_wb_rf_wnum[4:0]  ), //o
+    .debug0_wb_rf_wdata             (backendArea_core_debug0_wb_rf_wdata[31:0]), //o
+    .debug0_wb_inst                 (backendArea_core_debug0_wb_inst[31:0]    ), //o
+    .aclk_1                         (aclk                                     ), //i
+    .resetCapture_delayedActiveHigh (resetCapture_delayedActiveHigh           )  //i
   );
+  assign backendArea_core_aresetn = (! resetCapture_delayedActiveHigh);
   assign arid = backendArea_core_arid;
   assign araddr = backendArea_core_araddr;
   assign arlen = backendArea_core_arlen;
@@ -175,6 +178,10 @@ module core_top #(
   assign debug0_wb_rf_wnum = backendArea_core_debug0_wb_rf_wnum;
   assign debug0_wb_rf_wdata = backendArea_core_debug0_wb_rf_wdata;
   assign debug0_wb_inst = backendArea_core_debug0_wb_inst;
+  always @(posedge aclk) begin
+    resetCapture_delayedActiveHigh <= (! aresetn);
+  end
+
 
 endmodule
 
@@ -229,7 +236,7 @@ module SpinalCoreBackend (
   output wire [31:0]   debug0_wb_rf_wdata,
   output wire [31:0]   debug0_wb_inst,
   input  wire          aclk_1,
-  input  wire          aresetn_1
+  input  wire          resetCapture_delayedActiveHigh
 );
 
   wire       [31:0]   fetch_io_exceptionEntry;
@@ -249,6 +256,7 @@ module SpinalCoreBackend (
   wire       [2:0]    memory_io_csrDmw1VirtualSegment;
   wire       [1:0]    memory_io_csrDmw1MemoryAttribute;
   wire       [4:0]    memory_io_dataTlbIndex;
+  wire       [4:0]    writeback_io_tlbFillIndex;
   wire       [13:0]   csr_rd_addr;
   wire       [13:0]   csr_wr_addr;
   wire       [31:0]   csr_era_in;
@@ -343,6 +351,38 @@ module SpinalCoreBackend (
   wire       [31:0]   decode_io_btb_actualTarget;
   wire       [31:0]   decode_io_btb_pc;
   wire       [4:0]    decode_io_btb_index;
+  wire       [31:0]   decode_io_registers_0;
+  wire       [31:0]   decode_io_registers_1;
+  wire       [31:0]   decode_io_registers_2;
+  wire       [31:0]   decode_io_registers_3;
+  wire       [31:0]   decode_io_registers_4;
+  wire       [31:0]   decode_io_registers_5;
+  wire       [31:0]   decode_io_registers_6;
+  wire       [31:0]   decode_io_registers_7;
+  wire       [31:0]   decode_io_registers_8;
+  wire       [31:0]   decode_io_registers_9;
+  wire       [31:0]   decode_io_registers_10;
+  wire       [31:0]   decode_io_registers_11;
+  wire       [31:0]   decode_io_registers_12;
+  wire       [31:0]   decode_io_registers_13;
+  wire       [31:0]   decode_io_registers_14;
+  wire       [31:0]   decode_io_registers_15;
+  wire       [31:0]   decode_io_registers_16;
+  wire       [31:0]   decode_io_registers_17;
+  wire       [31:0]   decode_io_registers_18;
+  wire       [31:0]   decode_io_registers_19;
+  wire       [31:0]   decode_io_registers_20;
+  wire       [31:0]   decode_io_registers_21;
+  wire       [31:0]   decode_io_registers_22;
+  wire       [31:0]   decode_io_registers_23;
+  wire       [31:0]   decode_io_registers_24;
+  wire       [31:0]   decode_io_registers_25;
+  wire       [31:0]   decode_io_registers_26;
+  wire       [31:0]   decode_io_registers_27;
+  wire       [31:0]   decode_io_registers_28;
+  wire       [31:0]   decode_io_registers_29;
+  wire       [31:0]   decode_io_registers_30;
+  wire       [31:0]   decode_io_registers_31;
   wire                execute_io_input_ready;
   wire                execute_io_output_valid;
   wire       [31:0]   execute_io_output_payload_pc;
@@ -578,6 +618,32 @@ module SpinalCoreBackend (
   wire       [1:0]    csr_datm_out;
   wire       [5:0]    csr_ecode_out;
   wire       [1:0]    csr_plv_out;
+  wire       [31:0]   csr_csr_crmd_diff;
+  wire       [31:0]   csr_csr_prmd_diff;
+  wire       [31:0]   csr_csr_ectl_diff;
+  wire       [31:0]   csr_csr_estat_diff;
+  wire       [31:0]   csr_csr_era_diff;
+  wire       [31:0]   csr_csr_badv_diff;
+  wire       [31:0]   csr_csr_eentry_diff;
+  wire       [31:0]   csr_csr_tlbidx_diff;
+  wire       [31:0]   csr_csr_tlbehi_diff;
+  wire       [31:0]   csr_csr_tlbelo0_diff;
+  wire       [31:0]   csr_csr_tlbelo1_diff;
+  wire       [31:0]   csr_csr_asid_diff;
+  wire       [31:0]   csr_csr_save0_diff;
+  wire       [31:0]   csr_csr_save1_diff;
+  wire       [31:0]   csr_csr_save2_diff;
+  wire       [31:0]   csr_csr_save3_diff;
+  wire       [31:0]   csr_csr_tid_diff;
+  wire       [31:0]   csr_csr_tcfg_diff;
+  wire       [31:0]   csr_csr_tval_diff;
+  wire       [31:0]   csr_csr_ticlr_diff;
+  wire       [31:0]   csr_csr_llbctl_diff;
+  wire       [31:0]   csr_csr_tlbrentry_diff;
+  wire       [31:0]   csr_csr_dmw0_diff;
+  wire       [31:0]   csr_csr_dmw1_diff;
+  wire       [31:0]   csr_csr_pgdl_diff;
+  wire       [31:0]   csr_csr_pgdh_diff;
   wire       [7:0]    addressTranslation_inst_index;
   wire       [19:0]   addressTranslation_inst_tag;
   wire       [3:0]    addressTranslation_inst_offset;
@@ -771,7 +837,7 @@ module SpinalCoreBackend (
   wire       [4:0]    lookupIndex;
   wire                lookupHit;
   wire       [4:0]    _zz_1;
-  wire                when_SpinalCoreBackend_l184;
+  wire                when_SpinalCoreBackend_l187;
   wire       [31:0]   _zz_2;
   wire                _zz_3;
   wire                _zz_4;
@@ -864,7 +930,7 @@ module SpinalCoreBackend (
     .io_fetchPc                                 (fetch_io_fetchPc[31:0]                          ), //o
     .io_fetchEnable                             (fetch_io_fetchEnable                            ), //o
     .aclk                                       (aclk_1                                          ), //i
-    .aresetn                                    (aresetn_1                                       )  //i
+    .resetCapture_delayedActiveHigh             (resetCapture_delayedActiveHigh                  )  //i
   );
   DecodeStage decode (
     .io_input_valid                         (fetch_io_downstream_valid                       ), //i
@@ -973,8 +1039,40 @@ module SpinalCoreBackend (
     .io_btb_actualTarget                    (decode_io_btb_actualTarget[31:0]                ), //o
     .io_btb_pc                              (decode_io_btb_pc[31:0]                          ), //o
     .io_btb_index                           (decode_io_btb_index[4:0]                        ), //o
+    .io_registers_0                         (decode_io_registers_0[31:0]                     ), //o
+    .io_registers_1                         (decode_io_registers_1[31:0]                     ), //o
+    .io_registers_2                         (decode_io_registers_2[31:0]                     ), //o
+    .io_registers_3                         (decode_io_registers_3[31:0]                     ), //o
+    .io_registers_4                         (decode_io_registers_4[31:0]                     ), //o
+    .io_registers_5                         (decode_io_registers_5[31:0]                     ), //o
+    .io_registers_6                         (decode_io_registers_6[31:0]                     ), //o
+    .io_registers_7                         (decode_io_registers_7[31:0]                     ), //o
+    .io_registers_8                         (decode_io_registers_8[31:0]                     ), //o
+    .io_registers_9                         (decode_io_registers_9[31:0]                     ), //o
+    .io_registers_10                        (decode_io_registers_10[31:0]                    ), //o
+    .io_registers_11                        (decode_io_registers_11[31:0]                    ), //o
+    .io_registers_12                        (decode_io_registers_12[31:0]                    ), //o
+    .io_registers_13                        (decode_io_registers_13[31:0]                    ), //o
+    .io_registers_14                        (decode_io_registers_14[31:0]                    ), //o
+    .io_registers_15                        (decode_io_registers_15[31:0]                    ), //o
+    .io_registers_16                        (decode_io_registers_16[31:0]                    ), //o
+    .io_registers_17                        (decode_io_registers_17[31:0]                    ), //o
+    .io_registers_18                        (decode_io_registers_18[31:0]                    ), //o
+    .io_registers_19                        (decode_io_registers_19[31:0]                    ), //o
+    .io_registers_20                        (decode_io_registers_20[31:0]                    ), //o
+    .io_registers_21                        (decode_io_registers_21[31:0]                    ), //o
+    .io_registers_22                        (decode_io_registers_22[31:0]                    ), //o
+    .io_registers_23                        (decode_io_registers_23[31:0]                    ), //o
+    .io_registers_24                        (decode_io_registers_24[31:0]                    ), //o
+    .io_registers_25                        (decode_io_registers_25[31:0]                    ), //o
+    .io_registers_26                        (decode_io_registers_26[31:0]                    ), //o
+    .io_registers_27                        (decode_io_registers_27[31:0]                    ), //o
+    .io_registers_28                        (decode_io_registers_28[31:0]                    ), //o
+    .io_registers_29                        (decode_io_registers_29[31:0]                    ), //o
+    .io_registers_30                        (decode_io_registers_30[31:0]                    ), //o
+    .io_registers_31                        (decode_io_registers_31[31:0]                    ), //o
     .aclk                                   (aclk_1                                          ), //i
-    .aresetn                                (aresetn_1                                       )  //i
+    .resetCapture_delayedActiveHigh         (resetCapture_delayedActiveHigh                  )  //i
   );
   ExecuteStage execute (
     .io_input_valid                              (decode_io_output_valid                              ), //i
@@ -1103,7 +1201,7 @@ module SpinalCoreBackend (
     .io_tlbInstructionStall                      (execute_io_tlbInstructionStall                      ), //o
     .io_dataFetch                                (execute_io_dataFetch                                ), //o
     .aclk                                        (aclk_1                                              ), //i
-    .aresetn                                     (aresetn_1                                           )  //i
+    .resetCapture_delayedActiveHigh              (resetCapture_delayedActiveHigh                      )  //i
   );
   MemoryStage memory (
     .io_input_valid                              (execute_io_output_valid                             ), //i
@@ -1247,7 +1345,7 @@ module SpinalCoreBackend (
     .io_forward_destination                      (memory_io_forward_destination[4:0]                  ), //o
     .io_forward_result                           (memory_io_forward_result[31:0]                      ), //o
     .aclk                                        (aclk_1                                              ), //i
-    .aresetn                                     (aresetn_1                                           )  //i
+    .resetCapture_delayedActiveHigh              (resetCapture_delayedActiveHigh                      )  //i
   );
   WritebackStage writeback (
     .io_input_valid                             (memory_io_output_valid                                ), //i
@@ -1296,6 +1394,7 @@ module SpinalCoreBackend (
     .io_input_payload_csrRstatEvent             (memory_io_output_payload_csrRstatEvent                ), //i
     .io_input_payload_csrData                   (memory_io_output_payload_csrData[31:0]                ), //i
     .io_debugBreakPoint                         (break_point                                           ), //i
+    .io_tlbFillIndex                            (writeback_io_tlbFillIndex[4:0]                        ), //i
     .io_stageValid                              (writeback_io_stageValid                               ), //o
     .io_realValid                               (writeback_io_realValid                                ), //o
     .io_registerWrite_valid                     (writeback_io_registerWrite_valid                      ), //o
@@ -1379,64 +1478,90 @@ module SpinalCoreBackend (
     .io_commit_payload_tlbFill_valid            (writeback_io_commit_payload_tlbFill_valid             ), //o
     .io_commit_payload_tlbFill_index            (writeback_io_commit_payload_tlbFill_index[4:0]        ), //o
     .aclk                                       (aclk_1                                                ), //i
-    .aresetn                                    (aresetn_1                                             )  //i
+    .resetCapture_delayedActiveHigh             (resetCapture_delayedActiveHigh                        )  //i
   );
   OpenLa500Csr csr (
-    .clk               (aclk                                ), //i
-    .reset             (reset                               ), //i
-    .rd_addr           (csr_rd_addr[13:0]                   ), //i
-    .rd_data           (csr_rd_data[31:0]                   ), //o
-    .timer_64_out      (csr_timer_64_out[63:0]              ), //o
-    .tid_out           (csr_tid_out[31:0]                   ), //o
-    .csr_wr_en         (writeback_io_csrWrite_valid         ), //i
-    .wr_addr           (csr_wr_addr[13:0]                   ), //i
-    .wr_data           (writeback_io_csrWrite_data[31:0]    ), //i
-    .interrupt         (intrpt[7:0]                         ), //i
-    .has_int           (csr_has_int                         ), //o
-    .excp_flush        (writeback_io_flush_exception        ), //i
-    .ertn_flush        (writeback_io_flush_ertn             ), //i
-    .era_in            (csr_era_in[31:0]                    ), //i
-    .esubcode_in       (csr_esubcode_in[8:0]                ), //i
-    .ecode_in          (csr_ecode_in[5:0]                   ), //i
-    .va_error_in       (writeback_io_exception_badVAddrValid), //i
-    .bad_va_in         (csr_bad_va_in[31:0]                 ), //i
-    .tlbsrch_en        (writeback_io_tlb_search             ), //i
-    .tlbsrch_found     (writeback_io_tlb_searchFound        ), //i
-    .tlbsrch_index     (csr_tlbsrch_index[4:0]              ), //i
-    .excp_tlbrefill    (writeback_io_exception_tlbRefill    ), //i
-    .excp_tlb          (writeback_io_exception_tlbException ), //i
-    .excp_tlb_vppn     (csr_excp_tlb_vppn[18:0]             ), //i
-    .llbit_in          (writeback_io_reservation_bitValue   ), //i
-    .llbit_set_in      (writeback_io_reservation_bitSet     ), //i
-    .lladdr_in         (csr_lladdr_in[27:0]                 ), //i
-    .lladdr_set_in     (writeback_io_reservation_addressSet ), //i
-    .llbit_out         (csr_llbit_out                       ), //o
-    .vppn_out          (csr_vppn_out[18:0]                  ), //o
-    .lladdr_out        (csr_lladdr_out[27:0]                ), //o
-    .eentry_out        (csr_eentry_out[31:0]                ), //o
-    .era_out           (csr_era_out[31:0]                   ), //o
-    .tlbrentry_out     (csr_tlbrentry_out[31:0]             ), //o
-    .disable_cache_out (csr_disable_cache_out               ), //o
-    .asid_out          (csr_asid_out[9:0]                   ), //o
-    .rand_index        (csr_rand_index[4:0]                 ), //o
-    .tlbehi_out        (csr_tlbehi_out[31:0]                ), //o
-    .tlbelo0_out       (csr_tlbelo0_out[31:0]               ), //o
-    .tlbelo1_out       (csr_tlbelo1_out[31:0]               ), //o
-    .tlbidx_out        (csr_tlbidx_out[31:0]                ), //o
-    .pg_out            (csr_pg_out                          ), //o
-    .da_out            (csr_da_out                          ), //o
-    .dmw0_out          (csr_dmw0_out[31:0]                  ), //o
-    .dmw1_out          (csr_dmw1_out[31:0]                  ), //o
-    .datf_out          (csr_datf_out[1:0]                   ), //o
-    .datm_out          (csr_datm_out[1:0]                   ), //o
-    .ecode_out         (csr_ecode_out[5:0]                  ), //o
-    .tlbrd_en          (writeback_io_tlb_read               ), //i
-    .tlbehi_in         (addressTranslation_tlbehi_out[31:0] ), //i
-    .tlbelo0_in        (addressTranslation_tlbelo0_out[31:0]), //i
-    .tlbelo1_in        (addressTranslation_tlbelo1_out[31:0]), //i
-    .tlbidx_in         (addressTranslation_tlbidx_out[31:0] ), //i
-    .asid_in           (addressTranslation_asid_out[9:0]    ), //i
-    .plv_out           (csr_plv_out[1:0]                    )  //o
+    .clk                (aclk                                ), //i
+    .reset              (reset                               ), //i
+    .rd_addr            (csr_rd_addr[13:0]                   ), //i
+    .rd_data            (csr_rd_data[31:0]                   ), //o
+    .timer_64_out       (csr_timer_64_out[63:0]              ), //o
+    .tid_out            (csr_tid_out[31:0]                   ), //o
+    .csr_wr_en          (writeback_io_csrWrite_valid         ), //i
+    .wr_addr            (csr_wr_addr[13:0]                   ), //i
+    .wr_data            (writeback_io_csrWrite_data[31:0]    ), //i
+    .interrupt          (intrpt[7:0]                         ), //i
+    .has_int            (csr_has_int                         ), //o
+    .excp_flush         (writeback_io_flush_exception        ), //i
+    .ertn_flush         (writeback_io_flush_ertn             ), //i
+    .era_in             (csr_era_in[31:0]                    ), //i
+    .esubcode_in        (csr_esubcode_in[8:0]                ), //i
+    .ecode_in           (csr_ecode_in[5:0]                   ), //i
+    .va_error_in        (writeback_io_exception_badVAddrValid), //i
+    .bad_va_in          (csr_bad_va_in[31:0]                 ), //i
+    .tlbsrch_en         (writeback_io_tlb_search             ), //i
+    .tlbsrch_found      (writeback_io_tlb_searchFound        ), //i
+    .tlbsrch_index      (csr_tlbsrch_index[4:0]              ), //i
+    .excp_tlbrefill     (writeback_io_exception_tlbRefill    ), //i
+    .excp_tlb           (writeback_io_exception_tlbException ), //i
+    .excp_tlb_vppn      (csr_excp_tlb_vppn[18:0]             ), //i
+    .llbit_in           (writeback_io_reservation_bitValue   ), //i
+    .llbit_set_in       (writeback_io_reservation_bitSet     ), //i
+    .lladdr_in          (csr_lladdr_in[27:0]                 ), //i
+    .lladdr_set_in      (writeback_io_reservation_addressSet ), //i
+    .llbit_out          (csr_llbit_out                       ), //o
+    .vppn_out           (csr_vppn_out[18:0]                  ), //o
+    .lladdr_out         (csr_lladdr_out[27:0]                ), //o
+    .eentry_out         (csr_eentry_out[31:0]                ), //o
+    .era_out            (csr_era_out[31:0]                   ), //o
+    .tlbrentry_out      (csr_tlbrentry_out[31:0]             ), //o
+    .disable_cache_out  (csr_disable_cache_out               ), //o
+    .asid_out           (csr_asid_out[9:0]                   ), //o
+    .rand_index         (csr_rand_index[4:0]                 ), //o
+    .tlbehi_out         (csr_tlbehi_out[31:0]                ), //o
+    .tlbelo0_out        (csr_tlbelo0_out[31:0]               ), //o
+    .tlbelo1_out        (csr_tlbelo1_out[31:0]               ), //o
+    .tlbidx_out         (csr_tlbidx_out[31:0]                ), //o
+    .pg_out             (csr_pg_out                          ), //o
+    .da_out             (csr_da_out                          ), //o
+    .dmw0_out           (csr_dmw0_out[31:0]                  ), //o
+    .dmw1_out           (csr_dmw1_out[31:0]                  ), //o
+    .datf_out           (csr_datf_out[1:0]                   ), //o
+    .datm_out           (csr_datm_out[1:0]                   ), //o
+    .ecode_out          (csr_ecode_out[5:0]                  ), //o
+    .tlbrd_en           (writeback_io_tlb_read               ), //i
+    .tlbehi_in          (addressTranslation_tlbehi_out[31:0] ), //i
+    .tlbelo0_in         (addressTranslation_tlbelo0_out[31:0]), //i
+    .tlbelo1_in         (addressTranslation_tlbelo1_out[31:0]), //i
+    .tlbidx_in          (addressTranslation_tlbidx_out[31:0] ), //i
+    .asid_in            (addressTranslation_asid_out[9:0]    ), //i
+    .plv_out            (csr_plv_out[1:0]                    ), //o
+    .csr_crmd_diff      (csr_csr_crmd_diff[31:0]             ), //o
+    .csr_prmd_diff      (csr_csr_prmd_diff[31:0]             ), //o
+    .csr_ectl_diff      (csr_csr_ectl_diff[31:0]             ), //o
+    .csr_estat_diff     (csr_csr_estat_diff[31:0]            ), //o
+    .csr_era_diff       (csr_csr_era_diff[31:0]              ), //o
+    .csr_badv_diff      (csr_csr_badv_diff[31:0]             ), //o
+    .csr_eentry_diff    (csr_csr_eentry_diff[31:0]           ), //o
+    .csr_tlbidx_diff    (csr_csr_tlbidx_diff[31:0]           ), //o
+    .csr_tlbehi_diff    (csr_csr_tlbehi_diff[31:0]           ), //o
+    .csr_tlbelo0_diff   (csr_csr_tlbelo0_diff[31:0]          ), //o
+    .csr_tlbelo1_diff   (csr_csr_tlbelo1_diff[31:0]          ), //o
+    .csr_asid_diff      (csr_csr_asid_diff[31:0]             ), //o
+    .csr_save0_diff     (csr_csr_save0_diff[31:0]            ), //o
+    .csr_save1_diff     (csr_csr_save1_diff[31:0]            ), //o
+    .csr_save2_diff     (csr_csr_save2_diff[31:0]            ), //o
+    .csr_save3_diff     (csr_csr_save3_diff[31:0]            ), //o
+    .csr_tid_diff       (csr_csr_tid_diff[31:0]              ), //o
+    .csr_tcfg_diff      (csr_csr_tcfg_diff[31:0]             ), //o
+    .csr_tval_diff      (csr_csr_tval_diff[31:0]             ), //o
+    .csr_ticlr_diff     (csr_csr_ticlr_diff[31:0]            ), //o
+    .csr_llbctl_diff    (csr_csr_llbctl_diff[31:0]           ), //o
+    .csr_tlbrentry_diff (csr_csr_tlbrentry_diff[31:0]        ), //o
+    .csr_dmw0_diff      (csr_csr_dmw0_diff[31:0]             ), //o
+    .csr_dmw1_diff      (csr_csr_dmw1_diff[31:0]             ), //o
+    .csr_pgdl_diff      (csr_csr_pgdl_diff[31:0]             ), //o
+    .csr_pgdh_diff      (csr_csr_pgdh_diff[31:0]             )  //o
   );
   OpenLa500AddrTrans addressTranslation (
     .clk                (aclk                                     ), //i
@@ -1650,6 +1775,103 @@ module SpinalCoreBackend (
     .y          (execute_io_mulDiv_operandKOrD[31:0]), //i
     .result     (multiplier_result[63:0]            )  //o
   );
+  ChiplabDiffTestAdapter chiplabDiffTestAdapter_1 (
+    .io_clock                                  (aclk                                                  ), //i
+    .io_commit_valid                           (writeback_io_commit_valid                             ), //i
+    .io_commit_payload_pc                      (writeback_io_commit_payload_pc[31:0]                  ), //i
+    .io_commit_payload_instruction             (writeback_io_commit_payload_instruction[31:0]         ), //i
+    .io_commit_payload_retired                 (writeback_io_commit_payload_retired                   ), //i
+    .io_commit_payload_ertn                    (writeback_io_commit_payload_ertn                      ), //i
+    .io_commit_payload_isCounterInstruction    (writeback_io_commit_payload_isCounterInstruction      ), //i
+    .io_commit_payload_csrRstat                (writeback_io_commit_payload_csrRstat                  ), //i
+    .io_commit_payload_csrReadData             (writeback_io_commit_payload_csrReadData[31:0]         ), //i
+    .io_commit_payload_gprWrite_valid          (writeback_io_commit_payload_gprWrite_valid            ), //i
+    .io_commit_payload_gprWrite_index          (writeback_io_commit_payload_gprWrite_index[4:0]       ), //i
+    .io_commit_payload_gprWrite_data           (writeback_io_commit_payload_gprWrite_data[31:0]       ), //i
+    .io_commit_payload_csrWrite_valid          (writeback_io_commit_payload_csrWrite_valid            ), //i
+    .io_commit_payload_csrWrite_address        (writeback_io_commit_payload_csrWrite_address[13:0]    ), //i
+    .io_commit_payload_csrWrite_data           (writeback_io_commit_payload_csrWrite_data[31:0]       ), //i
+    .io_commit_payload_exception_valid         (writeback_io_commit_payload_exception_valid           ), //i
+    .io_commit_payload_exception_ecode         (writeback_io_commit_payload_exception_ecode[5:0]      ), //i
+    .io_commit_payload_exception_esubcode      (writeback_io_commit_payload_exception_esubcode[8:0]   ), //i
+    .io_commit_payload_exception_badVAddrValid (writeback_io_commit_payload_exception_badVAddrValid   ), //i
+    .io_commit_payload_exception_badVAddr      (writeback_io_commit_payload_exception_badVAddr[31:0]  ), //i
+    .io_commit_payload_exception_tlbRefill     (writeback_io_commit_payload_exception_tlbRefill       ), //i
+    .io_commit_payload_exception_tlbException  (writeback_io_commit_payload_exception_tlbException    ), //i
+    .io_commit_payload_exception_tlbVppn       (writeback_io_commit_payload_exception_tlbVppn[18:0]   ), //i
+    .io_commit_payload_timer                   (writeback_io_commit_payload_timer[63:0]               ), //i
+    .io_commit_payload_load_instructionMask    (writeback_io_commit_payload_load_instructionMask[7:0] ), //i
+    .io_commit_payload_load_pAddr              (writeback_io_commit_payload_load_pAddr[31:0]          ), //i
+    .io_commit_payload_load_vAddr              (writeback_io_commit_payload_load_vAddr[31:0]          ), //i
+    .io_commit_payload_store_instructionMask   (writeback_io_commit_payload_store_instructionMask[7:0]), //i
+    .io_commit_payload_store_pAddr             (writeback_io_commit_payload_store_pAddr[31:0]         ), //i
+    .io_commit_payload_store_vAddr             (writeback_io_commit_payload_store_vAddr[31:0]         ), //i
+    .io_commit_payload_store_data              (writeback_io_commit_payload_store_data[31:0]          ), //i
+    .io_commit_payload_store_byteMask          (writeback_io_commit_payload_store_byteMask[3:0]       ), //i
+    .io_commit_payload_tlbFill_valid           (writeback_io_commit_payload_tlbFill_valid             ), //i
+    .io_commit_payload_tlbFill_index           (writeback_io_commit_payload_tlbFill_index[4:0]        ), //i
+    .io_archState_gpr_0                        (32'h0                                                 ), //i
+    .io_archState_gpr_1                        (decode_io_registers_1[31:0]                           ), //i
+    .io_archState_gpr_2                        (decode_io_registers_2[31:0]                           ), //i
+    .io_archState_gpr_3                        (decode_io_registers_3[31:0]                           ), //i
+    .io_archState_gpr_4                        (decode_io_registers_4[31:0]                           ), //i
+    .io_archState_gpr_5                        (decode_io_registers_5[31:0]                           ), //i
+    .io_archState_gpr_6                        (decode_io_registers_6[31:0]                           ), //i
+    .io_archState_gpr_7                        (decode_io_registers_7[31:0]                           ), //i
+    .io_archState_gpr_8                        (decode_io_registers_8[31:0]                           ), //i
+    .io_archState_gpr_9                        (decode_io_registers_9[31:0]                           ), //i
+    .io_archState_gpr_10                       (decode_io_registers_10[31:0]                          ), //i
+    .io_archState_gpr_11                       (decode_io_registers_11[31:0]                          ), //i
+    .io_archState_gpr_12                       (decode_io_registers_12[31:0]                          ), //i
+    .io_archState_gpr_13                       (decode_io_registers_13[31:0]                          ), //i
+    .io_archState_gpr_14                       (decode_io_registers_14[31:0]                          ), //i
+    .io_archState_gpr_15                       (decode_io_registers_15[31:0]                          ), //i
+    .io_archState_gpr_16                       (decode_io_registers_16[31:0]                          ), //i
+    .io_archState_gpr_17                       (decode_io_registers_17[31:0]                          ), //i
+    .io_archState_gpr_18                       (decode_io_registers_18[31:0]                          ), //i
+    .io_archState_gpr_19                       (decode_io_registers_19[31:0]                          ), //i
+    .io_archState_gpr_20                       (decode_io_registers_20[31:0]                          ), //i
+    .io_archState_gpr_21                       (decode_io_registers_21[31:0]                          ), //i
+    .io_archState_gpr_22                       (decode_io_registers_22[31:0]                          ), //i
+    .io_archState_gpr_23                       (decode_io_registers_23[31:0]                          ), //i
+    .io_archState_gpr_24                       (decode_io_registers_24[31:0]                          ), //i
+    .io_archState_gpr_25                       (decode_io_registers_25[31:0]                          ), //i
+    .io_archState_gpr_26                       (decode_io_registers_26[31:0]                          ), //i
+    .io_archState_gpr_27                       (decode_io_registers_27[31:0]                          ), //i
+    .io_archState_gpr_28                       (decode_io_registers_28[31:0]                          ), //i
+    .io_archState_gpr_29                       (decode_io_registers_29[31:0]                          ), //i
+    .io_archState_gpr_30                       (decode_io_registers_30[31:0]                          ), //i
+    .io_archState_gpr_31                       (decode_io_registers_31[31:0]                          ), //i
+    .io_archState_crmd                         (csr_csr_crmd_diff[31:0]                               ), //i
+    .io_archState_prmd                         (csr_csr_prmd_diff[31:0]                               ), //i
+    .io_archState_euen                         (32'h0                                                 ), //i
+    .io_archState_ecfg                         (csr_csr_ectl_diff[31:0]                               ), //i
+    .io_archState_estat                        (csr_csr_estat_diff[31:0]                              ), //i
+    .io_archState_era                          (csr_csr_era_diff[31:0]                                ), //i
+    .io_archState_badv                         (csr_csr_badv_diff[31:0]                               ), //i
+    .io_archState_eentry                       (csr_csr_eentry_diff[31:0]                             ), //i
+    .io_archState_tlbidx                       (csr_csr_tlbidx_diff[31:0]                             ), //i
+    .io_archState_tlbehi                       (csr_csr_tlbehi_diff[31:0]                             ), //i
+    .io_archState_tlbelo0                      (csr_csr_tlbelo0_diff[31:0]                            ), //i
+    .io_archState_tlbelo1                      (csr_csr_tlbelo1_diff[31:0]                            ), //i
+    .io_archState_asid                         (csr_csr_asid_diff[31:0]                               ), //i
+    .io_archState_pgdl                         (csr_csr_pgdl_diff[31:0]                               ), //i
+    .io_archState_pgdh                         (csr_csr_pgdh_diff[31:0]                               ), //i
+    .io_archState_save0                        (csr_csr_save0_diff[31:0]                              ), //i
+    .io_archState_save1                        (csr_csr_save1_diff[31:0]                              ), //i
+    .io_archState_save2                        (csr_csr_save2_diff[31:0]                              ), //i
+    .io_archState_save3                        (csr_csr_save3_diff[31:0]                              ), //i
+    .io_archState_tid                          (csr_csr_tid_diff[31:0]                                ), //i
+    .io_archState_tcfg                         (csr_csr_tcfg_diff[31:0]                               ), //i
+    .io_archState_tval                         (csr_csr_tval_diff[31:0]                               ), //i
+    .io_archState_ticlr                        (csr_csr_ticlr_diff[31:0]                              ), //i
+    .io_archState_llbctl                       (csr_csr_llbctl_diff[31:0]                             ), //i
+    .io_archState_tlbrentry                    (csr_csr_tlbrentry_diff[31:0]                          ), //i
+    .io_archState_dmw0                         (csr_csr_dmw0_diff[31:0]                               ), //i
+    .io_archState_dmw1                         (csr_csr_dmw1_diff[31:0]                               ), //i
+    .aclk                                      (aclk_1                                                ), //i
+    .resetCapture_delayedActiveHigh            (resetCapture_delayedActiveHigh                        )  //i
+  );
   always @(*) begin
     case(lookupIndex)
       5'b00000 : begin
@@ -1816,11 +2038,12 @@ module SpinalCoreBackend (
   end
 
   assign reset = (! aresetn);
+  assign writeback_io_tlbFillIndex = csr_rand_index;
   assign lookupIndex = btbLookupPc[6 : 2];
   assign lookupHit = (_zz_lookupHit && (_zz_lookupHit_1 == btbLookupPc[31 : 7]));
   assign fetch_io_btbTarget = (lookupHit ? _zz_io_btbTarget : _zz_io_btbTarget_1);
   assign _zz_1 = decode_io_btb_pc[6 : 2];
-  assign when_SpinalCoreBackend_l184 = (decode_io_btb_actualTaken || decode_io_btb_addEntry);
+  assign when_SpinalCoreBackend_l187 = (decode_io_btb_actualTaken || decode_io_btb_addEntry);
   assign _zz_2 = ({31'd0,1'b1} <<< _zz_1);
   assign _zz_3 = _zz_2[0];
   assign _zz_4 = _zz_2[1];
@@ -1918,7 +2141,7 @@ module SpinalCoreBackend (
   assign debug0_wb_rf_wdata = writeback_io_debug_gprData;
   assign debug0_wb_inst = writeback_io_debug_instruction;
   always @(posedge aclk_1) begin
-    if(!aresetn_1) begin
+    if(resetCapture_delayedActiveHigh) begin
       btbValid_0 <= 1'b0;
       btbValid_1 <= 1'b0;
       btbValid_2 <= 1'b0;
@@ -1955,7 +2178,7 @@ module SpinalCoreBackend (
     end else begin
       btbLookupPc <= fetch_io_fetchPc;
       if(decode_io_btb_enable) begin
-        if(when_SpinalCoreBackend_l184) begin
+        if(when_SpinalCoreBackend_l187) begin
           if(_zz_3) begin
             btbValid_0 <= 1'b1;
           end
@@ -2158,7 +2381,7 @@ module SpinalCoreBackend (
 
   always @(posedge aclk_1) begin
     if(decode_io_btb_enable) begin
-      if(when_SpinalCoreBackend_l184) begin
+      if(when_SpinalCoreBackend_l187) begin
         if(_zz_35[0]) begin
           btbTag_0 <= _zz_btbTag_0;
         end
@@ -2353,6 +2576,383 @@ module SpinalCoreBackend (
         end
       end
     end
+  end
+
+
+endmodule
+
+module ChiplabDiffTestAdapter (
+  input  wire          io_clock,
+  input  wire          io_commit_valid,
+  input  wire [31:0]   io_commit_payload_pc,
+  input  wire [31:0]   io_commit_payload_instruction,
+  input  wire          io_commit_payload_retired,
+  input  wire          io_commit_payload_ertn,
+  input  wire          io_commit_payload_isCounterInstruction,
+  input  wire          io_commit_payload_csrRstat,
+  input  wire [31:0]   io_commit_payload_csrReadData,
+  input  wire          io_commit_payload_gprWrite_valid,
+  input  wire [4:0]    io_commit_payload_gprWrite_index,
+  input  wire [31:0]   io_commit_payload_gprWrite_data,
+  input  wire          io_commit_payload_csrWrite_valid,
+  input  wire [13:0]   io_commit_payload_csrWrite_address,
+  input  wire [31:0]   io_commit_payload_csrWrite_data,
+  input  wire          io_commit_payload_exception_valid,
+  input  wire [5:0]    io_commit_payload_exception_ecode,
+  input  wire [8:0]    io_commit_payload_exception_esubcode,
+  input  wire          io_commit_payload_exception_badVAddrValid,
+  input  wire [31:0]   io_commit_payload_exception_badVAddr,
+  input  wire          io_commit_payload_exception_tlbRefill,
+  input  wire          io_commit_payload_exception_tlbException,
+  input  wire [18:0]   io_commit_payload_exception_tlbVppn,
+  input  wire [63:0]   io_commit_payload_timer,
+  input  wire [7:0]    io_commit_payload_load_instructionMask,
+  input  wire [31:0]   io_commit_payload_load_pAddr,
+  input  wire [31:0]   io_commit_payload_load_vAddr,
+  input  wire [7:0]    io_commit_payload_store_instructionMask,
+  input  wire [31:0]   io_commit_payload_store_pAddr,
+  input  wire [31:0]   io_commit_payload_store_vAddr,
+  input  wire [31:0]   io_commit_payload_store_data,
+  input  wire [3:0]    io_commit_payload_store_byteMask,
+  input  wire          io_commit_payload_tlbFill_valid,
+  input  wire [4:0]    io_commit_payload_tlbFill_index,
+  input  wire [31:0]   io_archState_gpr_0,
+  input  wire [31:0]   io_archState_gpr_1,
+  input  wire [31:0]   io_archState_gpr_2,
+  input  wire [31:0]   io_archState_gpr_3,
+  input  wire [31:0]   io_archState_gpr_4,
+  input  wire [31:0]   io_archState_gpr_5,
+  input  wire [31:0]   io_archState_gpr_6,
+  input  wire [31:0]   io_archState_gpr_7,
+  input  wire [31:0]   io_archState_gpr_8,
+  input  wire [31:0]   io_archState_gpr_9,
+  input  wire [31:0]   io_archState_gpr_10,
+  input  wire [31:0]   io_archState_gpr_11,
+  input  wire [31:0]   io_archState_gpr_12,
+  input  wire [31:0]   io_archState_gpr_13,
+  input  wire [31:0]   io_archState_gpr_14,
+  input  wire [31:0]   io_archState_gpr_15,
+  input  wire [31:0]   io_archState_gpr_16,
+  input  wire [31:0]   io_archState_gpr_17,
+  input  wire [31:0]   io_archState_gpr_18,
+  input  wire [31:0]   io_archState_gpr_19,
+  input  wire [31:0]   io_archState_gpr_20,
+  input  wire [31:0]   io_archState_gpr_21,
+  input  wire [31:0]   io_archState_gpr_22,
+  input  wire [31:0]   io_archState_gpr_23,
+  input  wire [31:0]   io_archState_gpr_24,
+  input  wire [31:0]   io_archState_gpr_25,
+  input  wire [31:0]   io_archState_gpr_26,
+  input  wire [31:0]   io_archState_gpr_27,
+  input  wire [31:0]   io_archState_gpr_28,
+  input  wire [31:0]   io_archState_gpr_29,
+  input  wire [31:0]   io_archState_gpr_30,
+  input  wire [31:0]   io_archState_gpr_31,
+  input  wire [31:0]   io_archState_crmd,
+  input  wire [31:0]   io_archState_prmd,
+  input  wire [31:0]   io_archState_euen,
+  input  wire [31:0]   io_archState_ecfg,
+  input  wire [31:0]   io_archState_estat,
+  input  wire [31:0]   io_archState_era,
+  input  wire [31:0]   io_archState_badv,
+  input  wire [31:0]   io_archState_eentry,
+  input  wire [31:0]   io_archState_tlbidx,
+  input  wire [31:0]   io_archState_tlbehi,
+  input  wire [31:0]   io_archState_tlbelo0,
+  input  wire [31:0]   io_archState_tlbelo1,
+  input  wire [31:0]   io_archState_asid,
+  input  wire [31:0]   io_archState_pgdl,
+  input  wire [31:0]   io_archState_pgdh,
+  input  wire [31:0]   io_archState_save0,
+  input  wire [31:0]   io_archState_save1,
+  input  wire [31:0]   io_archState_save2,
+  input  wire [31:0]   io_archState_save3,
+  input  wire [31:0]   io_archState_tid,
+  input  wire [31:0]   io_archState_tcfg,
+  input  wire [31:0]   io_archState_tval,
+  input  wire [31:0]   io_archState_ticlr,
+  input  wire [31:0]   io_archState_llbctl,
+  input  wire [31:0]   io_archState_tlbrentry,
+  input  wire [31:0]   io_archState_dmw0,
+  input  wire [31:0]   io_archState_dmw1,
+  input  wire          aclk,
+  input  wire          resetCapture_delayedActiveHigh
+);
+
+  wire       [504:0]  wrapper_commitContract;
+  wire                wrapper_instrValid;
+  wire       [63:0]   wrapper_pc;
+  wire                wrapper_isTlbFill;
+  wire       [4:0]    wrapper_tlbFillIndex;
+  wire       [63:0]   wrapper_timer;
+  wire                wrapper_gprWriteValid;
+  wire       [7:0]    wrapper_gprWriteIndex;
+  wire       [63:0]   wrapper_gprWriteData;
+  wire                wrapper_exceptionValid;
+  wire                wrapper_ertn;
+  wire       [31:0]   wrapper_interruptNumber;
+  wire       [31:0]   wrapper_exceptionCause;
+  wire       [63:0]   wrapper_exceptionPc;
+  wire       [2:0]    wrapper_trapCode;
+  wire       [63:0]   wrapper_cycleCount;
+  wire       [63:0]   wrapper_instructionCount;
+  wire       [7:0]    wrapper_storeValid;
+  wire       [63:0]   wrapper_storePhysicalAddress;
+  wire       [63:0]   wrapper_storeVirtualAddress;
+  wire       [63:0]   wrapper_storeData;
+  wire       [7:0]    wrapper_loadValid;
+  wire       [63:0]   wrapper_loadPhysicalAddress;
+  wire       [63:0]   wrapper_loadVirtualAddress;
+  wire       [1727:0] wrapper_csrState;
+  wire       [2047:0] wrapper_gprState;
+  wire       [31:0]   _zz_commitContract;
+  wire       [18:0]   _zz_commitContract_1;
+  wire       [50:0]   _zz_commitContract_2;
+  wire       [0:0]    _zz_commitContract_3;
+  wire       [15:0]   _zz_commitContract_4;
+  wire       [46:0]   _zz_commitContract_5;
+  wire       [137:0]  _zz_commitContract_6;
+  wire       [0:0]    _zz_commitContract_7;
+  wire       [65:0]   _zz_commitContract_8;
+  wire       [1151:0] _zz_csrState;
+  wire       [639:0]  _zz_csrState_1;
+  wire       [127:0]  _zz_csrState_2;
+  wire       [63:0]   _zz_csrState_3;
+  wire       [31:0]   _zz_csrState_4;
+  wire       [63:0]   _zz_csrState_5;
+  wire       [31:0]   _zz_csrState_6;
+  wire       [63:0]   _zz_csrState_7;
+  wire       [31:0]   _zz_csrState_8;
+  wire       [1023:0] _zz_gprState;
+  reg                 registeredValid;
+  reg        [31:0]   registeredCommit_pc;
+  reg        [31:0]   registeredCommit_instruction;
+  reg                 registeredCommit_retired;
+  reg                 registeredCommit_ertn;
+  reg                 registeredCommit_isCounterInstruction;
+  reg                 registeredCommit_csrRstat;
+  reg        [31:0]   registeredCommit_csrReadData;
+  reg                 registeredCommit_gprWrite_valid;
+  reg        [4:0]    registeredCommit_gprWrite_index;
+  reg        [31:0]   registeredCommit_gprWrite_data;
+  reg                 registeredCommit_csrWrite_valid;
+  reg        [13:0]   registeredCommit_csrWrite_address;
+  reg        [31:0]   registeredCommit_csrWrite_data;
+  reg                 registeredCommit_exception_valid;
+  reg        [5:0]    registeredCommit_exception_ecode;
+  reg        [8:0]    registeredCommit_exception_esubcode;
+  reg                 registeredCommit_exception_badVAddrValid;
+  reg        [31:0]   registeredCommit_exception_badVAddr;
+  reg                 registeredCommit_exception_tlbRefill;
+  reg                 registeredCommit_exception_tlbException;
+  reg        [18:0]   registeredCommit_exception_tlbVppn;
+  reg        [63:0]   registeredCommit_timer;
+  reg        [7:0]    registeredCommit_load_instructionMask;
+  reg        [31:0]   registeredCommit_load_pAddr;
+  reg        [31:0]   registeredCommit_load_vAddr;
+  reg        [7:0]    registeredCommit_store_instructionMask;
+  reg        [31:0]   registeredCommit_store_pAddr;
+  reg        [31:0]   registeredCommit_store_vAddr;
+  reg        [31:0]   registeredCommit_store_data;
+  reg        [3:0]    registeredCommit_store_byteMask;
+  reg                 registeredCommit_tlbFill_valid;
+  reg        [4:0]    registeredCommit_tlbFill_index;
+  wire                rawRetired;
+  reg        [63:0]   cycleCount;
+  reg        [63:0]   instructionCount;
+  wire       [63:0]   gprWords_0;
+  wire       [63:0]   gprWords_1;
+  wire       [63:0]   gprWords_2;
+  wire       [63:0]   gprWords_3;
+  wire       [63:0]   gprWords_4;
+  wire       [63:0]   gprWords_5;
+  wire       [63:0]   gprWords_6;
+  wire       [63:0]   gprWords_7;
+  wire       [63:0]   gprWords_8;
+  wire       [63:0]   gprWords_9;
+  wire       [63:0]   gprWords_10;
+  wire       [63:0]   gprWords_11;
+  wire       [63:0]   gprWords_12;
+  wire       [63:0]   gprWords_13;
+  wire       [63:0]   gprWords_14;
+  wire       [63:0]   gprWords_15;
+  wire       [63:0]   gprWords_16;
+  wire       [63:0]   gprWords_17;
+  wire       [63:0]   gprWords_18;
+  wire       [63:0]   gprWords_19;
+  wire       [63:0]   gprWords_20;
+  wire       [63:0]   gprWords_21;
+  wire       [63:0]   gprWords_22;
+  wire       [63:0]   gprWords_23;
+  wire       [63:0]   gprWords_24;
+  wire       [63:0]   gprWords_25;
+  wire       [63:0]   gprWords_26;
+  wire       [63:0]   gprWords_27;
+  wire       [63:0]   gprWords_28;
+  wire       [63:0]   gprWords_29;
+  wire       [63:0]   gprWords_30;
+  wire       [63:0]   gprWords_31;
+
+  assign _zz_commitContract = registeredCommit_store_pAddr;
+  assign _zz_commitContract_1 = registeredCommit_exception_tlbVppn;
+  assign _zz_commitContract_2 = {registeredCommit_exception_tlbException,{registeredCommit_exception_tlbRefill,{registeredCommit_exception_badVAddr,{_zz_commitContract_3,_zz_commitContract_4}}}};
+  assign _zz_commitContract_5 = {registeredCommit_csrWrite_data,{registeredCommit_csrWrite_address,registeredCommit_csrWrite_valid}};
+  assign _zz_commitContract_6 = {{registeredCommit_gprWrite_data,{registeredCommit_gprWrite_index,registeredCommit_gprWrite_valid}},{registeredCommit_csrReadData,{registeredCommit_csrRstat,{_zz_commitContract_7,_zz_commitContract_8}}}};
+  assign _zz_commitContract_3 = registeredCommit_exception_badVAddrValid;
+  assign _zz_commitContract_4 = {registeredCommit_exception_esubcode,{registeredCommit_exception_ecode,registeredCommit_exception_valid}};
+  assign _zz_commitContract_7 = registeredCommit_isCounterInstruction;
+  assign _zz_commitContract_8 = {registeredCommit_ertn,{registeredCommit_retired,{registeredCommit_instruction,registeredCommit_pc}}};
+  assign _zz_csrState = {{{{{{{{_zz_csrState_1,_zz_csrState_5},{_zz_csrState_6,io_archState_save0}},{32'h0,io_archState_pgdh}},{32'h0,io_archState_pgdl}},{32'h0,io_archState_asid}},{32'h0,io_archState_tlbelo1}},{32'h0,io_archState_tlbelo0}},{32'h0,io_archState_tlbehi}};
+  assign _zz_csrState_7 = {32'h0,io_archState_tlbidx};
+  assign _zz_csrState_8 = 32'h0;
+  assign _zz_csrState_1 = {{{{{{{{_zz_csrState_2,_zz_csrState_3},{_zz_csrState_4,io_archState_llbctl}},{32'h0,io_archState_ticlr}},{32'h0,io_archState_tval}},{32'h0,io_archState_tcfg}},{32'h0,io_archState_tid}},{32'h0,io_archState_save3}},{32'h0,io_archState_save2}};
+  assign _zz_csrState_5 = {32'h0,io_archState_save1};
+  assign _zz_csrState_6 = 32'h0;
+  assign _zz_csrState_2 = {{32'h0,io_archState_dmw1},{32'h0,io_archState_dmw0}};
+  assign _zz_csrState_3 = {32'h0,io_archState_tlbrentry};
+  assign _zz_csrState_4 = 32'h0;
+  assign _zz_gprState = {{{{{{{{{{{{{{{gprWords_31,gprWords_30},gprWords_29},gprWords_28},gprWords_27},gprWords_26},gprWords_25},gprWords_24},gprWords_23},gprWords_22},gprWords_21},gprWords_20},gprWords_19},gprWords_18},gprWords_17},gprWords_16};
+  ChiplabDiffTestBlackBox wrapper (
+    .clock                (io_clock                             ), //i
+    .commitContract       (wrapper_commitContract[504:0]        ), //i
+    .instrValid           (wrapper_instrValid                   ), //i
+    .pc                   (wrapper_pc[63:0]                     ), //i
+    .instruction          (registeredCommit_instruction[31:0]   ), //i
+    .isTlbFill            (wrapper_isTlbFill                    ), //i
+    .tlbFillIndex         (wrapper_tlbFillIndex[4:0]            ), //i
+    .isCounterInstruction (registeredCommit_isCounterInstruction), //i
+    .timer                (wrapper_timer[63:0]                  ), //i
+    .gprWriteValid        (wrapper_gprWriteValid                ), //i
+    .gprWriteIndex        (wrapper_gprWriteIndex[7:0]           ), //i
+    .gprWriteData         (wrapper_gprWriteData[63:0]           ), //i
+    .csrRstat             (registeredCommit_csrRstat            ), //i
+    .csrReadData          (registeredCommit_csrReadData[31:0]   ), //i
+    .exceptionValid       (wrapper_exceptionValid               ), //i
+    .ertn                 (wrapper_ertn                         ), //i
+    .interruptNumber      (wrapper_interruptNumber[31:0]        ), //i
+    .exceptionCause       (wrapper_exceptionCause[31:0]         ), //i
+    .exceptionPc          (wrapper_exceptionPc[63:0]            ), //i
+    .exceptionInstruction (registeredCommit_instruction[31:0]   ), //i
+    .trapValid            (1'b0                                 ), //i
+    .trapCode             (wrapper_trapCode[2:0]                ), //i
+    .cycleCount           (wrapper_cycleCount[63:0]             ), //i
+    .instructionCount     (wrapper_instructionCount[63:0]       ), //i
+    .storeValid           (wrapper_storeValid[7:0]              ), //i
+    .storePhysicalAddress (wrapper_storePhysicalAddress[63:0]   ), //i
+    .storeVirtualAddress  (wrapper_storeVirtualAddress[63:0]    ), //i
+    .storeData            (wrapper_storeData[63:0]              ), //i
+    .loadValid            (wrapper_loadValid[7:0]               ), //i
+    .loadPhysicalAddress  (wrapper_loadPhysicalAddress[63:0]    ), //i
+    .loadVirtualAddress   (wrapper_loadVirtualAddress[63:0]     ), //i
+    .csrState             (wrapper_csrState[1727:0]             ), //i
+    .gprState             (wrapper_gprState[2047:0]             )  //i
+  );
+  assign rawRetired = (io_commit_valid && io_commit_payload_retired);
+  assign wrapper_commitContract = {{registeredCommit_tlbFill_index,registeredCommit_tlbFill_valid},{{registeredCommit_store_byteMask,{registeredCommit_store_data,{registeredCommit_store_vAddr,{_zz_commitContract,registeredCommit_store_instructionMask}}}},{{registeredCommit_load_vAddr,{registeredCommit_load_pAddr,registeredCommit_load_instructionMask}},{registeredCommit_timer,{{_zz_commitContract_1,_zz_commitContract_2},{_zz_commitContract_5,_zz_commitContract_6}}}}}};
+  assign wrapper_instrValid = (registeredValid && registeredCommit_retired);
+  assign wrapper_pc = {32'h0,registeredCommit_pc};
+  assign wrapper_isTlbFill = (registeredValid && registeredCommit_tlbFill_valid);
+  assign wrapper_tlbFillIndex = registeredCommit_tlbFill_index;
+  assign wrapper_timer = registeredCommit_timer;
+  assign wrapper_gprWriteValid = (registeredValid && registeredCommit_gprWrite_valid);
+  assign wrapper_gprWriteIndex = {3'b000,registeredCommit_gprWrite_index};
+  assign wrapper_gprWriteData = {32'h0,registeredCommit_gprWrite_data};
+  assign wrapper_exceptionValid = (registeredValid && registeredCommit_exception_valid);
+  assign wrapper_ertn = (registeredValid && registeredCommit_ertn);
+  assign wrapper_interruptNumber = {21'h0,io_archState_estat[12 : 2]};
+  assign wrapper_exceptionCause = {26'h0,registeredCommit_exception_ecode};
+  assign wrapper_exceptionPc = {32'h0,registeredCommit_pc};
+  assign wrapper_trapCode = io_archState_gpr_10[2 : 0];
+  assign wrapper_cycleCount = cycleCount;
+  assign wrapper_instructionCount = instructionCount;
+  assign wrapper_storeValid = (registeredValid ? registeredCommit_store_instructionMask : 8'h0);
+  assign wrapper_storePhysicalAddress = {32'h0,registeredCommit_store_pAddr};
+  assign wrapper_storeVirtualAddress = {32'h0,registeredCommit_store_vAddr};
+  assign wrapper_storeData = {32'h0,registeredCommit_store_data};
+  assign wrapper_loadValid = (registeredValid ? registeredCommit_load_instructionMask : 8'h0);
+  assign wrapper_loadPhysicalAddress = {32'h0,registeredCommit_load_pAddr};
+  assign wrapper_loadVirtualAddress = {32'h0,registeredCommit_load_vAddr};
+  assign wrapper_csrState = {{{{{{{{{_zz_csrState,_zz_csrState_7},{_zz_csrState_8,io_archState_eentry}},{32'h0,io_archState_badv}},{32'h0,io_archState_era}},{32'h0,io_archState_estat}},{32'h0,io_archState_ecfg}},{32'h0,io_archState_euen}},{32'h0,io_archState_prmd}},{32'h0,io_archState_crmd}};
+  assign gprWords_0 = {32'h0,io_archState_gpr_0};
+  assign gprWords_1 = {32'h0,io_archState_gpr_1};
+  assign gprWords_2 = {32'h0,io_archState_gpr_2};
+  assign gprWords_3 = {32'h0,io_archState_gpr_3};
+  assign gprWords_4 = {32'h0,io_archState_gpr_4};
+  assign gprWords_5 = {32'h0,io_archState_gpr_5};
+  assign gprWords_6 = {32'h0,io_archState_gpr_6};
+  assign gprWords_7 = {32'h0,io_archState_gpr_7};
+  assign gprWords_8 = {32'h0,io_archState_gpr_8};
+  assign gprWords_9 = {32'h0,io_archState_gpr_9};
+  assign gprWords_10 = {32'h0,io_archState_gpr_10};
+  assign gprWords_11 = {32'h0,io_archState_gpr_11};
+  assign gprWords_12 = {32'h0,io_archState_gpr_12};
+  assign gprWords_13 = {32'h0,io_archState_gpr_13};
+  assign gprWords_14 = {32'h0,io_archState_gpr_14};
+  assign gprWords_15 = {32'h0,io_archState_gpr_15};
+  assign gprWords_16 = {32'h0,io_archState_gpr_16};
+  assign gprWords_17 = {32'h0,io_archState_gpr_17};
+  assign gprWords_18 = {32'h0,io_archState_gpr_18};
+  assign gprWords_19 = {32'h0,io_archState_gpr_19};
+  assign gprWords_20 = {32'h0,io_archState_gpr_20};
+  assign gprWords_21 = {32'h0,io_archState_gpr_21};
+  assign gprWords_22 = {32'h0,io_archState_gpr_22};
+  assign gprWords_23 = {32'h0,io_archState_gpr_23};
+  assign gprWords_24 = {32'h0,io_archState_gpr_24};
+  assign gprWords_25 = {32'h0,io_archState_gpr_25};
+  assign gprWords_26 = {32'h0,io_archState_gpr_26};
+  assign gprWords_27 = {32'h0,io_archState_gpr_27};
+  assign gprWords_28 = {32'h0,io_archState_gpr_28};
+  assign gprWords_29 = {32'h0,io_archState_gpr_29};
+  assign gprWords_30 = {32'h0,io_archState_gpr_30};
+  assign gprWords_31 = {32'h0,io_archState_gpr_31};
+  assign wrapper_gprState = {{{{{{{{{{{{{{{{_zz_gprState,gprWords_15},gprWords_14},gprWords_13},gprWords_12},gprWords_11},gprWords_10},gprWords_9},gprWords_8},gprWords_7},gprWords_6},gprWords_5},gprWords_4},gprWords_3},gprWords_2},gprWords_1},gprWords_0};
+  always @(posedge aclk) begin
+    if(resetCapture_delayedActiveHigh) begin
+      registeredValid <= 1'b0;
+      cycleCount <= 64'h0;
+      instructionCount <= 64'h0;
+    end else begin
+      registeredValid <= io_commit_valid;
+      cycleCount <= (cycleCount + 64'h0000000000000001);
+      if(rawRetired) begin
+        instructionCount <= (instructionCount + 64'h0000000000000001);
+      end
+    end
+  end
+
+  always @(posedge aclk) begin
+    registeredCommit_pc <= io_commit_payload_pc;
+    registeredCommit_instruction <= io_commit_payload_instruction;
+    registeredCommit_retired <= io_commit_payload_retired;
+    registeredCommit_ertn <= io_commit_payload_ertn;
+    registeredCommit_isCounterInstruction <= io_commit_payload_isCounterInstruction;
+    registeredCommit_csrRstat <= io_commit_payload_csrRstat;
+    registeredCommit_csrReadData <= io_commit_payload_csrReadData;
+    registeredCommit_gprWrite_valid <= io_commit_payload_gprWrite_valid;
+    registeredCommit_gprWrite_index <= io_commit_payload_gprWrite_index;
+    registeredCommit_gprWrite_data <= io_commit_payload_gprWrite_data;
+    registeredCommit_csrWrite_valid <= io_commit_payload_csrWrite_valid;
+    registeredCommit_csrWrite_address <= io_commit_payload_csrWrite_address;
+    registeredCommit_csrWrite_data <= io_commit_payload_csrWrite_data;
+    registeredCommit_exception_valid <= io_commit_payload_exception_valid;
+    registeredCommit_exception_ecode <= io_commit_payload_exception_ecode;
+    registeredCommit_exception_esubcode <= io_commit_payload_exception_esubcode;
+    registeredCommit_exception_badVAddrValid <= io_commit_payload_exception_badVAddrValid;
+    registeredCommit_exception_badVAddr <= io_commit_payload_exception_badVAddr;
+    registeredCommit_exception_tlbRefill <= io_commit_payload_exception_tlbRefill;
+    registeredCommit_exception_tlbException <= io_commit_payload_exception_tlbException;
+    registeredCommit_exception_tlbVppn <= io_commit_payload_exception_tlbVppn;
+    registeredCommit_timer <= io_commit_payload_timer;
+    registeredCommit_load_instructionMask <= io_commit_payload_load_instructionMask;
+    registeredCommit_load_pAddr <= io_commit_payload_load_pAddr;
+    registeredCommit_load_vAddr <= io_commit_payload_load_vAddr;
+    registeredCommit_store_instructionMask <= io_commit_payload_store_instructionMask;
+    registeredCommit_store_pAddr <= io_commit_payload_store_pAddr;
+    registeredCommit_store_vAddr <= io_commit_payload_store_vAddr;
+    registeredCommit_store_data <= io_commit_payload_store_data;
+    registeredCommit_store_byteMask <= io_commit_payload_store_byteMask;
+    registeredCommit_tlbFill_valid <= io_commit_payload_tlbFill_valid;
+    registeredCommit_tlbFill_index <= io_commit_payload_tlbFill_index;
   end
 
 
@@ -7980,7 +8580,33 @@ module OpenLa500Csr (
   input  wire [31:0]   tlbelo1_in,
   input  wire [31:0]   tlbidx_in,
   input  wire [9:0]    asid_in,
-  output wire [1:0]    plv_out
+  output wire [1:0]    plv_out,
+  output wire [31:0]   csr_crmd_diff,
+  output wire [31:0]   csr_prmd_diff,
+  output wire [31:0]   csr_ectl_diff,
+  output wire [31:0]   csr_estat_diff,
+  output wire [31:0]   csr_era_diff,
+  output wire [31:0]   csr_badv_diff,
+  output wire [31:0]   csr_eentry_diff,
+  output wire [31:0]   csr_tlbidx_diff,
+  output wire [31:0]   csr_tlbehi_diff,
+  output wire [31:0]   csr_tlbelo0_diff,
+  output wire [31:0]   csr_tlbelo1_diff,
+  output wire [31:0]   csr_asid_diff,
+  output wire [31:0]   csr_save0_diff,
+  output wire [31:0]   csr_save1_diff,
+  output wire [31:0]   csr_save2_diff,
+  output wire [31:0]   csr_save3_diff,
+  output wire [31:0]   csr_tid_diff,
+  output wire [31:0]   csr_tcfg_diff,
+  output wire [31:0]   csr_tval_diff,
+  output wire [31:0]   csr_ticlr_diff,
+  output wire [31:0]   csr_llbctl_diff,
+  output wire [31:0]   csr_tlbrentry_diff,
+  output wire [31:0]   csr_dmw0_diff,
+  output wire [31:0]   csr_dmw1_diff,
+  output wire [31:0]   csr_pgdl_diff,
+  output wire [31:0]   csr_pgdh_diff
 );
 
   wire       [31:0]   _zz_logic_tval;
@@ -8249,6 +8875,32 @@ module OpenLa500Csr (
   assign datf_out = logic_crmd[6 : 5];
   assign datm_out = logic_crmd[8 : 7];
   assign ecode_out = logic_estat[21 : 16];
+  assign csr_crmd_diff = logic_crmd;
+  assign csr_prmd_diff = logic_prmd;
+  assign csr_ectl_diff = logic_ectl;
+  assign csr_estat_diff = logic_estat;
+  assign csr_era_diff = logic_era;
+  assign csr_badv_diff = logic_badv;
+  assign csr_eentry_diff = logic_eentry;
+  assign csr_tlbidx_diff = logic_tlbidx;
+  assign csr_tlbehi_diff = logic_tlbehi;
+  assign csr_tlbelo0_diff = logic_tlbelo0;
+  assign csr_tlbelo1_diff = logic_tlbelo1;
+  assign csr_asid_diff = logic_asid;
+  assign csr_save0_diff = logic_save0;
+  assign csr_save1_diff = logic_save1;
+  assign csr_save2_diff = logic_save2;
+  assign csr_save3_diff = logic_save3;
+  assign csr_tid_diff = logic_tid;
+  assign csr_tcfg_diff = logic_tcfg;
+  assign csr_tval_diff = logic_tval;
+  assign csr_ticlr_diff = logic_ticlr;
+  assign csr_llbctl_diff = {logic_llbctl[31 : 1],logic_llbit};
+  assign csr_tlbrentry_diff = logic_tlbrentry;
+  assign csr_dmw0_diff = logic_dmw0;
+  assign csr_dmw1_diff = logic_dmw1;
+  assign csr_pgdl_diff = logic_pgdl;
+  assign csr_pgdh_diff = logic_pgdh;
   always @(posedge clk) begin
     logic_tlbelo0[31 : 28] <= logic_tlbelo0[31 : 28];
     logic_tlbelo1[31 : 28] <= logic_tlbelo1[31 : 28];
@@ -8650,6 +9302,7 @@ module WritebackStage (
   input  wire          io_input_payload_csrRstatEvent,
   input  wire [31:0]   io_input_payload_csrData,
   input  wire          io_debugBreakPoint,
+  input  wire [4:0]    io_tlbFillIndex,
   output wire          io_stageValid,
   output wire          io_realValid,
   output wire          io_registerWrite_valid,
@@ -8733,7 +9386,7 @@ module WritebackStage (
   output wire          io_commit_payload_tlbFill_valid,
   output wire [4:0]    io_commit_payload_tlbFill_index,
   input  wire          aclk,
-  input  wire          aresetn
+  input  wire          resetCapture_delayedActiveHigh
 );
 
   reg                 valid;
@@ -8783,27 +9436,27 @@ module WritebackStage (
   wire                readyGo;
   wire                realValid;
   wire                registerWriteValid;
-  wire                when_WritebackStage_l138;
-  wire                when_WritebackStage_l140;
-  wire                when_WritebackStage_l144;
-  wire                when_WritebackStage_l151;
-  wire                when_WritebackStage_l157;
-  wire                when_WritebackStage_l163;
-  wire                when_WritebackStage_l165;
-  wire                when_WritebackStage_l167;
-  wire                when_WritebackStage_l169;
-  wire                when_WritebackStage_l171;
-  wire                when_WritebackStage_l175;
-  wire                when_WritebackStage_l182;
-  wire                when_WritebackStage_l188;
-  wire                when_WritebackStage_l194;
-  wire                when_WritebackStage_l200;
+  wire                when_WritebackStage_l139;
+  wire                when_WritebackStage_l141;
+  wire                when_WritebackStage_l145;
+  wire                when_WritebackStage_l152;
+  wire                when_WritebackStage_l158;
+  wire                when_WritebackStage_l164;
+  wire                when_WritebackStage_l166;
+  wire                when_WritebackStage_l168;
+  wire                when_WritebackStage_l170;
+  wire                when_WritebackStage_l172;
+  wire                when_WritebackStage_l176;
+  wire                when_WritebackStage_l183;
+  wire                when_WritebackStage_l189;
+  wire                when_WritebackStage_l195;
+  wire                when_WritebackStage_l201;
   reg        [3:0]    _zz_io_commit_payload_store_byteMask;
-  wire                when_WritebackStage_l255;
-  wire       [1:0]    switch_WritebackStage_l256;
-  wire                when_WritebackStage_l262;
-  wire                when_WritebackStage_l264;
-  wire                when_WritebackStage_l292;
+  wire                when_WritebackStage_l256;
+  wire       [1:0]    switch_WritebackStage_l257;
+  wire                when_WritebackStage_l263;
+  wire                when_WritebackStage_l265;
+  wire                when_WritebackStage_l293;
   wire                io_input_fire;
 
   assign readyGo = (! io_debugBreakPoint);
@@ -8826,49 +9479,49 @@ module WritebackStage (
   assign io_exception_valid = io_flush_exception;
   always @(*) begin
     io_exception_ecode = 6'h0;
-    if(when_WritebackStage_l138) begin
+    if(when_WritebackStage_l139) begin
       io_exception_ecode = 6'h0;
     end else begin
-      if(when_WritebackStage_l140) begin
+      if(when_WritebackStage_l141) begin
         io_exception_ecode = 6'h08;
       end else begin
-        if(when_WritebackStage_l144) begin
+        if(when_WritebackStage_l145) begin
           io_exception_ecode = 6'h3f;
         end else begin
-          if(when_WritebackStage_l151) begin
+          if(when_WritebackStage_l152) begin
             io_exception_ecode = 6'h03;
           end else begin
-            if(when_WritebackStage_l157) begin
+            if(when_WritebackStage_l158) begin
               io_exception_ecode = 6'h07;
             end else begin
-              if(when_WritebackStage_l163) begin
+              if(when_WritebackStage_l164) begin
                 io_exception_ecode = 6'h0b;
               end else begin
-                if(when_WritebackStage_l165) begin
+                if(when_WritebackStage_l166) begin
                   io_exception_ecode = 6'h0c;
                 end else begin
-                  if(when_WritebackStage_l167) begin
+                  if(when_WritebackStage_l168) begin
                     io_exception_ecode = 6'h0d;
                   end else begin
-                    if(when_WritebackStage_l169) begin
+                    if(when_WritebackStage_l170) begin
                       io_exception_ecode = 6'h0e;
                     end else begin
-                      if(when_WritebackStage_l171) begin
+                      if(when_WritebackStage_l172) begin
                         io_exception_ecode = 6'h09;
                       end else begin
-                        if(when_WritebackStage_l175) begin
+                        if(when_WritebackStage_l176) begin
                           io_exception_ecode = 6'h3f;
                         end else begin
-                          if(when_WritebackStage_l182) begin
+                          if(when_WritebackStage_l183) begin
                             io_exception_ecode = 6'h04;
                           end else begin
-                            if(when_WritebackStage_l188) begin
+                            if(when_WritebackStage_l189) begin
                               io_exception_ecode = 6'h07;
                             end else begin
-                              if(when_WritebackStage_l194) begin
+                              if(when_WritebackStage_l195) begin
                                 io_exception_ecode = 6'h02;
                               end else begin
-                                if(when_WritebackStage_l200) begin
+                                if(when_WritebackStage_l201) begin
                                   io_exception_ecode = 6'h01;
                                 end
                               end
@@ -8890,39 +9543,39 @@ module WritebackStage (
   assign io_exception_esubcode = 9'h0;
   always @(*) begin
     io_exception_badVAddrValid = 1'b0;
-    if(!when_WritebackStage_l138) begin
-      if(when_WritebackStage_l140) begin
+    if(!when_WritebackStage_l139) begin
+      if(when_WritebackStage_l141) begin
         io_exception_badVAddrValid = valid;
       end else begin
-        if(when_WritebackStage_l144) begin
+        if(when_WritebackStage_l145) begin
           io_exception_badVAddrValid = valid;
         end else begin
-          if(when_WritebackStage_l151) begin
+          if(when_WritebackStage_l152) begin
             io_exception_badVAddrValid = valid;
           end else begin
-            if(when_WritebackStage_l157) begin
+            if(when_WritebackStage_l158) begin
               io_exception_badVAddrValid = valid;
             end else begin
-              if(!when_WritebackStage_l163) begin
-                if(!when_WritebackStage_l165) begin
-                  if(!when_WritebackStage_l167) begin
-                    if(!when_WritebackStage_l169) begin
-                      if(when_WritebackStage_l171) begin
+              if(!when_WritebackStage_l164) begin
+                if(!when_WritebackStage_l166) begin
+                  if(!when_WritebackStage_l168) begin
+                    if(!when_WritebackStage_l170) begin
+                      if(when_WritebackStage_l172) begin
                         io_exception_badVAddrValid = valid;
                       end else begin
-                        if(when_WritebackStage_l175) begin
+                        if(when_WritebackStage_l176) begin
                           io_exception_badVAddrValid = valid;
                         end else begin
-                          if(when_WritebackStage_l182) begin
+                          if(when_WritebackStage_l183) begin
                             io_exception_badVAddrValid = valid;
                           end else begin
-                            if(when_WritebackStage_l188) begin
+                            if(when_WritebackStage_l189) begin
                               io_exception_badVAddrValid = valid;
                             end else begin
-                              if(when_WritebackStage_l194) begin
+                              if(when_WritebackStage_l195) begin
                                 io_exception_badVAddrValid = valid;
                               end else begin
-                                if(when_WritebackStage_l200) begin
+                                if(when_WritebackStage_l201) begin
                                   io_exception_badVAddrValid = valid;
                                 end
                               end
@@ -8943,39 +9596,39 @@ module WritebackStage (
 
   always @(*) begin
     io_exception_badVAddr = 32'h0;
-    if(!when_WritebackStage_l138) begin
-      if(when_WritebackStage_l140) begin
+    if(!when_WritebackStage_l139) begin
+      if(when_WritebackStage_l141) begin
         io_exception_badVAddr = payload_pc;
       end else begin
-        if(when_WritebackStage_l144) begin
+        if(when_WritebackStage_l145) begin
           io_exception_badVAddr = payload_pc;
         end else begin
-          if(when_WritebackStage_l151) begin
+          if(when_WritebackStage_l152) begin
             io_exception_badVAddr = payload_pc;
           end else begin
-            if(when_WritebackStage_l157) begin
+            if(when_WritebackStage_l158) begin
               io_exception_badVAddr = payload_pc;
             end else begin
-              if(!when_WritebackStage_l163) begin
-                if(!when_WritebackStage_l165) begin
-                  if(!when_WritebackStage_l167) begin
-                    if(!when_WritebackStage_l169) begin
-                      if(when_WritebackStage_l171) begin
+              if(!when_WritebackStage_l164) begin
+                if(!when_WritebackStage_l166) begin
+                  if(!when_WritebackStage_l168) begin
+                    if(!when_WritebackStage_l170) begin
+                      if(when_WritebackStage_l172) begin
                         io_exception_badVAddr = payload_errorVirtualAddress;
                       end else begin
-                        if(when_WritebackStage_l175) begin
+                        if(when_WritebackStage_l176) begin
                           io_exception_badVAddr = payload_errorVirtualAddress;
                         end else begin
-                          if(when_WritebackStage_l182) begin
+                          if(when_WritebackStage_l183) begin
                             io_exception_badVAddr = payload_errorVirtualAddress;
                           end else begin
-                            if(when_WritebackStage_l188) begin
+                            if(when_WritebackStage_l189) begin
                               io_exception_badVAddr = payload_errorVirtualAddress;
                             end else begin
-                              if(when_WritebackStage_l194) begin
+                              if(when_WritebackStage_l195) begin
                                 io_exception_badVAddr = payload_errorVirtualAddress;
                               end else begin
-                                if(when_WritebackStage_l200) begin
+                                if(when_WritebackStage_l201) begin
                                   io_exception_badVAddr = payload_errorVirtualAddress;
                                 end
                               end
@@ -8996,19 +9649,19 @@ module WritebackStage (
 
   always @(*) begin
     io_exception_tlbRefill = 1'b0;
-    if(!when_WritebackStage_l138) begin
-      if(!when_WritebackStage_l140) begin
-        if(when_WritebackStage_l144) begin
+    if(!when_WritebackStage_l139) begin
+      if(!when_WritebackStage_l141) begin
+        if(when_WritebackStage_l145) begin
           io_exception_tlbRefill = valid;
         end else begin
-          if(!when_WritebackStage_l151) begin
-            if(!when_WritebackStage_l157) begin
-              if(!when_WritebackStage_l163) begin
-                if(!when_WritebackStage_l165) begin
-                  if(!when_WritebackStage_l167) begin
-                    if(!when_WritebackStage_l169) begin
-                      if(!when_WritebackStage_l171) begin
-                        if(when_WritebackStage_l175) begin
+          if(!when_WritebackStage_l152) begin
+            if(!when_WritebackStage_l158) begin
+              if(!when_WritebackStage_l164) begin
+                if(!when_WritebackStage_l166) begin
+                  if(!when_WritebackStage_l168) begin
+                    if(!when_WritebackStage_l170) begin
+                      if(!when_WritebackStage_l172) begin
+                        if(when_WritebackStage_l176) begin
                           io_exception_tlbRefill = valid;
                         end
                       end
@@ -9025,35 +9678,35 @@ module WritebackStage (
 
   always @(*) begin
     io_exception_tlbException = 1'b0;
-    if(!when_WritebackStage_l138) begin
-      if(!when_WritebackStage_l140) begin
-        if(when_WritebackStage_l144) begin
+    if(!when_WritebackStage_l139) begin
+      if(!when_WritebackStage_l141) begin
+        if(when_WritebackStage_l145) begin
           io_exception_tlbException = valid;
         end else begin
-          if(when_WritebackStage_l151) begin
+          if(when_WritebackStage_l152) begin
             io_exception_tlbException = valid;
           end else begin
-            if(when_WritebackStage_l157) begin
+            if(when_WritebackStage_l158) begin
               io_exception_tlbException = valid;
             end else begin
-              if(!when_WritebackStage_l163) begin
-                if(!when_WritebackStage_l165) begin
-                  if(!when_WritebackStage_l167) begin
-                    if(!when_WritebackStage_l169) begin
-                      if(!when_WritebackStage_l171) begin
-                        if(when_WritebackStage_l175) begin
+              if(!when_WritebackStage_l164) begin
+                if(!when_WritebackStage_l166) begin
+                  if(!when_WritebackStage_l168) begin
+                    if(!when_WritebackStage_l170) begin
+                      if(!when_WritebackStage_l172) begin
+                        if(when_WritebackStage_l176) begin
                           io_exception_tlbException = valid;
                         end else begin
-                          if(when_WritebackStage_l182) begin
+                          if(when_WritebackStage_l183) begin
                             io_exception_tlbException = valid;
                           end else begin
-                            if(when_WritebackStage_l188) begin
+                            if(when_WritebackStage_l189) begin
                               io_exception_tlbException = valid;
                             end else begin
-                              if(when_WritebackStage_l194) begin
+                              if(when_WritebackStage_l195) begin
                                 io_exception_tlbException = valid;
                               end else begin
-                                if(when_WritebackStage_l200) begin
+                                if(when_WritebackStage_l201) begin
                                   io_exception_tlbException = valid;
                                 end
                               end
@@ -9074,35 +9727,35 @@ module WritebackStage (
 
   always @(*) begin
     io_exception_tlbVppn = 19'h0;
-    if(!when_WritebackStage_l138) begin
-      if(!when_WritebackStage_l140) begin
-        if(when_WritebackStage_l144) begin
+    if(!when_WritebackStage_l139) begin
+      if(!when_WritebackStage_l141) begin
+        if(when_WritebackStage_l145) begin
           io_exception_tlbVppn = payload_pc[31 : 13];
         end else begin
-          if(when_WritebackStage_l151) begin
+          if(when_WritebackStage_l152) begin
             io_exception_tlbVppn = payload_pc[31 : 13];
           end else begin
-            if(when_WritebackStage_l157) begin
+            if(when_WritebackStage_l158) begin
               io_exception_tlbVppn = payload_pc[31 : 13];
             end else begin
-              if(!when_WritebackStage_l163) begin
-                if(!when_WritebackStage_l165) begin
-                  if(!when_WritebackStage_l167) begin
-                    if(!when_WritebackStage_l169) begin
-                      if(!when_WritebackStage_l171) begin
-                        if(when_WritebackStage_l175) begin
+              if(!when_WritebackStage_l164) begin
+                if(!when_WritebackStage_l166) begin
+                  if(!when_WritebackStage_l168) begin
+                    if(!when_WritebackStage_l170) begin
+                      if(!when_WritebackStage_l172) begin
+                        if(when_WritebackStage_l176) begin
                           io_exception_tlbVppn = payload_errorVirtualAddress[31 : 13];
                         end else begin
-                          if(when_WritebackStage_l182) begin
+                          if(when_WritebackStage_l183) begin
                             io_exception_tlbVppn = payload_errorVirtualAddress[31 : 13];
                           end else begin
-                            if(when_WritebackStage_l188) begin
+                            if(when_WritebackStage_l189) begin
                               io_exception_tlbVppn = payload_errorVirtualAddress[31 : 13];
                             end else begin
-                              if(when_WritebackStage_l194) begin
+                              if(when_WritebackStage_l195) begin
                                 io_exception_tlbVppn = payload_errorVirtualAddress[31 : 13];
                               end else begin
-                                if(when_WritebackStage_l200) begin
+                                if(when_WritebackStage_l201) begin
                                   io_exception_tlbVppn = payload_errorVirtualAddress[31 : 13];
                                 end
                               end
@@ -9121,21 +9774,21 @@ module WritebackStage (
     end
   end
 
-  assign when_WritebackStage_l138 = payload_exceptionCode[0];
-  assign when_WritebackStage_l140 = payload_exceptionCode[1];
-  assign when_WritebackStage_l144 = payload_exceptionCode[2];
-  assign when_WritebackStage_l151 = payload_exceptionCode[3];
-  assign when_WritebackStage_l157 = payload_exceptionCode[4];
-  assign when_WritebackStage_l163 = payload_exceptionCode[5];
-  assign when_WritebackStage_l165 = payload_exceptionCode[6];
-  assign when_WritebackStage_l167 = payload_exceptionCode[7];
-  assign when_WritebackStage_l169 = payload_exceptionCode[8];
-  assign when_WritebackStage_l171 = payload_exceptionCode[9];
-  assign when_WritebackStage_l175 = payload_exceptionCode[11];
-  assign when_WritebackStage_l182 = payload_exceptionCode[12];
-  assign when_WritebackStage_l188 = payload_exceptionCode[13];
-  assign when_WritebackStage_l194 = payload_exceptionCode[14];
-  assign when_WritebackStage_l200 = payload_exceptionCode[15];
+  assign when_WritebackStage_l139 = payload_exceptionCode[0];
+  assign when_WritebackStage_l141 = payload_exceptionCode[1];
+  assign when_WritebackStage_l145 = payload_exceptionCode[2];
+  assign when_WritebackStage_l152 = payload_exceptionCode[3];
+  assign when_WritebackStage_l158 = payload_exceptionCode[4];
+  assign when_WritebackStage_l164 = payload_exceptionCode[5];
+  assign when_WritebackStage_l166 = payload_exceptionCode[6];
+  assign when_WritebackStage_l168 = payload_exceptionCode[7];
+  assign when_WritebackStage_l170 = payload_exceptionCode[8];
+  assign when_WritebackStage_l172 = payload_exceptionCode[9];
+  assign when_WritebackStage_l176 = payload_exceptionCode[11];
+  assign when_WritebackStage_l183 = payload_exceptionCode[12];
+  assign when_WritebackStage_l189 = payload_exceptionCode[13];
+  assign when_WritebackStage_l195 = payload_exceptionCode[14];
+  assign when_WritebackStage_l201 = payload_exceptionCode[15];
   assign io_tlb_instructionStall = ((payload_tlbSearch || payload_tlbRead) && valid);
   assign io_tlb_search = (payload_tlbSearch && realValid);
   assign io_tlb_searchFound = payload_tlbFound;
@@ -9166,8 +9819,8 @@ module WritebackStage (
   assign io_debug_instruction = payload_instruction;
   always @(*) begin
     _zz_io_commit_payload_store_byteMask = 4'b0000;
-    if(when_WritebackStage_l255) begin
-      case(switch_WritebackStage_l256)
+    if(when_WritebackStage_l256) begin
+      case(switch_WritebackStage_l257)
         2'b00 : begin
           _zz_io_commit_payload_store_byteMask = 4'b0001;
         end
@@ -9182,20 +9835,20 @@ module WritebackStage (
         end
       endcase
     end else begin
-      if(when_WritebackStage_l262) begin
+      if(when_WritebackStage_l263) begin
         _zz_io_commit_payload_store_byteMask = (payload_memoryVirtualAddress[1] ? 4'b1100 : 4'b0011);
       end else begin
-        if(when_WritebackStage_l264) begin
+        if(when_WritebackStage_l265) begin
           _zz_io_commit_payload_store_byteMask = 4'b1111;
         end
       end
     end
   end
 
-  assign when_WritebackStage_l255 = payload_storeEvent[0];
-  assign switch_WritebackStage_l256 = payload_memoryVirtualAddress[1 : 0];
-  assign when_WritebackStage_l262 = payload_storeEvent[1];
-  assign when_WritebackStage_l264 = (payload_storeEvent[2] || payload_storeEvent[3]);
+  assign when_WritebackStage_l256 = payload_storeEvent[0];
+  assign switch_WritebackStage_l257 = payload_memoryVirtualAddress[1 : 0];
+  assign when_WritebackStage_l263 = payload_storeEvent[1];
+  assign when_WritebackStage_l265 = (payload_storeEvent[2] || payload_storeEvent[3]);
   assign io_commit_valid = (valid && readyGo);
   assign io_commit_payload_pc = payload_pc;
   assign io_commit_payload_instruction = payload_instruction;
@@ -9228,14 +9881,14 @@ module WritebackStage (
   assign io_commit_payload_store_data = payload_storeData;
   assign io_commit_payload_store_byteMask = _zz_io_commit_payload_store_byteMask;
   assign io_commit_payload_tlbFill_valid = io_tlb_fill;
-  assign io_commit_payload_tlbFill_index = payload_tlbIndex;
-  assign when_WritebackStage_l292 = ((((io_flush_exception || io_flush_ertn) || io_flush_refetch) || io_flush_instructionCacheOperation) || io_flush_idle);
+  assign io_commit_payload_tlbFill_index = io_tlbFillIndex;
+  assign when_WritebackStage_l293 = ((((io_flush_exception || io_flush_ertn) || io_flush_refetch) || io_flush_instructionCacheOperation) || io_flush_idle);
   assign io_input_fire = (io_input_valid && io_input_ready);
   always @(posedge aclk) begin
-    if(!aresetn) begin
+    if(resetCapture_delayedActiveHigh) begin
       valid <= 1'b0;
     end else begin
-      if(when_WritebackStage_l292) begin
+      if(when_WritebackStage_l293) begin
         valid <= 1'b0;
       end else begin
         if(io_input_ready) begin
@@ -9438,7 +10091,7 @@ module MemoryStage (
   output wire [4:0]    io_forward_destination,
   output wire [31:0]   io_forward_result,
   input  wire          aclk,
-  input  wire          aresetn
+  input  wire          resetCapture_delayedActiveHigh
 );
 
   wire       [31:0]   _zz_extendedByte;
@@ -9660,7 +10313,7 @@ module MemoryStage (
   assign io_input_fire = (io_input_valid && io_input_ready);
   assign when_MemoryStage_l226 = ((((io_flush_exception || io_flush_ertn) || io_flush_refetch) || io_flush_instructionCacheOperation) || io_flush_idle);
   always @(posedge aclk) begin
-    if(!aresetn) begin
+    if(resetCapture_delayedActiveHigh) begin
       valid <= 1'b0;
       dataBuffer <= 32'h0;
       dataBufferEnable <= 1'b0;
@@ -9864,7 +10517,7 @@ module ExecuteStage (
   output wire          io_tlbInstructionStall,
   output wire          io_dataFetch,
   input  wire          aclk,
-  input  wire          aresetn
+  input  wire          resetCapture_delayedActiveHigh
 );
 
   wire       [31:0]   alu_alu_src1;
@@ -10099,7 +10752,7 @@ module ExecuteStage (
   assign io_output_payload_csrRstatEvent = payload_csrRstatEvent;
   assign io_output_payload_csrData = payload_csrReadData;
   always @(posedge aclk) begin
-    if(!aresetn) begin
+    if(resetCapture_delayedActiveHigh) begin
       occupied <= 1'b0;
     end else begin
       if(when_ExecuteStage_l183) begin
@@ -10272,8 +10925,40 @@ module DecodeStage (
   output wire [31:0]   io_btb_actualTarget,
   output wire [31:0]   io_btb_pc,
   output wire [4:0]    io_btb_index,
+  output wire [31:0]   io_registers_0,
+  output wire [31:0]   io_registers_1,
+  output wire [31:0]   io_registers_2,
+  output wire [31:0]   io_registers_3,
+  output wire [31:0]   io_registers_4,
+  output wire [31:0]   io_registers_5,
+  output wire [31:0]   io_registers_6,
+  output wire [31:0]   io_registers_7,
+  output wire [31:0]   io_registers_8,
+  output wire [31:0]   io_registers_9,
+  output wire [31:0]   io_registers_10,
+  output wire [31:0]   io_registers_11,
+  output wire [31:0]   io_registers_12,
+  output wire [31:0]   io_registers_13,
+  output wire [31:0]   io_registers_14,
+  output wire [31:0]   io_registers_15,
+  output wire [31:0]   io_registers_16,
+  output wire [31:0]   io_registers_17,
+  output wire [31:0]   io_registers_18,
+  output wire [31:0]   io_registers_19,
+  output wire [31:0]   io_registers_20,
+  output wire [31:0]   io_registers_21,
+  output wire [31:0]   io_registers_22,
+  output wire [31:0]   io_registers_23,
+  output wire [31:0]   io_registers_24,
+  output wire [31:0]   io_registers_25,
+  output wire [31:0]   io_registers_26,
+  output wire [31:0]   io_registers_27,
+  output wire [31:0]   io_registers_28,
+  output wire [31:0]   io_registers_29,
+  output wire [31:0]   io_registers_30,
+  output wire [31:0]   io_registers_31,
   input  wire          aclk,
-  input  wire          aresetn
+  input  wire          resetCapture_delayedActiveHigh
 );
 
   wire                _zz_aluOperation;
@@ -10895,8 +11580,40 @@ module DecodeStage (
   assign io_btb_actualTarget = branchTarget;
   assign io_btb_pc = fetch_pc;
   assign io_btb_index = fetch_btbIndex;
+  assign io_registers_0 = registerFile_0;
+  assign io_registers_1 = registerFile_1;
+  assign io_registers_2 = registerFile_2;
+  assign io_registers_3 = registerFile_3;
+  assign io_registers_4 = registerFile_4;
+  assign io_registers_5 = registerFile_5;
+  assign io_registers_6 = registerFile_6;
+  assign io_registers_7 = registerFile_7;
+  assign io_registers_8 = registerFile_8;
+  assign io_registers_9 = registerFile_9;
+  assign io_registers_10 = registerFile_10;
+  assign io_registers_11 = registerFile_11;
+  assign io_registers_12 = registerFile_12;
+  assign io_registers_13 = registerFile_13;
+  assign io_registers_14 = registerFile_14;
+  assign io_registers_15 = registerFile_15;
+  assign io_registers_16 = registerFile_16;
+  assign io_registers_17 = registerFile_17;
+  assign io_registers_18 = registerFile_18;
+  assign io_registers_19 = registerFile_19;
+  assign io_registers_20 = registerFile_20;
+  assign io_registers_21 = registerFile_21;
+  assign io_registers_22 = registerFile_22;
+  assign io_registers_23 = registerFile_23;
+  assign io_registers_24 = registerFile_24;
+  assign io_registers_25 = registerFile_25;
+  assign io_registers_26 = registerFile_26;
+  assign io_registers_27 = registerFile_27;
+  assign io_registers_28 = registerFile_28;
+  assign io_registers_29 = registerFile_29;
+  assign io_registers_30 = registerFile_30;
+  assign io_registers_31 = registerFile_31;
   always @(posedge aclk) begin
-    if(!aresetn) begin
+    if(resetCapture_delayedActiveHigh) begin
       occupied <= 1'b0;
       branchSlotCancel <= 1'b0;
     end else begin
@@ -11094,7 +11811,7 @@ module FetchStage (
   output wire [31:0]   io_fetchPc,
   output wire          io_fetchEnable,
   input  wire          aclk,
-  input  wire          aresetn
+  input  wire          resetCapture_delayedActiveHigh
 );
 
   wire       [31:0]   _zz_instructionFlushPc;
@@ -11247,7 +11964,7 @@ module FetchStage (
   assign when_FetchStage_l219 = (io_instructionDataValid && (! io_downstream_ready));
   assign when_FetchStage_l229 = (prefetchReady && (fsAllow || flushDirty));
   always @(posedge aclk) begin
-    if(!aresetn) begin
+    if(resetCapture_delayedActiveHigh) begin
       fsValid <= 1'b0;
       fsPc <= 32'h1bfffffc;
       fsException <= 1'b0;
@@ -16726,4 +17443,140 @@ module OpenLa500Alu (
 
   assign alu_result = (((((((((((resultTerms_0 | resultTerms_1) | resultTerms_2) | resultTerms_3) | resultTerms_4) | resultTerms_5) | resultTerms_6) | resultTerms_7) | resultTerms_8) | resultTerms_9) | resultTerms_10) | resultTerms_11);
 
+endmodule
+
+
+module ChiplabDiffTestBlackBox (
+    input  wire          clock,
+    input  wire [504:0]  commitContract,
+    input  wire          instrValid,
+    input  wire [63:0]   pc,
+    input  wire [31:0]   instruction,
+    input  wire          isTlbFill,
+    input  wire [4:0]    tlbFillIndex,
+    input  wire          isCounterInstruction,
+    input  wire [63:0]   timer,
+    input  wire          gprWriteValid,
+    input  wire [7:0]    gprWriteIndex,
+    input  wire [63:0]   gprWriteData,
+    input  wire          csrRstat,
+    input  wire [31:0]   csrReadData,
+    input  wire          exceptionValid,
+    input  wire          ertn,
+    input  wire [31:0]   interruptNumber,
+    input  wire [31:0]   exceptionCause,
+    input  wire [63:0]   exceptionPc,
+    input  wire [31:0]   exceptionInstruction,
+    input  wire          trapValid,
+    input  wire [2:0]    trapCode,
+    input  wire [63:0]   cycleCount,
+    input  wire [63:0]   instructionCount,
+    input  wire [7:0]    storeValid,
+    input  wire [63:0]   storePhysicalAddress,
+    input  wire [63:0]   storeVirtualAddress,
+    input  wire [63:0]   storeData,
+    input  wire [7:0]    loadValid,
+    input  wire [63:0]   loadPhysicalAddress,
+    input  wire [63:0]   loadVirtualAddress,
+    input  wire [1727:0] csrState,
+    input  wire [2047:0] gprState
+);
+`ifdef DIFFTEST_EN
+  DifftestInstrCommit u_difftest_instr_commit (
+    .clock(clock), .coreid(8'b0), .index(8'b0), .valid(instrValid),
+    .pc(pc), .instr(instruction), .skip(1'b0 & ^commitContract), .is_TLBFILL(isTlbFill),
+    .TLBFILL_index(tlbFillIndex), .is_CNTinst(isCounterInstruction),
+    .timer_64_value(timer), .wen(gprWriteValid), .wdest(gprWriteIndex),
+    .wdata(gprWriteData), .csr_rstat(csrRstat), .csr_data(csrReadData)
+  );
+
+  DifftestExcpEvent u_difftest_exception (
+    .clock(clock), .coreid(8'b0), .excp_valid(exceptionValid), .eret(ertn),
+    .intrNo(interruptNumber), .cause(exceptionCause), .exceptionPC(exceptionPc),
+    .exceptionInst(exceptionInstruction)
+  );
+
+  DifftestTrapEvent u_difftest_trap (
+    .clock(clock), .coreid(8'b0), .valid(trapValid), .code(trapCode), .pc(pc),
+    .cycleCnt(cycleCount), .instrCnt(instructionCount)
+  );
+
+  DifftestStoreEvent u_difftest_store (
+    .clock(clock), .coreid(8'b0), .index(8'b0), .valid(storeValid),
+    .storePAddr(storePhysicalAddress), .storeVAddr(storeVirtualAddress),
+    .storeData(storeData)
+  );
+
+  DifftestLoadEvent u_difftest_load (
+    .clock(clock), .coreid(8'b0), .index(8'b0), .valid(loadValid),
+    .paddr(loadPhysicalAddress), .vaddr(loadVirtualAddress)
+  );
+
+  DifftestCSRRegState u_difftest_csr_state (
+    .clock(clock), .coreid(8'b0),
+    .crmd(csrState[63:0]),
+    .prmd(csrState[127:64]),
+    .euen(64'b0 & csrState[191:128]),
+    .ecfg(csrState[255:192]),
+    .estat(csrState[319:256]),
+    .era(csrState[383:320]),
+    .badv(csrState[447:384]),
+    .eentry(csrState[511:448]),
+    .tlbidx(csrState[575:512]),
+    .tlbehi(csrState[639:576]),
+    .tlbelo0(csrState[703:640]),
+    .tlbelo1(csrState[767:704]),
+    .asid(csrState[831:768]),
+    .pgdl(csrState[895:832]),
+    .pgdh(csrState[959:896]),
+    .save0(csrState[1023:960]),
+    .save1(csrState[1087:1024]),
+    .save2(csrState[1151:1088]),
+    .save3(csrState[1215:1152]),
+    .tid(csrState[1279:1216]),
+    .tcfg(csrState[1343:1280]),
+    .tval(csrState[1407:1344]),
+    .ticlr(csrState[1471:1408]),
+    .llbctl(csrState[1535:1472]),
+    .tlbrentry(csrState[1599:1536]),
+    .dmw0(csrState[1663:1600]),
+    .dmw1(csrState[1727:1664])
+  );
+
+  DifftestGRegState u_difftest_gpr_state (
+    .clock(clock), .coreid(8'b0),
+    .gpr_0(64'b0 & gprState[63:0]),
+    .gpr_1(gprState[127:64]),
+    .gpr_2(gprState[191:128]),
+    .gpr_3(gprState[255:192]),
+    .gpr_4(gprState[319:256]),
+    .gpr_5(gprState[383:320]),
+    .gpr_6(gprState[447:384]),
+    .gpr_7(gprState[511:448]),
+    .gpr_8(gprState[575:512]),
+    .gpr_9(gprState[639:576]),
+    .gpr_10(gprState[703:640]),
+    .gpr_11(gprState[767:704]),
+    .gpr_12(gprState[831:768]),
+    .gpr_13(gprState[895:832]),
+    .gpr_14(gprState[959:896]),
+    .gpr_15(gprState[1023:960]),
+    .gpr_16(gprState[1087:1024]),
+    .gpr_17(gprState[1151:1088]),
+    .gpr_18(gprState[1215:1152]),
+    .gpr_19(gprState[1279:1216]),
+    .gpr_20(gprState[1343:1280]),
+    .gpr_21(gprState[1407:1344]),
+    .gpr_22(gprState[1471:1408]),
+    .gpr_23(gprState[1535:1472]),
+    .gpr_24(gprState[1599:1536]),
+    .gpr_25(gprState[1663:1600]),
+    .gpr_26(gprState[1727:1664]),
+    .gpr_27(gprState[1791:1728]),
+    .gpr_28(gprState[1855:1792]),
+    .gpr_29(gprState[1919:1856]),
+    .gpr_30(gprState[1983:1920]),
+    .gpr_31(gprState[2047:1984])
+  );
+`endif
 endmodule

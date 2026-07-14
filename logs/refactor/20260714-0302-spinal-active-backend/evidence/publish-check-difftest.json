@@ -1,0 +1,29 @@
+{
+  "base_sha256": "ff286f559dbc9131349c9fb8c842110569d231b6a34e76ded172c403d8f90afa",
+  "fresh_package": "/tmp/difftest-adapter-source/reference/component-replacements/mycpu_top.v",
+  "gate": "publish-check",
+  "generated_at": "2026-07-14T11:09:10+08:00",
+  "package_sha256": "748b025cedac922dbf6ff2707b61e6e230138b091c89ebe778b0eede446dea41",
+  "package_size": 766147,
+  "provenance": {
+    "evaluator": "/tmp/difftest-adapter-source/tools/core_top_gate.py",
+    "evaluator_sha256": "63490b44b7c4e9eee730281a4a12ad62eeea238aeb7031df05f7bf2fc4e33641",
+    "manifest": "/tmp/difftest-adapter-source/reference/manifest.lock",
+    "manifest_sha256": "743dd7e58d77e456cfe664d80c2e6614ab426f72bfecd9088ff18d702afa2f20",
+    "ports_contract": "/tmp/difftest-adapter-source/reference/core-top.ports.json",
+    "ports_contract_sha256": "effa486ff707e480ff8ee13d7f20b2d524bd26908726915c99abf1b37eeab576",
+    "repository": "/tmp/difftest-adapter-source",
+    "repository_head": "210f596689e7ca01c9711e1b226f4276b3c2ae05",
+    "repository_status_sha256": "a3b7d65f5b2506a271057655204d11d09993f8724e304ddb1c17022d94cf4735"
+  },
+  "published_source": "reference/component-replacements/mycpu_top.v",
+  "published_target": "rtl/mycpu_top.v",
+  "replacement_sha256": "748b025cedac922dbf6ff2707b61e6e230138b091c89ebe778b0eede446dea41",
+  "replacement_spec": "/tmp/difftest-adapter-source/reference/component-replacements/core-top.json",
+  "replacement_spec_sha256": "5f923fd5bba2dda4759cbea22e5481e36b53edd7d22f1d1a68ea71af74f14d0a",
+  "schema_version": 1,
+  "scope": "publication-consistency",
+  "status": "pass",
+  "target": "core-top-compat",
+  "tracked_package": "/tmp/difftest-adapter-source/reference/component-replacements/mycpu_top.v"
+}

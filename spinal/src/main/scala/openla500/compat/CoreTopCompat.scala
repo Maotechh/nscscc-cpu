@@ -90,7 +90,7 @@ final class CoreTopCompat(config: CoreTopCompatConfig = CoreTopCompatConfig()) e
 
   val backendArea = new ClockingArea(coreClockDomain) {
     val core = new SpinalCoreBackend(
-      openla500.config.CoreConfig.Locked.copy(tlbEntries = config.tlbEntries)
+      openla500.config.CoreConfig.LockedWithDiffTest.copy(tlbEntries = config.tlbEntries)
     )
   }
   val core = backendArea.core

@@ -3,9 +3,11 @@ package openla500.compat
 import openla500.config.CoreConfig
 import openla500.execute.{OpenLa500Div, OpenLa500Mul}
 import openla500.memory.{OpenLa500AxiBridge, OpenLa500DCache, OpenLa500ICache}
+import openla500.observe.{ArchState, ChiplabDiffTestAdapter, CommitEvent}
 import openla500.pipeline._
 import openla500.privileged.{OpenLa500AddrTrans, OpenLa500Csr}
 import spinal.core._
+import spinal.lib.Flow
 
 /** Active SpinalHDL implementation behind the locked chiplab compatibility boundary.
   *
@@ -120,6 +122,7 @@ private[compat] final class SpinalCoreBackend(
 
   // Writeback is the only producer of architectural state changes and global pipeline flushes.
   writeback.io.debugBreakPoint := io.break_point
+  writeback.io.tlbFillIndex := csr.io.rand_index.asUInt
   decode.io.registerWrite.valid := writeback.io.registerWrite.valid
   decode.io.registerWrite.destination := writeback.io.registerWrite.index
   decode.io.registerWrite.data := writeback.io.registerWrite.data
@@ -299,6 +302,49 @@ private[compat] final class SpinalCoreBackend(
   csr.io.tlbelo1_in := addressTranslation.io.tlbelo1_out
   csr.io.tlbidx_in := addressTranslation.io.tlbidx_out
   csr.io.asid_in := addressTranslation.io.asid_out
+
+  if (config.diffTestEnabled) {
+    val architecturalCommit = Flow(CommitEvent())
+    architecturalCommit := writeback.io.commit
+
+    val architecturalState = ArchState()
+    for (index <- 0 until 32) {
+      architecturalState.gpr(index) := (if (index == 0) B(0, 32 bits)
+                                        else decode.io.registers(index))
+    }
+    architecturalState.crmd := csr.io.csr_crmd_diff
+    architecturalState.prmd := csr.io.csr_prmd_diff
+    architecturalState.euen := 0
+    architecturalState.ecfg := csr.io.csr_ectl_diff
+    architecturalState.estat := csr.io.csr_estat_diff
+    architecturalState.era := csr.io.csr_era_diff
+    architecturalState.badv := csr.io.csr_badv_diff
+    architecturalState.eentry := csr.io.csr_eentry_diff
+    architecturalState.tlbidx := csr.io.csr_tlbidx_diff
+    architecturalState.tlbehi := csr.io.csr_tlbehi_diff
+    architecturalState.tlbelo0 := csr.io.csr_tlbelo0_diff
+    architecturalState.tlbelo1 := csr.io.csr_tlbelo1_diff
+    architecturalState.asid := csr.io.csr_asid_diff
+    architecturalState.pgdl := csr.io.csr_pgdl_diff
+    architecturalState.pgdh := csr.io.csr_pgdh_diff
+    architecturalState.save0 := csr.io.csr_save0_diff
+    architecturalState.save1 := csr.io.csr_save1_diff
+    architecturalState.save2 := csr.io.csr_save2_diff
+    architecturalState.save3 := csr.io.csr_save3_diff
+    architecturalState.tid := csr.io.csr_tid_diff
+    architecturalState.tcfg := csr.io.csr_tcfg_diff
+    architecturalState.tval := csr.io.csr_tval_diff
+    architecturalState.ticlr := csr.io.csr_ticlr_diff
+    architecturalState.llbctl := csr.io.csr_llbctl_diff
+    architecturalState.tlbrentry := csr.io.csr_tlbrentry_diff
+    architecturalState.dmw0 := csr.io.csr_dmw0_diff
+    architecturalState.dmw1 := csr.io.csr_dmw1_diff
+
+    val diffTest = new ChiplabDiffTestAdapter
+    diffTest.io.clock := io.aclk
+    diffTest.io.commit := architecturalCommit
+    diffTest.io.archState := architecturalState
+  }
 
   // Instruction cache request/response and its bridge-side refill channels.
   instructionCache.io.valid := fetch.io.instructionRequest

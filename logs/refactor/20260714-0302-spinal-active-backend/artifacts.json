@@ -9,11 +9,24 @@
     {"path":"evidence/port-check.json","sha256":"c04936f0c45135f71ad6a05f35f27d3b00367523f588a04227c9df79a9ac5ba9","size":7048,"retention":"git","gate_eligible":false},
     {"path":"evidence/yosys.json","sha256":"8ee3d68547740d84378e40b8c863b0038e59c94de378f73a8903932dda92f232","size":2294,"retention":"git","gate_eligible":false},
     {"path":"evidence/lint.json","sha256":"7e7bca6876b631674686ed60d73c3546ebd8baf64dc104e01e4e8cc9650f340e","size":296,"retention":"git","gate_eligible":false},
-    {"path":"evidence/reachability.json","sha256":"49f1b39a1da108c242f631a0d148ed5c7e967bc805a81a396980cde38ae4c5d7","size":4002,"retention":"git","gate_eligible":false}
+    {"path":"evidence/reachability.json","sha256":"49f1b39a1da108c242f631a0d148ed5c7e967bc805a81a396980cde38ae4c5d7","size":4002,"retention":"git","gate_eligible":false},
+    {"path":"evidence/chiplab-overlay-210f596.json","sha256":"9f5462e4cab0bb308dfde04a0d4e3cab87feab0b8f8cebe7f1385349f4fb43ad","size":3161,"retention":"git","gate_eligible":false},
+    {"path":"evidence/rtl-smoke-210f596.json","sha256":"83782b9e2334329eef96bef444512a76c044bfe5ee1674095e21ec8df52e5f1e","size":190915,"retention":"git","gate_eligible":false},
+    {"path":"evidence/scala-difftest.json","sha256":"d3148b77cda0ca380efbc8be8ac7e3bda0a0000f7ddec53baf5025007134f5fe","size":99761,"retention":"git","gate_eligible":false},
+    {"path":"evidence/generate-difftest.json","sha256":"54b69f028e8376599ad9336b032f09a8a9b2ae1d33bae7f0418795ade40066de","size":100077,"retention":"git","gate_eligible":false},
+    {"path":"evidence/package-difftest.json","sha256":"40d7c3ce2620262c2a99e84f1b98b0ca5ff140f5637766bee8080d540e466261","size":1694,"retention":"git","gate_eligible":false},
+    {"path":"evidence/port-check-difftest.json","sha256":"1adfe6ae89cd86d6eb1ab72a23588d8b532ea7a22b607958b002cfe3cc3186d0","size":7082,"retention":"git","gate_eligible":false},
+    {"path":"evidence/yosys-difftest.json","sha256":"4ec5022afac07ac9957e5ff7c9d0257a3f92f829050b5bd52ff47e5455bf8f23","size":2336,"retention":"git","gate_eligible":false},
+    {"path":"evidence/lint-difftest.json","sha256":"e4765a37e905f638be15408bf23c3d04ca925d56b114161e8576248e26096b58","size":296,"retention":"git","gate_eligible":false},
+    {"path":"evidence/publish-check-difftest.json","sha256":"4468c76ccf6c2c6e5e7e37e4376862e3927cdaa542f3fe761880b9146ef33bee","size":1730,"retention":"git","gate_eligible":false}
   ],
   "external_locators": [
     {"path":"/tmp/spinal-active-backend-scala2-0318/scala-check","retention":"local-until-explicit-clean"},
     {"path":"/tmp/spinal-active-backend-generate-0327/core_top","retention":"local-until-explicit-clean"},
-    {"path":"/tmp/spinal-active-backend-lint-0318/verilator.log","retention":"local-until-explicit-clean"}
+    {"path":"/tmp/spinal-active-backend-lint-0318/verilator.log","retention":"local-until-explicit-clean"},
+    {"path":"/tmp/difftest-root-scala3/scala-check","retention":"local-until-explicit-clean"},
+    {"path":"/tmp/difftest-root-elaborate2/core_top/elaborate","retention":"local-until-explicit-clean"},
+    {"path":"/tmp/difftest-root-lint2/core_top/lint/verilator.log","retention":"local-until-explicit-clean"},
+    {"path":"/tmp/spinal-active-chiplab-210f/raw/iterations/20260714-0302-spinal-active-backend","retention":"local-until-explicit-clean"}
   ]
 }
