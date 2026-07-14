@@ -7,6 +7,17 @@
     {"path":"build/lacc-main-unit/lacc/unit/summary.json","sha256":"459f5ea9dc78f7722a84821bec8ef1f8bc67f5cc3a7506eff9961da3d3f8e818","retention":"local build until explicit clean"},
     {"path":"build/lacc-core-top-final/core_top/elaborate/summary.json","sha256":"c4fd110c16bfdf557d48beed73713048157428d6027acf6c8de231d171589cb0","retention":"local build until explicit clean"},
     {"path":"build/lacc-core-top-final/core_top-lacc/elaborate/summary.json","sha256":"1ba1262805528fa2ecdafe81983e7e14ebcac1ec524514b5a80bc492676b11ff","retention":"local build until explicit clean"},
-    {"path":"/tmp/nscscc-lacc-scala-20260714-2056/build/lacc-scala-final2/scala-check/summary.json","sha256":"35900c7b531718d48861ab4fc54ee3b5c8d83d55e8d5d9e1f95b1a95a49ab3f2","retention":"ephemeral validation clone"}
+    {"path":"/tmp/nscscc-lacc-scala-20260714-2056/build/lacc-scala-final2/scala-check/summary.json","sha256":"35900c7b531718d48861ab4fc54ee3b5c8d83d55e8d5d9e1f95b1a95a49ab3f2","retention":"ephemeral pre-commit validation clone"},
+    {"path":"/tmp/nscscc-lacc-7364f89-I35AbL/repo/build/lacc-commit-7364f89/scala-check/summary.json","sha256":"c69ae5b9f9d3d30d86ee7cda4da465160527456b748050e2031ff15dd60ac173","retention":"ephemeral commit-bound validation clone"},
+    {"path":"/tmp/nscscc-lacc-7364f89-I35AbL/repo/build/lacc-commit-7364f89-contract/lacc/contract/summary.json","sha256":"bd8b03e719abcf4779fbfd45c82922b9292b2b2db9ec476179369407296bcdd0","retention":"ephemeral commit-bound validation clone"},
+    {"path":"/tmp/nscscc-lacc-7364f89-I35AbL/repo/build/lacc-commit-7364f89-leaf/lacc/generate/summary.json","sha256":"c9838ce16806d29a7d949c14d62815ac662d8820cf246f2d0687def6b6ac074d","retention":"ephemeral commit-bound validation clone"},
+    {"path":"/tmp/nscscc-lacc-7364f89-I35AbL/repo/build/lacc-commit-7364f89-leaf/lacc/unit/summary.json","sha256":"cd2b751a882545c7eab6bc2bf3b5cd64ce4668384cce9e8dfdbae56963159b44","retention":"ephemeral commit-bound validation clone"},
+    {"path":"/tmp/nscscc-lacc-7364f89-I35AbL/repo/build/lacc-commit-7364f89-top/core_top/elaborate/summary.json","sha256":"4a8e960eaf3519d5881a823b25425e78120dfce487959a18f73427d733cc96f2","retention":"ephemeral commit-bound validation clone"},
+    {"path":"/tmp/nscscc-lacc-7364f89-I35AbL/repo/build/lacc-commit-7364f89-top/core_top-lacc/elaborate/summary.json","sha256":"4e3d3aa561c5c11bc96e08736cb993b176ec3496ce7c6f67ea53c739f8cd8838","retention":"ephemeral commit-bound validation clone"},
+    {"path":"/tmp/nscscc-lacc-smoke-7364f89-evidence/reports/chiplab-doctor.json","sha256":"3a21e3ba29af92e3107efff434220895a4815224ad62a09d9b9b69e40d6d0e0c","retention":"local until explicit clean"},
+    {"path":"/tmp/nscscc-lacc-smoke-7364f89-evidence/reports/iterations/20260714-2228-lacc-commit-smoke/chiplab-overlay.json","sha256":"686409c5b2804486bc6ea4a7567f9e01142177c6d24bb220316395405bd0c932","retention":"local until explicit clean"},
+    {"path":"/tmp/nscscc-lacc-smoke-7364f89-evidence/reports/iterations/20260714-2228-lacc-commit-smoke/chiplab-overlay-manifest.json","sha256":"ebee3396af3833b7646c900eb02c3e68eb55c114eab3befd6d60fa25d92a2306","retention":"local until explicit clean"},
+    {"path":"/tmp/nscscc-lacc-smoke-7364f89-evidence/reports/iterations/20260714-2228-lacc-commit-smoke/rtl-smoke.json","sha256":"b7618a9a206445db22b89c5ce6c6967eeb234e2bdfaae9ddf941c8012e3fe707","retention":"local until explicit clean"},
+    {"path":"/tmp/nscscc-lacc-smoke-7364f89-work/20260714-2228-lacc-commit-smoke/sims/verilator/run_prog/log/func/func_lab19_log/simu_trace.txt","sha256":"80420ff3a497ae7a31cff4543a2fa1648a24253d69184b89268179184648c6fb","retention":"local until explicit clean"}
   ]
 }

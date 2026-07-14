@@ -1,17 +1,17 @@
 # 20260714-1907-lacc-spinal
 
 - Status: `implementation_in_review`。LACC 叶子达到 `differential_pass`，整机 gate 未闭合。
-- Branch / Base SHA / Head SHA: `refactor/20260714-1650-consolidated-spinal` / `2d09948802ed9bef9e63afd92061173ba5a3714b` / 提交后更新。
+- Branch / Base SHA / Head SHA: `refactor/20260714-1650-consolidated-spinal` / `2d09948802ed9bef9e63afd92061173ba5a3714b` / `7364f89ab5caa4e95234fa938022bc356092e54e`。
 - Owner / Agent: Codex；两个实现/验证代理；一个独立只读 claim reviewer。
 - Selected boundary and selection reason: `execute/lacc_core_and_active_integration`。LACC 是最后一个被 active backend 明确拒绝的可选活动功能，现有 Decode/Execute typed 分支和 DCache 合同足以建立最小可验证闭环。
 - Golden reference and locked tool versions: `a158aa8:rtl/lacc_core.v`、`a158aa8:rtl/lacc_demo.v`；JDK 17.0.19、sbt 1.10.11、Scala 2.13.16、SpinalHDL 1.14.2、Verilator 5.020、Yosys 0.33。
 - Behavior contract: `docs/contracts/lacc.md`；机器合同为 `reference/component-contracts/lacc.json`。
 - Files changed: LACC Scala FSM/legacy adapter、LACC-off/on top 配置和 backend 接线、ExecuteStage 明确 flush 常量、LACC golden diff 自动化、LACC+DCache 集成测试、runtime 旧模块 suppression、状态和本日志。
 - Functional/performance/resource delta: 未做性能优化。默认 LACC-off 生成 RTL SHA256 仍为 `07a2a2d9...125be1`；LACC-on 增加一个 LACC Component。未执行 Vivado，不能声明 Fmax/LUT/FF/BRAM 变化。
-- Residual risks: 仅证明 Verilator 两态、合法有序读响应下的可观察周期等价；whole-top strict lint 仍失败；官方 smoke、func58/81、random、perf20、U-Boot/Linux、Vivado/FPGA 均未在本提交上通过。
+- Residual risks: 仅证明 Verilator 两态、合法有序读响应下的可观察周期等价；whole-top strict lint 仍失败；官方单例 diagnostic smoke 的 parser 到 test end，但 warning policy 使总 gate FAIL；func58/81、random、perf20、U-Boot/Linux、Vivado/FPGA 均未在本提交上通过。
 - Rollback: revert 本轮提交即可恢复 LACC-off-only backend；默认稳定发布 RTL未改变。不得删除 golden reference 或放宽 oracle。
 - PR URL or awaiting state: `awaiting_pr`。仅推送分支，不自动创建、ready 或合并 PR。
-- Next unblocked candidates: 在同一集成分支迁移未接入的活动 `perf_counter`；提交后运行官方 diagnostic smoke；再处理整机 warning 和完整官方 gate。
+- Next unblocked candidates: 在同一集成分支接入活动 `perf_counter`；随后处理整机 warning、LACC-on 验证和完整官方 gate。默认 LACC-off 的本提交 diagnostic smoke 已执行且严格 FAIL，不再列为未执行项。
 
 ## 行为与接线结论
 
@@ -45,12 +45,40 @@
 8. whole-top strict Verilator：LACC-off FAIL（80 warnings：78 `UNUSEDSIGNAL`、1 `DECLFILENAME`、1 `UNUSEDPARAM`）；LACC-on FAIL（81 warnings，多出的唯一一条为 `io_laccInput_requestReady`）。Yosys并未失败。
 9. Claude review job `faecb554a159461b8e108bac59617d90` 在执行前因缺少 `GEEKPIE_CLAUDE_API_KEY` 失败；只能降级为独立只读代理审核，不能称为 Claude 审核。
 10. 首次 `make evidence-check ITERATION_ID=20260714-1907-lacc-spinal` 因旧 `commands.jsonl` 第二条记录缺少 `cwd` 而 fail-closed；没有伪造当时未采集的耗时，相关失败仍保留在本节，机器日志只保留有真实耗时的记录。修复 schema 后复跑 PASS。
+11. 提交后首次在 Windows 直接运行 `scala-check` 时继承了 JDK 23，且锁定的 `/opt/chiplab-tools/root` 被错误解析为 `D:\opt\...`，0.5 秒内失败，未进入编译。
+12. 前两次 WSL clean-clone wrapper 的 PowerShell 参数传递吞掉 Bash `$tmp`，分别在 65.1 秒和 12.1 秒后退出；checkout 已完成但门禁没有开始。改用 base64 传递 Bash 脚本后，创建 `/tmp/nscscc-lacc-7364f89-I35AbL/repo` 并成功绑定 `7364f89`。
+13. 第一次 canonical 静态 wrapper 已完成 off 生成、package、publish、port、Yosys，并得到预期 strict lint 非零；随后用错误的 `.warnings` JSON 字段断言数量而退出。真实 warning 位于 `verilator.log`，修正为日志计数后确认 off/on 分别为 80/81，没有出现新的 warning 类别。
 
 ## 自动化与独立审核
 
 - `make test-automation` 返回 0：351 项测试通过，10 项为测试套件中预设的 skip；该结果只证明自动化工具自身回归通过，不替代 RTL required gate。
-- `make evidence-check ITERATION_ID=20260714-1907-lacc-spinal` 返回 0：17 条命令记录、12 个 gate、Claude 正确归类为 `unavailable`，迭代保持 `draft`。
+- `make evidence-check ITERATION_ID=20260714-1907-lacc-spinal` 返回 0：25 条命令记录、13 个 gate、Claude 正确归类为 `unavailable`，迭代保持 `draft`。
 - 独立只读审核结论为 `WARN / draft-only`，详见 `reviews/local-independent-review.md`。LACC 叶子可维持 `differential_pass`；whole-top strict lint、官方 smoke、提交锚定和 top 级 flush 合同闭合前不得提升状态。
+
+## 提交绑定复验
+
+- 所有复验均在 clean clone `/tmp/nscscc-lacc-7364f89-I35AbL/repo`，HEAD 固定为 `7364f89ab5caa4e95234fa938022bc356092e54e`，JDK 17.0.19、sbt 1.10.11、Scala 2.13.16、SpinalHDL 1.14.2。
+- Scala：4/4 task、29 tests PASS，summary SHA256 `c69ae5b9...ac173`。
+- LACC：18-port contract PASS；leaf 2/2 可复现生成；8192 周期 two-state lockstep 与 negative control PASS，candidate 0 warning。生成 summary 直接记录 `7364f89`；unit/contract 通过 candidate RTL SHA 与提交绑定生成物形成间接 hash 链。
+- Top：LACC-off/on 各 2/2 可复现，19/20 modules；canonical RTL SHA256 分别为 `07a2a2d9...125be1` 与 `4009ac62...0ecbc`；49-port、package、默认 tracked publish、Yosys 均 PASS。
+- strict Verilator lint 仍 FAIL：off 80、on 81；唯一 LACC-on 增量为 `io_laccInput_requestReady` 未消费。该结果禁止整机静态通过、ready PR 或完整重构 claim。
+- 机器汇总与 raw summary locator 见 `evidence/commit-bound-gates.json` 和 `artifacts.json`。
+
+## 官方 chiplab diagnostic smoke
+
+- 使用锁定 chiplab `a2e11b38...`、myCPU gitlink `aa3bde1...`、Verilator 5.020、JDK 17，在 `/tmp/nscscc-lacc-smoke-7364f89-work/20260714-2228-lacc-commit-smoke` 创建隔离 overlay。
+- overlay 固定 source HEAD `7364f89`，22 个 CPU 文件中 18 个来自锁定 a158 candidate，4 个 replacement 来自本提交：`mycpu_top.v`、module-free `div.v`、`lacc_core.v`、`lacc_demo.v`；selection SHA256 `04345345...5cac4`。
+- 官方原生 `configure.sh --run func/func_lab19`、`make verilator testbench soft_compile`、`make simulation_run_prog` 均 exit 0 且无 timeout。parser 为 PASS：174069 instructions、609803 clocks、到 syscall/test end、`first_mismatch=null`。
+- 总 gate 仍为 **FAIL**：244 条 DUT warning + 364 条官方环境 warning 均无批准 waiver；`good_trap=false`。因此不得声称官方 `func_lab19` PASS。
+- 当前 trace SHA256 `80420ff3...09d8` 与此前 `eadf441` 默认 LACC-off diagnostic trace 完全相同，parser JSON 也相同；仅支持“本轮 LACC 变更未改变默认 LACC-off 的这个单例 trace”。它不覆盖 LACC-on、58/81、random、perf、system 或 FPGA。
+- 锁定 a158 baseline 仍是独立的失败参照：172552 instructions、602903 clocks，在 `0x1c07c79c` 首次 mismatch，t0 expected `0x6e2` / actual `0x8`。当前 diagnostic 越过该点不把 a158 自动变成 golden truth，也不构成完整顺序等价证明。
+- 完整机器摘要和 raw artifact SHA256 见 `evidence/official-smoke.json`。
+
+## 实验完整性审计
+
+- 独立只读 Codex 子代理按 `experiment-audit` 的 A-F 检查执行；由于 GPT-5.4 MCP 不可用且 Claude bridge 缺 key，本审核明确不是跨模型 GPT-5.4/Claude 审核。
+- 15 个 commit-bound summary、官方 smoke 汇总、3 个命令日志及 raw build/trace artifact 均存在且 SHA256 匹配；未发现 phantom、自比较、伪造 golden 或归一化。
+- 总体为 `WARN`：one seed/two-state/单 directed case/单 official diagnostic 的范围有限；允许叶子维持 `differential_pass`，不允许 `integrated_pass`、ready PR 或完整重构 claim。详见 `reviews/experiment-audit.md`。
 
 ## Claim 边界
 

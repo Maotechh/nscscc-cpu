@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "iteration_id": "20260714-1907-lacc-spinal",
+  "reviewed_implementation_sha": "7364f89ab5caa4e95234fa938022bc356092e54e",
+  "auditor": "independent_read_only_codex_agent",
+  "is_cross_model_gpt54": false,
+  "is_claude_review": false,
+  "overall_verdict": "warn",
+  "integrity_status": "warn",
+  "checks": {
+    "golden_provenance": {"status":"pass","details":"locked a158 blobs loaded independently and SHA256 checked"},
+    "score_normalization": {"status":"pass","details":"exact cycle comparison; no prediction-derived normalization"},
+    "result_existence": {"status":"warn","details":"all referenced artifacts exist and hashes match; evidence follow-up commit pending during review"},
+    "dead_metric": {"status":"pass","details":"candidate runner and coverage parser execute; requests/data are valid-cycle counts, not unique transaction counts"},
+    "scope": {"status":"warn","details":"one seed, two-state, legal ordered response model, one directed cache scenario and one diagnostic official case"},
+    "evaluation_types": ["simulation_only_leaf_differential","simulation_only_directed_integration","simulation_only_official_diagnostic"]
+  },
+  "verified": {
+    "commit_bound_summary_count": 15,
+    "commit_bound_summary_hashes_match": true,
+    "official_summary_artifact_hashes_match": true,
+    "official_raw_artifact_hashes_match": true,
+    "trace_lines": 174069,
+    "trace_sha256": "80420ff3a497ae7a31cff4543a2fa1648a24253d69184b89268179184648c6fb",
+    "prior_eadf441_trace_equal": true,
+    "prior_eadf441_parser_equal": true,
+    "whole_top_lint_warnings": {"off":80,"on":81}
+  },
+  "claims": [
+    {"id":"lacc_two_state_cycle_diff","impact":"qualified_supported"},
+    {"id":"lacc_dcache_directed","impact":"qualified_supported"},
+    {"id":"dual_config_elaboration_yosys","impact":"accepted_with_lint_failure_disclosure"},
+    {"id":"standalone_candidate_lint_clean","impact":"qualified_supported"},
+    {"id":"default_lacc_off_trace_unchanged","impact":"qualified_supported"},
+    {"id":"official_func_lab19_pass","impact":"rejected"},
+    {"id":"complete_integration_or_release","impact":"unsupported"}
+  ],
+  "maximum_boundary_state": "differential_pass",
+  "allow_ready": false,
+  "allow_status_promotion": false
+}

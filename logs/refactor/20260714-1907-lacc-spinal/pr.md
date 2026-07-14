@@ -13,7 +13,7 @@
 - 完整 Scala gate 18 suites/29 tests PASS。
 - LACC-off/on 各 2/2 可复现生成；49-port contract、canonical package、Yosys均PASS。
 - whole-top strict lint FAIL：off 80 warnings，on 81 warnings。
-- official smoke、func58/81、random、perf20、system、Vivado/FPGA未执行。
+- default LACC-off official `func_lab19` diagnostic 已执行：parser 到 test end、无 mismatch，但 244 条 DUT + 364 条官方 warning 使总 gate FAIL；LACC-on、func58/81、random、perf20、system、Vivado/FPGA未通过。
 
 ## 回退与状态
 

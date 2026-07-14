@@ -1,0 +1,78 @@
+{
+  "schema_version": 1,
+  "iteration_id": "20260714-1907-lacc-spinal",
+  "source_head": "7364f89ab5caa4e95234fa938022bc356092e54e",
+  "clean_clone": "/tmp/nscscc-lacc-7364f89-I35AbL/repo",
+  "results": {
+    "scala": {
+      "status": "pass",
+      "planned": 4,
+      "executed": 4,
+      "passed": 4,
+      "failed": 0,
+      "skipped": 0,
+      "tests_succeeded": 29,
+      "tests_failed": 0,
+      "summary": "build/lacc-commit-7364f89/scala-check/summary.json",
+      "summary_sha256": "c69ae5b9f9d3d30d86ee7cda4da465160527456b748050e2031ff15dd60ac173"
+    },
+    "contract": {
+      "status": "pass",
+      "ports": 18,
+      "golden_commit": "a158aa8ab4d49cece1a0fe488d7ac7dc02bd8cf6",
+      "summary": "build/lacc-commit-7364f89-contract/lacc/contract/summary.json",
+      "summary_sha256": "bd8b03e719abcf4779fbfd45c82922b9292b2b2db9ec476179369407296bcdd0"
+    },
+    "leaf_generate": {
+      "status": "pass",
+      "runs": 2,
+      "rtl_sha256": "6f6d57014bcb893f88b07c30a00dbffa18614c6766bc17f168fef1e7bc4509d8",
+      "summary": "build/lacc-commit-7364f89-leaf/lacc/generate/summary.json",
+      "summary_sha256": "c9838ce16806d29a7d949c14d62815ac662d8820cf246f2d0687def6b6ac074d"
+    },
+    "leaf_diff": {
+      "status": "pass",
+      "cycles": 8192,
+      "seed": "0x158aa8",
+      "candidate_warning_count": 0,
+      "historical_golden_warning_count": 7,
+      "negative_control_detected": true,
+      "coverage": {"requests":145,"responses":39,"data":56,"reads":30,"writes":15,"stalls":11,"drsp":30,"resets":11,"flushes":32},
+      "summary": "build/lacc-commit-7364f89-leaf/lacc/unit/summary.json",
+      "summary_sha256": "cd2b751a882545c7eab6bc2bf3b5cd64ce4668384cce9e8dfdbae56963159b44"
+    },
+    "core_top_off": {
+      "status": "warning",
+      "modules": 19,
+      "elaboration_rtl_sha256": "1b9340cd27c103ae0282b6e779394b31a87978d11532c5de52fd1b31bea61e07",
+      "canonical_rtl_sha256": "07a2a2d9cfa2446dd3e4d77d66ff1e2d17b525871241bbf4bfb3bd583d125be1",
+      "port_check": "pass",
+      "yosys": "pass",
+      "strict_lint": "fail",
+      "strict_lint_warnings": 80,
+      "elaboration_summary_sha256": "4a8e960eaf3519d5881a823b25425e78120dfce487959a18f73427d733cc96f2",
+      "package_summary_sha256": "ae112af8e9429e92cc10fea9fc784f1ab62c8abbee0ef7c1656b526ec030ff1d",
+      "publish_check_summary_sha256": "958f8031e29571bf9e89c7295ab92b9095123da89fd706cd48f859203292f7af",
+      "port_summary_sha256": "0bc4d3772cb6499e717104d297197576032b7a834f8103033095843bc2309102",
+      "yosys_summary_sha256": "6280725013ccd895cadf9c4a508eb6c77c1b4dfade19dc4cbc144761c807cbfe",
+      "lint_summary_sha256": "3079cc1c70c19234c5ff82b3fc95aab4d9dbda3afb9c430ce851e6797c13f668"
+    },
+    "core_top_on": {
+      "status": "warning",
+      "modules": 20,
+      "elaboration_rtl_sha256": "c5bf10523be1406e2b5025ca52f3b61ab5969ea84ac7309b1ddb332b3094dea4",
+      "canonical_rtl_sha256": "4009ac6264dbf24268aa124c21b5cc1bf145dda25f60e583a730035bd9f0ecbc",
+      "port_check": "pass",
+      "yosys": "pass",
+      "strict_lint": "fail",
+      "strict_lint_warnings": 81,
+      "lacc_only_warning_delta": "io_laccInput_requestReady",
+      "elaboration_summary_sha256": "4e3d3aa561c5c11bc96e08736cb993b176ec3496ce7c6f67ea53c739f8cd8838",
+      "package_summary_sha256": "1954a76bda2e39a78d3ccb528082ccda9c28db7a527542c56d53f25dffb472e9",
+      "port_summary_sha256": "146d9b88da35c77644d48f62c237bd02788bc3f0a7c8329e8aef3a125ec284c8",
+      "yosys_summary_sha256": "662f042c2fd74cb06c80d151845bb9d6891a6ed2c396518b83e1a1920e467038",
+      "lint_summary_sha256": "74a95888cc7e79466dcb8364a5f7de579106f9f45f8bf135036ca40fcaa3e451"
+    }
+  },
+  "claim_limit": "commit-bound leaf and static evidence only; the separate official diagnostic is not an official functional PASS; random, system, Vivado and release claims remain unsupported"
+}

@@ -1,8 +1,8 @@
 schema_version: 1
-updated_at: "2026-07-14T21:45:00+08:00"
+updated_at: "2026-07-14T22:38:00+08:00"
 active_iteration: "20260714-1907-lacc-spinal"
 active_branch: "refactor/20260714-1650-consolidated-spinal"
-source_head: "2d09948802ed9bef9e63afd92061173ba5a3714b"
+source_head: "7364f89ab5caa4e95234fa938022bc356092e54e"
 
 boundaries:
   refactor_branch_convergence:
@@ -318,12 +318,15 @@ boundaries:
       - logs/refactor/20260714-1907-lacc-spinal/iteration.md
       - logs/refactor/20260714-1907-lacc-spinal/summary.json
       - logs/refactor/20260714-1907-lacc-spinal/evidence/lacc-gates.json
+      - logs/refactor/20260714-1907-lacc-spinal/evidence/commit-bound-gates.json
+      - logs/refactor/20260714-1907-lacc-spinal/evidence/official-smoke.json
       - logs/refactor/20260714-1907-lacc-spinal/evidence/active-source-audit.md
       - logs/refactor/20260714-1907-lacc-spinal/reviews/local-independent-review.md
+      - logs/refactor/20260714-1907-lacc-spinal/reviews/experiment-audit.md
     active_pr: null
     blocked_by:
       - whole_top_strict_lint_failed_with_81_warnings
-      - official_func_smoke_not_executed_on_iteration_commit
+      - official_diagnostic_smoke_failed_warning_policy_244_dut_364_environment
       - four_state_equivalence_not_proved
       - func_full_random_system_fpga_not_executed
       - claude_bridge_missing_GEEKPIE_CLAUDE_API_KEY
