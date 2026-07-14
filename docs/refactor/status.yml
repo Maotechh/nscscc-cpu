@@ -1,8 +1,8 @@
 schema_version: 1
-updated_at: "2026-07-14T17:30:00+08:00"
-active_iteration: "20260714-1650-refactor-convergence"
+updated_at: "2026-07-14T17:33:00+08:00"
+active_iteration: "20260714-1733-btb-spinal-full"
 active_branch: "refactor/20260714-1650-consolidated-spinal"
-source_head: "09cfa96a1b67e2f5764b1ab015e3e51d307558fa"
+source_head: "cc8e1f30fd27272849d65e0858873c5d2e15f1a3"
 
 boundaries:
   refactor_branch_convergence:

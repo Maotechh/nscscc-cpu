@@ -1,0 +1,1 @@
+{"id":"preflight","argv":["git","status/rev-parse/remote"],"cwd":"nscscc-cpu/.work/worktrees/20260714-1650-consolidated-spinal","exit_code":0,"elapsed_seconds":2.5,"result":"clean canonical integration branch; base=cc8e1f3; origin/main=20cae5f","evidence":"iteration.md"}
