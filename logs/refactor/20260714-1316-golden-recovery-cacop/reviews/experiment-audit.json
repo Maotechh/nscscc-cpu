@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "iteration_id": "20260714-1316-golden-recovery-cacop",
+  "date": "2026-07-14",
+  "auditor": "independent-subagent-read-only",
+  "cross_model": false,
+  "overall_verdict": "fail",
+  "integrity_status": "fail",
+  "checks": {
+    "oracle_provenance": {"status":"pass","details":"Gate locks d22/d76/2ff/408 commit/blob identities and performs Verilator trace comparison without score normalization."},
+    "history_counts": {"status":"fail","details":"All four top-level history smoke gates failed; d22 only passed the functional parser. Summary corrected to 0 passed and 4 failed."},
+    "lint_evidence": {"status":"fail","details":"Final lint JSON proves FAIL but does not retain an independently verifiable exact warning count. Exact number removed from claims."},
+    "candidate_binding": {"status":"warn","details":"Directed result binds I/D candidates by RTL SHA256 but lacks source HEAD and evaluator/tool provenance; C1 is limited to those two hashes."},
+    "diagnostic_smoke": {"status":"warn","details":"Overlay is mixed diagnostic with gate_eligible=false; it proves an executed failure and first mismatch, not an official locked-candidate PASS."},
+    "artifact_integrity": {"status":"pass","details":"Committed relative artifact hashes and sizes validate. Old temporary runs are unavailable; final b2 diagnostic trace/package locators and hashes remain recorded."},
+    "scope": {"status":"warn","details":"No 58/81, random, perf20, U-Boot, Linux or FPGA release suite."},
+    "eval_type": "simulation_only_and_differential_oracle"
+  },
+  "claims": [
+    {"id":"C1","impact":"supported_only_for_recorded_rtl_sha256_and_958_cycles"},
+    {"id":"C2","impact":"supported_with_strict_lint_failure"},
+    {"id":"C3","impact":"supported_only_as_diagnostic_smoke_failure"},
+    {"id":"complete_core_function","impact":"unsupported"}
+  ],
+  "open_findings": [
+    "directed gate lacks source HEAD and tool/evaluator provenance",
+    "exact lint warning count is not retained",
+    "func_lab19 fails at 0x1c07cfcc",
+    "Claude bridge unavailable"
+  ],
+  "remediations_applied": [
+    "history counts changed from 4 pass to 4 fail",
+    "exact lint warning count removed",
+    "C1 bound to candidate RTL hashes instead of b2a73c8"
+  ]
+}

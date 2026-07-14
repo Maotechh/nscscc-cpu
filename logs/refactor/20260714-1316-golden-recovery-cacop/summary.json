@@ -1,50 +1,59 @@
 {
   "schema_version": 1,
   "iteration_id": "20260714-1316-golden-recovery-cacop",
-  "status": "implementation_in_review",
+  "status": "blocked",
   "branch": "refactor/20260714-1316-golden-recovery-cacop",
   "base_sha": "13e0c8da423bb75ca848aada91c67738f22a60ab",
-  "head_sha": null,
-  "source_head": "0db763de97099d437cfedd4e7157b8c329a0ba4d",
+  "head_sha": "b2a73c83f9d849c6f67828e8dcfdd39a620e00ed",
+  "review_target_sha": "b2a73c83f9d849c6f67828e8dcfdd39a620e00ed",
   "selected_boundary": "golden_recovery_cacop",
   "gates": {
-    "doctor": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0,"evidence":"evidence/doctor.json"},
-    "history_bisect": {"status":"pass","planned":4,"executed":4,"passed":4,"failed":0,"skipped":0,"evidence":"iteration.md"},
+    "doctor": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0,"evidence":"evidence/chiplab-doctor-b2a73c8.json"},
+    "history_bisect": {"status":"warning","planned":4,"executed":4,"passed":0,"failed":4,"skipped":0,"evidence":"iteration.md"},
     "unit_diff": {"status":"pass","planned":10,"executed":10,"passed":10,"failed":0,"skipped":0,"evidence":"evidence/cacop-directed.json"},
-    "scala": {"status":"pass","planned":4,"executed":4,"passed":4,"failed":0,"skipped":0,"evidence":"evidence/header-fix-scala.json"},
-    "generate_publish": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0,"evidence":"evidence/publish-check-0db763d.json"},
-    "rtl_static": {"status":"fail","planned":3,"executed":3,"passed":2,"failed":1,"skipped":0,"evidence":"evidence/clean-head-lint-968712c.json"},
-    "func_smoke": {"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":0,"evidence":"iteration.md"},
-    "claim_review": {"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":0,"evidence":"iteration.md"}
+    "scala": {"status":"pass","planned":4,"executed":4,"passed":4,"failed":0,"skipped":0,"evidence":"evidence/clean-head-scala-b2a73c8.json"},
+    "generate_publish": {"status":"pass","planned":3,"executed":3,"passed":3,"failed":0,"skipped":0,"evidence":["evidence/clean-head-generate-b2a73c8.json","evidence/clean-head-package-b2a73c8.json","evidence/clean-head-publish-b2a73c8.json"]},
+    "rtl_static": {"status":"fail","planned":3,"executed":3,"passed":2,"failed":1,"skipped":0,"evidence":["evidence/clean-head-port-b2a73c8.json","evidence/clean-head-yosys-b2a73c8.json","evidence/clean-head-lint-b2a73c8.json"]},
+    "func_smoke": {"status":"fail","planned":1,"executed":1,"passed":0,"failed":1,"skipped":0,"evidence":"evidence/rtl-smoke-b2a73c8.json"},
+    "claim_review": {"status":"unavailable","planned":1,"executed":0,"passed":0,"failed":0,"skipped":1,"evidence":"reviews/claude-raw.md"}
   },
   "required_gates": ["doctor","history_bisect","unit_diff","scala","generate_publish","rtl_static","func_smoke","claim_review"],
   "claims": [
     {
-      "claim": "d76ca40 is the first reproduced history point in the tested sequence whose func_lab19 parser fails at 0x1c07c79c after d22c13c passes functionally",
-      "support": "supported",
-      "evidence": ["iteration.md"]
-    },
-    {
-      "claim": "generated I/D cache candidates match the d22 CACOP oracle for the 958 directed lockstep cycles and detect all three historical negative controls",
-      "support": "supported",
+      "id": "C1",
+      "claim": "SHA256 为 0e0a39e5...932c 和 ebf5f12a...392a 的 I/D Cache RTL 在所列 958 拍 CACOP 定向轨迹上与 d22 局部 oracle 一致，并捕获三组固定负控",
+      "support": "supported_with_scope",
       "evidence": ["evidence/cacop-directed.json"]
     },
     {
-      "claim": "the current full core passes official functionality or complete cache equivalence",
+      "id": "C2",
+      "claim": "b2a73c8 的 committed core_top 可复现生成和发布，49 端口检查及 Yosys 通过",
+      "support": "supported",
+      "evidence": ["evidence/clean-head-generate-b2a73c8.json","evidence/clean-head-publish-b2a73c8.json","evidence/clean-head-port-b2a73c8.json","evidence/clean-head-yosys-b2a73c8.json"]
+    },
+    {
+      "id": "C3",
+      "claim": "在锁定 chiplab 环境的 mixed diagnostic overlay 中，func_lab19 越过旧首错 0x1c07c79c，但仍严格失败于 0x1c07cfcc",
+      "support": "supported",
+      "evidence": ["evidence/rtl-smoke-b2a73c8.json"]
+    },
+    {
+      "id": "C4",
+      "claim": "官方功能、完整 cache 等价或完整重构已经通过",
       "support": "unsupported",
-      "evidence": ["evidence/clean-head-lint-968712c.json"]
+      "evidence": ["evidence/clean-head-lint-b2a73c8.json","evidence/rtl-smoke-b2a73c8.json"]
     }
   ],
   "blocked_by": [
-    "clean_final_head_generate_confirmation_pending",
-    "86_unapproved_core_top_lint_warnings",
-    "current_head_func_smoke_not_yet_executed",
-    "claude_claim_review_not_yet_executed",
+    "strict_lint_failed_with_unapproved_warnings",
+    "func_lab19_failed_at_1c07cfcc",
+    "claude_bridge_missing_GEEKPIE_CLAUDE_API_KEY",
     "full_regression_and_fpga_not_executed"
   ],
   "residual_risks": [
-    "all four historical smoke invocations remain strict FAIL because warning policy is not clean even when the d22 functional parser passes",
-    "the directed CACOP gate does not prove unrestricted cache behavior or whole-core sequential equivalence",
-    "58/81, random DiffTest, perf20, system and FPGA release gates are not executed in this iteration"
+    "d22 仅是 CACOP recovery 的局部 oracle，不是全局 golden truth",
+    "958 拍定向轨迹不证明完整 cache 或整机顺序等价",
+    "当前新首错呈现 branch 重复提交，但根因尚需独立 harness 证明",
+    "58/81、random、perf20、U-Boot、Linux 和 Vivado release gates 未执行"
   ]
 }

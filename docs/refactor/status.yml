@@ -301,7 +301,7 @@ boundaries:
     active_pr: null
     blocked_by:
       - func_lab19_fails_at_locked_baseline_mismatch_1c07c79c
-      - 86_unapproved_verilator_warnings_in_complete_spinal_rtl
+      - unapproved_verilator_warnings_in_complete_spinal_rtl
       - func_full_and_random_wrappers_not_implemented
       - vivado_complete_spinal_rtl_not_executed
       - golden_observable_btb_ras_lacc_random_difftest_and_perf_pending
@@ -671,11 +671,40 @@ boundaries:
       - logs/refactor/20260714-0302-spinal-active-backend/iteration.md
       - logs/refactor/20260714-0302-spinal-active-backend/evidence/rtl-smoke-2e5409a.json
       - logs/refactor/20260714-0302-spinal-active-backend/evidence/baseline-forwarding-comparison.json
+      - logs/refactor/20260714-1316-golden-recovery-cacop/evidence/rtl-smoke-b2a73c8.json
     active_pr: null
     blocked_by:
-      - func_lab19_fails_at_locked_baseline_mismatch_1c07c79c
+      - func_lab19_fails_at_mismatch_1c07cfcc_after_cacop_recovery
       - random_backpressure_and_perf_not_executed
-    last_iteration: "20260714-0302-spinal-active-backend"
+    last_iteration: "20260714-1316-golden-recovery-cacop"
+
+  golden_recovery_cacop:
+    owner: memory
+    state: differential_pass
+    golden_ref: d22c13c:rtl/{icache,dcache}.v
+    dependencies:
+      - icache
+      - dcache
+    contract: docs/contracts/golden-recovery-cacop.md
+    required_gates:
+      - history_bisect
+      - unit_diff
+      - scala
+      - generate_publish
+      - rtl_static
+      - func_smoke
+      - claim_review
+    evidence:
+      - logs/refactor/20260714-1316-golden-recovery-cacop/iteration.md
+      - logs/refactor/20260714-1316-golden-recovery-cacop/summary.json
+      - logs/refactor/20260714-1316-golden-recovery-cacop/evidence/cacop-directed.json
+      - logs/refactor/20260714-1316-golden-recovery-cacop/evidence/rtl-smoke-b2a73c8.json
+    active_pr: null
+    blocked_by:
+      - strict_lint_failed_with_unapproved_warnings
+      - func_lab19_fails_at_mismatch_1c07cfcc
+      - claude_bridge_missing_GEEKPIE_CLAUDE_API_KEY
+    last_iteration: "20260714-1316-golden-recovery-cacop"
 
   observability:
     owner: observe
@@ -695,7 +724,7 @@ boundaries:
       - logs/refactor/20260714-0302-spinal-active-backend/evidence/baseline-forwarding-comparison.json
     active_pr: null
     blocked_by:
-      - func_lab19_fails_at_locked_baseline_mismatch_1c07c79c
+      - func_lab19_fails_at_mismatch_1c07cfcc_after_cacop_recovery
       - random_difftest_not_executed
       - claude_bridge_missing_GEEKPIE_CLAUDE_API_KEY
-    last_iteration: "20260714-0302-spinal-active-backend"
+    last_iteration: "20260714-1316-golden-recovery-cacop"

@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "command": "python -I tools/refactor.py validate-iteration --iteration-dir logs/refactor/20260714-1316-golden-recovery-cacop",
+  "status": "pass",
+  "iteration_status": "blocked",
+  "artifact_count": 20,
+  "command_records": 14,
+  "gate_count": 8,
+  "review_status": "unavailable",
+  "validated_at": "2026-07-14T15:18:41+08:00"
+}

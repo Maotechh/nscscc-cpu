@@ -2,20 +2,35 @@
   "schema_version": 1,
   "iteration_id": "20260714-1316-golden-recovery-cacop",
   "artifacts": [
-    {"path":"evidence/cacop-directed.json","sha256":"4c541280731621c34ce77106ad6b925c850a3dd04557a86220676416abf36e8f","size":8695,"tracked":true},
-    {"path":"evidence/doctor.json","sha256":"429f23e44681cb747244de3cce1177ba96adef6596176e5c88b1ccda54e086c2","size":5572,"tracked":true},
-    {"path":"evidence/header-fix-scala.json","sha256":"3bb32da7cf322bd1dcdbf5860f4a8749e75609a9f1e212e90ba6839045835e16","size":104529,"tracked":true},
-    {"path":"evidence/header-fix-generate.json","sha256":"e9a03ceac17cab1cabbf6442e841e584e6af1ca35e958fce500fafca1adff1de","size":101329,"tracked":true},
-    {"path":"evidence/clean-head-lint-968712c.json","sha256":"fe85517d3ce0fb0c5b340d0e0daad6a9ee950c044666c9a9b668333b4fe6622a","size":296,"tracked":true},
-    {"path":"evidence/publish-check-0db763d.json","sha256":"8c1d71c601075098ab1856dc04bc5759173a51b1f978c79d1125e50d8b23260e","size":2204,"tracked":true},
-    {"path":"evidence/reachability-0db763d.json","sha256":"49f1b39a1da108c242f631a0d148ed5c7e967bc805a81a396980cde38ae4c5d7","size":4002,"tracked":true}
+    {"id":"cacop-directed","path":"evidence/cacop-directed.json","sha256":"4c541280731621c34ce77106ad6b925c850a3dd04557a86220676416abf36e8f","size":8695,"tracked":true},
+    {"id":"vivado-doctor","path":"evidence/doctor.json","sha256":"429f23e44681cb747244de3cce1177ba96adef6596176e5c88b1ccda54e086c2","size":5572,"tracked":true},
+    {"id":"scala-b2a73c8","path":"evidence/clean-head-scala-b2a73c8.json","sha256":"d1f290c1588931c551d00edc016ae6f16229593d9cdf465d14c54442baf15a7e","size":104054,"tracked":true},
+    {"id":"generate-b2a73c8","path":"evidence/clean-head-generate-b2a73c8.json","sha256":"2acf7dccf75495f8d0c0f41b3272cbb62fe336ad7ef9f8c0f411cb89f5fc801c","size":101318,"tracked":true},
+    {"id":"package-b2a73c8","path":"evidence/clean-head-package-b2a73c8.json","sha256":"463ff0118820d747b37a9fdaf16b7b7eef1dd541757c889a3780851c60a4e2e0","size":1665,"tracked":true},
+    {"id":"publish-b2a73c8","path":"evidence/clean-head-publish-b2a73c8.json","sha256":"a36f6280968bbe2c791d0d209804a49a31aa4424dd9ba211338863fd70183076","size":1692,"tracked":true},
+    {"id":"port-b2a73c8","path":"evidence/clean-head-port-b2a73c8.json","sha256":"f12aff196438b88e03b2f2adf2aaaa2890050777288556a9fabcf21ae0ac9fc2","size":7050,"tracked":true},
+    {"id":"yosys-b2a73c8","path":"evidence/clean-head-yosys-b2a73c8.json","sha256":"9b92e3119a856d7c90c423508e3ad29fb6a83d92ab36bc3547b3b6c19812b576","size":2301,"tracked":true},
+    {"id":"lint-b2a73c8","path":"evidence/clean-head-lint-b2a73c8.json","sha256":"d4d4c6710cf0f7170a74f4e4b485f1b3d3ca7317509fdabffa938462d926f9f8","size":296,"tracked":true},
+    {"id":"chiplab-doctor-b2a73c8","path":"evidence/chiplab-doctor-b2a73c8.json","sha256":"4094f3d0e794b4c4eb45ed20b0d6746382fc42e8fc772cafcd37994f1b65b31f","size":16175,"tracked":true},
+    {"id":"chiplab-overlay-b2a73c8","path":"evidence/chiplab-overlay-b2a73c8.json","sha256":"548448c5ecdf93b43e90dc44682120698caf57b1bc5e98e7593266f9b2eca2d7","size":3150,"tracked":true},
+    {"id":"rtl-smoke-b2a73c8","path":"evidence/rtl-smoke-b2a73c8.json","sha256":"d8bee77ca83f2ed1a5cb52e544e36d803177eb9efea2646c94e2ea055e7fba48","size":183088,"tracked":true},
+    {"id":"claude-raw","path":"reviews/claude-raw.md","sha256":"65b686cdbed0a3a1205817d564b68f714348ff916b2318726a89573a5629f466","size":500,"tracked":true},
+    {"id":"claude-summary-json","path":"reviews/claude-summary.json","sha256":"07ce61c21fca6464870c20f0ab5757e92c6461684bf8a6645ff78d76797b2899","size":896,"tracked":true},
+    {"id":"claude-summary-md","path":"reviews/claude-summary.md","sha256":"ee0994c05202066cbebef6669ae7b6e34c9383e835a7f728e4920e38786017c9","size":456,"tracked":true},
+    {"id":"local-independent-review-json","path":"reviews/local-independent-review.json","sha256":"0923d02bb23b4b2b6a39079f1715515e8cc35ca4270a5b5349d9ba570c218f08","size":1045,"tracked":true},
+    {"id":"local-independent-review-md","path":"reviews/local-independent-review.md","sha256":"6d1bfd34025d25295015ad8c7f991bb099b692660956000e2cd3e472b5dbb3ad","size":1843,"tracked":true},
+    {"id":"experiment-audit-json","path":"reviews/experiment-audit.json","sha256":"5b41ba638d568367d5e0133abe5e50538c93783679fd245f039062b0eb0233ba","size":2265,"tracked":true},
+    {"id":"experiment-audit-md","path":"reviews/experiment-audit.md","sha256":"88b17c8b5befb0104f9b9b1539f178fe8685ac48cbd57ffe79143d4f7ee960be","size":1314,"tracked":true},
+    {"id":"iteration-validation","path":"evidence/iteration-validation-b2a73c8.json","sha256":"beb5347cfdcf421a6de50f50cd5e1b133826e28f3779a34f54253d2f1cba6ef5","size":357,"tracked":true}
+  ],
+  "unavailable_external_artifacts": [
+    {"path":"/tmp/golden-recovery-*-out","reason":"local temporary output was cleaned before final evidence packaging"},
+    {"path":"build/cacop-directed-gate-v4","reason":"untracked build output no longer exists; reproducible gate and summary remain"},
+    {"path":"/tmp/cacop-stablegen","reason":"local temporary output no longer exists; clean b2a73c8 summaries supersede it"},
+    {"path":"/tmp/cacop-final-b2a/raw","reason":"raw build logs are not retained in the repository; only listed final trace locator remains available"}
   ],
   "external_locators": [
-    {"path":"/tmp/golden-recovery-d22-out/reports/iterations/20260714-1316-golden-recovery-cacop-d22/rtl-smoke.json","sha256":"5dcedd1bdc04c76a82c6b1a60591e9fad60c01df8b1b3bb9ae2497c9a7321b10","size":174202,"retention":"local-until-explicit-clean"},
-    {"path":"/tmp/golden-recovery-d76-out/reports/iterations/20260714-1316-golden-recovery-cacop-d76/rtl-smoke.json","sha256":"514c5fb1c947b109393f3ab521efcf3591e4ad5c5f6f5f6c60880df82d9b0593","size":174537,"retention":"local-until-explicit-clean"},
-    {"path":"/tmp/golden-recovery-2ff-out/reports/iterations/20260714-1316-golden-recovery-cacop-2ff/rtl-smoke.json","sha256":"030a892c005a96fcf1d5d30e6510273857e4674f90697970e37215b9b2afb102","size":174537,"retention":"local-until-explicit-clean"},
-    {"path":"/tmp/golden-recovery-408-out/reports/iterations/20260714-1316-golden-recovery-cacop-408/rtl-smoke.json","sha256":"ace5769e60d3a7db158f54c224e3c9e1a2c515be4a2a6e06a1abc828f8347611","size":174538,"retention":"local-until-explicit-clean"},
-    {"path":"build/cacop-directed-gate-v4","retention":"local-until-explicit-clean"},
-    {"path":"/tmp/cacop-stablegen","retention":"local-until-explicit-clean"}
+    {"path":"/tmp/nscscc-cacop-final-work/20260714-1316-golden-recovery-cacop/sims/verilator/run_prog/log/func/func_lab19_log/simu_trace.txt","sha256":"7bebde0afb200be8c538a19133ca1a2e8d959a7a5f7031ab84b7fe4bc48cafd3","size":13860965,"retention":"local-until-explicit-clean"},
+    {"path":"/tmp/cacop-final-b2a/core_top/package/summary.json","sha256":"463ff0118820d747b37a9fdaf16b7b7eef1dd541757c889a3780851c60a4e2e0","size":1665,"retention":"local-until-explicit-clean"}
   ]
 }
