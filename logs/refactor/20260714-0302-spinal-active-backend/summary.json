@@ -22,9 +22,9 @@
   },
   "required_gates": ["doctor","scala","contract","rtl_static","func_smoke","func_full","random","fpga","claim_review"],
   "claims": [
-    {"claim":"生成 core_top 的活动 backend 不再依赖 legacy CPU Verilog BlackBox","support":"yes","evidence":"evidence/package.json"},
+    {"claim":"生成 core_top 的活动 backend 不再依赖 legacy CPU Verilog BlackBox","support":"yes","evidence":"evidence/package-difftest.json"},
     {"claim":"完整生成 RTL 的官方 49 端口合同和 Yosys hierarchy/check 通过","support":"yes","evidence":"evidence/port-check-difftest.json"},
-    {"claim":"官方七个 DiffTest 模块已通过条件生成和静态链接","support":"yes","evidence":"evidence/generate-difftest.json"},
+    {"claim":"官方七个 DiffTest 模块已通过条件生成和静态链接","support":"yes","evidence":"evidence/difftest-static-link.json"},
     {"claim":"纯 Spinal 整机功能等价","support":"no","evidence":"iteration.md"}
   ],
   "residual_risks": [
