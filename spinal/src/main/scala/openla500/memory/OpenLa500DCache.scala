@@ -173,7 +173,9 @@ final class OpenLa500DCache extends Component {
         )
       }
     }
-    cacheHit := realHit.orR && !io.uncache_en
+    // CACOP follows the locked passing d22c13c state path: it must not be
+    // treated as a normal lookup hit, even when the indexed line is valid.
+    cacheHit := realHit.orR && !(io.uncache_en || mode0 || mode1 || mode2)
     loadResult :=
       (Mux(realHit(0), dataOutputs(0)(requestOffset(3 downto 2).asUInt), B(0, 32 bits)) |
         Mux(realHit(1), dataOutputs(1)(requestOffset(3 downto 2).asUInt), B(0, 32 bits)))
@@ -215,7 +217,7 @@ final class OpenLa500DCache extends Component {
     val rdReq = isReplace && !(uncacheWrBuffer || mode0 || mode1 || mode2)
     val refillMatch = missRetNum === requestOffset(3 downto 2).asUInt
     val dataOk =
-      (isLookup && (cacheHit || requestOp || cancelReq || requestCacop) ||
+      (isLookup && (cacheHit || requestOp || cancelReq) ||
         isRefill && !requestOp && io.ret_valid && (refillMatch || requestUncache)) && !requestPreld
 
     val replaceTag = Bits(20 bits)
@@ -256,8 +258,6 @@ final class OpenLa500DCache extends Component {
           mainState := MainLookup
           captureRequest()
         }.elsewhen(cancelReq) {
-          mainState := MainIdle
-        }.elsewhen(requestCacop) {
           mainState := MainIdle
         }.elsewhen(!cacheHit) {
           when(

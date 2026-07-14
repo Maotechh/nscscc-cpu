@@ -35,7 +35,7 @@ SRAM 是单口同步读：`ena && !wea` 时在上升沿更新输出；写周期�
 
 ## CACOP 与遗留死端口
 
-当前 golden 的 CACOP 在 lookup 立即完成并回 idle，不进入 replace/refill，因此 mode 0/1/2 均不会实际改写 tag SRAM。`lookup_way_hit_buffer` 仍按历史代码更新。此次重构必须保留这一可执行行为，不按注释“修复”无效化功能。
+当前重构分支以历史最后通过点 `d22c13c` 作为 CACOP recovery oracle：CACOP mode 0/1/2 不得伪装成普通 cache hit 或在 lookup 立即返回 `data_ok`，而应进入既有 replace/refill 状态路径；命中/未命中的 tag、dirty 和 AXI 副作用按该 oracle 逐拍比较。锁定 `a158aa8` 的 bypass 行为已在 `0x1c07c79c` 复现为失败，不能继续作为正确性合同。
 
 `wr_req` 仅在 reset 时被置零，`wr_type/wr_addr/wr_wstrb/wr_data` 在 golden 中完全未驱动，`wr_rdy` 未消费。候选在 reset 后将这些兼容死端口确定为零；这是 2-state 官方仿真兼容，不声明四态逐位等价。
 

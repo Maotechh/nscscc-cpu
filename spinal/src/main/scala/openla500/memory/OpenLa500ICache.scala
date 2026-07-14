@@ -107,7 +107,9 @@ final class OpenLa500ICache extends Component {
     for (way <- 0 until 2) {
       wayHit(way) := tagOutputs(way)(0) && tagOutputs(way)(20 downto 1) === realTag
     }
-    val cacheHit = wayHit.orR && !io.uncache_en
+    // CACOP follows the locked passing d22c13c state path: it must not be
+    // treated as a normal lookup hit, even when the indexed line is valid.
+    val cacheHit = wayHit.orR && !(io.uncache_en || mode0 || mode1 || mode2)
     val addrOk = (isIdle || (isLookup && cacheHit)) && !io.icacop_op_en
 
     val wayWords = Vec(Bits(32 bits), 2)
@@ -142,7 +144,7 @@ final class OpenLa500ICache extends Component {
     val rdReq = isReplace && !(mode0 || mode1 || mode2)
     val refillMatch = missRetNum === requestOffset(3 downto 2).asUInt
     val dataOk =
-      (isLookup && (cacheHit || io.tlb_excp_cancel_req || requestCacop)) ||
+      (isLookup && (cacheHit || io.tlb_excp_cancel_req)) ||
         (isRefill && io.ret_valid && (refillMatch || requestUncache) && !requestCacop)
 
     // The legacy source increments this exact two-bit binary counter.
@@ -213,8 +215,6 @@ final class OpenLa500ICache extends Component {
           mainState := MainLookup
           captureRequest()
         }.elsewhen(io.tlb_excp_cancel_req) {
-          mainState := MainIdle
-        }.elsewhen(requestCacop) {
           mainState := MainIdle
         }.elsewhen(!cacheHit) {
           mainState := MainReplace

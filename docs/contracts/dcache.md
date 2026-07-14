@@ -40,8 +40,8 @@ Golden 是待复测的行为候选，不是天然正确的体系结构规范。�
 
 ## CACOP 与 PRELD
 
-- 锁定 golden 在 lookup 中对所有 `request_buffer_dcacop` 直接返回 idle 并产生 `data_ok`，不进入 miss/replace/refill，也不发 AXI 请求。
-- 因上述优先级，golden 当前并未实际执行 mode 0/1/2 的 tag invalidation 或 dirty writeback；candidate 必须先保持这个已锁定行为，若要修复 CACOP 需另立功能修复 PR 和体系结构 oracle。
+- 当前 recovery 以历史最后通过点 `d22c13c` 为 CACOP oracle：`request_buffer_dcacop` 不得在 lookup 伪装成普通 cache hit 或立即产生 `data_ok`，而应进入既有 miss/replace/refill 状态路径；mode 0/1/2 的 tag、dirty 和 AXI 副作用按该 oracle 逐拍比较。
+- 锁定 `a158aa8` 的 CACOP bypass 行为已在 `0x1c07c79c` 复现为失败；在独立 recovery PR 完成前不得把它当作正确性合同。
 - PRELD 参与请求和 refill，但不产生 `data_ok`，且不计入 `cache_miss`。
 - `preld_hint` 在 golden 当前活动逻辑中不改变控制；精确保留端口并以哈希绑定 waiver 处理未使用告警。
 

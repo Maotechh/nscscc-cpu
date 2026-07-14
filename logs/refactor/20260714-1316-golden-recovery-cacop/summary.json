@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "iteration_id": "20260714-1316-golden-recovery-cacop",
+  "status": "draft",
+  "branch": "refactor/20260714-1316-golden-recovery-cacop",
+  "base_sha": "13e0c8da423bb75ca848aada91c67738f22a60ab",
+  "head_sha": null,
+  "source_head": null,
+  "selected_boundary": "golden_recovery_cacop",
+  "gates": {
+    "doctor": {"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":0,"evidence":"iteration.md"},
+    "history_bisect": {"status":"pending","planned":5,"executed":0,"passed":0,"failed":0,"skipped":0,"evidence":"iteration.md"},
+    "unit_diff": {"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":0,"evidence":"iteration.md"},
+    "scala": {"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":0,"evidence":"iteration.md"},
+    "rtl_static": {"status":"pending","planned":2,"executed":0,"passed":0,"failed":0,"skipped":0,"evidence":"iteration.md"},
+    "func_smoke": {"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":0,"evidence":"iteration.md"},
+    "claim_review": {"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":0,"evidence":"iteration.md"}
+  },
+  "required_gates": ["doctor","history_bisect","unit_diff","scala","rtl_static","func_smoke","claim_review"],
+  "claims": [],
+  "residual_risks": [
+    "locked baseline fails at 0x1c07c79c",
+    "the exact CACOP regression commit is not yet reproduced in this iteration",
+    "full regressions and FPGA gates are not executed"
+  ]
+}

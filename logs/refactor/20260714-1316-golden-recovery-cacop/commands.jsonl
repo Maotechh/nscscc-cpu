@@ -1,0 +1,2 @@
+{"id":"preflight","argv":["git","status/rev-parse/remote","read-only"],"cwd":"20260714-0302-spinal-active-backend","exit_code":0,"elapsed_seconds":2.6,"result":"clean pushed source branch; BASE_SHA=13e0c8d; origin/main=20cae5f","evidence":"iteration.md"}
+{"id":"worktree-add","argv":["git","worktree","add","20260714-1316-golden-recovery-cacop","-b","refactor/20260714-1316-golden-recovery-cacop","13e0c8d"],"cwd":"nscscc-cpu/.work/worktrees","exit_code":0,"elapsed_seconds":2.8,"result":"new isolated worktree and branch created","evidence":"iteration.md"}
