@@ -1,5 +1,6 @@
 // Generator : SpinalHDL v1.14.2    git head : 78f29dc66110fc099a777992b6daa2f803ab445e
 // Component : core_top
+// Git hash  : 528b79ca2af86f9b71277de91e8fa5811e18a900
 
 
 
@@ -3847,11 +3848,11 @@ module OpenLa500DCache (
   wire       [31:0]   _zz_logic_dataOutputs_1_3_6;
   wire       [1:0]    logic_cacopChosenWay;
   reg        [1:0]    logic_invalidWay;
-  wire                when_OpenLa500DCache_l184;
-  wire                when_OpenLa500DCache_l185;
+  wire                when_OpenLa500DCache_l186;
+  wire                when_OpenLa500DCache_l187;
   wire       [1:0]    logic_randomWay;
   reg        [1:0]    logic_replacementWay;
-  wire                when_OpenLa500DCache_l189;
+  wire                when_OpenLa500DCache_l191;
   wire       [1:0]    logic_dirtyAtIndex;
   wire       [1:0]    logic_effectiveDirty;
   wire                logic_replacementDirty;
@@ -3868,25 +3869,25 @@ module OpenLa500DCache (
   wire                logic_refillMatch;
   wire                logic_dataOk;
   reg        [19:0]   logic_replaceTag;
-  wire                when_OpenLa500DCache_l223;
-  wire                when_OpenLa500DCache_l224;
-  reg        [127:0]  logic_replaceData;
+  wire                when_OpenLa500DCache_l226;
   wire                when_OpenLa500DCache_l227;
-  wire                when_OpenLa500DCache_l232;
-  wire                when_OpenLa500DCache_l252;
+  reg        [127:0]  logic_replaceData;
+  wire                when_OpenLa500DCache_l230;
+  wire                when_OpenLa500DCache_l235;
   wire                when_OpenLa500DCache_l255;
-  wire                when_OpenLa500DCache_l266;
-  wire                when_OpenLa500DCache_l262;
-  wire                when_OpenLa500DCache_l285;
-  wire                when_OpenLa500DCache_l295;
-  wire                when_OpenLa500DCache_l299;
+  wire                when_OpenLa500DCache_l258;
+  wire                when_OpenLa500DCache_l267;
+  wire                when_OpenLa500DCache_l263;
+  wire                when_OpenLa500DCache_l286;
+  wire                when_OpenLa500DCache_l296;
   wire                when_OpenLa500DCache_l300;
-  wire       [255:0]  _zz_11;
   wire                when_OpenLa500DCache_l301;
+  wire       [255:0]  _zz_11;
+  wire                when_OpenLa500DCache_l302;
   wire       [255:0]  _zz_12;
   wire       [255:0]  _zz_13;
   wire       [1:0]    _zz_logic_dirtyMem_0;
-  wire                when_OpenLa500DCache_l306;
+  wire                when_OpenLa500DCache_l307;
   reg [7:0] logic_dataMem_0_0_symbol0 [0:255];
   reg [7:0] logic_dataMem_0_0_symbol1 [0:255];
   reg [7:0] logic_dataMem_0_0_symbol2 [0:255];
@@ -4837,26 +4838,26 @@ module OpenLa500DCache (
   assign _zz_logic_dataOutputs_1_3_5 = (_zz_logic_dataOutputs_1_3 ? logic_writeBufferIndex : (addr_ok ? index : logic_requestIndex));
   assign _zz_logic_dataOutputs_1_3_6 = (_zz_logic_dataOutputs_1_3 ? logic_writeBufferWdata : logic_refillData);
   assign logic_dataOutputs_1_3 = logic_dataMem_1_3_spinal_port0;
-  assign logic_cacheHit = ((|logic_realHit) && (! uncache_en));
+  assign logic_cacheHit = ((|logic_realHit) && (! (((uncache_en || logic_mode0) || logic_mode1) || logic_mode2)));
   assign logic_loadResult = ((logic_realHit[0] ? _zz_logic_loadResult : 32'h0) | (logic_realHit[1] ? _zz_logic_loadResult_2 : 32'h0));
   assign logic_cacopChosenWay = (logic_requestOffset[0] ? 2'b10 : 2'b01);
   always @(*) begin
     logic_invalidWay = 2'b00;
-    if(when_OpenLa500DCache_l184) begin
+    if(when_OpenLa500DCache_l186) begin
       logic_invalidWay = 2'b01;
     end else begin
-      if(when_OpenLa500DCache_l185) begin
+      if(when_OpenLa500DCache_l187) begin
         logic_invalidWay = 2'b10;
       end
     end
   end
 
-  assign when_OpenLa500DCache_l184 = (! logic_tagOutputs_0[0]);
-  assign when_OpenLa500DCache_l185 = (! logic_tagOutputs_1[0]);
+  assign when_OpenLa500DCache_l186 = (! logic_tagOutputs_0[0]);
+  assign when_OpenLa500DCache_l187 = (! logic_tagOutputs_1[0]);
   assign logic_randomWay = (logic_lfsr[6] ? 2'b10 : 2'b01);
   always @(*) begin
     logic_replacementWay = ((|logic_invalidWay) ? logic_invalidWay : logic_randomWay);
-    if(when_OpenLa500DCache_l189) begin
+    if(when_OpenLa500DCache_l191) begin
       logic_replacementWay = logic_cacopChosenWay;
     end else begin
       if(logic_mode2) begin
@@ -4865,7 +4866,7 @@ module OpenLa500DCache (
     end
   end
 
-  assign when_OpenLa500DCache_l189 = (logic_mode0 || logic_mode1);
+  assign when_OpenLa500DCache_l191 = (logic_mode0 || logic_mode1);
   assign logic_dirtyAtIndex = _zz_logic_dirtyAtIndex;
   assign logic_effectiveDirty = (logic_dirtyAtIndex | ((logic_writeBufferState && (logic_writeBufferIndex == logic_requestIndex)) ? logic_writeBufferWay : 2'b00));
   assign logic_replacementDirty = (|(logic_replacementWay & logic_effectiveDirty));
@@ -4884,47 +4885,47 @@ module OpenLa500DCache (
   assign logic_uncacheWrite = (((logic_uncacheRequest && logic_requestOp) && (! logic_mode1)) && (! logic_cacopMode2Hit));
   assign logic_rdReq = (logic_isReplace && (! (((logic_uncacheWrBuffer || logic_mode0) || logic_mode1) || logic_mode2)));
   assign logic_refillMatch = (logic_missRetNum == logic_requestOffset[3 : 2]);
-  assign logic_dataOk = (((logic_isLookup && (((logic_cacheHit || logic_requestOp) || logic_cancelReq) || logic_requestCacop)) || (((logic_isRefill && (! logic_requestOp)) && ret_valid) && (logic_refillMatch || logic_requestUncache))) && (! logic_requestPreld));
+  assign logic_dataOk = (((logic_isLookup && ((logic_cacheHit || logic_requestOp) || logic_cancelReq)) || (((logic_isRefill && (! logic_requestOp)) && ret_valid) && (logic_refillMatch || logic_requestUncache))) && (! (logic_requestPreld || logic_requestCacop)));
   always @(*) begin
     logic_replaceTag = 20'h0;
-    if(when_OpenLa500DCache_l223) begin
+    if(when_OpenLa500DCache_l226) begin
       logic_replaceTag = logic_tagOutputs_0[20 : 1];
     end else begin
-      if(when_OpenLa500DCache_l224) begin
+      if(when_OpenLa500DCache_l227) begin
         logic_replaceTag = logic_tagOutputs_1[20 : 1];
       end
     end
   end
 
-  assign when_OpenLa500DCache_l223 = logic_missReplaceWay[0];
-  assign when_OpenLa500DCache_l224 = logic_missReplaceWay[1];
+  assign when_OpenLa500DCache_l226 = logic_missReplaceWay[0];
+  assign when_OpenLa500DCache_l227 = logic_missReplaceWay[1];
   always @(*) begin
     logic_replaceData = 128'h0;
-    if(when_OpenLa500DCache_l227) begin
+    if(when_OpenLa500DCache_l230) begin
       logic_replaceData = {{{logic_dataOutputs_0_3,logic_dataOutputs_0_2},logic_dataOutputs_0_1},logic_dataOutputs_0_0};
     end else begin
-      if(when_OpenLa500DCache_l232) begin
+      if(when_OpenLa500DCache_l235) begin
         logic_replaceData = {{{logic_dataOutputs_1_3,logic_dataOutputs_1_2},logic_dataOutputs_1_1},logic_dataOutputs_1_0};
       end
     end
   end
 
-  assign when_OpenLa500DCache_l227 = logic_missReplaceWay[0];
-  assign when_OpenLa500DCache_l232 = logic_missReplaceWay[1];
-  assign when_OpenLa500DCache_l252 = (logic_requestValid && logic_idleToLookup);
-  assign when_OpenLa500DCache_l255 = (logic_requestValid && logic_lookupToLookup);
-  assign when_OpenLa500DCache_l266 = (logic_uncacheWrite || (((logic_replacementDirty && logic_replacementValid) && ((! logic_uncacheRequest) || logic_cacopMode2Hit)) && (! logic_mode0)));
-  assign when_OpenLa500DCache_l262 = (! logic_cacheHit);
-  assign when_OpenLa500DCache_l285 = ((ret_valid && ret_last) || (! logic_rdReqBuffer));
-  assign when_OpenLa500DCache_l295 = ((logic_isRefill && ret_valid) && ret_last);
-  assign when_OpenLa500DCache_l299 = ((logic_isRefill && ((ret_valid && ret_last) || (! logic_rdReqBuffer))) && (! (logic_requestUncache || logic_mode0)));
-  assign when_OpenLa500DCache_l300 = logic_missReplaceWay[0];
+  assign when_OpenLa500DCache_l230 = logic_missReplaceWay[0];
+  assign when_OpenLa500DCache_l235 = logic_missReplaceWay[1];
+  assign when_OpenLa500DCache_l255 = (logic_requestValid && logic_idleToLookup);
+  assign when_OpenLa500DCache_l258 = (logic_requestValid && logic_lookupToLookup);
+  assign when_OpenLa500DCache_l267 = (logic_uncacheWrite || (((logic_replacementDirty && logic_replacementValid) && ((! logic_uncacheRequest) || logic_cacopMode2Hit)) && (! logic_mode0)));
+  assign when_OpenLa500DCache_l263 = (! logic_cacheHit);
+  assign when_OpenLa500DCache_l286 = ((ret_valid && ret_last) || (! logic_rdReqBuffer));
+  assign when_OpenLa500DCache_l296 = ((logic_isRefill && ret_valid) && ret_last);
+  assign when_OpenLa500DCache_l300 = ((logic_isRefill && ((ret_valid && ret_last) || (! logic_rdReqBuffer))) && (! (logic_requestUncache || logic_mode0)));
+  assign when_OpenLa500DCache_l301 = logic_missReplaceWay[0];
   assign _zz_11 = ({255'd0,1'b1} <<< logic_requestIndex);
-  assign when_OpenLa500DCache_l301 = logic_missReplaceWay[1];
+  assign when_OpenLa500DCache_l302 = logic_missReplaceWay[1];
   assign _zz_12 = ({255'd0,1'b1} <<< logic_requestIndex);
   assign _zz_13 = ({255'd0,1'b1} <<< logic_writeBufferIndex);
   assign _zz_logic_dirtyMem_0 = (_zz__zz_logic_dirtyMem_0 | logic_writeBufferWay);
-  assign when_OpenLa500DCache_l306 = (((logic_isLookup && logic_cacheHit) && logic_requestOp) && (! logic_cancelReq));
+  assign when_OpenLa500DCache_l307 = (((logic_isLookup && logic_cacheHit) && logic_requestOp) && (! logic_cancelReq));
   assign addr_ok = logic_addrOk;
   assign data_ok = logic_dataOk;
   assign rdata = (logic_isLookup ? logic_loadResult : (logic_isRefill ? ret_data : 32'h0));
@@ -4963,7 +4964,7 @@ module OpenLa500DCache (
       logic_writeBufferWord <= 2'b00;
     end else begin
       if((logic_mainState == logic_MainIdle)) begin
-          if(when_OpenLa500DCache_l252) begin
+          if(when_OpenLa500DCache_l255) begin
             logic_mainState <= logic_MainLookup;
             logic_requestOp <= op;
             logic_requestPreld <= preld_en;
@@ -4976,7 +4977,7 @@ module OpenLa500DCache (
             logic_requestCacop <= dcacop_op_en;
           end
       end else if((logic_mainState == logic_MainLookup)) begin
-          if(when_OpenLa500DCache_l255) begin
+          if(when_OpenLa500DCache_l258) begin
             logic_mainState <= logic_MainLookup;
             logic_requestOp <= op;
             logic_requestPreld <= preld_en;
@@ -4991,20 +4992,16 @@ module OpenLa500DCache (
             if(logic_cancelReq) begin
               logic_mainState <= logic_MainIdle;
             end else begin
-              if(logic_requestCacop) begin
-                logic_mainState <= logic_MainIdle;
-              end else begin
-                if(when_OpenLa500DCache_l262) begin
-                  if(when_OpenLa500DCache_l266) begin
-                    logic_mainState <= logic_MainMiss;
-                  end else begin
-                    logic_mainState <= logic_MainReplace;
-                  end
-                  logic_requestUncache <= logic_uncacheRequest;
-                  logic_missReplaceWay <= logic_replacementWay;
+              if(when_OpenLa500DCache_l263) begin
+                if(when_OpenLa500DCache_l267) begin
+                  logic_mainState <= logic_MainMiss;
                 end else begin
-                  logic_mainState <= logic_MainIdle;
+                  logic_mainState <= logic_MainReplace;
                 end
+                logic_requestUncache <= logic_uncacheRequest;
+                logic_missReplaceWay <= logic_replacementWay;
+              end else begin
+                logic_mainState <= logic_MainIdle;
               end
             end
           end
@@ -5019,7 +5016,7 @@ module OpenLa500DCache (
           end
           logic_legacyWrReq <= 1'b0;
       end else if((logic_mainState == logic_MainRefill)) begin
-          if(when_OpenLa500DCache_l285) begin
+          if(when_OpenLa500DCache_l286) begin
             logic_mainState <= logic_MainIdle;
           end
       end else begin
@@ -5028,11 +5025,11 @@ module OpenLa500DCache (
       if(logic_rdReq) begin
         logic_rdReqBuffer <= 1'b1;
       end else begin
-        if(when_OpenLa500DCache_l295) begin
+        if(when_OpenLa500DCache_l296) begin
           logic_rdReqBuffer <= 1'b0;
         end
       end
-      if(when_OpenLa500DCache_l306) begin
+      if(when_OpenLa500DCache_l307) begin
         logic_writeBufferState <= 1'b1;
         logic_writeBufferIndex <= logic_requestIndex;
         logic_writeBufferWstrb <= logic_requestWstrb;
@@ -5056,14 +5053,12 @@ module OpenLa500DCache (
   always @(posedge clk) begin
     if((logic_mainState == logic_MainIdle)) begin
     end else if((logic_mainState == logic_MainLookup)) begin
-        if(!when_OpenLa500DCache_l255) begin
+        if(!when_OpenLa500DCache_l258) begin
           if(!logic_cancelReq) begin
-            if(!logic_requestCacop) begin
-              if(when_OpenLa500DCache_l262) begin
-                logic_requestTag <= tag;
-                logic_uncacheWrBuffer <= logic_uncacheWrite;
-                logic_cacopMode2HitWrBuffer <= logic_cacopMode2Hit;
-              end
+            if(when_OpenLa500DCache_l263) begin
+              logic_requestTag <= tag;
+              logic_uncacheWrBuffer <= logic_uncacheWrite;
+              logic_cacopMode2HitWrBuffer <= logic_cacopMode2Hit;
             end
           end
         end
@@ -5073,15 +5068,15 @@ module OpenLa500DCache (
           logic_missRetNum <= 2'b00;
         end
     end else if((logic_mainState == logic_MainRefill)) begin
-        if(!when_OpenLa500DCache_l285) begin
+        if(!when_OpenLa500DCache_l286) begin
           if(ret_valid) begin
             logic_missRetNum <= (logic_missRetNum + 2'b01);
           end
         end
     end else begin
     end
-    if(when_OpenLa500DCache_l299) begin
-      if(when_OpenLa500DCache_l300) begin
+    if(when_OpenLa500DCache_l300) begin
+      if(when_OpenLa500DCache_l301) begin
         if(_zz_11[0]) begin
           logic_dirtyMem_0[0] <= logic_requestOp;
         end
@@ -5851,7 +5846,7 @@ module OpenLa500DCache (
           logic_dirtyMem_255[0] <= logic_requestOp;
         end
       end
-      if(when_OpenLa500DCache_l301) begin
+      if(when_OpenLa500DCache_l302) begin
         if(_zz_12[0]) begin
           logic_dirtyMem_0[1] <= logic_requestOp;
         end
@@ -7515,82 +7510,82 @@ module OpenLa500ICache (
   wire       [31:0]   logic_wayWords_1;
   wire       [31:0]   logic_loadResult;
   reg        [1:0]    logic_invalidWay;
-  wire                when_OpenLa500ICache_l123;
   wire                when_OpenLa500ICache_l125;
+  wire                when_OpenLa500ICache_l127;
   wire                logic_hasInvalidWay;
   wire       [1:0]    logic_randomWay;
   wire       [1:0]    logic_randomReplacement;
   wire       [1:0]    logic_cacopChosenWay;
   reg        [1:0]    logic_replaceWay;
-  wire                when_OpenLa500ICache_l134;
-  wire                when_OpenLa500ICache_l138;
+  wire                when_OpenLa500ICache_l136;
+  wire                when_OpenLa500ICache_l140;
   wire                logic_rdReq;
   wire                logic_refillMatch;
   wire                logic_dataOk;
   wire       [1:0]    logic_nextRetNum;
   wire       [7:0]    _zz_logic_dataOutputs_0_0;
   reg        [3:0]    _zz_logic_dataOutputs_0_0_1;
-  wire                when_OpenLa500ICache_l155;
+  wire                when_OpenLa500ICache_l157;
   wire                _zz_logic_dataOutputs_0_0_2;
   wire                _zz_logic_dataOutputs_0_0_3;
   wire       [7:0]    _zz_logic_dataOutputs_0_0_4;
   wire       [7:0]    _zz_logic_dataOutputs_0_1;
   reg        [3:0]    _zz_logic_dataOutputs_0_1_1;
-  wire                when_OpenLa500ICache_l155_1;
+  wire                when_OpenLa500ICache_l157_1;
   wire                _zz_logic_dataOutputs_0_1_2;
   wire                _zz_logic_dataOutputs_0_1_3;
   wire       [7:0]    _zz_logic_dataOutputs_0_1_4;
   wire       [7:0]    _zz_logic_dataOutputs_0_2;
   reg        [3:0]    _zz_logic_dataOutputs_0_2_1;
-  wire                when_OpenLa500ICache_l155_2;
+  wire                when_OpenLa500ICache_l157_2;
   wire                _zz_logic_dataOutputs_0_2_2;
   wire                _zz_logic_dataOutputs_0_2_3;
   wire       [7:0]    _zz_logic_dataOutputs_0_2_4;
   wire       [7:0]    _zz_logic_dataOutputs_0_3;
   reg        [3:0]    _zz_logic_dataOutputs_0_3_1;
-  wire                when_OpenLa500ICache_l155_3;
+  wire                when_OpenLa500ICache_l157_3;
   wire                _zz_logic_dataOutputs_0_3_2;
   wire                _zz_logic_dataOutputs_0_3_3;
   wire       [7:0]    _zz_logic_dataOutputs_0_3_4;
   wire       [7:0]    _zz_logic_dataOutputs_1_0;
   reg        [3:0]    _zz_logic_dataOutputs_1_0_1;
-  wire                when_OpenLa500ICache_l155_4;
+  wire                when_OpenLa500ICache_l157_4;
   wire                _zz_logic_dataOutputs_1_0_2;
   wire                _zz_logic_dataOutputs_1_0_3;
   wire       [7:0]    _zz_logic_dataOutputs_1_0_4;
   wire       [7:0]    _zz_logic_dataOutputs_1_1;
   reg        [3:0]    _zz_logic_dataOutputs_1_1_1;
-  wire                when_OpenLa500ICache_l155_5;
+  wire                when_OpenLa500ICache_l157_5;
   wire                _zz_logic_dataOutputs_1_1_2;
   wire                _zz_logic_dataOutputs_1_1_3;
   wire       [7:0]    _zz_logic_dataOutputs_1_1_4;
   wire       [7:0]    _zz_logic_dataOutputs_1_2;
   reg        [3:0]    _zz_logic_dataOutputs_1_2_1;
-  wire                when_OpenLa500ICache_l155_6;
+  wire                when_OpenLa500ICache_l157_6;
   wire                _zz_logic_dataOutputs_1_2_2;
   wire                _zz_logic_dataOutputs_1_2_3;
   wire       [7:0]    _zz_logic_dataOutputs_1_2_4;
   wire       [7:0]    _zz_logic_dataOutputs_1_3;
   reg        [3:0]    _zz_logic_dataOutputs_1_3_1;
-  wire                when_OpenLa500ICache_l155_7;
+  wire                when_OpenLa500ICache_l157_7;
   wire                _zz_logic_dataOutputs_1_3_2;
   wire                _zz_logic_dataOutputs_1_3_3;
   wire       [7:0]    _zz_logic_dataOutputs_1_3_4;
   reg        [7:0]    _zz_logic_tagOutputs_0;
-  wire                when_OpenLa500ICache_l176;
   wire                when_OpenLa500ICache_l178;
+  wire                when_OpenLa500ICache_l180;
   wire                _zz_logic_tagOutputs_0_1;
   wire                _zz_logic_tagOutputs_0_2;
   wire       [7:0]    _zz_logic_tagOutputs_0_3;
   wire                _zz_logic_tagOutputs_0_4;
   reg        [7:0]    _zz_logic_tagOutputs_1;
-  wire                when_OpenLa500ICache_l176_1;
   wire                when_OpenLa500ICache_l178_1;
+  wire                when_OpenLa500ICache_l180_1;
   wire                _zz_logic_tagOutputs_1_1;
   wire                _zz_logic_tagOutputs_1_2;
   wire       [7:0]    _zz_logic_tagOutputs_1_3;
   wire                _zz_logic_tagOutputs_1_4;
-  wire                when_OpenLa500ICache_l212;
+  wire                when_OpenLa500ICache_l214;
   wire                when_OpenLa500ICache_l219;
   wire                when_OpenLa500ICache_l235;
   wire                when_OpenLa500ICache_l246;
@@ -7963,58 +7958,58 @@ module OpenLa500ICache (
     logic_wayHit[1] = (logic_tagOutputs_1[0] && (logic_tagOutputs_1[20 : 1] == logic_realTag));
   end
 
-  assign logic_cacheHit = ((|logic_wayHit) && (! uncache_en));
+  assign logic_cacheHit = ((|logic_wayHit) && (! (((uncache_en || logic_mode0) || logic_mode1) || logic_mode2)));
   assign logic_addrOk = ((logic_isIdle || (logic_isLookup && logic_cacheHit)) && (! icacop_op_en));
   assign logic_wayWords_0 = _zz_logic_wayWords_0;
   assign logic_wayWords_1 = _zz_logic_wayWords_1;
   assign logic_loadResult = ((logic_wayHit[0] ? logic_wayWords_0 : 32'h0) | (logic_wayHit[1] ? logic_wayWords_1 : 32'h0));
   always @(*) begin
     logic_invalidWay = 2'b00;
-    if(when_OpenLa500ICache_l123) begin
+    if(when_OpenLa500ICache_l125) begin
       logic_invalidWay = 2'b01;
     end else begin
-      if(when_OpenLa500ICache_l125) begin
+      if(when_OpenLa500ICache_l127) begin
         logic_invalidWay = 2'b10;
       end
     end
   end
 
-  assign when_OpenLa500ICache_l123 = (! logic_tagOutputs_0[0]);
-  assign when_OpenLa500ICache_l125 = (! logic_tagOutputs_1[0]);
+  assign when_OpenLa500ICache_l125 = (! logic_tagOutputs_0[0]);
+  assign when_OpenLa500ICache_l127 = (! logic_tagOutputs_1[0]);
   assign logic_hasInvalidWay = (|logic_invalidWay);
   assign logic_randomWay = (logic_lfsr[6] ? 2'b10 : 2'b01);
   assign logic_randomReplacement = (logic_hasInvalidWay ? logic_invalidWay : logic_randomWay);
   assign logic_cacopChosenWay = (logic_requestOffset[0] ? 2'b10 : 2'b01);
   always @(*) begin
     logic_replaceWay = 2'b00;
-    if(when_OpenLa500ICache_l134) begin
+    if(when_OpenLa500ICache_l136) begin
       logic_replaceWay = logic_cacopChosenWay;
     end else begin
       if(logic_mode2) begin
         logic_replaceWay = logic_wayHit;
       end else begin
-        if(when_OpenLa500ICache_l138) begin
+        if(when_OpenLa500ICache_l140) begin
           logic_replaceWay = logic_randomReplacement;
         end
       end
     end
   end
 
-  assign when_OpenLa500ICache_l134 = (logic_mode0 || logic_mode1);
-  assign when_OpenLa500ICache_l138 = (! logic_requestCacop);
+  assign when_OpenLa500ICache_l136 = (logic_mode0 || logic_mode1);
+  assign when_OpenLa500ICache_l140 = (! logic_requestCacop);
   assign logic_rdReq = (logic_isReplace && (! ((logic_mode0 || logic_mode1) || logic_mode2)));
   assign logic_refillMatch = (logic_missRetNum == logic_requestOffset[3 : 2]);
-  assign logic_dataOk = ((logic_isLookup && ((logic_cacheHit || tlb_excp_cancel_req) || logic_requestCacop)) || (((logic_isRefill && ret_valid) && (logic_refillMatch || logic_requestUncache)) && (! logic_requestCacop)));
+  assign logic_dataOk = ((logic_isLookup && (logic_cacheHit || tlb_excp_cancel_req)) || (((logic_isRefill && ret_valid) && (logic_refillMatch || logic_requestUncache)) && (! logic_requestCacop)));
   assign logic_nextRetNum = (logic_missRetNum + 2'b01);
   assign _zz_logic_dataOutputs_0_0 = (logic_addrOk ? logic_realIndex : logic_requestIndex);
   always @(*) begin
     _zz_logic_dataOutputs_0_0_1 = 4'b0000;
-    if(when_OpenLa500ICache_l155) begin
+    if(when_OpenLa500ICache_l157) begin
       _zz_logic_dataOutputs_0_0_1 = 4'b1111;
     end
   end
 
-  assign when_OpenLa500ICache_l155 = (((logic_isRefill && logic_missReplaceWay[0]) && ret_valid) && (logic_missRetNum == 2'b00));
+  assign when_OpenLa500ICache_l157 = (((logic_isRefill && logic_missReplaceWay[0]) && ret_valid) && (logic_missRetNum == 2'b00));
   assign _zz_logic_dataOutputs_0_0_2 = (((! (logic_requestUncache || logic_mode0)) || logic_isIdle) || logic_isLookup);
   assign _zz_logic_dataOutputs_0_0_3 = (_zz_logic_dataOutputs_0_0_2 && (! (|_zz_logic_dataOutputs_0_0_1)));
   assign _zz_logic_dataOutputs_0_0_4 = _zz_logic_dataOutputs_0_0;
@@ -8022,12 +8017,12 @@ module OpenLa500ICache (
   assign _zz_logic_dataOutputs_0_1 = (logic_addrOk ? logic_realIndex : logic_requestIndex);
   always @(*) begin
     _zz_logic_dataOutputs_0_1_1 = 4'b0000;
-    if(when_OpenLa500ICache_l155_1) begin
+    if(when_OpenLa500ICache_l157_1) begin
       _zz_logic_dataOutputs_0_1_1 = 4'b1111;
     end
   end
 
-  assign when_OpenLa500ICache_l155_1 = (((logic_isRefill && logic_missReplaceWay[0]) && ret_valid) && (logic_missRetNum == 2'b01));
+  assign when_OpenLa500ICache_l157_1 = (((logic_isRefill && logic_missReplaceWay[0]) && ret_valid) && (logic_missRetNum == 2'b01));
   assign _zz_logic_dataOutputs_0_1_2 = (((! (logic_requestUncache || logic_mode0)) || logic_isIdle) || logic_isLookup);
   assign _zz_logic_dataOutputs_0_1_3 = (_zz_logic_dataOutputs_0_1_2 && (! (|_zz_logic_dataOutputs_0_1_1)));
   assign _zz_logic_dataOutputs_0_1_4 = _zz_logic_dataOutputs_0_1;
@@ -8035,12 +8030,12 @@ module OpenLa500ICache (
   assign _zz_logic_dataOutputs_0_2 = (logic_addrOk ? logic_realIndex : logic_requestIndex);
   always @(*) begin
     _zz_logic_dataOutputs_0_2_1 = 4'b0000;
-    if(when_OpenLa500ICache_l155_2) begin
+    if(when_OpenLa500ICache_l157_2) begin
       _zz_logic_dataOutputs_0_2_1 = 4'b1111;
     end
   end
 
-  assign when_OpenLa500ICache_l155_2 = (((logic_isRefill && logic_missReplaceWay[0]) && ret_valid) && (logic_missRetNum == 2'b10));
+  assign when_OpenLa500ICache_l157_2 = (((logic_isRefill && logic_missReplaceWay[0]) && ret_valid) && (logic_missRetNum == 2'b10));
   assign _zz_logic_dataOutputs_0_2_2 = (((! (logic_requestUncache || logic_mode0)) || logic_isIdle) || logic_isLookup);
   assign _zz_logic_dataOutputs_0_2_3 = (_zz_logic_dataOutputs_0_2_2 && (! (|_zz_logic_dataOutputs_0_2_1)));
   assign _zz_logic_dataOutputs_0_2_4 = _zz_logic_dataOutputs_0_2;
@@ -8048,12 +8043,12 @@ module OpenLa500ICache (
   assign _zz_logic_dataOutputs_0_3 = (logic_addrOk ? logic_realIndex : logic_requestIndex);
   always @(*) begin
     _zz_logic_dataOutputs_0_3_1 = 4'b0000;
-    if(when_OpenLa500ICache_l155_3) begin
+    if(when_OpenLa500ICache_l157_3) begin
       _zz_logic_dataOutputs_0_3_1 = 4'b1111;
     end
   end
 
-  assign when_OpenLa500ICache_l155_3 = (((logic_isRefill && logic_missReplaceWay[0]) && ret_valid) && (logic_missRetNum == 2'b11));
+  assign when_OpenLa500ICache_l157_3 = (((logic_isRefill && logic_missReplaceWay[0]) && ret_valid) && (logic_missRetNum == 2'b11));
   assign _zz_logic_dataOutputs_0_3_2 = (((! (logic_requestUncache || logic_mode0)) || logic_isIdle) || logic_isLookup);
   assign _zz_logic_dataOutputs_0_3_3 = (_zz_logic_dataOutputs_0_3_2 && (! (|_zz_logic_dataOutputs_0_3_1)));
   assign _zz_logic_dataOutputs_0_3_4 = _zz_logic_dataOutputs_0_3;
@@ -8061,12 +8056,12 @@ module OpenLa500ICache (
   assign _zz_logic_dataOutputs_1_0 = (logic_addrOk ? logic_realIndex : logic_requestIndex);
   always @(*) begin
     _zz_logic_dataOutputs_1_0_1 = 4'b0000;
-    if(when_OpenLa500ICache_l155_4) begin
+    if(when_OpenLa500ICache_l157_4) begin
       _zz_logic_dataOutputs_1_0_1 = 4'b1111;
     end
   end
 
-  assign when_OpenLa500ICache_l155_4 = (((logic_isRefill && logic_missReplaceWay[1]) && ret_valid) && (logic_missRetNum == 2'b00));
+  assign when_OpenLa500ICache_l157_4 = (((logic_isRefill && logic_missReplaceWay[1]) && ret_valid) && (logic_missRetNum == 2'b00));
   assign _zz_logic_dataOutputs_1_0_2 = (((! (logic_requestUncache || logic_mode0)) || logic_isIdle) || logic_isLookup);
   assign _zz_logic_dataOutputs_1_0_3 = (_zz_logic_dataOutputs_1_0_2 && (! (|_zz_logic_dataOutputs_1_0_1)));
   assign _zz_logic_dataOutputs_1_0_4 = _zz_logic_dataOutputs_1_0;
@@ -8074,12 +8069,12 @@ module OpenLa500ICache (
   assign _zz_logic_dataOutputs_1_1 = (logic_addrOk ? logic_realIndex : logic_requestIndex);
   always @(*) begin
     _zz_logic_dataOutputs_1_1_1 = 4'b0000;
-    if(when_OpenLa500ICache_l155_5) begin
+    if(when_OpenLa500ICache_l157_5) begin
       _zz_logic_dataOutputs_1_1_1 = 4'b1111;
     end
   end
 
-  assign when_OpenLa500ICache_l155_5 = (((logic_isRefill && logic_missReplaceWay[1]) && ret_valid) && (logic_missRetNum == 2'b01));
+  assign when_OpenLa500ICache_l157_5 = (((logic_isRefill && logic_missReplaceWay[1]) && ret_valid) && (logic_missRetNum == 2'b01));
   assign _zz_logic_dataOutputs_1_1_2 = (((! (logic_requestUncache || logic_mode0)) || logic_isIdle) || logic_isLookup);
   assign _zz_logic_dataOutputs_1_1_3 = (_zz_logic_dataOutputs_1_1_2 && (! (|_zz_logic_dataOutputs_1_1_1)));
   assign _zz_logic_dataOutputs_1_1_4 = _zz_logic_dataOutputs_1_1;
@@ -8087,12 +8082,12 @@ module OpenLa500ICache (
   assign _zz_logic_dataOutputs_1_2 = (logic_addrOk ? logic_realIndex : logic_requestIndex);
   always @(*) begin
     _zz_logic_dataOutputs_1_2_1 = 4'b0000;
-    if(when_OpenLa500ICache_l155_6) begin
+    if(when_OpenLa500ICache_l157_6) begin
       _zz_logic_dataOutputs_1_2_1 = 4'b1111;
     end
   end
 
-  assign when_OpenLa500ICache_l155_6 = (((logic_isRefill && logic_missReplaceWay[1]) && ret_valid) && (logic_missRetNum == 2'b10));
+  assign when_OpenLa500ICache_l157_6 = (((logic_isRefill && logic_missReplaceWay[1]) && ret_valid) && (logic_missRetNum == 2'b10));
   assign _zz_logic_dataOutputs_1_2_2 = (((! (logic_requestUncache || logic_mode0)) || logic_isIdle) || logic_isLookup);
   assign _zz_logic_dataOutputs_1_2_3 = (_zz_logic_dataOutputs_1_2_2 && (! (|_zz_logic_dataOutputs_1_2_1)));
   assign _zz_logic_dataOutputs_1_2_4 = _zz_logic_dataOutputs_1_2;
@@ -8100,29 +8095,29 @@ module OpenLa500ICache (
   assign _zz_logic_dataOutputs_1_3 = (logic_addrOk ? logic_realIndex : logic_requestIndex);
   always @(*) begin
     _zz_logic_dataOutputs_1_3_1 = 4'b0000;
-    if(when_OpenLa500ICache_l155_7) begin
+    if(when_OpenLa500ICache_l157_7) begin
       _zz_logic_dataOutputs_1_3_1 = 4'b1111;
     end
   end
 
-  assign when_OpenLa500ICache_l155_7 = (((logic_isRefill && logic_missReplaceWay[1]) && ret_valid) && (logic_missRetNum == 2'b11));
+  assign when_OpenLa500ICache_l157_7 = (((logic_isRefill && logic_missReplaceWay[1]) && ret_valid) && (logic_missRetNum == 2'b11));
   assign _zz_logic_dataOutputs_1_3_2 = (((! (logic_requestUncache || logic_mode0)) || logic_isIdle) || logic_isLookup);
   assign _zz_logic_dataOutputs_1_3_3 = (_zz_logic_dataOutputs_1_3_2 && (! (|_zz_logic_dataOutputs_1_3_1)));
   assign _zz_logic_dataOutputs_1_3_4 = _zz_logic_dataOutputs_1_3;
   assign logic_dataOutputs_1_3 = logic_dataMem_1_3_spinal_port1;
   always @(*) begin
     _zz_logic_tagOutputs_0 = 8'h0;
-    if(when_OpenLa500ICache_l176) begin
+    if(when_OpenLa500ICache_l178) begin
       _zz_logic_tagOutputs_0 = logic_realIndex;
     end else begin
-      if(when_OpenLa500ICache_l178) begin
+      if(when_OpenLa500ICache_l180) begin
         _zz_logic_tagOutputs_0 = logic_requestIndex;
       end
     end
   end
 
-  assign when_OpenLa500ICache_l176 = (logic_addrOk || (icacop_op_en && (logic_isIdle || logic_isLookup)));
-  assign when_OpenLa500ICache_l178 = (logic_isReplace || logic_isRefill);
+  assign when_OpenLa500ICache_l178 = (logic_addrOk || (icacop_op_en && (logic_isIdle || logic_isLookup)));
+  assign when_OpenLa500ICache_l180 = (logic_isReplace || logic_isRefill);
   assign _zz_logic_tagOutputs_0_1 = (((! logic_requestUncache) || logic_isIdle) || logic_isLookup);
   assign _zz_logic_tagOutputs_0_2 = (((_zz_logic_tagOutputs_0_1 && logic_missReplaceWay[0]) && logic_isRefill) && ((((ret_valid && ret_last) || logic_mode0) || logic_mode1) || logic_mode2HitWrite));
   assign _zz_logic_tagOutputs_0_3 = _zz_logic_tagOutputs_0;
@@ -8130,23 +8125,23 @@ module OpenLa500ICache (
   assign logic_tagOutputs_0 = logic_tagMem_0_spinal_port1;
   always @(*) begin
     _zz_logic_tagOutputs_1 = 8'h0;
-    if(when_OpenLa500ICache_l176_1) begin
+    if(when_OpenLa500ICache_l178_1) begin
       _zz_logic_tagOutputs_1 = logic_realIndex;
     end else begin
-      if(when_OpenLa500ICache_l178_1) begin
+      if(when_OpenLa500ICache_l180_1) begin
         _zz_logic_tagOutputs_1 = logic_requestIndex;
       end
     end
   end
 
-  assign when_OpenLa500ICache_l176_1 = (logic_addrOk || (icacop_op_en && (logic_isIdle || logic_isLookup)));
-  assign when_OpenLa500ICache_l178_1 = (logic_isReplace || logic_isRefill);
+  assign when_OpenLa500ICache_l178_1 = (logic_addrOk || (icacop_op_en && (logic_isIdle || logic_isLookup)));
+  assign when_OpenLa500ICache_l180_1 = (logic_isReplace || logic_isRefill);
   assign _zz_logic_tagOutputs_1_1 = (((! logic_requestUncache) || logic_isIdle) || logic_isLookup);
   assign _zz_logic_tagOutputs_1_2 = (((_zz_logic_tagOutputs_1_1 && logic_missReplaceWay[1]) && logic_isRefill) && ((((ret_valid && ret_last) || logic_mode0) || logic_mode1) || logic_mode2HitWrite));
   assign _zz_logic_tagOutputs_1_3 = _zz_logic_tagOutputs_1;
   assign _zz_logic_tagOutputs_1_4 = (_zz_logic_tagOutputs_1_1 && (! _zz_logic_tagOutputs_1_2));
   assign logic_tagOutputs_1 = logic_tagMem_1_spinal_port1;
-  assign when_OpenLa500ICache_l212 = (logic_requestValid && logic_cacheHit);
+  assign when_OpenLa500ICache_l214 = (logic_requestValid && logic_cacheHit);
   assign when_OpenLa500ICache_l219 = (! logic_cacheHit);
   assign when_OpenLa500ICache_l235 = ((ret_valid && ret_last) || (! logic_rdReqBuffer));
   assign when_OpenLa500ICache_l246 = (logic_mode2 && logic_isLookup);
@@ -8188,7 +8183,7 @@ module OpenLa500ICache (
             logic_requestCacop <= icacop_op_en;
           end
       end else if((logic_mainState == logic_MainLookup)) begin
-          if(when_OpenLa500ICache_l212) begin
+          if(when_OpenLa500ICache_l214) begin
             logic_mainState <= logic_MainLookup;
             logic_requestIndex <= logic_realIndex;
             logic_requestOffset <= logic_realOffset;
@@ -8198,17 +8193,13 @@ module OpenLa500ICache (
             if(tlb_excp_cancel_req) begin
               logic_mainState <= logic_MainIdle;
             end else begin
-              if(logic_requestCacop) begin
-                logic_mainState <= logic_MainIdle;
+              if(when_OpenLa500ICache_l219) begin
+                logic_mainState <= logic_MainReplace;
+                logic_requestTag <= logic_realTag;
+                logic_requestUncache <= (uncache_en && (! logic_requestCacop));
+                logic_missReplaceWay <= logic_replaceWay;
               end else begin
-                if(when_OpenLa500ICache_l219) begin
-                  logic_mainState <= logic_MainReplace;
-                  logic_requestTag <= logic_realTag;
-                  logic_requestUncache <= (uncache_en && (! logic_requestCacop));
-                  logic_missReplaceWay <= logic_replaceWay;
-                end else begin
-                  logic_mainState <= logic_MainIdle;
-                end
+                logic_mainState <= logic_MainIdle;
               end
             end
           end

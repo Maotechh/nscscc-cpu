@@ -5,7 +5,7 @@
       "target": "rtl/mycpu_top.v",
       "source": "reference/component-replacements/mycpu_top.v",
       "base_sha256": "ff286f559dbc9131349c9fb8c842110569d231b6a34e76ded172c403d8f90afa",
-      "replacement_sha256": "2646383fc6e201c0108c018c780fb4240301beb53e8dfc6eacf00149ab5586cc"
+      "replacement_sha256": "56023fc37ff52568771979534f134f4a78792d8d66be3814fca70b3c0b3daff5"
     }
   ]
 }
