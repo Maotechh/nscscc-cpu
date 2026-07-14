@@ -11,7 +11,7 @@ class CoreConfigSpec extends AnyFunSuite {
       assert(config.resetVector == BigInt("1c000000", 16))
       assert(config.resetDelayCycles == 1)
       assert(config.tlbEntries == 32)
-      assert(config.btbEntries == 64)
+      assert(config.btbEntries == 32)
       assert(config.rasEntries == 16)
       assert(config.returnStackDepth == 8)
       assert(config.instructionCache.capacityBytes == 8192)
@@ -53,7 +53,7 @@ class CoreConfigSpec extends AnyFunSuite {
       () => CoreConfig(resetVector = 0),
       () => CoreConfig(resetDelayCycles = 0),
       () => CoreConfig(tlbEntries = 16),
-      () => CoreConfig(btbEntries = 32),
+      () => CoreConfig(btbEntries = 64),
       () => CoreConfig(rasEntries = 8),
       () => CoreConfig(returnStackDepth = 4),
       () => CoreConfig(instructionCache = CacheGeometry(2, 128, 16)),

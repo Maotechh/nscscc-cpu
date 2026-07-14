@@ -13,7 +13,7 @@
   "pipeline_widths": {"fetch":109,"decode_lacc_off":350,"decode_lacc_on":353,"execute":425,"memory":493},
   "locked_config": {
     "xlen":32,"gpr_count":32,"reset_vector":"0x1c000000","legacy_reset_delay_cycles":1,
-    "tlb_entries":32,"btb_entries":64,"ras_entries":16,
+    "tlb_entries":32,"btb_entries":32,"ras_entries":16,
     "debug_enabled":true,
     "active_features":["integer","mul_div","privileged","tlb_dmw","cache_cacop","ll_sc","barrier","preload","branch_prediction","performance_counters"],
     "i_cache":{"sets":256,"ways":2,"line_bytes":16},
@@ -42,5 +42,12 @@
     "blob_sha1":"3ba49572d1772ba9c41b907e84774036374162b9",
     "instruction_commit_fields":["is_CNTinst","timer_64_value","csr_rstat","csr_data"],
     "load_store_valid_mask_width":8
+  },
+  "official_behavioral_source": {
+    "commit":"aa3bde1f3e720e71c2c78d6b81930d797b810149",
+    "repository":"../chiplab/IP/myCPU",
+    "btb_path":"btb.v",
+    "btb_git_blob_sha1":"e2f6e340c1f4f98ce93493192030c32943935229",
+    "btb_sha256":"6d540a983075e8ed3a9bd1f791bc4ec14e3b08ff04c4c8f13ae1c0fa8a081bfb"
   }
 }

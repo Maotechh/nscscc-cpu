@@ -212,7 +212,15 @@ class CoreContractManifestTest(unittest.TestCase):
     def test_predictor_and_cache_geometry_are_present_in_golden(self) -> None:
         config = self.document["locked_config"]
         btb = self.source("rtl/btb.v")
-        self.assertRegex(btb, rf"parameter\s+BTBNUM\s*=\s*{config['btb_entries']}")
+        self.assertEqual(32, config["btb_entries"])
+        self.assertIn("parameter BTBNUM = 64", btb)
+        official = self.document["official_behavioral_source"]
+        self.assertEqual("aa3bde1f3e720e71c2c78d6b81930d797b810149", official["commit"])
+        self.assertEqual("e2f6e340c1f4f98ce93493192030c32943935229", official["btb_git_blob_sha1"])
+        self.assertEqual(
+            "6d540a983075e8ed3a9bd1f791bc4ec14e3b08ff04c4c8f13ae1c0fa8a081bfb",
+            official["btb_sha256"],
+        )
         self.assertRegex(btb, rf"parameter\s+RASNUM\s*=\s*{config['ras_entries']}")
         for cache_path, cache in (("rtl/icache.v", config["i_cache"]), ("rtl/dcache.v", config["d_cache"])):
             text = self.source(cache_path)

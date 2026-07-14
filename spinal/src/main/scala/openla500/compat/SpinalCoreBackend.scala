@@ -190,13 +190,13 @@ private[compat] final class SpinalCoreBackend(
   predictor.io.update.payload.popReturnStack := decode.io.btb.popReturnStack
   predictor.io.update.payload.pushReturnStack := decode.io.btb.pushReturnStack
   predictor.io.update.payload.addEntry := decode.io.btb.addEntry
-  predictor.io.update.payload.deleteEntry := decode.io.btb.deleteEntry
   predictor.io.update.payload.predictionError := decode.io.btb.predictionError
   predictor.io.update.payload.predictionRight := decode.io.btb.predictionRight
   predictor.io.update.payload.targetError := decode.io.btb.targetError
   predictor.io.update.payload.actualTaken := decode.io.btb.actualTaken
   predictor.io.update.payload.actualTarget := decode.io.btb.actualTarget
   predictor.io.update.payload.pc := decode.io.btb.pc
+  predictor.io.update.payload.legacyIndex := decode.io.btb.index
 
   // CSR and precise exception/state-update wiring.
   csr.io.rd_addr := decode.io.csrReadAddress.asBits

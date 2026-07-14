@@ -19,7 +19,7 @@ Debug 包含 `break_point/infor_flag/reg_num`、`ws_valid/rf_rdata` 和五个 `d
 AXI bridge、mul/div 等 Spinal 组件；overlay 只能替换 `rtl/mycpu_top.v`，不得同时 overlay
 旧叶子 replacement 造成重复模块定义。
 
-这一结构事实只证明活动手写真源已切换，不证明功能等价。64-entry BTB、LACC、完整 DiffTest/
+这一结构事实只证明活动手写真源已切换，不证明功能等价。官方 32-entry BTB、LACC、完整 DiffTest/
 ArchState、perf 以及官方 func/random/system/FPGA 门禁仍须分别取得证据。
 
 `TLBNUM` 历史默认值为 32。打包后的顶层保留该参数并原样转发给兼容后端；本轮只验证默认值 32，Scala API 也暂时拒绝其他值。可配置的 immutable `CoreConfig` 和配置矩阵由后续整机 PR 建立，不据此声称统一配置已经完成。

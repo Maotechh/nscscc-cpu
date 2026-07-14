@@ -18,16 +18,16 @@ final case class PredictorUpdate() extends Bundle {
   val popReturnStack = Bool()
   val pushReturnStack = Bool()
   val addEntry = Bool()
-  val deleteEntry = Bool()
   val predictionError = Bool()
   val predictionRight = Bool()
   val targetError = Bool()
   val actualTaken = Bool()
   val actualTarget = UInt(32 bits)
   val pc = UInt(32 bits)
+  val legacyIndex = UInt(5 bits)
 }
 
-/** Active 64-entry branch predictor.
+/** Active official 32-entry branch predictor.
   *
   * Lookup is a one-cycle Flow contract. Updates have no backpressure and are applied exactly once
   * when their Flow is valid. The component owns the BTB, return-site matcher, LFSR, and return
@@ -41,8 +41,11 @@ final class OpenLa500Predictor(config: CoreConfig = CoreConfig.Locked) extends C
   private val ReturnStackIndexWidth = log2Up(ReturnStackDepth)
   private val ReturnDepthWidth = log2Up(ReturnStackDepth + 1)
 
-  require(config.btbEntries == 64, "the active predictor requires the locked 64-entry BTB")
-  require(config.rasEntries == 16, "the active predictor requires 16 return-site entries")
+  require(config.btbEntries == 32, "the active predictor requires the official 32-entry BTB")
+  require(
+    config.rasEntries == 16,
+    "the active predictor requires the official 16-entry return-site matcher"
+  )
   require(config.returnStackDepth == 8, "the active predictor requires an eight-entry return stack")
 
   val io = new Bundle {
@@ -125,78 +128,60 @@ final class OpenLa500Predictor(config: CoreConfig = CoreConfig.Locked) extends C
     io.prediction.payload.legacyIndex := returnLookupIndex.resize(5)
   }
 
-  val branchUpdateMatches = Bits(config.btbEntries bits)
   val invalidBranchEntries = Bits(config.btbEntries bits)
   val stronglyUntakenEntries = Bits(config.btbEntries bits)
   for (index <- 0 until config.btbEntries) {
-    branchUpdateMatches(index) :=
-      branchValid(index) && branchPc(index) === io.update.payload.pc
     invalidBranchEntries(index) := !branchValid(index)
     stronglyUntakenEntries(index) := branchValid(index) && branchCounter(index) === 0
   }
-  val branchUpdateHit = branchUpdateMatches.orR
-  val branchUpdateIndex = selectLowest(branchUpdateMatches, BtbIndexWidth)
   val invalidBranchIndex = selectLowest(invalidBranchEntries, BtbIndexWidth)
   val stronglyUntakenIndex = selectLowest(stronglyUntakenEntries, BtbIndexWidth)
   val branchReplacementIndex = UInt(BtbIndexWidth bits)
-  branchReplacementIndex := lfsr.asUInt
+  branchReplacementIndex := lfsr(BtbIndexWidth - 1 downto 0).asUInt
   when(invalidBranchEntries.orR) {
     branchReplacementIndex := invalidBranchIndex
   }.elsewhen(stronglyUntakenEntries.orR) {
     branchReplacementIndex := stronglyUntakenIndex
   }
-  val branchAddIndex = Mux(branchUpdateHit, branchUpdateIndex, branchReplacementIndex)
 
-  val returnUpdateMatches = Bits(config.rasEntries bits)
   val invalidReturnSites = Bits(config.rasEntries bits)
   for (index <- 0 until config.rasEntries) {
-    returnUpdateMatches(index) :=
-      returnSiteValid(index) && returnSitePc(index) === io.update.payload.pc
     invalidReturnSites(index) := !returnSiteValid(index)
   }
-  val returnUpdateHit = returnUpdateMatches.orR
   val invalidReturnIndex = selectLowest(invalidReturnSites, ReturnSiteIndexWidth)
   val returnReplacementIndex = UInt(ReturnSiteIndexWidth bits)
   returnReplacementIndex := lfsr(ReturnSiteIndexWidth - 1 downto 0).asUInt
   when(invalidReturnSites.orR) {
     returnReplacementIndex := invalidReturnIndex
   }
-  val returnAddIndex =
-    Mux(
-      returnUpdateHit,
-      selectLowest(returnUpdateMatches, ReturnSiteIndexWidth),
-      returnReplacementIndex
-    )
 
   when(io.update.valid) {
     when(!io.update.payload.popReturnStack) {
       when(io.update.payload.addEntry) {
-        branchValid(branchAddIndex) := True
-        branchPc(branchAddIndex) := io.update.payload.pc
-        branchTarget(branchAddIndex) := io.update.payload.actualTarget
-        branchCounter(branchAddIndex) := 2
-      }.elsewhen(io.update.payload.deleteEntry && branchUpdateHit) {
-        branchValid(branchUpdateIndex) := False
-      }.elsewhen(io.update.payload.targetError && branchUpdateHit) {
-        branchTarget(branchUpdateIndex) := io.update.payload.actualTarget
-        branchCounter(branchUpdateIndex) := 2
-      }.elsewhen(
-        (io.update.payload.predictionError || io.update.payload.predictionRight) && branchUpdateHit
-      ) {
+        branchValid(branchReplacementIndex) := True
+        branchPc(branchReplacementIndex) := io.update.payload.pc
+        branchTarget(branchReplacementIndex) := io.update.payload.actualTarget
+        branchCounter(branchReplacementIndex) := 2
+      }.elsewhen(io.update.payload.targetError) {
+        branchTarget(io.update.payload.legacyIndex) := io.update.payload.actualTarget
+        branchCounter(io.update.payload.legacyIndex) := 2
+      }.elsewhen(io.update.payload.predictionError || io.update.payload.predictionRight) {
         when(io.update.payload.actualTaken) {
-          when(branchCounter(branchUpdateIndex) =/= 3) {
-            branchCounter(branchUpdateIndex) := branchCounter(branchUpdateIndex) + 1
+          when(branchCounter(io.update.payload.legacyIndex) =/= 3) {
+            branchCounter(io.update.payload.legacyIndex) :=
+              branchCounter(io.update.payload.legacyIndex) + 1
           }
         } otherwise {
-          when(branchCounter(branchUpdateIndex) =/= 0) {
-            branchCounter(branchUpdateIndex) := branchCounter(branchUpdateIndex) - 1
+          when(branchCounter(io.update.payload.legacyIndex) =/= 0) {
+            branchCounter(io.update.payload.legacyIndex) :=
+              branchCounter(io.update.payload.legacyIndex) - 1
           }
         }
       }
     } otherwise {
       when(io.update.payload.addEntry) {
-        returnSiteValid(returnAddIndex) := True
-        returnSitePc(returnAddIndex) := io.update.payload.pc
+        returnSiteValid(returnReplacementIndex) := True
+        returnSitePc(returnReplacementIndex) := io.update.payload.pc
       }
     }
 

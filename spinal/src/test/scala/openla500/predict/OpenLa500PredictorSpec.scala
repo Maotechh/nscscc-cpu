@@ -9,7 +9,9 @@ import spinal.core.sim._
 class OpenLa500PredictorSpec extends AnyFunSuite {
   private val WordMask = (BigInt(1) << 32) - 1
 
-  test("64-entry BTB, saturating counters and return prediction obey the active contract") {
+  test(
+    "official 32-entry BTB, saturating counters and return prediction obey the active contract"
+  ) {
     val workspaceRoot =
       sys.env.getOrElse("SPINAL_SIM_WORKSPACE", "target/sim-workspace-contracts")
     val workspace = Paths.get(workspaceRoot, "predictor").toString
@@ -35,13 +37,13 @@ class OpenLa500PredictorSpec extends AnyFunSuite {
           dut.io.update.payload.popReturnStack #= false
           dut.io.update.payload.pushReturnStack #= false
           dut.io.update.payload.addEntry #= false
-          dut.io.update.payload.deleteEntry #= false
           dut.io.update.payload.predictionError #= false
           dut.io.update.payload.predictionRight #= false
           dut.io.update.payload.targetError #= false
           dut.io.update.payload.actualTaken #= false
           dut.io.update.payload.actualTarget #= 0
           dut.io.update.payload.pc #= 0
+          dut.io.update.payload.legacyIndex #= 0
         }
 
         def resetState(): Unit = {
@@ -59,22 +61,22 @@ class OpenLa500PredictorSpec extends AnyFunSuite {
             pop: Boolean = false,
             push: Boolean = false,
             add: Boolean = false,
-            delete: Boolean = false,
             error: Boolean = false,
             right: Boolean = false,
             targetError: Boolean = false,
-            actualTaken: Boolean = false
+            actualTaken: Boolean = false,
+            legacyIndex: Int = 0
         ): Unit = {
           dut.io.update.payload.pc #= pc & WordMask
           dut.io.update.payload.actualTarget #= target & WordMask
           dut.io.update.payload.popReturnStack #= pop
           dut.io.update.payload.pushReturnStack #= push
           dut.io.update.payload.addEntry #= add
-          dut.io.update.payload.deleteEntry #= delete
           dut.io.update.payload.predictionError #= error
           dut.io.update.payload.predictionRight #= right
           dut.io.update.payload.targetError #= targetError
           dut.io.update.payload.actualTaken #= actualTaken
+          dut.io.update.payload.legacyIndex #= legacyIndex
           dut.io.update.valid #= true
           dut.clockDomain.waitSampling()
           dut.io.update.valid #= false
@@ -148,25 +150,21 @@ class OpenLa500PredictorSpec extends AnyFunSuite {
         expectHit(counterPc, counterTarget)
 
         val correctedTarget = BigInt("1c003000", 16)
-        update(counterPc, correctedTarget, targetError = true)
+        update(BigInt("1c101000", 16), correctedTarget, targetError = true, legacyIndex = 0)
         expectHit(counterPc, correctedTarget)
-        update(BigInt("1c101000", 16), delete = true)
-        expectHit(counterPc, correctedTarget)
-        update(counterPc, delete = true)
-        expectMiss(counterPc)
 
         val fillBase = BigInt("1d000000", 16)
         val targetBase = BigInt("1e000000", 16)
-        for (entry <- 0 until 64) {
+        for (entry <- 0 until 31) {
           update(fillBase + entry * 4, targetBase + entry * 4, add = true, actualTaken = true)
         }
-        expectHit(fillBase, targetBase, index = Some(0))
-        expectHit(fillBase + 32 * 4, targetBase + 32 * 4, index = Some(0))
-        expectHit(fillBase + 63 * 4, targetBase + 63 * 4, index = Some(31))
+        expectHit(fillBase, targetBase, index = Some(1))
+        expectHit(fillBase + 15 * 4, targetBase + 15 * 4, index = Some(16))
+        expectHit(fillBase + 30 * 4, targetBase + 30 * 4, index = Some(31))
 
         val weakPc = fillBase + 11 * 4
-        update(weakPc, error = true, actualTaken = false)
-        update(weakPc, error = true, actualTaken = false)
+        update(weakPc, error = true, actualTaken = false, legacyIndex = 12)
+        update(weakPc, error = true, actualTaken = false, legacyIndex = 12)
         val replacementPc = BigInt("1d100000", 16)
         val replacementTarget = BigInt("1e100000", 16)
         update(replacementPc, replacementTarget, add = true, actualTaken = true)
@@ -178,12 +176,13 @@ class OpenLa500PredictorSpec extends AnyFunSuite {
         val randomReplacementTarget = BigInt("1e200000", 16)
         update(randomReplacementPc, randomReplacementTarget, add = true, actualTaken = true)
         expectHit(randomReplacementPc, randomReplacementTarget)
-        val oldMisses = (0 until 64).count { entry =>
+        val oldMisses = (0 until 31).count { entry =>
           !lookup(fillBase + entry * 4).valid
         }
         val replacementWasEvicted = !lookup(replacementPc).valid
+        val originalMisses = oldMisses + (if (!lookup(counterPc).valid) 1 else 0)
         assert(
-          oldMisses + (if (replacementWasEvicted) 1 else 0) == 2,
+          originalMisses + (if (replacementWasEvicted) 1 else 0) == 2,
           "the strongly-untaken replacement plus one LFSR replacement must be observable"
         )
 
@@ -215,15 +214,15 @@ class OpenLa500PredictorSpec extends AnyFunSuite {
 
         for (_ <- 0 until 8) update(returnPc, pop = true)
         expectMiss(returnPc)
-        val matcherBase = returnPc
-        for (entry <- 0 until 16) update(matcherBase + entry * 4, pop = true, add = true)
+        val matcherBase = BigInt("1c100000", 16)
+        for (entry <- 0 until 15) update(matcherBase + entry * 4, pop = true, add = true)
         val matcherReplacement = BigInt("1c110000", 16)
         update(matcherReplacement, pop = true, add = true)
         update(call0, push = true)
         expectHit(matcherReplacement, call0 + 4)
-        val matcherMisses = (0 until 16).count { entry =>
-          !lookup(matcherBase + entry * 4).valid
-        }
+        val matcherMisses =
+          (0 until 15).count(entry => !lookup(matcherBase + entry * 4).valid) +
+            (if (!lookup(returnPc).valid) 1 else 0)
         assert(matcherMisses == 1, s"expected one replaced return-site matcher, got $matcherMisses")
 
         val collisionPc = BigInt("1c200000", 16)

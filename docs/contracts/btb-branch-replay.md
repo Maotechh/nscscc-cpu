@@ -2,7 +2,7 @@
 
 ## 范围
 
-本迭代只处理活动 `SpinalCoreBackend` 中临时 BTB lookup 的请求绑定，以及官方 `func_lab19` 首错附近的五条循环。完整 64-entry/2-bit/RAS BTB 迁移另行提交，不在本迭代宣称完成。
+本迭代只处理活动 `SpinalCoreBackend` 中临时 BTB lookup 的请求绑定，以及官方 `func_lab19` 首错附近的五条循环。官方 32-entry/2-bit/RAS BTB 已在后续 predictor 边界中迁移；本历史记录本身不声明完成。
 
 ## Golden 约束
 
