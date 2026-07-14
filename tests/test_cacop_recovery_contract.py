@@ -19,3 +19,4 @@ def test_icache_cacop_uses_passing_d22_state_path() -> None:
 
 def test_dcache_cacop_uses_passing_d22_state_path() -> None:
     _assert_recovery_contract(DCACHE, cache_name="dcache")
+    assert "!(requestPreld || requestCacop)" in DCACHE

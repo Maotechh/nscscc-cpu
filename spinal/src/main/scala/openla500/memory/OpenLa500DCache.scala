@@ -218,7 +218,8 @@ final class OpenLa500DCache extends Component {
     val refillMatch = missRetNum === requestOffset(3 downto 2).asUInt
     val dataOk =
       (isLookup && (cacheHit || requestOp || cancelReq) ||
-        isRefill && !requestOp && io.ret_valid && (refillMatch || requestUncache)) && !requestPreld
+        isRefill && !requestOp && io.ret_valid && (refillMatch || requestUncache)) &&
+        !(requestPreld || requestCacop)
 
     val replaceTag = Bits(20 bits)
     replaceTag := 0
