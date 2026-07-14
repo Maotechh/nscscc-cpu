@@ -27,7 +27,7 @@ object GenAll extends App {
   genOne("mul") { new Multiplier }
   genOne("div") { new Divider }
   genOne("addr_trans") { new AddrTrans }
-  genOne("perf_counter") { new PerfCounter }
+  genOne("perf_counter") { new observe.LegacyOpenLa500PerfCounter }
   genOne("icache") { new ICache }
   genOne("dcache") { new DCache }
   genOne("if_stage") { new IFStage }

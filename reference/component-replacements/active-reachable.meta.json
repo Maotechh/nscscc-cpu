@@ -25,6 +25,7 @@
     "rtl/axi_bridge.v": "完整纯 Spinal mycpu_top.v 已内嵌 AXI bridge，禁止重复定义",
     "rtl/mul.v": "完整纯 Spinal mycpu_top.v 已内嵌 multiplier，禁止重复定义",
     "rtl/div.v": "完整纯 Spinal mycpu_top.v 已内嵌 divider，禁止重复定义",
+    "rtl/perf_counter.v": "完整纯 Spinal mycpu_top.v 已内嵌七个活动性能计数器，runtime overlay 使用 module-free 占位避免重复活动实现",
     "rtl/regfile.v": "活动 DecodeStage 内部拥有 GPR 状态，禁止重复定义旧 regfile"
   },
   "unreachable_or_backup": [

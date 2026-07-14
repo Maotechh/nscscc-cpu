@@ -3,7 +3,7 @@ package openla500.compat
 import openla500.config.CoreConfig
 import openla500.execute.{OpenLa500Div, OpenLa500LaccCore, OpenLa500Mul}
 import openla500.memory.{OpenLa500AxiBridge, OpenLa500DCache, OpenLa500ICache}
-import openla500.observe.{ArchState, ChiplabDiffTestAdapter, CommitEvent}
+import openla500.observe.{ArchState, ChiplabDiffTestAdapter, CommitEvent, OpenLa500PerfCounter}
 import openla500.pipeline._
 import openla500.predict.OpenLa500Predictor
 import openla500.privileged.{OpenLa500AddrTrans, OpenLa500Csr}
@@ -98,6 +98,7 @@ private[compat] final class SpinalCoreBackend(
   val axiBridge = new OpenLa500AxiBridge
   val divider = new OpenLa500Div
   val multiplier = new OpenLa500Mul
+  val performanceCounter = new OpenLa500PerfCounter
 
   for (
     clocked <- Seq(
@@ -107,7 +108,8 @@ private[compat] final class SpinalCoreBackend(
       dataCache.io.clk,
       axiBridge.io.clk,
       divider.io.div_clk,
-      multiplier.io.mul_clk
+      multiplier.io.mul_clk,
+      performanceCounter.io.clk
     )
   ) {
     clocked := io.aclk
@@ -118,6 +120,15 @@ private[compat] final class SpinalCoreBackend(
   axiBridge.io.reset := reset
   divider.io.reset := reset
   multiplier.io.reset := reset
+  performanceCounter.io.reset := reset
+
+  performanceCounter.io.events.dataCacheMiss := writeback.io.perf.dataCacheMiss
+  performanceCounter.io.events.instructionCacheMiss := writeback.io.perf.instructionCacheMiss
+  performanceCounter.io.events.retired := writeback.io.perf.retired
+  performanceCounter.io.events.branch := writeback.io.perf.branch
+  performanceCounter.io.events.memoryAccess := writeback.io.perf.memoryAccess
+  performanceCounter.io.events.predictedBranch := writeback.io.perf.predictedBranch
+  performanceCounter.io.events.predictionError := writeback.io.perf.predictionError
 
   // Writeback is the only producer of architectural state changes and global pipeline flushes.
   writeback.io.debugBreakPoint := io.break_point

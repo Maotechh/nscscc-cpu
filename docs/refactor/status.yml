@@ -1,8 +1,8 @@
 schema_version: 1
-updated_at: "2026-07-14T22:38:00+08:00"
-active_iteration: "20260714-1907-lacc-spinal"
+updated_at: "2026-07-14T23:28:00+08:00"
+active_iteration: "20260714-2328-perf-counter"
 active_branch: "refactor/20260714-1650-consolidated-spinal"
-source_head: "7364f89ab5caa4e95234fa938022bc356092e54e"
+source_head: "working-tree"
 
 boundaries:
   refactor_branch_convergence:
@@ -331,6 +331,35 @@ boundaries:
       - func_full_random_system_fpga_not_executed
       - claude_bridge_missing_GEEKPIE_CLAUDE_API_KEY
     last_iteration: "20260714-1907-lacc-spinal"
+
+  perf_counter:
+    owner: observe
+    state: implementation_in_review
+    golden_ref: a158aa8:rtl/perf_counter.v
+    dependencies:
+      - writeback_stage
+      - core_top_compat
+    contract: docs/contracts/perf-counter.md
+    required_gates:
+      - contract
+      - scala
+      - elaborate
+      - generate
+      - port_check
+      - lint
+      - yosys_check
+      - unit_diff
+      - negative_control
+      - replacement_reachability
+      - diagnostic_overlay
+      - func_smoke
+      - claim_review
+    evidence:
+      - logs/refactor/20260714-2328-perf-counter/iteration.md
+      - logs/refactor/20260714-2328-perf-counter/summary.json
+    active_pr: null
+    blocked_by: []
+    last_iteration: "20260714-2328-perf-counter"
 
   core_top_compat:
     owner: compat

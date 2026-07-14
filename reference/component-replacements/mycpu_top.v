@@ -1636,6 +1636,17 @@ module SpinalCoreBackend (
     .y          (execute_io_mulDiv_operandKOrD[31:0]), //i
     .result     (multiplier_result[63:0]            )  //o
   );
+  OpenLa500PerfCounter performanceCounter (
+    .io_clk                         (aclk                                  ), //i
+    .io_reset                       (reset                                 ), //i
+    .io_events_dataCacheMiss        (writeback_io_perf_dataCacheMiss       ), //i
+    .io_events_instructionCacheMiss (writeback_io_perf_instructionCacheMiss), //i
+    .io_events_retired              (writeback_io_perf_retired             ), //i
+    .io_events_branch               (writeback_io_perf_branch              ), //i
+    .io_events_memoryAccess         (writeback_io_perf_memoryAccess        ), //i
+    .io_events_predictedBranch      (writeback_io_perf_predictedBranch     ), //i
+    .io_events_predictionError      (writeback_io_perf_predictionError     )  //i
+  );
   OpenLa500Predictor predictor (
     .io_lookup_valid                   (fetch_io_fetchEnable                            ), //i
     .io_lookup_payload_pc              (fetch_io_fetchPc[31:0]                          ), //i
@@ -7120,6 +7131,63 @@ module OpenLa500Predictor (
         if(_zz_74[7]) begin
           returnStack_7 <= _zz_returnStack_0;
         end
+      end
+    end
+  end
+
+
+endmodule
+
+module OpenLa500PerfCounter (
+  input  wire          io_clk,
+  input  wire          io_reset,
+  input  wire          io_events_dataCacheMiss,
+  input  wire          io_events_instructionCacheMiss,
+  input  wire          io_events_retired,
+  input  wire          io_events_branch,
+  input  wire          io_events_memoryAccess,
+  input  wire          io_events_predictedBranch,
+  input  wire          io_events_predictionError
+);
+
+  reg        [31:0]   counters_dataCacheMiss;
+  reg        [31:0]   counters_instructionCacheMiss;
+  reg        [31:0]   counters_retired;
+  reg        [31:0]   counters_branch;
+  reg        [31:0]   counters_memoryAccess;
+  reg        [31:0]   counters_predictedBranch;
+  reg        [31:0]   counters_predictionError;
+
+  always @(posedge io_clk) begin
+    if(io_reset) begin
+      counters_dataCacheMiss <= 32'h0;
+      counters_instructionCacheMiss <= 32'h0;
+      counters_retired <= 32'h0;
+      counters_branch <= 32'h0;
+      counters_memoryAccess <= 32'h0;
+      counters_predictedBranch <= 32'h0;
+      counters_predictionError <= 32'h0;
+    end else begin
+      if(io_events_dataCacheMiss) begin
+        counters_dataCacheMiss <= (counters_dataCacheMiss + 32'h00000001);
+      end
+      if(io_events_instructionCacheMiss) begin
+        counters_instructionCacheMiss <= (counters_instructionCacheMiss + 32'h00000001);
+      end
+      if(io_events_retired) begin
+        counters_retired <= (counters_retired + 32'h00000001);
+      end
+      if(io_events_branch) begin
+        counters_branch <= (counters_branch + 32'h00000001);
+      end
+      if(io_events_memoryAccess) begin
+        counters_memoryAccess <= (counters_memoryAccess + 32'h00000001);
+      end
+      if(io_events_predictedBranch) begin
+        counters_predictedBranch <= (counters_predictedBranch + 32'h00000001);
+      end
+      if(io_events_predictionError) begin
+        counters_predictionError <= (counters_predictionError + 32'h00000001);
       end
     end
   end

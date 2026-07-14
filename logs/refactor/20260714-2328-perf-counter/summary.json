@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "iteration_id": "20260714-2328-perf-counter",
+  "status": "draft",
+  "branch": "refactor/20260714-1650-consolidated-spinal",
+  "base_sha": "5038a537a02c1778a13ceca6b07d26e311b9afd6",
+  "head_sha": "working-tree",
+  "selected_boundary": "observe/perf_counter",
+  "gates": {
+    "preflight": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0,"evidence":"iteration.md"},
+    "contract": {"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":0,"evidence":null},
+    "scala": {"status":"pending","planned":4,"executed":0,"passed":0,"failed":0,"skipped":0,"evidence":null},
+    "unit_diff": {"status":"pending","planned":2,"executed":0,"passed":0,"failed":0,"skipped":0,"evidence":null},
+    "core_top": {"status":"pending","planned":4,"executed":0,"passed":0,"failed":0,"skipped":0,"evidence":null},
+    "rtl_static": {"status":"pending","planned":2,"executed":0,"passed":0,"failed":0,"skipped":0,"evidence":null},
+    "func_smoke": {"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":0,"evidence":null},
+    "claude_review": {"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":0,"evidence":null}
+  },
+  "claims": [],
+  "blocked_by": [],
+  "residual_risks": [
+    "whole-core regression evidence is not established by the leaf migration",
+    "official full suites, random DiffTest, system and FPGA gates remain required"
+  ]
+}

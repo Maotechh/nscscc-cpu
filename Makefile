@@ -40,6 +40,11 @@ LACC_CYCLES ?= 8192
 LACC_RANDOM_SEED ?= 0x158aa8
 LACC_GENERATE_DIR ?= $(OUT_DIR)/lacc/generate
 LACC_RTL ?= $(LACC_GENERATE_DIR)/rtl/lacc_core.v
+PERF_COUNTER_CONTRACT ?= reference/component-contracts/perf-counter.json
+PERF_COUNTER_CYCLES ?= 8192
+PERF_COUNTER_RANDOM_SEED ?= 0x0158aa8e
+PERF_COUNTER_GENERATE_DIR ?= $(OUT_DIR)/perf_counter/generate
+PERF_COUNTER_RTL ?= $(PERF_COUNTER_GENERATE_DIR)/rtl/perf_counter.v
 AXI_BRIDGE_CONTRACT ?= reference/component-contracts/axi-bridge.json
 AXI_BRIDGE_CYCLES ?= 8192
 AXI_BRIDGE_RANDOM_SEED ?= 0x158aa8
@@ -116,6 +121,8 @@ else ifeq ($(TARGET),div)
 	$(PYTHON) -I tools/div_gate.py elaborate --target "$(TARGET)" --manifest "reference/manifest.lock" --spinal-dir "spinal" --tool-root "$(CHIPLAB_TOOL_ROOT)" --out-dir "$(OUT_DIR)/div/elaborate" $(if $(JAVA_HOME),--java-home "$(JAVA_HOME)",)
 else ifeq ($(TARGET),lacc)
 	$(PYTHON) -I tools/spinal_generate.py --manifest "reference/manifest.lock" --spinal-dir "spinal" --tool-root "$(CHIPLAB_TOOL_ROOT)" --main-class "openla500.execute.GenerateOpenLa500LaccCore" --expected-module "lacc_core" --expected-file "lacc_core.v" --out-dir "$(OUT_DIR)/lacc/elaborate" --runs 2 $(if $(JAVA_HOME),--java-home "$(JAVA_HOME)",)
+else ifeq ($(TARGET),perf_counter)
+	$(PYTHON) -I tools/spinal_generate.py --manifest "reference/manifest.lock" --spinal-dir "spinal" --tool-root "$(CHIPLAB_TOOL_ROOT)" --main-class "openla500.observe.GenerateOpenLa500PerfCounter" --expected-module "perf_counter" --expected-file "perf_counter.v" --out-dir "$(OUT_DIR)/perf_counter/elaborate" --runs 2 $(if $(JAVA_HOME),--java-home "$(JAVA_HOME)",)
 else ifeq ($(TARGET),axi_bridge)
 	$(PYTHON) -I tools/spinal_generate.py --manifest "reference/manifest.lock" --spinal-dir "spinal" --tool-root "$(CHIPLAB_TOOL_ROOT)" --main-class "openla500.memory.GenerateOpenLa500AxiBridge" --expected-module "axi_bridge" --expected-file "axi_bridge.v" --out-dir "$(OUT_DIR)/axi_bridge/elaborate" --runs 2 $(if $(JAVA_HOME),--java-home "$(JAVA_HOME)",)
 else ifeq ($(TARGET),exe_stage)
@@ -152,6 +159,8 @@ else ifeq ($(TARGET),div)
 	$(PYTHON) -I tools/div_gate.py generate --target "$(TARGET)" --manifest "reference/manifest.lock" --spinal-dir "spinal" --tool-root "$(CHIPLAB_TOOL_ROOT)" --out-dir "$(DIV_GENERATE_DIR)" $(if $(JAVA_HOME),--java-home "$(JAVA_HOME)",)
 else ifeq ($(TARGET),lacc)
 	$(PYTHON) -I tools/spinal_generate.py --manifest "reference/manifest.lock" --spinal-dir "spinal" --tool-root "$(CHIPLAB_TOOL_ROOT)" --main-class "openla500.execute.GenerateOpenLa500LaccCore" --expected-module "lacc_core" --expected-file "lacc_core.v" --out-dir "$(LACC_GENERATE_DIR)" --runs 2 $(if $(JAVA_HOME),--java-home "$(JAVA_HOME)",)
+else ifeq ($(TARGET),perf_counter)
+	$(PYTHON) -I tools/spinal_generate.py --manifest "reference/manifest.lock" --spinal-dir "spinal" --tool-root "$(CHIPLAB_TOOL_ROOT)" --main-class "openla500.observe.GenerateOpenLa500PerfCounter" --expected-module "perf_counter" --expected-file "perf_counter.v" --out-dir "$(PERF_COUNTER_GENERATE_DIR)" --runs 2 $(if $(JAVA_HOME),--java-home "$(JAVA_HOME)",)
 else ifeq ($(TARGET),axi_bridge)
 	$(PYTHON) -I tools/spinal_generate.py --manifest "reference/manifest.lock" --spinal-dir "spinal" --tool-root "$(CHIPLAB_TOOL_ROOT)" --main-class "openla500.memory.GenerateOpenLa500AxiBridge" --expected-module "axi_bridge" --expected-file "axi_bridge.v" --out-dir "$(AXI_BRIDGE_GENERATE_DIR)" --runs 2 $(if $(JAVA_HOME),--java-home "$(JAVA_HOME)",)
 else ifeq ($(TARGET),exe_stage)
@@ -184,6 +193,8 @@ else ifeq ($(TARGET),mul)
 	$(PYTHON) -I tools/mul_gate.py port-check --target "$(TARGET)" --manifest "reference/manifest.lock" --rtl "$(MUL_RTL)" --out-dir "$(OUT_DIR)/mul/port-check"
 else ifeq ($(TARGET),div)
 	$(PYTHON) -I tools/div_gate.py port-check --target "$(TARGET)" --manifest "reference/manifest.lock" --rtl "$(DIV_RTL)" --out-dir "$(OUT_DIR)/div/port-check"
+else ifeq ($(TARGET),perf_counter)
+	$(PYTHON) -I tools/perf_counter_gate.py port-check --contract "$(PERF_COUNTER_CONTRACT)" --rtl "$(PERF_COUNTER_RTL)" --out-dir "$(OUT_DIR)/perf_counter/port-check"
 else ifeq ($(TARGET),axi_bridge)
 	$(PYTHON) -I tools/axi_bridge_gate.py port-check --contract "$(AXI_BRIDGE_CONTRACT)" --rtl "$(AXI_BRIDGE_RTL)" --out-dir "$(OUT_DIR)/axi_bridge/port-check"
 else ifeq ($(TARGET),exe_stage)
@@ -210,6 +221,8 @@ else ifeq ($(TARGET),mul)
 	$(PYTHON) -I tools/mul_gate.py lint --target "$(TARGET)" --manifest "reference/manifest.lock" --rtl "$(MUL_RTL)" --out-dir "$(OUT_DIR)/mul/lint"
 else ifeq ($(TARGET),div)
 	$(PYTHON) -I tools/div_gate.py lint --target "$(TARGET)" --manifest "reference/manifest.lock" --rtl "$(DIV_RTL)" --out-dir "$(OUT_DIR)/div/lint"
+else ifeq ($(TARGET),perf_counter)
+	$(PYTHON) -I tools/perf_counter_gate.py lint --contract "$(PERF_COUNTER_CONTRACT)" --rtl "$(PERF_COUNTER_RTL)" --out-dir "$(OUT_DIR)/perf_counter/lint"
 else ifeq ($(TARGET),axi_bridge)
 	$(PYTHON) -I tools/axi_bridge_gate.py lint --contract "$(AXI_BRIDGE_CONTRACT)" --rtl "$(AXI_BRIDGE_RTL)" --out-dir "$(OUT_DIR)/axi_bridge/lint"
 else ifeq ($(TARGET),exe_stage)
@@ -236,6 +249,8 @@ else ifeq ($(TARGET),mul)
 	$(PYTHON) -I tools/mul_gate.py yosys-check --target "$(TARGET)" --manifest "reference/manifest.lock" --rtl "$(MUL_RTL)" --out-dir "$(OUT_DIR)/mul/yosys-check"
 else ifeq ($(TARGET),div)
 	$(PYTHON) -I tools/div_gate.py yosys-check --target "$(TARGET)" --manifest "reference/manifest.lock" --rtl "$(DIV_RTL)" --out-dir "$(OUT_DIR)/div/yosys-check"
+else ifeq ($(TARGET),perf_counter)
+	yosys -q -p 'read_verilog "$(PERF_COUNTER_RTL)"; hierarchy -check -top perf_counter; proc; check -assert'
 else ifeq ($(TARGET),axi_bridge)
 	$(PYTHON) -I tools/axi_bridge_gate.py yosys-check --contract "$(AXI_BRIDGE_CONTRACT)" --rtl "$(AXI_BRIDGE_RTL)" --out-dir "$(OUT_DIR)/axi_bridge/yosys-check"
 else ifeq ($(TARGET),exe_stage)
@@ -262,6 +277,8 @@ else ifeq ($(TARGET),div)
 	$(PYTHON) -I tools/div_diff.py candidate --contract "$(DIV_CONTRACT)" --manifest "reference/manifest.lock" --rtl "$(DIV_RTL)" --out-dir "$(OUT_DIR)/div/unit" --vector-count "$(DIV_VECTOR_COUNT)" --seed "$(DIV_RANDOM_SEED)"
 else ifeq ($(TARGET),lacc)
 	$(PYTHON) -I tools/lacc_diff.py candidate --contract "$(LACC_CONTRACT)" --manifest "reference/manifest.lock" --rtl "$(LACC_RTL)" --out-dir "$(OUT_DIR)/lacc/unit" --cycles "$(LACC_CYCLES)" --seed "$(LACC_RANDOM_SEED)"
+else ifeq ($(TARGET),perf_counter)
+	$(PYTHON) -I tools/perf_counter_gate.py candidate --contract "$(PERF_COUNTER_CONTRACT)" --manifest "reference/manifest.lock" --rtl "$(PERF_COUNTER_RTL)" --out-dir "$(OUT_DIR)/perf_counter/unit" --cycles "$(PERF_COUNTER_CYCLES)" --seed "$(PERF_COUNTER_RANDOM_SEED)"
 else ifeq ($(TARGET),axi_bridge)
 	$(PYTHON) -I tools/axi_bridge_gate.py diff --contract "$(AXI_BRIDGE_CONTRACT)" --rtl "$(AXI_BRIDGE_RTL)" --out-dir "$(OUT_DIR)/axi_bridge/unit" --cycles "$(AXI_BRIDGE_CYCLES)" --seed "$(AXI_BRIDGE_RANDOM_SEED)"
 else ifeq ($(TARGET),exe_stage)
@@ -333,6 +350,15 @@ lacc-contract:
 
 lacc-candidate-unit:
 	$(PYTHON) -I tools/lacc_diff.py candidate --contract "$(LACC_CONTRACT)" --manifest "reference/manifest.lock" --rtl "$(LACC_RTL)" --out-dir "$(OUT_DIR)/lacc/unit" --cycles "$(LACC_CYCLES)" --seed "$(LACC_RANDOM_SEED)"
+
+perf-counter-contract:
+	$(PYTHON) -I tools/perf_counter_gate.py contract --contract "$(PERF_COUNTER_CONTRACT)" --manifest "reference/manifest.lock" --out-dir "$(OUT_DIR)/perf_counter/contract"
+
+perf-counter-candidate-unit:
+	$(PYTHON) -I tools/perf_counter_gate.py candidate --contract "$(PERF_COUNTER_CONTRACT)" --manifest "reference/manifest.lock" --rtl "$(PERF_COUNTER_RTL)" --out-dir "$(OUT_DIR)/perf_counter/unit" --cycles "$(PERF_COUNTER_CYCLES)" --seed "$(PERF_COUNTER_RANDOM_SEED)"
+
+perf-counter-top-check:
+	$(PYTHON) -I tools/perf_counter_gate.py top-check --rtl "$(CORE_TOP_TRACKED_RTL)" --out-dir "$(OUT_DIR)/perf_counter/top-check"
 
 axi-bridge-contract:
 	$(PYTHON) -I tools/axi_bridge_gate.py contract --contract "$(AXI_BRIDGE_CONTRACT)" --out-dir "$(OUT_DIR)/axi_bridge/contract"
