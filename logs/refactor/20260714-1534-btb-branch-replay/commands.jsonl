@@ -1,0 +1,1 @@
+{"id":"preflight","argv":["git","status/rev-parse/remote"],"cwd":"nscscc-cpu/.work/worktrees/20260714-1534-btb-branch-replay","exit_code":0,"elapsed_seconds":2.7,"result":"clean worktree; base=372eccc; origin/main=20cae5f; branch created from pushed CACOP head","evidence":"iteration.md"}

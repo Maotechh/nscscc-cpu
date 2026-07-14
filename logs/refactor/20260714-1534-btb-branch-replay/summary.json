@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "iteration_id": "20260714-1534-btb-branch-replay",
+  "status": "draft",
+  "branch": "refactor/20260714-1534-btb-branch-replay",
+  "base_sha": "372eccc9b54fb5a80f08bc5af6dcc8944ea3e8fa",
+  "head_sha": "372eccc9b54fb5a80f08bc5af6dcc8944ea3e8fa",
+  "selected_boundary": "predictor/branch_replay",
+  "gates": {
+    "preflight": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0,"evidence":"iteration.md"},
+    "branch_harness": {"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":1,"evidence":"docs/contracts/btb-branch-replay.md"},
+    "scala": {"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":1,"evidence":"iteration.md"},
+    "rtl_static": {"status":"pending","planned":3,"executed":0,"passed":0,"failed":0,"skipped":3,"evidence":"iteration.md"},
+    "func_smoke": {"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":1,"evidence":"iteration.md"},
+    "claim_review": {"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":1,"evidence":"iteration.md"}
+  },
+  "required_gates": ["branch_harness","scala","rtl_static","func_smoke","claim_review"],
+  "claims": [],
+  "blocked_by": ["implementation_and_branch_harness_pending"],
+  "residual_risks": ["temporary 32-entry predictor still differs from golden 64-entry 2-bit/RAS BTB"]
+}

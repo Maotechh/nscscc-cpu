@@ -833,11 +833,12 @@ module SpinalCoreBackend (
   reg        [31:0]   btbTarget_29;
   reg        [31:0]   btbTarget_30;
   reg        [31:0]   btbTarget_31;
+  reg                 btbLookupValid;
   reg        [31:0]   btbLookupPc;
   wire       [4:0]    lookupIndex;
   wire                lookupHit;
   wire       [4:0]    _zz_1;
-  wire                when_SpinalCoreBackend_l187;
+  wire                when_SpinalCoreBackend_l192;
   wire       [31:0]   _zz_2;
   wire                _zz_3;
   wire                _zz_4;
@@ -2040,10 +2041,10 @@ module SpinalCoreBackend (
   assign reset = (! aresetn);
   assign writeback_io_tlbFillIndex = csr_rand_index;
   assign lookupIndex = btbLookupPc[6 : 2];
-  assign lookupHit = (_zz_lookupHit && (_zz_lookupHit_1 == btbLookupPc[31 : 7]));
+  assign lookupHit = ((btbLookupValid && _zz_lookupHit) && (_zz_lookupHit_1 == btbLookupPc[31 : 7]));
   assign fetch_io_btbTarget = (lookupHit ? _zz_io_btbTarget : _zz_io_btbTarget_1);
   assign _zz_1 = decode_io_btb_pc[6 : 2];
-  assign when_SpinalCoreBackend_l187 = (decode_io_btb_actualTaken || decode_io_btb_addEntry);
+  assign when_SpinalCoreBackend_l192 = (decode_io_btb_actualTaken || decode_io_btb_addEntry);
   assign _zz_2 = ({31'd0,1'b1} <<< _zz_1);
   assign _zz_3 = _zz_2[0];
   assign _zz_4 = _zz_2[1];
@@ -2174,11 +2175,15 @@ module SpinalCoreBackend (
       btbValid_29 <= 1'b0;
       btbValid_30 <= 1'b0;
       btbValid_31 <= 1'b0;
+      btbLookupValid <= 1'b0;
       btbLookupPc <= 32'h1c000000;
     end else begin
-      btbLookupPc <= fetch_io_fetchPc;
+      btbLookupValid <= fetch_io_fetchEnable;
+      if(fetch_io_fetchEnable) begin
+        btbLookupPc <= fetch_io_fetchPc;
+      end
       if(decode_io_btb_enable) begin
-        if(when_SpinalCoreBackend_l187) begin
+        if(when_SpinalCoreBackend_l192) begin
           if(_zz_3) begin
             btbValid_0 <= 1'b1;
           end
@@ -2381,7 +2386,7 @@ module SpinalCoreBackend (
 
   always @(posedge aclk_1) begin
     if(decode_io_btb_enable) begin
-      if(when_SpinalCoreBackend_l187) begin
+      if(when_SpinalCoreBackend_l192) begin
         if(_zz_35[0]) begin
           btbTag_0 <= _zz_btbTag_0;
         end

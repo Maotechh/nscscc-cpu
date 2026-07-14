@@ -173,11 +173,16 @@ private[compat] final class SpinalCoreBackend(
   val btbValid = Vec.fill(32)(Reg(Bool()) init (False))
   val btbTag = Vec.fill(32)(Reg(UInt(25 bits)))
   val btbTarget = Vec.fill(32)(Reg(UInt(32 bits)))
-  // Registering the lookup address matches the synchronous predictor boundary and prevents the
-  // prediction target from feeding combinationally back into FetchStage.nextPc.
-  val btbLookupPc = RegNext(fetch.io.fetchPc) init (U(config.resetVector, 32 bits))
+  // Match the golden synchronous boundary: a lookup is only valid for a fetch request
+  // accepted in the previous cycle. Sampling speculative/stalled PCs can replay a branch.
+  val btbLookupValid = RegNext(fetch.io.fetchEnable) init (False)
+  val btbLookupPc = Reg(UInt(32 bits)) init (U(config.resetVector, 32 bits))
+  when(fetch.io.fetchEnable) {
+    btbLookupPc := fetch.io.fetchPc
+  }
   val lookupIndex = btbLookupPc(6 downto 2)
-  val lookupHit = btbValid(lookupIndex) && btbTag(lookupIndex) === btbLookupPc(31 downto 7)
+  val lookupHit =
+    btbLookupValid && btbValid(lookupIndex) && btbTag(lookupIndex) === btbLookupPc(31 downto 7)
   fetch.io.btbEnabled := lookupHit
   fetch.io.btbTaken := lookupHit
   fetch.io.btbIndex := lookupIndex
