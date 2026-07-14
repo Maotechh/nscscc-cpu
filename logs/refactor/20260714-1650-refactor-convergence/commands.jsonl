@@ -1,0 +1,1 @@
+{"id":"preflight","argv":["git","status/rev-parse/remote/worktree-list"],"cwd":"nscscc-cpu/.work/worktrees/20260714-1650-consolidated-spinal","exit_code":0,"elapsed_seconds":8.7,"result":"new integration branch and worktree created from clean ce50a05; origin/main=20cae5f; unrelated dirty primary worktree preserved","evidence":"iteration.md"}

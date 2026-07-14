@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "iteration_id": "20260714-1650-refactor-convergence",
+  "status": "draft",
+  "branch": "refactor/20260714-1650-consolidated-spinal",
+  "base_sha": "ce50a05c87baef28e0eabd95e5b2b27b6820a400",
+  "head_sha": "ce50a05c87baef28e0eabd95e5b2b27b6820a400",
+  "selected_boundary": "repository/refactor_branch_convergence",
+  "gates": {
+    "preflight": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0,"evidence":"iteration.md"},
+    "branch_ancestry": {"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":1,"evidence":"evidence/branch-map.json"},
+    "content_preservation": {"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":1,"evidence":"evidence/content-preservation.json"},
+    "scala": {"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":1,"evidence":"evidence/scala.json"},
+    "automation_tests": {"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":1,"evidence":"evidence/automation-tests.txt"},
+    "claim_review": {"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":1,"evidence":"reviews/claude-raw.md"}
+  },
+  "required_gates": ["branch_ancestry","content_preservation","scala","automation_tests","claim_review"],
+  "claims": [],
+  "blocked_by": ["branch_convergence_not_committed", "claim_review_not_executed"],
+  "residual_risks": ["old branch content must not overwrite later integrated fixes"]
+}
