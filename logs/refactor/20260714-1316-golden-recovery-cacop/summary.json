@@ -5,14 +5,14 @@
   "branch": "refactor/20260714-1316-golden-recovery-cacop",
   "base_sha": "13e0c8da423bb75ca848aada91c67738f22a60ab",
   "head_sha": null,
-  "source_head": null,
+  "source_head": "0db763de97099d437cfedd4e7157b8c329a0ba4d",
   "selected_boundary": "golden_recovery_cacop",
   "gates": {
     "doctor": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0,"evidence":"evidence/doctor.json"},
     "history_bisect": {"status":"pass","planned":4,"executed":4,"passed":4,"failed":0,"skipped":0,"evidence":"iteration.md"},
     "unit_diff": {"status":"pass","planned":10,"executed":10,"passed":10,"failed":0,"skipped":0,"evidence":"evidence/cacop-directed.json"},
     "scala": {"status":"pass","planned":4,"executed":4,"passed":4,"failed":0,"skipped":0,"evidence":"evidence/header-fix-scala.json"},
-    "generate_publish": {"status":"fail","planned":1,"executed":1,"passed":0,"failed":1,"skipped":0,"evidence":"evidence/clean-head-generate-968712c.json"},
+    "generate_publish": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0,"evidence":"evidence/publish-check-0db763d.json"},
     "rtl_static": {"status":"fail","planned":3,"executed":3,"passed":2,"failed":1,"skipped":0,"evidence":"evidence/clean-head-lint-968712c.json"},
     "func_smoke": {"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":0,"evidence":"iteration.md"},
     "claim_review": {"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":0,"evidence":"iteration.md"}
@@ -36,7 +36,7 @@
     }
   ],
   "blocked_by": [
-    "tracked_core_top_at_968712c_contains_self_invalidating_git_hash_header",
+    "clean_final_head_generate_confirmation_pending",
     "86_unapproved_core_top_lint_warnings",
     "current_head_func_smoke_not_yet_executed",
     "claude_claim_review_not_yet_executed",

@@ -6,7 +6,9 @@
     {"path":"evidence/doctor.json","sha256":"429f23e44681cb747244de3cce1177ba96adef6596176e5c88b1ccda54e086c2","size":5572,"tracked":true},
     {"path":"evidence/header-fix-scala.json","sha256":"3bb32da7cf322bd1dcdbf5860f4a8749e75609a9f1e212e90ba6839045835e16","size":104529,"tracked":true},
     {"path":"evidence/header-fix-generate.json","sha256":"e9a03ceac17cab1cabbf6442e841e584e6af1ca35e958fce500fafca1adff1de","size":101329,"tracked":true},
-    {"path":"evidence/clean-head-lint-968712c.json","sha256":"fe85517d3ce0fb0c5b340d0e0daad6a9ee950c044666c9a9b668333b4fe6622a","size":296,"tracked":true}
+    {"path":"evidence/clean-head-lint-968712c.json","sha256":"fe85517d3ce0fb0c5b340d0e0daad6a9ee950c044666c9a9b668333b4fe6622a","size":296,"tracked":true},
+    {"path":"evidence/publish-check-0db763d.json","sha256":"8c1d71c601075098ab1856dc04bc5759173a51b1f978c79d1125e50d8b23260e","size":2204,"tracked":true},
+    {"path":"evidence/reachability-0db763d.json","sha256":"49f1b39a1da108c242f631a0d148ed5c7e967bc805a81a396980cde38ae4c5d7","size":4002,"tracked":true}
   ],
   "external_locators": [
     {"path":"/tmp/golden-recovery-d22-out/reports/iterations/20260714-1316-golden-recovery-cacop-d22/rtl-smoke.json","sha256":"5dcedd1bdc04c76a82c6b1a60591e9fad60c01df8b1b3bb9ae2497c9a7321b10","size":174202,"retention":"local-until-explicit-clean"},

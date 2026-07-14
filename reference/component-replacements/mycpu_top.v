@@ -1,6 +1,5 @@
 // Generator : SpinalHDL v1.14.2    git head : 78f29dc66110fc099a777992b6daa2f803ab445e
 // Component : core_top
-// Git hash  : 528b79ca2af86f9b71277de91e8fa5811e18a900
 
 
 

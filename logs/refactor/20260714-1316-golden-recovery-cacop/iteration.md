@@ -1,7 +1,7 @@
 # 20260714-1316-golden-recovery-cacop
 
 - Status: `implementation_in_review`
-- Branch / Base SHA / Head SHA: `refactor/20260714-1316-golden-recovery-cacop` / `13e0c8da423bb75ca848aada91c67738f22a60ab` / 待本轮提交
+- Branch / Base SHA / Source SHA: `refactor/20260714-1316-golden-recovery-cacop` / `13e0c8da423bb75ca848aada91c67738f22a60ab` / `0db763de97099d437cfedd4e7157b8c329a0ba4d`
 - Owner / Agent: Codex；CACOP gate 由独立子代理实现，主代理复核并重跑
 - Selected boundary and selection reason: `baseline_validation/cacop`。锁定 baseline 与活动 Spinal core 均在 `0x1c07c79c` 失败，先恢复可执行 oracle，避免继续在错误基线上扩大等价声明。
 - Golden reference and locked tool versions: `d22c13c1ecbee7b0423b7e4f4616f24d98457f02` 仅作为本迭代 CACOP oracle；全局 `team_golden_candidate` 保持 `a158aa8`；chiplab `a2e11b3`；SpinalHDL 1.14.2；Verilator 5.020；Vivado ML Standard 2023.2。
@@ -40,6 +40,7 @@
 2. 已在 `GenerateCoreTopCompat` 关闭 `headerWithDate/headerWithRepoHash`。锁定 Scala gate 4/4 通过，新 RTL 两次生成可复现，且包内不再含仓库 HEAD；本修改提交后需重新发布 tracked RTL 并从 clean commit 再跑 publish-check。
 3. clean `968712c` 严格 lint 为 FAIL：86 条未批准 warning（84 `UNUSEDSIGNAL`、1 `UNUSEDPARAM`、1 `DECLFILENAME`）。端口和 Yosys 通过不覆盖该失败。
 4. 首次 PowerShell/WSL 包装错误解析 `$((END-START))`；另一次把 OUT 错展开到 `/scala-check`。两次结果均作废，未进入 evidence。
+5. 从 clean `0db763d` 重新生成后，wrapper/package SHA256 分别为 `5f2694bb...a57b1b` / `517005ef...907c57`；tracked RTL、`core-top.json`、`spinal-active-runtime.json` 和 `active-reachable.json` 已同步。publish-check 与 reachability 均 PASS。
 
 ## 当前门禁
 
@@ -49,7 +50,7 @@
 | history localization | PASS（定位任务）；四次 strict smoke 均 FAIL | 本文件及外部原始结果 locator |
 | CACOP d22 directed lockstep | PASS，10/10 | `evidence/cacop-directed.json` |
 | Scala after header fix | PASS，4/4 | `evidence/header-fix-scala.json` |
-| core_top generate/package after header fix | 子步骤 PASS；tracked publish 尚未更新 | `evidence/header-fix-generate.json`、`header-fix-package.json` |
+| core_top generate/package/publish after header fix | PASS；package `517005ef...907c57` | `evidence/header-fix-generate.json`、`header-fix-package.json`、`publish-check-0db763d.json` |
 | port / Yosys | PASS / PASS | `evidence/clean-head-port-968712c.json`、`clean-head-yosys-968712c.json` |
 | strict lint | FAIL，86 warnings | `evidence/clean-head-lint-968712c.json` |
 | current committed head official smoke | 待执行 | 待生成 |
@@ -62,5 +63,5 @@
 ## 残余风险与后续候选
 
 - 定向 958 拍不能替代完整 cache 随机 backpressure、全流水提交序列或整机顺序等价。
-- 需要在稳定生成头部提交后重新发布完整 `mycpu_top.v`，从 clean head 跑 generate/publish/port/Yosys/lint 和官方 `func_lab19`。
+- 已重新发布完整 `mycpu_top.v`；还需从本次发布后的 clean head 重跑 generate/publish/port/Yosys/lint 和官方 `func_lab19`。
 - 若当前 head 越过 `0x1c07c79c`，下一项才是扩大功能集；若未越过，继续用首个新 mismatch 定位，不把问题归因于性能。
