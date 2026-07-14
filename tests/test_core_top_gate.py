@@ -343,6 +343,60 @@ class CoreTopStaticGateTests(unittest.TestCase):
         self.assertFalse(any("legacy" in item for item in lint_argv))
         self.assertEqual("complete-spinal-rtl", summary["scope"])
 
+    def test_local_lint_profile_does_not_assert_locked_tool_identity(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            args = self._args(Path(temporary), "lint-local")
+            args.environment_profile = "local"
+            args.verilator = str(Path(sys.executable).resolve())
+
+            def fake_command(argv, *, cwd, timeout):
+                return {
+                    "argv": argv,
+                    "returncode": 0,
+                    "stdout": "Verilator 5.051 local\n" if "--version" in argv else "",
+                    "timed_out": False,
+                    "elapsed_seconds": 0.01,
+                }
+
+            with mock.patch.object(
+                core_top_gate, "resolve_executable", return_value=Path(sys.executable).resolve()
+            ), mock.patch.object(
+                core_top_gate, "checked_tool", side_effect=AssertionError("locked tool used")
+            ), mock.patch.object(core_top_gate, "run_command", side_effect=fake_command):
+                summary = core_top_gate.lint_gate(args)
+        self.assertEqual(summary["environment_profile"], "local")
+        self.assertFalse(summary["locked_manifest_asserted"])
+
+    def test_failed_local_lint_persists_warning_summary_before_raising(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            args = self._args(Path(temporary), "lint-local-fail")
+            args.environment_profile = "local"
+            args.verilator = str(Path(sys.executable).resolve())
+
+            def fake_command(argv, *, cwd, timeout):
+                return {
+                    "argv": argv,
+                    "returncode": 0,
+                    "stdout": (
+                        "Verilator 5.051 local\n"
+                        if "--version" in argv
+                        else "%Warning-UNUSEDSIGNAL: evidence\n"
+                    ),
+                    "timed_out": False,
+                    "elapsed_seconds": 0.01,
+                }
+
+            with mock.patch.object(
+                core_top_gate, "resolve_executable", return_value=Path(sys.executable).resolve()
+            ), mock.patch.object(core_top_gate, "run_command", side_effect=fake_command):
+                with self.assertRaisesRegex(core_top_gate.CoreTopGateError, "failed or warned"):
+                    core_top_gate.lint_gate(args)
+            summary = json.loads((args.out_dir / "summary.json").read_text(encoding="utf-8"))
+        self.assertEqual(summary["status"], "fail")
+        self.assertEqual(summary["environment_profile"], "local")
+        self.assertFalse(summary["locked_manifest_asserted"])
+        self.assertEqual(summary["warnings"], ["%Warning-UNUSEDSIGNAL: evidence"])
+
     def test_yosys_check_reads_one_complete_rtl_file(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             args = self._args(Path(temporary), "yosys")

@@ -899,12 +899,18 @@ def port_check_gate(args: argparse.Namespace) -> dict[str, Any]:
 
 def lint_gate(args: argparse.Namespace) -> dict[str, Any]:
     out_dir, rtl, _, values, identity = prepare_complete_rtl(args, "lint")
-    verilator = checked_tool(values, args.verilator, "verilator", "verilator_binary_sha256")
+    profile = getattr(args, "environment_profile", "locked")
+    if profile == "local":
+        verilator = resolve_executable(args.verilator, "verilator")
+    elif profile == "locked":
+        verilator = checked_tool(values, args.verilator, "verilator", "verilator_binary_sha256")
+    else:
+        raise CoreTopGateError(f"unsupported environment profile: {profile}")
     version = run_command([str(verilator), "--version"], cwd=out_dir, timeout=args.timeout)
     if version["returncode"] != 0 or version["timed_out"]:
-        raise CoreTopGateError("locked Verilator version probe failed")
+        raise CoreTopGateError(f"{profile} Verilator version probe failed")
     expected_version = values.get("verilator", "")
-    if expected_version and not re.search(
+    if profile == "locked" and expected_version and not re.search(
         rf"Verilator\s+{re.escape(expected_version)}(?:\s|$)", str(version["stdout"])
     ):
         raise CoreTopGateError(f"Verilator version differs: {str(version['stdout']).strip()}")
@@ -924,15 +930,16 @@ def lint_gate(args: argparse.Namespace) -> dict[str, Any]:
     log_path.write_text(str(result["stdout"]), encoding="utf-8")
     warnings = warning_lines(str(result["stdout"]))
     skips = skip_lines(str(result["stdout"]))
-    if result["returncode"] != 0 or result["timed_out"] or warnings or skips:
-        raise CoreTopGateError("Verilator complete core_top lint failed or warned")
+    failed = bool(result["returncode"] != 0 or result["timed_out"] or warnings or skips)
     summary = {
         "schema_version": 1,
         "gate": "core-top-lint",
         "target": TARGET,
         "scope": "complete-spinal-rtl",
-        "status": "pass",
+        "status": "fail" if failed else "pass",
         "generated_at": now_iso(),
+        "environment_profile": profile,
+        "locked_manifest_asserted": profile == "locked",
         "input": identity,
         "warnings": warnings,
         "skip_markers": skips,
@@ -949,6 +956,8 @@ def lint_gate(args: argparse.Namespace) -> dict[str, Any]:
         "provenance": gate_provenance(args),
     }
     write_json(out_dir / "summary.json", summary)
+    if failed:
+        raise CoreTopGateError("Verilator complete core_top lint failed or warned")
     return summary
 
 
@@ -1013,6 +1022,7 @@ def build_parser() -> argparse.ArgumentParser:
     lint = subparsers.add_parser("lint")
     add_common(lint, rtl=True)
     lint.add_argument("--verilator")
+    lint.add_argument("--environment-profile", choices=("locked", "local"), default="locked")
     yosys = subparsers.add_parser("yosys-check")
     add_common(yosys, rtl=True)
     yosys.add_argument("--yosys")
