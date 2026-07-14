@@ -244,6 +244,7 @@ module SpinalCoreBackend (
   wire       [31:0]   fetch_io_tlbRefillEntry;
   wire       [1:0]    fetch_io_currentPlv;
   wire       [31:0]   fetch_io_btbTarget;
+  wire       [4:0]    fetch_io_btbIndex;
   wire       [1:0]    fetch_io_tlbPlv;
   wire       [4:0]    decode_io_debugReadAddress;
   wire       [18:0]   execute_io_csrVirtualPageNumber;
@@ -735,7 +736,6 @@ module SpinalCoreBackend (
   reg                 _zz_lookupHit;
   reg        [24:0]   _zz_lookupHit_1;
   reg        [31:0]   _zz_io_btbTarget;
-  wire       [31:0]   _zz_io_btbTarget_1;
   wire                reset;
   reg                 btbValid_0;
   reg                 btbValid_1;
@@ -876,7 +876,6 @@ module SpinalCoreBackend (
   wire       [24:0]   _zz_btbTag_0;
   wire       [31:0]   _zz_36;
 
-  assign _zz_io_btbTarget_1 = (btbLookupPc + 32'h00000004);
   FetchStage fetch (
     .io_downstream_valid                        (fetch_io_downstream_valid                       ), //o
     .io_downstream_ready                        (decode_io_input_ready                           ), //i
@@ -920,7 +919,7 @@ module SpinalCoreBackend (
     .io_btbTarget                               (fetch_io_btbTarget[31:0]                        ), //i
     .io_btbTaken                                (lookupHit                                       ), //i
     .io_btbEnabled                              (lookupHit                                       ), //i
-    .io_btbIndex                                (lookupIndex[4:0]                                ), //i
+    .io_btbIndex                                (fetch_io_btbIndex[4:0]                          ), //i
     .io_addressTranslation                      (fetch_io_addressTranslation                     ), //o
     .io_dmw0Enabled                             (fetch_io_dmw0Enabled                            ), //o
     .io_dmw1Enabled                             (fetch_io_dmw1Enabled                            ), //o
@@ -2042,7 +2041,8 @@ module SpinalCoreBackend (
   assign writeback_io_tlbFillIndex = csr_rand_index;
   assign lookupIndex = btbLookupPc[6 : 2];
   assign lookupHit = ((btbLookupValid && _zz_lookupHit) && (_zz_lookupHit_1 == btbLookupPc[31 : 7]));
-  assign fetch_io_btbTarget = (lookupHit ? _zz_io_btbTarget : _zz_io_btbTarget_1);
+  assign fetch_io_btbIndex = (lookupHit ? lookupIndex : 5'h0);
+  assign fetch_io_btbTarget = (lookupHit ? _zz_io_btbTarget : 32'h0);
   assign _zz_1 = decode_io_btb_pc[6 : 2];
   assign when_SpinalCoreBackend_l192 = (decode_io_btb_actualTaken || decode_io_btb_addEntry);
   assign _zz_2 = ({31'd0,1'b1} <<< _zz_1);
