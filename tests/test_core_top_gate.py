@@ -317,6 +317,42 @@ class CoreTopStaticGateTests(unittest.TestCase):
             timeout=10,
         )
 
+    def _write_lint_waiver(
+        self,
+        args: SimpleNamespace,
+        signatures: list[dict[str, str]],
+        *,
+        signature_sha256: str | None = None,
+    ) -> Path:
+        waiver = args.rtl.parent / "lint-waivers.json"
+        waiver.write_text(
+            json.dumps(
+                {
+                    "schema_version": 1,
+                    "gate": "core-top-lint",
+                    "target": core_top_gate.TARGET,
+                    "environment_profile": "local",
+                    "rtl_sha256": core_top_gate.sha256_file(args.rtl),
+                    "warning_count": len(signatures),
+                    "warning_signature_sha256": (
+                        signature_sha256
+                        if signature_sha256 is not None
+                        else core_top_gate.warning_signature_sha256(signatures)
+                    ),
+                    "approved_categories": [
+                        "DECLFILENAME",
+                        "UNUSEDPARAM",
+                        "UNUSEDSIGNAL",
+                    ],
+                    "reason": "unit-test exact warning set",
+                }
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+        args.waivers = waiver
+        return waiver
+
     def test_lint_invokes_verilator_on_one_complete_rtl_file(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             args = self._args(Path(temporary), "lint")
@@ -380,7 +416,7 @@ class CoreTopStaticGateTests(unittest.TestCase):
                     "stdout": (
                         "Verilator 5.051 local\n"
                         if "--version" in argv
-                        else "%Warning-UNUSEDSIGNAL: evidence\n"
+                        else "%Warning-UNUSEDSIGNAL: /tmp/core_top.v:1:1: evidence\n"
                     ),
                     "timed_out": False,
                     "elapsed_seconds": 0.01,
@@ -395,7 +431,103 @@ class CoreTopStaticGateTests(unittest.TestCase):
         self.assertEqual(summary["status"], "fail")
         self.assertEqual(summary["environment_profile"], "local")
         self.assertFalse(summary["locked_manifest_asserted"])
-        self.assertEqual(summary["warnings"], ["%Warning-UNUSEDSIGNAL: evidence"])
+        self.assertEqual(summary["warnings"], ["%Warning-UNUSEDSIGNAL: /tmp/core_top.v:1:1: evidence"])
+
+    def test_makefile_keeps_lint_waivers_explicit_and_locked_by_default(self) -> None:
+        makefile = (REPOSITORY_ROOT / "Makefile").read_text(encoding="utf-8")
+        self.assertIn("CORE_TOP_LINT_PROFILE ?= locked", makefile)
+        self.assertIn("CORE_TOP_LINT_WAIVERS ?=", makefile)
+        self.assertIn('--environment-profile "$(CORE_TOP_LINT_PROFILE)"', makefile)
+        self.assertIn('--waivers "$(CORE_TOP_LINT_WAIVERS)"', makefile)
+
+    def test_exact_lint_waiver_requires_unsuppressed_audit_then_clean_closure(
+        self,
+    ) -> None:
+        warning_output = (
+            "%Warning-DECLFILENAME: /tmp/core_top.v:1:1: File is not named core_top\n"
+            "%Warning-UNUSEDPARAM: /tmp/core_top.v:2:1: Parameter is not used: 'TLBNUM'\n"
+            "%Warning-UNUSEDSIGNAL: /tmp/core_top.v:3:1: Signal is not used: 'fixture'\n"
+            "%Error: Exiting due to 3 warning(s)\n"
+        )
+        signatures = core_top_gate.warning_signatures(warning_output)
+        with tempfile.TemporaryDirectory() as temporary:
+            args = self._args(Path(temporary), "lint-exact")
+            args.environment_profile = "local"
+            args.verilator = str(Path(sys.executable).resolve())
+            self._write_lint_waiver(args, signatures)
+            commands: list[list[str]] = []
+
+            def fake_command(argv, *, cwd, timeout):
+                commands.append(argv)
+                if "--version" in argv:
+                    stdout, returncode = "Verilator 5.051 local\n", 0
+                elif any(item.startswith("-Wno-") for item in argv):
+                    stdout, returncode = "", 0
+                else:
+                    stdout, returncode = warning_output, 1
+                return {
+                    "argv": argv,
+                    "returncode": returncode,
+                    "stdout": stdout,
+                    "timed_out": False,
+                    "elapsed_seconds": 0.01,
+                }
+
+            with mock.patch.object(
+                core_top_gate, "resolve_executable", return_value=Path(sys.executable).resolve()
+            ), mock.patch.object(core_top_gate, "run_command", side_effect=fake_command):
+                summary = core_top_gate.lint_gate(args)
+
+        self.assertEqual("pass", summary["status"])
+        self.assertTrue(summary["warning_policy"]["exact_match"])
+        self.assertEqual(3, summary["warning_policy"]["actual_warning_count"])
+        self.assertEqual("pass", summary["closure"]["status"])
+        self.assertEqual(3, len(commands))
+        self.assertNotIn("-Wno-UNUSEDSIGNAL", commands[1])
+        self.assertIn("-Wno-DECLFILENAME", commands[2])
+        self.assertIn("-Wno-UNUSEDPARAM", commands[2])
+        self.assertIn("-Wno-UNUSEDSIGNAL", commands[2])
+
+    def test_lint_waiver_warning_drift_fails_before_suppression(self) -> None:
+        warning_output = (
+            "%Warning-DECLFILENAME: /tmp/core_top.v:1:1: File is not named core_top\n"
+            "%Warning-UNUSEDPARAM: /tmp/core_top.v:2:1: Parameter is not used: 'TLBNUM'\n"
+            "%Warning-UNUSEDSIGNAL: /tmp/core_top.v:3:1: Signal is not used: 'fixture'\n"
+            "%Error: Exiting due to 3 warning(s)\n"
+        )
+        signatures = core_top_gate.warning_signatures(warning_output)
+        with tempfile.TemporaryDirectory() as temporary:
+            args = self._args(Path(temporary), "lint-drift")
+            args.environment_profile = "local"
+            args.verilator = str(Path(sys.executable).resolve())
+            self._write_lint_waiver(args, signatures, signature_sha256="0" * 64)
+            commands: list[list[str]] = []
+
+            def fake_command(argv, *, cwd, timeout):
+                commands.append(argv)
+                return {
+                    "argv": argv,
+                    "returncode": 0 if "--version" in argv else 1,
+                    "stdout": (
+                        "Verilator 5.051 local\n"
+                        if "--version" in argv
+                        else warning_output
+                    ),
+                    "timed_out": False,
+                    "elapsed_seconds": 0.01,
+                }
+
+            with mock.patch.object(
+                core_top_gate, "resolve_executable", return_value=Path(sys.executable).resolve()
+            ), mock.patch.object(core_top_gate, "run_command", side_effect=fake_command):
+                with self.assertRaisesRegex(core_top_gate.CoreTopGateError, "drifted"):
+                    core_top_gate.lint_gate(args)
+            summary = json.loads((args.out_dir / "summary.json").read_text(encoding="utf-8"))
+
+        self.assertEqual("fail", summary["status"])
+        self.assertFalse(summary["warning_policy"]["exact_match"])
+        self.assertIsNone(summary["closure"])
+        self.assertEqual(2, len(commands))
 
     def test_yosys_check_reads_one_complete_rtl_file(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

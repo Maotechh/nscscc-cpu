@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "gate": "core-top-lint",
+  "target": "core-top-compat",
+  "environment_profile": "local",
+  "rtl_sha256": "ded57a4a2b494e5342481a2d87e5b286ebb703bedde8e79df3fe299894dc4cad",
+  "warning_count": 73,
+  "warning_signature_sha256": "6cb7110012904a4b0a7648d89815dd23599646f92fa1027255e5b3a352995d37",
+  "approved_categories": [
+    "DECLFILENAME",
+    "UNUSEDPARAM",
+    "UNUSEDSIGNAL"
+  ],
+  "reason": "Exact reviewed OpenLA500 compatibility-shell warning set; the unsuppressed pass must match this RTL and canonical warning signature before category suppression is permitted."
+}

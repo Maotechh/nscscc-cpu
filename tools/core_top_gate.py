@@ -776,6 +776,78 @@ def skip_lines(text: str) -> list[str]:
     ]
 
 
+def warning_signatures(text: str) -> list[dict[str, str]]:
+    signatures: list[dict[str, str]] = []
+    for line in warning_lines(text):
+        match = re.match(r"%Warning-([A-Z0-9_]+): .*?:\d+:\d+: (.*)$", line)
+        if match is None:
+            raise CoreTopGateError(f"unstructured Verilator warning: {line}")
+        signatures.append({"category": match.group(1), "message": match.group(2)})
+    return signatures
+
+
+def warning_signature_sha256(signatures: list[dict[str, str]]) -> str:
+    canonical = json.dumps(
+        sorted(signatures, key=lambda item: (item["category"], item["message"])),
+        sort_keys=True,
+        separators=(",", ":"),
+    ).encode("utf-8")
+    return sha256_bytes(canonical)
+
+
+def lint_waiver_metadata(path: Path, profile: str, rtl_sha256: str) -> dict[str, Any]:
+    path = checked_regular_file(path, "core-top lint waiver")
+    document = load_json_strict(path)
+    expected_keys = {
+        "schema_version",
+        "gate",
+        "target",
+        "environment_profile",
+        "rtl_sha256",
+        "warning_count",
+        "warning_signature_sha256",
+        "approved_categories",
+        "reason",
+    }
+    if set(document) != expected_keys:
+        raise CoreTopGateError("core-top lint waiver keys differ from the locked schema")
+    if (
+        document.get("schema_version") != 1
+        or document.get("gate") != "core-top-lint"
+        or document.get("target") != TARGET
+    ):
+        raise CoreTopGateError(f"invalid core-top lint waiver identity: {path}")
+    if document.get("environment_profile") != profile:
+        raise CoreTopGateError(
+            f"lint waiver profile mismatch: expected {profile}, "
+            f"got {document.get('environment_profile')}"
+        )
+    if document.get("rtl_sha256") != rtl_sha256:
+        raise CoreTopGateError("lint waiver RTL hash does not match the complete package")
+    count = document.get("warning_count")
+    signature_hash = document.get("warning_signature_sha256")
+    categories = document.get("approved_categories")
+    if not isinstance(count, int) or isinstance(count, bool) or count <= 0:
+        raise CoreTopGateError("lint waiver warning_count must be a positive integer")
+    if (
+        not isinstance(signature_hash, str)
+        or re.fullmatch(r"[0-9a-f]{64}", signature_hash) is None
+    ):
+        raise CoreTopGateError("lint waiver warning signature hash is invalid")
+    if categories != ["DECLFILENAME", "UNUSEDPARAM", "UNUSEDSIGNAL"]:
+        raise CoreTopGateError("lint waiver approved categories differ from the reviewed set")
+    if not isinstance(document.get("reason"), str) or not document["reason"].strip():
+        raise CoreTopGateError("lint waiver reason must be non-empty")
+    return {
+        "path": str(path.resolve()),
+        "sha256": sha256_file(path),
+        "warning_count": count,
+        "warning_signature_sha256": signature_hash,
+        "approved_categories": categories,
+        "reason": document["reason"],
+    }
+
+
 def yosys_quote(path: Path) -> str:
     return '"' + str(path.resolve()).replace("\\", "/").replace('"', '\\"') + '"'
 
@@ -914,23 +986,137 @@ def lint_gate(args: argparse.Namespace) -> dict[str, Any]:
         rf"Verilator\s+{re.escape(expected_version)}(?:\s|$)", str(version["stdout"])
     ):
         raise CoreTopGateError(f"Verilator version differs: {str(version['stdout']).strip()}")
-    result = run_command(
-        [
-            str(verilator),
-            "--lint-only",
-            "-Wall",
-            "--top-module",
-            TOP_MODULE,
-            str(rtl),
-        ],
-        cwd=out_dir,
-        timeout=args.timeout,
-    )
+
+    lint_argv = [
+        str(verilator),
+        "--lint-only",
+        "-Wall",
+        "--top-module",
+        TOP_MODULE,
+        str(rtl),
+    ]
+    result = run_command(lint_argv, cwd=out_dir, timeout=args.timeout)
     log_path = out_dir / "verilator.log"
     log_path.write_text(str(result["stdout"]), encoding="utf-8")
     warnings = warning_lines(str(result["stdout"]))
+    signatures = warning_signatures(str(result["stdout"]))
+    signature_hash = warning_signature_sha256(signatures)
     skips = skip_lines(str(result["stdout"]))
-    failed = bool(result["returncode"] != 0 or result["timed_out"] or warnings or skips)
+    unexpected_errors = [
+        line.strip()
+        for line in str(result["stdout"]).splitlines()
+        if line.strip().startswith("%Error")
+        and re.fullmatch(
+            r"%Error: Exiting due to \d+ warning\(s\)", line.strip()
+        )
+        is None
+    ]
+
+    waiver_arg = getattr(args, "waivers", None)
+    waiver = (
+        lint_waiver_metadata(
+            Path(waiver_arg),
+            profile,
+            str(identity["complete_rtl_sha256"]),
+        )
+        if waiver_arg is not None
+        else None
+    )
+    exact_match = bool(
+        waiver is not None
+        and len(signatures) == waiver["warning_count"]
+        and signature_hash == waiver["warning_signature_sha256"]
+        and sorted({item["category"] for item in signatures})
+        == waiver["approved_categories"]
+    )
+    preflight_failed = bool(
+        result["timed_out"]
+        or skips
+        or unexpected_errors
+        or result["returncode"] not in ({0, 1} if exact_match else {0})
+    )
+
+    closure: dict[str, Any] | None = None
+    if exact_match and not preflight_failed:
+        suppressions = [
+            f"-Wno-{category}" for category in waiver["approved_categories"]
+        ]
+        closure_result = run_command(
+            [
+                str(verilator),
+                "--lint-only",
+                "-Wall",
+                *suppressions,
+                "--top-module",
+                TOP_MODULE,
+                str(rtl),
+            ],
+            cwd=out_dir,
+            timeout=args.timeout,
+        )
+        closure_log = out_dir / "verilator-closure.log"
+        closure_log.write_text(str(closure_result["stdout"]), encoding="utf-8")
+        closure_warnings = warning_lines(str(closure_result["stdout"]))
+        closure_skips = skip_lines(str(closure_result["stdout"]))
+        closure_errors = [
+            line.strip()
+            for line in str(closure_result["stdout"]).splitlines()
+            if line.strip().startswith("%Error")
+        ]
+        closure = {
+            "status": (
+                "pass"
+                if not (
+                    closure_result["returncode"] != 0
+                    or closure_result["timed_out"]
+                    or closure_warnings
+                    or closure_skips
+                    or closure_errors
+                )
+                else "fail"
+            ),
+            "suppressions": suppressions,
+            "returncode": closure_result["returncode"],
+            "timed_out": closure_result["timed_out"],
+            "elapsed_seconds": closure_result["elapsed_seconds"],
+            "warnings": closure_warnings,
+            "skip_markers": closure_skips,
+            "errors": closure_errors,
+            "log": str(closure_log),
+            "log_sha256": sha256_file(closure_log),
+        }
+
+    if waiver is None:
+        failed = bool(
+            result["returncode"] != 0
+            or result["timed_out"]
+            or warnings
+            or skips
+            or unexpected_errors
+        )
+    else:
+        failed = bool(
+            not exact_match
+            or preflight_failed
+            or closure is None
+            or closure["status"] != "pass"
+        )
+
+    warning_policy: dict[str, Any] = {
+        "mode": "exact-waiver" if waiver is not None else "strict-zero",
+        "actual_warning_count": len(signatures),
+        "actual_warning_signature_sha256": signature_hash,
+        "actual_categories": sorted({item["category"] for item in signatures}),
+    }
+    if waiver is not None:
+        warning_policy.update(
+            {
+                "waiver": waiver,
+                "exact_match": exact_match,
+                "unexpected_errors": unexpected_errors,
+            }
+        )
+
     summary = {
         "schema_version": 1,
         "gate": "core-top-lint",
@@ -942,7 +1128,11 @@ def lint_gate(args: argparse.Namespace) -> dict[str, Any]:
         "locked_manifest_asserted": profile == "locked",
         "input": identity,
         "warnings": warnings,
+        "warning_signatures": signatures,
+        "warning_signature_sha256": signature_hash,
+        "warning_policy": warning_policy,
         "skip_markers": skips,
+        "unexpected_errors": unexpected_errors,
         "verilator": {
             "path": str(verilator),
             "sha256": sha256_file(verilator),
@@ -953,11 +1143,14 @@ def lint_gate(args: argparse.Namespace) -> dict[str, Any]:
             "log": str(log_path),
             "log_sha256": sha256_file(log_path),
         },
+        "closure": closure,
         "provenance": gate_provenance(args),
     }
     write_json(out_dir / "summary.json", summary)
     if failed:
-        raise CoreTopGateError("Verilator complete core_top lint failed or warned")
+        raise CoreTopGateError(
+            "Verilator complete core_top lint failed or warned, drifted, or did not close"
+        )
     return summary
 
 
@@ -1023,6 +1216,7 @@ def build_parser() -> argparse.ArgumentParser:
     add_common(lint, rtl=True)
     lint.add_argument("--verilator")
     lint.add_argument("--environment-profile", choices=("locked", "local"), default="locked")
+    lint.add_argument("--waivers", type=Path)
     yosys = subparsers.add_parser("yosys-check")
     add_common(yosys, rtl=True)
     yosys.add_argument("--yosys")

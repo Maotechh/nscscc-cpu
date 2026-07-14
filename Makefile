@@ -102,6 +102,9 @@ CORE_TOP_PACKAGE_DIR ?= $(OUT_DIR)/core_top/package
 CORE_TOP_RTL ?= $(CORE_TOP_PACKAGE_DIR)/rtl/mycpu_top.v
 CORE_TOP_TRACKED_RTL ?= reference/component-replacements/mycpu_top.v
 CORE_TOP_REPLACEMENT_SPEC ?= reference/component-replacements/core-top.json
+CORE_TOP_LINT_PROFILE ?= locked
+CORE_TOP_LINT_WAIVERS ?=
+CORE_TOP_VERILATOR ?=
 LINT_WAIVERS ?= lint-waivers.yml
 
 .PHONY: doctor local-doctor local-scala test-local scala-cache-bootstrap scala-check elaborate generate port-check lint yosys-check unit formal cacop-recovery-unit core-contract-check core-top-contract core-top-package core-top-publish-check mul-contract mul-golden-unit mul-candidate-unit div-contract div-golden-unit div-candidate-unit lacc-contract lacc-candidate-unit perf-counter-contract perf-counter-candidate-unit perf-counter-top-check axi-bridge-contract axi-bridge-candidate-unit csr-generate csr-port-check csr-static csr-unit wb-stage-contract wb-stage-candidate-unit mem-stage-contract mem-stage-candidate-unit exe-stage-negative-control icache-contract icache-candidate-unit dcache-contract dcache-candidate-unit replacement-reachability chiplab-doctor golden-export chiplab-overlay rtl-smoke identity-compare evidence-check claim-review test-automation
@@ -229,7 +232,7 @@ endif
 
 lint:
 ifeq ($(TARGET),core_top)
-	$(PYTHON) -I tools/core_top_gate.py lint --repo-root "." --manifest "reference/manifest.lock" --ports "$(CORE_TOP_PORTS)" --rtl "$(CORE_TOP_RTL)" --out-dir "$(OUT_DIR)/core_top/lint"
+	$(PYTHON) -I tools/core_top_gate.py lint --repo-root "." --manifest "reference/manifest.lock" --ports "$(CORE_TOP_PORTS)" --rtl "$(CORE_TOP_RTL)" --out-dir "$(OUT_DIR)/core_top/lint" --environment-profile "$(CORE_TOP_LINT_PROFILE)" $(if $(CORE_TOP_VERILATOR),--verilator "$(CORE_TOP_VERILATOR)",) $(if $(CORE_TOP_LINT_WAIVERS),--waivers "$(CORE_TOP_LINT_WAIVERS)",)
 else ifeq ($(TARGET),mul)
 	$(PYTHON) -I tools/mul_gate.py lint --target "$(TARGET)" --manifest "reference/manifest.lock" --rtl "$(MUL_RTL)" --out-dir "$(OUT_DIR)/mul/lint"
 else ifeq ($(TARGET),div)
