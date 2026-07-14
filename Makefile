@@ -13,6 +13,10 @@ LOCKED_ITERATION_ID ?=
 MIXED_ITERATION_ID ?=$(ITERATION_ID)
 VIVADO_HOME ?=
 SCALA_CACHE_ROOT ?= $(CHIPLAB_TOOL_ROOT)/scala-cache-sbt1.10.11-spinal1.14.2
+LOCAL_SBT ?= /home/toss-a-coin/.local/share/coursier/bin/sbt
+LOCAL_TMP_ROOT ?=
+LOCAL_ENV_OUT ?= $(OUT_DIR)/local-env
+LOCAL_VERILATOR_FLAGS ?= -CFLAGS -DWData=EData
 
 ifneq ($(word 2,$(strip $(DIAGNOSTIC))),)
 $(error DIAGNOSTIC must be empty, 0, or 1)
@@ -100,8 +104,17 @@ CORE_TOP_TRACKED_RTL ?= reference/component-replacements/mycpu_top.v
 CORE_TOP_REPLACEMENT_SPEC ?= reference/component-replacements/core-top.json
 LINT_WAIVERS ?= lint-waivers.yml
 
-.PHONY: doctor scala-cache-bootstrap scala-check elaborate generate port-check lint yosys-check unit formal cacop-recovery-unit core-contract-check core-top-contract core-top-package core-top-publish-check mul-contract mul-golden-unit mul-candidate-unit div-contract div-golden-unit div-candidate-unit lacc-contract lacc-candidate-unit axi-bridge-contract axi-bridge-candidate-unit csr-generate csr-port-check csr-static csr-unit wb-stage-contract wb-stage-candidate-unit mem-stage-contract mem-stage-candidate-unit exe-stage-negative-control icache-contract icache-candidate-unit dcache-contract dcache-candidate-unit replacement-reachability chiplab-doctor golden-export chiplab-overlay rtl-smoke identity-compare evidence-check claim-review test-automation
+.PHONY: doctor local-doctor local-scala test-local scala-cache-bootstrap scala-check elaborate generate port-check lint yosys-check unit formal cacop-recovery-unit core-contract-check core-top-contract core-top-package core-top-publish-check mul-contract mul-golden-unit mul-candidate-unit div-contract div-golden-unit div-candidate-unit lacc-contract lacc-candidate-unit perf-counter-contract perf-counter-candidate-unit perf-counter-top-check axi-bridge-contract axi-bridge-candidate-unit csr-generate csr-port-check csr-static csr-unit wb-stage-contract wb-stage-candidate-unit mem-stage-contract mem-stage-candidate-unit exe-stage-negative-control icache-contract icache-candidate-unit dcache-contract dcache-candidate-unit replacement-reachability chiplab-doctor golden-export chiplab-overlay rtl-smoke identity-compare evidence-check claim-review test-automation
 
+
+local-doctor:
+	$(PYTHON) -I tools/local_env.py --repo-root "." --out "$(LOCAL_ENV_OUT)/summary.json"
+
+local-scala:
+	cd spinal && $(if $(LOCAL_TMP_ROOT),TMPDIR="$(LOCAL_TMP_ROOT)" TMP="$(LOCAL_TMP_ROOT)" TEMP="$(LOCAL_TMP_ROOT)" ,)SPINAL_VERILATOR_FLAGS="$(LOCAL_VERILATOR_FLAGS)" $(LOCAL_SBT) -batch "scalafmtCheckAll" "Compile / compile" "Test / compile" "Test / test"
+
+test-local:
+	$(if $(LOCAL_TMP_ROOT),TMPDIR="$(LOCAL_TMP_ROOT)" TMP="$(LOCAL_TMP_ROOT)" TEMP="$(LOCAL_TMP_ROOT)" ,)$(PYTHON) -I -m unittest discover -s tests -p "test_*.py"
 doctor:
 	$(PYTHON) -I tools/refactor.py doctor --out-dir "$(OUT_DIR)" $(if $(VIVADO_HOME),--vivado-home "$(VIVADO_HOME)",)
 

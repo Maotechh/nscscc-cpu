@@ -46,7 +46,7 @@ class ReplacementReachabilityTest(unittest.TestCase):
             report = json.loads((Path(directory) / "out" / "reachability.json").read_text())
             self.assertEqual(report["selected_count"], 1)
             self.assertEqual(report["selected_target_modules"], {"rtl/mycpu_top.v": "core_top"})
-            self.assertEqual(report["deferred_count"], 13)
+            self.assertEqual(report["deferred_count"], 14)
             self.assertIn("rtl/id_stage.v", report["deferred_reachable"])
             self.assertIn("rtl/wb_stage.v", report["deferred_reachable"])
             self.assertNotIn("lacc_core", report["reachable_modules"])
