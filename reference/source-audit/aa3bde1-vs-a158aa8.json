@@ -1,0 +1,451 @@
+{
+  "classification_policy": {
+    "dead-or-backup": "backup or duplicate register-file source not in official baseline",
+    "official-behavioral-rtl": "aa3bde1 root-level Verilog/header implementation files",
+    "official-overlap": "a158aa8 rtl basename matches an official aa3bde1 source",
+    "team-enhancement": "LACC/store-buffer candidate-only implementation",
+    "test-or-integration-support": "SoC/software/Xilinx support outside the CPU RTL boundary"
+  },
+  "historical": {
+    "files": [
+      {
+        "blob_sha1": "e03fafbc6e05dc6a3abddc7808b58c24cb2875d8",
+        "classification": "official-overlap",
+        "official_path": "addr_trans.v",
+        "official_sha256": "b25c7585ca410363cbbb25e6669687083687fed1a0641a91ff58b7837c371697",
+        "path": "rtl/addr_trans.v",
+        "sha256": "b25c7585ca410363cbbb25e6669687083687fed1a0641a91ff58b7837c371697",
+        "size": 8901
+      },
+      {
+        "blob_sha1": "8569fe983adb5c08762964a2c44ec6db4831da75",
+        "classification": "official-overlap",
+        "official_path": "alu.v",
+        "official_sha256": "5d73aa7f57367311f5d6f6fad5f750e5f97bc2bd1e52c7d0b9e543596ffc7d32",
+        "path": "rtl/alu.v",
+        "sha256": "5d73aa7f57367311f5d6f6fad5f750e5f97bc2bd1e52c7d0b9e543596ffc7d32",
+        "size": 3066
+      },
+      {
+        "blob_sha1": "4219790c25c653da1a061c5f4c674e062201b8e9",
+        "classification": "official-overlap",
+        "official_path": "axi_bridge.v",
+        "official_sha256": "07c30c8e5e99373ecb988b2a5cc03e4e8cb7b6e22af26b1b37171a808b144f9e",
+        "path": "rtl/axi_bridge.v",
+        "sha256": "07c30c8e5e99373ecb988b2a5cc03e4e8cb7b6e22af26b1b37171a808b144f9e",
+        "size": 10106
+      },
+      {
+        "blob_sha1": "3f697590399a6cde0fc6b79becbdc0cda1dfc315",
+        "classification": "official-overlap",
+        "official_path": "btb.v",
+        "official_sha256": "6d540a983075e8ed3a9bd1f791bc4ec14e3b08ff04c4c8f13ae1c0fa8a081bfb",
+        "path": "rtl/btb.v",
+        "sha256": "81b34945ad638d6211301aafe48cfd22344933ba9c66f56e7c0472d24bf47ae9",
+        "size": 6976
+      },
+      {
+        "blob_sha1": "e2f6e340c1f4f98ce93493192030c32943935229",
+        "classification": "dead-or-backup",
+        "official_path": null,
+        "official_sha256": null,
+        "path": "rtl/btb.v.bak",
+        "sha256": "6d540a983075e8ed3a9bd1f791bc4ec14e3b08ff04c4c8f13ae1c0fa8a081bfb",
+        "size": 6976
+      },
+      {
+        "blob_sha1": "a1d8a4389e2b45afee520d5c70d728d14404e13c",
+        "classification": "official-overlap",
+        "official_path": "csr.h",
+        "official_sha256": "11f5550b887a2b507a5b916340069d6d127848c66c761f07d0303c7cc201026d",
+        "path": "rtl/csr.h",
+        "sha256": "11f5550b887a2b507a5b916340069d6d127848c66c761f07d0303c7cc201026d",
+        "size": 1409
+      },
+      {
+        "blob_sha1": "b43d83d7636f20ff05667ec4f439484c961f9090",
+        "classification": "official-overlap",
+        "official_path": "csr.v",
+        "official_sha256": "7349b5b83975b6da8efe69f42d8ee43d93312f7e13def4ed2f6c48a3a868c433",
+        "path": "rtl/csr.v",
+        "sha256": "7349b5b83975b6da8efe69f42d8ee43d93312f7e13def4ed2f6c48a3a868c433",
+        "size": 25307
+      },
+      {
+        "blob_sha1": "755b5087d0321ab5a41596465c2352dd3ee98a4e",
+        "classification": "official-overlap",
+        "official_path": "dcache.v",
+        "official_sha256": "8b6dd8088b8f2c09a20e8a6ce373c246b292558e7e225ff4c9210bf529553dfc",
+        "path": "rtl/dcache.v",
+        "sha256": "8c9c968723710ca741bb5253cc0a1f29c9c6f9f8b3e5e2b14b69f11483e60e97",
+        "size": 23305
+      },
+      {
+        "blob_sha1": "225827c7d69addd280cb671c17e067a406a9171f",
+        "classification": "official-overlap",
+        "official_path": "div.v",
+        "official_sha256": "7e499f4c43c92154d1d4e21be2f269ac140b4f2b2d944677c71f6f4213b66dc6",
+        "path": "rtl/div.v",
+        "sha256": "7e499f4c43c92154d1d4e21be2f269ac140b4f2b2d944677c71f6f4213b66dc6",
+        "size": 2642
+      },
+      {
+        "blob_sha1": "e95171aba43330a3b0bf267d3bdd45162889cb3b",
+        "classification": "official-overlap",
+        "official_path": "exe_stage.v",
+        "official_sha256": "8e0df730dc433f4f173de2d781a3e3da45f781ef6bf1fdc7b82d9a4ddfb6cbd9",
+        "path": "rtl/exe_stage.v",
+        "sha256": "cab20e05205c6bddff19f01fd15ad4cb671144debf0836982b45b334c686f526",
+        "size": 16242
+      },
+      {
+        "blob_sha1": "39ec5931316a068b7e5e64169bd257f480db5640",
+        "classification": "official-overlap",
+        "official_path": "icache.v",
+        "official_sha256": "033c788597c9ed3664409c2c9df9d04e5a55a47316a33753b1e667c5589e5a48",
+        "path": "rtl/icache.v",
+        "sha256": "85ba1acc69616dd8b19dae1578fc7e002c83fd435f90227f54068e4fa492675b",
+        "size": 14887
+      },
+      {
+        "blob_sha1": "93bb0283a06a0f4e88b5c37022f550b45ea4e6ed",
+        "classification": "official-overlap",
+        "official_path": "id_stage.v",
+        "official_sha256": "22ec5679f862d0736c36550e13aec72f2bd60eb4e824a3ad5d10b052b33edc2b",
+        "path": "rtl/id_stage.v",
+        "sha256": "dcd896a12fda42faff9f7c1bcd43de3bbd7bb181be688b0cef21dded5e05d807",
+        "size": 38974
+      },
+      {
+        "blob_sha1": "f0684f133ffd509dcda14d6a29f03779822001e5",
+        "classification": "official-overlap",
+        "official_path": "if_stage.v",
+        "official_sha256": "9fcc66200e549825c89737b420c68e97a22af1082e370536ad67e3d72e035547",
+        "path": "rtl/if_stage.v",
+        "sha256": "9fcc66200e549825c89737b420c68e97a22af1082e370536ad67e3d72e035547",
+        "size": 12929
+      },
+      {
+        "blob_sha1": "4e6b4b328ac7b15f8e84745806c7cb87ed6dda95",
+        "classification": "team-enhancement",
+        "official_path": null,
+        "official_sha256": null,
+        "path": "rtl/lacc_core.v",
+        "sha256": "0b17abbd83cbbf088993dcb30a38981e99d600ebaeaa5c566ad4eaff75ac97b5",
+        "size": 1707
+      },
+      {
+        "blob_sha1": "d09a09b3dd258288d1fc9e3992bc288b83fb43c0",
+        "classification": "team-enhancement",
+        "official_path": null,
+        "official_sha256": null,
+        "path": "rtl/lacc_demo.v",
+        "sha256": "8cae09cc7f0acb0ea5cc24352704d80baf116e29f4ae372ca9eac6b63bac2ea0",
+        "size": 6081
+      },
+      {
+        "blob_sha1": "ebeacf81c498b3041f5c55b16c2abe220e87ecd4",
+        "classification": "official-overlap",
+        "official_path": "mem_stage.v",
+        "official_sha256": "86592ed33afd5dde9e944860c7088ad70e5d62ee22f72999e336a64902d881a7",
+        "path": "rtl/mem_stage.v",
+        "sha256": "86592ed33afd5dde9e944860c7088ad70e5d62ee22f72999e336a64902d881a7",
+        "size": 13988
+      },
+      {
+        "blob_sha1": "9aa9e7ebf5632420a3cb6677fb873b62887cb71d",
+        "classification": "official-overlap",
+        "official_path": "mul.v",
+        "official_sha256": "251d2bba3e659c294c9a004bbb2b542435fcfa0b0c1582cc1a7a3edca765a4c0",
+        "path": "rtl/mul.v",
+        "sha256": "251d2bba3e659c294c9a004bbb2b542435fcfa0b0c1582cc1a7a3edca765a4c0",
+        "size": 6045
+      },
+      {
+        "blob_sha1": "64725d67fb79cf1b43ee88f7a898ecd20052cdf0",
+        "classification": "official-overlap",
+        "official_path": "mycpu_top.v",
+        "official_sha256": "0b2b294b1c242edc42bbaadd33c51125a1e24388c8781b0adad94aa25a4bdde1",
+        "path": "rtl/mycpu_top.v",
+        "sha256": "ff286f559dbc9131349c9fb8c842110569d231b6a34e76ded172c403d8f90afa",
+        "size": 46274
+      },
+      {
+        "blob_sha1": "7fa24d4cbe4429e7740dfc74c3b750819e057c90",
+        "classification": "official-overlap",
+        "official_path": "perf_counter.v",
+        "official_sha256": "a2f8f337422097699b91d217afb1eb896fa1aa02a7fdd1ed829c183de00935b6",
+        "path": "rtl/perf_counter.v",
+        "sha256": "a2f8f337422097699b91d217afb1eb896fa1aa02a7fdd1ed829c183de00935b6",
+        "size": 1623
+      },
+      {
+        "blob_sha1": "3caa2b688d0b6cd2e37b28d43ab5fad632e7d2f7",
+        "classification": "official-overlap",
+        "official_path": "regfile.v",
+        "official_sha256": "e98d043d5166f8c2baf33692e74e3e2f203c8a80a3a2fae6b0f913ffb45d1203",
+        "path": "rtl/regfile.v",
+        "sha256": "e98d043d5166f8c2baf33692e74e3e2f203c8a80a3a2fae6b0f913ffb45d1203",
+        "size": 872
+      },
+      {
+        "blob_sha1": "c347125d3ae318a7e6c280d92630bcb723b69f2a",
+        "classification": "dead-or-backup",
+        "official_path": null,
+        "official_sha256": null,
+        "path": "rtl/regfile_dual.v",
+        "sha256": "7c90b96fdedca94154a19c650d2c60423e62b784abd355d37a1db26f0d14a9a3",
+        "size": 1769
+      },
+      {
+        "blob_sha1": "0bfb0966f6d3767d66a8cbf9390351dc8eb0a6ec",
+        "classification": "team-enhancement",
+        "official_path": null,
+        "official_sha256": null,
+        "path": "rtl/store_buffer.v",
+        "sha256": "3e946de3edd58763df8b459a53b9f513d5d25619c7f270d81f63a92017b85040",
+        "size": 2778
+      },
+      {
+        "blob_sha1": "0dad79a3947675efc2115a10d6dfcbdbb4038a5a",
+        "classification": "official-overlap",
+        "official_path": "tlb_entry.v",
+        "official_sha256": "a3e3508a0c755375336ba6db392f9038e1d793042fc21b7cd088fde9febcba1f",
+        "path": "rtl/tlb_entry.v",
+        "sha256": "a3e3508a0c755375336ba6db392f9038e1d793042fc21b7cd088fde9febcba1f",
+        "size": 9268
+      },
+      {
+        "blob_sha1": "e4599aa111da7a9a84d417bd4f5b4a820c9fbc95",
+        "classification": "official-overlap",
+        "official_path": "tools.v",
+        "official_sha256": "8dd00f9bef99547bdf97c60dbbce2a792a8de574f2ffcace7775ffcf29f9d531",
+        "path": "rtl/tools.v",
+        "sha256": "0160c1b8a80f09670a0cc1942b72b44350a4d79d1866fdaa5eb4ea8fa77e9bef",
+        "size": 4758
+      },
+      {
+        "blob_sha1": "90ae54b4ea13298aa64ee83aa33eee14813392d7",
+        "classification": "official-overlap",
+        "official_path": "wb_stage.v",
+        "official_sha256": "8a6f6cb282d152e4b43673397b8c00f598e3d116589e5797fb6feaadbc032a09",
+        "path": "rtl/wb_stage.v",
+        "sha256": "8a6f6cb282d152e4b43673397b8c00f598e3d116589e5797fb6feaadbc032a09",
+        "size": 12315
+      }
+    ],
+    "repository": "/home/toss-a-coin/WorkSpace/NSCSCC2026/nscscc-cpu",
+    "revision": "a158aa8ab4d49cece1a0fe488d7ac7dc02bd8cf6"
+  },
+  "official": {
+    "behavioral_rtl_count": 21,
+    "files": [
+      {
+        "blob_sha1": "7312e3ea4ad93f196824d51450c3c913c5c7008a",
+        "classification": "official-memory-ip",
+        "path": "IP/data_bank_sram.xcix",
+        "sha256": "ab1cd5714fa1cf94dd09fc59bc461bc92198a6e29e7aba07687f64dce696968f",
+        "size": 11674557
+      },
+      {
+        "blob_sha1": "e7fcbde4dbfa40b0d069b5c9f3a3526aa16b3a9a",
+        "classification": "official-memory-ip",
+        "path": "IP/tagv_sram.xcix",
+        "sha256": "0dfffef5a025f7ba266c7f7b1759c31951439c3fa0e93c522c2b8ad1dccc7941",
+        "size": 11668860
+      },
+      {
+        "blob_sha1": "ee5839968a2bf86c93283efc09d40fd050b7cfa2",
+        "classification": "official-documentation",
+        "path": "LICENSE",
+        "sha256": "6326ae60dd78c85b1f2f6ff308ef1615ff939323270d838e8ebab20f5de1a8c5",
+        "size": 9719
+      },
+      {
+        "blob_sha1": "beaa043a54d9aeae5c5fef9a097aaf594db7ff99",
+        "classification": "official-documentation",
+        "path": "README.md",
+        "sha256": "2f57d0abf4d73e93f1b8ded2a4543813d0b59f398415cd78922dfdcb96e1f14d",
+        "size": 683
+      },
+      {
+        "blob_sha1": "e03fafbc6e05dc6a3abddc7808b58c24cb2875d8",
+        "classification": "official-behavioral-rtl",
+        "path": "addr_trans.v",
+        "sha256": "b25c7585ca410363cbbb25e6669687083687fed1a0641a91ff58b7837c371697",
+        "size": 8901
+      },
+      {
+        "blob_sha1": "8569fe983adb5c08762964a2c44ec6db4831da75",
+        "classification": "official-behavioral-rtl",
+        "path": "alu.v",
+        "sha256": "5d73aa7f57367311f5d6f6fad5f750e5f97bc2bd1e52c7d0b9e543596ffc7d32",
+        "size": 3066
+      },
+      {
+        "blob_sha1": "4219790c25c653da1a061c5f4c674e062201b8e9",
+        "classification": "official-behavioral-rtl",
+        "path": "axi_bridge.v",
+        "sha256": "07c30c8e5e99373ecb988b2a5cc03e4e8cb7b6e22af26b1b37171a808b144f9e",
+        "size": 10106
+      },
+      {
+        "blob_sha1": "e2f6e340c1f4f98ce93493192030c32943935229",
+        "classification": "official-behavioral-rtl",
+        "path": "btb.v",
+        "sha256": "6d540a983075e8ed3a9bd1f791bc4ec14e3b08ff04c4c8f13ae1c0fa8a081bfb",
+        "size": 6976
+      },
+      {
+        "blob_sha1": "a1d8a4389e2b45afee520d5c70d728d14404e13c",
+        "classification": "official-behavioral-rtl",
+        "path": "csr.h",
+        "sha256": "11f5550b887a2b507a5b916340069d6d127848c66c761f07d0303c7cc201026d",
+        "size": 1409
+      },
+      {
+        "blob_sha1": "b43d83d7636f20ff05667ec4f439484c961f9090",
+        "classification": "official-behavioral-rtl",
+        "path": "csr.v",
+        "sha256": "7349b5b83975b6da8efe69f42d8ee43d93312f7e13def4ed2f6c48a3a868c433",
+        "size": 25307
+      },
+      {
+        "blob_sha1": "d9c20456b28969fe32bfaf79cc79c2fba0db2e8a",
+        "classification": "official-behavioral-rtl",
+        "path": "dcache.v",
+        "sha256": "8b6dd8088b8f2c09a20e8a6ce373c246b292558e7e225ff4c9210bf529553dfc",
+        "size": 22880
+      },
+      {
+        "blob_sha1": "225827c7d69addd280cb671c17e067a406a9171f",
+        "classification": "official-behavioral-rtl",
+        "path": "div.v",
+        "sha256": "7e499f4c43c92154d1d4e21be2f269ac140b4f2b2d944677c71f6f4213b66dc6",
+        "size": 2642
+      },
+      {
+        "blob_sha1": "734ecfe855957c7f259117b8e7e5ab57cdeae1c7",
+        "classification": "official-documentation",
+        "path": "doc/picture/\u6846\u56fe.svg",
+        "sha256": "af55bd0cbc25e949031373a44c838bd9ca2c8176849a59a0c110bf7bdce9f908",
+        "size": 74746
+      },
+      {
+        "blob_sha1": "20d7d0b2e7a0c8bd70cc6dd84b255e4282350aef",
+        "classification": "official-documentation",
+        "path": "doc/\u5206\u652f\u9884\u6d4b.md",
+        "sha256": "bf3a4bf61595266f885f30e93e0dedab9adb5f403346082b559f2b0dc9ffa08f",
+        "size": 11577
+      },
+      {
+        "blob_sha1": "6e49d32cddb03566328b4712dc87651b982d0f49",
+        "classification": "official-documentation",
+        "path": "doc/\u524d\u8a00.md",
+        "sha256": "041853727024bad0c8e2ddb0d2496fb6653e254e724d87aff585355a5a162059",
+        "size": 1364
+      },
+      {
+        "blob_sha1": "f93b5eba8fbb2fa014b1d6ed2e341a1603adea26",
+        "classification": "official-documentation",
+        "path": "doc/\u8bbe\u8ba1\u6982\u8ff0.md",
+        "sha256": "2a07d79593562549d37a0906d7742df11047fa802a1598fe04faaee7574a46cf",
+        "size": 9165
+      },
+      {
+        "blob_sha1": "9c9d73033eeb00ce1f9e2e3db02010e99b851ba6",
+        "classification": "official-behavioral-rtl",
+        "path": "exe_stage.v",
+        "sha256": "8e0df730dc433f4f173de2d781a3e3da45f781ef6bf1fdc7b82d9a4ddfb6cbd9",
+        "size": 13681
+      },
+      {
+        "blob_sha1": "5f641ae52220a8ef696b1ec8bc3a38e2a853a578",
+        "classification": "official-behavioral-rtl",
+        "path": "icache.v",
+        "sha256": "033c788597c9ed3664409c2c9df9d04e5a55a47316a33753b1e667c5589e5a48",
+        "size": 14632
+      },
+      {
+        "blob_sha1": "9bb80e2ee5155d229f64b8237138f92e9bfb4558",
+        "classification": "official-behavioral-rtl",
+        "path": "id_stage.v",
+        "sha256": "22ec5679f862d0736c36550e13aec72f2bd60eb4e824a3ad5d10b052b33edc2b",
+        "size": 38058
+      },
+      {
+        "blob_sha1": "f0684f133ffd509dcda14d6a29f03779822001e5",
+        "classification": "official-behavioral-rtl",
+        "path": "if_stage.v",
+        "sha256": "9fcc66200e549825c89737b420c68e97a22af1082e370536ad67e3d72e035547",
+        "size": 12929
+      },
+      {
+        "blob_sha1": "ebeacf81c498b3041f5c55b16c2abe220e87ecd4",
+        "classification": "official-behavioral-rtl",
+        "path": "mem_stage.v",
+        "sha256": "86592ed33afd5dde9e944860c7088ad70e5d62ee22f72999e336a64902d881a7",
+        "size": 13988
+      },
+      {
+        "blob_sha1": "9aa9e7ebf5632420a3cb6677fb873b62887cb71d",
+        "classification": "official-behavioral-rtl",
+        "path": "mul.v",
+        "sha256": "251d2bba3e659c294c9a004bbb2b542435fcfa0b0c1582cc1a7a3edca765a4c0",
+        "size": 6045
+      },
+      {
+        "blob_sha1": "6e3c073cbc09261c607acfa0b855edc0337b87c2",
+        "classification": "official-behavioral-rtl",
+        "path": "mycpu.h",
+        "sha256": "bebb41d58151b373980b9f666d9ca3c68dbfbcb070bc4dc84f96bc009fedcd6e",
+        "size": 631
+      },
+      {
+        "blob_sha1": "cff885ffa163fd4dba4e83d0db0f0e422fdce27e",
+        "classification": "official-behavioral-rtl",
+        "path": "mycpu_top.v",
+        "sha256": "0b2b294b1c242edc42bbaadd33c51125a1e24388c8781b0adad94aa25a4bdde1",
+        "size": 44289
+      },
+      {
+        "blob_sha1": "7fa24d4cbe4429e7740dfc74c3b750819e057c90",
+        "classification": "official-behavioral-rtl",
+        "path": "perf_counter.v",
+        "sha256": "a2f8f337422097699b91d217afb1eb896fa1aa02a7fdd1ed829c183de00935b6",
+        "size": 1623
+      },
+      {
+        "blob_sha1": "3caa2b688d0b6cd2e37b28d43ab5fad632e7d2f7",
+        "classification": "official-behavioral-rtl",
+        "path": "regfile.v",
+        "sha256": "e98d043d5166f8c2baf33692e74e3e2f203c8a80a3a2fae6b0f913ffb45d1203",
+        "size": 872
+      },
+      {
+        "blob_sha1": "0dad79a3947675efc2115a10d6dfcbdbb4038a5a",
+        "classification": "official-behavioral-rtl",
+        "path": "tlb_entry.v",
+        "sha256": "a3e3508a0c755375336ba6db392f9038e1d793042fc21b7cd088fde9febcba1f",
+        "size": 9268
+      },
+      {
+        "blob_sha1": "28022d1fc25026db3282f2cfae319e8b0158d55f",
+        "classification": "official-behavioral-rtl",
+        "path": "tools.v",
+        "sha256": "8dd00f9bef99547bdf97c60dbbce2a792a8de574f2ffcace7775ffcf29f9d531",
+        "size": 2696
+      },
+      {
+        "blob_sha1": "90ae54b4ea13298aa64ee83aa33eee14813392d7",
+        "classification": "official-behavioral-rtl",
+        "path": "wb_stage.v",
+        "sha256": "8a6f6cb282d152e4b43673397b8c00f598e3d116589e5797fb6feaadbc032a09",
+        "size": 12315
+      }
+    ],
+    "repository": "/home/toss-a-coin/WorkSpace/NSCSCC2026/chiplab/IP/myCPU",
+    "revision": "aa3bde1f3e720e71c2c78d6b81930d797b810149"
+  },
+  "schema_version": 1
+}
