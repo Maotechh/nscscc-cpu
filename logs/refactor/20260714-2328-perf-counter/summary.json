@@ -1,21 +1,21 @@
 {
   "schema_version": 1,
   "iteration_id": "20260714-2328-perf-counter",
-  "status": "implementation_in_review",
+  "status": "draft",
   "branch": "refactor/20260714-1650-consolidated-spinal",
   "base_sha": "5038a537a02c1778a13ceca6b07d26e311b9afd6",
   "head_sha": "b015be13f468d34debc912e77db8b8423e846a98",
   "selected_boundary": "observe/perf_counter",
   "gates": {
-    "preflight": {"status": "pass", "executed": 1, "passed": 1, "failed": 0, "skipped": 0},
-    "contract": {"status": "pass", "executed": 1, "passed": 1, "failed": 0, "skipped": 0, "evidence": "reference/component-contracts/perf-counter.json"},
-    "scala": {"status": "pass", "executed": 4, "passed": 4, "failed": 0, "skipped": 0, "evidence": "build/perf-counter-scala-final-2/scala-check/"},
-    "unit_diff": {"status": "pass", "executed": 2, "passed": 2, "failed": 0, "skipped": 0, "evidence": "logs/refactor/20260714-2328-perf-counter/evidence/"},
-    "rtl_static": {"status": "pass", "executed": 2, "passed": 2, "failed": 0, "skipped": 0, "evidence": "reference/component-replacements/"},
-    "core_top": {"status": "pass", "executed": 4, "passed": 4, "failed": 0, "skipped": 0, "evidence": "reference/component-replacements/core-top.json"},
-    "chiplab_doctor": {"status": "pass", "executed": 1, "passed": 1, "failed": 0, "skipped": 0, "evidence": "evidence/rtl-smoke-20260715-0118/chiplab-doctor.json"},
-    "func_smoke": {"status": "fail", "executed": 3, "passed": 2, "failed": 1, "skipped": 0, "evidence": "evidence/rtl-smoke-20260715-0118/rtl-smoke.json", "reason": "good_trap=false and warning policy failed (DUT 237, official 364)"},
-    "claude_review": {"status": "unavailable", "executed": 0, "passed": 0, "failed": 0, "skipped": 1, "evidence": "reviews/claude-summary.json"}
+    "preflight": {"status": "pass", "planned": 1, "executed": 1, "passed": 1, "failed": 0, "skipped": 0},
+    "contract": {"status": "pass", "planned": 1, "executed": 1, "passed": 1, "failed": 0, "skipped": 0, "evidence": "reference/component-contracts/perf-counter.json"},
+    "scala": {"status": "pass", "planned": 4, "executed": 4, "passed": 4, "failed": 0, "skipped": 0, "evidence": "build/perf-counter-scala-final-2/scala-check/"},
+    "unit_diff": {"status": "pass", "planned": 2, "executed": 2, "passed": 2, "failed": 0, "skipped": 0, "evidence": "logs/refactor/20260714-2328-perf-counter/evidence/"},
+    "rtl_static": {"status": "pass", "planned": 2, "executed": 2, "passed": 2, "failed": 0, "skipped": 0, "evidence": "reference/component-replacements/"},
+    "core_top": {"status": "pass", "planned": 4, "executed": 4, "passed": 4, "failed": 0, "skipped": 0, "evidence": "reference/component-replacements/core-top.json"},
+    "chiplab_doctor": {"status": "pass", "planned": 1, "executed": 1, "passed": 1, "failed": 0, "skipped": 0, "evidence": "evidence/rtl-smoke-20260715-0118/chiplab-doctor.json"},
+    "func_smoke": {"status": "fail", "planned": 3, "executed": 3, "passed": 2, "failed": 1, "skipped": 0, "evidence": "evidence/rtl-smoke-20260715-0118/rtl-smoke.json", "reason": "good_trap=false and warning policy failed (DUT 237, official 364)"},
+    "claude_review": {"status": "unavailable", "planned": 1, "executed": 0, "passed": 0, "failed": 0, "skipped": 1, "evidence": "reviews/claude-summary.json"}
   },
   "claims": [
     {"claim": "perf_counter active logic is migrated to SpinalHDL", "status": "supported", "evidence": "OpenLa500PerfCounter.scala and unit differential evidence"},
