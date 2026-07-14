@@ -1,5 +1,39 @@
 {
   "schema_version": 1,
   "iteration_id": "20260714-1534-btb-branch-replay",
-  "artifacts": []
+  "external_artifact_policy": "原始 trace 和 compile log 不提交 Git；仅保存绝对 locator、SHA256、大小和保留策略。",
+  "artifacts": [
+    {
+      "id": "published-mycpu-rtl",
+      "path": "reference/component-replacements/mycpu_top.v",
+      "sha256": "27b578ce4bf3c3157b65d2e05e2b45603da6e67e776a79a93630bede8981c6c0",
+      "size": 766051,
+      "retention": "git"
+    },
+    {
+      "id": "final-smoke-summary",
+      "path": "logs/refactor/20260714-1534-btb-branch-replay/evidence/rtl-smoke.json",
+      "sha256": "15563b017fbd4113a6be88d2f5770eba2c3b71166b5785db8f083a265e417491",
+      "size": 181155,
+      "retention": "git"
+    }
+  ],
+  "external_artifacts": [
+    {
+      "id": "final-simu-trace",
+      "path": "/tmp/nscscc-btb-replay-work-4/20260714-1534-btb-branch-replay/sims/verilator/run_prog/log/func/func_lab19_log/simu_trace.txt",
+      "sha256": "8e9ed2a68aa67e99ceea259ab9802c2b79b720a45a0b4b9ef09a1eb01b69fe50",
+      "size": 13922720,
+      "tracked": false,
+      "retention": "local_until_explicit_clean"
+    },
+    {
+      "id": "final-compile-log",
+      "path": "/tmp/nscscc-btb-replay-work-4/20260714-1534-btb-branch-replay/sims/verilator/run_prog/log/compile.log",
+      "sha256": "37d7e10c68ec18c27da0d0ca9259a0f8a987bd131b3f29641bb89fed14ffd94b",
+      "size": 279076,
+      "tracked": false,
+      "retention": "local_until_explicit_clean"
+    }
+  ]
 }

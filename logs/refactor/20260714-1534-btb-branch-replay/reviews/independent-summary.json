@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "iteration_id": "20260714-1534-btb-branch-replay",
+  "review_type": "independent_read_only",
+  "reviewer": "Codex subagent",
+  "is_claude_review": false,
+  "head_sha": "75523504912c1b390dc1d1e3cddb5c3a0cc43a27",
+  "draft_pr_allowed": true,
+  "ready_or_merge_allowed": false,
+  "claims": [
+    {
+      "id": "C1",
+      "verdict": "accepted",
+      "claim": "Scala、生成、package/publish、49 端口、Yosys 和 chiplab doctor 门禁通过",
+      "evidence": ["../evidence/scala.json", "../evidence/generate.json", "../evidence/package.json", "../evidence/publish-check.json", "../evidence/port-check.json", "../evidence/yosys-check.json", "../evidence/chiplab-doctor.json"]
+    },
+    {
+      "id": "C2",
+      "verdict": "partial",
+      "claim": "最终 mixed diagnostic func_lab19 功能 parser 到达结束且未观察到 mismatch",
+      "reason": "diagnostic mixed overlay、good_trap=false 且总 gate 因 warning 失败",
+      "evidence": ["../evidence/rtl-smoke.json"]
+    },
+    {
+      "id": "C3",
+      "verdict": "rejected",
+      "claim": "official RTL smoke gate 通过",
+      "reason": "gate_result=fail，compile warning policy 未通过"
+    },
+    {
+      "id": "C4",
+      "verdict": "open",
+      "claim": "BTB replay 已被唯一证明修复或完整 BTB 已迁移",
+      "reason": "没有内部 predictor 定向 harness；实现仍是临时 32-entry always-taken"
+    }
+  ],
+  "blocking_issues": [
+    "strict_lint_failed",
+    "unapproved_compile_warnings",
+    "claude_review_unavailable",
+    "btb_directed_harness_missing",
+    "full_regression_missing"
+  ]
+}

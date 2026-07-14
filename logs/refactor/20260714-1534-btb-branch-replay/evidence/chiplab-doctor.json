@@ -1,0 +1,419 @@
+{
+  "checks": [
+    {
+      "actual": {
+        "machine": "x86_64",
+        "os_name": "posix",
+        "system": "Linux"
+      },
+      "expected": "Linux x86_64 (WSL or native)",
+      "name": "host.locked_platform",
+      "status": "pass"
+    },
+    {
+      "actual": "/opt/chiplab-reference",
+      "name": "chiplab.path",
+      "status": "pass"
+    },
+    {
+      "actual": "ext2/ext3",
+      "expected": "Linux filesystem preserving symlinks",
+      "name": "chiplab.filesystem",
+      "status": "pass"
+    },
+    {
+      "actual": "a2e11b38bc5c85abb4408a8e0c0f5ce903c7ba31",
+      "expected": "a2e11b38bc5c85abb4408a8e0c0f5ce903c7ba31",
+      "name": "chiplab.commit",
+      "status": "pass"
+    },
+    {
+      "actual": "clean",
+      "expected": "clean",
+      "name": "chiplab.clean",
+      "status": "pass"
+    },
+    {
+      "actual": "aa3bde1f3e720e71c2c78d6b81930d797b810149",
+      "expected": "aa3bde1f3e720e71c2c78d6b81930d797b810149",
+      "name": "chiplab.mycpu_gitlink",
+      "status": "pass"
+    },
+    {
+      "actual": "symlink=True path=/opt/chiplab-reference/software/examples/func/func_lab19/Makefile",
+      "detail": "Windows checkouts that materialize mode 120000 as text are rejected.",
+      "expected": "real symlink",
+      "name": "chiplab.symlink_checkout",
+      "status": "pass"
+    },
+    {
+      "actual": [],
+      "expected": "all present",
+      "name": "chiplab.official_paths",
+      "status": "pass"
+    },
+    {
+      "actual": true,
+      "expected": "/opt/chiplab-tools/downloads/loongson-gnu-toolchain-8.3-x86_64-loongarch32r-linux-gnusf-v2.0.tar.xz",
+      "name": "tool.la32r_gcc.asset_exists",
+      "status": "pass"
+    },
+    {
+      "actual": "64856b06a2793863aa60104ef91ad04c7ba99c0de57928ceab7d31dd884ce647",
+      "expected": "64856b06a2793863aa60104ef91ad04c7ba99c0de57928ceab7d31dd884ce647",
+      "name": "tool.la32r_gcc.sha256",
+      "status": "pass"
+    },
+    {
+      "actual": true,
+      "expected": "/opt/chiplab-tools/downloads/la32r-nemu-interpreter-so",
+      "name": "tool.nemu.asset_exists",
+      "status": "pass"
+    },
+    {
+      "actual": "3fa8ddd5c1b11d378caade5a6ab2b428c669c14d0925e2c79e155a767a995a89",
+      "expected": "3fa8ddd5c1b11d378caade5a6ab2b428c669c14d0925e2c79e155a767a995a89",
+      "name": "tool.nemu.sha256",
+      "status": "pass"
+    },
+    {
+      "actual": true,
+      "expected": "/opt/chiplab-tools/downloads/picolibc.tar.gz",
+      "name": "tool.picolibc.asset_exists",
+      "status": "pass"
+    },
+    {
+      "actual": "3598c92d714277e83e27b3587195f5343c7ee17c309d5824689214bed2f24063",
+      "expected": "3598c92d714277e83e27b3587195f5343c7ee17c309d5824689214bed2f24063",
+      "name": "tool.picolibc.sha256",
+      "status": "pass"
+    },
+    {
+      "actual": true,
+      "expected": "/opt/chiplab-tools/downloads/la32r-QEMU-x86_64-ubuntu-22.04.tar",
+      "name": "tool.qemu.asset_exists",
+      "status": "pass"
+    },
+    {
+      "actual": "36d1bec147e18c8f16c1aacccce67dd1718cf71d7cd8303056231f669d27621a",
+      "expected": "36d1bec147e18c8f16c1aacccce67dd1718cf71d7cd8303056231f669d27621a",
+      "name": "tool.qemu.sha256",
+      "status": "pass"
+    },
+    {
+      "actual": true,
+      "expected": "/opt/chiplab-tools/downloads/sbt-1.10.11.tgz",
+      "name": "tool.sbt.asset_exists",
+      "status": "pass"
+    },
+    {
+      "actual": "5034a64841b8a9cfb52a341e45b01df2b8c2ffaa87d8d2b0fe33c4cdcabd8f0c",
+      "expected": "5034a64841b8a9cfb52a341e45b01df2b8c2ffaa87d8d2b0fe33c4cdcabd8f0c",
+      "name": "tool.sbt.sha256",
+      "status": "pass"
+    },
+    {
+      "actual": "f29812336f8f0cedfd55a56f834ec9a88178d3bfb31fd67e105342aa8ed2ef7c",
+      "expected": "f29812336f8f0cedfd55a56f834ec9a88178d3bfb31fd67e105342aa8ed2ef7c",
+      "name": "tool.gcc.installed_sha256",
+      "status": "pass"
+    },
+    {
+      "actual": "fbdb9c0a2fc8038b592636b012f578a9e87b5c3264a8ab2f12a08b64a7e09409",
+      "expected": "fbdb9c0a2fc8038b592636b012f578a9e87b5c3264a8ab2f12a08b64a7e09409",
+      "name": "tool.as.installed_sha256",
+      "status": "pass"
+    },
+    {
+      "actual": "c5b83d2ef6761d0ffffcfe7bf71145c8abcc2eae185812dd2b23113df8a50a35",
+      "expected": "c5b83d2ef6761d0ffffcfe7bf71145c8abcc2eae185812dd2b23113df8a50a35",
+      "name": "tool.ld.installed_sha256",
+      "status": "pass"
+    },
+    {
+      "actual": "a7379e4bfb5dff237d59f1606aeac04cb8a1b82697cb89b8efbb69b237775b8c",
+      "expected": "a7379e4bfb5dff237d59f1606aeac04cb8a1b82697cb89b8efbb69b237775b8c",
+      "name": "tool.gcc_cc1.installed_sha256",
+      "status": "pass"
+    },
+    {
+      "actual": "ff8603a2b7e1e225f71d95df3e31d47f203709842f571c07a4d348d08710c961",
+      "expected": "ff8603a2b7e1e225f71d95df3e31d47f203709842f571c07a4d348d08710c961",
+      "name": "tool.gcc_collect2.installed_sha256",
+      "status": "pass"
+    },
+    {
+      "actual": "3fa8ddd5c1b11d378caade5a6ab2b428c669c14d0925e2c79e155a767a995a89",
+      "expected": "3fa8ddd5c1b11d378caade5a6ab2b428c669c14d0925e2c79e155a767a995a89",
+      "name": "tool.nemu.installed_sha256",
+      "status": "pass"
+    },
+    {
+      "actual": "2a601edbbca47f45cacc860b6314072e1c5738ea05dcc1b58f89a65fd743f0c5",
+      "expected": "2a601edbbca47f45cacc860b6314072e1c5738ea05dcc1b58f89a65fd743f0c5",
+      "name": "tool.picolibc.installed_sha256",
+      "status": "pass"
+    },
+    {
+      "actual": "a21bba8032e132ca447261415b6f13ac71ebf53f94a2369c5921f51a00a06758",
+      "expected": "a21bba8032e132ca447261415b6f13ac71ebf53f94a2369c5921f51a00a06758",
+      "name": "tool.qemu.installed_sha256",
+      "status": "pass"
+    },
+    {
+      "actual": "b9732e3e9673acf5e7c8e604dd50f7d2ca719c91b47c33f4af42fdaf1dedaf02",
+      "expected": "b9732e3e9673acf5e7c8e604dd50f7d2ca719c91b47c33f4af42fdaf1dedaf02",
+      "name": "tool.sbt.installed_sha256",
+      "status": "pass"
+    },
+    {
+      "actual": "e988d533a020e5b60ec22c3b5df4cd3e3df465f4fdc3951c63036e21483978e4",
+      "expected": "e988d533a020e5b60ec22c3b5df4cd3e3df465f4fdc3951c63036e21483978e4",
+      "name": "tool.sbt_launch_jar.installed_sha256",
+      "status": "pass"
+    },
+    {
+      "actual": "4c6292ab82e57b7f34ab26dbae86ba9c494bacfb088b6ff34be93c553d1301b1",
+      "expected": "4c6292ab82e57b7f34ab26dbae86ba9c494bacfb088b6ff34be93c553d1301b1",
+      "name": "tool.verilator.installed_sha256",
+      "status": "pass"
+    },
+    {
+      "actual": "25f33046f0055a6982c67cdc55081685a844abb50d044cfda087bd418db9be6c",
+      "expected": "25f33046f0055a6982c67cdc55081685a844abb50d044cfda087bd418db9be6c",
+      "name": "tool.verilator_engine.installed_sha256",
+      "status": "pass"
+    },
+    {
+      "actual": "b784038c3cf821588ff4576653b540355889c0621bc258d1b349c29a63836c35",
+      "expected": "b784038c3cf821588ff4576653b540355889c0621bc258d1b349c29a63836c35",
+      "name": "tool.verilator_runtime.installed_sha256",
+      "status": "pass"
+    },
+    {
+      "actual": "88c0a12bb814a1a8716b1ae10b482e35d3005ed558e1f5f626b3dc983ea3abd0",
+      "expected": "88c0a12bb814a1a8716b1ae10b482e35d3005ed558e1f5f626b3dc983ea3abd0",
+      "name": "tool.yosys.installed_sha256",
+      "status": "pass"
+    },
+    {
+      "actual": "c0a86c03d2acbe2f389d5198142309f8e61db0c498920893977a494c4e9fd69b",
+      "expected": "c0a86c03d2acbe2f389d5198142309f8e61db0c498920893977a494c4e9fd69b",
+      "name": "tool.java.installed_sha256",
+      "status": "pass"
+    },
+    {
+      "actual": "1643dacd9feaedc58f3cc581e4d22577dfe25c09b10282936186ccf0f2e61118",
+      "expected": "1643dacd9feaedc58f3cc581e4d22577dfe25c09b10282936186ccf0f2e61118",
+      "name": "tool.python.installed_sha256",
+      "status": "pass"
+    },
+    {
+      "actual": "2d9de349be2aaa70adf53f78a88b8ca9bff70e910795655022808b4f61cbdc15",
+      "expected": "2d9de349be2aaa70adf53f78a88b8ca9bff70e910795655022808b4f61cbdc15",
+      "name": "tool.jdk_modules.installed_sha256",
+      "status": "pass"
+    },
+    {
+      "actual": "Verilator 5.020 2024-01-01 rev (Debian 5.020-1)",
+      "expected": "5.020",
+      "name": "tool.verilator.version",
+      "status": "pass"
+    },
+    {
+      "actual": "Yosys 0.33 (git sha1 2584903a060)",
+      "expected": "0.33",
+      "name": "tool.yosys.version",
+      "status": "pass"
+    },
+    {
+      "actual": "openjdk version \"17.0.19\" 2026-04-21",
+      "expected": "17.0.19",
+      "name": "tool.java.version",
+      "status": "pass"
+    },
+    {
+      "actual": "Python 3.12.3",
+      "expected": "3.12.3",
+      "name": "tool.python.version",
+      "status": "pass"
+    },
+    {
+      "actual": "loongarch32r-linux-gnusf-gcc (LoongArch GNU toolchain LA32 v2.0 (20230903)) 8.3.0",
+      "expected": "8.3.0",
+      "name": "tool.gcc.version",
+      "status": "pass"
+    },
+    {
+      "actual": "1.10.11",
+      "expected": "1.10.11",
+      "name": "tool.sbt.version",
+      "status": "pass"
+    },
+    {
+      "actual": "exit=0",
+      "expected": "dpkg -V exit=0 with no modified package files",
+      "name": "package.verilator.dpkg_verify",
+      "status": "pass"
+    },
+    {
+      "actual": "exit=0",
+      "expected": "dpkg -V exit=0 with no modified package files",
+      "name": "package.yosys.dpkg_verify",
+      "status": "pass"
+    },
+    {
+      "actual": "exit=0",
+      "expected": "dpkg -V exit=0 with no modified package files",
+      "name": "package.openjdk-17-jre-headless.dpkg_verify",
+      "status": "pass"
+    }
+  ],
+  "chiplab_reference": "/opt/chiplab-reference",
+  "command": "chiplab-doctor",
+  "evaluator_sha256": "5c99b47b812cfb4b76869126e23c201259799736221425ba05253c58c9e852da",
+  "generated_at": "2026-07-14T16:13:21+08:00",
+  "manifest_sha256": "743dd7e58d77e456cfe664d80c2e6614ab426f72bfecd9088ff18d702afa2f20",
+  "repo_head_sha": "75523504912c1b390dc1d1e3cddb5c3a0cc43a27",
+  "schema_version": 1,
+  "status": "pass",
+  "tool_fingerprints": [
+    {
+      "actual_sha256": "f29812336f8f0cedfd55a56f834ec9a88178d3bfb31fd67e105342aa8ed2ef7c",
+      "expected_sha256": "f29812336f8f0cedfd55a56f834ec9a88178d3bfb31fd67e105342aa8ed2ef7c",
+      "manifest_key": "gcc_binary_sha256",
+      "name": "gcc",
+      "path": "/opt/chiplab-tools/root/loongson-gnu-toolchain-8.3-x86_64-loongarch32r-linux-gnusf-v2.0/bin/loongarch32r-linux-gnusf-gcc",
+      "size": 1813392
+    },
+    {
+      "actual_sha256": "fbdb9c0a2fc8038b592636b012f578a9e87b5c3264a8ab2f12a08b64a7e09409",
+      "expected_sha256": "fbdb9c0a2fc8038b592636b012f578a9e87b5c3264a8ab2f12a08b64a7e09409",
+      "manifest_key": "as_binary_sha256",
+      "name": "as",
+      "path": "/opt/chiplab-tools/root/loongson-gnu-toolchain-8.3-x86_64-loongarch32r-linux-gnusf-v2.0/bin/loongarch32r-linux-gnusf-as",
+      "size": 2101520
+    },
+    {
+      "actual_sha256": "c5b83d2ef6761d0ffffcfe7bf71145c8abcc2eae185812dd2b23113df8a50a35",
+      "expected_sha256": "c5b83d2ef6761d0ffffcfe7bf71145c8abcc2eae185812dd2b23113df8a50a35",
+      "manifest_key": "ld_binary_sha256",
+      "name": "ld",
+      "path": "/opt/chiplab-tools/root/loongson-gnu-toolchain-8.3-x86_64-loongarch32r-linux-gnusf-v2.0/bin/loongarch32r-linux-gnusf-ld",
+      "size": 2310224
+    },
+    {
+      "actual_sha256": "a7379e4bfb5dff237d59f1606aeac04cb8a1b82697cb89b8efbb69b237775b8c",
+      "expected_sha256": "a7379e4bfb5dff237d59f1606aeac04cb8a1b82697cb89b8efbb69b237775b8c",
+      "manifest_key": "gcc_cc1_sha256",
+      "name": "gcc_cc1",
+      "path": "/opt/chiplab-tools/root/loongson-gnu-toolchain-8.3-x86_64-loongarch32r-linux-gnusf-v2.0/libexec/gcc/loongarch32r-linux-gnusf/8.3.0/cc1",
+      "size": 17921200
+    },
+    {
+      "actual_sha256": "ff8603a2b7e1e225f71d95df3e31d47f203709842f571c07a4d348d08710c961",
+      "expected_sha256": "ff8603a2b7e1e225f71d95df3e31d47f203709842f571c07a4d348d08710c961",
+      "manifest_key": "gcc_collect2_sha256",
+      "name": "gcc_collect2",
+      "path": "/opt/chiplab-tools/root/loongson-gnu-toolchain-8.3-x86_64-loongarch32r-linux-gnusf-v2.0/libexec/gcc/loongarch32r-linux-gnusf/8.3.0/collect2",
+      "size": 1396208
+    },
+    {
+      "actual_sha256": "3fa8ddd5c1b11d378caade5a6ab2b428c669c14d0925e2c79e155a767a995a89",
+      "expected_sha256": "3fa8ddd5c1b11d378caade5a6ab2b428c669c14d0925e2c79e155a767a995a89",
+      "manifest_key": "nemu_binary_sha256",
+      "name": "nemu",
+      "path": "/opt/chiplab-tools/root/nemu/la32r-nemu-interpreter-so",
+      "size": 74280
+    },
+    {
+      "actual_sha256": "2a601edbbca47f45cacc860b6314072e1c5738ea05dcc1b58f89a65fd743f0c5",
+      "expected_sha256": "2a601edbbca47f45cacc860b6314072e1c5738ea05dcc1b58f89a65fd743f0c5",
+      "manifest_key": "picolibc_libc_sha256",
+      "name": "picolibc",
+      "path": "/opt/chiplab-tools/root/picolibc/lib/libc.a",
+      "size": 13875076
+    },
+    {
+      "actual_sha256": "a21bba8032e132ca447261415b6f13ac71ebf53f94a2369c5921f51a00a06758",
+      "expected_sha256": "a21bba8032e132ca447261415b6f13ac71ebf53f94a2369c5921f51a00a06758",
+      "manifest_key": "qemu_binary_sha256",
+      "name": "qemu",
+      "path": "/opt/chiplab-tools/root/la32r-QEMU-x86_64-ubuntu-22.04/qemu-system-loongarch32",
+      "size": 9306792
+    },
+    {
+      "actual_sha256": "b9732e3e9673acf5e7c8e604dd50f7d2ca719c91b47c33f4af42fdaf1dedaf02",
+      "expected_sha256": "b9732e3e9673acf5e7c8e604dd50f7d2ca719c91b47c33f4af42fdaf1dedaf02",
+      "manifest_key": "sbt_script_sha256",
+      "name": "sbt",
+      "path": "/opt/chiplab-tools/root/sbt-1.10.11/bin/sbt",
+      "size": 29854
+    },
+    {
+      "actual_sha256": "e988d533a020e5b60ec22c3b5df4cd3e3df465f4fdc3951c63036e21483978e4",
+      "expected_sha256": "e988d533a020e5b60ec22c3b5df4cd3e3df465f4fdc3951c63036e21483978e4",
+      "manifest_key": "sbt_launch_jar_sha256",
+      "name": "sbt_launch_jar",
+      "path": "/opt/chiplab-tools/root/sbt-1.10.11/bin/sbt-launch.jar",
+      "size": 3847513
+    },
+    {
+      "actual_sha256": "4c6292ab82e57b7f34ab26dbae86ba9c494bacfb088b6ff34be93c553d1301b1",
+      "expected_sha256": "4c6292ab82e57b7f34ab26dbae86ba9c494bacfb088b6ff34be93c553d1301b1",
+      "manifest_key": "verilator_binary_sha256",
+      "name": "verilator",
+      "path": "/usr/bin/verilator",
+      "size": 23493
+    },
+    {
+      "actual_sha256": "25f33046f0055a6982c67cdc55081685a844abb50d044cfda087bd418db9be6c",
+      "expected_sha256": "25f33046f0055a6982c67cdc55081685a844abb50d044cfda087bd418db9be6c",
+      "manifest_key": "verilator_engine_sha256",
+      "name": "verilator_engine",
+      "path": "/usr/bin/verilator_bin",
+      "size": 10993608
+    },
+    {
+      "actual_sha256": "b784038c3cf821588ff4576653b540355889c0621bc258d1b349c29a63836c35",
+      "expected_sha256": "b784038c3cf821588ff4576653b540355889c0621bc258d1b349c29a63836c35",
+      "manifest_key": "verilator_runtime_sha256",
+      "name": "verilator_runtime",
+      "path": "/usr/share/verilator/include/verilated.cpp",
+      "size": 131544
+    },
+    {
+      "actual_sha256": "88c0a12bb814a1a8716b1ae10b482e35d3005ed558e1f5f626b3dc983ea3abd0",
+      "expected_sha256": "88c0a12bb814a1a8716b1ae10b482e35d3005ed558e1f5f626b3dc983ea3abd0",
+      "manifest_key": "yosys_binary_sha256",
+      "name": "yosys",
+      "path": "/usr/bin/yosys",
+      "size": 8174408
+    },
+    {
+      "actual_sha256": "c0a86c03d2acbe2f389d5198142309f8e61db0c498920893977a494c4e9fd69b",
+      "expected_sha256": "c0a86c03d2acbe2f389d5198142309f8e61db0c498920893977a494c4e9fd69b",
+      "manifest_key": "java_binary_sha256",
+      "name": "java",
+      "path": "/usr/lib/jvm/java-17-openjdk-amd64/bin/java",
+      "size": 14464
+    },
+    {
+      "actual_sha256": "1643dacd9feaedc58f3cc581e4d22577dfe25c09b10282936186ccf0f2e61118",
+      "expected_sha256": "1643dacd9feaedc58f3cc581e4d22577dfe25c09b10282936186ccf0f2e61118",
+      "manifest_key": "python_binary_sha256",
+      "name": "python",
+      "path": "/usr/bin/python3.12",
+      "size": 8020928
+    },
+    {
+      "actual_sha256": "2d9de349be2aaa70adf53f78a88b8ca9bff70e910795655022808b4f61cbdc15",
+      "expected_sha256": "2d9de349be2aaa70adf53f78a88b8ca9bff70e910795655022808b4f61cbdc15",
+      "manifest_key": "jdk_modules_sha256",
+      "name": "jdk_modules",
+      "path": "/usr/lib/jvm/java-17-openjdk-amd64/lib/modules",
+      "size": 128880903
+    }
+  ],
+  "tool_root": "/opt/chiplab-tools/root"
+}

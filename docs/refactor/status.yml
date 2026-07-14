@@ -1,8 +1,8 @@
 schema_version: 1
-updated_at: "2026-07-14T12:57:57+08:00"
-active_iteration: "20260714-0302-spinal-active-backend"
-active_branch: "refactor/20260714-0302-spinal-active-backend"
-source_head: "2e5409a73841424540978e8dc43f6ba8b576a31e"
+updated_at: "2026-07-14T16:21:13+08:00"
+active_iteration: "20260714-1534-btb-branch-replay"
+active_branch: "refactor/20260714-1534-btb-branch-replay"
+source_head: "75523504912c1b390dc1d1e3cddb5c3a0cc43a27"
 
 boundaries:
   legacy_shell_active_replacement_overlay:
@@ -705,6 +705,41 @@ boundaries:
       - func_lab19_fails_at_mismatch_1c07cfcc
       - claude_bridge_missing_GEEKPIE_CLAUDE_API_KEY
     last_iteration: "20260714-1316-golden-recovery-cacop"
+
+  predictor_branch_replay:
+    owner: predict
+    state: implementation_in_review
+    golden_ref: d22/a158:rtl/btb.v
+    dependencies:
+      - golden_recovery_cacop
+      - if_stage
+      - id_stage
+    contract: docs/contracts/btb-branch-replay.md
+    required_gates:
+      - scala
+      - generate_publish
+      - rtl_static
+      - chiplab_doctor
+      - diagnostic_overlay
+      - func_smoke
+      - claim_review
+    evidence:
+      - logs/refactor/20260714-1534-btb-branch-replay/iteration.md
+      - logs/refactor/20260714-1534-btb-branch-replay/summary.json
+      - logs/refactor/20260714-1534-btb-branch-replay/evidence/scala.json
+      - logs/refactor/20260714-1534-btb-branch-replay/evidence/generate.json
+      - logs/refactor/20260714-1534-btb-branch-replay/evidence/port-check.json
+      - logs/refactor/20260714-1534-btb-branch-replay/evidence/yosys-check.json
+      - logs/refactor/20260714-1534-btb-branch-replay/evidence/rtl-smoke.json
+      - logs/refactor/20260714-1534-btb-branch-replay/reviews/independent-summary.json
+    active_pr: null
+    blocked_by:
+      - strict_lint_failed_with_unapproved_warnings
+      - claude_bridge_missing_GEEKPIE_CLAUDE_API_KEY
+      - btb_directed_harness_missing
+      - complete_64_entry_2bit_ras_predictor_not_migrated
+      - full_regression_random_and_fpga_not_executed
+    last_iteration: "20260714-1534-btb-branch-replay"
 
   observability:
     owner: observe

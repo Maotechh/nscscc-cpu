@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "iteration_id": "20260714-1534-btb-branch-replay",
+  "scope": "single_func_lab19_mixed_diagnostic_observation",
+  "baseline": {
+    "source_iteration": "20260714-1316-golden-recovery-cacop",
+    "source_head": "b2a73c83f9d849c6f67828e8dcfdd39a620e00ed",
+    "evidence": "../20260714-1316-golden-recovery-cacop/evidence/rtl-smoke-b2a73c8.json",
+    "functional_status": "fail",
+    "expected_pc": "0x1c07cfcc",
+    "dut_pc": "0x1c07cfdc"
+  },
+  "intermediate": {
+    "source_head": "9ff8f5965f3b60be362f7101e5188d2b20a88328",
+    "evidence": "attempt-2-9ff-corrected-rtl-smoke.json",
+    "functional_status": "pass",
+    "instructions": 174079,
+    "clocks": 610657,
+    "first_mismatch": null
+  },
+  "final": {
+    "source_head": "75523504912c1b390dc1d1e3cddb5c3a0cc43a27",
+    "evidence": "rtl-smoke.json",
+    "functional_status": "pass",
+    "instructions": 174034,
+    "clocks": 610132,
+    "first_mismatch": null,
+    "gate_result": "fail",
+    "gate_failure": "unapproved_compile_warnings"
+  },
+  "allowed_inference": "The previous branch-replay mismatch was not observed in the final single-case mixed diagnostic run.",
+  "forbidden_inference": [
+    "unique root cause proved",
+    "official smoke gate passed",
+    "complete BTB equivalence",
+    "full CPU sequential equivalence"
+  ]
+}

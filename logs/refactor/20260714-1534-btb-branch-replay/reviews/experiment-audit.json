@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "iteration_id": "20260714-1534-btb-branch-replay",
+  "review_target_sha": "75523504912c1b390dc1d1e3cddb5c3a0cc43a27",
+  "audit_mode": "degraded_independent_read_only",
+  "cross_model_reviewer_available": false,
+  "integrity_status": "warn",
+  "checks": {
+    "result_existence": {"status": "pass"},
+    "command_execution": {"status": "pass"},
+    "number_match": {"status": "pass"},
+    "scope": {"status": "warn", "detail": "one mixed diagnostic func_lab19 case"},
+    "oracle": {"status": "warn", "detail": "locked NEMU parser with non-locked mixed DUT"},
+    "warning_policy": {"status": "fail", "detail": "258 DUT and 364 official-environment compile warnings; strict lint failed"}
+  },
+  "claim_impact": "draft_only_with_qualifiers"
+}

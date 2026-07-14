@@ -1,21 +1,56 @@
 {
   "schema_version": 1,
   "iteration_id": "20260714-1534-btb-branch-replay",
-  "status": "draft",
+  "status": "blocked",
   "branch": "refactor/20260714-1534-btb-branch-replay",
   "base_sha": "372eccc9b54fb5a80f08bc5af6dcc8944ea3e8fa",
-  "head_sha": "372eccc9b54fb5a80f08bc5af6dcc8944ea3e8fa",
+  "head_sha": "75523504912c1b390dc1d1e3cddb5c3a0cc43a27",
+  "review_target_sha": "75523504912c1b390dc1d1e3cddb5c3a0cc43a27",
   "selected_boundary": "predictor/branch_replay",
   "gates": {
     "preflight": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0,"evidence":"iteration.md"},
-    "branch_harness": {"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":1,"evidence":"docs/contracts/btb-branch-replay.md"},
-    "scala": {"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":1,"evidence":"iteration.md"},
-    "rtl_static": {"status":"pending","planned":3,"executed":0,"passed":0,"failed":0,"skipped":3,"evidence":"iteration.md"},
-    "func_smoke": {"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":1,"evidence":"iteration.md"},
-    "claim_review": {"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":1,"evidence":"iteration.md"}
+    "scala": {"status":"pass","planned":4,"executed":4,"passed":4,"failed":0,"skipped":0,"evidence":"evidence/scala.json"},
+    "generate_publish": {"status":"pass","planned":4,"executed":4,"passed":4,"failed":0,"skipped":0,"evidence":["evidence/generate.json","evidence/package.json","evidence/publish-check.json"]},
+    "rtl_static": {"status":"fail","planned":3,"executed":3,"passed":2,"failed":1,"skipped":0,"evidence":["evidence/port-check.json","evidence/yosys-check.json","evidence/lint.json"]},
+    "chiplab_doctor": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0,"evidence":"evidence/chiplab-doctor.json"},
+    "diagnostic_overlay": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0,"evidence":"evidence/chiplab-overlay.json"},
+    "branch_replay_observation": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0,"evidence":"evidence/smoke-comparison.json"},
+    "func_smoke": {"status":"fail","planned":1,"executed":1,"passed":0,"failed":1,"skipped":0,"functional_parser_passed":1,"evidence":"evidence/rtl-smoke.json"},
+    "claim_review": {"status":"unavailable","planned":1,"executed":0,"passed":0,"failed":0,"skipped":1,"evidence":["reviews/claude-raw.md","reviews/independent-summary.json"]},
+    "experiment_audit": {"status":"warning","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0,"evidence":"reviews/experiment-audit.json"}
   },
-  "required_gates": ["branch_harness","scala","rtl_static","func_smoke","claim_review"],
-  "claims": [],
-  "blocked_by": ["implementation_and_branch_harness_pending"],
-  "residual_risks": ["temporary 32-entry predictor still differs from golden 64-entry 2-bit/RAS BTB"]
+  "required_gates": ["scala","generate_publish","rtl_static","chiplab_doctor","diagnostic_overlay","func_smoke","claim_review"],
+  "claims": [
+    {
+      "id": "C1",
+      "claim": "7552350 的 Scala、可复现生成、package/publish、49 端口、Yosys 和 chiplab doctor 窄门禁通过",
+      "support": "supported",
+      "evidence": ["evidence/scala.json","evidence/generate.json","evidence/package.json","evidence/publish-check.json","evidence/port-check.json","evidence/yosys-check.json","evidence/chiplab-doctor.json"]
+    },
+    {
+      "id": "C2",
+      "claim": "单个 mixed diagnostic func_lab19 的功能 parser 到达结束且未观察到 DiffTest mismatch",
+      "support": "supported_with_scope",
+      "evidence": ["evidence/rtl-smoke.json","evidence/smoke-comparison.json"]
+    },
+    {
+      "id": "C3",
+      "claim": "official smoke gate、完整 BTB 或完全重构已经通过",
+      "support": "unsupported",
+      "evidence": ["evidence/lint.json","evidence/rtl-smoke.json","reviews/independent-summary.json"]
+    }
+  ],
+  "blocked_by": [
+    "strict_lint_failed_with_unapproved_warnings",
+    "claude_bridge_missing_GEEKPIE_CLAUDE_API_KEY",
+    "btb_directed_harness_missing",
+    "complete_64_entry_2bit_ras_predictor_not_migrated",
+    "full_regression_random_and_fpga_not_executed"
+  ],
+  "residual_risks": [
+    "mixed diagnostic result is not a locked-candidate official PASS",
+    "single func_lab19 cannot prove unique root cause or sequential equivalence",
+    "good_trap is false and the parser accepts the locked END by Syscall contract",
+    "58/81, random, perf20, U-Boot, Linux and Vivado release evidence is absent"
+  ]
 }
