@@ -1,6 +1,19 @@
 {
   "schema_version": 1,
   "iteration_id": "20260714-1316-golden-recovery-cacop",
-  "artifacts": [],
-  "external_locators": []
+  "artifacts": [
+    {"path":"evidence/cacop-directed.json","sha256":"4c541280731621c34ce77106ad6b925c850a3dd04557a86220676416abf36e8f","size":8695,"tracked":true},
+    {"path":"evidence/doctor.json","sha256":"429f23e44681cb747244de3cce1177ba96adef6596176e5c88b1ccda54e086c2","size":5572,"tracked":true},
+    {"path":"evidence/header-fix-scala.json","sha256":"3bb32da7cf322bd1dcdbf5860f4a8749e75609a9f1e212e90ba6839045835e16","size":104529,"tracked":true},
+    {"path":"evidence/header-fix-generate.json","sha256":"e9a03ceac17cab1cabbf6442e841e584e6af1ca35e958fce500fafca1adff1de","size":101329,"tracked":true},
+    {"path":"evidence/clean-head-lint-968712c.json","sha256":"fe85517d3ce0fb0c5b340d0e0daad6a9ee950c044666c9a9b668333b4fe6622a","size":296,"tracked":true}
+  ],
+  "external_locators": [
+    {"path":"/tmp/golden-recovery-d22-out/reports/iterations/20260714-1316-golden-recovery-cacop-d22/rtl-smoke.json","sha256":"5dcedd1bdc04c76a82c6b1a60591e9fad60c01df8b1b3bb9ae2497c9a7321b10","size":174202,"retention":"local-until-explicit-clean"},
+    {"path":"/tmp/golden-recovery-d76-out/reports/iterations/20260714-1316-golden-recovery-cacop-d76/rtl-smoke.json","sha256":"514c5fb1c947b109393f3ab521efcf3591e4ad5c5f6f5f6c60880df82d9b0593","size":174537,"retention":"local-until-explicit-clean"},
+    {"path":"/tmp/golden-recovery-2ff-out/reports/iterations/20260714-1316-golden-recovery-cacop-2ff/rtl-smoke.json","sha256":"030a892c005a96fcf1d5d30e6510273857e4674f90697970e37215b9b2afb102","size":174537,"retention":"local-until-explicit-clean"},
+    {"path":"/tmp/golden-recovery-408-out/reports/iterations/20260714-1316-golden-recovery-cacop-408/rtl-smoke.json","sha256":"ace5769e60d3a7db158f54c224e3c9e1a2c515be4a2a6e06a1abc828f8347611","size":174538,"retention":"local-until-explicit-clean"},
+    {"path":"build/cacop-directed-gate-v4","retention":"local-until-explicit-clean"},
+    {"path":"/tmp/cacop-stablegen","retention":"local-until-explicit-clean"}
+  ]
 }

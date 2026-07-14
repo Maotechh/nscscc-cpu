@@ -73,6 +73,8 @@ DCACHE_CONTRACT ?= reference/component-contracts/dcache.json
 DCACHE_CYCLES ?= 12000
 DCACHE_GENERATE_DIR ?= $(OUT_DIR)/dcache/generate
 DCACHE_RTL ?= $(DCACHE_GENERATE_DIR)/rtl/dcache.v
+CACOP_RECOVERY_OUT ?= $(OUT_DIR)/cacop-recovery/unit
+CACOP_RECOVERY_REPO ?= .
 TLB_RTL ?= reference/component-replacements/tlb_entry.v
 TLB_CYCLES ?= 8192
 TLB_RANDOM_SEED ?= 0x158aa8
@@ -88,7 +90,7 @@ CORE_TOP_TRACKED_RTL ?= reference/component-replacements/mycpu_top.v
 CORE_TOP_REPLACEMENT_SPEC ?= reference/component-replacements/core-top.json
 LINT_WAIVERS ?= lint-waivers.yml
 
-.PHONY: doctor scala-cache-bootstrap scala-check elaborate generate port-check lint yosys-check unit formal core-contract-check core-top-contract core-top-package core-top-publish-check mul-contract mul-golden-unit mul-candidate-unit div-contract div-golden-unit div-candidate-unit axi-bridge-contract axi-bridge-candidate-unit csr-generate csr-port-check csr-static csr-unit wb-stage-contract wb-stage-candidate-unit mem-stage-contract mem-stage-candidate-unit exe-stage-negative-control icache-contract icache-candidate-unit dcache-contract dcache-candidate-unit replacement-reachability chiplab-doctor golden-export chiplab-overlay rtl-smoke identity-compare evidence-check test-automation
+.PHONY: doctor scala-cache-bootstrap scala-check elaborate generate port-check lint yosys-check unit formal cacop-recovery-unit core-contract-check core-top-contract core-top-package core-top-publish-check mul-contract mul-golden-unit mul-candidate-unit div-contract div-golden-unit div-candidate-unit axi-bridge-contract axi-bridge-candidate-unit csr-generate csr-port-check csr-static csr-unit wb-stage-contract wb-stage-candidate-unit mem-stage-contract mem-stage-candidate-unit exe-stage-negative-control icache-contract icache-candidate-unit dcache-contract dcache-candidate-unit replacement-reachability chiplab-doctor golden-export chiplab-overlay rtl-smoke identity-compare evidence-check test-automation
 
 doctor:
 	$(PYTHON) -I tools/refactor.py doctor --out-dir "$(OUT_DIR)" $(if $(VIVADO_HOME),--vivado-home "$(VIVADO_HOME)",)
@@ -269,6 +271,9 @@ else ifeq ($(TARGET),id_stage)
 else
 	@echo "ERROR: unsupported TARGET=$(TARGET); expected alu, mul, div, tlb, id_stage, mem_stage, or wb_stage" >&2; exit 2
 endif
+
+cacop-recovery-unit:
+	$(PYTHON) -I tools/cacop_recovery_gate.py --repo "$(CACOP_RECOVERY_REPO)" --icache-rtl "$(ICACHE_RTL)" --dcache-rtl "$(DCACHE_RTL)" --out-dir "$(CACOP_RECOVERY_OUT)"
 
 formal:
 ifeq ($(TARGET),mul)

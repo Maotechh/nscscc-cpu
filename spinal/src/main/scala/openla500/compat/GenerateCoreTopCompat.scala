@@ -64,7 +64,9 @@ object GenerateCoreTopCompat {
 
     val spinalConfig = SpinalConfig(
       targetDirectory = outputDirectory.toString,
-      oneFilePerComponent = false
+      oneFilePerComponent = false,
+      headerWithDate = false,
+      headerWithRepoHash = false
     )
     spinalConfig.withTimescale = false
     spinalConfig.generateVerilog {

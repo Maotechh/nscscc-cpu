@@ -29,3 +29,30 @@
 - 独立 claim review 与 experiment audit。
 
 锁定 reference 的更新属于单独人工确认 PR，本迭代不得修改 `reference/manifest.lock`。
+
+### d22 定向逐拍门禁
+
+本迭代使用 `tools/cacop_recovery_gate.py` 将 `d22c13c1ecbee7b0423b7e4f4616f24d98457f02`
+作为仅限 CACOP recovery 的逐拍 oracle。脚本在自身固定该提交以及 I-cache、D-cache、helper RTL 的
+Git blob SHA1，不读取或修改全局 `team_golden_candidate`。固定向量先通过普通 miss/refill 在同一 index
+建立 way 0/1，再覆盖 mode 0/1/2/3、两路选择、mode 2 hit/miss、Replace 的 `rd_rdy` backpressure、
+无读请求 refill 的单拍 tag invalidation，以及 D-cache dirty mode 1/2 writeback。
+
+同一向量必须识别以下历史负控，缺少任一负控差分即 fail closed：
+
+- `d76ca40be528eb8de6e258d1ba249a44eaaed6b6`：CACOP 被并入普通 `cache_hit`；
+- `2ffb1abe4e23eb2272c1b0f899a4ef0727994e05`：lookup CACOP bypass；
+- `40830b8307be27128cb215dc4ea66908bd128334`：CACOP 立即 `data_ok`。
+
+运行入口：
+
+```bash
+make cacop-recovery-unit \
+  CACOP_RECOVERY_REPO=<read-only-git-source> \
+  ICACHE_RTL=<generated-icache.v> \
+  DCACHE_RTL=<generated-dcache.v> \
+  OUT_DIR=<fresh-output-root>
+```
+
+该门禁通过只支持“候选在所列定向轨迹上与 d22 CACOP 行为一致”，不支持完整 cache、func、
+DiffTest、性能、Linux 或 FPGA claim。
