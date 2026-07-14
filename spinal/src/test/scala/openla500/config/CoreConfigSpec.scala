@@ -12,6 +12,7 @@ class CoreConfigSpec extends AnyFunSuite {
       assert(config.tlbEntries == 32)
       assert(config.btbEntries == 64)
       assert(config.rasEntries == 16)
+      assert(config.returnStackDepth == 8)
       assert(config.instructionCache.capacityBytes == 8192)
       assert(config.dataCache.capacityBytes == 8192)
       assert(config.instructionCache == CacheGeometry(2, 256, 16))
@@ -46,6 +47,7 @@ class CoreConfigSpec extends AnyFunSuite {
       () => CoreConfig(tlbEntries = 16),
       () => CoreConfig(btbEntries = 32),
       () => CoreConfig(rasEntries = 8),
+      () => CoreConfig(returnStackDepth = 4),
       () => CoreConfig(instructionCache = CacheGeometry(2, 128, 16)),
       () => CoreConfig(dataCache = CacheGeometry(4, 256, 16)),
       () => CoreConfig(laccEnabled = true, laccOpWidth = 3),

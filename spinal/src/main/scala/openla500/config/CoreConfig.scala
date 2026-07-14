@@ -55,6 +55,7 @@ final case class CoreConfig(
     tlbEntries: Int = 32,
     btbEntries: Int = 64,
     rasEntries: Int = 16,
+    returnStackDepth: Int = 8,
     instructionCache: CacheGeometry = CacheGeometry(),
     dataCache: CacheGeometry = CacheGeometry(),
     laccEnabled: Boolean = false,
@@ -72,7 +73,8 @@ final case class CoreConfig(
   require(resetDelayCycles == 1, "the golden core registers reset for exactly one cycle")
   require(tlbEntries == 32, "only the locked 32-entry TLB is supported")
   require(btbEntries == 64, "only the golden 64-entry BTB is supported")
-  require(rasEntries == 16, "only the golden 16-entry RAS is supported")
+  require(rasEntries == 16, "only the golden 16-entry return-site matcher is supported")
+  require(returnStackDepth == 8, "only the golden eight-entry return stack is supported")
   require(instructionCache == CacheGeometry(), "unsupported instruction-cache geometry")
   require(dataCache == CacheGeometry(), "unsupported data-cache geometry")
   require(laccOpWidth == 2, "the locked LACC command is two bits wide")

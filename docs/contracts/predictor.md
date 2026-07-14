@@ -36,9 +36,9 @@ Fetch/Decode 流水策略仍由现有 stage 拥有。
 Fetch payload 保留历史 5-bit `btbIndex`，只输出内部 6-bit BTB entry 的低 5 bit；该字段不得再
 决定更新目标。返回 matcher 输出兼容的低 4-bit index。
 
-`a158aa8:rtl/btb.v` 名义参数是 64/16，但存在 32-bit match/untaken vector、5-bit selector、
-32-bit reset literal和 6->5 bit index 截断。本实现遵循其可辨识的 64-entry/2-bit/RAS 意图，
-不复刻这些宽度 bug。`delete_entry` 在 a158 中未消费，但临时活动 backend 已实现删除；本实现
+`a158aa8:rtl/btb.v` 名义参数是 64/16，但存在 32-bit match/untaken vector、5-bit selector 和
+6->5 bit index 截断。其 `32'b0` reset 赋值会零扩展，仍可清零 64-bit valid vector，不列为功能缺陷。
+本实现遵循其可辨识的 64-entry/2-bit/RAS 意图，不复刻这些宽度 bug。`delete_entry` 在 a158 中未消费，但临时活动 backend 已实现删除；本实现
 保留该可见修复，防止非分支 PC 留下幽灵预测。
 
 ## 必测不变量

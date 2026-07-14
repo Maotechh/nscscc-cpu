@@ -8,16 +8,18 @@
   "selected_boundary": "predictor/full_btb_ras",
   "gates": {
     "preflight": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0,"evidence":"iteration.md"},
-    "scala": {"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":1,"evidence":"evidence/scala.json"},
-    "predictor_directed": {"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":1,"evidence":"evidence/predictor-directed.json"},
+    "scala": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0,"evidence":"evidence/scala-precommit.json"},
+    "predictor_directed": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0,"evidence":"evidence/predictor-directed.json"},
     "generate_publish": {"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":1,"evidence":"evidence/generate.json"},
     "rtl_static": {"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":1,"evidence":["evidence/port-check.json","evidence/lint.json","evidence/yosys-check.json"]},
     "chiplab_doctor": {"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":1,"evidence":"evidence/chiplab-doctor.json"},
     "func_smoke": {"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":1,"evidence":"evidence/rtl-smoke.json"},
+    "func_full": {"status":"unavailable","planned":2,"executed":0,"passed":0,"failed":0,"skipped":2,"evidence":null},
+    "random": {"status":"unavailable","planned":1,"executed":0,"passed":0,"failed":0,"skipped":1,"evidence":null},
     "claim_review": {"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":1,"evidence":"reviews/claude-raw.md"}
   },
-  "required_gates": ["scala","predictor_directed","generate_publish","rtl_static","chiplab_doctor","func_smoke","claim_review"],
-  "claims": [],
-  "blocked_by": ["implementation_not_started"],
-  "residual_risks": ["a158 predictor width bugs prevent blind sequential equivalence"]
+  "required_gates": ["scala","predictor_directed","generate_publish","rtl_static","chiplab_doctor","func_smoke","func_full","random","claim_review"],
+  "claims": ["predictor directed contract passes in isolated locked Scala gate"],
+  "blocked_by": ["implementation_not_committed","rtl_func_58_81_targets_missing","rtl_random_target_missing"],
+  "residual_risks": ["a158 predictor width bugs prevent blind sequential equivalence","full official functional and random regression unavailable"]
 }

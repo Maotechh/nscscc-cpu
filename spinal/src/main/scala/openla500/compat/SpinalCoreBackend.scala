@@ -5,6 +5,7 @@ import openla500.execute.{OpenLa500Div, OpenLa500Mul}
 import openla500.memory.{OpenLa500AxiBridge, OpenLa500DCache, OpenLa500ICache}
 import openla500.observe.{ArchState, ChiplabDiffTestAdapter, CommitEvent}
 import openla500.pipeline._
+import openla500.predict.OpenLa500Predictor
 import openla500.privileged.{OpenLa500AddrTrans, OpenLa500Csr}
 import spinal.core._
 import spinal.lib.Flow
@@ -168,35 +169,25 @@ private[compat] final class SpinalCoreBackend(
   fetch.io.branchRepair := decode.io.branchRepair.active
   fetch.io.branchTarget := decode.io.branchRepair.target
 
-  // The current typed fetch contract exposes the historical five-bit index. Keep a local
-  // direct-mapped predictor until the 64-entry predictor contract is migrated independently.
-  val btbValid = Vec.fill(32)(Reg(Bool()) init (False))
-  val btbTag = Vec.fill(32)(Reg(UInt(25 bits)))
-  val btbTarget = Vec.fill(32)(Reg(UInt(32 bits)))
-  // Match the golden synchronous boundary: a lookup is only valid for a fetch request
-  // accepted in the previous cycle. Sampling speculative/stalled PCs can replay a branch.
-  val btbLookupValid = RegNext(fetch.io.fetchEnable) init (False)
-  val btbLookupPc = Reg(UInt(32 bits)) init (U(config.resetVector, 32 bits))
-  when(fetch.io.fetchEnable) {
-    btbLookupPc := fetch.io.fetchPc
-  }
-  val lookupIndex = btbLookupPc(6 downto 2)
-  val lookupHit =
-    btbLookupValid && btbValid(lookupIndex) && btbTag(lookupIndex) === btbLookupPc(31 downto 7)
-  fetch.io.btbEnabled := lookupHit
-  fetch.io.btbTaken := lookupHit
-  fetch.io.btbIndex := Mux(lookupHit, lookupIndex, U(0, 5 bits))
-  fetch.io.btbTarget := Mux(lookupHit, btbTarget(lookupIndex), U(0, 32 bits))
-  when(decode.io.btb.enable) {
-    val updateIndex = decode.io.btb.pc(6 downto 2)
-    when(decode.io.btb.actualTaken || decode.io.btb.addEntry) {
-      btbValid(updateIndex) := True
-      btbTag(updateIndex) := decode.io.btb.pc(31 downto 7)
-      btbTarget(updateIndex) := decode.io.btb.actualTarget
-    }.elsewhen(decode.io.btb.deleteEntry) {
-      btbValid(updateIndex) := False
-    }
-  }
+  val predictor = new OpenLa500Predictor(config)
+  predictor.io.lookup.valid := fetch.io.fetchEnable
+  predictor.io.lookup.payload.pc := fetch.io.fetchPc
+  fetch.io.btbEnabled := predictor.io.prediction.valid
+  fetch.io.btbTaken := predictor.io.prediction.payload.taken
+  fetch.io.btbIndex := predictor.io.prediction.payload.legacyIndex
+  fetch.io.btbTarget := predictor.io.prediction.payload.target
+
+  predictor.io.update.valid := decode.io.btb.enable
+  predictor.io.update.payload.popReturnStack := decode.io.btb.popReturnStack
+  predictor.io.update.payload.pushReturnStack := decode.io.btb.pushReturnStack
+  predictor.io.update.payload.addEntry := decode.io.btb.addEntry
+  predictor.io.update.payload.deleteEntry := decode.io.btb.deleteEntry
+  predictor.io.update.payload.predictionError := decode.io.btb.predictionError
+  predictor.io.update.payload.predictionRight := decode.io.btb.predictionRight
+  predictor.io.update.payload.targetError := decode.io.btb.targetError
+  predictor.io.update.payload.actualTaken := decode.io.btb.actualTaken
+  predictor.io.update.payload.actualTarget := decode.io.btb.actualTarget
+  predictor.io.update.payload.pc := decode.io.btb.pc
 
   // CSR and precise exception/state-update wiring.
   csr.io.rd_addr := decode.io.csrReadAddress.asBits
