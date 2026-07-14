@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "status": "warn",
+  "reviewer": "independent_read_only_agent",
+  "active_golden_instances": 16,
+  "scala_source_paths_present": 15,
+  "missing_active_backend_connections": ["perf_counter"],
+  "legacy_cpu_verilog_dependency_found": false,
+  "difftest_blackbox_classification": "official_simulation_sink_only",
+  "claim": "source mapping is nearly complete but full functional reconstruction is not established"
+}

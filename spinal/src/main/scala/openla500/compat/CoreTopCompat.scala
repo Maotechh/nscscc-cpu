@@ -1,10 +1,15 @@
 package openla500.compat
 
+import openla500.config.CoreConfig
 import spinal.core._
 
 /** Locked compatibility boundary for the chiplab core_top interface. */
-final case class CoreTopCompatConfig(tlbEntries: Int = 32) {
+final case class CoreTopCompatConfig(tlbEntries: Int = 32, laccEnabled: Boolean = false) {
   require(tlbEntries == 32, "only the locked TLBNUM=32 configuration is currently verified")
+
+  val backendConfig: CoreConfig =
+    (if (laccEnabled) CoreConfig.LockedWithLaccAndDiffTest else CoreConfig.LockedWithDiffTest)
+      .copy(tlbEntries = tlbEntries)
 }
 
 final class CoreTopCompat(config: CoreTopCompatConfig = CoreTopCompatConfig()) extends Component {
@@ -89,9 +94,7 @@ final class CoreTopCompat(config: CoreTopCompatConfig = CoreTopCompatConfig()) e
   )
 
   val backendArea = new ClockingArea(coreClockDomain) {
-    val core = new SpinalCoreBackend(
-      openla500.config.CoreConfig.LockedWithDiffTest.copy(tlbEntries = config.tlbEntries)
-    )
+    val core = new SpinalCoreBackend(config.backendConfig)
   }
   val core = backendArea.core
 

@@ -276,7 +276,7 @@ final class ExecuteStage(config: CoreConfig = CoreConfig.Locked) extends Compone
     io.laccOutput.request := laccRequest
     io.laccOutput.command := payload.laccCommand
     io.laccOutput.immediate := payload.immediate(11 downto 5)
-    io.laccOutput.flush := io.laccInput.requestReady && !io.laccInput.requestReady
+    io.laccOutput.flush := False
     io.laccOutput.dataResponseValid := laccRequest && io.laccInput.dataAccepted
   }
 

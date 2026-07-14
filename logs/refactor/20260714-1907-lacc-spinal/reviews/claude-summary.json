@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "iteration_id": "20260714-1907-lacc-spinal",
+  "status": "unavailable",
+  "job_id": "faecb554a159461b8e108bac59617d90",
+  "raw_sha256": "dcaa6e9eb38645002141215ca2fdddc00c6f7cffd5ae7d9e59498e1713ea4fb5",
+  "provider": null,
+  "model": null,
+  "reviewed_head_sha": null,
+  "provenance": {
+    "source": "claude-review-mcp",
+    "raw_path": "reviews/claude-raw.md",
+    "raw_sha256": "dcaa6e9eb38645002141215ca2fdddc00c6f7cffd5ae7d9e59498e1713ea4fb5",
+    "job_id": "faecb554a159461b8e108bac59617d90",
+    "provider": null,
+    "model": null,
+    "reviewed_head_sha": null
+  },
+  "review_executed": false,
+  "error": "Required provider environment variable is not set: GEEKPIE_CLAUDE_API_KEY",
+  "fallback": "independent_read_only_agent",
+  "open_blocking_count": 1,
+  "fresh_against_head": false,
+  "allow_ready": false,
+  "allow_status_promotion": false,
+  "dispositions": []
+}

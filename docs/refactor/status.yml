@@ -1,8 +1,8 @@
 schema_version: 1
-updated_at: "2026-07-14T18:50:00+08:00"
-active_iteration: "20260714-1845-refactor-prune"
+updated_at: "2026-07-14T21:45:00+08:00"
+active_iteration: "20260714-1907-lacc-spinal"
 active_branch: "refactor/20260714-1650-consolidated-spinal"
-source_head: "eadf4415a94d890a09c382af215fd76f66ef1b54"
+source_head: "2d09948802ed9bef9e63afd92061173ba5a3714b"
 
 boundaries:
   refactor_branch_convergence:
@@ -295,6 +295,39 @@ boundaries:
       - golden_sequential_formal_equivalence_not_proved
       - claude_bridge_missing_GEEKPIE_CLAUDE_API_KEY
     last_iteration: "20260713-0302-div-spinal"
+
+  lacc:
+    owner: execute
+    state: differential_pass
+    golden_ref: a158aa8:rtl/{lacc_core,lacc_demo}.v
+    dependencies:
+      - dcache
+      - pipeline
+    contract: docs/contracts/lacc.md
+    required_gates:
+      - contract
+      - scala
+      - elaborate
+      - unit_diff
+      - dcache_integration
+      - rtl_static
+      - diagnostic_overlay
+      - func_smoke
+      - claim_review
+    evidence:
+      - logs/refactor/20260714-1907-lacc-spinal/iteration.md
+      - logs/refactor/20260714-1907-lacc-spinal/summary.json
+      - logs/refactor/20260714-1907-lacc-spinal/evidence/lacc-gates.json
+      - logs/refactor/20260714-1907-lacc-spinal/evidence/active-source-audit.md
+      - logs/refactor/20260714-1907-lacc-spinal/reviews/local-independent-review.md
+    active_pr: null
+    blocked_by:
+      - whole_top_strict_lint_failed_with_81_warnings
+      - official_func_smoke_not_executed_on_iteration_commit
+      - four_state_equivalence_not_proved
+      - func_full_random_system_fpga_not_executed
+      - claude_bridge_missing_GEEKPIE_CLAUDE_API_KEY
+    last_iteration: "20260714-1907-lacc-spinal"
 
   core_top_compat:
     owner: compat

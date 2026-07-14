@@ -1,7 +1,7 @@
 package openla500.compat
 
 import openla500.config.CoreConfig
-import openla500.execute.{OpenLa500Div, OpenLa500Mul}
+import openla500.execute.{OpenLa500Div, OpenLa500LaccCore, OpenLa500Mul}
 import openla500.memory.{OpenLa500AxiBridge, OpenLa500DCache, OpenLa500ICache}
 import openla500.observe.{ArchState, ChiplabDiffTestAdapter, CommitEvent}
 import openla500.pipeline._
@@ -19,8 +19,6 @@ import spinal.lib.Flow
 private[compat] final class SpinalCoreBackend(
     config: CoreConfig = CoreConfig.Locked
 ) extends Component {
-  require(!config.laccEnabled, "the active backend does not yet include the external LACC core")
-
   val io = new Bundle {
     val aclk = in Bool ()
     val aresetn = in Bool ()
@@ -386,6 +384,32 @@ private[compat] final class SpinalCoreBackend(
   decode.io.dataCacheEmpty := dataCache.io.dcache_empty
   execute.io.memoryWritesTlbEntryHigh := memory.io.writeTlbEntryHigh
   execute.io.memoryFlush := memory.io.stageFlush
+
+  if (config.laccEnabled) {
+    val accelerator = new OpenLa500LaccCore
+    accelerator.io.clk := io.aclk
+    accelerator.io.reset := reset
+    accelerator.io.flush := execute.io.laccOutput.flush
+    accelerator.io.request.valid := execute.io.laccOutput.request
+    accelerator.io.request.payload.command := execute.io.laccOutput.command
+    accelerator.io.request.payload.immediate := execute.io.laccOutput.immediate
+    accelerator.io.request.payload.registerJ := execute.io.mulDiv.operandJ
+    accelerator.io.request.payload.registerK := execute.io.mulDiv.operandKOrD
+
+    execute.io.laccInput.requestReady := False
+    execute.io.laccInput.responseValid := accelerator.io.response.valid
+    execute.io.laccInput.responseData := accelerator.io.response.payload.data
+    execute.io.laccInput.dataValid := accelerator.io.memoryRequest.valid
+    execute.io.laccInput.dataRead := accelerator.io.memoryRequest.payload.read
+    execute.io.laccInput.dataAddress := accelerator.io.memoryRequest.payload.address
+    execute.io.laccInput.dataWriteData := accelerator.io.memoryRequest.payload.writeData
+    execute.io.laccInput.dataSize := accelerator.io.memoryRequest.payload.size
+    execute.io.laccInput.dataAccepted := dataCache.io.data_ok
+
+    accelerator.io.memoryRequest.ready := dataCache.io.addr_ok
+    accelerator.io.memoryResponse.valid := execute.io.laccOutput.dataResponseValid
+    accelerator.io.memoryResponse.payload.data := dataCache.io.rdata
+  }
 
   // Divider and multiplier retain their verified cycle-level leaf contracts.
   divider.io.div := execute.io.mulDiv.divideEnable

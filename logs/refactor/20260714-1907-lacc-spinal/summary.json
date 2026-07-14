@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "iteration_id": "20260714-1907-lacc-spinal",
+  "status": "draft",
+  "branch": "refactor/20260714-1650-consolidated-spinal",
+  "base_sha": "2d09948802ed9bef9e63afd92061173ba5a3714b",
+  "head_sha": "2d09948802ed9bef9e63afd92061173ba5a3714b",
+  "selected_boundary": "execute/lacc_core_and_active_integration",
+  "gates": {
+    "preflight": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0,"evidence":"iteration.md"},
+    "automation_tests": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0,"evidence":"iteration.md"},
+    "contract": {"status":"pass","planned":2,"executed":2,"passed":2,"failed":0,"skipped":0,"evidence":"evidence/lacc-gates.json"},
+    "scala": {"status":"pass","planned":4,"executed":4,"passed":4,"failed":0,"skipped":0,"evidence":"evidence/lacc-gates.json"},
+    "lacc_directed": {"status":"pass","planned":3,"executed":3,"passed":3,"failed":0,"skipped":0,"evidence":"evidence/lacc-gates.json"},
+    "unit_diff": {"status":"pass","planned":2,"executed":2,"passed":2,"failed":0,"skipped":0,"evidence":"evidence/lacc-gates.json"},
+    "core_top_elaboration": {"status":"pass","planned":4,"executed":4,"passed":4,"failed":0,"skipped":0,"evidence":"evidence/lacc-gates.json"},
+    "rtl_static": {"status":"fail","planned":4,"executed":4,"passed":2,"failed":2,"skipped":0,"evidence":"evidence/lacc-gates.json"},
+    "func_smoke": {"status":"skipped","planned":1,"executed":0,"passed":0,"failed":0,"skipped":1,"evidence":null},
+    "claude_review": {"status":"fail","planned":1,"executed":1,"passed":0,"failed":1,"skipped":0,"evidence":"reviews/claude-raw.md"},
+    "independent_review": {"status":"warning","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0,"evidence":"reviews/local-independent-review.json"},
+    "evidence_schema": {"status":"warning","planned":2,"executed":2,"passed":1,"failed":1,"skipped":0,"evidence":"iteration.md"}
+  },
+  "claims": [
+    {"id":"lacc_two_state_cycle_diff","status":"qualified","scope":"Verilator 5.020 two-state, seed 0x158aa8, 8192 cycles, legal ordered responses, observable valid/payload/memory/backpressure only"},
+    {"id":"lacc_dcache_directed","status":"qualified","scope":"one typed LACC+DCache cross-line miss/refill directed scenario; Execute/AddrTrans/AXI excluded"},
+    {"id":"dual_config_elaboration_yosys","status":"accepted","scope":"LACC-off/on reproducible core_top generation, canonical package and Yosys hierarchy/check; strict Verilator lint excluded and failing"}
+  ],
+  "blocked_by": [
+    "whole_top_strict_lint_failed",
+    "official_func_smoke_not_executed_on_iteration_commit",
+    "four_state_equivalence_not_proved",
+    "full_random_system_fpga_gates_not_executed",
+    "claude_bridge_missing_GEEKPIE_CLAUDE_API_KEY"
+  ],
+  "residual_risks": [
+    "golden LACC four-state behavior is not a safe direct equivalence oracle",
+    "whole-core functional behavior is not established by leaf and elaboration gates",
+    "default LACC-off official smoke must be rerun from the committed source head"
+  ]
+}

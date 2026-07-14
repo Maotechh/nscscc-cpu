@@ -1,5 +1,6 @@
 package openla500.config
 
+import openla500.compat.CoreTopCompatConfig
 import org.scalatest.funsuite.AnyFunSuite
 
 class CoreConfigSpec extends AnyFunSuite {
@@ -36,6 +37,13 @@ class CoreConfigSpec extends AnyFunSuite {
     assert(CoreConfig.LockedWithLaccAndDiffTest.diffTestEnabled)
     assert(CoreConfig.Supported.forall(_.debugEnabled))
     assert(CoreConfig.Supported.forall(_.isa == IsaFeatures()))
+
+    val defaultTop = CoreTopCompatConfig()
+    val laccTop = CoreTopCompatConfig(laccEnabled = true)
+    assert(defaultTop.backendConfig == CoreConfig.LockedWithDiffTest)
+    assert(!defaultTop.backendConfig.laccEnabled)
+    assert(laccTop.backendConfig == CoreConfig.LockedWithLaccAndDiffTest)
+    assert(laccTop.backendConfig.laccEnabled)
   }
 
   test("unsupported configuration changes fail closed") {

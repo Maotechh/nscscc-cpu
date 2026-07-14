@@ -3,7 +3,7 @@ package openla500.compat
 import java.nio.file.{Files, Path, Paths}
 import spinal.core._
 
-object GenerateCoreTopCompat {
+private object CoreTopCompatGeneratorSupport {
   private def outputArgument(args: Array[String]): String =
     args match {
       case Array(path) if path.nonEmpty              => path
@@ -37,7 +37,7 @@ object GenerateCoreTopCompat {
       prospectiveRealPath(parent).resolve(path.getFileName).normalize()
     }
 
-  def main(args: Array[String]): Unit = {
+  def generate(args: Array[String], laccEnabled: Boolean): Unit = {
     val outputDirectory = Paths.get(outputArgument(args)).toAbsolutePath.normalize()
     val workingDirectory = Paths.get("").toAbsolutePath.normalize()
     val classDirectory = Paths
@@ -70,9 +70,19 @@ object GenerateCoreTopCompat {
     )
     spinalConfig.withTimescale = false
     spinalConfig.generateVerilog {
-      val dut = new CoreTopCompat()
+      val dut = new CoreTopCompat(CoreTopCompatConfig(laccEnabled = laccEnabled))
       dut.setDefinitionName("core_top")
       dut
     }
   }
+}
+
+object GenerateCoreTopCompat {
+  def main(args: Array[String]): Unit =
+    CoreTopCompatGeneratorSupport.generate(args, laccEnabled = false)
+}
+
+object GenerateCoreTopCompatWithLacc {
+  def main(args: Array[String]): Unit =
+    CoreTopCompatGeneratorSupport.generate(args, laccEnabled = true)
 }

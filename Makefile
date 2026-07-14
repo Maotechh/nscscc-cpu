@@ -35,6 +35,11 @@ DIV_VECTOR_COUNT ?= 4096
 DIV_RANDOM_SEED ?= 0x158aa8
 DIV_GENERATE_DIR ?= $(OUT_DIR)/div/generate
 DIV_RTL ?= $(DIV_GENERATE_DIR)/rtl/div.v
+LACC_CONTRACT ?= reference/component-contracts/lacc.json
+LACC_CYCLES ?= 8192
+LACC_RANDOM_SEED ?= 0x158aa8
+LACC_GENERATE_DIR ?= $(OUT_DIR)/lacc/generate
+LACC_RTL ?= $(LACC_GENERATE_DIR)/rtl/lacc_core.v
 AXI_BRIDGE_CONTRACT ?= reference/component-contracts/axi-bridge.json
 AXI_BRIDGE_CYCLES ?= 8192
 AXI_BRIDGE_RANDOM_SEED ?= 0x158aa8
@@ -90,7 +95,7 @@ CORE_TOP_TRACKED_RTL ?= reference/component-replacements/mycpu_top.v
 CORE_TOP_REPLACEMENT_SPEC ?= reference/component-replacements/core-top.json
 LINT_WAIVERS ?= lint-waivers.yml
 
-.PHONY: doctor scala-cache-bootstrap scala-check elaborate generate port-check lint yosys-check unit formal cacop-recovery-unit core-contract-check core-top-contract core-top-package core-top-publish-check mul-contract mul-golden-unit mul-candidate-unit div-contract div-golden-unit div-candidate-unit axi-bridge-contract axi-bridge-candidate-unit csr-generate csr-port-check csr-static csr-unit wb-stage-contract wb-stage-candidate-unit mem-stage-contract mem-stage-candidate-unit exe-stage-negative-control icache-contract icache-candidate-unit dcache-contract dcache-candidate-unit replacement-reachability chiplab-doctor golden-export chiplab-overlay rtl-smoke identity-compare evidence-check test-automation
+.PHONY: doctor scala-cache-bootstrap scala-check elaborate generate port-check lint yosys-check unit formal cacop-recovery-unit core-contract-check core-top-contract core-top-package core-top-publish-check mul-contract mul-golden-unit mul-candidate-unit div-contract div-golden-unit div-candidate-unit lacc-contract lacc-candidate-unit axi-bridge-contract axi-bridge-candidate-unit csr-generate csr-port-check csr-static csr-unit wb-stage-contract wb-stage-candidate-unit mem-stage-contract mem-stage-candidate-unit exe-stage-negative-control icache-contract icache-candidate-unit dcache-contract dcache-candidate-unit replacement-reachability chiplab-doctor golden-export chiplab-overlay rtl-smoke identity-compare evidence-check test-automation
 
 doctor:
 	$(PYTHON) -I tools/refactor.py doctor --out-dir "$(OUT_DIR)" $(if $(VIVADO_HOME),--vivado-home "$(VIVADO_HOME)",)
@@ -104,10 +109,13 @@ scala-check:
 elaborate:
 ifeq ($(TARGET),core_top)
 	$(PYTHON) -I tools/spinal_generate.py --manifest "reference/manifest.lock" --spinal-dir "spinal" --tool-root "$(CHIPLAB_TOOL_ROOT)" --main-class "openla500.compat.GenerateCoreTopCompat" --expected-module "core_top" --expected-file "core_top.v" --out-dir "$(OUT_DIR)/core_top/elaborate" --runs 2 $(if $(JAVA_HOME),--java-home "$(JAVA_HOME)",)
+	$(PYTHON) -I tools/spinal_generate.py --manifest "reference/manifest.lock" --spinal-dir "spinal" --tool-root "$(CHIPLAB_TOOL_ROOT)" --main-class "openla500.compat.GenerateCoreTopCompatWithLacc" --expected-module "core_top" --expected-file "core_top.v" --out-dir "$(OUT_DIR)/core_top-lacc/elaborate" --runs 2 $(if $(JAVA_HOME),--java-home "$(JAVA_HOME)",)
 else ifeq ($(TARGET),mul)
 	$(PYTHON) -I tools/mul_gate.py elaborate --target "$(TARGET)" --manifest "reference/manifest.lock" --spinal-dir "spinal" --tool-root "$(CHIPLAB_TOOL_ROOT)" --out-dir "$(OUT_DIR)/mul/elaborate" $(if $(JAVA_HOME),--java-home "$(JAVA_HOME)",)
 else ifeq ($(TARGET),div)
 	$(PYTHON) -I tools/div_gate.py elaborate --target "$(TARGET)" --manifest "reference/manifest.lock" --spinal-dir "spinal" --tool-root "$(CHIPLAB_TOOL_ROOT)" --out-dir "$(OUT_DIR)/div/elaborate" $(if $(JAVA_HOME),--java-home "$(JAVA_HOME)",)
+else ifeq ($(TARGET),lacc)
+	$(PYTHON) -I tools/spinal_generate.py --manifest "reference/manifest.lock" --spinal-dir "spinal" --tool-root "$(CHIPLAB_TOOL_ROOT)" --main-class "openla500.execute.GenerateOpenLa500LaccCore" --expected-module "lacc_core" --expected-file "lacc_core.v" --out-dir "$(OUT_DIR)/lacc/elaborate" --runs 2 $(if $(JAVA_HOME),--java-home "$(JAVA_HOME)",)
 else ifeq ($(TARGET),axi_bridge)
 	$(PYTHON) -I tools/spinal_generate.py --manifest "reference/manifest.lock" --spinal-dir "spinal" --tool-root "$(CHIPLAB_TOOL_ROOT)" --main-class "openla500.memory.GenerateOpenLa500AxiBridge" --expected-module "axi_bridge" --expected-file "axi_bridge.v" --out-dir "$(OUT_DIR)/axi_bridge/elaborate" --runs 2 $(if $(JAVA_HOME),--java-home "$(JAVA_HOME)",)
 else ifeq ($(TARGET),exe_stage)
@@ -130,7 +138,7 @@ else ifeq ($(TARGET),id_stage)
 else ifeq ($(TARGET),alu)
 	$(PYTHON) -I tools/alu_gate.py elaborate --target "$(TARGET)" --manifest "reference/manifest.lock" --spinal-dir "spinal" --tool-root "$(CHIPLAB_TOOL_ROOT)" --out-dir "$(OUT_DIR)/alu/elaborate" $(if $(JAVA_HOME),--java-home "$(JAVA_HOME)",)
 else
-	@echo "ERROR: unsupported TARGET=$(TARGET); expected core_top, alu, mul, div, axi_bridge, exe_stage, mem_stage, icache, tlb, addr_trans, or wb_stage" >&2; exit 2
+	@echo "ERROR: unsupported TARGET=$(TARGET); expected core_top, alu, mul, div, lacc, axi_bridge, exe_stage, mem_stage, icache, tlb, addr_trans, or wb_stage" >&2; exit 2
 endif
 
 generate:
@@ -142,6 +150,8 @@ else ifeq ($(TARGET),mul)
 	$(PYTHON) -I tools/mul_gate.py generate --target "$(TARGET)" --manifest "reference/manifest.lock" --spinal-dir "spinal" --tool-root "$(CHIPLAB_TOOL_ROOT)" --out-dir "$(MUL_GENERATE_DIR)" $(if $(JAVA_HOME),--java-home "$(JAVA_HOME)",)
 else ifeq ($(TARGET),div)
 	$(PYTHON) -I tools/div_gate.py generate --target "$(TARGET)" --manifest "reference/manifest.lock" --spinal-dir "spinal" --tool-root "$(CHIPLAB_TOOL_ROOT)" --out-dir "$(DIV_GENERATE_DIR)" $(if $(JAVA_HOME),--java-home "$(JAVA_HOME)",)
+else ifeq ($(TARGET),lacc)
+	$(PYTHON) -I tools/spinal_generate.py --manifest "reference/manifest.lock" --spinal-dir "spinal" --tool-root "$(CHIPLAB_TOOL_ROOT)" --main-class "openla500.execute.GenerateOpenLa500LaccCore" --expected-module "lacc_core" --expected-file "lacc_core.v" --out-dir "$(LACC_GENERATE_DIR)" --runs 2 $(if $(JAVA_HOME),--java-home "$(JAVA_HOME)",)
 else ifeq ($(TARGET),axi_bridge)
 	$(PYTHON) -I tools/spinal_generate.py --manifest "reference/manifest.lock" --spinal-dir "spinal" --tool-root "$(CHIPLAB_TOOL_ROOT)" --main-class "openla500.memory.GenerateOpenLa500AxiBridge" --expected-module "axi_bridge" --expected-file "axi_bridge.v" --out-dir "$(AXI_BRIDGE_GENERATE_DIR)" --runs 2 $(if $(JAVA_HOME),--java-home "$(JAVA_HOME)",)
 else ifeq ($(TARGET),exe_stage)
@@ -250,6 +260,8 @@ ifeq ($(TARGET),mul)
 	$(PYTHON) -I tools/mul_diff.py candidate --contract "$(MUL_CONTRACT)" --manifest "reference/manifest.lock" --rtl "$(MUL_RTL)" --out-dir "$(OUT_DIR)/mul/unit" --vector-count "$(MUL_VECTOR_COUNT)" --seed "$(MUL_RANDOM_SEED)"
 else ifeq ($(TARGET),div)
 	$(PYTHON) -I tools/div_diff.py candidate --contract "$(DIV_CONTRACT)" --manifest "reference/manifest.lock" --rtl "$(DIV_RTL)" --out-dir "$(OUT_DIR)/div/unit" --vector-count "$(DIV_VECTOR_COUNT)" --seed "$(DIV_RANDOM_SEED)"
+else ifeq ($(TARGET),lacc)
+	$(PYTHON) -I tools/lacc_diff.py candidate --contract "$(LACC_CONTRACT)" --manifest "reference/manifest.lock" --rtl "$(LACC_RTL)" --out-dir "$(OUT_DIR)/lacc/unit" --cycles "$(LACC_CYCLES)" --seed "$(LACC_RANDOM_SEED)"
 else ifeq ($(TARGET),axi_bridge)
 	$(PYTHON) -I tools/axi_bridge_gate.py diff --contract "$(AXI_BRIDGE_CONTRACT)" --rtl "$(AXI_BRIDGE_RTL)" --out-dir "$(OUT_DIR)/axi_bridge/unit" --cycles "$(AXI_BRIDGE_CYCLES)" --seed "$(AXI_BRIDGE_RANDOM_SEED)"
 else ifeq ($(TARGET),exe_stage)
@@ -269,7 +281,7 @@ else ifeq ($(TARGET),mem_stage)
 else ifeq ($(TARGET),id_stage)
 	$(PYTHON) -I tools/id_stage_gate.py --repo "." --rtl "$(ID_STAGE_RTL)" --profile "$(ID_STAGE_PROFILE)" --out-dir "$(OUT_DIR)/id_stage/$(ID_STAGE_PROFILE)/unit" --cycles "$(ID_STAGE_CYCLES)"
 else
-	@echo "ERROR: unsupported TARGET=$(TARGET); expected alu, mul, div, tlb, id_stage, mem_stage, or wb_stage" >&2; exit 2
+	@echo "ERROR: unsupported TARGET=$(TARGET); expected alu, mul, div, lacc, tlb, id_stage, mem_stage, or wb_stage" >&2; exit 2
 endif
 
 cacop-recovery-unit:
@@ -315,6 +327,12 @@ div-golden-unit:
 
 div-candidate-unit:
 	$(PYTHON) -I tools/div_diff.py candidate --contract "$(DIV_CONTRACT)" --manifest "reference/manifest.lock" --rtl "$(DIV_RTL)" --out-dir "$(OUT_DIR)/div/unit" --vector-count "$(DIV_VECTOR_COUNT)" --seed "$(DIV_RANDOM_SEED)"
+
+lacc-contract:
+	$(PYTHON) -I tools/lacc_diff.py contract --contract "$(LACC_CONTRACT)" --manifest "reference/manifest.lock" --out-dir "$(OUT_DIR)/lacc/contract"
+
+lacc-candidate-unit:
+	$(PYTHON) -I tools/lacc_diff.py candidate --contract "$(LACC_CONTRACT)" --manifest "reference/manifest.lock" --rtl "$(LACC_RTL)" --out-dir "$(OUT_DIR)/lacc/unit" --cycles "$(LACC_CYCLES)" --seed "$(LACC_RANDOM_SEED)"
 
 axi-bridge-contract:
 	$(PYTHON) -I tools/axi_bridge_gate.py contract --contract "$(AXI_BRIDGE_CONTRACT)" --out-dir "$(OUT_DIR)/axi_bridge/contract"

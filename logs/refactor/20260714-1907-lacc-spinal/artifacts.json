@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "iteration_id": "20260714-1907-lacc-spinal",
+  "artifacts": [],
+  "external_artifacts": [
+    {"path":"build/lacc-final-stable/lacc/generate/summary.json","sha256":"f0d9a3591b215a3d3417d3539ab34c2cdd22627c4a00c4f256e9ec01359cab0a","retention":"local build until explicit clean"},
+    {"path":"build/lacc-main-unit/lacc/unit/summary.json","sha256":"459f5ea9dc78f7722a84821bec8ef1f8bc67f5cc3a7506eff9961da3d3f8e818","retention":"local build until explicit clean"},
+    {"path":"build/lacc-core-top-final/core_top/elaborate/summary.json","sha256":"c4fd110c16bfdf557d48beed73713048157428d6027acf6c8de231d171589cb0","retention":"local build until explicit clean"},
+    {"path":"build/lacc-core-top-final/core_top-lacc/elaborate/summary.json","sha256":"1ba1262805528fa2ecdafe81983e7e14ebcac1ec524514b5a80bc492676b11ff","retention":"local build until explicit clean"},
+    {"path":"/tmp/nscscc-lacc-scala-20260714-2056/build/lacc-scala-final2/scala-check/summary.json","sha256":"35900c7b531718d48861ab4fc54ee3b5c8d83d55e8d5d9e1f95b1a95a49ab3f2","retention":"ephemeral validation clone"}
+  ]
+}
