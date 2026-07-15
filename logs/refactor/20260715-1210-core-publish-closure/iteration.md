@@ -1,7 +1,7 @@
 # 20260715-1210-core-publish-closure
 
 - 状态：`draft`
-- 分支 / Base SHA / Head：`refactor/20260714-1650-consolidated-spinal` / `ba4ce0364a51e4c5ff9f5e674c20578c31e7e769` / `fe24e9a13fe8acbfc2e55117f4fdcc79c39b823c`
+- 分支 / Base SHA / Head：`refactor/20260714-1650-consolidated-spinal` / `ba4ce0364a51e4c5ff9f5e674c20578c31e7e769` / `31bdc18020339a0b57365d0ac66a8c1008465ace`
 - 选择边界：发布一致性与 candidate hierarchy closure。审计确认生成层级已无旧 CPU Verilog 实例，但 tracked `mycpu_top.v` 曾落后于当前 32-entry predictor；同时 overlay 仍导出 16 个旧 Verilog 输入。该边界能直接阻止 stale RTL 和无依据的“纯 Spinal”声明。
 
 ## 实施与证据

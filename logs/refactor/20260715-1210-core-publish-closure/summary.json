@@ -4,7 +4,7 @@
   "status": "draft",
   "branch": "refactor/20260714-1650-consolidated-spinal",
   "base_sha": "ba4ce0364a51e4c5ff9f5e674c20578c31e7e769",
-  "head_sha": "fe24e9a13fe8acbfc2e55117f4fdcc79c39b823c",
+  "head_sha": "31bdc18020339a0b57365d0ac66a8c1008465ace",
   "selected_boundary": "core_top_publish_and_candidate_closure",
   "gates": {
     "scala": {"status": "pass", "planned": 4, "executed": 4, "passed": 4, "failed": 0, "skipped": 0, "evidence": "evidence/scala-check.json"},

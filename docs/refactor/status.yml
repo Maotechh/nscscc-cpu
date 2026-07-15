@@ -2,7 +2,7 @@ schema_version: 1
 updated_at: "2026-07-15T12:28:00+08:00"
 active_iteration: "20260715-1210-core-publish-closure"
 active_branch: "refactor/20260714-1650-consolidated-spinal"
-source_head: "fe24e9a13fe8acbfc2e55117f4fdcc79c39b823c"
+source_head: "31bdc18020339a0b57365d0ac66a8c1008465ace"
 
 boundaries:
   refactor_branch_convergence:
