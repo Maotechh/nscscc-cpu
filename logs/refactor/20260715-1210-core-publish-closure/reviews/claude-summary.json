@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "iteration_id": "20260715-1210-core-publish-closure",
+  "status": "unavailable",
+  "job_id": "unavailable-20260715-core-publish-closure",
+  "raw_sha256": "c1179f74c589bd1dbbaa0f0e8646705c532846ad130c9bfca4e9fed58b7b02ba",
+  "provider": "claude-review-mcp",
+  "model": null,
+  "reviewed_head_sha": null,
+  "provenance": {"source": "claude-review-mcp", "raw_path": "reviews/claude-raw.md", "raw_sha256": "c1179f74c589bd1dbbaa0f0e8646705c532846ad130c9bfca4e9fed58b7b02ba", "job_id": "unavailable-20260715-core-publish-closure", "provider": "claude-review-mcp", "model": null, "reviewed_head_sha": null},
+  "open_blocking_count": 1,
+  "fresh_against_head": false,
+  "allow_ready": false,
+  "allow_status_promotion": false,
+  "error": "Required provider environment variable is not set: GEEKPIE_CLAUDE_API_KEY",
+  "reviewer": "claude",
+  "claims": [
+    {"claim": "fresh package matches Scala", "decision": "accepted"},
+    {"claim": "pure overlay complete", "decision": "open"},
+    {"claim": "complete functional refactor", "decision": "open"}
+  ]
+}

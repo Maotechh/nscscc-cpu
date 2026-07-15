@@ -14,12 +14,12 @@
 - 隔离目录：`/tmp/nscscc-perf-counter-work/20260715-0118-perf-counter-diagnostic`；摘要证据复制到 `evidence/rtl-smoke-20260715-0118/`。
 - overlay 使用完整 source SHA，替换 5 个锁定 blob；overlay 为 diagnostic/mixed provenance，不能作为 candidate-locked release gate。
 - `configure.sh --run func/func_lab19`、`make verilator testbench soft_compile`、`make simulation_run_prog` 分别返回 0。
-- parser 观察到 `instructions=174069`、`clocks=609803`、`first_mismatch=null`、`difftest_enabled=true`，但 `good_trap=false`，UART 输出为空；因此 `func_smoke` FAIL。
+- parser 观察到 `instructions=174069`、`clocks=609803`、`first_mismatch=null`、`difftest_enabled=true`、`end_by_syscall=true` 和 `reached_test_end=true`；该 case 的锁定终止合同是 syscall，因此 `functional_status=pass`。`good_trap=false` 与 UART 为空不构成功能失败。
 - warning policy FAIL：DUT 237 条、官方环境 364 条，尚无逐文件 waiver。失败不是 perf_counter leaf 差分失败，而是整机基线/警告策略问题，需单独隔离处理。
 
 ## 审核与风险
 
 - Claude bridge 因缺少 `GEEKPIE_CLAUDE_API_KEY` 未执行；已记录为 unavailable，不把独立审查冒充 Claude 审核。
-- 不支持“官方 smoke PASS”“整机完成”或“release ready”声明。58/81 功能、random DiffTest、perf20、U-Boot/Linux、Vivado 尚未通过。
+- 只支持“该 diagnostic mixed run 的功能观察通过”；严格官方 smoke gate 仍因 warning policy 和非 gate-eligible provenance 失败。不支持“整机完成”或“release ready”声明。58/81 功能、random DiffTest、perf20、U-Boot/Linux、Vivado 尚未通过。
 - 回退：revert 本迭代提交即可恢复 perf_counter 的旧 backend 接线，不删除锁定 golden。
 - PR 状态：`awaiting_pr`；只推送分支，不自动创建 ready PR，也不合并 `main`。

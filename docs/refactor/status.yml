@@ -1,8 +1,8 @@
 schema_version: 1
-updated_at: "2026-07-15T01:30:00+08:00"
-active_iteration: "20260714-2328-perf-counter"
+updated_at: "2026-07-15T12:15:00+08:00"
+active_iteration: "20260715-1210-core-publish-closure"
 active_branch: "refactor/20260714-1650-consolidated-spinal"
-source_head: "b015be13f468d34debc912e77db8b8423e846a98"
+source_head: "ba4ce0364a51e4c5ff9f5e674c20578c31e7e769"
 
 boundaries:
   refactor_branch_convergence:
@@ -68,8 +68,7 @@ boundaries:
       - logs/refactor/20260713-2255-id-active-overlay/reviews/claude-summary.json
     active_pr: null
     blocked_by:
-      - func_lab19_fail_at_1c07c79c
-      - 619_unapproved_verilator_warnings
+      - strict_warning_policy_unapproved
       - claude_bridge_missing_GEEKPIE_CLAUDE_API_KEY
       - full_regression_not_executed
     last_iteration: "20260713-2255-id-active-overlay"
@@ -97,8 +96,8 @@ boundaries:
       - logs/refactor/20260711-1533-component-overlay/reviews/result-to-claim.md
     active_pr: null
     blocked_by:
-      - func_lab19_locked_and_mixed_mismatch_at_1c07c79c
-      - 644_unapproved_verilator_warnings
+      - locked_baseline_mismatch_at_1c07c79c
+      - strict_warning_policy_unapproved
       - independent_rtl_static_and_yosys_not_executed
       - claude_bridge_missing_GEEKPIE_CLAUDE_API_KEY
     last_iteration: "20260711-1533-component-overlay"
@@ -127,7 +126,7 @@ boundaries:
     active_pr: null
     blocked_by:
       - a158aa8_func_lab19_mismatch_at_1c07c79c
-      - 644_unapproved_verilator_warnings
+      - strict_warning_policy_unapproved
       - independent_rtl_static_and_yosys_not_executed
       - claude_bridge_missing_GEEKPIE_CLAUDE_API_KEY
     last_iteration: "20260710-2026-baseline"
@@ -163,8 +162,8 @@ boundaries:
       - logs/refactor/20260712-0430-alu-spinal/reviews/result-to-claim.json
     active_pr: null
     blocked_by:
-      - func_lab19_candidate_and_mixed_mismatch_at_1c07c79c
-      - 642_unapproved_verilator_warnings_in_mixed_compile
+      - strict_warning_policy_unapproved
+      - func_full_and_random_not_executed
       - claude_bridge_missing_GEEKPIE_CLAUDE_API_KEY
     last_iteration: "20260712-0430-alu-spinal"
 
@@ -225,8 +224,8 @@ boundaries:
       - logs/refactor/20260712-1651-mul-spinal/reviews/result-to-claim.json
     active_pr: null
     blocked_by:
-      - func_lab19_candidate_and_mixed_mismatch_at_1c07c79c
-      - 640_unapproved_verilator_warnings_in_mixed_compile
+      - strict_warning_policy_unapproved
+      - func_full_and_random_not_executed
       - vivado_leaf_63_unapproved_warnings
       - golden_sequential_formal_solver_timeout
       - claude_bridge_missing_GEEKPIE_CLAUDE_API_KEY
@@ -289,8 +288,8 @@ boundaries:
     active_pr: null
     blocked_by:
       - div_harness_pr_unmerged
-      - func_lab19_locked_and_mixed_mismatch_at_1c07c79c
-      - 641_unapproved_verilator_warnings_in_mixed_compile
+      - locked_baseline_mismatch_at_1c07c79c
+      - strict_warning_policy_unapproved
       - vivado_leaf_drc_methodology_and_timing_fail
       - golden_sequential_formal_equivalence_not_proved
       - claude_bridge_missing_GEEKPIE_CLAUDE_API_KEY
@@ -361,8 +360,8 @@ boundaries:
       - logs/refactor/20260714-2328-perf-counter/reviews/claude-summary.json
     active_pr: null
     blocked_by:
-      - official_func_lab19_good_trap_false
-      - unapproved_verilator_warnings
+      - strict_warning_policy_unapproved
+      - func_full_and_random_not_executed
       - claude_bridge_missing_GEEKPIE_CLAUDE_API_KEY
     last_iteration: "20260714-2328-perf-counter"
 
@@ -396,13 +395,38 @@ boundaries:
       - logs/refactor/20260714-0302-spinal-active-backend/reviews/independent-summary.json
     active_pr: null
     blocked_by:
-      - func_lab19_fails_at_locked_baseline_mismatch_1c07c79c
+      - locked_baseline_not_golden_truth
       - unapproved_verilator_warnings_in_complete_spinal_rtl
       - func_full_and_random_wrappers_not_implemented
       - vivado_complete_spinal_rtl_not_executed
       - golden_observable_btb_ras_lacc_random_difftest_and_perf_pending
       - claude_bridge_missing_GEEKPIE_CLAUDE_API_KEY
     last_iteration: "20260714-0302-spinal-active-backend"
+
+  candidate_closure:
+    owner: verification
+    state: implementation_in_review
+    golden_ref: a158aa8:reference/golden-rtl-files.lock
+    dependencies:
+      - core_top_compat
+    contract: docs/contracts/candidate-closure.md
+    required_gates:
+      - reproducible_generate
+      - publish_check
+      - candidate_hierarchy_closure
+      - pure_overlay_file_set
+      - rtl_static
+      - func_smoke
+      - claim_review
+    evidence:
+      - logs/refactor/20260715-1210-core-publish-closure/iteration.md
+      - logs/refactor/20260715-1210-core-publish-closure/evidence/candidate-closure.json
+    active_pr: null
+    blocked_by:
+      - pure_overlay_file_set_not_enabled
+      - strict_warning_policy_unapproved
+      - claude_bridge_missing_GEEKPIE_CLAUDE_API_KEY
+    last_iteration: "20260715-1210-core-publish-closure"
 
   core_contracts:
     owner: architecture
@@ -446,7 +470,9 @@ boundaries:
       - logs/refactor/20260713-0729-exe-stage-spinal/iteration.md
       - logs/refactor/20260713-0729-exe-stage-spinal/summary.json
     active_pr: null
-    blocked_by: []
+    blocked_by:
+      - func_full_and_random_not_executed
+      - claude_bridge_missing_GEEKPIE_CLAUDE_API_KEY
     last_iteration: "20260713-0729-exe-stage-spinal"
 
   id_stage:
@@ -476,8 +502,7 @@ boundaries:
       - logs/refactor/20260713-2255-id-active-overlay/evidence/rtl-smoke.json
     active_pr: null
     blocked_by:
-      - func_lab19_fail_at_1c07c79c
-      - 619_unapproved_verilator_warnings
+      - strict_warning_policy_unapproved
       - rtl_static_not_executed_for_active_overlay
       - func_full_and_random_not_executed
     last_iteration: "20260713-2255-id-active-overlay"
@@ -488,7 +513,7 @@ boundaries:
     golden_ref: a158aa8:rtl/wb_stage.v
     dependencies:
       - core_contracts
-      - observability_contracts
+      - observability
     contract: docs/contracts/wb-stage.md
     required_gates:
       - doctor
@@ -510,8 +535,7 @@ boundaries:
     active_pr: null
     blocked_by:
       - claude_bridge_missing_GEEKPIE_CLAUDE_API_KEY
-      - official_func_smoke_failed_at_1c07c79c
-      - 627_unapproved_verilator_warnings_in_mixed_compile
+      - strict_warning_policy_unapproved
     last_iteration: "20260713-1829-wb-stage-spinal"
 
   memory_stage:
@@ -547,8 +571,8 @@ boundaries:
       - logs/refactor/20260713-2119-mem-stage-spinal/reviews/experiment-audit.json
     active_pr: null
     blocked_by:
-      - active_overlay_integration_pending
-      - official_func_smoke_pending
+      - strict_warning_policy_unapproved
+      - func_full_and_random_not_executed
       - claude_bridge_missing_GEEKPIE_CLAUDE_API_KEY
     last_iteration: "20260713-2119-mem-stage-spinal"
 
@@ -576,7 +600,6 @@ boundaries:
       - logs/refactor/20260713-2215-if-stage-spinal/reviews/local-independent-review.md
     active_pr: null
     blocked_by:
-      - official_overlay_not_enabled
       - func_full_and_random_not_executed
       - multi_seed_and_idle_icacop_interrupt_reset_coverage_pending
       - claude_bridge_missing_GEEKPIE_CLAUDE_API_KEY
@@ -600,7 +623,9 @@ boundaries:
       - claim_review
     evidence: []
     active_pr: null
-    blocked_by: []
+    blocked_by:
+      - func_full_and_random_not_executed
+      - claude_bridge_missing_GEEKPIE_CLAUDE_API_KEY
     last_iteration: "20260713-0735-regfile-spinal"
 
   privileged:
@@ -619,7 +644,9 @@ boundaries:
       - logs/refactor/20260713-0729-csr-spinal/iteration.md
       - logs/refactor/20260713-0729-csr-spinal/summary.json
     active_pr: null
-    blocked_by: []
+    blocked_by:
+      - func_full_and_random_not_executed
+      - claude_bridge_missing_GEEKPIE_CLAUDE_API_KEY
     last_iteration: "20260713-0729-csr-spinal"
 
   axi_bridge:
@@ -756,7 +783,7 @@ boundaries:
     dependencies:
       - core_contracts
       - axi_bridge
-    contract: null
+    contract: docs/contracts/memory-system.md
     required_gates:
       - unit_diff
       - func_full
@@ -770,7 +797,7 @@ boundaries:
       - logs/refactor/20260714-1316-golden-recovery-cacop/evidence/rtl-smoke-b2a73c8.json
     active_pr: null
     blocked_by:
-      - func_lab19_fails_at_mismatch_1c07cfcc_after_cacop_recovery
+      - func_full_and_random_not_executed
       - random_backpressure_and_perf_not_executed
     last_iteration: "20260714-1316-golden-recovery-cacop"
 
@@ -797,8 +824,7 @@ boundaries:
       - logs/refactor/20260714-1316-golden-recovery-cacop/evidence/rtl-smoke-b2a73c8.json
     active_pr: null
     blocked_by:
-      - strict_lint_failed_with_unapproved_warnings
-      - func_lab19_fails_at_mismatch_1c07cfcc
+      - strict_warning_policy_unapproved
       - claude_bridge_missing_GEEKPIE_CLAUDE_API_KEY
     last_iteration: "20260714-1316-golden-recovery-cacop"
 
@@ -830,10 +856,9 @@ boundaries:
       - logs/refactor/20260714-1534-btb-branch-replay/reviews/independent-summary.json
     active_pr: null
     blocked_by:
-      - strict_lint_failed_with_unapproved_warnings
+      - strict_warning_policy_unapproved
       - claude_bridge_missing_GEEKPIE_CLAUDE_API_KEY
       - btb_directed_harness_missing
-      - complete_64_entry_2bit_ras_predictor_not_migrated
       - full_regression_random_and_fpga_not_executed
     last_iteration: "20260714-1534-btb-branch-replay"
 
@@ -872,7 +897,7 @@ boundaries:
       - logs/refactor/20260714-1733-btb-spinal-full/reviews/claude-summary.json
     active_pr: null
     blocked_by:
-      - strict_lint_failed_with_unapproved_warnings
+      - strict_warning_policy_unapproved
       - smoke_compile_warning_policy_failed
       - rtl_func_58_81_targets_missing
       - rtl_random_target_missing
@@ -885,7 +910,7 @@ boundaries:
     golden_ref: a158aa8:rtl/mycpu_top.v
     dependencies:
       - core_contracts
-    contract: null
+    contract: docs/contracts/observability.md
     required_gates:
       - contract
       - difftest
@@ -897,7 +922,7 @@ boundaries:
       - logs/refactor/20260714-0302-spinal-active-backend/evidence/baseline-forwarding-comparison.json
     active_pr: null
     blocked_by:
-      - func_lab19_fails_at_mismatch_1c07cfcc_after_cacop_recovery
+      - func_full_and_random_not_executed
       - random_difftest_not_executed
       - claude_bridge_missing_GEEKPIE_CLAUDE_API_KEY
     last_iteration: "20260714-1316-golden-recovery-cacop"

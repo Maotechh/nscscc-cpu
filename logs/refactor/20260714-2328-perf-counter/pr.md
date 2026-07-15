@@ -8,7 +8,7 @@
 
 - Scala / unit differential / port-check / Yosys：PASS，证据见迭代目录。
 - chiplab-doctor：PASS。
-- 官方 `func_lab19`：FAIL，构建与仿真命令返回 0，但 `good_trap=false` 且 warning policy 为 DUT 237、官方 364。
+- 官方 `func_lab19` diagnostic mixed run：功能观察 PASS（syscall 终止、到达 test-end、无 mismatch）；严格 gate 因 warning policy 为 DUT 237、官方 364，且 provenance 非 gate-eligible 而 FAIL。
 - 未运行或未通过：58/81 功能集、random、perf20、U-Boot/Linux、Vivado implementation/timing/bitstream。
 
 ## 审核与状态

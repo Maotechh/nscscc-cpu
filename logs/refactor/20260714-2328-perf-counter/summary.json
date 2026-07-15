@@ -14,7 +14,7 @@
     "rtl_static": {"status": "pass", "planned": 2, "executed": 2, "passed": 2, "failed": 0, "skipped": 0, "evidence": "reference/component-replacements/"},
     "core_top": {"status": "pass", "planned": 4, "executed": 4, "passed": 4, "failed": 0, "skipped": 0, "evidence": "reference/component-replacements/core-top.json"},
     "chiplab_doctor": {"status": "pass", "planned": 1, "executed": 1, "passed": 1, "failed": 0, "skipped": 0, "evidence": "evidence/rtl-smoke-20260715-0118/chiplab-doctor.json"},
-    "func_smoke": {"status": "fail", "planned": 3, "executed": 3, "passed": 2, "failed": 1, "skipped": 0, "evidence": "evidence/rtl-smoke-20260715-0118/rtl-smoke.json", "reason": "good_trap=false and warning policy failed (DUT 237, official 364)"},
+    "func_smoke": {"status": "fail", "planned": 3, "executed": 3, "passed": 2, "failed": 1, "skipped": 0, "evidence": "evidence/rtl-smoke-20260715-0118/rtl-smoke.json", "reason": "functional_status=pass via end_by_syscall; strict warning policy failed (DUT 237, official 364) and diagnostic mixed overlay is not gate-eligible"},
     "claude_review": {"status": "unavailable", "planned": 1, "executed": 0, "passed": 0, "failed": 0, "skipped": 1, "evidence": "reviews/claude-summary.json"}
   },
   "claims": [
@@ -22,6 +22,6 @@
     {"claim": "official func_lab19 smoke passes", "status": "unsupported", "evidence": "rtl-smoke.json parser good_trap=false"},
     {"claim": "whole core is release ready", "status": "unsupported", "evidence": "full suites, random, system and FPGA gates remain"}
   ],
-  "blocked_by": ["baseline func_lab19 good_trap=false", "unapproved Verilator warnings", "Claude bridge unavailable"],
+  "blocked_by": ["unapproved Verilator warnings", "diagnostic mixed overlay is not gate-eligible", "Claude bridge unavailable"],
   "residual_risks": ["whole-core regression evidence is not established by the leaf migration", "official full suites, random DiffTest, system and FPGA gates remain required"]
 }

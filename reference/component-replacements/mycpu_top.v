@@ -1658,13 +1658,13 @@ module SpinalCoreBackend (
     .io_update_payload_popReturnStack  (decode_io_btb_popReturnStack                    ), //i
     .io_update_payload_pushReturnStack (decode_io_btb_pushReturnStack                   ), //i
     .io_update_payload_addEntry        (decode_io_btb_addEntry                          ), //i
-    .io_update_payload_deleteEntry     (decode_io_btb_deleteEntry                       ), //i
     .io_update_payload_predictionError (decode_io_btb_predictionError                   ), //i
     .io_update_payload_predictionRight (decode_io_btb_predictionRight                   ), //i
     .io_update_payload_targetError     (decode_io_btb_targetError                       ), //i
     .io_update_payload_actualTaken     (decode_io_btb_actualTaken                       ), //i
     .io_update_payload_actualTarget    (decode_io_btb_actualTarget[31:0]                ), //i
     .io_update_payload_pc              (decode_io_btb_pc[31:0]                          ), //i
+    .io_update_payload_legacyIndex     (decode_io_btb_index[4:0]                        ), //i
     .aclk                              (aclk_1                                          ), //i
     .resetCapture_delayedActiveHigh    (resetCapture_delayedActiveHigh                  )  //i
   );
@@ -2218,13 +2218,13 @@ module OpenLa500Predictor (
   input  wire          io_update_payload_popReturnStack,
   input  wire          io_update_payload_pushReturnStack,
   input  wire          io_update_payload_addEntry,
-  input  wire          io_update_payload_deleteEntry,
   input  wire          io_update_payload_predictionError,
   input  wire          io_update_payload_predictionRight,
   input  wire          io_update_payload_targetError,
   input  wire          io_update_payload_actualTaken,
   input  wire [31:0]   io_update_payload_actualTarget,
   input  wire [31:0]   io_update_payload_pc,
+  input  wire [4:0]    io_update_payload_legacyIndex,
   input  wire          aclk,
   input  wire          resetCapture_delayedActiveHigh
 );
@@ -2232,7 +2232,7 @@ module OpenLa500Predictor (
   reg        [31:0]   _zz_returnTarget;
   reg        [31:0]   _zz_predictedBranchTarget;
   reg                 _zz_io_prediction_payload_taken;
-  reg        [1:0]    _zz__zz_when_OpenLa500Predictor_l187;
+  reg        [1:0]    _zz__zz_when_OpenLa500Predictor_l170;
   reg                 branchValid_0;
   reg                 branchValid_1;
   reg                 branchValid_2;
@@ -2265,38 +2265,6 @@ module OpenLa500Predictor (
   reg                 branchValid_29;
   reg                 branchValid_30;
   reg                 branchValid_31;
-  reg                 branchValid_32;
-  reg                 branchValid_33;
-  reg                 branchValid_34;
-  reg                 branchValid_35;
-  reg                 branchValid_36;
-  reg                 branchValid_37;
-  reg                 branchValid_38;
-  reg                 branchValid_39;
-  reg                 branchValid_40;
-  reg                 branchValid_41;
-  reg                 branchValid_42;
-  reg                 branchValid_43;
-  reg                 branchValid_44;
-  reg                 branchValid_45;
-  reg                 branchValid_46;
-  reg                 branchValid_47;
-  reg                 branchValid_48;
-  reg                 branchValid_49;
-  reg                 branchValid_50;
-  reg                 branchValid_51;
-  reg                 branchValid_52;
-  reg                 branchValid_53;
-  reg                 branchValid_54;
-  reg                 branchValid_55;
-  reg                 branchValid_56;
-  reg                 branchValid_57;
-  reg                 branchValid_58;
-  reg                 branchValid_59;
-  reg                 branchValid_60;
-  reg                 branchValid_61;
-  reg                 branchValid_62;
-  reg                 branchValid_63;
   reg        [31:0]   branchPc_0;
   reg        [31:0]   branchPc_1;
   reg        [31:0]   branchPc_2;
@@ -2329,38 +2297,6 @@ module OpenLa500Predictor (
   reg        [31:0]   branchPc_29;
   reg        [31:0]   branchPc_30;
   reg        [31:0]   branchPc_31;
-  reg        [31:0]   branchPc_32;
-  reg        [31:0]   branchPc_33;
-  reg        [31:0]   branchPc_34;
-  reg        [31:0]   branchPc_35;
-  reg        [31:0]   branchPc_36;
-  reg        [31:0]   branchPc_37;
-  reg        [31:0]   branchPc_38;
-  reg        [31:0]   branchPc_39;
-  reg        [31:0]   branchPc_40;
-  reg        [31:0]   branchPc_41;
-  reg        [31:0]   branchPc_42;
-  reg        [31:0]   branchPc_43;
-  reg        [31:0]   branchPc_44;
-  reg        [31:0]   branchPc_45;
-  reg        [31:0]   branchPc_46;
-  reg        [31:0]   branchPc_47;
-  reg        [31:0]   branchPc_48;
-  reg        [31:0]   branchPc_49;
-  reg        [31:0]   branchPc_50;
-  reg        [31:0]   branchPc_51;
-  reg        [31:0]   branchPc_52;
-  reg        [31:0]   branchPc_53;
-  reg        [31:0]   branchPc_54;
-  reg        [31:0]   branchPc_55;
-  reg        [31:0]   branchPc_56;
-  reg        [31:0]   branchPc_57;
-  reg        [31:0]   branchPc_58;
-  reg        [31:0]   branchPc_59;
-  reg        [31:0]   branchPc_60;
-  reg        [31:0]   branchPc_61;
-  reg        [31:0]   branchPc_62;
-  reg        [31:0]   branchPc_63;
   reg        [31:0]   branchTarget_0;
   reg        [31:0]   branchTarget_1;
   reg        [31:0]   branchTarget_2;
@@ -2393,38 +2329,6 @@ module OpenLa500Predictor (
   reg        [31:0]   branchTarget_29;
   reg        [31:0]   branchTarget_30;
   reg        [31:0]   branchTarget_31;
-  reg        [31:0]   branchTarget_32;
-  reg        [31:0]   branchTarget_33;
-  reg        [31:0]   branchTarget_34;
-  reg        [31:0]   branchTarget_35;
-  reg        [31:0]   branchTarget_36;
-  reg        [31:0]   branchTarget_37;
-  reg        [31:0]   branchTarget_38;
-  reg        [31:0]   branchTarget_39;
-  reg        [31:0]   branchTarget_40;
-  reg        [31:0]   branchTarget_41;
-  reg        [31:0]   branchTarget_42;
-  reg        [31:0]   branchTarget_43;
-  reg        [31:0]   branchTarget_44;
-  reg        [31:0]   branchTarget_45;
-  reg        [31:0]   branchTarget_46;
-  reg        [31:0]   branchTarget_47;
-  reg        [31:0]   branchTarget_48;
-  reg        [31:0]   branchTarget_49;
-  reg        [31:0]   branchTarget_50;
-  reg        [31:0]   branchTarget_51;
-  reg        [31:0]   branchTarget_52;
-  reg        [31:0]   branchTarget_53;
-  reg        [31:0]   branchTarget_54;
-  reg        [31:0]   branchTarget_55;
-  reg        [31:0]   branchTarget_56;
-  reg        [31:0]   branchTarget_57;
-  reg        [31:0]   branchTarget_58;
-  reg        [31:0]   branchTarget_59;
-  reg        [31:0]   branchTarget_60;
-  reg        [31:0]   branchTarget_61;
-  reg        [31:0]   branchTarget_62;
-  reg        [31:0]   branchTarget_63;
   reg        [1:0]    branchCounter_0;
   reg        [1:0]    branchCounter_1;
   reg        [1:0]    branchCounter_2;
@@ -2457,38 +2361,6 @@ module OpenLa500Predictor (
   reg        [1:0]    branchCounter_29;
   reg        [1:0]    branchCounter_30;
   reg        [1:0]    branchCounter_31;
-  reg        [1:0]    branchCounter_32;
-  reg        [1:0]    branchCounter_33;
-  reg        [1:0]    branchCounter_34;
-  reg        [1:0]    branchCounter_35;
-  reg        [1:0]    branchCounter_36;
-  reg        [1:0]    branchCounter_37;
-  reg        [1:0]    branchCounter_38;
-  reg        [1:0]    branchCounter_39;
-  reg        [1:0]    branchCounter_40;
-  reg        [1:0]    branchCounter_41;
-  reg        [1:0]    branchCounter_42;
-  reg        [1:0]    branchCounter_43;
-  reg        [1:0]    branchCounter_44;
-  reg        [1:0]    branchCounter_45;
-  reg        [1:0]    branchCounter_46;
-  reg        [1:0]    branchCounter_47;
-  reg        [1:0]    branchCounter_48;
-  reg        [1:0]    branchCounter_49;
-  reg        [1:0]    branchCounter_50;
-  reg        [1:0]    branchCounter_51;
-  reg        [1:0]    branchCounter_52;
-  reg        [1:0]    branchCounter_53;
-  reg        [1:0]    branchCounter_54;
-  reg        [1:0]    branchCounter_55;
-  reg        [1:0]    branchCounter_56;
-  reg        [1:0]    branchCounter_57;
-  reg        [1:0]    branchCounter_58;
-  reg        [1:0]    branchCounter_59;
-  reg        [1:0]    branchCounter_60;
-  reg        [1:0]    branchCounter_61;
-  reg        [1:0]    branchCounter_62;
-  reg        [1:0]    branchCounter_63;
   reg                 returnSiteValid_0;
   reg                 returnSiteValid_1;
   reg                 returnSiteValid_2;
@@ -2534,7 +2406,7 @@ module OpenLa500Predictor (
   reg        [5:0]    lfsrNext;
   reg                 lookupValid;
   reg        [31:0]   lookupPc;
-  reg        [63:0]   branchLookupMatches;
+  reg        [31:0]   branchLookupMatches;
   wire                branchLookupTaken_0;
   wire                branchLookupTaken_1;
   wire                branchLookupTaken_2;
@@ -2567,380 +2439,164 @@ module OpenLa500Predictor (
   wire                branchLookupTaken_29;
   wire                branchLookupTaken_30;
   wire                branchLookupTaken_31;
-  wire                branchLookupTaken_32;
-  wire                branchLookupTaken_33;
-  wire                branchLookupTaken_34;
-  wire                branchLookupTaken_35;
-  wire                branchLookupTaken_36;
-  wire                branchLookupTaken_37;
-  wire                branchLookupTaken_38;
-  wire                branchLookupTaken_39;
-  wire                branchLookupTaken_40;
-  wire                branchLookupTaken_41;
-  wire                branchLookupTaken_42;
-  wire                branchLookupTaken_43;
-  wire                branchLookupTaken_44;
-  wire                branchLookupTaken_45;
-  wire                branchLookupTaken_46;
-  wire                branchLookupTaken_47;
-  wire                branchLookupTaken_48;
-  wire                branchLookupTaken_49;
-  wire                branchLookupTaken_50;
-  wire                branchLookupTaken_51;
-  wire                branchLookupTaken_52;
-  wire                branchLookupTaken_53;
-  wire                branchLookupTaken_54;
-  wire                branchLookupTaken_55;
-  wire                branchLookupTaken_56;
-  wire                branchLookupTaken_57;
-  wire                branchLookupTaken_58;
-  wire                branchLookupTaken_59;
-  wire                branchLookupTaken_60;
-  wire                branchLookupTaken_61;
-  wire                branchLookupTaken_62;
-  wire                branchLookupTaken_63;
   wire                branchLookupHit;
-  reg        [5:0]    branchLookupIndex;
-  wire                when_OpenLa500Predictor_l58;
-  wire                when_OpenLa500Predictor_l58_1;
-  wire                when_OpenLa500Predictor_l58_2;
-  wire                when_OpenLa500Predictor_l58_3;
-  wire                when_OpenLa500Predictor_l58_4;
-  wire                when_OpenLa500Predictor_l58_5;
-  wire                when_OpenLa500Predictor_l58_6;
-  wire                when_OpenLa500Predictor_l58_7;
-  wire                when_OpenLa500Predictor_l58_8;
-  wire                when_OpenLa500Predictor_l58_9;
-  wire                when_OpenLa500Predictor_l58_10;
-  wire                when_OpenLa500Predictor_l58_11;
-  wire                when_OpenLa500Predictor_l58_12;
-  wire                when_OpenLa500Predictor_l58_13;
-  wire                when_OpenLa500Predictor_l58_14;
-  wire                when_OpenLa500Predictor_l58_15;
-  wire                when_OpenLa500Predictor_l58_16;
-  wire                when_OpenLa500Predictor_l58_17;
-  wire                when_OpenLa500Predictor_l58_18;
-  wire                when_OpenLa500Predictor_l58_19;
-  wire                when_OpenLa500Predictor_l58_20;
-  wire                when_OpenLa500Predictor_l58_21;
-  wire                when_OpenLa500Predictor_l58_22;
-  wire                when_OpenLa500Predictor_l58_23;
-  wire                when_OpenLa500Predictor_l58_24;
-  wire                when_OpenLa500Predictor_l58_25;
-  wire                when_OpenLa500Predictor_l58_26;
-  wire                when_OpenLa500Predictor_l58_27;
-  wire                when_OpenLa500Predictor_l58_28;
-  wire                when_OpenLa500Predictor_l58_29;
-  wire                when_OpenLa500Predictor_l58_30;
-  wire                when_OpenLa500Predictor_l58_31;
-  wire                when_OpenLa500Predictor_l58_32;
-  wire                when_OpenLa500Predictor_l58_33;
-  wire                when_OpenLa500Predictor_l58_34;
-  wire                when_OpenLa500Predictor_l58_35;
-  wire                when_OpenLa500Predictor_l58_36;
-  wire                when_OpenLa500Predictor_l58_37;
-  wire                when_OpenLa500Predictor_l58_38;
-  wire                when_OpenLa500Predictor_l58_39;
-  wire                when_OpenLa500Predictor_l58_40;
-  wire                when_OpenLa500Predictor_l58_41;
-  wire                when_OpenLa500Predictor_l58_42;
-  wire                when_OpenLa500Predictor_l58_43;
-  wire                when_OpenLa500Predictor_l58_44;
-  wire                when_OpenLa500Predictor_l58_45;
-  wire                when_OpenLa500Predictor_l58_46;
-  wire                when_OpenLa500Predictor_l58_47;
-  wire                when_OpenLa500Predictor_l58_48;
-  wire                when_OpenLa500Predictor_l58_49;
-  wire                when_OpenLa500Predictor_l58_50;
-  wire                when_OpenLa500Predictor_l58_51;
-  wire                when_OpenLa500Predictor_l58_52;
-  wire                when_OpenLa500Predictor_l58_53;
-  wire                when_OpenLa500Predictor_l58_54;
-  wire                when_OpenLa500Predictor_l58_55;
-  wire                when_OpenLa500Predictor_l58_56;
-  wire                when_OpenLa500Predictor_l58_57;
-  wire                when_OpenLa500Predictor_l58_58;
-  wire                when_OpenLa500Predictor_l58_59;
-  wire                when_OpenLa500Predictor_l58_60;
-  wire                when_OpenLa500Predictor_l58_61;
-  wire                when_OpenLa500Predictor_l58_62;
-  wire                when_OpenLa500Predictor_l58_63;
+  reg        [4:0]    branchLookupIndex;
+  wire                when_OpenLa500Predictor_l61;
+  wire                when_OpenLa500Predictor_l61_1;
+  wire                when_OpenLa500Predictor_l61_2;
+  wire                when_OpenLa500Predictor_l61_3;
+  wire                when_OpenLa500Predictor_l61_4;
+  wire                when_OpenLa500Predictor_l61_5;
+  wire                when_OpenLa500Predictor_l61_6;
+  wire                when_OpenLa500Predictor_l61_7;
+  wire                when_OpenLa500Predictor_l61_8;
+  wire                when_OpenLa500Predictor_l61_9;
+  wire                when_OpenLa500Predictor_l61_10;
+  wire                when_OpenLa500Predictor_l61_11;
+  wire                when_OpenLa500Predictor_l61_12;
+  wire                when_OpenLa500Predictor_l61_13;
+  wire                when_OpenLa500Predictor_l61_14;
+  wire                when_OpenLa500Predictor_l61_15;
+  wire                when_OpenLa500Predictor_l61_16;
+  wire                when_OpenLa500Predictor_l61_17;
+  wire                when_OpenLa500Predictor_l61_18;
+  wire                when_OpenLa500Predictor_l61_19;
+  wire                when_OpenLa500Predictor_l61_20;
+  wire                when_OpenLa500Predictor_l61_21;
+  wire                when_OpenLa500Predictor_l61_22;
+  wire                when_OpenLa500Predictor_l61_23;
+  wire                when_OpenLa500Predictor_l61_24;
+  wire                when_OpenLa500Predictor_l61_25;
+  wire                when_OpenLa500Predictor_l61_26;
+  wire                when_OpenLa500Predictor_l61_27;
+  wire                when_OpenLa500Predictor_l61_28;
+  wire                when_OpenLa500Predictor_l61_29;
+  wire                when_OpenLa500Predictor_l61_30;
+  wire                when_OpenLa500Predictor_l61_31;
   reg        [15:0]   returnLookupMatches;
   wire                returnStackEmpty;
   wire                returnStackFull;
   wire                returnLookupHit;
   reg        [3:0]    returnLookupIndex;
-  wire                when_OpenLa500Predictor_l58_64;
-  wire                when_OpenLa500Predictor_l58_65;
-  wire                when_OpenLa500Predictor_l58_66;
-  wire                when_OpenLa500Predictor_l58_67;
-  wire                when_OpenLa500Predictor_l58_68;
-  wire                when_OpenLa500Predictor_l58_69;
-  wire                when_OpenLa500Predictor_l58_70;
-  wire                when_OpenLa500Predictor_l58_71;
-  wire                when_OpenLa500Predictor_l58_72;
-  wire                when_OpenLa500Predictor_l58_73;
-  wire                when_OpenLa500Predictor_l58_74;
-  wire                when_OpenLa500Predictor_l58_75;
-  wire                when_OpenLa500Predictor_l58_76;
-  wire                when_OpenLa500Predictor_l58_77;
-  wire                when_OpenLa500Predictor_l58_78;
-  wire                when_OpenLa500Predictor_l58_79;
+  wire                when_OpenLa500Predictor_l61_32;
+  wire                when_OpenLa500Predictor_l61_33;
+  wire                when_OpenLa500Predictor_l61_34;
+  wire                when_OpenLa500Predictor_l61_35;
+  wire                when_OpenLa500Predictor_l61_36;
+  wire                when_OpenLa500Predictor_l61_37;
+  wire                when_OpenLa500Predictor_l61_38;
+  wire                when_OpenLa500Predictor_l61_39;
+  wire                when_OpenLa500Predictor_l61_40;
+  wire                when_OpenLa500Predictor_l61_41;
+  wire                when_OpenLa500Predictor_l61_42;
+  wire                when_OpenLa500Predictor_l61_43;
+  wire                when_OpenLa500Predictor_l61_44;
+  wire                when_OpenLa500Predictor_l61_45;
+  wire                when_OpenLa500Predictor_l61_46;
+  wire                when_OpenLa500Predictor_l61_47;
   wire       [2:0]    returnTopIndex;
   wire       [31:0]   returnTarget;
   wire       [31:0]   predictedBranchTarget;
-  reg        [63:0]   branchUpdateMatches;
-  reg        [63:0]   invalidBranchEntries;
-  reg        [63:0]   stronglyUntakenEntries;
-  wire                branchUpdateHit;
-  reg        [5:0]    branchUpdateIndex;
-  wire                when_OpenLa500Predictor_l58_80;
-  wire                when_OpenLa500Predictor_l58_81;
-  wire                when_OpenLa500Predictor_l58_82;
-  wire                when_OpenLa500Predictor_l58_83;
-  wire                when_OpenLa500Predictor_l58_84;
-  wire                when_OpenLa500Predictor_l58_85;
-  wire                when_OpenLa500Predictor_l58_86;
-  wire                when_OpenLa500Predictor_l58_87;
-  wire                when_OpenLa500Predictor_l58_88;
-  wire                when_OpenLa500Predictor_l58_89;
-  wire                when_OpenLa500Predictor_l58_90;
-  wire                when_OpenLa500Predictor_l58_91;
-  wire                when_OpenLa500Predictor_l58_92;
-  wire                when_OpenLa500Predictor_l58_93;
-  wire                when_OpenLa500Predictor_l58_94;
-  wire                when_OpenLa500Predictor_l58_95;
-  wire                when_OpenLa500Predictor_l58_96;
-  wire                when_OpenLa500Predictor_l58_97;
-  wire                when_OpenLa500Predictor_l58_98;
-  wire                when_OpenLa500Predictor_l58_99;
-  wire                when_OpenLa500Predictor_l58_100;
-  wire                when_OpenLa500Predictor_l58_101;
-  wire                when_OpenLa500Predictor_l58_102;
-  wire                when_OpenLa500Predictor_l58_103;
-  wire                when_OpenLa500Predictor_l58_104;
-  wire                when_OpenLa500Predictor_l58_105;
-  wire                when_OpenLa500Predictor_l58_106;
-  wire                when_OpenLa500Predictor_l58_107;
-  wire                when_OpenLa500Predictor_l58_108;
-  wire                when_OpenLa500Predictor_l58_109;
-  wire                when_OpenLa500Predictor_l58_110;
-  wire                when_OpenLa500Predictor_l58_111;
-  wire                when_OpenLa500Predictor_l58_112;
-  wire                when_OpenLa500Predictor_l58_113;
-  wire                when_OpenLa500Predictor_l58_114;
-  wire                when_OpenLa500Predictor_l58_115;
-  wire                when_OpenLa500Predictor_l58_116;
-  wire                when_OpenLa500Predictor_l58_117;
-  wire                when_OpenLa500Predictor_l58_118;
-  wire                when_OpenLa500Predictor_l58_119;
-  wire                when_OpenLa500Predictor_l58_120;
-  wire                when_OpenLa500Predictor_l58_121;
-  wire                when_OpenLa500Predictor_l58_122;
-  wire                when_OpenLa500Predictor_l58_123;
-  wire                when_OpenLa500Predictor_l58_124;
-  wire                when_OpenLa500Predictor_l58_125;
-  wire                when_OpenLa500Predictor_l58_126;
-  wire                when_OpenLa500Predictor_l58_127;
-  wire                when_OpenLa500Predictor_l58_128;
-  wire                when_OpenLa500Predictor_l58_129;
-  wire                when_OpenLa500Predictor_l58_130;
-  wire                when_OpenLa500Predictor_l58_131;
-  wire                when_OpenLa500Predictor_l58_132;
-  wire                when_OpenLa500Predictor_l58_133;
-  wire                when_OpenLa500Predictor_l58_134;
-  wire                when_OpenLa500Predictor_l58_135;
-  wire                when_OpenLa500Predictor_l58_136;
-  wire                when_OpenLa500Predictor_l58_137;
-  wire                when_OpenLa500Predictor_l58_138;
-  wire                when_OpenLa500Predictor_l58_139;
-  wire                when_OpenLa500Predictor_l58_140;
-  wire                when_OpenLa500Predictor_l58_141;
-  wire                when_OpenLa500Predictor_l58_142;
-  wire                when_OpenLa500Predictor_l58_143;
-  reg        [5:0]    invalidBranchIndex;
-  wire                when_OpenLa500Predictor_l58_144;
-  wire                when_OpenLa500Predictor_l58_145;
-  wire                when_OpenLa500Predictor_l58_146;
-  wire                when_OpenLa500Predictor_l58_147;
-  wire                when_OpenLa500Predictor_l58_148;
-  wire                when_OpenLa500Predictor_l58_149;
-  wire                when_OpenLa500Predictor_l58_150;
-  wire                when_OpenLa500Predictor_l58_151;
-  wire                when_OpenLa500Predictor_l58_152;
-  wire                when_OpenLa500Predictor_l58_153;
-  wire                when_OpenLa500Predictor_l58_154;
-  wire                when_OpenLa500Predictor_l58_155;
-  wire                when_OpenLa500Predictor_l58_156;
-  wire                when_OpenLa500Predictor_l58_157;
-  wire                when_OpenLa500Predictor_l58_158;
-  wire                when_OpenLa500Predictor_l58_159;
-  wire                when_OpenLa500Predictor_l58_160;
-  wire                when_OpenLa500Predictor_l58_161;
-  wire                when_OpenLa500Predictor_l58_162;
-  wire                when_OpenLa500Predictor_l58_163;
-  wire                when_OpenLa500Predictor_l58_164;
-  wire                when_OpenLa500Predictor_l58_165;
-  wire                when_OpenLa500Predictor_l58_166;
-  wire                when_OpenLa500Predictor_l58_167;
-  wire                when_OpenLa500Predictor_l58_168;
-  wire                when_OpenLa500Predictor_l58_169;
-  wire                when_OpenLa500Predictor_l58_170;
-  wire                when_OpenLa500Predictor_l58_171;
-  wire                when_OpenLa500Predictor_l58_172;
-  wire                when_OpenLa500Predictor_l58_173;
-  wire                when_OpenLa500Predictor_l58_174;
-  wire                when_OpenLa500Predictor_l58_175;
-  wire                when_OpenLa500Predictor_l58_176;
-  wire                when_OpenLa500Predictor_l58_177;
-  wire                when_OpenLa500Predictor_l58_178;
-  wire                when_OpenLa500Predictor_l58_179;
-  wire                when_OpenLa500Predictor_l58_180;
-  wire                when_OpenLa500Predictor_l58_181;
-  wire                when_OpenLa500Predictor_l58_182;
-  wire                when_OpenLa500Predictor_l58_183;
-  wire                when_OpenLa500Predictor_l58_184;
-  wire                when_OpenLa500Predictor_l58_185;
-  wire                when_OpenLa500Predictor_l58_186;
-  wire                when_OpenLa500Predictor_l58_187;
-  wire                when_OpenLa500Predictor_l58_188;
-  wire                when_OpenLa500Predictor_l58_189;
-  wire                when_OpenLa500Predictor_l58_190;
-  wire                when_OpenLa500Predictor_l58_191;
-  wire                when_OpenLa500Predictor_l58_192;
-  wire                when_OpenLa500Predictor_l58_193;
-  wire                when_OpenLa500Predictor_l58_194;
-  wire                when_OpenLa500Predictor_l58_195;
-  wire                when_OpenLa500Predictor_l58_196;
-  wire                when_OpenLa500Predictor_l58_197;
-  wire                when_OpenLa500Predictor_l58_198;
-  wire                when_OpenLa500Predictor_l58_199;
-  wire                when_OpenLa500Predictor_l58_200;
-  wire                when_OpenLa500Predictor_l58_201;
-  wire                when_OpenLa500Predictor_l58_202;
-  wire                when_OpenLa500Predictor_l58_203;
-  wire                when_OpenLa500Predictor_l58_204;
-  wire                when_OpenLa500Predictor_l58_205;
-  wire                when_OpenLa500Predictor_l58_206;
-  wire                when_OpenLa500Predictor_l58_207;
-  reg        [5:0]    stronglyUntakenIndex;
-  wire                when_OpenLa500Predictor_l58_208;
-  wire                when_OpenLa500Predictor_l58_209;
-  wire                when_OpenLa500Predictor_l58_210;
-  wire                when_OpenLa500Predictor_l58_211;
-  wire                when_OpenLa500Predictor_l58_212;
-  wire                when_OpenLa500Predictor_l58_213;
-  wire                when_OpenLa500Predictor_l58_214;
-  wire                when_OpenLa500Predictor_l58_215;
-  wire                when_OpenLa500Predictor_l58_216;
-  wire                when_OpenLa500Predictor_l58_217;
-  wire                when_OpenLa500Predictor_l58_218;
-  wire                when_OpenLa500Predictor_l58_219;
-  wire                when_OpenLa500Predictor_l58_220;
-  wire                when_OpenLa500Predictor_l58_221;
-  wire                when_OpenLa500Predictor_l58_222;
-  wire                when_OpenLa500Predictor_l58_223;
-  wire                when_OpenLa500Predictor_l58_224;
-  wire                when_OpenLa500Predictor_l58_225;
-  wire                when_OpenLa500Predictor_l58_226;
-  wire                when_OpenLa500Predictor_l58_227;
-  wire                when_OpenLa500Predictor_l58_228;
-  wire                when_OpenLa500Predictor_l58_229;
-  wire                when_OpenLa500Predictor_l58_230;
-  wire                when_OpenLa500Predictor_l58_231;
-  wire                when_OpenLa500Predictor_l58_232;
-  wire                when_OpenLa500Predictor_l58_233;
-  wire                when_OpenLa500Predictor_l58_234;
-  wire                when_OpenLa500Predictor_l58_235;
-  wire                when_OpenLa500Predictor_l58_236;
-  wire                when_OpenLa500Predictor_l58_237;
-  wire                when_OpenLa500Predictor_l58_238;
-  wire                when_OpenLa500Predictor_l58_239;
-  wire                when_OpenLa500Predictor_l58_240;
-  wire                when_OpenLa500Predictor_l58_241;
-  wire                when_OpenLa500Predictor_l58_242;
-  wire                when_OpenLa500Predictor_l58_243;
-  wire                when_OpenLa500Predictor_l58_244;
-  wire                when_OpenLa500Predictor_l58_245;
-  wire                when_OpenLa500Predictor_l58_246;
-  wire                when_OpenLa500Predictor_l58_247;
-  wire                when_OpenLa500Predictor_l58_248;
-  wire                when_OpenLa500Predictor_l58_249;
-  wire                when_OpenLa500Predictor_l58_250;
-  wire                when_OpenLa500Predictor_l58_251;
-  wire                when_OpenLa500Predictor_l58_252;
-  wire                when_OpenLa500Predictor_l58_253;
-  wire                when_OpenLa500Predictor_l58_254;
-  wire                when_OpenLa500Predictor_l58_255;
-  wire                when_OpenLa500Predictor_l58_256;
-  wire                when_OpenLa500Predictor_l58_257;
-  wire                when_OpenLa500Predictor_l58_258;
-  wire                when_OpenLa500Predictor_l58_259;
-  wire                when_OpenLa500Predictor_l58_260;
-  wire                when_OpenLa500Predictor_l58_261;
-  wire                when_OpenLa500Predictor_l58_262;
-  wire                when_OpenLa500Predictor_l58_263;
-  wire                when_OpenLa500Predictor_l58_264;
-  wire                when_OpenLa500Predictor_l58_265;
-  wire                when_OpenLa500Predictor_l58_266;
-  wire                when_OpenLa500Predictor_l58_267;
-  wire                when_OpenLa500Predictor_l58_268;
-  wire                when_OpenLa500Predictor_l58_269;
-  wire                when_OpenLa500Predictor_l58_270;
-  wire                when_OpenLa500Predictor_l58_271;
-  reg        [5:0]    branchReplacementIndex;
+  reg        [31:0]   invalidBranchEntries;
+  reg        [31:0]   stronglyUntakenEntries;
+  reg        [4:0]    invalidBranchIndex;
+  wire                when_OpenLa500Predictor_l61_48;
+  wire                when_OpenLa500Predictor_l61_49;
+  wire                when_OpenLa500Predictor_l61_50;
+  wire                when_OpenLa500Predictor_l61_51;
+  wire                when_OpenLa500Predictor_l61_52;
+  wire                when_OpenLa500Predictor_l61_53;
+  wire                when_OpenLa500Predictor_l61_54;
+  wire                when_OpenLa500Predictor_l61_55;
+  wire                when_OpenLa500Predictor_l61_56;
+  wire                when_OpenLa500Predictor_l61_57;
+  wire                when_OpenLa500Predictor_l61_58;
+  wire                when_OpenLa500Predictor_l61_59;
+  wire                when_OpenLa500Predictor_l61_60;
+  wire                when_OpenLa500Predictor_l61_61;
+  wire                when_OpenLa500Predictor_l61_62;
+  wire                when_OpenLa500Predictor_l61_63;
+  wire                when_OpenLa500Predictor_l61_64;
+  wire                when_OpenLa500Predictor_l61_65;
+  wire                when_OpenLa500Predictor_l61_66;
+  wire                when_OpenLa500Predictor_l61_67;
+  wire                when_OpenLa500Predictor_l61_68;
+  wire                when_OpenLa500Predictor_l61_69;
+  wire                when_OpenLa500Predictor_l61_70;
+  wire                when_OpenLa500Predictor_l61_71;
+  wire                when_OpenLa500Predictor_l61_72;
+  wire                when_OpenLa500Predictor_l61_73;
+  wire                when_OpenLa500Predictor_l61_74;
+  wire                when_OpenLa500Predictor_l61_75;
+  wire                when_OpenLa500Predictor_l61_76;
+  wire                when_OpenLa500Predictor_l61_77;
+  wire                when_OpenLa500Predictor_l61_78;
+  wire                when_OpenLa500Predictor_l61_79;
+  reg        [4:0]    stronglyUntakenIndex;
+  wire                when_OpenLa500Predictor_l61_80;
+  wire                when_OpenLa500Predictor_l61_81;
+  wire                when_OpenLa500Predictor_l61_82;
+  wire                when_OpenLa500Predictor_l61_83;
+  wire                when_OpenLa500Predictor_l61_84;
+  wire                when_OpenLa500Predictor_l61_85;
+  wire                when_OpenLa500Predictor_l61_86;
+  wire                when_OpenLa500Predictor_l61_87;
+  wire                when_OpenLa500Predictor_l61_88;
+  wire                when_OpenLa500Predictor_l61_89;
+  wire                when_OpenLa500Predictor_l61_90;
+  wire                when_OpenLa500Predictor_l61_91;
+  wire                when_OpenLa500Predictor_l61_92;
+  wire                when_OpenLa500Predictor_l61_93;
+  wire                when_OpenLa500Predictor_l61_94;
+  wire                when_OpenLa500Predictor_l61_95;
+  wire                when_OpenLa500Predictor_l61_96;
+  wire                when_OpenLa500Predictor_l61_97;
+  wire                when_OpenLa500Predictor_l61_98;
+  wire                when_OpenLa500Predictor_l61_99;
+  wire                when_OpenLa500Predictor_l61_100;
+  wire                when_OpenLa500Predictor_l61_101;
+  wire                when_OpenLa500Predictor_l61_102;
+  wire                when_OpenLa500Predictor_l61_103;
+  wire                when_OpenLa500Predictor_l61_104;
+  wire                when_OpenLa500Predictor_l61_105;
+  wire                when_OpenLa500Predictor_l61_106;
+  wire                when_OpenLa500Predictor_l61_107;
+  wire                when_OpenLa500Predictor_l61_108;
+  wire                when_OpenLa500Predictor_l61_109;
+  wire                when_OpenLa500Predictor_l61_110;
+  wire                when_OpenLa500Predictor_l61_111;
+  reg        [4:0]    branchReplacementIndex;
+  wire                when_OpenLa500Predictor_l141;
   wire                when_OpenLa500Predictor_l143;
-  wire                when_OpenLa500Predictor_l145;
-  wire       [5:0]    branchAddIndex;
-  reg        [15:0]   returnUpdateMatches;
   reg        [15:0]   invalidReturnSites;
-  wire                returnUpdateHit;
   reg        [3:0]    invalidReturnIndex;
-  wire                when_OpenLa500Predictor_l58_272;
-  wire                when_OpenLa500Predictor_l58_273;
-  wire                when_OpenLa500Predictor_l58_274;
-  wire                when_OpenLa500Predictor_l58_275;
-  wire                when_OpenLa500Predictor_l58_276;
-  wire                when_OpenLa500Predictor_l58_277;
-  wire                when_OpenLa500Predictor_l58_278;
-  wire                when_OpenLa500Predictor_l58_279;
-  wire                when_OpenLa500Predictor_l58_280;
-  wire                when_OpenLa500Predictor_l58_281;
-  wire                when_OpenLa500Predictor_l58_282;
-  wire                when_OpenLa500Predictor_l58_283;
-  wire                when_OpenLa500Predictor_l58_284;
-  wire                when_OpenLa500Predictor_l58_285;
-  wire                when_OpenLa500Predictor_l58_286;
-  wire                when_OpenLa500Predictor_l58_287;
+  wire                when_OpenLa500Predictor_l61_112;
+  wire                when_OpenLa500Predictor_l61_113;
+  wire                when_OpenLa500Predictor_l61_114;
+  wire                when_OpenLa500Predictor_l61_115;
+  wire                when_OpenLa500Predictor_l61_116;
+  wire                when_OpenLa500Predictor_l61_117;
+  wire                when_OpenLa500Predictor_l61_118;
+  wire                when_OpenLa500Predictor_l61_119;
+  wire                when_OpenLa500Predictor_l61_120;
+  wire                when_OpenLa500Predictor_l61_121;
+  wire                when_OpenLa500Predictor_l61_122;
+  wire                when_OpenLa500Predictor_l61_123;
+  wire                when_OpenLa500Predictor_l61_124;
+  wire                when_OpenLa500Predictor_l61_125;
+  wire                when_OpenLa500Predictor_l61_126;
+  wire                when_OpenLa500Predictor_l61_127;
   reg        [3:0]    returnReplacementIndex;
-  wire                when_OpenLa500Predictor_l161;
-  reg        [3:0]    _zz_returnAddIndex;
-  wire                when_OpenLa500Predictor_l58_288;
-  wire                when_OpenLa500Predictor_l58_289;
-  wire                when_OpenLa500Predictor_l58_290;
-  wire                when_OpenLa500Predictor_l58_291;
-  wire                when_OpenLa500Predictor_l58_292;
-  wire                when_OpenLa500Predictor_l58_293;
-  wire                when_OpenLa500Predictor_l58_294;
-  wire                when_OpenLa500Predictor_l58_295;
-  wire                when_OpenLa500Predictor_l58_296;
-  wire                when_OpenLa500Predictor_l58_297;
-  wire                when_OpenLa500Predictor_l58_298;
-  wire                when_OpenLa500Predictor_l58_299;
-  wire                when_OpenLa500Predictor_l58_300;
-  wire                when_OpenLa500Predictor_l58_301;
-  wire                when_OpenLa500Predictor_l58_302;
-  wire                when_OpenLa500Predictor_l58_303;
-  wire       [3:0]    returnAddIndex;
-  wire                when_OpenLa500Predictor_l172;
-  wire       [63:0]   _zz_1;
-  wire       [63:0]   _zz_2;
-  wire       [63:0]   _zz_3;
-  wire       [63:0]   _zz_4;
-  wire       [63:0]   _zz_5;
-  wire       [63:0]   _zz_6;
-  wire       [1:0]    _zz_when_OpenLa500Predictor_l187;
-  wire       [63:0]   _zz_7;
+  wire                when_OpenLa500Predictor_l154;
+  wire                when_OpenLa500Predictor_l159;
+  wire       [31:0]   _zz_1;
+  wire       [31:0]   _zz_2;
+  wire       [31:0]   _zz_3;
+  wire       [31:0]   _zz_4;
+  wire       [31:0]   _zz_5;
+  wire       [1:0]    _zz_when_OpenLa500Predictor_l170;
+  wire       [31:0]   _zz_6;
+  wire                _zz_7;
   wire                _zz_8;
   wire                _zz_9;
   wire                _zz_10;
@@ -2972,52 +2628,17 @@ module OpenLa500Predictor (
   wire                _zz_36;
   wire                _zz_37;
   wire                _zz_38;
-  wire                _zz_39;
-  wire                _zz_40;
-  wire                _zz_41;
-  wire                _zz_42;
-  wire                _zz_43;
-  wire                _zz_44;
-  wire                _zz_45;
-  wire                _zz_46;
-  wire                _zz_47;
-  wire                _zz_48;
-  wire                _zz_49;
-  wire                _zz_50;
-  wire                _zz_51;
-  wire                _zz_52;
-  wire                _zz_53;
-  wire                _zz_54;
-  wire                _zz_55;
-  wire                _zz_56;
-  wire                _zz_57;
-  wire                _zz_58;
-  wire                _zz_59;
-  wire                _zz_60;
-  wire                _zz_61;
-  wire                _zz_62;
-  wire                _zz_63;
-  wire                _zz_64;
-  wire                _zz_65;
-  wire                _zz_66;
-  wire                _zz_67;
-  wire                _zz_68;
-  wire                _zz_69;
-  wire                _zz_70;
-  wire                _zz_71;
-  wire                when_OpenLa500Predictor_l187;
+  wire                when_OpenLa500Predictor_l170;
   wire       [1:0]    _zz_branchCounter_0;
-  wire                when_OpenLa500Predictor_l191;
+  wire                when_OpenLa500Predictor_l175;
   wire       [1:0]    _zz_branchCounter_0_1;
-  wire                when_OpenLa500Predictor_l178;
-  wire                when_OpenLa500Predictor_l180;
-  wire                when_OpenLa500Predictor_l185;
-  wire       [15:0]   _zz_72;
-  wire       [15:0]   _zz_73;
-  wire                when_OpenLa500Predictor_l203;
-  wire       [7:0]    _zz_74;
+  wire                when_OpenLa500Predictor_l168;
+  wire       [15:0]   _zz_39;
+  wire       [15:0]   _zz_40;
+  wire                when_OpenLa500Predictor_l188;
+  wire       [7:0]    _zz_41;
   wire       [31:0]   _zz_returnStack_0;
-  wire                when_OpenLa500Predictor_l206;
+  wire                when_OpenLa500Predictor_l191;
 
   always @(*) begin
     case(returnTopIndex)
@@ -3034,331 +2655,171 @@ module OpenLa500Predictor (
 
   always @(*) begin
     case(branchLookupIndex)
-      6'b000000 : begin
+      5'b00000 : begin
         _zz_predictedBranchTarget = branchTarget_0;
         _zz_io_prediction_payload_taken = branchLookupTaken_0;
       end
-      6'b000001 : begin
+      5'b00001 : begin
         _zz_predictedBranchTarget = branchTarget_1;
         _zz_io_prediction_payload_taken = branchLookupTaken_1;
       end
-      6'b000010 : begin
+      5'b00010 : begin
         _zz_predictedBranchTarget = branchTarget_2;
         _zz_io_prediction_payload_taken = branchLookupTaken_2;
       end
-      6'b000011 : begin
+      5'b00011 : begin
         _zz_predictedBranchTarget = branchTarget_3;
         _zz_io_prediction_payload_taken = branchLookupTaken_3;
       end
-      6'b000100 : begin
+      5'b00100 : begin
         _zz_predictedBranchTarget = branchTarget_4;
         _zz_io_prediction_payload_taken = branchLookupTaken_4;
       end
-      6'b000101 : begin
+      5'b00101 : begin
         _zz_predictedBranchTarget = branchTarget_5;
         _zz_io_prediction_payload_taken = branchLookupTaken_5;
       end
-      6'b000110 : begin
+      5'b00110 : begin
         _zz_predictedBranchTarget = branchTarget_6;
         _zz_io_prediction_payload_taken = branchLookupTaken_6;
       end
-      6'b000111 : begin
+      5'b00111 : begin
         _zz_predictedBranchTarget = branchTarget_7;
         _zz_io_prediction_payload_taken = branchLookupTaken_7;
       end
-      6'b001000 : begin
+      5'b01000 : begin
         _zz_predictedBranchTarget = branchTarget_8;
         _zz_io_prediction_payload_taken = branchLookupTaken_8;
       end
-      6'b001001 : begin
+      5'b01001 : begin
         _zz_predictedBranchTarget = branchTarget_9;
         _zz_io_prediction_payload_taken = branchLookupTaken_9;
       end
-      6'b001010 : begin
+      5'b01010 : begin
         _zz_predictedBranchTarget = branchTarget_10;
         _zz_io_prediction_payload_taken = branchLookupTaken_10;
       end
-      6'b001011 : begin
+      5'b01011 : begin
         _zz_predictedBranchTarget = branchTarget_11;
         _zz_io_prediction_payload_taken = branchLookupTaken_11;
       end
-      6'b001100 : begin
+      5'b01100 : begin
         _zz_predictedBranchTarget = branchTarget_12;
         _zz_io_prediction_payload_taken = branchLookupTaken_12;
       end
-      6'b001101 : begin
+      5'b01101 : begin
         _zz_predictedBranchTarget = branchTarget_13;
         _zz_io_prediction_payload_taken = branchLookupTaken_13;
       end
-      6'b001110 : begin
+      5'b01110 : begin
         _zz_predictedBranchTarget = branchTarget_14;
         _zz_io_prediction_payload_taken = branchLookupTaken_14;
       end
-      6'b001111 : begin
+      5'b01111 : begin
         _zz_predictedBranchTarget = branchTarget_15;
         _zz_io_prediction_payload_taken = branchLookupTaken_15;
       end
-      6'b010000 : begin
+      5'b10000 : begin
         _zz_predictedBranchTarget = branchTarget_16;
         _zz_io_prediction_payload_taken = branchLookupTaken_16;
       end
-      6'b010001 : begin
+      5'b10001 : begin
         _zz_predictedBranchTarget = branchTarget_17;
         _zz_io_prediction_payload_taken = branchLookupTaken_17;
       end
-      6'b010010 : begin
+      5'b10010 : begin
         _zz_predictedBranchTarget = branchTarget_18;
         _zz_io_prediction_payload_taken = branchLookupTaken_18;
       end
-      6'b010011 : begin
+      5'b10011 : begin
         _zz_predictedBranchTarget = branchTarget_19;
         _zz_io_prediction_payload_taken = branchLookupTaken_19;
       end
-      6'b010100 : begin
+      5'b10100 : begin
         _zz_predictedBranchTarget = branchTarget_20;
         _zz_io_prediction_payload_taken = branchLookupTaken_20;
       end
-      6'b010101 : begin
+      5'b10101 : begin
         _zz_predictedBranchTarget = branchTarget_21;
         _zz_io_prediction_payload_taken = branchLookupTaken_21;
       end
-      6'b010110 : begin
+      5'b10110 : begin
         _zz_predictedBranchTarget = branchTarget_22;
         _zz_io_prediction_payload_taken = branchLookupTaken_22;
       end
-      6'b010111 : begin
+      5'b10111 : begin
         _zz_predictedBranchTarget = branchTarget_23;
         _zz_io_prediction_payload_taken = branchLookupTaken_23;
       end
-      6'b011000 : begin
+      5'b11000 : begin
         _zz_predictedBranchTarget = branchTarget_24;
         _zz_io_prediction_payload_taken = branchLookupTaken_24;
       end
-      6'b011001 : begin
+      5'b11001 : begin
         _zz_predictedBranchTarget = branchTarget_25;
         _zz_io_prediction_payload_taken = branchLookupTaken_25;
       end
-      6'b011010 : begin
+      5'b11010 : begin
         _zz_predictedBranchTarget = branchTarget_26;
         _zz_io_prediction_payload_taken = branchLookupTaken_26;
       end
-      6'b011011 : begin
+      5'b11011 : begin
         _zz_predictedBranchTarget = branchTarget_27;
         _zz_io_prediction_payload_taken = branchLookupTaken_27;
       end
-      6'b011100 : begin
+      5'b11100 : begin
         _zz_predictedBranchTarget = branchTarget_28;
         _zz_io_prediction_payload_taken = branchLookupTaken_28;
       end
-      6'b011101 : begin
+      5'b11101 : begin
         _zz_predictedBranchTarget = branchTarget_29;
         _zz_io_prediction_payload_taken = branchLookupTaken_29;
       end
-      6'b011110 : begin
+      5'b11110 : begin
         _zz_predictedBranchTarget = branchTarget_30;
         _zz_io_prediction_payload_taken = branchLookupTaken_30;
       end
-      6'b011111 : begin
+      default : begin
         _zz_predictedBranchTarget = branchTarget_31;
         _zz_io_prediction_payload_taken = branchLookupTaken_31;
-      end
-      6'b100000 : begin
-        _zz_predictedBranchTarget = branchTarget_32;
-        _zz_io_prediction_payload_taken = branchLookupTaken_32;
-      end
-      6'b100001 : begin
-        _zz_predictedBranchTarget = branchTarget_33;
-        _zz_io_prediction_payload_taken = branchLookupTaken_33;
-      end
-      6'b100010 : begin
-        _zz_predictedBranchTarget = branchTarget_34;
-        _zz_io_prediction_payload_taken = branchLookupTaken_34;
-      end
-      6'b100011 : begin
-        _zz_predictedBranchTarget = branchTarget_35;
-        _zz_io_prediction_payload_taken = branchLookupTaken_35;
-      end
-      6'b100100 : begin
-        _zz_predictedBranchTarget = branchTarget_36;
-        _zz_io_prediction_payload_taken = branchLookupTaken_36;
-      end
-      6'b100101 : begin
-        _zz_predictedBranchTarget = branchTarget_37;
-        _zz_io_prediction_payload_taken = branchLookupTaken_37;
-      end
-      6'b100110 : begin
-        _zz_predictedBranchTarget = branchTarget_38;
-        _zz_io_prediction_payload_taken = branchLookupTaken_38;
-      end
-      6'b100111 : begin
-        _zz_predictedBranchTarget = branchTarget_39;
-        _zz_io_prediction_payload_taken = branchLookupTaken_39;
-      end
-      6'b101000 : begin
-        _zz_predictedBranchTarget = branchTarget_40;
-        _zz_io_prediction_payload_taken = branchLookupTaken_40;
-      end
-      6'b101001 : begin
-        _zz_predictedBranchTarget = branchTarget_41;
-        _zz_io_prediction_payload_taken = branchLookupTaken_41;
-      end
-      6'b101010 : begin
-        _zz_predictedBranchTarget = branchTarget_42;
-        _zz_io_prediction_payload_taken = branchLookupTaken_42;
-      end
-      6'b101011 : begin
-        _zz_predictedBranchTarget = branchTarget_43;
-        _zz_io_prediction_payload_taken = branchLookupTaken_43;
-      end
-      6'b101100 : begin
-        _zz_predictedBranchTarget = branchTarget_44;
-        _zz_io_prediction_payload_taken = branchLookupTaken_44;
-      end
-      6'b101101 : begin
-        _zz_predictedBranchTarget = branchTarget_45;
-        _zz_io_prediction_payload_taken = branchLookupTaken_45;
-      end
-      6'b101110 : begin
-        _zz_predictedBranchTarget = branchTarget_46;
-        _zz_io_prediction_payload_taken = branchLookupTaken_46;
-      end
-      6'b101111 : begin
-        _zz_predictedBranchTarget = branchTarget_47;
-        _zz_io_prediction_payload_taken = branchLookupTaken_47;
-      end
-      6'b110000 : begin
-        _zz_predictedBranchTarget = branchTarget_48;
-        _zz_io_prediction_payload_taken = branchLookupTaken_48;
-      end
-      6'b110001 : begin
-        _zz_predictedBranchTarget = branchTarget_49;
-        _zz_io_prediction_payload_taken = branchLookupTaken_49;
-      end
-      6'b110010 : begin
-        _zz_predictedBranchTarget = branchTarget_50;
-        _zz_io_prediction_payload_taken = branchLookupTaken_50;
-      end
-      6'b110011 : begin
-        _zz_predictedBranchTarget = branchTarget_51;
-        _zz_io_prediction_payload_taken = branchLookupTaken_51;
-      end
-      6'b110100 : begin
-        _zz_predictedBranchTarget = branchTarget_52;
-        _zz_io_prediction_payload_taken = branchLookupTaken_52;
-      end
-      6'b110101 : begin
-        _zz_predictedBranchTarget = branchTarget_53;
-        _zz_io_prediction_payload_taken = branchLookupTaken_53;
-      end
-      6'b110110 : begin
-        _zz_predictedBranchTarget = branchTarget_54;
-        _zz_io_prediction_payload_taken = branchLookupTaken_54;
-      end
-      6'b110111 : begin
-        _zz_predictedBranchTarget = branchTarget_55;
-        _zz_io_prediction_payload_taken = branchLookupTaken_55;
-      end
-      6'b111000 : begin
-        _zz_predictedBranchTarget = branchTarget_56;
-        _zz_io_prediction_payload_taken = branchLookupTaken_56;
-      end
-      6'b111001 : begin
-        _zz_predictedBranchTarget = branchTarget_57;
-        _zz_io_prediction_payload_taken = branchLookupTaken_57;
-      end
-      6'b111010 : begin
-        _zz_predictedBranchTarget = branchTarget_58;
-        _zz_io_prediction_payload_taken = branchLookupTaken_58;
-      end
-      6'b111011 : begin
-        _zz_predictedBranchTarget = branchTarget_59;
-        _zz_io_prediction_payload_taken = branchLookupTaken_59;
-      end
-      6'b111100 : begin
-        _zz_predictedBranchTarget = branchTarget_60;
-        _zz_io_prediction_payload_taken = branchLookupTaken_60;
-      end
-      6'b111101 : begin
-        _zz_predictedBranchTarget = branchTarget_61;
-        _zz_io_prediction_payload_taken = branchLookupTaken_61;
-      end
-      6'b111110 : begin
-        _zz_predictedBranchTarget = branchTarget_62;
-        _zz_io_prediction_payload_taken = branchLookupTaken_62;
-      end
-      default : begin
-        _zz_predictedBranchTarget = branchTarget_63;
-        _zz_io_prediction_payload_taken = branchLookupTaken_63;
       end
     endcase
   end
 
   always @(*) begin
-    case(branchUpdateIndex)
-      6'b000000 : _zz__zz_when_OpenLa500Predictor_l187 = branchCounter_0;
-      6'b000001 : _zz__zz_when_OpenLa500Predictor_l187 = branchCounter_1;
-      6'b000010 : _zz__zz_when_OpenLa500Predictor_l187 = branchCounter_2;
-      6'b000011 : _zz__zz_when_OpenLa500Predictor_l187 = branchCounter_3;
-      6'b000100 : _zz__zz_when_OpenLa500Predictor_l187 = branchCounter_4;
-      6'b000101 : _zz__zz_when_OpenLa500Predictor_l187 = branchCounter_5;
-      6'b000110 : _zz__zz_when_OpenLa500Predictor_l187 = branchCounter_6;
-      6'b000111 : _zz__zz_when_OpenLa500Predictor_l187 = branchCounter_7;
-      6'b001000 : _zz__zz_when_OpenLa500Predictor_l187 = branchCounter_8;
-      6'b001001 : _zz__zz_when_OpenLa500Predictor_l187 = branchCounter_9;
-      6'b001010 : _zz__zz_when_OpenLa500Predictor_l187 = branchCounter_10;
-      6'b001011 : _zz__zz_when_OpenLa500Predictor_l187 = branchCounter_11;
-      6'b001100 : _zz__zz_when_OpenLa500Predictor_l187 = branchCounter_12;
-      6'b001101 : _zz__zz_when_OpenLa500Predictor_l187 = branchCounter_13;
-      6'b001110 : _zz__zz_when_OpenLa500Predictor_l187 = branchCounter_14;
-      6'b001111 : _zz__zz_when_OpenLa500Predictor_l187 = branchCounter_15;
-      6'b010000 : _zz__zz_when_OpenLa500Predictor_l187 = branchCounter_16;
-      6'b010001 : _zz__zz_when_OpenLa500Predictor_l187 = branchCounter_17;
-      6'b010010 : _zz__zz_when_OpenLa500Predictor_l187 = branchCounter_18;
-      6'b010011 : _zz__zz_when_OpenLa500Predictor_l187 = branchCounter_19;
-      6'b010100 : _zz__zz_when_OpenLa500Predictor_l187 = branchCounter_20;
-      6'b010101 : _zz__zz_when_OpenLa500Predictor_l187 = branchCounter_21;
-      6'b010110 : _zz__zz_when_OpenLa500Predictor_l187 = branchCounter_22;
-      6'b010111 : _zz__zz_when_OpenLa500Predictor_l187 = branchCounter_23;
-      6'b011000 : _zz__zz_when_OpenLa500Predictor_l187 = branchCounter_24;
-      6'b011001 : _zz__zz_when_OpenLa500Predictor_l187 = branchCounter_25;
-      6'b011010 : _zz__zz_when_OpenLa500Predictor_l187 = branchCounter_26;
-      6'b011011 : _zz__zz_when_OpenLa500Predictor_l187 = branchCounter_27;
-      6'b011100 : _zz__zz_when_OpenLa500Predictor_l187 = branchCounter_28;
-      6'b011101 : _zz__zz_when_OpenLa500Predictor_l187 = branchCounter_29;
-      6'b011110 : _zz__zz_when_OpenLa500Predictor_l187 = branchCounter_30;
-      6'b011111 : _zz__zz_when_OpenLa500Predictor_l187 = branchCounter_31;
-      6'b100000 : _zz__zz_when_OpenLa500Predictor_l187 = branchCounter_32;
-      6'b100001 : _zz__zz_when_OpenLa500Predictor_l187 = branchCounter_33;
-      6'b100010 : _zz__zz_when_OpenLa500Predictor_l187 = branchCounter_34;
-      6'b100011 : _zz__zz_when_OpenLa500Predictor_l187 = branchCounter_35;
-      6'b100100 : _zz__zz_when_OpenLa500Predictor_l187 = branchCounter_36;
-      6'b100101 : _zz__zz_when_OpenLa500Predictor_l187 = branchCounter_37;
-      6'b100110 : _zz__zz_when_OpenLa500Predictor_l187 = branchCounter_38;
-      6'b100111 : _zz__zz_when_OpenLa500Predictor_l187 = branchCounter_39;
-      6'b101000 : _zz__zz_when_OpenLa500Predictor_l187 = branchCounter_40;
-      6'b101001 : _zz__zz_when_OpenLa500Predictor_l187 = branchCounter_41;
-      6'b101010 : _zz__zz_when_OpenLa500Predictor_l187 = branchCounter_42;
-      6'b101011 : _zz__zz_when_OpenLa500Predictor_l187 = branchCounter_43;
-      6'b101100 : _zz__zz_when_OpenLa500Predictor_l187 = branchCounter_44;
-      6'b101101 : _zz__zz_when_OpenLa500Predictor_l187 = branchCounter_45;
-      6'b101110 : _zz__zz_when_OpenLa500Predictor_l187 = branchCounter_46;
-      6'b101111 : _zz__zz_when_OpenLa500Predictor_l187 = branchCounter_47;
-      6'b110000 : _zz__zz_when_OpenLa500Predictor_l187 = branchCounter_48;
-      6'b110001 : _zz__zz_when_OpenLa500Predictor_l187 = branchCounter_49;
-      6'b110010 : _zz__zz_when_OpenLa500Predictor_l187 = branchCounter_50;
-      6'b110011 : _zz__zz_when_OpenLa500Predictor_l187 = branchCounter_51;
-      6'b110100 : _zz__zz_when_OpenLa500Predictor_l187 = branchCounter_52;
-      6'b110101 : _zz__zz_when_OpenLa500Predictor_l187 = branchCounter_53;
-      6'b110110 : _zz__zz_when_OpenLa500Predictor_l187 = branchCounter_54;
-      6'b110111 : _zz__zz_when_OpenLa500Predictor_l187 = branchCounter_55;
-      6'b111000 : _zz__zz_when_OpenLa500Predictor_l187 = branchCounter_56;
-      6'b111001 : _zz__zz_when_OpenLa500Predictor_l187 = branchCounter_57;
-      6'b111010 : _zz__zz_when_OpenLa500Predictor_l187 = branchCounter_58;
-      6'b111011 : _zz__zz_when_OpenLa500Predictor_l187 = branchCounter_59;
-      6'b111100 : _zz__zz_when_OpenLa500Predictor_l187 = branchCounter_60;
-      6'b111101 : _zz__zz_when_OpenLa500Predictor_l187 = branchCounter_61;
-      6'b111110 : _zz__zz_when_OpenLa500Predictor_l187 = branchCounter_62;
-      default : _zz__zz_when_OpenLa500Predictor_l187 = branchCounter_63;
+    case(io_update_payload_legacyIndex)
+      5'b00000 : _zz__zz_when_OpenLa500Predictor_l170 = branchCounter_0;
+      5'b00001 : _zz__zz_when_OpenLa500Predictor_l170 = branchCounter_1;
+      5'b00010 : _zz__zz_when_OpenLa500Predictor_l170 = branchCounter_2;
+      5'b00011 : _zz__zz_when_OpenLa500Predictor_l170 = branchCounter_3;
+      5'b00100 : _zz__zz_when_OpenLa500Predictor_l170 = branchCounter_4;
+      5'b00101 : _zz__zz_when_OpenLa500Predictor_l170 = branchCounter_5;
+      5'b00110 : _zz__zz_when_OpenLa500Predictor_l170 = branchCounter_6;
+      5'b00111 : _zz__zz_when_OpenLa500Predictor_l170 = branchCounter_7;
+      5'b01000 : _zz__zz_when_OpenLa500Predictor_l170 = branchCounter_8;
+      5'b01001 : _zz__zz_when_OpenLa500Predictor_l170 = branchCounter_9;
+      5'b01010 : _zz__zz_when_OpenLa500Predictor_l170 = branchCounter_10;
+      5'b01011 : _zz__zz_when_OpenLa500Predictor_l170 = branchCounter_11;
+      5'b01100 : _zz__zz_when_OpenLa500Predictor_l170 = branchCounter_12;
+      5'b01101 : _zz__zz_when_OpenLa500Predictor_l170 = branchCounter_13;
+      5'b01110 : _zz__zz_when_OpenLa500Predictor_l170 = branchCounter_14;
+      5'b01111 : _zz__zz_when_OpenLa500Predictor_l170 = branchCounter_15;
+      5'b10000 : _zz__zz_when_OpenLa500Predictor_l170 = branchCounter_16;
+      5'b10001 : _zz__zz_when_OpenLa500Predictor_l170 = branchCounter_17;
+      5'b10010 : _zz__zz_when_OpenLa500Predictor_l170 = branchCounter_18;
+      5'b10011 : _zz__zz_when_OpenLa500Predictor_l170 = branchCounter_19;
+      5'b10100 : _zz__zz_when_OpenLa500Predictor_l170 = branchCounter_20;
+      5'b10101 : _zz__zz_when_OpenLa500Predictor_l170 = branchCounter_21;
+      5'b10110 : _zz__zz_when_OpenLa500Predictor_l170 = branchCounter_22;
+      5'b10111 : _zz__zz_when_OpenLa500Predictor_l170 = branchCounter_23;
+      5'b11000 : _zz__zz_when_OpenLa500Predictor_l170 = branchCounter_24;
+      5'b11001 : _zz__zz_when_OpenLa500Predictor_l170 = branchCounter_25;
+      5'b11010 : _zz__zz_when_OpenLa500Predictor_l170 = branchCounter_26;
+      5'b11011 : _zz__zz_when_OpenLa500Predictor_l170 = branchCounter_27;
+      5'b11100 : _zz__zz_when_OpenLa500Predictor_l170 = branchCounter_28;
+      5'b11101 : _zz__zz_when_OpenLa500Predictor_l170 = branchCounter_29;
+      5'b11110 : _zz__zz_when_OpenLa500Predictor_l170 = branchCounter_30;
+      default : _zz__zz_when_OpenLa500Predictor_l170 = branchCounter_31;
     endcase
   end
 
@@ -3404,38 +2865,6 @@ module OpenLa500Predictor (
     branchLookupMatches[29] = ((lookupValid && branchValid_29) && (branchPc_29 == lookupPc));
     branchLookupMatches[30] = ((lookupValid && branchValid_30) && (branchPc_30 == lookupPc));
     branchLookupMatches[31] = ((lookupValid && branchValid_31) && (branchPc_31 == lookupPc));
-    branchLookupMatches[32] = ((lookupValid && branchValid_32) && (branchPc_32 == lookupPc));
-    branchLookupMatches[33] = ((lookupValid && branchValid_33) && (branchPc_33 == lookupPc));
-    branchLookupMatches[34] = ((lookupValid && branchValid_34) && (branchPc_34 == lookupPc));
-    branchLookupMatches[35] = ((lookupValid && branchValid_35) && (branchPc_35 == lookupPc));
-    branchLookupMatches[36] = ((lookupValid && branchValid_36) && (branchPc_36 == lookupPc));
-    branchLookupMatches[37] = ((lookupValid && branchValid_37) && (branchPc_37 == lookupPc));
-    branchLookupMatches[38] = ((lookupValid && branchValid_38) && (branchPc_38 == lookupPc));
-    branchLookupMatches[39] = ((lookupValid && branchValid_39) && (branchPc_39 == lookupPc));
-    branchLookupMatches[40] = ((lookupValid && branchValid_40) && (branchPc_40 == lookupPc));
-    branchLookupMatches[41] = ((lookupValid && branchValid_41) && (branchPc_41 == lookupPc));
-    branchLookupMatches[42] = ((lookupValid && branchValid_42) && (branchPc_42 == lookupPc));
-    branchLookupMatches[43] = ((lookupValid && branchValid_43) && (branchPc_43 == lookupPc));
-    branchLookupMatches[44] = ((lookupValid && branchValid_44) && (branchPc_44 == lookupPc));
-    branchLookupMatches[45] = ((lookupValid && branchValid_45) && (branchPc_45 == lookupPc));
-    branchLookupMatches[46] = ((lookupValid && branchValid_46) && (branchPc_46 == lookupPc));
-    branchLookupMatches[47] = ((lookupValid && branchValid_47) && (branchPc_47 == lookupPc));
-    branchLookupMatches[48] = ((lookupValid && branchValid_48) && (branchPc_48 == lookupPc));
-    branchLookupMatches[49] = ((lookupValid && branchValid_49) && (branchPc_49 == lookupPc));
-    branchLookupMatches[50] = ((lookupValid && branchValid_50) && (branchPc_50 == lookupPc));
-    branchLookupMatches[51] = ((lookupValid && branchValid_51) && (branchPc_51 == lookupPc));
-    branchLookupMatches[52] = ((lookupValid && branchValid_52) && (branchPc_52 == lookupPc));
-    branchLookupMatches[53] = ((lookupValid && branchValid_53) && (branchPc_53 == lookupPc));
-    branchLookupMatches[54] = ((lookupValid && branchValid_54) && (branchPc_54 == lookupPc));
-    branchLookupMatches[55] = ((lookupValid && branchValid_55) && (branchPc_55 == lookupPc));
-    branchLookupMatches[56] = ((lookupValid && branchValid_56) && (branchPc_56 == lookupPc));
-    branchLookupMatches[57] = ((lookupValid && branchValid_57) && (branchPc_57 == lookupPc));
-    branchLookupMatches[58] = ((lookupValid && branchValid_58) && (branchPc_58 == lookupPc));
-    branchLookupMatches[59] = ((lookupValid && branchValid_59) && (branchPc_59 == lookupPc));
-    branchLookupMatches[60] = ((lookupValid && branchValid_60) && (branchPc_60 == lookupPc));
-    branchLookupMatches[61] = ((lookupValid && branchValid_61) && (branchPc_61 == lookupPc));
-    branchLookupMatches[62] = ((lookupValid && branchValid_62) && (branchPc_62 == lookupPc));
-    branchLookupMatches[63] = ((lookupValid && branchValid_63) && (branchPc_63 == lookupPc));
   end
 
   assign branchLookupTaken_0 = branchCounter_0[1];
@@ -3470,299 +2899,139 @@ module OpenLa500Predictor (
   assign branchLookupTaken_29 = branchCounter_29[1];
   assign branchLookupTaken_30 = branchCounter_30[1];
   assign branchLookupTaken_31 = branchCounter_31[1];
-  assign branchLookupTaken_32 = branchCounter_32[1];
-  assign branchLookupTaken_33 = branchCounter_33[1];
-  assign branchLookupTaken_34 = branchCounter_34[1];
-  assign branchLookupTaken_35 = branchCounter_35[1];
-  assign branchLookupTaken_36 = branchCounter_36[1];
-  assign branchLookupTaken_37 = branchCounter_37[1];
-  assign branchLookupTaken_38 = branchCounter_38[1];
-  assign branchLookupTaken_39 = branchCounter_39[1];
-  assign branchLookupTaken_40 = branchCounter_40[1];
-  assign branchLookupTaken_41 = branchCounter_41[1];
-  assign branchLookupTaken_42 = branchCounter_42[1];
-  assign branchLookupTaken_43 = branchCounter_43[1];
-  assign branchLookupTaken_44 = branchCounter_44[1];
-  assign branchLookupTaken_45 = branchCounter_45[1];
-  assign branchLookupTaken_46 = branchCounter_46[1];
-  assign branchLookupTaken_47 = branchCounter_47[1];
-  assign branchLookupTaken_48 = branchCounter_48[1];
-  assign branchLookupTaken_49 = branchCounter_49[1];
-  assign branchLookupTaken_50 = branchCounter_50[1];
-  assign branchLookupTaken_51 = branchCounter_51[1];
-  assign branchLookupTaken_52 = branchCounter_52[1];
-  assign branchLookupTaken_53 = branchCounter_53[1];
-  assign branchLookupTaken_54 = branchCounter_54[1];
-  assign branchLookupTaken_55 = branchCounter_55[1];
-  assign branchLookupTaken_56 = branchCounter_56[1];
-  assign branchLookupTaken_57 = branchCounter_57[1];
-  assign branchLookupTaken_58 = branchCounter_58[1];
-  assign branchLookupTaken_59 = branchCounter_59[1];
-  assign branchLookupTaken_60 = branchCounter_60[1];
-  assign branchLookupTaken_61 = branchCounter_61[1];
-  assign branchLookupTaken_62 = branchCounter_62[1];
-  assign branchLookupTaken_63 = branchCounter_63[1];
   assign branchLookupHit = (|branchLookupMatches);
   always @(*) begin
-    branchLookupIndex = 6'h0;
-    if(when_OpenLa500Predictor_l58) begin
-      branchLookupIndex = 6'h3f;
+    branchLookupIndex = 5'h0;
+    if(when_OpenLa500Predictor_l61) begin
+      branchLookupIndex = 5'h1f;
     end
-    if(when_OpenLa500Predictor_l58_1) begin
-      branchLookupIndex = 6'h3e;
+    if(when_OpenLa500Predictor_l61_1) begin
+      branchLookupIndex = 5'h1e;
     end
-    if(when_OpenLa500Predictor_l58_2) begin
-      branchLookupIndex = 6'h3d;
+    if(when_OpenLa500Predictor_l61_2) begin
+      branchLookupIndex = 5'h1d;
     end
-    if(when_OpenLa500Predictor_l58_3) begin
-      branchLookupIndex = 6'h3c;
+    if(when_OpenLa500Predictor_l61_3) begin
+      branchLookupIndex = 5'h1c;
     end
-    if(when_OpenLa500Predictor_l58_4) begin
-      branchLookupIndex = 6'h3b;
+    if(when_OpenLa500Predictor_l61_4) begin
+      branchLookupIndex = 5'h1b;
     end
-    if(when_OpenLa500Predictor_l58_5) begin
-      branchLookupIndex = 6'h3a;
+    if(when_OpenLa500Predictor_l61_5) begin
+      branchLookupIndex = 5'h1a;
     end
-    if(when_OpenLa500Predictor_l58_6) begin
-      branchLookupIndex = 6'h39;
+    if(when_OpenLa500Predictor_l61_6) begin
+      branchLookupIndex = 5'h19;
     end
-    if(when_OpenLa500Predictor_l58_7) begin
-      branchLookupIndex = 6'h38;
+    if(when_OpenLa500Predictor_l61_7) begin
+      branchLookupIndex = 5'h18;
     end
-    if(when_OpenLa500Predictor_l58_8) begin
-      branchLookupIndex = 6'h37;
+    if(when_OpenLa500Predictor_l61_8) begin
+      branchLookupIndex = 5'h17;
     end
-    if(when_OpenLa500Predictor_l58_9) begin
-      branchLookupIndex = 6'h36;
+    if(when_OpenLa500Predictor_l61_9) begin
+      branchLookupIndex = 5'h16;
     end
-    if(when_OpenLa500Predictor_l58_10) begin
-      branchLookupIndex = 6'h35;
+    if(when_OpenLa500Predictor_l61_10) begin
+      branchLookupIndex = 5'h15;
     end
-    if(when_OpenLa500Predictor_l58_11) begin
-      branchLookupIndex = 6'h34;
+    if(when_OpenLa500Predictor_l61_11) begin
+      branchLookupIndex = 5'h14;
     end
-    if(when_OpenLa500Predictor_l58_12) begin
-      branchLookupIndex = 6'h33;
+    if(when_OpenLa500Predictor_l61_12) begin
+      branchLookupIndex = 5'h13;
     end
-    if(when_OpenLa500Predictor_l58_13) begin
-      branchLookupIndex = 6'h32;
+    if(when_OpenLa500Predictor_l61_13) begin
+      branchLookupIndex = 5'h12;
     end
-    if(when_OpenLa500Predictor_l58_14) begin
-      branchLookupIndex = 6'h31;
+    if(when_OpenLa500Predictor_l61_14) begin
+      branchLookupIndex = 5'h11;
     end
-    if(when_OpenLa500Predictor_l58_15) begin
-      branchLookupIndex = 6'h30;
+    if(when_OpenLa500Predictor_l61_15) begin
+      branchLookupIndex = 5'h10;
     end
-    if(when_OpenLa500Predictor_l58_16) begin
-      branchLookupIndex = 6'h2f;
+    if(when_OpenLa500Predictor_l61_16) begin
+      branchLookupIndex = 5'h0f;
     end
-    if(when_OpenLa500Predictor_l58_17) begin
-      branchLookupIndex = 6'h2e;
+    if(when_OpenLa500Predictor_l61_17) begin
+      branchLookupIndex = 5'h0e;
     end
-    if(when_OpenLa500Predictor_l58_18) begin
-      branchLookupIndex = 6'h2d;
+    if(when_OpenLa500Predictor_l61_18) begin
+      branchLookupIndex = 5'h0d;
     end
-    if(when_OpenLa500Predictor_l58_19) begin
-      branchLookupIndex = 6'h2c;
+    if(when_OpenLa500Predictor_l61_19) begin
+      branchLookupIndex = 5'h0c;
     end
-    if(when_OpenLa500Predictor_l58_20) begin
-      branchLookupIndex = 6'h2b;
+    if(when_OpenLa500Predictor_l61_20) begin
+      branchLookupIndex = 5'h0b;
     end
-    if(when_OpenLa500Predictor_l58_21) begin
-      branchLookupIndex = 6'h2a;
+    if(when_OpenLa500Predictor_l61_21) begin
+      branchLookupIndex = 5'h0a;
     end
-    if(when_OpenLa500Predictor_l58_22) begin
-      branchLookupIndex = 6'h29;
+    if(when_OpenLa500Predictor_l61_22) begin
+      branchLookupIndex = 5'h09;
     end
-    if(when_OpenLa500Predictor_l58_23) begin
-      branchLookupIndex = 6'h28;
+    if(when_OpenLa500Predictor_l61_23) begin
+      branchLookupIndex = 5'h08;
     end
-    if(when_OpenLa500Predictor_l58_24) begin
-      branchLookupIndex = 6'h27;
+    if(when_OpenLa500Predictor_l61_24) begin
+      branchLookupIndex = 5'h07;
     end
-    if(when_OpenLa500Predictor_l58_25) begin
-      branchLookupIndex = 6'h26;
+    if(when_OpenLa500Predictor_l61_25) begin
+      branchLookupIndex = 5'h06;
     end
-    if(when_OpenLa500Predictor_l58_26) begin
-      branchLookupIndex = 6'h25;
+    if(when_OpenLa500Predictor_l61_26) begin
+      branchLookupIndex = 5'h05;
     end
-    if(when_OpenLa500Predictor_l58_27) begin
-      branchLookupIndex = 6'h24;
+    if(when_OpenLa500Predictor_l61_27) begin
+      branchLookupIndex = 5'h04;
     end
-    if(when_OpenLa500Predictor_l58_28) begin
-      branchLookupIndex = 6'h23;
+    if(when_OpenLa500Predictor_l61_28) begin
+      branchLookupIndex = 5'h03;
     end
-    if(when_OpenLa500Predictor_l58_29) begin
-      branchLookupIndex = 6'h22;
+    if(when_OpenLa500Predictor_l61_29) begin
+      branchLookupIndex = 5'h02;
     end
-    if(when_OpenLa500Predictor_l58_30) begin
-      branchLookupIndex = 6'h21;
+    if(when_OpenLa500Predictor_l61_30) begin
+      branchLookupIndex = 5'h01;
     end
-    if(when_OpenLa500Predictor_l58_31) begin
-      branchLookupIndex = 6'h20;
-    end
-    if(when_OpenLa500Predictor_l58_32) begin
-      branchLookupIndex = 6'h1f;
-    end
-    if(when_OpenLa500Predictor_l58_33) begin
-      branchLookupIndex = 6'h1e;
-    end
-    if(when_OpenLa500Predictor_l58_34) begin
-      branchLookupIndex = 6'h1d;
-    end
-    if(when_OpenLa500Predictor_l58_35) begin
-      branchLookupIndex = 6'h1c;
-    end
-    if(when_OpenLa500Predictor_l58_36) begin
-      branchLookupIndex = 6'h1b;
-    end
-    if(when_OpenLa500Predictor_l58_37) begin
-      branchLookupIndex = 6'h1a;
-    end
-    if(when_OpenLa500Predictor_l58_38) begin
-      branchLookupIndex = 6'h19;
-    end
-    if(when_OpenLa500Predictor_l58_39) begin
-      branchLookupIndex = 6'h18;
-    end
-    if(when_OpenLa500Predictor_l58_40) begin
-      branchLookupIndex = 6'h17;
-    end
-    if(when_OpenLa500Predictor_l58_41) begin
-      branchLookupIndex = 6'h16;
-    end
-    if(when_OpenLa500Predictor_l58_42) begin
-      branchLookupIndex = 6'h15;
-    end
-    if(when_OpenLa500Predictor_l58_43) begin
-      branchLookupIndex = 6'h14;
-    end
-    if(when_OpenLa500Predictor_l58_44) begin
-      branchLookupIndex = 6'h13;
-    end
-    if(when_OpenLa500Predictor_l58_45) begin
-      branchLookupIndex = 6'h12;
-    end
-    if(when_OpenLa500Predictor_l58_46) begin
-      branchLookupIndex = 6'h11;
-    end
-    if(when_OpenLa500Predictor_l58_47) begin
-      branchLookupIndex = 6'h10;
-    end
-    if(when_OpenLa500Predictor_l58_48) begin
-      branchLookupIndex = 6'h0f;
-    end
-    if(when_OpenLa500Predictor_l58_49) begin
-      branchLookupIndex = 6'h0e;
-    end
-    if(when_OpenLa500Predictor_l58_50) begin
-      branchLookupIndex = 6'h0d;
-    end
-    if(when_OpenLa500Predictor_l58_51) begin
-      branchLookupIndex = 6'h0c;
-    end
-    if(when_OpenLa500Predictor_l58_52) begin
-      branchLookupIndex = 6'h0b;
-    end
-    if(when_OpenLa500Predictor_l58_53) begin
-      branchLookupIndex = 6'h0a;
-    end
-    if(when_OpenLa500Predictor_l58_54) begin
-      branchLookupIndex = 6'h09;
-    end
-    if(when_OpenLa500Predictor_l58_55) begin
-      branchLookupIndex = 6'h08;
-    end
-    if(when_OpenLa500Predictor_l58_56) begin
-      branchLookupIndex = 6'h07;
-    end
-    if(when_OpenLa500Predictor_l58_57) begin
-      branchLookupIndex = 6'h06;
-    end
-    if(when_OpenLa500Predictor_l58_58) begin
-      branchLookupIndex = 6'h05;
-    end
-    if(when_OpenLa500Predictor_l58_59) begin
-      branchLookupIndex = 6'h04;
-    end
-    if(when_OpenLa500Predictor_l58_60) begin
-      branchLookupIndex = 6'h03;
-    end
-    if(when_OpenLa500Predictor_l58_61) begin
-      branchLookupIndex = 6'h02;
-    end
-    if(when_OpenLa500Predictor_l58_62) begin
-      branchLookupIndex = 6'h01;
-    end
-    if(when_OpenLa500Predictor_l58_63) begin
-      branchLookupIndex = 6'h0;
+    if(when_OpenLa500Predictor_l61_31) begin
+      branchLookupIndex = 5'h0;
     end
   end
 
-  assign when_OpenLa500Predictor_l58 = branchLookupMatches[63];
-  assign when_OpenLa500Predictor_l58_1 = branchLookupMatches[62];
-  assign when_OpenLa500Predictor_l58_2 = branchLookupMatches[61];
-  assign when_OpenLa500Predictor_l58_3 = branchLookupMatches[60];
-  assign when_OpenLa500Predictor_l58_4 = branchLookupMatches[59];
-  assign when_OpenLa500Predictor_l58_5 = branchLookupMatches[58];
-  assign when_OpenLa500Predictor_l58_6 = branchLookupMatches[57];
-  assign when_OpenLa500Predictor_l58_7 = branchLookupMatches[56];
-  assign when_OpenLa500Predictor_l58_8 = branchLookupMatches[55];
-  assign when_OpenLa500Predictor_l58_9 = branchLookupMatches[54];
-  assign when_OpenLa500Predictor_l58_10 = branchLookupMatches[53];
-  assign when_OpenLa500Predictor_l58_11 = branchLookupMatches[52];
-  assign when_OpenLa500Predictor_l58_12 = branchLookupMatches[51];
-  assign when_OpenLa500Predictor_l58_13 = branchLookupMatches[50];
-  assign when_OpenLa500Predictor_l58_14 = branchLookupMatches[49];
-  assign when_OpenLa500Predictor_l58_15 = branchLookupMatches[48];
-  assign when_OpenLa500Predictor_l58_16 = branchLookupMatches[47];
-  assign when_OpenLa500Predictor_l58_17 = branchLookupMatches[46];
-  assign when_OpenLa500Predictor_l58_18 = branchLookupMatches[45];
-  assign when_OpenLa500Predictor_l58_19 = branchLookupMatches[44];
-  assign when_OpenLa500Predictor_l58_20 = branchLookupMatches[43];
-  assign when_OpenLa500Predictor_l58_21 = branchLookupMatches[42];
-  assign when_OpenLa500Predictor_l58_22 = branchLookupMatches[41];
-  assign when_OpenLa500Predictor_l58_23 = branchLookupMatches[40];
-  assign when_OpenLa500Predictor_l58_24 = branchLookupMatches[39];
-  assign when_OpenLa500Predictor_l58_25 = branchLookupMatches[38];
-  assign when_OpenLa500Predictor_l58_26 = branchLookupMatches[37];
-  assign when_OpenLa500Predictor_l58_27 = branchLookupMatches[36];
-  assign when_OpenLa500Predictor_l58_28 = branchLookupMatches[35];
-  assign when_OpenLa500Predictor_l58_29 = branchLookupMatches[34];
-  assign when_OpenLa500Predictor_l58_30 = branchLookupMatches[33];
-  assign when_OpenLa500Predictor_l58_31 = branchLookupMatches[32];
-  assign when_OpenLa500Predictor_l58_32 = branchLookupMatches[31];
-  assign when_OpenLa500Predictor_l58_33 = branchLookupMatches[30];
-  assign when_OpenLa500Predictor_l58_34 = branchLookupMatches[29];
-  assign when_OpenLa500Predictor_l58_35 = branchLookupMatches[28];
-  assign when_OpenLa500Predictor_l58_36 = branchLookupMatches[27];
-  assign when_OpenLa500Predictor_l58_37 = branchLookupMatches[26];
-  assign when_OpenLa500Predictor_l58_38 = branchLookupMatches[25];
-  assign when_OpenLa500Predictor_l58_39 = branchLookupMatches[24];
-  assign when_OpenLa500Predictor_l58_40 = branchLookupMatches[23];
-  assign when_OpenLa500Predictor_l58_41 = branchLookupMatches[22];
-  assign when_OpenLa500Predictor_l58_42 = branchLookupMatches[21];
-  assign when_OpenLa500Predictor_l58_43 = branchLookupMatches[20];
-  assign when_OpenLa500Predictor_l58_44 = branchLookupMatches[19];
-  assign when_OpenLa500Predictor_l58_45 = branchLookupMatches[18];
-  assign when_OpenLa500Predictor_l58_46 = branchLookupMatches[17];
-  assign when_OpenLa500Predictor_l58_47 = branchLookupMatches[16];
-  assign when_OpenLa500Predictor_l58_48 = branchLookupMatches[15];
-  assign when_OpenLa500Predictor_l58_49 = branchLookupMatches[14];
-  assign when_OpenLa500Predictor_l58_50 = branchLookupMatches[13];
-  assign when_OpenLa500Predictor_l58_51 = branchLookupMatches[12];
-  assign when_OpenLa500Predictor_l58_52 = branchLookupMatches[11];
-  assign when_OpenLa500Predictor_l58_53 = branchLookupMatches[10];
-  assign when_OpenLa500Predictor_l58_54 = branchLookupMatches[9];
-  assign when_OpenLa500Predictor_l58_55 = branchLookupMatches[8];
-  assign when_OpenLa500Predictor_l58_56 = branchLookupMatches[7];
-  assign when_OpenLa500Predictor_l58_57 = branchLookupMatches[6];
-  assign when_OpenLa500Predictor_l58_58 = branchLookupMatches[5];
-  assign when_OpenLa500Predictor_l58_59 = branchLookupMatches[4];
-  assign when_OpenLa500Predictor_l58_60 = branchLookupMatches[3];
-  assign when_OpenLa500Predictor_l58_61 = branchLookupMatches[2];
-  assign when_OpenLa500Predictor_l58_62 = branchLookupMatches[1];
-  assign when_OpenLa500Predictor_l58_63 = branchLookupMatches[0];
+  assign when_OpenLa500Predictor_l61 = branchLookupMatches[31];
+  assign when_OpenLa500Predictor_l61_1 = branchLookupMatches[30];
+  assign when_OpenLa500Predictor_l61_2 = branchLookupMatches[29];
+  assign when_OpenLa500Predictor_l61_3 = branchLookupMatches[28];
+  assign when_OpenLa500Predictor_l61_4 = branchLookupMatches[27];
+  assign when_OpenLa500Predictor_l61_5 = branchLookupMatches[26];
+  assign when_OpenLa500Predictor_l61_6 = branchLookupMatches[25];
+  assign when_OpenLa500Predictor_l61_7 = branchLookupMatches[24];
+  assign when_OpenLa500Predictor_l61_8 = branchLookupMatches[23];
+  assign when_OpenLa500Predictor_l61_9 = branchLookupMatches[22];
+  assign when_OpenLa500Predictor_l61_10 = branchLookupMatches[21];
+  assign when_OpenLa500Predictor_l61_11 = branchLookupMatches[20];
+  assign when_OpenLa500Predictor_l61_12 = branchLookupMatches[19];
+  assign when_OpenLa500Predictor_l61_13 = branchLookupMatches[18];
+  assign when_OpenLa500Predictor_l61_14 = branchLookupMatches[17];
+  assign when_OpenLa500Predictor_l61_15 = branchLookupMatches[16];
+  assign when_OpenLa500Predictor_l61_16 = branchLookupMatches[15];
+  assign when_OpenLa500Predictor_l61_17 = branchLookupMatches[14];
+  assign when_OpenLa500Predictor_l61_18 = branchLookupMatches[13];
+  assign when_OpenLa500Predictor_l61_19 = branchLookupMatches[12];
+  assign when_OpenLa500Predictor_l61_20 = branchLookupMatches[11];
+  assign when_OpenLa500Predictor_l61_21 = branchLookupMatches[10];
+  assign when_OpenLa500Predictor_l61_22 = branchLookupMatches[9];
+  assign when_OpenLa500Predictor_l61_23 = branchLookupMatches[8];
+  assign when_OpenLa500Predictor_l61_24 = branchLookupMatches[7];
+  assign when_OpenLa500Predictor_l61_25 = branchLookupMatches[6];
+  assign when_OpenLa500Predictor_l61_26 = branchLookupMatches[5];
+  assign when_OpenLa500Predictor_l61_27 = branchLookupMatches[4];
+  assign when_OpenLa500Predictor_l61_28 = branchLookupMatches[3];
+  assign when_OpenLa500Predictor_l61_29 = branchLookupMatches[2];
+  assign when_OpenLa500Predictor_l61_30 = branchLookupMatches[1];
+  assign when_OpenLa500Predictor_l61_31 = branchLookupMatches[0];
   always @(*) begin
     returnLookupMatches[0] = ((lookupValid && returnSiteValid_0) && (returnSitePc_0 == lookupPc));
     returnLookupMatches[1] = ((lookupValid && returnSiteValid_1) && (returnSitePc_1 == lookupPc));
@@ -3787,72 +3056,72 @@ module OpenLa500Predictor (
   assign returnLookupHit = ((|returnLookupMatches) && (! returnStackEmpty));
   always @(*) begin
     returnLookupIndex = 4'b0000;
-    if(when_OpenLa500Predictor_l58_64) begin
+    if(when_OpenLa500Predictor_l61_32) begin
       returnLookupIndex = 4'b1111;
     end
-    if(when_OpenLa500Predictor_l58_65) begin
+    if(when_OpenLa500Predictor_l61_33) begin
       returnLookupIndex = 4'b1110;
     end
-    if(when_OpenLa500Predictor_l58_66) begin
+    if(when_OpenLa500Predictor_l61_34) begin
       returnLookupIndex = 4'b1101;
     end
-    if(when_OpenLa500Predictor_l58_67) begin
+    if(when_OpenLa500Predictor_l61_35) begin
       returnLookupIndex = 4'b1100;
     end
-    if(when_OpenLa500Predictor_l58_68) begin
+    if(when_OpenLa500Predictor_l61_36) begin
       returnLookupIndex = 4'b1011;
     end
-    if(when_OpenLa500Predictor_l58_69) begin
+    if(when_OpenLa500Predictor_l61_37) begin
       returnLookupIndex = 4'b1010;
     end
-    if(when_OpenLa500Predictor_l58_70) begin
+    if(when_OpenLa500Predictor_l61_38) begin
       returnLookupIndex = 4'b1001;
     end
-    if(when_OpenLa500Predictor_l58_71) begin
+    if(when_OpenLa500Predictor_l61_39) begin
       returnLookupIndex = 4'b1000;
     end
-    if(when_OpenLa500Predictor_l58_72) begin
+    if(when_OpenLa500Predictor_l61_40) begin
       returnLookupIndex = 4'b0111;
     end
-    if(when_OpenLa500Predictor_l58_73) begin
+    if(when_OpenLa500Predictor_l61_41) begin
       returnLookupIndex = 4'b0110;
     end
-    if(when_OpenLa500Predictor_l58_74) begin
+    if(when_OpenLa500Predictor_l61_42) begin
       returnLookupIndex = 4'b0101;
     end
-    if(when_OpenLa500Predictor_l58_75) begin
+    if(when_OpenLa500Predictor_l61_43) begin
       returnLookupIndex = 4'b0100;
     end
-    if(when_OpenLa500Predictor_l58_76) begin
+    if(when_OpenLa500Predictor_l61_44) begin
       returnLookupIndex = 4'b0011;
     end
-    if(when_OpenLa500Predictor_l58_77) begin
+    if(when_OpenLa500Predictor_l61_45) begin
       returnLookupIndex = 4'b0010;
     end
-    if(when_OpenLa500Predictor_l58_78) begin
+    if(when_OpenLa500Predictor_l61_46) begin
       returnLookupIndex = 4'b0001;
     end
-    if(when_OpenLa500Predictor_l58_79) begin
+    if(when_OpenLa500Predictor_l61_47) begin
       returnLookupIndex = 4'b0000;
     end
   end
 
-  assign when_OpenLa500Predictor_l58_64 = returnLookupMatches[15];
-  assign when_OpenLa500Predictor_l58_65 = returnLookupMatches[14];
-  assign when_OpenLa500Predictor_l58_66 = returnLookupMatches[13];
-  assign when_OpenLa500Predictor_l58_67 = returnLookupMatches[12];
-  assign when_OpenLa500Predictor_l58_68 = returnLookupMatches[11];
-  assign when_OpenLa500Predictor_l58_69 = returnLookupMatches[10];
-  assign when_OpenLa500Predictor_l58_70 = returnLookupMatches[9];
-  assign when_OpenLa500Predictor_l58_71 = returnLookupMatches[8];
-  assign when_OpenLa500Predictor_l58_72 = returnLookupMatches[7];
-  assign when_OpenLa500Predictor_l58_73 = returnLookupMatches[6];
-  assign when_OpenLa500Predictor_l58_74 = returnLookupMatches[5];
-  assign when_OpenLa500Predictor_l58_75 = returnLookupMatches[4];
-  assign when_OpenLa500Predictor_l58_76 = returnLookupMatches[3];
-  assign when_OpenLa500Predictor_l58_77 = returnLookupMatches[2];
-  assign when_OpenLa500Predictor_l58_78 = returnLookupMatches[1];
-  assign when_OpenLa500Predictor_l58_79 = returnLookupMatches[0];
+  assign when_OpenLa500Predictor_l61_32 = returnLookupMatches[15];
+  assign when_OpenLa500Predictor_l61_33 = returnLookupMatches[14];
+  assign when_OpenLa500Predictor_l61_34 = returnLookupMatches[13];
+  assign when_OpenLa500Predictor_l61_35 = returnLookupMatches[12];
+  assign when_OpenLa500Predictor_l61_36 = returnLookupMatches[11];
+  assign when_OpenLa500Predictor_l61_37 = returnLookupMatches[10];
+  assign when_OpenLa500Predictor_l61_38 = returnLookupMatches[9];
+  assign when_OpenLa500Predictor_l61_39 = returnLookupMatches[8];
+  assign when_OpenLa500Predictor_l61_40 = returnLookupMatches[7];
+  assign when_OpenLa500Predictor_l61_41 = returnLookupMatches[6];
+  assign when_OpenLa500Predictor_l61_42 = returnLookupMatches[5];
+  assign when_OpenLa500Predictor_l61_43 = returnLookupMatches[4];
+  assign when_OpenLa500Predictor_l61_44 = returnLookupMatches[3];
+  assign when_OpenLa500Predictor_l61_45 = returnLookupMatches[2];
+  assign when_OpenLa500Predictor_l61_46 = returnLookupMatches[1];
+  assign when_OpenLa500Predictor_l61_47 = returnLookupMatches[0];
   assign returnTopIndex = (returnDepth[2 : 0] - 3'b001);
   assign returnTarget = _zz_returnTarget;
   assign predictedBranchTarget = _zz_predictedBranchTarget;
@@ -3876,73 +3145,6 @@ module OpenLa500Predictor (
     if(returnLookupHit) begin
       io_prediction_payload_legacyIndex = {1'd0, returnLookupIndex};
     end
-  end
-
-  always @(*) begin
-    branchUpdateMatches[0] = (branchValid_0 && (branchPc_0 == io_update_payload_pc));
-    branchUpdateMatches[1] = (branchValid_1 && (branchPc_1 == io_update_payload_pc));
-    branchUpdateMatches[2] = (branchValid_2 && (branchPc_2 == io_update_payload_pc));
-    branchUpdateMatches[3] = (branchValid_3 && (branchPc_3 == io_update_payload_pc));
-    branchUpdateMatches[4] = (branchValid_4 && (branchPc_4 == io_update_payload_pc));
-    branchUpdateMatches[5] = (branchValid_5 && (branchPc_5 == io_update_payload_pc));
-    branchUpdateMatches[6] = (branchValid_6 && (branchPc_6 == io_update_payload_pc));
-    branchUpdateMatches[7] = (branchValid_7 && (branchPc_7 == io_update_payload_pc));
-    branchUpdateMatches[8] = (branchValid_8 && (branchPc_8 == io_update_payload_pc));
-    branchUpdateMatches[9] = (branchValid_9 && (branchPc_9 == io_update_payload_pc));
-    branchUpdateMatches[10] = (branchValid_10 && (branchPc_10 == io_update_payload_pc));
-    branchUpdateMatches[11] = (branchValid_11 && (branchPc_11 == io_update_payload_pc));
-    branchUpdateMatches[12] = (branchValid_12 && (branchPc_12 == io_update_payload_pc));
-    branchUpdateMatches[13] = (branchValid_13 && (branchPc_13 == io_update_payload_pc));
-    branchUpdateMatches[14] = (branchValid_14 && (branchPc_14 == io_update_payload_pc));
-    branchUpdateMatches[15] = (branchValid_15 && (branchPc_15 == io_update_payload_pc));
-    branchUpdateMatches[16] = (branchValid_16 && (branchPc_16 == io_update_payload_pc));
-    branchUpdateMatches[17] = (branchValid_17 && (branchPc_17 == io_update_payload_pc));
-    branchUpdateMatches[18] = (branchValid_18 && (branchPc_18 == io_update_payload_pc));
-    branchUpdateMatches[19] = (branchValid_19 && (branchPc_19 == io_update_payload_pc));
-    branchUpdateMatches[20] = (branchValid_20 && (branchPc_20 == io_update_payload_pc));
-    branchUpdateMatches[21] = (branchValid_21 && (branchPc_21 == io_update_payload_pc));
-    branchUpdateMatches[22] = (branchValid_22 && (branchPc_22 == io_update_payload_pc));
-    branchUpdateMatches[23] = (branchValid_23 && (branchPc_23 == io_update_payload_pc));
-    branchUpdateMatches[24] = (branchValid_24 && (branchPc_24 == io_update_payload_pc));
-    branchUpdateMatches[25] = (branchValid_25 && (branchPc_25 == io_update_payload_pc));
-    branchUpdateMatches[26] = (branchValid_26 && (branchPc_26 == io_update_payload_pc));
-    branchUpdateMatches[27] = (branchValid_27 && (branchPc_27 == io_update_payload_pc));
-    branchUpdateMatches[28] = (branchValid_28 && (branchPc_28 == io_update_payload_pc));
-    branchUpdateMatches[29] = (branchValid_29 && (branchPc_29 == io_update_payload_pc));
-    branchUpdateMatches[30] = (branchValid_30 && (branchPc_30 == io_update_payload_pc));
-    branchUpdateMatches[31] = (branchValid_31 && (branchPc_31 == io_update_payload_pc));
-    branchUpdateMatches[32] = (branchValid_32 && (branchPc_32 == io_update_payload_pc));
-    branchUpdateMatches[33] = (branchValid_33 && (branchPc_33 == io_update_payload_pc));
-    branchUpdateMatches[34] = (branchValid_34 && (branchPc_34 == io_update_payload_pc));
-    branchUpdateMatches[35] = (branchValid_35 && (branchPc_35 == io_update_payload_pc));
-    branchUpdateMatches[36] = (branchValid_36 && (branchPc_36 == io_update_payload_pc));
-    branchUpdateMatches[37] = (branchValid_37 && (branchPc_37 == io_update_payload_pc));
-    branchUpdateMatches[38] = (branchValid_38 && (branchPc_38 == io_update_payload_pc));
-    branchUpdateMatches[39] = (branchValid_39 && (branchPc_39 == io_update_payload_pc));
-    branchUpdateMatches[40] = (branchValid_40 && (branchPc_40 == io_update_payload_pc));
-    branchUpdateMatches[41] = (branchValid_41 && (branchPc_41 == io_update_payload_pc));
-    branchUpdateMatches[42] = (branchValid_42 && (branchPc_42 == io_update_payload_pc));
-    branchUpdateMatches[43] = (branchValid_43 && (branchPc_43 == io_update_payload_pc));
-    branchUpdateMatches[44] = (branchValid_44 && (branchPc_44 == io_update_payload_pc));
-    branchUpdateMatches[45] = (branchValid_45 && (branchPc_45 == io_update_payload_pc));
-    branchUpdateMatches[46] = (branchValid_46 && (branchPc_46 == io_update_payload_pc));
-    branchUpdateMatches[47] = (branchValid_47 && (branchPc_47 == io_update_payload_pc));
-    branchUpdateMatches[48] = (branchValid_48 && (branchPc_48 == io_update_payload_pc));
-    branchUpdateMatches[49] = (branchValid_49 && (branchPc_49 == io_update_payload_pc));
-    branchUpdateMatches[50] = (branchValid_50 && (branchPc_50 == io_update_payload_pc));
-    branchUpdateMatches[51] = (branchValid_51 && (branchPc_51 == io_update_payload_pc));
-    branchUpdateMatches[52] = (branchValid_52 && (branchPc_52 == io_update_payload_pc));
-    branchUpdateMatches[53] = (branchValid_53 && (branchPc_53 == io_update_payload_pc));
-    branchUpdateMatches[54] = (branchValid_54 && (branchPc_54 == io_update_payload_pc));
-    branchUpdateMatches[55] = (branchValid_55 && (branchPc_55 == io_update_payload_pc));
-    branchUpdateMatches[56] = (branchValid_56 && (branchPc_56 == io_update_payload_pc));
-    branchUpdateMatches[57] = (branchValid_57 && (branchPc_57 == io_update_payload_pc));
-    branchUpdateMatches[58] = (branchValid_58 && (branchPc_58 == io_update_payload_pc));
-    branchUpdateMatches[59] = (branchValid_59 && (branchPc_59 == io_update_payload_pc));
-    branchUpdateMatches[60] = (branchValid_60 && (branchPc_60 == io_update_payload_pc));
-    branchUpdateMatches[61] = (branchValid_61 && (branchPc_61 == io_update_payload_pc));
-    branchUpdateMatches[62] = (branchValid_62 && (branchPc_62 == io_update_payload_pc));
-    branchUpdateMatches[63] = (branchValid_63 && (branchPc_63 == io_update_payload_pc));
   end
 
   always @(*) begin
@@ -3978,38 +3180,6 @@ module OpenLa500Predictor (
     invalidBranchEntries[29] = (! branchValid_29);
     invalidBranchEntries[30] = (! branchValid_30);
     invalidBranchEntries[31] = (! branchValid_31);
-    invalidBranchEntries[32] = (! branchValid_32);
-    invalidBranchEntries[33] = (! branchValid_33);
-    invalidBranchEntries[34] = (! branchValid_34);
-    invalidBranchEntries[35] = (! branchValid_35);
-    invalidBranchEntries[36] = (! branchValid_36);
-    invalidBranchEntries[37] = (! branchValid_37);
-    invalidBranchEntries[38] = (! branchValid_38);
-    invalidBranchEntries[39] = (! branchValid_39);
-    invalidBranchEntries[40] = (! branchValid_40);
-    invalidBranchEntries[41] = (! branchValid_41);
-    invalidBranchEntries[42] = (! branchValid_42);
-    invalidBranchEntries[43] = (! branchValid_43);
-    invalidBranchEntries[44] = (! branchValid_44);
-    invalidBranchEntries[45] = (! branchValid_45);
-    invalidBranchEntries[46] = (! branchValid_46);
-    invalidBranchEntries[47] = (! branchValid_47);
-    invalidBranchEntries[48] = (! branchValid_48);
-    invalidBranchEntries[49] = (! branchValid_49);
-    invalidBranchEntries[50] = (! branchValid_50);
-    invalidBranchEntries[51] = (! branchValid_51);
-    invalidBranchEntries[52] = (! branchValid_52);
-    invalidBranchEntries[53] = (! branchValid_53);
-    invalidBranchEntries[54] = (! branchValid_54);
-    invalidBranchEntries[55] = (! branchValid_55);
-    invalidBranchEntries[56] = (! branchValid_56);
-    invalidBranchEntries[57] = (! branchValid_57);
-    invalidBranchEntries[58] = (! branchValid_58);
-    invalidBranchEntries[59] = (! branchValid_59);
-    invalidBranchEntries[60] = (! branchValid_60);
-    invalidBranchEntries[61] = (! branchValid_61);
-    invalidBranchEntries[62] = (! branchValid_62);
-    invalidBranchEntries[63] = (! branchValid_63);
   end
 
   always @(*) begin
@@ -4045,854 +3215,285 @@ module OpenLa500Predictor (
     stronglyUntakenEntries[29] = (branchValid_29 && (branchCounter_29 == 2'b00));
     stronglyUntakenEntries[30] = (branchValid_30 && (branchCounter_30 == 2'b00));
     stronglyUntakenEntries[31] = (branchValid_31 && (branchCounter_31 == 2'b00));
-    stronglyUntakenEntries[32] = (branchValid_32 && (branchCounter_32 == 2'b00));
-    stronglyUntakenEntries[33] = (branchValid_33 && (branchCounter_33 == 2'b00));
-    stronglyUntakenEntries[34] = (branchValid_34 && (branchCounter_34 == 2'b00));
-    stronglyUntakenEntries[35] = (branchValid_35 && (branchCounter_35 == 2'b00));
-    stronglyUntakenEntries[36] = (branchValid_36 && (branchCounter_36 == 2'b00));
-    stronglyUntakenEntries[37] = (branchValid_37 && (branchCounter_37 == 2'b00));
-    stronglyUntakenEntries[38] = (branchValid_38 && (branchCounter_38 == 2'b00));
-    stronglyUntakenEntries[39] = (branchValid_39 && (branchCounter_39 == 2'b00));
-    stronglyUntakenEntries[40] = (branchValid_40 && (branchCounter_40 == 2'b00));
-    stronglyUntakenEntries[41] = (branchValid_41 && (branchCounter_41 == 2'b00));
-    stronglyUntakenEntries[42] = (branchValid_42 && (branchCounter_42 == 2'b00));
-    stronglyUntakenEntries[43] = (branchValid_43 && (branchCounter_43 == 2'b00));
-    stronglyUntakenEntries[44] = (branchValid_44 && (branchCounter_44 == 2'b00));
-    stronglyUntakenEntries[45] = (branchValid_45 && (branchCounter_45 == 2'b00));
-    stronglyUntakenEntries[46] = (branchValid_46 && (branchCounter_46 == 2'b00));
-    stronglyUntakenEntries[47] = (branchValid_47 && (branchCounter_47 == 2'b00));
-    stronglyUntakenEntries[48] = (branchValid_48 && (branchCounter_48 == 2'b00));
-    stronglyUntakenEntries[49] = (branchValid_49 && (branchCounter_49 == 2'b00));
-    stronglyUntakenEntries[50] = (branchValid_50 && (branchCounter_50 == 2'b00));
-    stronglyUntakenEntries[51] = (branchValid_51 && (branchCounter_51 == 2'b00));
-    stronglyUntakenEntries[52] = (branchValid_52 && (branchCounter_52 == 2'b00));
-    stronglyUntakenEntries[53] = (branchValid_53 && (branchCounter_53 == 2'b00));
-    stronglyUntakenEntries[54] = (branchValid_54 && (branchCounter_54 == 2'b00));
-    stronglyUntakenEntries[55] = (branchValid_55 && (branchCounter_55 == 2'b00));
-    stronglyUntakenEntries[56] = (branchValid_56 && (branchCounter_56 == 2'b00));
-    stronglyUntakenEntries[57] = (branchValid_57 && (branchCounter_57 == 2'b00));
-    stronglyUntakenEntries[58] = (branchValid_58 && (branchCounter_58 == 2'b00));
-    stronglyUntakenEntries[59] = (branchValid_59 && (branchCounter_59 == 2'b00));
-    stronglyUntakenEntries[60] = (branchValid_60 && (branchCounter_60 == 2'b00));
-    stronglyUntakenEntries[61] = (branchValid_61 && (branchCounter_61 == 2'b00));
-    stronglyUntakenEntries[62] = (branchValid_62 && (branchCounter_62 == 2'b00));
-    stronglyUntakenEntries[63] = (branchValid_63 && (branchCounter_63 == 2'b00));
   end
 
-  assign branchUpdateHit = (|branchUpdateMatches);
   always @(*) begin
-    branchUpdateIndex = 6'h0;
-    if(when_OpenLa500Predictor_l58_80) begin
-      branchUpdateIndex = 6'h3f;
+    invalidBranchIndex = 5'h0;
+    if(when_OpenLa500Predictor_l61_48) begin
+      invalidBranchIndex = 5'h1f;
     end
-    if(when_OpenLa500Predictor_l58_81) begin
-      branchUpdateIndex = 6'h3e;
+    if(when_OpenLa500Predictor_l61_49) begin
+      invalidBranchIndex = 5'h1e;
     end
-    if(when_OpenLa500Predictor_l58_82) begin
-      branchUpdateIndex = 6'h3d;
+    if(when_OpenLa500Predictor_l61_50) begin
+      invalidBranchIndex = 5'h1d;
     end
-    if(when_OpenLa500Predictor_l58_83) begin
-      branchUpdateIndex = 6'h3c;
+    if(when_OpenLa500Predictor_l61_51) begin
+      invalidBranchIndex = 5'h1c;
     end
-    if(when_OpenLa500Predictor_l58_84) begin
-      branchUpdateIndex = 6'h3b;
+    if(when_OpenLa500Predictor_l61_52) begin
+      invalidBranchIndex = 5'h1b;
     end
-    if(when_OpenLa500Predictor_l58_85) begin
-      branchUpdateIndex = 6'h3a;
+    if(when_OpenLa500Predictor_l61_53) begin
+      invalidBranchIndex = 5'h1a;
     end
-    if(when_OpenLa500Predictor_l58_86) begin
-      branchUpdateIndex = 6'h39;
+    if(when_OpenLa500Predictor_l61_54) begin
+      invalidBranchIndex = 5'h19;
     end
-    if(when_OpenLa500Predictor_l58_87) begin
-      branchUpdateIndex = 6'h38;
+    if(when_OpenLa500Predictor_l61_55) begin
+      invalidBranchIndex = 5'h18;
     end
-    if(when_OpenLa500Predictor_l58_88) begin
-      branchUpdateIndex = 6'h37;
+    if(when_OpenLa500Predictor_l61_56) begin
+      invalidBranchIndex = 5'h17;
     end
-    if(when_OpenLa500Predictor_l58_89) begin
-      branchUpdateIndex = 6'h36;
+    if(when_OpenLa500Predictor_l61_57) begin
+      invalidBranchIndex = 5'h16;
     end
-    if(when_OpenLa500Predictor_l58_90) begin
-      branchUpdateIndex = 6'h35;
+    if(when_OpenLa500Predictor_l61_58) begin
+      invalidBranchIndex = 5'h15;
     end
-    if(when_OpenLa500Predictor_l58_91) begin
-      branchUpdateIndex = 6'h34;
+    if(when_OpenLa500Predictor_l61_59) begin
+      invalidBranchIndex = 5'h14;
     end
-    if(when_OpenLa500Predictor_l58_92) begin
-      branchUpdateIndex = 6'h33;
+    if(when_OpenLa500Predictor_l61_60) begin
+      invalidBranchIndex = 5'h13;
     end
-    if(when_OpenLa500Predictor_l58_93) begin
-      branchUpdateIndex = 6'h32;
+    if(when_OpenLa500Predictor_l61_61) begin
+      invalidBranchIndex = 5'h12;
     end
-    if(when_OpenLa500Predictor_l58_94) begin
-      branchUpdateIndex = 6'h31;
+    if(when_OpenLa500Predictor_l61_62) begin
+      invalidBranchIndex = 5'h11;
     end
-    if(when_OpenLa500Predictor_l58_95) begin
-      branchUpdateIndex = 6'h30;
+    if(when_OpenLa500Predictor_l61_63) begin
+      invalidBranchIndex = 5'h10;
     end
-    if(when_OpenLa500Predictor_l58_96) begin
-      branchUpdateIndex = 6'h2f;
+    if(when_OpenLa500Predictor_l61_64) begin
+      invalidBranchIndex = 5'h0f;
     end
-    if(when_OpenLa500Predictor_l58_97) begin
-      branchUpdateIndex = 6'h2e;
+    if(when_OpenLa500Predictor_l61_65) begin
+      invalidBranchIndex = 5'h0e;
     end
-    if(when_OpenLa500Predictor_l58_98) begin
-      branchUpdateIndex = 6'h2d;
+    if(when_OpenLa500Predictor_l61_66) begin
+      invalidBranchIndex = 5'h0d;
     end
-    if(when_OpenLa500Predictor_l58_99) begin
-      branchUpdateIndex = 6'h2c;
+    if(when_OpenLa500Predictor_l61_67) begin
+      invalidBranchIndex = 5'h0c;
     end
-    if(when_OpenLa500Predictor_l58_100) begin
-      branchUpdateIndex = 6'h2b;
+    if(when_OpenLa500Predictor_l61_68) begin
+      invalidBranchIndex = 5'h0b;
     end
-    if(when_OpenLa500Predictor_l58_101) begin
-      branchUpdateIndex = 6'h2a;
+    if(when_OpenLa500Predictor_l61_69) begin
+      invalidBranchIndex = 5'h0a;
     end
-    if(when_OpenLa500Predictor_l58_102) begin
-      branchUpdateIndex = 6'h29;
+    if(when_OpenLa500Predictor_l61_70) begin
+      invalidBranchIndex = 5'h09;
     end
-    if(when_OpenLa500Predictor_l58_103) begin
-      branchUpdateIndex = 6'h28;
+    if(when_OpenLa500Predictor_l61_71) begin
+      invalidBranchIndex = 5'h08;
     end
-    if(when_OpenLa500Predictor_l58_104) begin
-      branchUpdateIndex = 6'h27;
+    if(when_OpenLa500Predictor_l61_72) begin
+      invalidBranchIndex = 5'h07;
     end
-    if(when_OpenLa500Predictor_l58_105) begin
-      branchUpdateIndex = 6'h26;
+    if(when_OpenLa500Predictor_l61_73) begin
+      invalidBranchIndex = 5'h06;
     end
-    if(when_OpenLa500Predictor_l58_106) begin
-      branchUpdateIndex = 6'h25;
+    if(when_OpenLa500Predictor_l61_74) begin
+      invalidBranchIndex = 5'h05;
     end
-    if(when_OpenLa500Predictor_l58_107) begin
-      branchUpdateIndex = 6'h24;
+    if(when_OpenLa500Predictor_l61_75) begin
+      invalidBranchIndex = 5'h04;
     end
-    if(when_OpenLa500Predictor_l58_108) begin
-      branchUpdateIndex = 6'h23;
+    if(when_OpenLa500Predictor_l61_76) begin
+      invalidBranchIndex = 5'h03;
     end
-    if(when_OpenLa500Predictor_l58_109) begin
-      branchUpdateIndex = 6'h22;
+    if(when_OpenLa500Predictor_l61_77) begin
+      invalidBranchIndex = 5'h02;
     end
-    if(when_OpenLa500Predictor_l58_110) begin
-      branchUpdateIndex = 6'h21;
+    if(when_OpenLa500Predictor_l61_78) begin
+      invalidBranchIndex = 5'h01;
     end
-    if(when_OpenLa500Predictor_l58_111) begin
-      branchUpdateIndex = 6'h20;
-    end
-    if(when_OpenLa500Predictor_l58_112) begin
-      branchUpdateIndex = 6'h1f;
-    end
-    if(when_OpenLa500Predictor_l58_113) begin
-      branchUpdateIndex = 6'h1e;
-    end
-    if(when_OpenLa500Predictor_l58_114) begin
-      branchUpdateIndex = 6'h1d;
-    end
-    if(when_OpenLa500Predictor_l58_115) begin
-      branchUpdateIndex = 6'h1c;
-    end
-    if(when_OpenLa500Predictor_l58_116) begin
-      branchUpdateIndex = 6'h1b;
-    end
-    if(when_OpenLa500Predictor_l58_117) begin
-      branchUpdateIndex = 6'h1a;
-    end
-    if(when_OpenLa500Predictor_l58_118) begin
-      branchUpdateIndex = 6'h19;
-    end
-    if(when_OpenLa500Predictor_l58_119) begin
-      branchUpdateIndex = 6'h18;
-    end
-    if(when_OpenLa500Predictor_l58_120) begin
-      branchUpdateIndex = 6'h17;
-    end
-    if(when_OpenLa500Predictor_l58_121) begin
-      branchUpdateIndex = 6'h16;
-    end
-    if(when_OpenLa500Predictor_l58_122) begin
-      branchUpdateIndex = 6'h15;
-    end
-    if(when_OpenLa500Predictor_l58_123) begin
-      branchUpdateIndex = 6'h14;
-    end
-    if(when_OpenLa500Predictor_l58_124) begin
-      branchUpdateIndex = 6'h13;
-    end
-    if(when_OpenLa500Predictor_l58_125) begin
-      branchUpdateIndex = 6'h12;
-    end
-    if(when_OpenLa500Predictor_l58_126) begin
-      branchUpdateIndex = 6'h11;
-    end
-    if(when_OpenLa500Predictor_l58_127) begin
-      branchUpdateIndex = 6'h10;
-    end
-    if(when_OpenLa500Predictor_l58_128) begin
-      branchUpdateIndex = 6'h0f;
-    end
-    if(when_OpenLa500Predictor_l58_129) begin
-      branchUpdateIndex = 6'h0e;
-    end
-    if(when_OpenLa500Predictor_l58_130) begin
-      branchUpdateIndex = 6'h0d;
-    end
-    if(when_OpenLa500Predictor_l58_131) begin
-      branchUpdateIndex = 6'h0c;
-    end
-    if(when_OpenLa500Predictor_l58_132) begin
-      branchUpdateIndex = 6'h0b;
-    end
-    if(when_OpenLa500Predictor_l58_133) begin
-      branchUpdateIndex = 6'h0a;
-    end
-    if(when_OpenLa500Predictor_l58_134) begin
-      branchUpdateIndex = 6'h09;
-    end
-    if(when_OpenLa500Predictor_l58_135) begin
-      branchUpdateIndex = 6'h08;
-    end
-    if(when_OpenLa500Predictor_l58_136) begin
-      branchUpdateIndex = 6'h07;
-    end
-    if(when_OpenLa500Predictor_l58_137) begin
-      branchUpdateIndex = 6'h06;
-    end
-    if(when_OpenLa500Predictor_l58_138) begin
-      branchUpdateIndex = 6'h05;
-    end
-    if(when_OpenLa500Predictor_l58_139) begin
-      branchUpdateIndex = 6'h04;
-    end
-    if(when_OpenLa500Predictor_l58_140) begin
-      branchUpdateIndex = 6'h03;
-    end
-    if(when_OpenLa500Predictor_l58_141) begin
-      branchUpdateIndex = 6'h02;
-    end
-    if(when_OpenLa500Predictor_l58_142) begin
-      branchUpdateIndex = 6'h01;
-    end
-    if(when_OpenLa500Predictor_l58_143) begin
-      branchUpdateIndex = 6'h0;
+    if(when_OpenLa500Predictor_l61_79) begin
+      invalidBranchIndex = 5'h0;
     end
   end
 
-  assign when_OpenLa500Predictor_l58_80 = branchUpdateMatches[63];
-  assign when_OpenLa500Predictor_l58_81 = branchUpdateMatches[62];
-  assign when_OpenLa500Predictor_l58_82 = branchUpdateMatches[61];
-  assign when_OpenLa500Predictor_l58_83 = branchUpdateMatches[60];
-  assign when_OpenLa500Predictor_l58_84 = branchUpdateMatches[59];
-  assign when_OpenLa500Predictor_l58_85 = branchUpdateMatches[58];
-  assign when_OpenLa500Predictor_l58_86 = branchUpdateMatches[57];
-  assign when_OpenLa500Predictor_l58_87 = branchUpdateMatches[56];
-  assign when_OpenLa500Predictor_l58_88 = branchUpdateMatches[55];
-  assign when_OpenLa500Predictor_l58_89 = branchUpdateMatches[54];
-  assign when_OpenLa500Predictor_l58_90 = branchUpdateMatches[53];
-  assign when_OpenLa500Predictor_l58_91 = branchUpdateMatches[52];
-  assign when_OpenLa500Predictor_l58_92 = branchUpdateMatches[51];
-  assign when_OpenLa500Predictor_l58_93 = branchUpdateMatches[50];
-  assign when_OpenLa500Predictor_l58_94 = branchUpdateMatches[49];
-  assign when_OpenLa500Predictor_l58_95 = branchUpdateMatches[48];
-  assign when_OpenLa500Predictor_l58_96 = branchUpdateMatches[47];
-  assign when_OpenLa500Predictor_l58_97 = branchUpdateMatches[46];
-  assign when_OpenLa500Predictor_l58_98 = branchUpdateMatches[45];
-  assign when_OpenLa500Predictor_l58_99 = branchUpdateMatches[44];
-  assign when_OpenLa500Predictor_l58_100 = branchUpdateMatches[43];
-  assign when_OpenLa500Predictor_l58_101 = branchUpdateMatches[42];
-  assign when_OpenLa500Predictor_l58_102 = branchUpdateMatches[41];
-  assign when_OpenLa500Predictor_l58_103 = branchUpdateMatches[40];
-  assign when_OpenLa500Predictor_l58_104 = branchUpdateMatches[39];
-  assign when_OpenLa500Predictor_l58_105 = branchUpdateMatches[38];
-  assign when_OpenLa500Predictor_l58_106 = branchUpdateMatches[37];
-  assign when_OpenLa500Predictor_l58_107 = branchUpdateMatches[36];
-  assign when_OpenLa500Predictor_l58_108 = branchUpdateMatches[35];
-  assign when_OpenLa500Predictor_l58_109 = branchUpdateMatches[34];
-  assign when_OpenLa500Predictor_l58_110 = branchUpdateMatches[33];
-  assign when_OpenLa500Predictor_l58_111 = branchUpdateMatches[32];
-  assign when_OpenLa500Predictor_l58_112 = branchUpdateMatches[31];
-  assign when_OpenLa500Predictor_l58_113 = branchUpdateMatches[30];
-  assign when_OpenLa500Predictor_l58_114 = branchUpdateMatches[29];
-  assign when_OpenLa500Predictor_l58_115 = branchUpdateMatches[28];
-  assign when_OpenLa500Predictor_l58_116 = branchUpdateMatches[27];
-  assign when_OpenLa500Predictor_l58_117 = branchUpdateMatches[26];
-  assign when_OpenLa500Predictor_l58_118 = branchUpdateMatches[25];
-  assign when_OpenLa500Predictor_l58_119 = branchUpdateMatches[24];
-  assign when_OpenLa500Predictor_l58_120 = branchUpdateMatches[23];
-  assign when_OpenLa500Predictor_l58_121 = branchUpdateMatches[22];
-  assign when_OpenLa500Predictor_l58_122 = branchUpdateMatches[21];
-  assign when_OpenLa500Predictor_l58_123 = branchUpdateMatches[20];
-  assign when_OpenLa500Predictor_l58_124 = branchUpdateMatches[19];
-  assign when_OpenLa500Predictor_l58_125 = branchUpdateMatches[18];
-  assign when_OpenLa500Predictor_l58_126 = branchUpdateMatches[17];
-  assign when_OpenLa500Predictor_l58_127 = branchUpdateMatches[16];
-  assign when_OpenLa500Predictor_l58_128 = branchUpdateMatches[15];
-  assign when_OpenLa500Predictor_l58_129 = branchUpdateMatches[14];
-  assign when_OpenLa500Predictor_l58_130 = branchUpdateMatches[13];
-  assign when_OpenLa500Predictor_l58_131 = branchUpdateMatches[12];
-  assign when_OpenLa500Predictor_l58_132 = branchUpdateMatches[11];
-  assign when_OpenLa500Predictor_l58_133 = branchUpdateMatches[10];
-  assign when_OpenLa500Predictor_l58_134 = branchUpdateMatches[9];
-  assign when_OpenLa500Predictor_l58_135 = branchUpdateMatches[8];
-  assign when_OpenLa500Predictor_l58_136 = branchUpdateMatches[7];
-  assign when_OpenLa500Predictor_l58_137 = branchUpdateMatches[6];
-  assign when_OpenLa500Predictor_l58_138 = branchUpdateMatches[5];
-  assign when_OpenLa500Predictor_l58_139 = branchUpdateMatches[4];
-  assign when_OpenLa500Predictor_l58_140 = branchUpdateMatches[3];
-  assign when_OpenLa500Predictor_l58_141 = branchUpdateMatches[2];
-  assign when_OpenLa500Predictor_l58_142 = branchUpdateMatches[1];
-  assign when_OpenLa500Predictor_l58_143 = branchUpdateMatches[0];
+  assign when_OpenLa500Predictor_l61_48 = invalidBranchEntries[31];
+  assign when_OpenLa500Predictor_l61_49 = invalidBranchEntries[30];
+  assign when_OpenLa500Predictor_l61_50 = invalidBranchEntries[29];
+  assign when_OpenLa500Predictor_l61_51 = invalidBranchEntries[28];
+  assign when_OpenLa500Predictor_l61_52 = invalidBranchEntries[27];
+  assign when_OpenLa500Predictor_l61_53 = invalidBranchEntries[26];
+  assign when_OpenLa500Predictor_l61_54 = invalidBranchEntries[25];
+  assign when_OpenLa500Predictor_l61_55 = invalidBranchEntries[24];
+  assign when_OpenLa500Predictor_l61_56 = invalidBranchEntries[23];
+  assign when_OpenLa500Predictor_l61_57 = invalidBranchEntries[22];
+  assign when_OpenLa500Predictor_l61_58 = invalidBranchEntries[21];
+  assign when_OpenLa500Predictor_l61_59 = invalidBranchEntries[20];
+  assign when_OpenLa500Predictor_l61_60 = invalidBranchEntries[19];
+  assign when_OpenLa500Predictor_l61_61 = invalidBranchEntries[18];
+  assign when_OpenLa500Predictor_l61_62 = invalidBranchEntries[17];
+  assign when_OpenLa500Predictor_l61_63 = invalidBranchEntries[16];
+  assign when_OpenLa500Predictor_l61_64 = invalidBranchEntries[15];
+  assign when_OpenLa500Predictor_l61_65 = invalidBranchEntries[14];
+  assign when_OpenLa500Predictor_l61_66 = invalidBranchEntries[13];
+  assign when_OpenLa500Predictor_l61_67 = invalidBranchEntries[12];
+  assign when_OpenLa500Predictor_l61_68 = invalidBranchEntries[11];
+  assign when_OpenLa500Predictor_l61_69 = invalidBranchEntries[10];
+  assign when_OpenLa500Predictor_l61_70 = invalidBranchEntries[9];
+  assign when_OpenLa500Predictor_l61_71 = invalidBranchEntries[8];
+  assign when_OpenLa500Predictor_l61_72 = invalidBranchEntries[7];
+  assign when_OpenLa500Predictor_l61_73 = invalidBranchEntries[6];
+  assign when_OpenLa500Predictor_l61_74 = invalidBranchEntries[5];
+  assign when_OpenLa500Predictor_l61_75 = invalidBranchEntries[4];
+  assign when_OpenLa500Predictor_l61_76 = invalidBranchEntries[3];
+  assign when_OpenLa500Predictor_l61_77 = invalidBranchEntries[2];
+  assign when_OpenLa500Predictor_l61_78 = invalidBranchEntries[1];
+  assign when_OpenLa500Predictor_l61_79 = invalidBranchEntries[0];
   always @(*) begin
-    invalidBranchIndex = 6'h0;
-    if(when_OpenLa500Predictor_l58_144) begin
-      invalidBranchIndex = 6'h3f;
+    stronglyUntakenIndex = 5'h0;
+    if(when_OpenLa500Predictor_l61_80) begin
+      stronglyUntakenIndex = 5'h1f;
     end
-    if(when_OpenLa500Predictor_l58_145) begin
-      invalidBranchIndex = 6'h3e;
+    if(when_OpenLa500Predictor_l61_81) begin
+      stronglyUntakenIndex = 5'h1e;
     end
-    if(when_OpenLa500Predictor_l58_146) begin
-      invalidBranchIndex = 6'h3d;
+    if(when_OpenLa500Predictor_l61_82) begin
+      stronglyUntakenIndex = 5'h1d;
     end
-    if(when_OpenLa500Predictor_l58_147) begin
-      invalidBranchIndex = 6'h3c;
+    if(when_OpenLa500Predictor_l61_83) begin
+      stronglyUntakenIndex = 5'h1c;
     end
-    if(when_OpenLa500Predictor_l58_148) begin
-      invalidBranchIndex = 6'h3b;
+    if(when_OpenLa500Predictor_l61_84) begin
+      stronglyUntakenIndex = 5'h1b;
     end
-    if(when_OpenLa500Predictor_l58_149) begin
-      invalidBranchIndex = 6'h3a;
+    if(when_OpenLa500Predictor_l61_85) begin
+      stronglyUntakenIndex = 5'h1a;
     end
-    if(when_OpenLa500Predictor_l58_150) begin
-      invalidBranchIndex = 6'h39;
+    if(when_OpenLa500Predictor_l61_86) begin
+      stronglyUntakenIndex = 5'h19;
     end
-    if(when_OpenLa500Predictor_l58_151) begin
-      invalidBranchIndex = 6'h38;
+    if(when_OpenLa500Predictor_l61_87) begin
+      stronglyUntakenIndex = 5'h18;
     end
-    if(when_OpenLa500Predictor_l58_152) begin
-      invalidBranchIndex = 6'h37;
+    if(when_OpenLa500Predictor_l61_88) begin
+      stronglyUntakenIndex = 5'h17;
     end
-    if(when_OpenLa500Predictor_l58_153) begin
-      invalidBranchIndex = 6'h36;
+    if(when_OpenLa500Predictor_l61_89) begin
+      stronglyUntakenIndex = 5'h16;
     end
-    if(when_OpenLa500Predictor_l58_154) begin
-      invalidBranchIndex = 6'h35;
+    if(when_OpenLa500Predictor_l61_90) begin
+      stronglyUntakenIndex = 5'h15;
     end
-    if(when_OpenLa500Predictor_l58_155) begin
-      invalidBranchIndex = 6'h34;
+    if(when_OpenLa500Predictor_l61_91) begin
+      stronglyUntakenIndex = 5'h14;
     end
-    if(when_OpenLa500Predictor_l58_156) begin
-      invalidBranchIndex = 6'h33;
+    if(when_OpenLa500Predictor_l61_92) begin
+      stronglyUntakenIndex = 5'h13;
     end
-    if(when_OpenLa500Predictor_l58_157) begin
-      invalidBranchIndex = 6'h32;
+    if(when_OpenLa500Predictor_l61_93) begin
+      stronglyUntakenIndex = 5'h12;
     end
-    if(when_OpenLa500Predictor_l58_158) begin
-      invalidBranchIndex = 6'h31;
+    if(when_OpenLa500Predictor_l61_94) begin
+      stronglyUntakenIndex = 5'h11;
     end
-    if(when_OpenLa500Predictor_l58_159) begin
-      invalidBranchIndex = 6'h30;
+    if(when_OpenLa500Predictor_l61_95) begin
+      stronglyUntakenIndex = 5'h10;
     end
-    if(when_OpenLa500Predictor_l58_160) begin
-      invalidBranchIndex = 6'h2f;
+    if(when_OpenLa500Predictor_l61_96) begin
+      stronglyUntakenIndex = 5'h0f;
     end
-    if(when_OpenLa500Predictor_l58_161) begin
-      invalidBranchIndex = 6'h2e;
+    if(when_OpenLa500Predictor_l61_97) begin
+      stronglyUntakenIndex = 5'h0e;
     end
-    if(when_OpenLa500Predictor_l58_162) begin
-      invalidBranchIndex = 6'h2d;
+    if(when_OpenLa500Predictor_l61_98) begin
+      stronglyUntakenIndex = 5'h0d;
     end
-    if(when_OpenLa500Predictor_l58_163) begin
-      invalidBranchIndex = 6'h2c;
+    if(when_OpenLa500Predictor_l61_99) begin
+      stronglyUntakenIndex = 5'h0c;
     end
-    if(when_OpenLa500Predictor_l58_164) begin
-      invalidBranchIndex = 6'h2b;
+    if(when_OpenLa500Predictor_l61_100) begin
+      stronglyUntakenIndex = 5'h0b;
     end
-    if(when_OpenLa500Predictor_l58_165) begin
-      invalidBranchIndex = 6'h2a;
+    if(when_OpenLa500Predictor_l61_101) begin
+      stronglyUntakenIndex = 5'h0a;
     end
-    if(when_OpenLa500Predictor_l58_166) begin
-      invalidBranchIndex = 6'h29;
+    if(when_OpenLa500Predictor_l61_102) begin
+      stronglyUntakenIndex = 5'h09;
     end
-    if(when_OpenLa500Predictor_l58_167) begin
-      invalidBranchIndex = 6'h28;
+    if(when_OpenLa500Predictor_l61_103) begin
+      stronglyUntakenIndex = 5'h08;
     end
-    if(when_OpenLa500Predictor_l58_168) begin
-      invalidBranchIndex = 6'h27;
+    if(when_OpenLa500Predictor_l61_104) begin
+      stronglyUntakenIndex = 5'h07;
     end
-    if(when_OpenLa500Predictor_l58_169) begin
-      invalidBranchIndex = 6'h26;
+    if(when_OpenLa500Predictor_l61_105) begin
+      stronglyUntakenIndex = 5'h06;
     end
-    if(when_OpenLa500Predictor_l58_170) begin
-      invalidBranchIndex = 6'h25;
+    if(when_OpenLa500Predictor_l61_106) begin
+      stronglyUntakenIndex = 5'h05;
     end
-    if(when_OpenLa500Predictor_l58_171) begin
-      invalidBranchIndex = 6'h24;
+    if(when_OpenLa500Predictor_l61_107) begin
+      stronglyUntakenIndex = 5'h04;
     end
-    if(when_OpenLa500Predictor_l58_172) begin
-      invalidBranchIndex = 6'h23;
+    if(when_OpenLa500Predictor_l61_108) begin
+      stronglyUntakenIndex = 5'h03;
     end
-    if(when_OpenLa500Predictor_l58_173) begin
-      invalidBranchIndex = 6'h22;
+    if(when_OpenLa500Predictor_l61_109) begin
+      stronglyUntakenIndex = 5'h02;
     end
-    if(when_OpenLa500Predictor_l58_174) begin
-      invalidBranchIndex = 6'h21;
+    if(when_OpenLa500Predictor_l61_110) begin
+      stronglyUntakenIndex = 5'h01;
     end
-    if(when_OpenLa500Predictor_l58_175) begin
-      invalidBranchIndex = 6'h20;
-    end
-    if(when_OpenLa500Predictor_l58_176) begin
-      invalidBranchIndex = 6'h1f;
-    end
-    if(when_OpenLa500Predictor_l58_177) begin
-      invalidBranchIndex = 6'h1e;
-    end
-    if(when_OpenLa500Predictor_l58_178) begin
-      invalidBranchIndex = 6'h1d;
-    end
-    if(when_OpenLa500Predictor_l58_179) begin
-      invalidBranchIndex = 6'h1c;
-    end
-    if(when_OpenLa500Predictor_l58_180) begin
-      invalidBranchIndex = 6'h1b;
-    end
-    if(when_OpenLa500Predictor_l58_181) begin
-      invalidBranchIndex = 6'h1a;
-    end
-    if(when_OpenLa500Predictor_l58_182) begin
-      invalidBranchIndex = 6'h19;
-    end
-    if(when_OpenLa500Predictor_l58_183) begin
-      invalidBranchIndex = 6'h18;
-    end
-    if(when_OpenLa500Predictor_l58_184) begin
-      invalidBranchIndex = 6'h17;
-    end
-    if(when_OpenLa500Predictor_l58_185) begin
-      invalidBranchIndex = 6'h16;
-    end
-    if(when_OpenLa500Predictor_l58_186) begin
-      invalidBranchIndex = 6'h15;
-    end
-    if(when_OpenLa500Predictor_l58_187) begin
-      invalidBranchIndex = 6'h14;
-    end
-    if(when_OpenLa500Predictor_l58_188) begin
-      invalidBranchIndex = 6'h13;
-    end
-    if(when_OpenLa500Predictor_l58_189) begin
-      invalidBranchIndex = 6'h12;
-    end
-    if(when_OpenLa500Predictor_l58_190) begin
-      invalidBranchIndex = 6'h11;
-    end
-    if(when_OpenLa500Predictor_l58_191) begin
-      invalidBranchIndex = 6'h10;
-    end
-    if(when_OpenLa500Predictor_l58_192) begin
-      invalidBranchIndex = 6'h0f;
-    end
-    if(when_OpenLa500Predictor_l58_193) begin
-      invalidBranchIndex = 6'h0e;
-    end
-    if(when_OpenLa500Predictor_l58_194) begin
-      invalidBranchIndex = 6'h0d;
-    end
-    if(when_OpenLa500Predictor_l58_195) begin
-      invalidBranchIndex = 6'h0c;
-    end
-    if(when_OpenLa500Predictor_l58_196) begin
-      invalidBranchIndex = 6'h0b;
-    end
-    if(when_OpenLa500Predictor_l58_197) begin
-      invalidBranchIndex = 6'h0a;
-    end
-    if(when_OpenLa500Predictor_l58_198) begin
-      invalidBranchIndex = 6'h09;
-    end
-    if(when_OpenLa500Predictor_l58_199) begin
-      invalidBranchIndex = 6'h08;
-    end
-    if(when_OpenLa500Predictor_l58_200) begin
-      invalidBranchIndex = 6'h07;
-    end
-    if(when_OpenLa500Predictor_l58_201) begin
-      invalidBranchIndex = 6'h06;
-    end
-    if(when_OpenLa500Predictor_l58_202) begin
-      invalidBranchIndex = 6'h05;
-    end
-    if(when_OpenLa500Predictor_l58_203) begin
-      invalidBranchIndex = 6'h04;
-    end
-    if(when_OpenLa500Predictor_l58_204) begin
-      invalidBranchIndex = 6'h03;
-    end
-    if(when_OpenLa500Predictor_l58_205) begin
-      invalidBranchIndex = 6'h02;
-    end
-    if(when_OpenLa500Predictor_l58_206) begin
-      invalidBranchIndex = 6'h01;
-    end
-    if(when_OpenLa500Predictor_l58_207) begin
-      invalidBranchIndex = 6'h0;
+    if(when_OpenLa500Predictor_l61_111) begin
+      stronglyUntakenIndex = 5'h0;
     end
   end
 
-  assign when_OpenLa500Predictor_l58_144 = invalidBranchEntries[63];
-  assign when_OpenLa500Predictor_l58_145 = invalidBranchEntries[62];
-  assign when_OpenLa500Predictor_l58_146 = invalidBranchEntries[61];
-  assign when_OpenLa500Predictor_l58_147 = invalidBranchEntries[60];
-  assign when_OpenLa500Predictor_l58_148 = invalidBranchEntries[59];
-  assign when_OpenLa500Predictor_l58_149 = invalidBranchEntries[58];
-  assign when_OpenLa500Predictor_l58_150 = invalidBranchEntries[57];
-  assign when_OpenLa500Predictor_l58_151 = invalidBranchEntries[56];
-  assign when_OpenLa500Predictor_l58_152 = invalidBranchEntries[55];
-  assign when_OpenLa500Predictor_l58_153 = invalidBranchEntries[54];
-  assign when_OpenLa500Predictor_l58_154 = invalidBranchEntries[53];
-  assign when_OpenLa500Predictor_l58_155 = invalidBranchEntries[52];
-  assign when_OpenLa500Predictor_l58_156 = invalidBranchEntries[51];
-  assign when_OpenLa500Predictor_l58_157 = invalidBranchEntries[50];
-  assign when_OpenLa500Predictor_l58_158 = invalidBranchEntries[49];
-  assign when_OpenLa500Predictor_l58_159 = invalidBranchEntries[48];
-  assign when_OpenLa500Predictor_l58_160 = invalidBranchEntries[47];
-  assign when_OpenLa500Predictor_l58_161 = invalidBranchEntries[46];
-  assign when_OpenLa500Predictor_l58_162 = invalidBranchEntries[45];
-  assign when_OpenLa500Predictor_l58_163 = invalidBranchEntries[44];
-  assign when_OpenLa500Predictor_l58_164 = invalidBranchEntries[43];
-  assign when_OpenLa500Predictor_l58_165 = invalidBranchEntries[42];
-  assign when_OpenLa500Predictor_l58_166 = invalidBranchEntries[41];
-  assign when_OpenLa500Predictor_l58_167 = invalidBranchEntries[40];
-  assign when_OpenLa500Predictor_l58_168 = invalidBranchEntries[39];
-  assign when_OpenLa500Predictor_l58_169 = invalidBranchEntries[38];
-  assign when_OpenLa500Predictor_l58_170 = invalidBranchEntries[37];
-  assign when_OpenLa500Predictor_l58_171 = invalidBranchEntries[36];
-  assign when_OpenLa500Predictor_l58_172 = invalidBranchEntries[35];
-  assign when_OpenLa500Predictor_l58_173 = invalidBranchEntries[34];
-  assign when_OpenLa500Predictor_l58_174 = invalidBranchEntries[33];
-  assign when_OpenLa500Predictor_l58_175 = invalidBranchEntries[32];
-  assign when_OpenLa500Predictor_l58_176 = invalidBranchEntries[31];
-  assign when_OpenLa500Predictor_l58_177 = invalidBranchEntries[30];
-  assign when_OpenLa500Predictor_l58_178 = invalidBranchEntries[29];
-  assign when_OpenLa500Predictor_l58_179 = invalidBranchEntries[28];
-  assign when_OpenLa500Predictor_l58_180 = invalidBranchEntries[27];
-  assign when_OpenLa500Predictor_l58_181 = invalidBranchEntries[26];
-  assign when_OpenLa500Predictor_l58_182 = invalidBranchEntries[25];
-  assign when_OpenLa500Predictor_l58_183 = invalidBranchEntries[24];
-  assign when_OpenLa500Predictor_l58_184 = invalidBranchEntries[23];
-  assign when_OpenLa500Predictor_l58_185 = invalidBranchEntries[22];
-  assign when_OpenLa500Predictor_l58_186 = invalidBranchEntries[21];
-  assign when_OpenLa500Predictor_l58_187 = invalidBranchEntries[20];
-  assign when_OpenLa500Predictor_l58_188 = invalidBranchEntries[19];
-  assign when_OpenLa500Predictor_l58_189 = invalidBranchEntries[18];
-  assign when_OpenLa500Predictor_l58_190 = invalidBranchEntries[17];
-  assign when_OpenLa500Predictor_l58_191 = invalidBranchEntries[16];
-  assign when_OpenLa500Predictor_l58_192 = invalidBranchEntries[15];
-  assign when_OpenLa500Predictor_l58_193 = invalidBranchEntries[14];
-  assign when_OpenLa500Predictor_l58_194 = invalidBranchEntries[13];
-  assign when_OpenLa500Predictor_l58_195 = invalidBranchEntries[12];
-  assign when_OpenLa500Predictor_l58_196 = invalidBranchEntries[11];
-  assign when_OpenLa500Predictor_l58_197 = invalidBranchEntries[10];
-  assign when_OpenLa500Predictor_l58_198 = invalidBranchEntries[9];
-  assign when_OpenLa500Predictor_l58_199 = invalidBranchEntries[8];
-  assign when_OpenLa500Predictor_l58_200 = invalidBranchEntries[7];
-  assign when_OpenLa500Predictor_l58_201 = invalidBranchEntries[6];
-  assign when_OpenLa500Predictor_l58_202 = invalidBranchEntries[5];
-  assign when_OpenLa500Predictor_l58_203 = invalidBranchEntries[4];
-  assign when_OpenLa500Predictor_l58_204 = invalidBranchEntries[3];
-  assign when_OpenLa500Predictor_l58_205 = invalidBranchEntries[2];
-  assign when_OpenLa500Predictor_l58_206 = invalidBranchEntries[1];
-  assign when_OpenLa500Predictor_l58_207 = invalidBranchEntries[0];
+  assign when_OpenLa500Predictor_l61_80 = stronglyUntakenEntries[31];
+  assign when_OpenLa500Predictor_l61_81 = stronglyUntakenEntries[30];
+  assign when_OpenLa500Predictor_l61_82 = stronglyUntakenEntries[29];
+  assign when_OpenLa500Predictor_l61_83 = stronglyUntakenEntries[28];
+  assign when_OpenLa500Predictor_l61_84 = stronglyUntakenEntries[27];
+  assign when_OpenLa500Predictor_l61_85 = stronglyUntakenEntries[26];
+  assign when_OpenLa500Predictor_l61_86 = stronglyUntakenEntries[25];
+  assign when_OpenLa500Predictor_l61_87 = stronglyUntakenEntries[24];
+  assign when_OpenLa500Predictor_l61_88 = stronglyUntakenEntries[23];
+  assign when_OpenLa500Predictor_l61_89 = stronglyUntakenEntries[22];
+  assign when_OpenLa500Predictor_l61_90 = stronglyUntakenEntries[21];
+  assign when_OpenLa500Predictor_l61_91 = stronglyUntakenEntries[20];
+  assign when_OpenLa500Predictor_l61_92 = stronglyUntakenEntries[19];
+  assign when_OpenLa500Predictor_l61_93 = stronglyUntakenEntries[18];
+  assign when_OpenLa500Predictor_l61_94 = stronglyUntakenEntries[17];
+  assign when_OpenLa500Predictor_l61_95 = stronglyUntakenEntries[16];
+  assign when_OpenLa500Predictor_l61_96 = stronglyUntakenEntries[15];
+  assign when_OpenLa500Predictor_l61_97 = stronglyUntakenEntries[14];
+  assign when_OpenLa500Predictor_l61_98 = stronglyUntakenEntries[13];
+  assign when_OpenLa500Predictor_l61_99 = stronglyUntakenEntries[12];
+  assign when_OpenLa500Predictor_l61_100 = stronglyUntakenEntries[11];
+  assign when_OpenLa500Predictor_l61_101 = stronglyUntakenEntries[10];
+  assign when_OpenLa500Predictor_l61_102 = stronglyUntakenEntries[9];
+  assign when_OpenLa500Predictor_l61_103 = stronglyUntakenEntries[8];
+  assign when_OpenLa500Predictor_l61_104 = stronglyUntakenEntries[7];
+  assign when_OpenLa500Predictor_l61_105 = stronglyUntakenEntries[6];
+  assign when_OpenLa500Predictor_l61_106 = stronglyUntakenEntries[5];
+  assign when_OpenLa500Predictor_l61_107 = stronglyUntakenEntries[4];
+  assign when_OpenLa500Predictor_l61_108 = stronglyUntakenEntries[3];
+  assign when_OpenLa500Predictor_l61_109 = stronglyUntakenEntries[2];
+  assign when_OpenLa500Predictor_l61_110 = stronglyUntakenEntries[1];
+  assign when_OpenLa500Predictor_l61_111 = stronglyUntakenEntries[0];
   always @(*) begin
-    stronglyUntakenIndex = 6'h0;
-    if(when_OpenLa500Predictor_l58_208) begin
-      stronglyUntakenIndex = 6'h3f;
-    end
-    if(when_OpenLa500Predictor_l58_209) begin
-      stronglyUntakenIndex = 6'h3e;
-    end
-    if(when_OpenLa500Predictor_l58_210) begin
-      stronglyUntakenIndex = 6'h3d;
-    end
-    if(when_OpenLa500Predictor_l58_211) begin
-      stronglyUntakenIndex = 6'h3c;
-    end
-    if(when_OpenLa500Predictor_l58_212) begin
-      stronglyUntakenIndex = 6'h3b;
-    end
-    if(when_OpenLa500Predictor_l58_213) begin
-      stronglyUntakenIndex = 6'h3a;
-    end
-    if(when_OpenLa500Predictor_l58_214) begin
-      stronglyUntakenIndex = 6'h39;
-    end
-    if(when_OpenLa500Predictor_l58_215) begin
-      stronglyUntakenIndex = 6'h38;
-    end
-    if(when_OpenLa500Predictor_l58_216) begin
-      stronglyUntakenIndex = 6'h37;
-    end
-    if(when_OpenLa500Predictor_l58_217) begin
-      stronglyUntakenIndex = 6'h36;
-    end
-    if(when_OpenLa500Predictor_l58_218) begin
-      stronglyUntakenIndex = 6'h35;
-    end
-    if(when_OpenLa500Predictor_l58_219) begin
-      stronglyUntakenIndex = 6'h34;
-    end
-    if(when_OpenLa500Predictor_l58_220) begin
-      stronglyUntakenIndex = 6'h33;
-    end
-    if(when_OpenLa500Predictor_l58_221) begin
-      stronglyUntakenIndex = 6'h32;
-    end
-    if(when_OpenLa500Predictor_l58_222) begin
-      stronglyUntakenIndex = 6'h31;
-    end
-    if(when_OpenLa500Predictor_l58_223) begin
-      stronglyUntakenIndex = 6'h30;
-    end
-    if(when_OpenLa500Predictor_l58_224) begin
-      stronglyUntakenIndex = 6'h2f;
-    end
-    if(when_OpenLa500Predictor_l58_225) begin
-      stronglyUntakenIndex = 6'h2e;
-    end
-    if(when_OpenLa500Predictor_l58_226) begin
-      stronglyUntakenIndex = 6'h2d;
-    end
-    if(when_OpenLa500Predictor_l58_227) begin
-      stronglyUntakenIndex = 6'h2c;
-    end
-    if(when_OpenLa500Predictor_l58_228) begin
-      stronglyUntakenIndex = 6'h2b;
-    end
-    if(when_OpenLa500Predictor_l58_229) begin
-      stronglyUntakenIndex = 6'h2a;
-    end
-    if(when_OpenLa500Predictor_l58_230) begin
-      stronglyUntakenIndex = 6'h29;
-    end
-    if(when_OpenLa500Predictor_l58_231) begin
-      stronglyUntakenIndex = 6'h28;
-    end
-    if(when_OpenLa500Predictor_l58_232) begin
-      stronglyUntakenIndex = 6'h27;
-    end
-    if(when_OpenLa500Predictor_l58_233) begin
-      stronglyUntakenIndex = 6'h26;
-    end
-    if(when_OpenLa500Predictor_l58_234) begin
-      stronglyUntakenIndex = 6'h25;
-    end
-    if(when_OpenLa500Predictor_l58_235) begin
-      stronglyUntakenIndex = 6'h24;
-    end
-    if(when_OpenLa500Predictor_l58_236) begin
-      stronglyUntakenIndex = 6'h23;
-    end
-    if(when_OpenLa500Predictor_l58_237) begin
-      stronglyUntakenIndex = 6'h22;
-    end
-    if(when_OpenLa500Predictor_l58_238) begin
-      stronglyUntakenIndex = 6'h21;
-    end
-    if(when_OpenLa500Predictor_l58_239) begin
-      stronglyUntakenIndex = 6'h20;
-    end
-    if(when_OpenLa500Predictor_l58_240) begin
-      stronglyUntakenIndex = 6'h1f;
-    end
-    if(when_OpenLa500Predictor_l58_241) begin
-      stronglyUntakenIndex = 6'h1e;
-    end
-    if(when_OpenLa500Predictor_l58_242) begin
-      stronglyUntakenIndex = 6'h1d;
-    end
-    if(when_OpenLa500Predictor_l58_243) begin
-      stronglyUntakenIndex = 6'h1c;
-    end
-    if(when_OpenLa500Predictor_l58_244) begin
-      stronglyUntakenIndex = 6'h1b;
-    end
-    if(when_OpenLa500Predictor_l58_245) begin
-      stronglyUntakenIndex = 6'h1a;
-    end
-    if(when_OpenLa500Predictor_l58_246) begin
-      stronglyUntakenIndex = 6'h19;
-    end
-    if(when_OpenLa500Predictor_l58_247) begin
-      stronglyUntakenIndex = 6'h18;
-    end
-    if(when_OpenLa500Predictor_l58_248) begin
-      stronglyUntakenIndex = 6'h17;
-    end
-    if(when_OpenLa500Predictor_l58_249) begin
-      stronglyUntakenIndex = 6'h16;
-    end
-    if(when_OpenLa500Predictor_l58_250) begin
-      stronglyUntakenIndex = 6'h15;
-    end
-    if(when_OpenLa500Predictor_l58_251) begin
-      stronglyUntakenIndex = 6'h14;
-    end
-    if(when_OpenLa500Predictor_l58_252) begin
-      stronglyUntakenIndex = 6'h13;
-    end
-    if(when_OpenLa500Predictor_l58_253) begin
-      stronglyUntakenIndex = 6'h12;
-    end
-    if(when_OpenLa500Predictor_l58_254) begin
-      stronglyUntakenIndex = 6'h11;
-    end
-    if(when_OpenLa500Predictor_l58_255) begin
-      stronglyUntakenIndex = 6'h10;
-    end
-    if(when_OpenLa500Predictor_l58_256) begin
-      stronglyUntakenIndex = 6'h0f;
-    end
-    if(when_OpenLa500Predictor_l58_257) begin
-      stronglyUntakenIndex = 6'h0e;
-    end
-    if(when_OpenLa500Predictor_l58_258) begin
-      stronglyUntakenIndex = 6'h0d;
-    end
-    if(when_OpenLa500Predictor_l58_259) begin
-      stronglyUntakenIndex = 6'h0c;
-    end
-    if(when_OpenLa500Predictor_l58_260) begin
-      stronglyUntakenIndex = 6'h0b;
-    end
-    if(when_OpenLa500Predictor_l58_261) begin
-      stronglyUntakenIndex = 6'h0a;
-    end
-    if(when_OpenLa500Predictor_l58_262) begin
-      stronglyUntakenIndex = 6'h09;
-    end
-    if(when_OpenLa500Predictor_l58_263) begin
-      stronglyUntakenIndex = 6'h08;
-    end
-    if(when_OpenLa500Predictor_l58_264) begin
-      stronglyUntakenIndex = 6'h07;
-    end
-    if(when_OpenLa500Predictor_l58_265) begin
-      stronglyUntakenIndex = 6'h06;
-    end
-    if(when_OpenLa500Predictor_l58_266) begin
-      stronglyUntakenIndex = 6'h05;
-    end
-    if(when_OpenLa500Predictor_l58_267) begin
-      stronglyUntakenIndex = 6'h04;
-    end
-    if(when_OpenLa500Predictor_l58_268) begin
-      stronglyUntakenIndex = 6'h03;
-    end
-    if(when_OpenLa500Predictor_l58_269) begin
-      stronglyUntakenIndex = 6'h02;
-    end
-    if(when_OpenLa500Predictor_l58_270) begin
-      stronglyUntakenIndex = 6'h01;
-    end
-    if(when_OpenLa500Predictor_l58_271) begin
-      stronglyUntakenIndex = 6'h0;
-    end
-  end
-
-  assign when_OpenLa500Predictor_l58_208 = stronglyUntakenEntries[63];
-  assign when_OpenLa500Predictor_l58_209 = stronglyUntakenEntries[62];
-  assign when_OpenLa500Predictor_l58_210 = stronglyUntakenEntries[61];
-  assign when_OpenLa500Predictor_l58_211 = stronglyUntakenEntries[60];
-  assign when_OpenLa500Predictor_l58_212 = stronglyUntakenEntries[59];
-  assign when_OpenLa500Predictor_l58_213 = stronglyUntakenEntries[58];
-  assign when_OpenLa500Predictor_l58_214 = stronglyUntakenEntries[57];
-  assign when_OpenLa500Predictor_l58_215 = stronglyUntakenEntries[56];
-  assign when_OpenLa500Predictor_l58_216 = stronglyUntakenEntries[55];
-  assign when_OpenLa500Predictor_l58_217 = stronglyUntakenEntries[54];
-  assign when_OpenLa500Predictor_l58_218 = stronglyUntakenEntries[53];
-  assign when_OpenLa500Predictor_l58_219 = stronglyUntakenEntries[52];
-  assign when_OpenLa500Predictor_l58_220 = stronglyUntakenEntries[51];
-  assign when_OpenLa500Predictor_l58_221 = stronglyUntakenEntries[50];
-  assign when_OpenLa500Predictor_l58_222 = stronglyUntakenEntries[49];
-  assign when_OpenLa500Predictor_l58_223 = stronglyUntakenEntries[48];
-  assign when_OpenLa500Predictor_l58_224 = stronglyUntakenEntries[47];
-  assign when_OpenLa500Predictor_l58_225 = stronglyUntakenEntries[46];
-  assign when_OpenLa500Predictor_l58_226 = stronglyUntakenEntries[45];
-  assign when_OpenLa500Predictor_l58_227 = stronglyUntakenEntries[44];
-  assign when_OpenLa500Predictor_l58_228 = stronglyUntakenEntries[43];
-  assign when_OpenLa500Predictor_l58_229 = stronglyUntakenEntries[42];
-  assign when_OpenLa500Predictor_l58_230 = stronglyUntakenEntries[41];
-  assign when_OpenLa500Predictor_l58_231 = stronglyUntakenEntries[40];
-  assign when_OpenLa500Predictor_l58_232 = stronglyUntakenEntries[39];
-  assign when_OpenLa500Predictor_l58_233 = stronglyUntakenEntries[38];
-  assign when_OpenLa500Predictor_l58_234 = stronglyUntakenEntries[37];
-  assign when_OpenLa500Predictor_l58_235 = stronglyUntakenEntries[36];
-  assign when_OpenLa500Predictor_l58_236 = stronglyUntakenEntries[35];
-  assign when_OpenLa500Predictor_l58_237 = stronglyUntakenEntries[34];
-  assign when_OpenLa500Predictor_l58_238 = stronglyUntakenEntries[33];
-  assign when_OpenLa500Predictor_l58_239 = stronglyUntakenEntries[32];
-  assign when_OpenLa500Predictor_l58_240 = stronglyUntakenEntries[31];
-  assign when_OpenLa500Predictor_l58_241 = stronglyUntakenEntries[30];
-  assign when_OpenLa500Predictor_l58_242 = stronglyUntakenEntries[29];
-  assign when_OpenLa500Predictor_l58_243 = stronglyUntakenEntries[28];
-  assign when_OpenLa500Predictor_l58_244 = stronglyUntakenEntries[27];
-  assign when_OpenLa500Predictor_l58_245 = stronglyUntakenEntries[26];
-  assign when_OpenLa500Predictor_l58_246 = stronglyUntakenEntries[25];
-  assign when_OpenLa500Predictor_l58_247 = stronglyUntakenEntries[24];
-  assign when_OpenLa500Predictor_l58_248 = stronglyUntakenEntries[23];
-  assign when_OpenLa500Predictor_l58_249 = stronglyUntakenEntries[22];
-  assign when_OpenLa500Predictor_l58_250 = stronglyUntakenEntries[21];
-  assign when_OpenLa500Predictor_l58_251 = stronglyUntakenEntries[20];
-  assign when_OpenLa500Predictor_l58_252 = stronglyUntakenEntries[19];
-  assign when_OpenLa500Predictor_l58_253 = stronglyUntakenEntries[18];
-  assign when_OpenLa500Predictor_l58_254 = stronglyUntakenEntries[17];
-  assign when_OpenLa500Predictor_l58_255 = stronglyUntakenEntries[16];
-  assign when_OpenLa500Predictor_l58_256 = stronglyUntakenEntries[15];
-  assign when_OpenLa500Predictor_l58_257 = stronglyUntakenEntries[14];
-  assign when_OpenLa500Predictor_l58_258 = stronglyUntakenEntries[13];
-  assign when_OpenLa500Predictor_l58_259 = stronglyUntakenEntries[12];
-  assign when_OpenLa500Predictor_l58_260 = stronglyUntakenEntries[11];
-  assign when_OpenLa500Predictor_l58_261 = stronglyUntakenEntries[10];
-  assign when_OpenLa500Predictor_l58_262 = stronglyUntakenEntries[9];
-  assign when_OpenLa500Predictor_l58_263 = stronglyUntakenEntries[8];
-  assign when_OpenLa500Predictor_l58_264 = stronglyUntakenEntries[7];
-  assign when_OpenLa500Predictor_l58_265 = stronglyUntakenEntries[6];
-  assign when_OpenLa500Predictor_l58_266 = stronglyUntakenEntries[5];
-  assign when_OpenLa500Predictor_l58_267 = stronglyUntakenEntries[4];
-  assign when_OpenLa500Predictor_l58_268 = stronglyUntakenEntries[3];
-  assign when_OpenLa500Predictor_l58_269 = stronglyUntakenEntries[2];
-  assign when_OpenLa500Predictor_l58_270 = stronglyUntakenEntries[1];
-  assign when_OpenLa500Predictor_l58_271 = stronglyUntakenEntries[0];
-  always @(*) begin
-    branchReplacementIndex = lfsr;
-    if(when_OpenLa500Predictor_l143) begin
+    branchReplacementIndex = lfsr[4 : 0];
+    if(when_OpenLa500Predictor_l141) begin
       branchReplacementIndex = invalidBranchIndex;
     end else begin
-      if(when_OpenLa500Predictor_l145) begin
+      if(when_OpenLa500Predictor_l143) begin
         branchReplacementIndex = stronglyUntakenIndex;
       end
     end
   end
 
-  assign when_OpenLa500Predictor_l143 = (|invalidBranchEntries);
-  assign when_OpenLa500Predictor_l145 = (|stronglyUntakenEntries);
-  assign branchAddIndex = (branchUpdateHit ? branchUpdateIndex : branchReplacementIndex);
-  always @(*) begin
-    returnUpdateMatches[0] = (returnSiteValid_0 && (returnSitePc_0 == io_update_payload_pc));
-    returnUpdateMatches[1] = (returnSiteValid_1 && (returnSitePc_1 == io_update_payload_pc));
-    returnUpdateMatches[2] = (returnSiteValid_2 && (returnSitePc_2 == io_update_payload_pc));
-    returnUpdateMatches[3] = (returnSiteValid_3 && (returnSitePc_3 == io_update_payload_pc));
-    returnUpdateMatches[4] = (returnSiteValid_4 && (returnSitePc_4 == io_update_payload_pc));
-    returnUpdateMatches[5] = (returnSiteValid_5 && (returnSitePc_5 == io_update_payload_pc));
-    returnUpdateMatches[6] = (returnSiteValid_6 && (returnSitePc_6 == io_update_payload_pc));
-    returnUpdateMatches[7] = (returnSiteValid_7 && (returnSitePc_7 == io_update_payload_pc));
-    returnUpdateMatches[8] = (returnSiteValid_8 && (returnSitePc_8 == io_update_payload_pc));
-    returnUpdateMatches[9] = (returnSiteValid_9 && (returnSitePc_9 == io_update_payload_pc));
-    returnUpdateMatches[10] = (returnSiteValid_10 && (returnSitePc_10 == io_update_payload_pc));
-    returnUpdateMatches[11] = (returnSiteValid_11 && (returnSitePc_11 == io_update_payload_pc));
-    returnUpdateMatches[12] = (returnSiteValid_12 && (returnSitePc_12 == io_update_payload_pc));
-    returnUpdateMatches[13] = (returnSiteValid_13 && (returnSitePc_13 == io_update_payload_pc));
-    returnUpdateMatches[14] = (returnSiteValid_14 && (returnSitePc_14 == io_update_payload_pc));
-    returnUpdateMatches[15] = (returnSiteValid_15 && (returnSitePc_15 == io_update_payload_pc));
-  end
-
+  assign when_OpenLa500Predictor_l141 = (|invalidBranchEntries);
+  assign when_OpenLa500Predictor_l143 = (|stronglyUntakenEntries);
   always @(*) begin
     invalidReturnSites[0] = (! returnSiteValid_0);
     invalidReturnSites[1] = (! returnSiteValid_1);
@@ -4912,238 +3513,133 @@ module OpenLa500Predictor (
     invalidReturnSites[15] = (! returnSiteValid_15);
   end
 
-  assign returnUpdateHit = (|returnUpdateMatches);
   always @(*) begin
     invalidReturnIndex = 4'b0000;
-    if(when_OpenLa500Predictor_l58_272) begin
+    if(when_OpenLa500Predictor_l61_112) begin
       invalidReturnIndex = 4'b1111;
     end
-    if(when_OpenLa500Predictor_l58_273) begin
+    if(when_OpenLa500Predictor_l61_113) begin
       invalidReturnIndex = 4'b1110;
     end
-    if(when_OpenLa500Predictor_l58_274) begin
+    if(when_OpenLa500Predictor_l61_114) begin
       invalidReturnIndex = 4'b1101;
     end
-    if(when_OpenLa500Predictor_l58_275) begin
+    if(when_OpenLa500Predictor_l61_115) begin
       invalidReturnIndex = 4'b1100;
     end
-    if(when_OpenLa500Predictor_l58_276) begin
+    if(when_OpenLa500Predictor_l61_116) begin
       invalidReturnIndex = 4'b1011;
     end
-    if(when_OpenLa500Predictor_l58_277) begin
+    if(when_OpenLa500Predictor_l61_117) begin
       invalidReturnIndex = 4'b1010;
     end
-    if(when_OpenLa500Predictor_l58_278) begin
+    if(when_OpenLa500Predictor_l61_118) begin
       invalidReturnIndex = 4'b1001;
     end
-    if(when_OpenLa500Predictor_l58_279) begin
+    if(when_OpenLa500Predictor_l61_119) begin
       invalidReturnIndex = 4'b1000;
     end
-    if(when_OpenLa500Predictor_l58_280) begin
+    if(when_OpenLa500Predictor_l61_120) begin
       invalidReturnIndex = 4'b0111;
     end
-    if(when_OpenLa500Predictor_l58_281) begin
+    if(when_OpenLa500Predictor_l61_121) begin
       invalidReturnIndex = 4'b0110;
     end
-    if(when_OpenLa500Predictor_l58_282) begin
+    if(when_OpenLa500Predictor_l61_122) begin
       invalidReturnIndex = 4'b0101;
     end
-    if(when_OpenLa500Predictor_l58_283) begin
+    if(when_OpenLa500Predictor_l61_123) begin
       invalidReturnIndex = 4'b0100;
     end
-    if(when_OpenLa500Predictor_l58_284) begin
+    if(when_OpenLa500Predictor_l61_124) begin
       invalidReturnIndex = 4'b0011;
     end
-    if(when_OpenLa500Predictor_l58_285) begin
+    if(when_OpenLa500Predictor_l61_125) begin
       invalidReturnIndex = 4'b0010;
     end
-    if(when_OpenLa500Predictor_l58_286) begin
+    if(when_OpenLa500Predictor_l61_126) begin
       invalidReturnIndex = 4'b0001;
     end
-    if(when_OpenLa500Predictor_l58_287) begin
+    if(when_OpenLa500Predictor_l61_127) begin
       invalidReturnIndex = 4'b0000;
     end
   end
 
-  assign when_OpenLa500Predictor_l58_272 = invalidReturnSites[15];
-  assign when_OpenLa500Predictor_l58_273 = invalidReturnSites[14];
-  assign when_OpenLa500Predictor_l58_274 = invalidReturnSites[13];
-  assign when_OpenLa500Predictor_l58_275 = invalidReturnSites[12];
-  assign when_OpenLa500Predictor_l58_276 = invalidReturnSites[11];
-  assign when_OpenLa500Predictor_l58_277 = invalidReturnSites[10];
-  assign when_OpenLa500Predictor_l58_278 = invalidReturnSites[9];
-  assign when_OpenLa500Predictor_l58_279 = invalidReturnSites[8];
-  assign when_OpenLa500Predictor_l58_280 = invalidReturnSites[7];
-  assign when_OpenLa500Predictor_l58_281 = invalidReturnSites[6];
-  assign when_OpenLa500Predictor_l58_282 = invalidReturnSites[5];
-  assign when_OpenLa500Predictor_l58_283 = invalidReturnSites[4];
-  assign when_OpenLa500Predictor_l58_284 = invalidReturnSites[3];
-  assign when_OpenLa500Predictor_l58_285 = invalidReturnSites[2];
-  assign when_OpenLa500Predictor_l58_286 = invalidReturnSites[1];
-  assign when_OpenLa500Predictor_l58_287 = invalidReturnSites[0];
+  assign when_OpenLa500Predictor_l61_112 = invalidReturnSites[15];
+  assign when_OpenLa500Predictor_l61_113 = invalidReturnSites[14];
+  assign when_OpenLa500Predictor_l61_114 = invalidReturnSites[13];
+  assign when_OpenLa500Predictor_l61_115 = invalidReturnSites[12];
+  assign when_OpenLa500Predictor_l61_116 = invalidReturnSites[11];
+  assign when_OpenLa500Predictor_l61_117 = invalidReturnSites[10];
+  assign when_OpenLa500Predictor_l61_118 = invalidReturnSites[9];
+  assign when_OpenLa500Predictor_l61_119 = invalidReturnSites[8];
+  assign when_OpenLa500Predictor_l61_120 = invalidReturnSites[7];
+  assign when_OpenLa500Predictor_l61_121 = invalidReturnSites[6];
+  assign when_OpenLa500Predictor_l61_122 = invalidReturnSites[5];
+  assign when_OpenLa500Predictor_l61_123 = invalidReturnSites[4];
+  assign when_OpenLa500Predictor_l61_124 = invalidReturnSites[3];
+  assign when_OpenLa500Predictor_l61_125 = invalidReturnSites[2];
+  assign when_OpenLa500Predictor_l61_126 = invalidReturnSites[1];
+  assign when_OpenLa500Predictor_l61_127 = invalidReturnSites[0];
   always @(*) begin
     returnReplacementIndex = lfsr[3 : 0];
-    if(when_OpenLa500Predictor_l161) begin
+    if(when_OpenLa500Predictor_l154) begin
       returnReplacementIndex = invalidReturnIndex;
     end
   end
 
-  assign when_OpenLa500Predictor_l161 = (|invalidReturnSites);
-  always @(*) begin
-    _zz_returnAddIndex = 4'b0000;
-    if(when_OpenLa500Predictor_l58_288) begin
-      _zz_returnAddIndex = 4'b1111;
-    end
-    if(when_OpenLa500Predictor_l58_289) begin
-      _zz_returnAddIndex = 4'b1110;
-    end
-    if(when_OpenLa500Predictor_l58_290) begin
-      _zz_returnAddIndex = 4'b1101;
-    end
-    if(when_OpenLa500Predictor_l58_291) begin
-      _zz_returnAddIndex = 4'b1100;
-    end
-    if(when_OpenLa500Predictor_l58_292) begin
-      _zz_returnAddIndex = 4'b1011;
-    end
-    if(when_OpenLa500Predictor_l58_293) begin
-      _zz_returnAddIndex = 4'b1010;
-    end
-    if(when_OpenLa500Predictor_l58_294) begin
-      _zz_returnAddIndex = 4'b1001;
-    end
-    if(when_OpenLa500Predictor_l58_295) begin
-      _zz_returnAddIndex = 4'b1000;
-    end
-    if(when_OpenLa500Predictor_l58_296) begin
-      _zz_returnAddIndex = 4'b0111;
-    end
-    if(when_OpenLa500Predictor_l58_297) begin
-      _zz_returnAddIndex = 4'b0110;
-    end
-    if(when_OpenLa500Predictor_l58_298) begin
-      _zz_returnAddIndex = 4'b0101;
-    end
-    if(when_OpenLa500Predictor_l58_299) begin
-      _zz_returnAddIndex = 4'b0100;
-    end
-    if(when_OpenLa500Predictor_l58_300) begin
-      _zz_returnAddIndex = 4'b0011;
-    end
-    if(when_OpenLa500Predictor_l58_301) begin
-      _zz_returnAddIndex = 4'b0010;
-    end
-    if(when_OpenLa500Predictor_l58_302) begin
-      _zz_returnAddIndex = 4'b0001;
-    end
-    if(when_OpenLa500Predictor_l58_303) begin
-      _zz_returnAddIndex = 4'b0000;
-    end
-  end
-
-  assign when_OpenLa500Predictor_l58_288 = returnUpdateMatches[15];
-  assign when_OpenLa500Predictor_l58_289 = returnUpdateMatches[14];
-  assign when_OpenLa500Predictor_l58_290 = returnUpdateMatches[13];
-  assign when_OpenLa500Predictor_l58_291 = returnUpdateMatches[12];
-  assign when_OpenLa500Predictor_l58_292 = returnUpdateMatches[11];
-  assign when_OpenLa500Predictor_l58_293 = returnUpdateMatches[10];
-  assign when_OpenLa500Predictor_l58_294 = returnUpdateMatches[9];
-  assign when_OpenLa500Predictor_l58_295 = returnUpdateMatches[8];
-  assign when_OpenLa500Predictor_l58_296 = returnUpdateMatches[7];
-  assign when_OpenLa500Predictor_l58_297 = returnUpdateMatches[6];
-  assign when_OpenLa500Predictor_l58_298 = returnUpdateMatches[5];
-  assign when_OpenLa500Predictor_l58_299 = returnUpdateMatches[4];
-  assign when_OpenLa500Predictor_l58_300 = returnUpdateMatches[3];
-  assign when_OpenLa500Predictor_l58_301 = returnUpdateMatches[2];
-  assign when_OpenLa500Predictor_l58_302 = returnUpdateMatches[1];
-  assign when_OpenLa500Predictor_l58_303 = returnUpdateMatches[0];
-  assign returnAddIndex = (returnUpdateHit ? _zz_returnAddIndex : returnReplacementIndex);
-  assign when_OpenLa500Predictor_l172 = (! io_update_payload_popReturnStack);
-  assign _zz_1 = ({63'd0,1'b1} <<< branchAddIndex);
-  assign _zz_2 = ({63'd0,1'b1} <<< branchAddIndex);
-  assign _zz_3 = ({63'd0,1'b1} <<< branchAddIndex);
-  assign _zz_4 = ({63'd0,1'b1} <<< branchAddIndex);
-  assign _zz_5 = ({63'd0,1'b1} <<< branchUpdateIndex);
-  assign _zz_6 = ({63'd0,1'b1} <<< branchUpdateIndex);
-  assign _zz_when_OpenLa500Predictor_l187 = _zz__zz_when_OpenLa500Predictor_l187;
-  assign _zz_7 = ({63'd0,1'b1} <<< branchUpdateIndex);
-  assign _zz_8 = _zz_7[0];
-  assign _zz_9 = _zz_7[1];
-  assign _zz_10 = _zz_7[2];
-  assign _zz_11 = _zz_7[3];
-  assign _zz_12 = _zz_7[4];
-  assign _zz_13 = _zz_7[5];
-  assign _zz_14 = _zz_7[6];
-  assign _zz_15 = _zz_7[7];
-  assign _zz_16 = _zz_7[8];
-  assign _zz_17 = _zz_7[9];
-  assign _zz_18 = _zz_7[10];
-  assign _zz_19 = _zz_7[11];
-  assign _zz_20 = _zz_7[12];
-  assign _zz_21 = _zz_7[13];
-  assign _zz_22 = _zz_7[14];
-  assign _zz_23 = _zz_7[15];
-  assign _zz_24 = _zz_7[16];
-  assign _zz_25 = _zz_7[17];
-  assign _zz_26 = _zz_7[18];
-  assign _zz_27 = _zz_7[19];
-  assign _zz_28 = _zz_7[20];
-  assign _zz_29 = _zz_7[21];
-  assign _zz_30 = _zz_7[22];
-  assign _zz_31 = _zz_7[23];
-  assign _zz_32 = _zz_7[24];
-  assign _zz_33 = _zz_7[25];
-  assign _zz_34 = _zz_7[26];
-  assign _zz_35 = _zz_7[27];
-  assign _zz_36 = _zz_7[28];
-  assign _zz_37 = _zz_7[29];
-  assign _zz_38 = _zz_7[30];
-  assign _zz_39 = _zz_7[31];
-  assign _zz_40 = _zz_7[32];
-  assign _zz_41 = _zz_7[33];
-  assign _zz_42 = _zz_7[34];
-  assign _zz_43 = _zz_7[35];
-  assign _zz_44 = _zz_7[36];
-  assign _zz_45 = _zz_7[37];
-  assign _zz_46 = _zz_7[38];
-  assign _zz_47 = _zz_7[39];
-  assign _zz_48 = _zz_7[40];
-  assign _zz_49 = _zz_7[41];
-  assign _zz_50 = _zz_7[42];
-  assign _zz_51 = _zz_7[43];
-  assign _zz_52 = _zz_7[44];
-  assign _zz_53 = _zz_7[45];
-  assign _zz_54 = _zz_7[46];
-  assign _zz_55 = _zz_7[47];
-  assign _zz_56 = _zz_7[48];
-  assign _zz_57 = _zz_7[49];
-  assign _zz_58 = _zz_7[50];
-  assign _zz_59 = _zz_7[51];
-  assign _zz_60 = _zz_7[52];
-  assign _zz_61 = _zz_7[53];
-  assign _zz_62 = _zz_7[54];
-  assign _zz_63 = _zz_7[55];
-  assign _zz_64 = _zz_7[56];
-  assign _zz_65 = _zz_7[57];
-  assign _zz_66 = _zz_7[58];
-  assign _zz_67 = _zz_7[59];
-  assign _zz_68 = _zz_7[60];
-  assign _zz_69 = _zz_7[61];
-  assign _zz_70 = _zz_7[62];
-  assign _zz_71 = _zz_7[63];
-  assign when_OpenLa500Predictor_l187 = (_zz_when_OpenLa500Predictor_l187 != 2'b11);
-  assign _zz_branchCounter_0 = (_zz_when_OpenLa500Predictor_l187 + 2'b01);
-  assign when_OpenLa500Predictor_l191 = (_zz_when_OpenLa500Predictor_l187 != 2'b00);
-  assign _zz_branchCounter_0_1 = (_zz_when_OpenLa500Predictor_l187 - 2'b01);
-  assign when_OpenLa500Predictor_l178 = (io_update_payload_deleteEntry && branchUpdateHit);
-  assign when_OpenLa500Predictor_l180 = (io_update_payload_targetError && branchUpdateHit);
-  assign when_OpenLa500Predictor_l185 = ((io_update_payload_predictionError || io_update_payload_predictionRight) && branchUpdateHit);
-  assign _zz_72 = ({15'd0,1'b1} <<< returnAddIndex);
-  assign _zz_73 = ({15'd0,1'b1} <<< returnAddIndex);
-  assign when_OpenLa500Predictor_l203 = (io_update_payload_pushReturnStack && (! returnStackFull));
-  assign _zz_74 = ({7'd0,1'b1} <<< returnDepth[2 : 0]);
+  assign when_OpenLa500Predictor_l154 = (|invalidReturnSites);
+  assign when_OpenLa500Predictor_l159 = (! io_update_payload_popReturnStack);
+  assign _zz_1 = ({31'd0,1'b1} <<< branchReplacementIndex);
+  assign _zz_2 = ({31'd0,1'b1} <<< branchReplacementIndex);
+  assign _zz_3 = ({31'd0,1'b1} <<< branchReplacementIndex);
+  assign _zz_4 = ({31'd0,1'b1} <<< branchReplacementIndex);
+  assign _zz_5 = ({31'd0,1'b1} <<< io_update_payload_legacyIndex);
+  assign _zz_when_OpenLa500Predictor_l170 = _zz__zz_when_OpenLa500Predictor_l170;
+  assign _zz_6 = ({31'd0,1'b1} <<< io_update_payload_legacyIndex);
+  assign _zz_7 = _zz_6[0];
+  assign _zz_8 = _zz_6[1];
+  assign _zz_9 = _zz_6[2];
+  assign _zz_10 = _zz_6[3];
+  assign _zz_11 = _zz_6[4];
+  assign _zz_12 = _zz_6[5];
+  assign _zz_13 = _zz_6[6];
+  assign _zz_14 = _zz_6[7];
+  assign _zz_15 = _zz_6[8];
+  assign _zz_16 = _zz_6[9];
+  assign _zz_17 = _zz_6[10];
+  assign _zz_18 = _zz_6[11];
+  assign _zz_19 = _zz_6[12];
+  assign _zz_20 = _zz_6[13];
+  assign _zz_21 = _zz_6[14];
+  assign _zz_22 = _zz_6[15];
+  assign _zz_23 = _zz_6[16];
+  assign _zz_24 = _zz_6[17];
+  assign _zz_25 = _zz_6[18];
+  assign _zz_26 = _zz_6[19];
+  assign _zz_27 = _zz_6[20];
+  assign _zz_28 = _zz_6[21];
+  assign _zz_29 = _zz_6[22];
+  assign _zz_30 = _zz_6[23];
+  assign _zz_31 = _zz_6[24];
+  assign _zz_32 = _zz_6[25];
+  assign _zz_33 = _zz_6[26];
+  assign _zz_34 = _zz_6[27];
+  assign _zz_35 = _zz_6[28];
+  assign _zz_36 = _zz_6[29];
+  assign _zz_37 = _zz_6[30];
+  assign _zz_38 = _zz_6[31];
+  assign when_OpenLa500Predictor_l170 = (_zz_when_OpenLa500Predictor_l170 != 2'b11);
+  assign _zz_branchCounter_0 = (_zz_when_OpenLa500Predictor_l170 + 2'b01);
+  assign when_OpenLa500Predictor_l175 = (_zz_when_OpenLa500Predictor_l170 != 2'b00);
+  assign _zz_branchCounter_0_1 = (_zz_when_OpenLa500Predictor_l170 - 2'b01);
+  assign when_OpenLa500Predictor_l168 = (io_update_payload_predictionError || io_update_payload_predictionRight);
+  assign _zz_39 = ({15'd0,1'b1} <<< returnReplacementIndex);
+  assign _zz_40 = ({15'd0,1'b1} <<< returnReplacementIndex);
+  assign when_OpenLa500Predictor_l188 = (io_update_payload_pushReturnStack && (! returnStackFull));
+  assign _zz_41 = ({7'd0,1'b1} <<< returnDepth[2 : 0]);
   assign _zz_returnStack_0 = (io_update_payload_pc + 32'h00000004);
-  assign when_OpenLa500Predictor_l206 = (io_update_payload_popReturnStack && (! returnStackEmpty));
+  assign when_OpenLa500Predictor_l191 = (io_update_payload_popReturnStack && (! returnStackEmpty));
   always @(posedge aclk) begin
     if(resetCapture_delayedActiveHigh) begin
       branchValid_0 <= 1'b0;
@@ -5178,38 +3674,6 @@ module OpenLa500Predictor (
       branchValid_29 <= 1'b0;
       branchValid_30 <= 1'b0;
       branchValid_31 <= 1'b0;
-      branchValid_32 <= 1'b0;
-      branchValid_33 <= 1'b0;
-      branchValid_34 <= 1'b0;
-      branchValid_35 <= 1'b0;
-      branchValid_36 <= 1'b0;
-      branchValid_37 <= 1'b0;
-      branchValid_38 <= 1'b0;
-      branchValid_39 <= 1'b0;
-      branchValid_40 <= 1'b0;
-      branchValid_41 <= 1'b0;
-      branchValid_42 <= 1'b0;
-      branchValid_43 <= 1'b0;
-      branchValid_44 <= 1'b0;
-      branchValid_45 <= 1'b0;
-      branchValid_46 <= 1'b0;
-      branchValid_47 <= 1'b0;
-      branchValid_48 <= 1'b0;
-      branchValid_49 <= 1'b0;
-      branchValid_50 <= 1'b0;
-      branchValid_51 <= 1'b0;
-      branchValid_52 <= 1'b0;
-      branchValid_53 <= 1'b0;
-      branchValid_54 <= 1'b0;
-      branchValid_55 <= 1'b0;
-      branchValid_56 <= 1'b0;
-      branchValid_57 <= 1'b0;
-      branchValid_58 <= 1'b0;
-      branchValid_59 <= 1'b0;
-      branchValid_60 <= 1'b0;
-      branchValid_61 <= 1'b0;
-      branchValid_62 <= 1'b0;
-      branchValid_63 <= 1'b0;
       returnSiteValid_0 <= 1'b0;
       returnSiteValid_1 <= 1'b0;
       returnSiteValid_2 <= 1'b0;
@@ -5237,7 +3701,7 @@ module OpenLa500Predictor (
         lookupPc <= io_lookup_payload_pc;
       end
       if(io_update_valid) begin
-        if(when_OpenLa500Predictor_l172) begin
+        if(when_OpenLa500Predictor_l159) begin
           if(io_update_payload_addEntry) begin
             if(_zz_1[0]) begin
               branchValid_0 <= 1'b1;
@@ -5335,354 +3799,63 @@ module OpenLa500Predictor (
             if(_zz_1[31]) begin
               branchValid_31 <= 1'b1;
             end
-            if(_zz_1[32]) begin
-              branchValid_32 <= 1'b1;
-            end
-            if(_zz_1[33]) begin
-              branchValid_33 <= 1'b1;
-            end
-            if(_zz_1[34]) begin
-              branchValid_34 <= 1'b1;
-            end
-            if(_zz_1[35]) begin
-              branchValid_35 <= 1'b1;
-            end
-            if(_zz_1[36]) begin
-              branchValid_36 <= 1'b1;
-            end
-            if(_zz_1[37]) begin
-              branchValid_37 <= 1'b1;
-            end
-            if(_zz_1[38]) begin
-              branchValid_38 <= 1'b1;
-            end
-            if(_zz_1[39]) begin
-              branchValid_39 <= 1'b1;
-            end
-            if(_zz_1[40]) begin
-              branchValid_40 <= 1'b1;
-            end
-            if(_zz_1[41]) begin
-              branchValid_41 <= 1'b1;
-            end
-            if(_zz_1[42]) begin
-              branchValid_42 <= 1'b1;
-            end
-            if(_zz_1[43]) begin
-              branchValid_43 <= 1'b1;
-            end
-            if(_zz_1[44]) begin
-              branchValid_44 <= 1'b1;
-            end
-            if(_zz_1[45]) begin
-              branchValid_45 <= 1'b1;
-            end
-            if(_zz_1[46]) begin
-              branchValid_46 <= 1'b1;
-            end
-            if(_zz_1[47]) begin
-              branchValid_47 <= 1'b1;
-            end
-            if(_zz_1[48]) begin
-              branchValid_48 <= 1'b1;
-            end
-            if(_zz_1[49]) begin
-              branchValid_49 <= 1'b1;
-            end
-            if(_zz_1[50]) begin
-              branchValid_50 <= 1'b1;
-            end
-            if(_zz_1[51]) begin
-              branchValid_51 <= 1'b1;
-            end
-            if(_zz_1[52]) begin
-              branchValid_52 <= 1'b1;
-            end
-            if(_zz_1[53]) begin
-              branchValid_53 <= 1'b1;
-            end
-            if(_zz_1[54]) begin
-              branchValid_54 <= 1'b1;
-            end
-            if(_zz_1[55]) begin
-              branchValid_55 <= 1'b1;
-            end
-            if(_zz_1[56]) begin
-              branchValid_56 <= 1'b1;
-            end
-            if(_zz_1[57]) begin
-              branchValid_57 <= 1'b1;
-            end
-            if(_zz_1[58]) begin
-              branchValid_58 <= 1'b1;
-            end
-            if(_zz_1[59]) begin
-              branchValid_59 <= 1'b1;
-            end
-            if(_zz_1[60]) begin
-              branchValid_60 <= 1'b1;
-            end
-            if(_zz_1[61]) begin
-              branchValid_61 <= 1'b1;
-            end
-            if(_zz_1[62]) begin
-              branchValid_62 <= 1'b1;
-            end
-            if(_zz_1[63]) begin
-              branchValid_63 <= 1'b1;
-            end
-          end else begin
-            if(when_OpenLa500Predictor_l178) begin
-              if(_zz_5[0]) begin
-                branchValid_0 <= 1'b0;
-              end
-              if(_zz_5[1]) begin
-                branchValid_1 <= 1'b0;
-              end
-              if(_zz_5[2]) begin
-                branchValid_2 <= 1'b0;
-              end
-              if(_zz_5[3]) begin
-                branchValid_3 <= 1'b0;
-              end
-              if(_zz_5[4]) begin
-                branchValid_4 <= 1'b0;
-              end
-              if(_zz_5[5]) begin
-                branchValid_5 <= 1'b0;
-              end
-              if(_zz_5[6]) begin
-                branchValid_6 <= 1'b0;
-              end
-              if(_zz_5[7]) begin
-                branchValid_7 <= 1'b0;
-              end
-              if(_zz_5[8]) begin
-                branchValid_8 <= 1'b0;
-              end
-              if(_zz_5[9]) begin
-                branchValid_9 <= 1'b0;
-              end
-              if(_zz_5[10]) begin
-                branchValid_10 <= 1'b0;
-              end
-              if(_zz_5[11]) begin
-                branchValid_11 <= 1'b0;
-              end
-              if(_zz_5[12]) begin
-                branchValid_12 <= 1'b0;
-              end
-              if(_zz_5[13]) begin
-                branchValid_13 <= 1'b0;
-              end
-              if(_zz_5[14]) begin
-                branchValid_14 <= 1'b0;
-              end
-              if(_zz_5[15]) begin
-                branchValid_15 <= 1'b0;
-              end
-              if(_zz_5[16]) begin
-                branchValid_16 <= 1'b0;
-              end
-              if(_zz_5[17]) begin
-                branchValid_17 <= 1'b0;
-              end
-              if(_zz_5[18]) begin
-                branchValid_18 <= 1'b0;
-              end
-              if(_zz_5[19]) begin
-                branchValid_19 <= 1'b0;
-              end
-              if(_zz_5[20]) begin
-                branchValid_20 <= 1'b0;
-              end
-              if(_zz_5[21]) begin
-                branchValid_21 <= 1'b0;
-              end
-              if(_zz_5[22]) begin
-                branchValid_22 <= 1'b0;
-              end
-              if(_zz_5[23]) begin
-                branchValid_23 <= 1'b0;
-              end
-              if(_zz_5[24]) begin
-                branchValid_24 <= 1'b0;
-              end
-              if(_zz_5[25]) begin
-                branchValid_25 <= 1'b0;
-              end
-              if(_zz_5[26]) begin
-                branchValid_26 <= 1'b0;
-              end
-              if(_zz_5[27]) begin
-                branchValid_27 <= 1'b0;
-              end
-              if(_zz_5[28]) begin
-                branchValid_28 <= 1'b0;
-              end
-              if(_zz_5[29]) begin
-                branchValid_29 <= 1'b0;
-              end
-              if(_zz_5[30]) begin
-                branchValid_30 <= 1'b0;
-              end
-              if(_zz_5[31]) begin
-                branchValid_31 <= 1'b0;
-              end
-              if(_zz_5[32]) begin
-                branchValid_32 <= 1'b0;
-              end
-              if(_zz_5[33]) begin
-                branchValid_33 <= 1'b0;
-              end
-              if(_zz_5[34]) begin
-                branchValid_34 <= 1'b0;
-              end
-              if(_zz_5[35]) begin
-                branchValid_35 <= 1'b0;
-              end
-              if(_zz_5[36]) begin
-                branchValid_36 <= 1'b0;
-              end
-              if(_zz_5[37]) begin
-                branchValid_37 <= 1'b0;
-              end
-              if(_zz_5[38]) begin
-                branchValid_38 <= 1'b0;
-              end
-              if(_zz_5[39]) begin
-                branchValid_39 <= 1'b0;
-              end
-              if(_zz_5[40]) begin
-                branchValid_40 <= 1'b0;
-              end
-              if(_zz_5[41]) begin
-                branchValid_41 <= 1'b0;
-              end
-              if(_zz_5[42]) begin
-                branchValid_42 <= 1'b0;
-              end
-              if(_zz_5[43]) begin
-                branchValid_43 <= 1'b0;
-              end
-              if(_zz_5[44]) begin
-                branchValid_44 <= 1'b0;
-              end
-              if(_zz_5[45]) begin
-                branchValid_45 <= 1'b0;
-              end
-              if(_zz_5[46]) begin
-                branchValid_46 <= 1'b0;
-              end
-              if(_zz_5[47]) begin
-                branchValid_47 <= 1'b0;
-              end
-              if(_zz_5[48]) begin
-                branchValid_48 <= 1'b0;
-              end
-              if(_zz_5[49]) begin
-                branchValid_49 <= 1'b0;
-              end
-              if(_zz_5[50]) begin
-                branchValid_50 <= 1'b0;
-              end
-              if(_zz_5[51]) begin
-                branchValid_51 <= 1'b0;
-              end
-              if(_zz_5[52]) begin
-                branchValid_52 <= 1'b0;
-              end
-              if(_zz_5[53]) begin
-                branchValid_53 <= 1'b0;
-              end
-              if(_zz_5[54]) begin
-                branchValid_54 <= 1'b0;
-              end
-              if(_zz_5[55]) begin
-                branchValid_55 <= 1'b0;
-              end
-              if(_zz_5[56]) begin
-                branchValid_56 <= 1'b0;
-              end
-              if(_zz_5[57]) begin
-                branchValid_57 <= 1'b0;
-              end
-              if(_zz_5[58]) begin
-                branchValid_58 <= 1'b0;
-              end
-              if(_zz_5[59]) begin
-                branchValid_59 <= 1'b0;
-              end
-              if(_zz_5[60]) begin
-                branchValid_60 <= 1'b0;
-              end
-              if(_zz_5[61]) begin
-                branchValid_61 <= 1'b0;
-              end
-              if(_zz_5[62]) begin
-                branchValid_62 <= 1'b0;
-              end
-              if(_zz_5[63]) begin
-                branchValid_63 <= 1'b0;
-              end
-            end
           end
         end else begin
           if(io_update_payload_addEntry) begin
-            if(_zz_72[0]) begin
+            if(_zz_39[0]) begin
               returnSiteValid_0 <= 1'b1;
             end
-            if(_zz_72[1]) begin
+            if(_zz_39[1]) begin
               returnSiteValid_1 <= 1'b1;
             end
-            if(_zz_72[2]) begin
+            if(_zz_39[2]) begin
               returnSiteValid_2 <= 1'b1;
             end
-            if(_zz_72[3]) begin
+            if(_zz_39[3]) begin
               returnSiteValid_3 <= 1'b1;
             end
-            if(_zz_72[4]) begin
+            if(_zz_39[4]) begin
               returnSiteValid_4 <= 1'b1;
             end
-            if(_zz_72[5]) begin
+            if(_zz_39[5]) begin
               returnSiteValid_5 <= 1'b1;
             end
-            if(_zz_72[6]) begin
+            if(_zz_39[6]) begin
               returnSiteValid_6 <= 1'b1;
             end
-            if(_zz_72[7]) begin
+            if(_zz_39[7]) begin
               returnSiteValid_7 <= 1'b1;
             end
-            if(_zz_72[8]) begin
+            if(_zz_39[8]) begin
               returnSiteValid_8 <= 1'b1;
             end
-            if(_zz_72[9]) begin
+            if(_zz_39[9]) begin
               returnSiteValid_9 <= 1'b1;
             end
-            if(_zz_72[10]) begin
+            if(_zz_39[10]) begin
               returnSiteValid_10 <= 1'b1;
             end
-            if(_zz_72[11]) begin
+            if(_zz_39[11]) begin
               returnSiteValid_11 <= 1'b1;
             end
-            if(_zz_72[12]) begin
+            if(_zz_39[12]) begin
               returnSiteValid_12 <= 1'b1;
             end
-            if(_zz_72[13]) begin
+            if(_zz_39[13]) begin
               returnSiteValid_13 <= 1'b1;
             end
-            if(_zz_72[14]) begin
+            if(_zz_39[14]) begin
               returnSiteValid_14 <= 1'b1;
             end
-            if(_zz_72[15]) begin
+            if(_zz_39[15]) begin
               returnSiteValid_15 <= 1'b1;
             end
           end
         end
-        if(when_OpenLa500Predictor_l203) begin
+        if(when_OpenLa500Predictor_l188) begin
           returnDepth <= (returnDepth + 4'b0001);
         end else begin
-          if(when_OpenLa500Predictor_l206) begin
+          if(when_OpenLa500Predictor_l191) begin
             returnDepth <= (returnDepth - 4'b0001);
           end
         end
@@ -5692,7 +3865,7 @@ module OpenLa500Predictor (
 
   always @(posedge aclk) begin
     if(io_update_valid) begin
-      if(when_OpenLa500Predictor_l172) begin
+      if(when_OpenLa500Predictor_l159) begin
         if(io_update_payload_addEntry) begin
           if(_zz_2[0]) begin
             branchPc_0 <= io_update_payload_pc;
@@ -5790,102 +3963,6 @@ module OpenLa500Predictor (
           if(_zz_2[31]) begin
             branchPc_31 <= io_update_payload_pc;
           end
-          if(_zz_2[32]) begin
-            branchPc_32 <= io_update_payload_pc;
-          end
-          if(_zz_2[33]) begin
-            branchPc_33 <= io_update_payload_pc;
-          end
-          if(_zz_2[34]) begin
-            branchPc_34 <= io_update_payload_pc;
-          end
-          if(_zz_2[35]) begin
-            branchPc_35 <= io_update_payload_pc;
-          end
-          if(_zz_2[36]) begin
-            branchPc_36 <= io_update_payload_pc;
-          end
-          if(_zz_2[37]) begin
-            branchPc_37 <= io_update_payload_pc;
-          end
-          if(_zz_2[38]) begin
-            branchPc_38 <= io_update_payload_pc;
-          end
-          if(_zz_2[39]) begin
-            branchPc_39 <= io_update_payload_pc;
-          end
-          if(_zz_2[40]) begin
-            branchPc_40 <= io_update_payload_pc;
-          end
-          if(_zz_2[41]) begin
-            branchPc_41 <= io_update_payload_pc;
-          end
-          if(_zz_2[42]) begin
-            branchPc_42 <= io_update_payload_pc;
-          end
-          if(_zz_2[43]) begin
-            branchPc_43 <= io_update_payload_pc;
-          end
-          if(_zz_2[44]) begin
-            branchPc_44 <= io_update_payload_pc;
-          end
-          if(_zz_2[45]) begin
-            branchPc_45 <= io_update_payload_pc;
-          end
-          if(_zz_2[46]) begin
-            branchPc_46 <= io_update_payload_pc;
-          end
-          if(_zz_2[47]) begin
-            branchPc_47 <= io_update_payload_pc;
-          end
-          if(_zz_2[48]) begin
-            branchPc_48 <= io_update_payload_pc;
-          end
-          if(_zz_2[49]) begin
-            branchPc_49 <= io_update_payload_pc;
-          end
-          if(_zz_2[50]) begin
-            branchPc_50 <= io_update_payload_pc;
-          end
-          if(_zz_2[51]) begin
-            branchPc_51 <= io_update_payload_pc;
-          end
-          if(_zz_2[52]) begin
-            branchPc_52 <= io_update_payload_pc;
-          end
-          if(_zz_2[53]) begin
-            branchPc_53 <= io_update_payload_pc;
-          end
-          if(_zz_2[54]) begin
-            branchPc_54 <= io_update_payload_pc;
-          end
-          if(_zz_2[55]) begin
-            branchPc_55 <= io_update_payload_pc;
-          end
-          if(_zz_2[56]) begin
-            branchPc_56 <= io_update_payload_pc;
-          end
-          if(_zz_2[57]) begin
-            branchPc_57 <= io_update_payload_pc;
-          end
-          if(_zz_2[58]) begin
-            branchPc_58 <= io_update_payload_pc;
-          end
-          if(_zz_2[59]) begin
-            branchPc_59 <= io_update_payload_pc;
-          end
-          if(_zz_2[60]) begin
-            branchPc_60 <= io_update_payload_pc;
-          end
-          if(_zz_2[61]) begin
-            branchPc_61 <= io_update_payload_pc;
-          end
-          if(_zz_2[62]) begin
-            branchPc_62 <= io_update_payload_pc;
-          end
-          if(_zz_2[63]) begin
-            branchPc_63 <= io_update_payload_pc;
-          end
           if(_zz_3[0]) begin
             branchTarget_0 <= io_update_payload_actualTarget;
           end
@@ -5981,102 +4058,6 @@ module OpenLa500Predictor (
           end
           if(_zz_3[31]) begin
             branchTarget_31 <= io_update_payload_actualTarget;
-          end
-          if(_zz_3[32]) begin
-            branchTarget_32 <= io_update_payload_actualTarget;
-          end
-          if(_zz_3[33]) begin
-            branchTarget_33 <= io_update_payload_actualTarget;
-          end
-          if(_zz_3[34]) begin
-            branchTarget_34 <= io_update_payload_actualTarget;
-          end
-          if(_zz_3[35]) begin
-            branchTarget_35 <= io_update_payload_actualTarget;
-          end
-          if(_zz_3[36]) begin
-            branchTarget_36 <= io_update_payload_actualTarget;
-          end
-          if(_zz_3[37]) begin
-            branchTarget_37 <= io_update_payload_actualTarget;
-          end
-          if(_zz_3[38]) begin
-            branchTarget_38 <= io_update_payload_actualTarget;
-          end
-          if(_zz_3[39]) begin
-            branchTarget_39 <= io_update_payload_actualTarget;
-          end
-          if(_zz_3[40]) begin
-            branchTarget_40 <= io_update_payload_actualTarget;
-          end
-          if(_zz_3[41]) begin
-            branchTarget_41 <= io_update_payload_actualTarget;
-          end
-          if(_zz_3[42]) begin
-            branchTarget_42 <= io_update_payload_actualTarget;
-          end
-          if(_zz_3[43]) begin
-            branchTarget_43 <= io_update_payload_actualTarget;
-          end
-          if(_zz_3[44]) begin
-            branchTarget_44 <= io_update_payload_actualTarget;
-          end
-          if(_zz_3[45]) begin
-            branchTarget_45 <= io_update_payload_actualTarget;
-          end
-          if(_zz_3[46]) begin
-            branchTarget_46 <= io_update_payload_actualTarget;
-          end
-          if(_zz_3[47]) begin
-            branchTarget_47 <= io_update_payload_actualTarget;
-          end
-          if(_zz_3[48]) begin
-            branchTarget_48 <= io_update_payload_actualTarget;
-          end
-          if(_zz_3[49]) begin
-            branchTarget_49 <= io_update_payload_actualTarget;
-          end
-          if(_zz_3[50]) begin
-            branchTarget_50 <= io_update_payload_actualTarget;
-          end
-          if(_zz_3[51]) begin
-            branchTarget_51 <= io_update_payload_actualTarget;
-          end
-          if(_zz_3[52]) begin
-            branchTarget_52 <= io_update_payload_actualTarget;
-          end
-          if(_zz_3[53]) begin
-            branchTarget_53 <= io_update_payload_actualTarget;
-          end
-          if(_zz_3[54]) begin
-            branchTarget_54 <= io_update_payload_actualTarget;
-          end
-          if(_zz_3[55]) begin
-            branchTarget_55 <= io_update_payload_actualTarget;
-          end
-          if(_zz_3[56]) begin
-            branchTarget_56 <= io_update_payload_actualTarget;
-          end
-          if(_zz_3[57]) begin
-            branchTarget_57 <= io_update_payload_actualTarget;
-          end
-          if(_zz_3[58]) begin
-            branchTarget_58 <= io_update_payload_actualTarget;
-          end
-          if(_zz_3[59]) begin
-            branchTarget_59 <= io_update_payload_actualTarget;
-          end
-          if(_zz_3[60]) begin
-            branchTarget_60 <= io_update_payload_actualTarget;
-          end
-          if(_zz_3[61]) begin
-            branchTarget_61 <= io_update_payload_actualTarget;
-          end
-          if(_zz_3[62]) begin
-            branchTarget_62 <= io_update_payload_actualTarget;
-          end
-          if(_zz_3[63]) begin
-            branchTarget_63 <= io_update_payload_actualTarget;
           end
           if(_zz_4[0]) begin
             branchCounter_0 <= 2'b10;
@@ -6174,880 +4155,398 @@ module OpenLa500Predictor (
           if(_zz_4[31]) begin
             branchCounter_31 <= 2'b10;
           end
-          if(_zz_4[32]) begin
-            branchCounter_32 <= 2'b10;
-          end
-          if(_zz_4[33]) begin
-            branchCounter_33 <= 2'b10;
-          end
-          if(_zz_4[34]) begin
-            branchCounter_34 <= 2'b10;
-          end
-          if(_zz_4[35]) begin
-            branchCounter_35 <= 2'b10;
-          end
-          if(_zz_4[36]) begin
-            branchCounter_36 <= 2'b10;
-          end
-          if(_zz_4[37]) begin
-            branchCounter_37 <= 2'b10;
-          end
-          if(_zz_4[38]) begin
-            branchCounter_38 <= 2'b10;
-          end
-          if(_zz_4[39]) begin
-            branchCounter_39 <= 2'b10;
-          end
-          if(_zz_4[40]) begin
-            branchCounter_40 <= 2'b10;
-          end
-          if(_zz_4[41]) begin
-            branchCounter_41 <= 2'b10;
-          end
-          if(_zz_4[42]) begin
-            branchCounter_42 <= 2'b10;
-          end
-          if(_zz_4[43]) begin
-            branchCounter_43 <= 2'b10;
-          end
-          if(_zz_4[44]) begin
-            branchCounter_44 <= 2'b10;
-          end
-          if(_zz_4[45]) begin
-            branchCounter_45 <= 2'b10;
-          end
-          if(_zz_4[46]) begin
-            branchCounter_46 <= 2'b10;
-          end
-          if(_zz_4[47]) begin
-            branchCounter_47 <= 2'b10;
-          end
-          if(_zz_4[48]) begin
-            branchCounter_48 <= 2'b10;
-          end
-          if(_zz_4[49]) begin
-            branchCounter_49 <= 2'b10;
-          end
-          if(_zz_4[50]) begin
-            branchCounter_50 <= 2'b10;
-          end
-          if(_zz_4[51]) begin
-            branchCounter_51 <= 2'b10;
-          end
-          if(_zz_4[52]) begin
-            branchCounter_52 <= 2'b10;
-          end
-          if(_zz_4[53]) begin
-            branchCounter_53 <= 2'b10;
-          end
-          if(_zz_4[54]) begin
-            branchCounter_54 <= 2'b10;
-          end
-          if(_zz_4[55]) begin
-            branchCounter_55 <= 2'b10;
-          end
-          if(_zz_4[56]) begin
-            branchCounter_56 <= 2'b10;
-          end
-          if(_zz_4[57]) begin
-            branchCounter_57 <= 2'b10;
-          end
-          if(_zz_4[58]) begin
-            branchCounter_58 <= 2'b10;
-          end
-          if(_zz_4[59]) begin
-            branchCounter_59 <= 2'b10;
-          end
-          if(_zz_4[60]) begin
-            branchCounter_60 <= 2'b10;
-          end
-          if(_zz_4[61]) begin
-            branchCounter_61 <= 2'b10;
-          end
-          if(_zz_4[62]) begin
-            branchCounter_62 <= 2'b10;
-          end
-          if(_zz_4[63]) begin
-            branchCounter_63 <= 2'b10;
-          end
         end else begin
-          if(!when_OpenLa500Predictor_l178) begin
-            if(when_OpenLa500Predictor_l180) begin
-              if(_zz_6[0]) begin
-                branchTarget_0 <= io_update_payload_actualTarget;
-              end
-              if(_zz_6[1]) begin
-                branchTarget_1 <= io_update_payload_actualTarget;
-              end
-              if(_zz_6[2]) begin
-                branchTarget_2 <= io_update_payload_actualTarget;
-              end
-              if(_zz_6[3]) begin
-                branchTarget_3 <= io_update_payload_actualTarget;
-              end
-              if(_zz_6[4]) begin
-                branchTarget_4 <= io_update_payload_actualTarget;
-              end
-              if(_zz_6[5]) begin
-                branchTarget_5 <= io_update_payload_actualTarget;
-              end
-              if(_zz_6[6]) begin
-                branchTarget_6 <= io_update_payload_actualTarget;
-              end
-              if(_zz_6[7]) begin
-                branchTarget_7 <= io_update_payload_actualTarget;
-              end
-              if(_zz_6[8]) begin
-                branchTarget_8 <= io_update_payload_actualTarget;
-              end
-              if(_zz_6[9]) begin
-                branchTarget_9 <= io_update_payload_actualTarget;
-              end
-              if(_zz_6[10]) begin
-                branchTarget_10 <= io_update_payload_actualTarget;
-              end
-              if(_zz_6[11]) begin
-                branchTarget_11 <= io_update_payload_actualTarget;
-              end
-              if(_zz_6[12]) begin
-                branchTarget_12 <= io_update_payload_actualTarget;
-              end
-              if(_zz_6[13]) begin
-                branchTarget_13 <= io_update_payload_actualTarget;
-              end
-              if(_zz_6[14]) begin
-                branchTarget_14 <= io_update_payload_actualTarget;
-              end
-              if(_zz_6[15]) begin
-                branchTarget_15 <= io_update_payload_actualTarget;
-              end
-              if(_zz_6[16]) begin
-                branchTarget_16 <= io_update_payload_actualTarget;
-              end
-              if(_zz_6[17]) begin
-                branchTarget_17 <= io_update_payload_actualTarget;
-              end
-              if(_zz_6[18]) begin
-                branchTarget_18 <= io_update_payload_actualTarget;
-              end
-              if(_zz_6[19]) begin
-                branchTarget_19 <= io_update_payload_actualTarget;
-              end
-              if(_zz_6[20]) begin
-                branchTarget_20 <= io_update_payload_actualTarget;
-              end
-              if(_zz_6[21]) begin
-                branchTarget_21 <= io_update_payload_actualTarget;
-              end
-              if(_zz_6[22]) begin
-                branchTarget_22 <= io_update_payload_actualTarget;
-              end
-              if(_zz_6[23]) begin
-                branchTarget_23 <= io_update_payload_actualTarget;
-              end
-              if(_zz_6[24]) begin
-                branchTarget_24 <= io_update_payload_actualTarget;
-              end
-              if(_zz_6[25]) begin
-                branchTarget_25 <= io_update_payload_actualTarget;
-              end
-              if(_zz_6[26]) begin
-                branchTarget_26 <= io_update_payload_actualTarget;
-              end
-              if(_zz_6[27]) begin
-                branchTarget_27 <= io_update_payload_actualTarget;
-              end
-              if(_zz_6[28]) begin
-                branchTarget_28 <= io_update_payload_actualTarget;
-              end
-              if(_zz_6[29]) begin
-                branchTarget_29 <= io_update_payload_actualTarget;
-              end
-              if(_zz_6[30]) begin
-                branchTarget_30 <= io_update_payload_actualTarget;
-              end
-              if(_zz_6[31]) begin
-                branchTarget_31 <= io_update_payload_actualTarget;
-              end
-              if(_zz_6[32]) begin
-                branchTarget_32 <= io_update_payload_actualTarget;
-              end
-              if(_zz_6[33]) begin
-                branchTarget_33 <= io_update_payload_actualTarget;
-              end
-              if(_zz_6[34]) begin
-                branchTarget_34 <= io_update_payload_actualTarget;
-              end
-              if(_zz_6[35]) begin
-                branchTarget_35 <= io_update_payload_actualTarget;
-              end
-              if(_zz_6[36]) begin
-                branchTarget_36 <= io_update_payload_actualTarget;
-              end
-              if(_zz_6[37]) begin
-                branchTarget_37 <= io_update_payload_actualTarget;
-              end
-              if(_zz_6[38]) begin
-                branchTarget_38 <= io_update_payload_actualTarget;
-              end
-              if(_zz_6[39]) begin
-                branchTarget_39 <= io_update_payload_actualTarget;
-              end
-              if(_zz_6[40]) begin
-                branchTarget_40 <= io_update_payload_actualTarget;
-              end
-              if(_zz_6[41]) begin
-                branchTarget_41 <= io_update_payload_actualTarget;
-              end
-              if(_zz_6[42]) begin
-                branchTarget_42 <= io_update_payload_actualTarget;
-              end
-              if(_zz_6[43]) begin
-                branchTarget_43 <= io_update_payload_actualTarget;
-              end
-              if(_zz_6[44]) begin
-                branchTarget_44 <= io_update_payload_actualTarget;
-              end
-              if(_zz_6[45]) begin
-                branchTarget_45 <= io_update_payload_actualTarget;
-              end
-              if(_zz_6[46]) begin
-                branchTarget_46 <= io_update_payload_actualTarget;
-              end
-              if(_zz_6[47]) begin
-                branchTarget_47 <= io_update_payload_actualTarget;
-              end
-              if(_zz_6[48]) begin
-                branchTarget_48 <= io_update_payload_actualTarget;
-              end
-              if(_zz_6[49]) begin
-                branchTarget_49 <= io_update_payload_actualTarget;
-              end
-              if(_zz_6[50]) begin
-                branchTarget_50 <= io_update_payload_actualTarget;
-              end
-              if(_zz_6[51]) begin
-                branchTarget_51 <= io_update_payload_actualTarget;
-              end
-              if(_zz_6[52]) begin
-                branchTarget_52 <= io_update_payload_actualTarget;
-              end
-              if(_zz_6[53]) begin
-                branchTarget_53 <= io_update_payload_actualTarget;
-              end
-              if(_zz_6[54]) begin
-                branchTarget_54 <= io_update_payload_actualTarget;
-              end
-              if(_zz_6[55]) begin
-                branchTarget_55 <= io_update_payload_actualTarget;
-              end
-              if(_zz_6[56]) begin
-                branchTarget_56 <= io_update_payload_actualTarget;
-              end
-              if(_zz_6[57]) begin
-                branchTarget_57 <= io_update_payload_actualTarget;
-              end
-              if(_zz_6[58]) begin
-                branchTarget_58 <= io_update_payload_actualTarget;
-              end
-              if(_zz_6[59]) begin
-                branchTarget_59 <= io_update_payload_actualTarget;
-              end
-              if(_zz_6[60]) begin
-                branchTarget_60 <= io_update_payload_actualTarget;
-              end
-              if(_zz_6[61]) begin
-                branchTarget_61 <= io_update_payload_actualTarget;
-              end
-              if(_zz_6[62]) begin
-                branchTarget_62 <= io_update_payload_actualTarget;
-              end
-              if(_zz_6[63]) begin
-                branchTarget_63 <= io_update_payload_actualTarget;
-              end
-              if(_zz_8) begin
-                branchCounter_0 <= 2'b10;
-              end
-              if(_zz_9) begin
-                branchCounter_1 <= 2'b10;
-              end
-              if(_zz_10) begin
-                branchCounter_2 <= 2'b10;
-              end
-              if(_zz_11) begin
-                branchCounter_3 <= 2'b10;
-              end
-              if(_zz_12) begin
-                branchCounter_4 <= 2'b10;
-              end
-              if(_zz_13) begin
-                branchCounter_5 <= 2'b10;
-              end
-              if(_zz_14) begin
-                branchCounter_6 <= 2'b10;
-              end
-              if(_zz_15) begin
-                branchCounter_7 <= 2'b10;
-              end
-              if(_zz_16) begin
-                branchCounter_8 <= 2'b10;
-              end
-              if(_zz_17) begin
-                branchCounter_9 <= 2'b10;
-              end
-              if(_zz_18) begin
-                branchCounter_10 <= 2'b10;
-              end
-              if(_zz_19) begin
-                branchCounter_11 <= 2'b10;
-              end
-              if(_zz_20) begin
-                branchCounter_12 <= 2'b10;
-              end
-              if(_zz_21) begin
-                branchCounter_13 <= 2'b10;
-              end
-              if(_zz_22) begin
-                branchCounter_14 <= 2'b10;
-              end
-              if(_zz_23) begin
-                branchCounter_15 <= 2'b10;
-              end
-              if(_zz_24) begin
-                branchCounter_16 <= 2'b10;
-              end
-              if(_zz_25) begin
-                branchCounter_17 <= 2'b10;
-              end
-              if(_zz_26) begin
-                branchCounter_18 <= 2'b10;
-              end
-              if(_zz_27) begin
-                branchCounter_19 <= 2'b10;
-              end
-              if(_zz_28) begin
-                branchCounter_20 <= 2'b10;
-              end
-              if(_zz_29) begin
-                branchCounter_21 <= 2'b10;
-              end
-              if(_zz_30) begin
-                branchCounter_22 <= 2'b10;
-              end
-              if(_zz_31) begin
-                branchCounter_23 <= 2'b10;
-              end
-              if(_zz_32) begin
-                branchCounter_24 <= 2'b10;
-              end
-              if(_zz_33) begin
-                branchCounter_25 <= 2'b10;
-              end
-              if(_zz_34) begin
-                branchCounter_26 <= 2'b10;
-              end
-              if(_zz_35) begin
-                branchCounter_27 <= 2'b10;
-              end
-              if(_zz_36) begin
-                branchCounter_28 <= 2'b10;
-              end
-              if(_zz_37) begin
-                branchCounter_29 <= 2'b10;
-              end
-              if(_zz_38) begin
-                branchCounter_30 <= 2'b10;
-              end
-              if(_zz_39) begin
-                branchCounter_31 <= 2'b10;
-              end
-              if(_zz_40) begin
-                branchCounter_32 <= 2'b10;
-              end
-              if(_zz_41) begin
-                branchCounter_33 <= 2'b10;
-              end
-              if(_zz_42) begin
-                branchCounter_34 <= 2'b10;
-              end
-              if(_zz_43) begin
-                branchCounter_35 <= 2'b10;
-              end
-              if(_zz_44) begin
-                branchCounter_36 <= 2'b10;
-              end
-              if(_zz_45) begin
-                branchCounter_37 <= 2'b10;
-              end
-              if(_zz_46) begin
-                branchCounter_38 <= 2'b10;
-              end
-              if(_zz_47) begin
-                branchCounter_39 <= 2'b10;
-              end
-              if(_zz_48) begin
-                branchCounter_40 <= 2'b10;
-              end
-              if(_zz_49) begin
-                branchCounter_41 <= 2'b10;
-              end
-              if(_zz_50) begin
-                branchCounter_42 <= 2'b10;
-              end
-              if(_zz_51) begin
-                branchCounter_43 <= 2'b10;
-              end
-              if(_zz_52) begin
-                branchCounter_44 <= 2'b10;
-              end
-              if(_zz_53) begin
-                branchCounter_45 <= 2'b10;
-              end
-              if(_zz_54) begin
-                branchCounter_46 <= 2'b10;
-              end
-              if(_zz_55) begin
-                branchCounter_47 <= 2'b10;
-              end
-              if(_zz_56) begin
-                branchCounter_48 <= 2'b10;
-              end
-              if(_zz_57) begin
-                branchCounter_49 <= 2'b10;
-              end
-              if(_zz_58) begin
-                branchCounter_50 <= 2'b10;
-              end
-              if(_zz_59) begin
-                branchCounter_51 <= 2'b10;
-              end
-              if(_zz_60) begin
-                branchCounter_52 <= 2'b10;
-              end
-              if(_zz_61) begin
-                branchCounter_53 <= 2'b10;
-              end
-              if(_zz_62) begin
-                branchCounter_54 <= 2'b10;
-              end
-              if(_zz_63) begin
-                branchCounter_55 <= 2'b10;
-              end
-              if(_zz_64) begin
-                branchCounter_56 <= 2'b10;
-              end
-              if(_zz_65) begin
-                branchCounter_57 <= 2'b10;
-              end
-              if(_zz_66) begin
-                branchCounter_58 <= 2'b10;
-              end
-              if(_zz_67) begin
-                branchCounter_59 <= 2'b10;
-              end
-              if(_zz_68) begin
-                branchCounter_60 <= 2'b10;
-              end
-              if(_zz_69) begin
-                branchCounter_61 <= 2'b10;
-              end
-              if(_zz_70) begin
-                branchCounter_62 <= 2'b10;
-              end
-              if(_zz_71) begin
-                branchCounter_63 <= 2'b10;
-              end
-            end else begin
-              if(when_OpenLa500Predictor_l185) begin
-                if(io_update_payload_actualTaken) begin
-                  if(when_OpenLa500Predictor_l187) begin
-                    if(_zz_8) begin
-                      branchCounter_0 <= _zz_branchCounter_0;
-                    end
-                    if(_zz_9) begin
-                      branchCounter_1 <= _zz_branchCounter_0;
-                    end
-                    if(_zz_10) begin
-                      branchCounter_2 <= _zz_branchCounter_0;
-                    end
-                    if(_zz_11) begin
-                      branchCounter_3 <= _zz_branchCounter_0;
-                    end
-                    if(_zz_12) begin
-                      branchCounter_4 <= _zz_branchCounter_0;
-                    end
-                    if(_zz_13) begin
-                      branchCounter_5 <= _zz_branchCounter_0;
-                    end
-                    if(_zz_14) begin
-                      branchCounter_6 <= _zz_branchCounter_0;
-                    end
-                    if(_zz_15) begin
-                      branchCounter_7 <= _zz_branchCounter_0;
-                    end
-                    if(_zz_16) begin
-                      branchCounter_8 <= _zz_branchCounter_0;
-                    end
-                    if(_zz_17) begin
-                      branchCounter_9 <= _zz_branchCounter_0;
-                    end
-                    if(_zz_18) begin
-                      branchCounter_10 <= _zz_branchCounter_0;
-                    end
-                    if(_zz_19) begin
-                      branchCounter_11 <= _zz_branchCounter_0;
-                    end
-                    if(_zz_20) begin
-                      branchCounter_12 <= _zz_branchCounter_0;
-                    end
-                    if(_zz_21) begin
-                      branchCounter_13 <= _zz_branchCounter_0;
-                    end
-                    if(_zz_22) begin
-                      branchCounter_14 <= _zz_branchCounter_0;
-                    end
-                    if(_zz_23) begin
-                      branchCounter_15 <= _zz_branchCounter_0;
-                    end
-                    if(_zz_24) begin
-                      branchCounter_16 <= _zz_branchCounter_0;
-                    end
-                    if(_zz_25) begin
-                      branchCounter_17 <= _zz_branchCounter_0;
-                    end
-                    if(_zz_26) begin
-                      branchCounter_18 <= _zz_branchCounter_0;
-                    end
-                    if(_zz_27) begin
-                      branchCounter_19 <= _zz_branchCounter_0;
-                    end
-                    if(_zz_28) begin
-                      branchCounter_20 <= _zz_branchCounter_0;
-                    end
-                    if(_zz_29) begin
-                      branchCounter_21 <= _zz_branchCounter_0;
-                    end
-                    if(_zz_30) begin
-                      branchCounter_22 <= _zz_branchCounter_0;
-                    end
-                    if(_zz_31) begin
-                      branchCounter_23 <= _zz_branchCounter_0;
-                    end
-                    if(_zz_32) begin
-                      branchCounter_24 <= _zz_branchCounter_0;
-                    end
-                    if(_zz_33) begin
-                      branchCounter_25 <= _zz_branchCounter_0;
-                    end
-                    if(_zz_34) begin
-                      branchCounter_26 <= _zz_branchCounter_0;
-                    end
-                    if(_zz_35) begin
-                      branchCounter_27 <= _zz_branchCounter_0;
-                    end
-                    if(_zz_36) begin
-                      branchCounter_28 <= _zz_branchCounter_0;
-                    end
-                    if(_zz_37) begin
-                      branchCounter_29 <= _zz_branchCounter_0;
-                    end
-                    if(_zz_38) begin
-                      branchCounter_30 <= _zz_branchCounter_0;
-                    end
-                    if(_zz_39) begin
-                      branchCounter_31 <= _zz_branchCounter_0;
-                    end
-                    if(_zz_40) begin
-                      branchCounter_32 <= _zz_branchCounter_0;
-                    end
-                    if(_zz_41) begin
-                      branchCounter_33 <= _zz_branchCounter_0;
-                    end
-                    if(_zz_42) begin
-                      branchCounter_34 <= _zz_branchCounter_0;
-                    end
-                    if(_zz_43) begin
-                      branchCounter_35 <= _zz_branchCounter_0;
-                    end
-                    if(_zz_44) begin
-                      branchCounter_36 <= _zz_branchCounter_0;
-                    end
-                    if(_zz_45) begin
-                      branchCounter_37 <= _zz_branchCounter_0;
-                    end
-                    if(_zz_46) begin
-                      branchCounter_38 <= _zz_branchCounter_0;
-                    end
-                    if(_zz_47) begin
-                      branchCounter_39 <= _zz_branchCounter_0;
-                    end
-                    if(_zz_48) begin
-                      branchCounter_40 <= _zz_branchCounter_0;
-                    end
-                    if(_zz_49) begin
-                      branchCounter_41 <= _zz_branchCounter_0;
-                    end
-                    if(_zz_50) begin
-                      branchCounter_42 <= _zz_branchCounter_0;
-                    end
-                    if(_zz_51) begin
-                      branchCounter_43 <= _zz_branchCounter_0;
-                    end
-                    if(_zz_52) begin
-                      branchCounter_44 <= _zz_branchCounter_0;
-                    end
-                    if(_zz_53) begin
-                      branchCounter_45 <= _zz_branchCounter_0;
-                    end
-                    if(_zz_54) begin
-                      branchCounter_46 <= _zz_branchCounter_0;
-                    end
-                    if(_zz_55) begin
-                      branchCounter_47 <= _zz_branchCounter_0;
-                    end
-                    if(_zz_56) begin
-                      branchCounter_48 <= _zz_branchCounter_0;
-                    end
-                    if(_zz_57) begin
-                      branchCounter_49 <= _zz_branchCounter_0;
-                    end
-                    if(_zz_58) begin
-                      branchCounter_50 <= _zz_branchCounter_0;
-                    end
-                    if(_zz_59) begin
-                      branchCounter_51 <= _zz_branchCounter_0;
-                    end
-                    if(_zz_60) begin
-                      branchCounter_52 <= _zz_branchCounter_0;
-                    end
-                    if(_zz_61) begin
-                      branchCounter_53 <= _zz_branchCounter_0;
-                    end
-                    if(_zz_62) begin
-                      branchCounter_54 <= _zz_branchCounter_0;
-                    end
-                    if(_zz_63) begin
-                      branchCounter_55 <= _zz_branchCounter_0;
-                    end
-                    if(_zz_64) begin
-                      branchCounter_56 <= _zz_branchCounter_0;
-                    end
-                    if(_zz_65) begin
-                      branchCounter_57 <= _zz_branchCounter_0;
-                    end
-                    if(_zz_66) begin
-                      branchCounter_58 <= _zz_branchCounter_0;
-                    end
-                    if(_zz_67) begin
-                      branchCounter_59 <= _zz_branchCounter_0;
-                    end
-                    if(_zz_68) begin
-                      branchCounter_60 <= _zz_branchCounter_0;
-                    end
-                    if(_zz_69) begin
-                      branchCounter_61 <= _zz_branchCounter_0;
-                    end
-                    if(_zz_70) begin
-                      branchCounter_62 <= _zz_branchCounter_0;
-                    end
-                    if(_zz_71) begin
-                      branchCounter_63 <= _zz_branchCounter_0;
-                    end
+          if(io_update_payload_targetError) begin
+            if(_zz_5[0]) begin
+              branchTarget_0 <= io_update_payload_actualTarget;
+            end
+            if(_zz_5[1]) begin
+              branchTarget_1 <= io_update_payload_actualTarget;
+            end
+            if(_zz_5[2]) begin
+              branchTarget_2 <= io_update_payload_actualTarget;
+            end
+            if(_zz_5[3]) begin
+              branchTarget_3 <= io_update_payload_actualTarget;
+            end
+            if(_zz_5[4]) begin
+              branchTarget_4 <= io_update_payload_actualTarget;
+            end
+            if(_zz_5[5]) begin
+              branchTarget_5 <= io_update_payload_actualTarget;
+            end
+            if(_zz_5[6]) begin
+              branchTarget_6 <= io_update_payload_actualTarget;
+            end
+            if(_zz_5[7]) begin
+              branchTarget_7 <= io_update_payload_actualTarget;
+            end
+            if(_zz_5[8]) begin
+              branchTarget_8 <= io_update_payload_actualTarget;
+            end
+            if(_zz_5[9]) begin
+              branchTarget_9 <= io_update_payload_actualTarget;
+            end
+            if(_zz_5[10]) begin
+              branchTarget_10 <= io_update_payload_actualTarget;
+            end
+            if(_zz_5[11]) begin
+              branchTarget_11 <= io_update_payload_actualTarget;
+            end
+            if(_zz_5[12]) begin
+              branchTarget_12 <= io_update_payload_actualTarget;
+            end
+            if(_zz_5[13]) begin
+              branchTarget_13 <= io_update_payload_actualTarget;
+            end
+            if(_zz_5[14]) begin
+              branchTarget_14 <= io_update_payload_actualTarget;
+            end
+            if(_zz_5[15]) begin
+              branchTarget_15 <= io_update_payload_actualTarget;
+            end
+            if(_zz_5[16]) begin
+              branchTarget_16 <= io_update_payload_actualTarget;
+            end
+            if(_zz_5[17]) begin
+              branchTarget_17 <= io_update_payload_actualTarget;
+            end
+            if(_zz_5[18]) begin
+              branchTarget_18 <= io_update_payload_actualTarget;
+            end
+            if(_zz_5[19]) begin
+              branchTarget_19 <= io_update_payload_actualTarget;
+            end
+            if(_zz_5[20]) begin
+              branchTarget_20 <= io_update_payload_actualTarget;
+            end
+            if(_zz_5[21]) begin
+              branchTarget_21 <= io_update_payload_actualTarget;
+            end
+            if(_zz_5[22]) begin
+              branchTarget_22 <= io_update_payload_actualTarget;
+            end
+            if(_zz_5[23]) begin
+              branchTarget_23 <= io_update_payload_actualTarget;
+            end
+            if(_zz_5[24]) begin
+              branchTarget_24 <= io_update_payload_actualTarget;
+            end
+            if(_zz_5[25]) begin
+              branchTarget_25 <= io_update_payload_actualTarget;
+            end
+            if(_zz_5[26]) begin
+              branchTarget_26 <= io_update_payload_actualTarget;
+            end
+            if(_zz_5[27]) begin
+              branchTarget_27 <= io_update_payload_actualTarget;
+            end
+            if(_zz_5[28]) begin
+              branchTarget_28 <= io_update_payload_actualTarget;
+            end
+            if(_zz_5[29]) begin
+              branchTarget_29 <= io_update_payload_actualTarget;
+            end
+            if(_zz_5[30]) begin
+              branchTarget_30 <= io_update_payload_actualTarget;
+            end
+            if(_zz_5[31]) begin
+              branchTarget_31 <= io_update_payload_actualTarget;
+            end
+            if(_zz_7) begin
+              branchCounter_0 <= 2'b10;
+            end
+            if(_zz_8) begin
+              branchCounter_1 <= 2'b10;
+            end
+            if(_zz_9) begin
+              branchCounter_2 <= 2'b10;
+            end
+            if(_zz_10) begin
+              branchCounter_3 <= 2'b10;
+            end
+            if(_zz_11) begin
+              branchCounter_4 <= 2'b10;
+            end
+            if(_zz_12) begin
+              branchCounter_5 <= 2'b10;
+            end
+            if(_zz_13) begin
+              branchCounter_6 <= 2'b10;
+            end
+            if(_zz_14) begin
+              branchCounter_7 <= 2'b10;
+            end
+            if(_zz_15) begin
+              branchCounter_8 <= 2'b10;
+            end
+            if(_zz_16) begin
+              branchCounter_9 <= 2'b10;
+            end
+            if(_zz_17) begin
+              branchCounter_10 <= 2'b10;
+            end
+            if(_zz_18) begin
+              branchCounter_11 <= 2'b10;
+            end
+            if(_zz_19) begin
+              branchCounter_12 <= 2'b10;
+            end
+            if(_zz_20) begin
+              branchCounter_13 <= 2'b10;
+            end
+            if(_zz_21) begin
+              branchCounter_14 <= 2'b10;
+            end
+            if(_zz_22) begin
+              branchCounter_15 <= 2'b10;
+            end
+            if(_zz_23) begin
+              branchCounter_16 <= 2'b10;
+            end
+            if(_zz_24) begin
+              branchCounter_17 <= 2'b10;
+            end
+            if(_zz_25) begin
+              branchCounter_18 <= 2'b10;
+            end
+            if(_zz_26) begin
+              branchCounter_19 <= 2'b10;
+            end
+            if(_zz_27) begin
+              branchCounter_20 <= 2'b10;
+            end
+            if(_zz_28) begin
+              branchCounter_21 <= 2'b10;
+            end
+            if(_zz_29) begin
+              branchCounter_22 <= 2'b10;
+            end
+            if(_zz_30) begin
+              branchCounter_23 <= 2'b10;
+            end
+            if(_zz_31) begin
+              branchCounter_24 <= 2'b10;
+            end
+            if(_zz_32) begin
+              branchCounter_25 <= 2'b10;
+            end
+            if(_zz_33) begin
+              branchCounter_26 <= 2'b10;
+            end
+            if(_zz_34) begin
+              branchCounter_27 <= 2'b10;
+            end
+            if(_zz_35) begin
+              branchCounter_28 <= 2'b10;
+            end
+            if(_zz_36) begin
+              branchCounter_29 <= 2'b10;
+            end
+            if(_zz_37) begin
+              branchCounter_30 <= 2'b10;
+            end
+            if(_zz_38) begin
+              branchCounter_31 <= 2'b10;
+            end
+          end else begin
+            if(when_OpenLa500Predictor_l168) begin
+              if(io_update_payload_actualTaken) begin
+                if(when_OpenLa500Predictor_l170) begin
+                  if(_zz_7) begin
+                    branchCounter_0 <= _zz_branchCounter_0;
                   end
-                end else begin
-                  if(when_OpenLa500Predictor_l191) begin
-                    if(_zz_8) begin
-                      branchCounter_0 <= _zz_branchCounter_0_1;
-                    end
-                    if(_zz_9) begin
-                      branchCounter_1 <= _zz_branchCounter_0_1;
-                    end
-                    if(_zz_10) begin
-                      branchCounter_2 <= _zz_branchCounter_0_1;
-                    end
-                    if(_zz_11) begin
-                      branchCounter_3 <= _zz_branchCounter_0_1;
-                    end
-                    if(_zz_12) begin
-                      branchCounter_4 <= _zz_branchCounter_0_1;
-                    end
-                    if(_zz_13) begin
-                      branchCounter_5 <= _zz_branchCounter_0_1;
-                    end
-                    if(_zz_14) begin
-                      branchCounter_6 <= _zz_branchCounter_0_1;
-                    end
-                    if(_zz_15) begin
-                      branchCounter_7 <= _zz_branchCounter_0_1;
-                    end
-                    if(_zz_16) begin
-                      branchCounter_8 <= _zz_branchCounter_0_1;
-                    end
-                    if(_zz_17) begin
-                      branchCounter_9 <= _zz_branchCounter_0_1;
-                    end
-                    if(_zz_18) begin
-                      branchCounter_10 <= _zz_branchCounter_0_1;
-                    end
-                    if(_zz_19) begin
-                      branchCounter_11 <= _zz_branchCounter_0_1;
-                    end
-                    if(_zz_20) begin
-                      branchCounter_12 <= _zz_branchCounter_0_1;
-                    end
-                    if(_zz_21) begin
-                      branchCounter_13 <= _zz_branchCounter_0_1;
-                    end
-                    if(_zz_22) begin
-                      branchCounter_14 <= _zz_branchCounter_0_1;
-                    end
-                    if(_zz_23) begin
-                      branchCounter_15 <= _zz_branchCounter_0_1;
-                    end
-                    if(_zz_24) begin
-                      branchCounter_16 <= _zz_branchCounter_0_1;
-                    end
-                    if(_zz_25) begin
-                      branchCounter_17 <= _zz_branchCounter_0_1;
-                    end
-                    if(_zz_26) begin
-                      branchCounter_18 <= _zz_branchCounter_0_1;
-                    end
-                    if(_zz_27) begin
-                      branchCounter_19 <= _zz_branchCounter_0_1;
-                    end
-                    if(_zz_28) begin
-                      branchCounter_20 <= _zz_branchCounter_0_1;
-                    end
-                    if(_zz_29) begin
-                      branchCounter_21 <= _zz_branchCounter_0_1;
-                    end
-                    if(_zz_30) begin
-                      branchCounter_22 <= _zz_branchCounter_0_1;
-                    end
-                    if(_zz_31) begin
-                      branchCounter_23 <= _zz_branchCounter_0_1;
-                    end
-                    if(_zz_32) begin
-                      branchCounter_24 <= _zz_branchCounter_0_1;
-                    end
-                    if(_zz_33) begin
-                      branchCounter_25 <= _zz_branchCounter_0_1;
-                    end
-                    if(_zz_34) begin
-                      branchCounter_26 <= _zz_branchCounter_0_1;
-                    end
-                    if(_zz_35) begin
-                      branchCounter_27 <= _zz_branchCounter_0_1;
-                    end
-                    if(_zz_36) begin
-                      branchCounter_28 <= _zz_branchCounter_0_1;
-                    end
-                    if(_zz_37) begin
-                      branchCounter_29 <= _zz_branchCounter_0_1;
-                    end
-                    if(_zz_38) begin
-                      branchCounter_30 <= _zz_branchCounter_0_1;
-                    end
-                    if(_zz_39) begin
-                      branchCounter_31 <= _zz_branchCounter_0_1;
-                    end
-                    if(_zz_40) begin
-                      branchCounter_32 <= _zz_branchCounter_0_1;
-                    end
-                    if(_zz_41) begin
-                      branchCounter_33 <= _zz_branchCounter_0_1;
-                    end
-                    if(_zz_42) begin
-                      branchCounter_34 <= _zz_branchCounter_0_1;
-                    end
-                    if(_zz_43) begin
-                      branchCounter_35 <= _zz_branchCounter_0_1;
-                    end
-                    if(_zz_44) begin
-                      branchCounter_36 <= _zz_branchCounter_0_1;
-                    end
-                    if(_zz_45) begin
-                      branchCounter_37 <= _zz_branchCounter_0_1;
-                    end
-                    if(_zz_46) begin
-                      branchCounter_38 <= _zz_branchCounter_0_1;
-                    end
-                    if(_zz_47) begin
-                      branchCounter_39 <= _zz_branchCounter_0_1;
-                    end
-                    if(_zz_48) begin
-                      branchCounter_40 <= _zz_branchCounter_0_1;
-                    end
-                    if(_zz_49) begin
-                      branchCounter_41 <= _zz_branchCounter_0_1;
-                    end
-                    if(_zz_50) begin
-                      branchCounter_42 <= _zz_branchCounter_0_1;
-                    end
-                    if(_zz_51) begin
-                      branchCounter_43 <= _zz_branchCounter_0_1;
-                    end
-                    if(_zz_52) begin
-                      branchCounter_44 <= _zz_branchCounter_0_1;
-                    end
-                    if(_zz_53) begin
-                      branchCounter_45 <= _zz_branchCounter_0_1;
-                    end
-                    if(_zz_54) begin
-                      branchCounter_46 <= _zz_branchCounter_0_1;
-                    end
-                    if(_zz_55) begin
-                      branchCounter_47 <= _zz_branchCounter_0_1;
-                    end
-                    if(_zz_56) begin
-                      branchCounter_48 <= _zz_branchCounter_0_1;
-                    end
-                    if(_zz_57) begin
-                      branchCounter_49 <= _zz_branchCounter_0_1;
-                    end
-                    if(_zz_58) begin
-                      branchCounter_50 <= _zz_branchCounter_0_1;
-                    end
-                    if(_zz_59) begin
-                      branchCounter_51 <= _zz_branchCounter_0_1;
-                    end
-                    if(_zz_60) begin
-                      branchCounter_52 <= _zz_branchCounter_0_1;
-                    end
-                    if(_zz_61) begin
-                      branchCounter_53 <= _zz_branchCounter_0_1;
-                    end
-                    if(_zz_62) begin
-                      branchCounter_54 <= _zz_branchCounter_0_1;
-                    end
-                    if(_zz_63) begin
-                      branchCounter_55 <= _zz_branchCounter_0_1;
-                    end
-                    if(_zz_64) begin
-                      branchCounter_56 <= _zz_branchCounter_0_1;
-                    end
-                    if(_zz_65) begin
-                      branchCounter_57 <= _zz_branchCounter_0_1;
-                    end
-                    if(_zz_66) begin
-                      branchCounter_58 <= _zz_branchCounter_0_1;
-                    end
-                    if(_zz_67) begin
-                      branchCounter_59 <= _zz_branchCounter_0_1;
-                    end
-                    if(_zz_68) begin
-                      branchCounter_60 <= _zz_branchCounter_0_1;
-                    end
-                    if(_zz_69) begin
-                      branchCounter_61 <= _zz_branchCounter_0_1;
-                    end
-                    if(_zz_70) begin
-                      branchCounter_62 <= _zz_branchCounter_0_1;
-                    end
-                    if(_zz_71) begin
-                      branchCounter_63 <= _zz_branchCounter_0_1;
-                    end
+                  if(_zz_8) begin
+                    branchCounter_1 <= _zz_branchCounter_0;
+                  end
+                  if(_zz_9) begin
+                    branchCounter_2 <= _zz_branchCounter_0;
+                  end
+                  if(_zz_10) begin
+                    branchCounter_3 <= _zz_branchCounter_0;
+                  end
+                  if(_zz_11) begin
+                    branchCounter_4 <= _zz_branchCounter_0;
+                  end
+                  if(_zz_12) begin
+                    branchCounter_5 <= _zz_branchCounter_0;
+                  end
+                  if(_zz_13) begin
+                    branchCounter_6 <= _zz_branchCounter_0;
+                  end
+                  if(_zz_14) begin
+                    branchCounter_7 <= _zz_branchCounter_0;
+                  end
+                  if(_zz_15) begin
+                    branchCounter_8 <= _zz_branchCounter_0;
+                  end
+                  if(_zz_16) begin
+                    branchCounter_9 <= _zz_branchCounter_0;
+                  end
+                  if(_zz_17) begin
+                    branchCounter_10 <= _zz_branchCounter_0;
+                  end
+                  if(_zz_18) begin
+                    branchCounter_11 <= _zz_branchCounter_0;
+                  end
+                  if(_zz_19) begin
+                    branchCounter_12 <= _zz_branchCounter_0;
+                  end
+                  if(_zz_20) begin
+                    branchCounter_13 <= _zz_branchCounter_0;
+                  end
+                  if(_zz_21) begin
+                    branchCounter_14 <= _zz_branchCounter_0;
+                  end
+                  if(_zz_22) begin
+                    branchCounter_15 <= _zz_branchCounter_0;
+                  end
+                  if(_zz_23) begin
+                    branchCounter_16 <= _zz_branchCounter_0;
+                  end
+                  if(_zz_24) begin
+                    branchCounter_17 <= _zz_branchCounter_0;
+                  end
+                  if(_zz_25) begin
+                    branchCounter_18 <= _zz_branchCounter_0;
+                  end
+                  if(_zz_26) begin
+                    branchCounter_19 <= _zz_branchCounter_0;
+                  end
+                  if(_zz_27) begin
+                    branchCounter_20 <= _zz_branchCounter_0;
+                  end
+                  if(_zz_28) begin
+                    branchCounter_21 <= _zz_branchCounter_0;
+                  end
+                  if(_zz_29) begin
+                    branchCounter_22 <= _zz_branchCounter_0;
+                  end
+                  if(_zz_30) begin
+                    branchCounter_23 <= _zz_branchCounter_0;
+                  end
+                  if(_zz_31) begin
+                    branchCounter_24 <= _zz_branchCounter_0;
+                  end
+                  if(_zz_32) begin
+                    branchCounter_25 <= _zz_branchCounter_0;
+                  end
+                  if(_zz_33) begin
+                    branchCounter_26 <= _zz_branchCounter_0;
+                  end
+                  if(_zz_34) begin
+                    branchCounter_27 <= _zz_branchCounter_0;
+                  end
+                  if(_zz_35) begin
+                    branchCounter_28 <= _zz_branchCounter_0;
+                  end
+                  if(_zz_36) begin
+                    branchCounter_29 <= _zz_branchCounter_0;
+                  end
+                  if(_zz_37) begin
+                    branchCounter_30 <= _zz_branchCounter_0;
+                  end
+                  if(_zz_38) begin
+                    branchCounter_31 <= _zz_branchCounter_0;
+                  end
+                end
+              end else begin
+                if(when_OpenLa500Predictor_l175) begin
+                  if(_zz_7) begin
+                    branchCounter_0 <= _zz_branchCounter_0_1;
+                  end
+                  if(_zz_8) begin
+                    branchCounter_1 <= _zz_branchCounter_0_1;
+                  end
+                  if(_zz_9) begin
+                    branchCounter_2 <= _zz_branchCounter_0_1;
+                  end
+                  if(_zz_10) begin
+                    branchCounter_3 <= _zz_branchCounter_0_1;
+                  end
+                  if(_zz_11) begin
+                    branchCounter_4 <= _zz_branchCounter_0_1;
+                  end
+                  if(_zz_12) begin
+                    branchCounter_5 <= _zz_branchCounter_0_1;
+                  end
+                  if(_zz_13) begin
+                    branchCounter_6 <= _zz_branchCounter_0_1;
+                  end
+                  if(_zz_14) begin
+                    branchCounter_7 <= _zz_branchCounter_0_1;
+                  end
+                  if(_zz_15) begin
+                    branchCounter_8 <= _zz_branchCounter_0_1;
+                  end
+                  if(_zz_16) begin
+                    branchCounter_9 <= _zz_branchCounter_0_1;
+                  end
+                  if(_zz_17) begin
+                    branchCounter_10 <= _zz_branchCounter_0_1;
+                  end
+                  if(_zz_18) begin
+                    branchCounter_11 <= _zz_branchCounter_0_1;
+                  end
+                  if(_zz_19) begin
+                    branchCounter_12 <= _zz_branchCounter_0_1;
+                  end
+                  if(_zz_20) begin
+                    branchCounter_13 <= _zz_branchCounter_0_1;
+                  end
+                  if(_zz_21) begin
+                    branchCounter_14 <= _zz_branchCounter_0_1;
+                  end
+                  if(_zz_22) begin
+                    branchCounter_15 <= _zz_branchCounter_0_1;
+                  end
+                  if(_zz_23) begin
+                    branchCounter_16 <= _zz_branchCounter_0_1;
+                  end
+                  if(_zz_24) begin
+                    branchCounter_17 <= _zz_branchCounter_0_1;
+                  end
+                  if(_zz_25) begin
+                    branchCounter_18 <= _zz_branchCounter_0_1;
+                  end
+                  if(_zz_26) begin
+                    branchCounter_19 <= _zz_branchCounter_0_1;
+                  end
+                  if(_zz_27) begin
+                    branchCounter_20 <= _zz_branchCounter_0_1;
+                  end
+                  if(_zz_28) begin
+                    branchCounter_21 <= _zz_branchCounter_0_1;
+                  end
+                  if(_zz_29) begin
+                    branchCounter_22 <= _zz_branchCounter_0_1;
+                  end
+                  if(_zz_30) begin
+                    branchCounter_23 <= _zz_branchCounter_0_1;
+                  end
+                  if(_zz_31) begin
+                    branchCounter_24 <= _zz_branchCounter_0_1;
+                  end
+                  if(_zz_32) begin
+                    branchCounter_25 <= _zz_branchCounter_0_1;
+                  end
+                  if(_zz_33) begin
+                    branchCounter_26 <= _zz_branchCounter_0_1;
+                  end
+                  if(_zz_34) begin
+                    branchCounter_27 <= _zz_branchCounter_0_1;
+                  end
+                  if(_zz_35) begin
+                    branchCounter_28 <= _zz_branchCounter_0_1;
+                  end
+                  if(_zz_36) begin
+                    branchCounter_29 <= _zz_branchCounter_0_1;
+                  end
+                  if(_zz_37) begin
+                    branchCounter_30 <= _zz_branchCounter_0_1;
+                  end
+                  if(_zz_38) begin
+                    branchCounter_31 <= _zz_branchCounter_0_1;
                   end
                 end
               end
@@ -7056,79 +4555,79 @@ module OpenLa500Predictor (
         end
       end else begin
         if(io_update_payload_addEntry) begin
-          if(_zz_73[0]) begin
+          if(_zz_40[0]) begin
             returnSitePc_0 <= io_update_payload_pc;
           end
-          if(_zz_73[1]) begin
+          if(_zz_40[1]) begin
             returnSitePc_1 <= io_update_payload_pc;
           end
-          if(_zz_73[2]) begin
+          if(_zz_40[2]) begin
             returnSitePc_2 <= io_update_payload_pc;
           end
-          if(_zz_73[3]) begin
+          if(_zz_40[3]) begin
             returnSitePc_3 <= io_update_payload_pc;
           end
-          if(_zz_73[4]) begin
+          if(_zz_40[4]) begin
             returnSitePc_4 <= io_update_payload_pc;
           end
-          if(_zz_73[5]) begin
+          if(_zz_40[5]) begin
             returnSitePc_5 <= io_update_payload_pc;
           end
-          if(_zz_73[6]) begin
+          if(_zz_40[6]) begin
             returnSitePc_6 <= io_update_payload_pc;
           end
-          if(_zz_73[7]) begin
+          if(_zz_40[7]) begin
             returnSitePc_7 <= io_update_payload_pc;
           end
-          if(_zz_73[8]) begin
+          if(_zz_40[8]) begin
             returnSitePc_8 <= io_update_payload_pc;
           end
-          if(_zz_73[9]) begin
+          if(_zz_40[9]) begin
             returnSitePc_9 <= io_update_payload_pc;
           end
-          if(_zz_73[10]) begin
+          if(_zz_40[10]) begin
             returnSitePc_10 <= io_update_payload_pc;
           end
-          if(_zz_73[11]) begin
+          if(_zz_40[11]) begin
             returnSitePc_11 <= io_update_payload_pc;
           end
-          if(_zz_73[12]) begin
+          if(_zz_40[12]) begin
             returnSitePc_12 <= io_update_payload_pc;
           end
-          if(_zz_73[13]) begin
+          if(_zz_40[13]) begin
             returnSitePc_13 <= io_update_payload_pc;
           end
-          if(_zz_73[14]) begin
+          if(_zz_40[14]) begin
             returnSitePc_14 <= io_update_payload_pc;
           end
-          if(_zz_73[15]) begin
+          if(_zz_40[15]) begin
             returnSitePc_15 <= io_update_payload_pc;
           end
         end
       end
-      if(when_OpenLa500Predictor_l203) begin
-        if(_zz_74[0]) begin
+      if(when_OpenLa500Predictor_l188) begin
+        if(_zz_41[0]) begin
           returnStack_0 <= _zz_returnStack_0;
         end
-        if(_zz_74[1]) begin
+        if(_zz_41[1]) begin
           returnStack_1 <= _zz_returnStack_0;
         end
-        if(_zz_74[2]) begin
+        if(_zz_41[2]) begin
           returnStack_2 <= _zz_returnStack_0;
         end
-        if(_zz_74[3]) begin
+        if(_zz_41[3]) begin
           returnStack_3 <= _zz_returnStack_0;
         end
-        if(_zz_74[4]) begin
+        if(_zz_41[4]) begin
           returnStack_4 <= _zz_returnStack_0;
         end
-        if(_zz_74[5]) begin
+        if(_zz_41[5]) begin
           returnStack_5 <= _zz_returnStack_0;
         end
-        if(_zz_74[6]) begin
+        if(_zz_41[6]) begin
           returnStack_6 <= _zz_returnStack_0;
         end
-        if(_zz_74[7]) begin
+        if(_zz_41[7]) begin
           returnStack_7 <= _zz_returnStack_0;
         end
       end

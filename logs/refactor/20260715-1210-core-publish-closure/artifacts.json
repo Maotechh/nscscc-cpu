@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "iteration_id": "20260715-1210-core-publish-closure",
+  "artifacts": [
+    {"path": "evidence/scala-check.json", "sha256": "46887b24de717c9e61d51480761b7d17e0d3125966b77b07f735c3319938cb04", "size": 341538},
+    {"path": "evidence/generate.json", "sha256": "4fa2cd1925444318741e739aed6d07c3479b1a17fbd1ed0b2fa514bcf4e28a57", "size": 109708},
+    {"path": "evidence/package.json", "sha256": "997f0e58a6c110dc57f804d0d9c40e050083e455fca6395215688b1780842d04", "size": 1957},
+    {"path": "evidence/publish-check.json", "sha256": "53272bdf8f7c339f8b207569922f4f4e37275280b568387ad89436abdc9a979d", "size": 2110},
+    {"path": "evidence/candidate-closure.json", "sha256": "b2f80eac6ecfb1fa0b9a0264029f10859197fe3fd19707e42b6b3591233efdfc", "size": 1998}
+  ],
+  "external_artifacts": [
+    {"path": "/mnt/d/tmp/nscscc-restore-core/core_top/package/rtl/mycpu_top.v", "sha256": "ded57a4a2b494e5342481a2d87e5b286ebb703bedde8e79df3fe299894dc4cad", "size": 842817, "retention": "external-temp"}
+  ]
+}

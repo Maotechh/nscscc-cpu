@@ -107,7 +107,7 @@ CORE_TOP_LINT_WAIVERS ?=
 CORE_TOP_VERILATOR ?=
 LINT_WAIVERS ?= lint-waivers.yml
 
-.PHONY: doctor local-doctor local-scala test-local scala-cache-bootstrap scala-check elaborate generate port-check lint yosys-check unit formal cacop-recovery-unit core-contract-check core-top-contract core-top-package core-top-publish-check mul-contract mul-golden-unit mul-candidate-unit div-contract div-golden-unit div-candidate-unit lacc-contract lacc-candidate-unit perf-counter-contract perf-counter-candidate-unit perf-counter-top-check axi-bridge-contract axi-bridge-candidate-unit csr-generate csr-port-check csr-static csr-unit wb-stage-contract wb-stage-candidate-unit mem-stage-contract mem-stage-candidate-unit exe-stage-negative-control icache-contract icache-candidate-unit dcache-contract dcache-candidate-unit replacement-reachability chiplab-doctor golden-export chiplab-overlay rtl-smoke identity-compare evidence-check claim-review test-automation
+.PHONY: doctor local-doctor local-scala test-local scala-cache-bootstrap scala-check elaborate generate port-check lint yosys-check unit formal cacop-recovery-unit core-contract-check core-top-contract core-top-package core-top-publish-check candidate-closure mul-contract mul-golden-unit mul-candidate-unit div-contract div-golden-unit div-candidate-unit lacc-contract lacc-candidate-unit perf-counter-contract perf-counter-candidate-unit perf-counter-top-check axi-bridge-contract axi-bridge-candidate-unit csr-generate csr-port-check csr-static csr-unit wb-stage-contract wb-stage-candidate-unit mem-stage-contract mem-stage-candidate-unit exe-stage-negative-control icache-contract icache-candidate-unit dcache-contract dcache-candidate-unit replacement-reachability chiplab-doctor golden-export chiplab-overlay rtl-smoke identity-compare evidence-check claim-review test-automation
 
 
 local-doctor:
@@ -339,6 +339,10 @@ core-top-package:
 
 core-top-publish-check:
 	$(PYTHON) -I tools/core_top_gate.py publish-check --repo-root "." --manifest "reference/manifest.lock" --ports "$(CORE_TOP_PORTS)" --rtl "$(CORE_TOP_RTL)" --tracked-rtl "$(CORE_TOP_TRACKED_RTL)" --replacement-spec "$(CORE_TOP_REPLACEMENT_SPEC)" --out-dir "$(OUT_DIR)/core_top/publish-check"
+
+candidate-closure:
+	@test -f "$(CORE_TOP_RTL)" || (echo "generated core_top RTL is required: $(CORE_TOP_RTL)" && exit 2)
+	$(PYTHON) -I tools/candidate_closure_gate.py --rtl "$(CORE_TOP_RTL)" --out "$(OUT_DIR)/core_top/candidate-closure.json" $(if $(OVERLAY_DIR),--overlay-dir "$(OVERLAY_DIR)",)
 
 core-contract-check:
 	$(PYTHON) -I tests/test_core_contract_manifest.py
