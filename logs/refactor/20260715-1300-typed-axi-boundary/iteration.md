@@ -1,7 +1,7 @@
 # 20260715-1300-typed-axi-boundary
 
 - 状态：`draft`
-- 分支 / Base SHA / Head SHA：`refactor/20260714-1650-consolidated-spinal` / `b8962b6c194c11d01747adb2a7269216df01dce3` / `45f716ba90b8712ca2a55d3916ab1d4186f9477a`
+- 分支 / Base SHA / Head SHA：`refactor/20260714-1650-consolidated-spinal` / `b8962b6c194c11d01747adb2a7269216df01dce3` / `797d19ef9f415cf6afcfbafb1a06109d2ff0e978`
 - Owner / Agent：Codex `/root`
 - 选择边界：让 `CoreTopCompat` 成为唯一接触 chiplab AXI3/WID 原始 pin 的层；`SpinalCoreBackend` 只暴露 typed `Axi3Compat`。该边界直接修正第五部分已审计出的遗留端口所有权问题，同时不改 cache/AXI bridge 状态机。
 - Golden / 固定工具：`a158aa8ab4d49cece1a0fe488d7ac7dc02bd8cf6`；JDK `17.0.19+10`、SBT `1.10.11`、Scala `2.13.16`、SpinalHDL `1.14.2`、Verilator `5.020`、Yosys `0.33`。
