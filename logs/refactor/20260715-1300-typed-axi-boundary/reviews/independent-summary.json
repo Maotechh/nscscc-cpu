@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "iteration_id": "20260715-1300-typed-axi-boundary",
+  "reviewed_head_sha": "c81af389d67063d99beb2caf46260df07a0a5a70",
+  "reviewer": "independent-codex-subagent:/root/backend_arch_audit",
+  "status": "accepted_with_open_limits",
+  "claim_supported": "partial",
+  "accepted": [
+    "Axi3Compat channel ownership and all locked widths are correct",
+    "CoreTopCompat preserves the external 49-port contract with direct field mapping",
+    "the recorded Yosys flow proves 18150 equivalence cells with zero unproven",
+    "the pure-Spinal diagnostic func_lab19 observation terminates by syscall without an observed mismatch"
+  ],
+  "fixed": [
+    "cumulative replacement hashes match the published core_top package",
+    "scala-check has a final wrapper exit code of zero",
+    "the overlay preserves LICENSE and the required mycpu.h support header"
+  ],
+  "open": [
+    "the regex typed AXI gate has documented mutation-test blind spots",
+    "strict lint and official smoke warning policy fail",
+    "the pure overlay is diagnostic and the mixed overlay compile is blocked by legacy div.v",
+    "ten automation cases are skipped",
+    "full functional, random, performance, system, and FPGA gates remain unproven",
+    "Claude review and live remote synchronization remain unavailable"
+  ],
+  "disallowed_claims": [
+    "formal chiplab smoke gate passes",
+    "all AXI behavior is proven under every implementation semantics",
+    "58/81/random/perf/Linux/FPGA gates pass",
+    "the complete CPU refactor is release ready"
+  ],
+  "allow_ready": false,
+  "allow_status_promotion": false
+}

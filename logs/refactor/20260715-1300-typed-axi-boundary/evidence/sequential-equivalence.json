@@ -1,0 +1,94 @@
+{
+  "schema_version": 1,
+  "gate": "core-top-sequential-equivalence",
+  "status": "pass",
+  "scope": "typed-axi-boundary-generated-core-top",
+  "generated_at": "2026-07-15T13:47:32+08:00",
+  "repository": {
+    "branch": "refactor/20260714-1650-consolidated-spinal",
+    "base_sha": "b8962b6c194c11d01747adb2a7269216df01dce3",
+    "head_sha": "c81af389d67063d99beb2caf46260df07a0a5a70"
+  },
+  "inputs": {
+    "golden": {
+      "commit": "b8962b6c194c11d01747adb2a7269216df01dce3",
+      "path": "reference/component-replacements/mycpu_top.v",
+      "blob_oid": "cd3301e7ca487d91e6f5544a9e3d22fda3faf63c",
+      "sha256": "ded57a4a2b494e5342481a2d87e5b286ebb703bedde8e79df3fe299894dc4cad",
+      "size": 842817
+    },
+    "candidate": {
+      "commit": "c81af389d67063d99beb2caf46260df07a0a5a70",
+      "path": "reference/component-replacements/mycpu_top.v",
+      "blob_oid": "fd16b4355b46b5901e03750c813240e500d3b48e",
+      "sha256": "51e400e3d3c56bed3201c9599224aaaf361c22d8f1dc272054094adc8a9e9ebc",
+      "size": 844312
+    }
+  },
+  "method": {
+    "description": "Flatten each committed core_top independently, stash the two designs, construct Yosys equivalence cells, prove them with equiv_simple and equiv_induct, then require equiv_status -assert.",
+    "input_export": [
+      "git archive --format=zip b8962b6c194c11d01747adb2a7269216df01dce3 reference/component-replacements/mycpu_top.v",
+      "git archive --format=zip c81af389d67063d99beb2caf46260df07a0a5a70 reference/component-replacements/mycpu_top.v"
+    ],
+    "runner": "wsl.exe yosys -Q -p <yosys_script>",
+    "yosys_script": "read_verilog ${OLD_RTL}; prep -flatten -top core_top; rename core_top gold; design -stash gold_design; read_verilog ${NEW_RTL}; prep -flatten -top core_top; rename core_top gate; design -stash gate_design; design -copy-from gold_design -as gold gold; design -copy-from gate_design -as gate gate; equiv_make gold gate equiv; prep -top equiv; equiv_simple; equiv_induct; equiv_status -assert",
+    "resolved_yosys_script": "read_verilog /mnt/c/Users/Dell/AppData/Local/Temp/nscscc-core-top-equiv-cb4a0906f3254624903f24c15f29794f/old/reference/component-replacements/mycpu_top.v; prep -flatten -top core_top; rename core_top gold; design -stash gold_design; read_verilog /mnt/c/Users/Dell/AppData/Local/Temp/nscscc-core-top-equiv-cb4a0906f3254624903f24c15f29794f/new/reference/component-replacements/mycpu_top.v; prep -flatten -top core_top; rename core_top gate; design -stash gate_design; design -copy-from gold_design -as gold gold; design -copy-from gate_design -as gate gate; equiv_make gold gate equiv; prep -top equiv; equiv_simple; equiv_induct; equiv_status -assert"
+  },
+  "tool": {
+    "path": "/usr/bin/yosys",
+    "version": "Yosys 0.33 (git sha1 2584903a060)",
+    "sha256": "88c0a12bb814a1a8716b1ae10b482e35d3005ed558e1f5f626b3dc983ea3abd0"
+  },
+  "result": {
+    "returncode": 0,
+    "timed_out": false,
+    "elapsed_seconds": 26.541,
+    "initially_unproven_cells": 11004,
+    "initially_unproven_groups": 1241,
+    "equiv_simple_proven": 11004,
+    "equiv_induct_proven": 0,
+    "final_equiv_cells": 18150,
+    "final_proven": 18150,
+    "final_unproven": 0,
+    "success_marker": "Equivalence successfully proven!",
+    "warnings": [],
+    "errors": []
+  },
+  "artifact": {
+    "path": "build/20260715-1300-typed-axi-boundary/sequential-equivalence/yosys.log",
+    "sha256": "ff5455a9dfd5d7e5ada4eb34fec65fac8b171afc8808a51f502bdc1761d41b67",
+    "size": 26504620,
+    "retention": "local ignored build artifact"
+  },
+  "attempts": [
+    {
+      "sequence": 1,
+      "status": "fail",
+      "returncode": 1,
+      "elapsed_seconds": 0.065,
+      "reason": "PowerShell-to-WSL path conversion removed backslashes, so Yosys received no input filename and did not start equivalence checking.",
+      "raw_log_sha256": "9dd2153210ed23fddbe2b19ffc83e04023691e48a3914c9802cf967220b18968",
+      "raw_log_size": 9306,
+      "raw_log_retained": false
+    },
+    {
+      "sequence": 2,
+      "status": "pass",
+      "returncode": 0,
+      "elapsed_seconds": 26.541,
+      "raw_log_sha256": "ff5455a9dfd5d7e5ada4eb34fec65fac8b171afc8808a51f502bdc1761d41b67",
+      "raw_log_size": 26504620,
+      "raw_log_retained": true
+    }
+  ],
+  "claim": {
+    "supported": "The committed generated core_top before and after the typed AXI boundary change is sequentially equivalent under the recorded Yosys flattened equivalence flow.",
+    "not_supported": [
+      "official chiplab functional-suite completion",
+      "random NEMU DiffTest completion",
+      "Vivado implementation, timing, or bitstream completion",
+      "release readiness of the complete CPU refactor"
+    ]
+  }
+}

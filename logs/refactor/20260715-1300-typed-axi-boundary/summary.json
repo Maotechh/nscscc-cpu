@@ -4,7 +4,7 @@
   "status": "draft",
   "branch": "refactor/20260714-1650-consolidated-spinal",
   "base_sha": "b8962b6c194c11d01747adb2a7269216df01dce3",
-  "head_sha": "797d19ef9f415cf6afcfbafb1a06109d2ff0e978",
+  "head_sha": "c81af389d67063d99beb2caf46260df07a0a5a70",
   "selected_boundary": "typed_axi3_backend_boundary",
   "gates": {
     "scala": {"status":"pass","planned":4,"executed":4,"passed":4,"failed":0,"skipped":0,"evidence":"evidence/scala-check.json"},
@@ -13,19 +13,26 @@
     "publish_check": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0,"evidence":"evidence/publish-check.json"},
     "candidate_closure": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0,"evidence":"evidence/candidate-closure.json"},
     "typed_axi_boundary": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0,"evidence":"evidence/typed-axi-boundary.json"},
+    "sequential_equivalence": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0,"evidence":"evidence/sequential-equivalence.json","note":"18150 proven, 0 unproven"},
     "replacement_reachability": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0,"evidence":"evidence/replacement-reachability.json"},
+    "chiplab_doctor": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0,"evidence":"evidence/chiplab-doctor.json"},
+    "pure_spinal_overlay": {"status":"warning","planned":1,"executed":1,"passed":0,"failed":1,"skipped":0,"evidence":"evidence/chiplab-overlay.json","reason":"diagnostic profile; gate_eligible=false"},
+    "mixed_overlay_compile": {"status":"fail","planned":1,"executed":1,"passed":0,"failed":1,"skipped":0,"evidence":"evidence/rtl-smoke-mixed.json","reason":"legacy div.v Verilator compile failure"},
     "verilator_lint": {"status":"fail","planned":1,"executed":1,"passed":0,"failed":1,"skipped":0,"evidence":"evidence/lint.json","reason":"73 pre-existing/unresolved zero-warning-policy findings"},
     "yosys_check": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0,"evidence":"evidence/yosys-check.json"},
-    "automation": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0,"evidence":"commands.jsonl","note":"381 tests ran; 10 test cases were skipped by the existing suite"},
+    "rtl_smoke": {"status":"fail","planned":1,"executed":1,"passed":0,"failed":1,"skipped":0,"evidence":"evidence/rtl-smoke.json","reason":"functional parser pass but strict warning policy fail; diagnostic profile"},
+    "func_smoke_observation": {"status":"warning","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0,"evidence":"evidence/rtl-smoke.json","note":"174059 instructions, 609660 clocks, syscall termination, no observed mismatch"},
+    "automation": {"status":"fail","planned":1,"executed":1,"passed":0,"failed":1,"skipped":0,"evidence":"commands.jsonl","reason":"wrapper returned zero but 10 test cases were skipped; zero-skip contract not met"},
     "automation_test_cases": {"status":"warning","planned":381,"executed":371,"passed":371,"failed":0,"skipped":10,"evidence":"commands.jsonl","reason":"Windows suite lacks ten optional test dependencies; WSL rerun needs a clean clone"},
-    "func_smoke": {"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":1,"evidence":"iteration.md"},
+    "func_smoke": {"status":"fail","planned":1,"executed":1,"passed":0,"failed":1,"skipped":0,"evidence":"evidence/rtl-smoke.json"},
     "claude_review": {"status":"unavailable","planned":1,"executed":0,"passed":0,"failed":0,"skipped":1,"evidence":"reviews/claude-summary.json","reason":"GEEKPIE_CLAUDE_API_KEY is not set"}
   },
   "claims": [
     {"claim":"CoreTopCompat owns raw pins and Backend-to-top AXI mapping uses typed Axi3Compat","status":"supported","evidence":"evidence/typed-axi-boundary.json and evidence/contract.json"},
-    {"claim":"AXI external behavior is fully equivalent","status":"partial","evidence":"static wiring, Scala tests, and generation pass; official smoke pending"},
+    {"claim":"Committed generated core_top before and after the typed AXI change is sequentially equivalent under the recorded Yosys flow","status":"supported","evidence":"evidence/sequential-equivalence.json"},
+    {"claim":"pure-Spinal diagnostic func_lab19 completes without an observed mismatch","status":"supported_with_limits","evidence":"evidence/rtl-smoke.json; diagnostic and warning-policy failed"},
     {"claim":"complete CPU refactor is release ready","status":"unsupported","evidence":"full/random/system/FPGA and strict lint gates remain"}
   ],
-  "blocked_by": ["strict warning policy unresolved", "official smoke pending", "Claude review unavailable", "live remote unverified"],
+  "blocked_by": ["strict warning policy unresolved", "zero-skip automation contract unmet", "diagnostic profile not gate eligible", "Claude review unavailable", "live remote unverified"],
   "residual_risks": ["MemReq/MemRsp and LineReq/LineRsp are not active memory path contracts", "PipelineCtrl remains uninstantiated", "single explicit ClockDomain target remains incomplete"]
 }
