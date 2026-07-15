@@ -58,31 +58,31 @@ module core_top #(
 );
 
   wire                backendArea_core_aresetn;
-  wire       [3:0]    backendArea_core_arid;
-  wire       [31:0]   backendArea_core_araddr;
-  wire       [7:0]    backendArea_core_arlen;
-  wire       [2:0]    backendArea_core_arsize;
-  wire       [1:0]    backendArea_core_arburst;
-  wire       [1:0]    backendArea_core_arlock;
-  wire       [3:0]    backendArea_core_arcache;
-  wire       [2:0]    backendArea_core_arprot;
-  wire                backendArea_core_arvalid;
-  wire                backendArea_core_rready;
-  wire       [3:0]    backendArea_core_awid;
-  wire       [31:0]   backendArea_core_awaddr;
-  wire       [7:0]    backendArea_core_awlen;
-  wire       [2:0]    backendArea_core_awsize;
-  wire       [1:0]    backendArea_core_awburst;
-  wire       [1:0]    backendArea_core_awlock;
-  wire       [3:0]    backendArea_core_awcache;
-  wire       [2:0]    backendArea_core_awprot;
-  wire                backendArea_core_awvalid;
-  wire       [3:0]    backendArea_core_wid;
-  wire       [31:0]   backendArea_core_wdata;
-  wire       [3:0]    backendArea_core_wstrb;
-  wire                backendArea_core_wlast;
-  wire                backendArea_core_wvalid;
-  wire                backendArea_core_bready;
+  wire                backendArea_core_axi_ar_valid;
+  wire       [3:0]    backendArea_core_axi_ar_payload_id;
+  wire       [31:0]   backendArea_core_axi_ar_payload_address;
+  wire       [7:0]    backendArea_core_axi_ar_payload_len;
+  wire       [2:0]    backendArea_core_axi_ar_payload_size;
+  wire       [1:0]    backendArea_core_axi_ar_payload_burst;
+  wire       [1:0]    backendArea_core_axi_ar_payload_lock;
+  wire       [3:0]    backendArea_core_axi_ar_payload_cache;
+  wire       [2:0]    backendArea_core_axi_ar_payload_prot;
+  wire                backendArea_core_axi_r_ready;
+  wire                backendArea_core_axi_aw_valid;
+  wire       [3:0]    backendArea_core_axi_aw_payload_id;
+  wire       [31:0]   backendArea_core_axi_aw_payload_address;
+  wire       [7:0]    backendArea_core_axi_aw_payload_len;
+  wire       [2:0]    backendArea_core_axi_aw_payload_size;
+  wire       [1:0]    backendArea_core_axi_aw_payload_burst;
+  wire       [1:0]    backendArea_core_axi_aw_payload_lock;
+  wire       [3:0]    backendArea_core_axi_aw_payload_cache;
+  wire       [2:0]    backendArea_core_axi_aw_payload_prot;
+  wire                backendArea_core_axi_w_valid;
+  wire       [3:0]    backendArea_core_axi_w_payload_id;
+  wire       [31:0]   backendArea_core_axi_w_payload_data;
+  wire       [3:0]    backendArea_core_axi_w_payload_byteMask;
+  wire                backendArea_core_axi_w_payload_last;
+  wire                backendArea_core_axi_b_ready;
   wire                backendArea_core_ws_valid;
   wire       [31:0]   backendArea_core_rf_rdata;
   wire       [31:0]   backendArea_core_debug0_wb_pc;
@@ -93,84 +93,84 @@ module core_top #(
   reg                 resetCapture_delayedActiveHigh;
 
   SpinalCoreBackend backendArea_core (
-    .aclk                           (aclk                                     ), //i
-    .aresetn                        (backendArea_core_aresetn                 ), //i
-    .intrpt                         (intrpt[7:0]                              ), //i
-    .arid                           (backendArea_core_arid[3:0]               ), //o
-    .araddr                         (backendArea_core_araddr[31:0]            ), //o
-    .arlen                          (backendArea_core_arlen[7:0]              ), //o
-    .arsize                         (backendArea_core_arsize[2:0]             ), //o
-    .arburst                        (backendArea_core_arburst[1:0]            ), //o
-    .arlock                         (backendArea_core_arlock[1:0]             ), //o
-    .arcache                        (backendArea_core_arcache[3:0]            ), //o
-    .arprot                         (backendArea_core_arprot[2:0]             ), //o
-    .arvalid                        (backendArea_core_arvalid                 ), //o
-    .arready                        (arready                                  ), //i
-    .rid                            (rid[3:0]                                 ), //i
-    .rdata                          (rdata[31:0]                              ), //i
-    .rresp                          (rresp[1:0]                               ), //i
-    .rlast                          (rlast                                    ), //i
-    .rvalid                         (rvalid                                   ), //i
-    .rready                         (backendArea_core_rready                  ), //o
-    .awid                           (backendArea_core_awid[3:0]               ), //o
-    .awaddr                         (backendArea_core_awaddr[31:0]            ), //o
-    .awlen                          (backendArea_core_awlen[7:0]              ), //o
-    .awsize                         (backendArea_core_awsize[2:0]             ), //o
-    .awburst                        (backendArea_core_awburst[1:0]            ), //o
-    .awlock                         (backendArea_core_awlock[1:0]             ), //o
-    .awcache                        (backendArea_core_awcache[3:0]            ), //o
-    .awprot                         (backendArea_core_awprot[2:0]             ), //o
-    .awvalid                        (backendArea_core_awvalid                 ), //o
-    .awready                        (awready                                  ), //i
-    .wid                            (backendArea_core_wid[3:0]                ), //o
-    .wdata                          (backendArea_core_wdata[31:0]             ), //o
-    .wstrb                          (backendArea_core_wstrb[3:0]              ), //o
-    .wlast                          (backendArea_core_wlast                   ), //o
-    .wvalid                         (backendArea_core_wvalid                  ), //o
-    .wready                         (wready                                   ), //i
-    .bid                            (bid[3:0]                                 ), //i
-    .bresp                          (bresp[1:0]                               ), //i
-    .bvalid                         (bvalid                                   ), //i
-    .bready                         (backendArea_core_bready                  ), //o
-    .break_point                    (break_point                              ), //i
-    .infor_flag                     (infor_flag                               ), //i
-    .reg_num                        (reg_num[4:0]                             ), //i
-    .ws_valid                       (backendArea_core_ws_valid                ), //o
-    .rf_rdata                       (backendArea_core_rf_rdata[31:0]          ), //o
-    .debug0_wb_pc                   (backendArea_core_debug0_wb_pc[31:0]      ), //o
-    .debug0_wb_rf_wen               (backendArea_core_debug0_wb_rf_wen[3:0]   ), //o
-    .debug0_wb_rf_wnum              (backendArea_core_debug0_wb_rf_wnum[4:0]  ), //o
-    .debug0_wb_rf_wdata             (backendArea_core_debug0_wb_rf_wdata[31:0]), //o
-    .debug0_wb_inst                 (backendArea_core_debug0_wb_inst[31:0]    ), //o
-    .aclk_1                         (aclk                                     ), //i
-    .resetCapture_delayedActiveHigh (resetCapture_delayedActiveHigh           )  //i
+    .aclk                           (aclk                                         ), //i
+    .aresetn                        (backendArea_core_aresetn                     ), //i
+    .intrpt                         (intrpt[7:0]                                  ), //i
+    .axi_ar_valid                   (backendArea_core_axi_ar_valid                ), //o
+    .axi_ar_ready                   (arready                                      ), //i
+    .axi_ar_payload_id              (backendArea_core_axi_ar_payload_id[3:0]      ), //o
+    .axi_ar_payload_address         (backendArea_core_axi_ar_payload_address[31:0]), //o
+    .axi_ar_payload_len             (backendArea_core_axi_ar_payload_len[7:0]     ), //o
+    .axi_ar_payload_size            (backendArea_core_axi_ar_payload_size[2:0]    ), //o
+    .axi_ar_payload_burst           (backendArea_core_axi_ar_payload_burst[1:0]   ), //o
+    .axi_ar_payload_lock            (backendArea_core_axi_ar_payload_lock[1:0]    ), //o
+    .axi_ar_payload_cache           (backendArea_core_axi_ar_payload_cache[3:0]   ), //o
+    .axi_ar_payload_prot            (backendArea_core_axi_ar_payload_prot[2:0]    ), //o
+    .axi_r_valid                    (rvalid                                       ), //i
+    .axi_r_ready                    (backendArea_core_axi_r_ready                 ), //o
+    .axi_r_payload_id               (rid[3:0]                                     ), //i
+    .axi_r_payload_data             (rdata[31:0]                                  ), //i
+    .axi_r_payload_response         (rresp[1:0]                                   ), //i
+    .axi_r_payload_last             (rlast                                        ), //i
+    .axi_aw_valid                   (backendArea_core_axi_aw_valid                ), //o
+    .axi_aw_ready                   (awready                                      ), //i
+    .axi_aw_payload_id              (backendArea_core_axi_aw_payload_id[3:0]      ), //o
+    .axi_aw_payload_address         (backendArea_core_axi_aw_payload_address[31:0]), //o
+    .axi_aw_payload_len             (backendArea_core_axi_aw_payload_len[7:0]     ), //o
+    .axi_aw_payload_size            (backendArea_core_axi_aw_payload_size[2:0]    ), //o
+    .axi_aw_payload_burst           (backendArea_core_axi_aw_payload_burst[1:0]   ), //o
+    .axi_aw_payload_lock            (backendArea_core_axi_aw_payload_lock[1:0]    ), //o
+    .axi_aw_payload_cache           (backendArea_core_axi_aw_payload_cache[3:0]   ), //o
+    .axi_aw_payload_prot            (backendArea_core_axi_aw_payload_prot[2:0]    ), //o
+    .axi_w_valid                    (backendArea_core_axi_w_valid                 ), //o
+    .axi_w_ready                    (wready                                       ), //i
+    .axi_w_payload_id               (backendArea_core_axi_w_payload_id[3:0]       ), //o
+    .axi_w_payload_data             (backendArea_core_axi_w_payload_data[31:0]    ), //o
+    .axi_w_payload_byteMask         (backendArea_core_axi_w_payload_byteMask[3:0] ), //o
+    .axi_w_payload_last             (backendArea_core_axi_w_payload_last          ), //o
+    .axi_b_valid                    (bvalid                                       ), //i
+    .axi_b_ready                    (backendArea_core_axi_b_ready                 ), //o
+    .axi_b_payload_id               (bid[3:0]                                     ), //i
+    .axi_b_payload_response         (bresp[1:0]                                   ), //i
+    .break_point                    (break_point                                  ), //i
+    .infor_flag                     (infor_flag                                   ), //i
+    .reg_num                        (reg_num[4:0]                                 ), //i
+    .ws_valid                       (backendArea_core_ws_valid                    ), //o
+    .rf_rdata                       (backendArea_core_rf_rdata[31:0]              ), //o
+    .debug0_wb_pc                   (backendArea_core_debug0_wb_pc[31:0]          ), //o
+    .debug0_wb_rf_wen               (backendArea_core_debug0_wb_rf_wen[3:0]       ), //o
+    .debug0_wb_rf_wnum              (backendArea_core_debug0_wb_rf_wnum[4:0]      ), //o
+    .debug0_wb_rf_wdata             (backendArea_core_debug0_wb_rf_wdata[31:0]    ), //o
+    .debug0_wb_inst                 (backendArea_core_debug0_wb_inst[31:0]        ), //o
+    .aclk_1                         (aclk                                         ), //i
+    .resetCapture_delayedActiveHigh (resetCapture_delayedActiveHigh               )  //i
   );
   assign backendArea_core_aresetn = (! resetCapture_delayedActiveHigh);
-  assign arid = backendArea_core_arid;
-  assign araddr = backendArea_core_araddr;
-  assign arlen = backendArea_core_arlen;
-  assign arsize = backendArea_core_arsize;
-  assign arburst = backendArea_core_arburst;
-  assign arlock = backendArea_core_arlock;
-  assign arcache = backendArea_core_arcache;
-  assign arprot = backendArea_core_arprot;
-  assign arvalid = backendArea_core_arvalid;
-  assign rready = backendArea_core_rready;
-  assign awid = backendArea_core_awid;
-  assign awaddr = backendArea_core_awaddr;
-  assign awlen = backendArea_core_awlen;
-  assign awsize = backendArea_core_awsize;
-  assign awburst = backendArea_core_awburst;
-  assign awlock = backendArea_core_awlock;
-  assign awcache = backendArea_core_awcache;
-  assign awprot = backendArea_core_awprot;
-  assign awvalid = backendArea_core_awvalid;
-  assign wid = backendArea_core_wid;
-  assign wdata = backendArea_core_wdata;
-  assign wstrb = backendArea_core_wstrb;
-  assign wlast = backendArea_core_wlast;
-  assign wvalid = backendArea_core_wvalid;
-  assign bready = backendArea_core_bready;
+  assign arid = backendArea_core_axi_ar_payload_id;
+  assign araddr = backendArea_core_axi_ar_payload_address;
+  assign arlen = backendArea_core_axi_ar_payload_len;
+  assign arsize = backendArea_core_axi_ar_payload_size;
+  assign arburst = backendArea_core_axi_ar_payload_burst;
+  assign arlock = backendArea_core_axi_ar_payload_lock;
+  assign arcache = backendArea_core_axi_ar_payload_cache;
+  assign arprot = backendArea_core_axi_ar_payload_prot;
+  assign arvalid = backendArea_core_axi_ar_valid;
+  assign rready = backendArea_core_axi_r_ready;
+  assign awid = backendArea_core_axi_aw_payload_id;
+  assign awaddr = backendArea_core_axi_aw_payload_address;
+  assign awlen = backendArea_core_axi_aw_payload_len;
+  assign awsize = backendArea_core_axi_aw_payload_size;
+  assign awburst = backendArea_core_axi_aw_payload_burst;
+  assign awlock = backendArea_core_axi_aw_payload_lock;
+  assign awcache = backendArea_core_axi_aw_payload_cache;
+  assign awprot = backendArea_core_axi_aw_payload_prot;
+  assign awvalid = backendArea_core_axi_aw_valid;
+  assign wid = backendArea_core_axi_w_payload_id;
+  assign wdata = backendArea_core_axi_w_payload_data;
+  assign wstrb = backendArea_core_axi_w_payload_byteMask;
+  assign wlast = backendArea_core_axi_w_payload_last;
+  assign wvalid = backendArea_core_axi_w_valid;
+  assign bready = backendArea_core_axi_b_ready;
   assign ws_valid = backendArea_core_ws_valid;
   assign rf_rdata = backendArea_core_rf_rdata;
   assign debug0_wb_pc = backendArea_core_debug0_wb_pc;
@@ -189,42 +189,42 @@ module SpinalCoreBackend (
   input  wire          aclk,
   input  wire          aresetn,
   input  wire [7:0]    intrpt,
-  output wire [3:0]    arid,
-  output wire [31:0]   araddr,
-  output wire [7:0]    arlen,
-  output wire [2:0]    arsize,
-  output wire [1:0]    arburst,
-  output wire [1:0]    arlock,
-  output wire [3:0]    arcache,
-  output wire [2:0]    arprot,
-  output wire          arvalid,
-  input  wire          arready,
-  input  wire [3:0]    rid,
-  input  wire [31:0]   rdata,
-  input  wire [1:0]    rresp,
-  input  wire          rlast,
-  input  wire          rvalid,
-  output wire          rready,
-  output wire [3:0]    awid,
-  output wire [31:0]   awaddr,
-  output wire [7:0]    awlen,
-  output wire [2:0]    awsize,
-  output wire [1:0]    awburst,
-  output wire [1:0]    awlock,
-  output wire [3:0]    awcache,
-  output wire [2:0]    awprot,
-  output wire          awvalid,
-  input  wire          awready,
-  output wire [3:0]    wid,
-  output wire [31:0]   wdata,
-  output wire [3:0]    wstrb,
-  output wire          wlast,
-  output wire          wvalid,
-  input  wire          wready,
-  input  wire [3:0]    bid,
-  input  wire [1:0]    bresp,
-  input  wire          bvalid,
-  output wire          bready,
+  output wire          axi_ar_valid,
+  input  wire          axi_ar_ready,
+  output wire [3:0]    axi_ar_payload_id,
+  output wire [31:0]   axi_ar_payload_address,
+  output wire [7:0]    axi_ar_payload_len,
+  output wire [2:0]    axi_ar_payload_size,
+  output wire [1:0]    axi_ar_payload_burst,
+  output wire [1:0]    axi_ar_payload_lock,
+  output wire [3:0]    axi_ar_payload_cache,
+  output wire [2:0]    axi_ar_payload_prot,
+  input  wire          axi_r_valid,
+  output wire          axi_r_ready,
+  input  wire [3:0]    axi_r_payload_id,
+  input  wire [31:0]   axi_r_payload_data,
+  input  wire [1:0]    axi_r_payload_response,
+  input  wire          axi_r_payload_last,
+  output wire          axi_aw_valid,
+  input  wire          axi_aw_ready,
+  output wire [3:0]    axi_aw_payload_id,
+  output wire [31:0]   axi_aw_payload_address,
+  output wire [7:0]    axi_aw_payload_len,
+  output wire [2:0]    axi_aw_payload_size,
+  output wire [1:0]    axi_aw_payload_burst,
+  output wire [1:0]    axi_aw_payload_lock,
+  output wire [3:0]    axi_aw_payload_cache,
+  output wire [2:0]    axi_aw_payload_prot,
+  output wire          axi_w_valid,
+  input  wire          axi_w_ready,
+  output wire [3:0]    axi_w_payload_id,
+  output wire [31:0]   axi_w_payload_data,
+  output wire [3:0]    axi_w_payload_byteMask,
+  output wire          axi_w_payload_last,
+  input  wire          axi_b_valid,
+  output wire          axi_b_ready,
+  input  wire [3:0]    axi_b_payload_id,
+  input  wire [1:0]    axi_b_payload_response,
   input  wire          break_point,
   input  wire          infor_flag,
   input  wire [4:0]    reg_num,
@@ -1562,12 +1562,12 @@ module SpinalCoreBackend (
     .arcache            (axiBridge_arcache[3:0]         ), //o
     .arprot             (axiBridge_arprot[2:0]          ), //o
     .arvalid            (axiBridge_arvalid              ), //o
-    .arready            (arready                        ), //i
-    .rid                (rid[3:0]                       ), //i
-    .rdata              (rdata[31:0]                    ), //i
-    .rresp              (rresp[1:0]                     ), //i
-    .rlast              (rlast                          ), //i
-    .rvalid             (rvalid                         ), //i
+    .arready            (axi_ar_ready                   ), //i
+    .rid                (axi_r_payload_id[3:0]          ), //i
+    .rdata              (axi_r_payload_data[31:0]       ), //i
+    .rresp              (axi_r_payload_response[1:0]    ), //i
+    .rlast              (axi_r_payload_last             ), //i
+    .rvalid             (axi_r_valid                    ), //i
     .rready             (axiBridge_rready               ), //o
     .awid               (axiBridge_awid[3:0]            ), //o
     .awaddr             (axiBridge_awaddr[31:0]         ), //o
@@ -1578,16 +1578,16 @@ module SpinalCoreBackend (
     .awcache            (axiBridge_awcache[3:0]         ), //o
     .awprot             (axiBridge_awprot[2:0]          ), //o
     .awvalid            (axiBridge_awvalid              ), //o
-    .awready            (awready                        ), //i
+    .awready            (axi_aw_ready                   ), //i
     .wid                (axiBridge_wid[3:0]             ), //o
     .wdata              (axiBridge_wdata[31:0]          ), //o
     .wstrb              (axiBridge_wstrb[3:0]           ), //o
     .wlast              (axiBridge_wlast                ), //o
     .wvalid             (axiBridge_wvalid               ), //o
-    .wready             (wready                         ), //i
-    .bid                (bid[3:0]                       ), //i
-    .bresp              (bresp[1:0]                     ), //i
-    .bvalid             (bvalid                         ), //i
+    .wready             (axi_w_ready                    ), //i
+    .bid                (axi_b_payload_id[3:0]          ), //i
+    .bresp              (axi_b_payload_response[1:0]    ), //i
+    .bvalid             (axi_b_valid                    ), //i
     .bready             (axiBridge_bready               ), //o
     .inst_rd_req        (instructionCache_rd_req        ), //i
     .inst_rd_type       (instructionCache_rd_type[2:0]  ), //i
@@ -1794,31 +1794,31 @@ module SpinalCoreBackend (
   assign addressTranslation_data_vaddr = execute_io_memory_virtualAddress;
   assign memory_io_dataTlbIndex = addressTranslation_data_tlb_index;
   assign addressTranslation_rand_index = csr_rand_index;
-  assign arid = axiBridge_arid;
-  assign araddr = axiBridge_araddr;
-  assign arlen = axiBridge_arlen;
-  assign arsize = axiBridge_arsize;
-  assign arburst = axiBridge_arburst;
-  assign arlock = axiBridge_arlock;
-  assign arcache = axiBridge_arcache;
-  assign arprot = axiBridge_arprot;
-  assign arvalid = axiBridge_arvalid;
-  assign rready = axiBridge_rready;
-  assign awid = axiBridge_awid;
-  assign awaddr = axiBridge_awaddr;
-  assign awlen = axiBridge_awlen;
-  assign awsize = axiBridge_awsize;
-  assign awburst = axiBridge_awburst;
-  assign awlock = axiBridge_awlock;
-  assign awcache = axiBridge_awcache;
-  assign awprot = axiBridge_awprot;
-  assign awvalid = axiBridge_awvalid;
-  assign wid = axiBridge_wid;
-  assign wdata = axiBridge_wdata;
-  assign wstrb = axiBridge_wstrb;
-  assign wlast = axiBridge_wlast;
-  assign wvalid = axiBridge_wvalid;
-  assign bready = axiBridge_bready;
+  assign axi_ar_payload_id = axiBridge_arid;
+  assign axi_ar_payload_address = axiBridge_araddr;
+  assign axi_ar_payload_len = axiBridge_arlen;
+  assign axi_ar_payload_size = axiBridge_arsize;
+  assign axi_ar_payload_burst = axiBridge_arburst;
+  assign axi_ar_payload_lock = axiBridge_arlock;
+  assign axi_ar_payload_cache = axiBridge_arcache;
+  assign axi_ar_payload_prot = axiBridge_arprot;
+  assign axi_ar_valid = axiBridge_arvalid;
+  assign axi_r_ready = axiBridge_rready;
+  assign axi_aw_payload_id = axiBridge_awid;
+  assign axi_aw_payload_address = axiBridge_awaddr;
+  assign axi_aw_payload_len = axiBridge_awlen;
+  assign axi_aw_payload_size = axiBridge_awsize;
+  assign axi_aw_payload_burst = axiBridge_awburst;
+  assign axi_aw_payload_lock = axiBridge_awlock;
+  assign axi_aw_payload_cache = axiBridge_awcache;
+  assign axi_aw_payload_prot = axiBridge_awprot;
+  assign axi_aw_valid = axiBridge_awvalid;
+  assign axi_w_payload_id = axiBridge_wid;
+  assign axi_w_payload_data = axiBridge_wdata;
+  assign axi_w_payload_byteMask = axiBridge_wstrb;
+  assign axi_w_payload_last = axiBridge_wlast;
+  assign axi_w_valid = axiBridge_wvalid;
+  assign axi_b_ready = axiBridge_bready;
   assign decode_io_debugReadAddress = reg_num;
   assign rf_rdata = decode_io_debugLegacyValue;
   assign ws_valid = writeback_io_debug_stageValid;

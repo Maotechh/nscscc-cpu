@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "iteration_id": "20260715-1300-typed-axi-boundary",
+  "status": "draft",
+  "branch": "refactor/20260714-1650-consolidated-spinal",
+  "base_sha": "b8962b6c194c11d01747adb2a7269216df01dce3",
+  "head_sha": "b8962b6c194c11d01747adb2a7269216df01dce3",
+  "selected_boundary": "typed_axi3_backend_boundary",
+  "gates": {
+    "scala": {"status":"pass","planned":4,"executed":4,"passed":4,"failed":0,"skipped":0,"evidence":"evidence/scala-check.json"},
+    "core_top_contract": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0,"evidence":"evidence/contract.json"},
+    "reproducible_generate": {"status":"pass","planned":2,"executed":2,"passed":2,"failed":0,"skipped":0,"evidence":"evidence/generate.json"},
+    "publish_check": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0,"evidence":"evidence/publish-check.json"},
+    "candidate_closure": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0,"evidence":"evidence/candidate-closure.json"},
+    "typed_axi_boundary": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0,"evidence":"evidence/typed-axi-boundary.json"},
+    "replacement_reachability": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0,"evidence":"evidence/replacement-reachability.json"},
+    "verilator_lint": {"status":"fail","planned":1,"executed":1,"passed":0,"failed":1,"skipped":0,"evidence":"evidence/lint.json","reason":"73 pre-existing/unresolved zero-warning-policy findings"},
+    "yosys_check": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0,"evidence":"evidence/yosys-check.json"},
+    "automation": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0,"evidence":"commands.jsonl","note":"381 tests ran; 10 test cases were skipped by the existing suite"},
+    "automation_test_cases": {"status":"warning","planned":381,"executed":371,"passed":371,"failed":0,"skipped":10,"evidence":"commands.jsonl","reason":"Windows suite lacks ten optional test dependencies; WSL rerun needs a clean clone"},
+    "func_smoke": {"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":1,"evidence":"iteration.md"},
+    "claude_review": {"status":"unavailable","planned":1,"executed":0,"passed":0,"failed":0,"skipped":1,"evidence":"reviews/claude-summary.json","reason":"GEEKPIE_CLAUDE_API_KEY is not set"}
+  },
+  "claims": [
+    {"claim":"CoreTopCompat owns raw pins and Backend-to-top AXI mapping uses typed Axi3Compat","status":"supported","evidence":"evidence/typed-axi-boundary.json and evidence/contract.json"},
+    {"claim":"AXI external behavior is fully equivalent","status":"partial","evidence":"static wiring, Scala tests, and generation pass; official smoke pending"},
+    {"claim":"complete CPU refactor is release ready","status":"unsupported","evidence":"full/random/system/FPGA and strict lint gates remain"}
+  ],
+  "blocked_by": ["strict warning policy unresolved", "official smoke pending", "Claude review unavailable", "live remote unverified"],
+  "residual_risks": ["MemReq/MemRsp and LineReq/LineRsp are not active memory path contracts", "PipelineCtrl remains uninstantiated", "single explicit ClockDomain target remains incomplete"]
+}

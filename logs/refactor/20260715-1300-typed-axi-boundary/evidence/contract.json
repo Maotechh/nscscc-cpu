@@ -1,0 +1,535 @@
+{
+  "chiplab_mycpu": {
+    "blob_sha1": "cff885ffa163fd4dba4e83d0db0f0e422fdce27e",
+    "commit": "aa3bde1f3e720e71c2c78d6b81930d797b810149",
+    "normalized_header_sha256": "43c1c564fe0288dca984a01fd8cffc6d385c4d5c7c0839fab3dd41103b4fc309",
+    "path": "mycpu_top.v",
+    "ports": [
+      {
+        "direction": "input",
+        "name": "aclk",
+        "width": 1
+      },
+      {
+        "direction": "input",
+        "name": "aresetn",
+        "width": 1
+      },
+      {
+        "direction": "input",
+        "name": "intrpt",
+        "width": 8
+      },
+      {
+        "direction": "output",
+        "name": "arid",
+        "width": 4
+      },
+      {
+        "direction": "output",
+        "name": "araddr",
+        "width": 32
+      },
+      {
+        "direction": "output",
+        "name": "arlen",
+        "width": 8
+      },
+      {
+        "direction": "output",
+        "name": "arsize",
+        "width": 3
+      },
+      {
+        "direction": "output",
+        "name": "arburst",
+        "width": 2
+      },
+      {
+        "direction": "output",
+        "name": "arlock",
+        "width": 2
+      },
+      {
+        "direction": "output",
+        "name": "arcache",
+        "width": 4
+      },
+      {
+        "direction": "output",
+        "name": "arprot",
+        "width": 3
+      },
+      {
+        "direction": "output",
+        "name": "arvalid",
+        "width": 1
+      },
+      {
+        "direction": "input",
+        "name": "arready",
+        "width": 1
+      },
+      {
+        "direction": "input",
+        "name": "rid",
+        "width": 4
+      },
+      {
+        "direction": "input",
+        "name": "rdata",
+        "width": 32
+      },
+      {
+        "direction": "input",
+        "name": "rresp",
+        "width": 2
+      },
+      {
+        "direction": "input",
+        "name": "rlast",
+        "width": 1
+      },
+      {
+        "direction": "input",
+        "name": "rvalid",
+        "width": 1
+      },
+      {
+        "direction": "output",
+        "name": "rready",
+        "width": 1
+      },
+      {
+        "direction": "output",
+        "name": "awid",
+        "width": 4
+      },
+      {
+        "direction": "output",
+        "name": "awaddr",
+        "width": 32
+      },
+      {
+        "direction": "output",
+        "name": "awlen",
+        "width": 8
+      },
+      {
+        "direction": "output",
+        "name": "awsize",
+        "width": 3
+      },
+      {
+        "direction": "output",
+        "name": "awburst",
+        "width": 2
+      },
+      {
+        "direction": "output",
+        "name": "awlock",
+        "width": 2
+      },
+      {
+        "direction": "output",
+        "name": "awcache",
+        "width": 4
+      },
+      {
+        "direction": "output",
+        "name": "awprot",
+        "width": 3
+      },
+      {
+        "direction": "output",
+        "name": "awvalid",
+        "width": 1
+      },
+      {
+        "direction": "input",
+        "name": "awready",
+        "width": 1
+      },
+      {
+        "direction": "output",
+        "name": "wid",
+        "width": 4
+      },
+      {
+        "direction": "output",
+        "name": "wdata",
+        "width": 32
+      },
+      {
+        "direction": "output",
+        "name": "wstrb",
+        "width": 4
+      },
+      {
+        "direction": "output",
+        "name": "wlast",
+        "width": 1
+      },
+      {
+        "direction": "output",
+        "name": "wvalid",
+        "width": 1
+      },
+      {
+        "direction": "input",
+        "name": "wready",
+        "width": 1
+      },
+      {
+        "direction": "input",
+        "name": "bid",
+        "width": 4
+      },
+      {
+        "direction": "input",
+        "name": "bresp",
+        "width": 2
+      },
+      {
+        "direction": "input",
+        "name": "bvalid",
+        "width": 1
+      },
+      {
+        "direction": "output",
+        "name": "bready",
+        "width": 1
+      },
+      {
+        "direction": "input",
+        "name": "break_point",
+        "width": 1
+      },
+      {
+        "direction": "input",
+        "name": "infor_flag",
+        "width": 1
+      },
+      {
+        "direction": "input",
+        "name": "reg_num",
+        "width": 5
+      },
+      {
+        "direction": "output",
+        "name": "ws_valid",
+        "width": 1
+      },
+      {
+        "direction": "output",
+        "name": "rf_rdata",
+        "width": 32
+      },
+      {
+        "direction": "output",
+        "name": "debug0_wb_pc",
+        "width": 32
+      },
+      {
+        "direction": "output",
+        "name": "debug0_wb_rf_wen",
+        "width": 4
+      },
+      {
+        "direction": "output",
+        "name": "debug0_wb_rf_wnum",
+        "width": 5
+      },
+      {
+        "direction": "output",
+        "name": "debug0_wb_rf_wdata",
+        "width": 32
+      },
+      {
+        "direction": "output",
+        "name": "debug0_wb_inst",
+        "width": 32
+      }
+    ],
+    "raw_sha256": "0b2b294b1c242edc42bbaadd33c51125a1e24388c8781b0adad94aa25a4bdde1",
+    "raw_size": 44289,
+    "tlbnum_default": 32
+  },
+  "counts": {
+    "inputs": 17,
+    "outputs": 32,
+    "ports": 49
+  },
+  "gate": "contract",
+  "generated_at": "2026-07-15T13:12:38+08:00",
+  "provenance": {
+    "evaluator": "/mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260714-1650-consolidated-spinal/tools/core_top_gate.py",
+    "evaluator_sha256": "de3b69dce99ea8a78c4ac0e15f3835ed8d31f861cc2119618a907b3a5eba2a51",
+    "manifest": "/mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260714-1650-consolidated-spinal/reference/manifest.lock",
+    "manifest_sha256": "743dd7e58d77e456cfe664d80c2e6614ab426f72bfecd9088ff18d702afa2f20",
+    "ports_contract": "/mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260714-1650-consolidated-spinal/reference/core-top.ports.json",
+    "ports_contract_sha256": "effa486ff707e480ff8ee13d7f20b2d524bd26908726915c99abf1b37eeab576",
+    "repository": "/mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260714-1650-consolidated-spinal",
+    "repository_head": "b8962b6c194c11d01747adb2a7269216df01dce3",
+    "repository_status_sha256": "90549f24c22d3fccf80adbefa43c5a8ddb738c13d8429dfbf5e14c64e13f8349"
+  },
+  "schema_version": 1,
+  "status": "pass",
+  "target": "core-top-compat",
+  "team_golden": {
+    "blob_sha1": "64725d67fb79cf1b43ee88f7a898ecd20052cdf0",
+    "commit": "a158aa8ab4d49cece1a0fe488d7ac7dc02bd8cf6",
+    "normalized_header_sha256": "43c1c564fe0288dca984a01fd8cffc6d385c4d5c7c0839fab3dd41103b4fc309",
+    "path": "rtl/mycpu_top.v",
+    "ports": [
+      {
+        "direction": "input",
+        "name": "aclk",
+        "width": 1
+      },
+      {
+        "direction": "input",
+        "name": "aresetn",
+        "width": 1
+      },
+      {
+        "direction": "input",
+        "name": "intrpt",
+        "width": 8
+      },
+      {
+        "direction": "output",
+        "name": "arid",
+        "width": 4
+      },
+      {
+        "direction": "output",
+        "name": "araddr",
+        "width": 32
+      },
+      {
+        "direction": "output",
+        "name": "arlen",
+        "width": 8
+      },
+      {
+        "direction": "output",
+        "name": "arsize",
+        "width": 3
+      },
+      {
+        "direction": "output",
+        "name": "arburst",
+        "width": 2
+      },
+      {
+        "direction": "output",
+        "name": "arlock",
+        "width": 2
+      },
+      {
+        "direction": "output",
+        "name": "arcache",
+        "width": 4
+      },
+      {
+        "direction": "output",
+        "name": "arprot",
+        "width": 3
+      },
+      {
+        "direction": "output",
+        "name": "arvalid",
+        "width": 1
+      },
+      {
+        "direction": "input",
+        "name": "arready",
+        "width": 1
+      },
+      {
+        "direction": "input",
+        "name": "rid",
+        "width": 4
+      },
+      {
+        "direction": "input",
+        "name": "rdata",
+        "width": 32
+      },
+      {
+        "direction": "input",
+        "name": "rresp",
+        "width": 2
+      },
+      {
+        "direction": "input",
+        "name": "rlast",
+        "width": 1
+      },
+      {
+        "direction": "input",
+        "name": "rvalid",
+        "width": 1
+      },
+      {
+        "direction": "output",
+        "name": "rready",
+        "width": 1
+      },
+      {
+        "direction": "output",
+        "name": "awid",
+        "width": 4
+      },
+      {
+        "direction": "output",
+        "name": "awaddr",
+        "width": 32
+      },
+      {
+        "direction": "output",
+        "name": "awlen",
+        "width": 8
+      },
+      {
+        "direction": "output",
+        "name": "awsize",
+        "width": 3
+      },
+      {
+        "direction": "output",
+        "name": "awburst",
+        "width": 2
+      },
+      {
+        "direction": "output",
+        "name": "awlock",
+        "width": 2
+      },
+      {
+        "direction": "output",
+        "name": "awcache",
+        "width": 4
+      },
+      {
+        "direction": "output",
+        "name": "awprot",
+        "width": 3
+      },
+      {
+        "direction": "output",
+        "name": "awvalid",
+        "width": 1
+      },
+      {
+        "direction": "input",
+        "name": "awready",
+        "width": 1
+      },
+      {
+        "direction": "output",
+        "name": "wid",
+        "width": 4
+      },
+      {
+        "direction": "output",
+        "name": "wdata",
+        "width": 32
+      },
+      {
+        "direction": "output",
+        "name": "wstrb",
+        "width": 4
+      },
+      {
+        "direction": "output",
+        "name": "wlast",
+        "width": 1
+      },
+      {
+        "direction": "output",
+        "name": "wvalid",
+        "width": 1
+      },
+      {
+        "direction": "input",
+        "name": "wready",
+        "width": 1
+      },
+      {
+        "direction": "input",
+        "name": "bid",
+        "width": 4
+      },
+      {
+        "direction": "input",
+        "name": "bresp",
+        "width": 2
+      },
+      {
+        "direction": "input",
+        "name": "bvalid",
+        "width": 1
+      },
+      {
+        "direction": "output",
+        "name": "bready",
+        "width": 1
+      },
+      {
+        "direction": "input",
+        "name": "break_point",
+        "width": 1
+      },
+      {
+        "direction": "input",
+        "name": "infor_flag",
+        "width": 1
+      },
+      {
+        "direction": "input",
+        "name": "reg_num",
+        "width": 5
+      },
+      {
+        "direction": "output",
+        "name": "ws_valid",
+        "width": 1
+      },
+      {
+        "direction": "output",
+        "name": "rf_rdata",
+        "width": 32
+      },
+      {
+        "direction": "output",
+        "name": "debug0_wb_pc",
+        "width": 32
+      },
+      {
+        "direction": "output",
+        "name": "debug0_wb_rf_wen",
+        "width": 4
+      },
+      {
+        "direction": "output",
+        "name": "debug0_wb_rf_wnum",
+        "width": 5
+      },
+      {
+        "direction": "output",
+        "name": "debug0_wb_rf_wdata",
+        "width": 32
+      },
+      {
+        "direction": "output",
+        "name": "debug0_wb_inst",
+        "width": 32
+      }
+    ],
+    "raw_sha256": "ff286f559dbc9131349c9fb8c842110569d231b6a34e76ded172c403d8f90afa",
+    "raw_size": 46274,
+    "tlbnum_default": 32
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "iteration_id": "20260715-1300-typed-axi-boundary",
+  "artifacts": [
+    {"path":"evidence/scala-check.json","sha256":"bb8ba49e7120f5d2e9d14cc55c4fc1be816c7a67469cdc8ca800960e6db3b8d5","size":412132},
+    {"path":"evidence/generate.json","sha256":"fd379e27aacaaadd91a82252b0fcbadba23ee2f56726382ff8992a5d741145f7","size":110207},
+    {"path":"evidence/contract.json","sha256":"61b008d9e3e2be7512e3b08924ce04bd6e9b88ef858f4442d79037012f440a27","size":11269},
+    {"path":"evidence/package.json","sha256":"f1e63c1f4bf133ac70ad6bd5d05f1906f0cb897d79cbe8d7edaba9a4dd07a635","size":2155},
+    {"path":"evidence/publish-check.json","sha256":"1ccbe869544ac2f87972b17611588f65c26c1ea5e1565d7dc44c29a4d8550276","size":2209},
+    {"path":"evidence/candidate-closure.json","sha256":"8989644352601b9f5d94fb55089349c966421125e3e29c556d530cfe76de199a","size":2097},
+    {"path":"evidence/lint.json","sha256":"7f1bffaddfeb11277c67ec81274b7b46bcf00e2ba88626c13732b934afd51e16","size":28401},
+    {"path":"evidence/yosys-check.json","sha256":"94fdaaa853506ae6a0fd93710b7a236c1cd319bde76d63f843350bdbb889e282","size":3101},
+    {"path":"evidence/typed-axi-boundary.json","sha256":"bdb4d33fd251abf2302c1a7c5debb1ddf93361e9e0fe421fad12bd613a3ef981","size":1744},
+    {"path":"evidence/replacement-reachability.json","sha256":"2e617d4b25ee8be794e239d076713cb2e53da206fb3cea1a9a74631b7a6c9d94","size":4335}
+  ],
+  "external_artifacts": [
+    {"path":"build/20260715-1300-typed-axi-final/core_top/generate","retention":"local until iteration close"},
+    {"path":"build/20260715-1300-typed-axi-final/core_top/lint/verilator.log","retention":"local until iteration close"}
+  ]
+}

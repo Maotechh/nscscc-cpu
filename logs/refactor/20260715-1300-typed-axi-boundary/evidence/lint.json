@@ -1,0 +1,431 @@
+{
+  "closure": null,
+  "environment_profile": "locked",
+  "gate": "core-top-lint",
+  "generated_at": "2026-07-15T13:12:44+08:00",
+  "input": {
+    "complete_rtl": "/mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260714-1650-consolidated-spinal/build/20260715-1300-typed-axi-final/core_top/package/rtl/mycpu_top.v",
+    "complete_rtl_sha256": "51e400e3d3c56bed3201c9599224aaaf361c22d8f1dc272054094adc8a9e9ebc",
+    "complete_rtl_size": 844312,
+    "contract": {
+      "header_sha256": "b2db20e7012ff21e931738a624a964274f779e3f3de664150f3cec40e87b9a79",
+      "input_count": 17,
+      "legacy_backend_absent": true,
+      "module_count": 1,
+      "output_count": 32,
+      "port_count": 49,
+      "tlbnum_default": 32
+    },
+    "snapshot": "/mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260714-1650-consolidated-spinal/build/20260715-1300-typed-axi-final/core_top/lint/input/core_top.v",
+    "snapshot_sha256": "51e400e3d3c56bed3201c9599224aaaf361c22d8f1dc272054094adc8a9e9ebc",
+    "stable": true
+  },
+  "locked_manifest_asserted": true,
+  "provenance": {
+    "evaluator": "/mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260714-1650-consolidated-spinal/tools/core_top_gate.py",
+    "evaluator_sha256": "de3b69dce99ea8a78c4ac0e15f3835ed8d31f861cc2119618a907b3a5eba2a51",
+    "manifest": "/mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260714-1650-consolidated-spinal/reference/manifest.lock",
+    "manifest_sha256": "743dd7e58d77e456cfe664d80c2e6614ab426f72bfecd9088ff18d702afa2f20",
+    "ports_contract": "/mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260714-1650-consolidated-spinal/reference/core-top.ports.json",
+    "ports_contract_sha256": "effa486ff707e480ff8ee13d7f20b2d524bd26908726915c99abf1b37eeab576",
+    "repository": "/mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260714-1650-consolidated-spinal",
+    "repository_head": "b8962b6c194c11d01747adb2a7269216df01dce3",
+    "repository_status_sha256": "90549f24c22d3fccf80adbefa43c5a8ddb738c13d8429dfbf5e14c64e13f8349"
+  },
+  "schema_version": 1,
+  "scope": "complete-spinal-rtl",
+  "skip_markers": [],
+  "status": "fail",
+  "target": "core-top-compat",
+  "unexpected_errors": [],
+  "verilator": {
+    "elapsed_seconds": 0.497,
+    "log": "/mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260714-1650-consolidated-spinal/build/20260715-1300-typed-axi-final/core_top/lint/verilator.log",
+    "log_sha256": "f09ab524f4c8156c8f0e3c72e52ac76099a971dd10cfd988ffe088e762ffb37e",
+    "path": "/usr/bin/verilator",
+    "returncode": 1,
+    "sha256": "4c6292ab82e57b7f34ab26dbae86ba9c494bacfb088b6ff34be93c553d1301b1",
+    "timed_out": false,
+    "version": "Verilator 5.020 2024-01-01 rev (Debian 5.020-1)"
+  },
+  "warning_policy": {
+    "actual_categories": [
+      "DECLFILENAME",
+      "UNUSEDPARAM",
+      "UNUSEDSIGNAL"
+    ],
+    "actual_warning_count": 73,
+    "actual_warning_signature_sha256": "6cb7110012904a4b0a7648d89815dd23599646f92fa1027255e5b3a352995d37",
+    "mode": "strict-zero"
+  },
+  "warning_signature_sha256": "6cb7110012904a4b0a7648d89815dd23599646f92fa1027255e5b3a352995d37",
+  "warning_signatures": [
+    {
+      "category": "DECLFILENAME",
+      "message": "Filename 'core_top' does not match MODULE name: 'SpinalCoreBackend'"
+    },
+    {
+      "category": "UNUSEDPARAM",
+      "message": "Parameter is not used: 'TLBNUM'"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "message": "Signal is not used: 'decode_io_btb_deleteEntry'"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "message": "Signal is not used: 'decode_io_registers_0'"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "message": "Signal is not used: 'writeback_io_realValid'"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "message": "Signal is not used: 'writeback_io_exception_valid'"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "message": "Signal is not used: 'addressTranslation_inst_tlb_d'"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "message": "Bits of signal are not used: 'rid'[3:1]"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "message": "Signal is not used: 'rresp'"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "message": "Signal is not used: 'bid'"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "message": "Signal is not used: 'bresp'"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "message": "Signal is not used: 'inst_wr_req'"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "message": "Signal is not used: 'inst_wr_type'"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "message": "Signal is not used: 'inst_wr_addr'"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "message": "Signal is not used: 'inst_wr_wstrb'"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "message": "Signal is not used: 'inst_wr_data'"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "message": "Signal is not used: 'preld_hint'"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "message": "Signal is not used: 'op'"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "message": "Signal is not used: 'wstrb'"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "message": "Signal is not used: 'wdata'"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "message": "Signal is not used: 'wr_rdy'"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "message": "Bits of signal are not used: 'tlbehi_in'[12:0]"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "message": "Bits of signal are not used: 'tlbelo0_in'[31:28,7]"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "message": "Bits of signal are not used: 'tlbelo1_in'[31:28,7]"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "message": "Bits of signal are not used: 'tlbidx_in'[30,23:5]"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "message": "Bits of signal are not used: 'csr_dmw0'[31:28,24:0]"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "message": "Bits of signal are not used: 'csr_dmw1'[31:28,24:0]"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "message": "Bits of signal are not used: 'instPhysical'[11:0]"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "message": "Bits of signal are not used: 'dataPhysical'[11:0]"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "message": "Bits of signal are not used: 'tlbehi_in'[12:0]"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "message": "Bits of signal are not used: 'tlbelo0_in'[31:28,7]"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "message": "Bits of signal are not used: 'tlbelo1_in'[31:28,7]"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "message": "Bits of signal are not used: 'tlbidx_in'[30,23:0]"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "message": "Signal is not used: 'logic_brk'"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "message": "Bits of signal are not used: 'logic_disableCache'[31:1]"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "message": "Bits of signal are not used: 'payload_exceptionCode'[10]"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "message": "Bits of signal are not used: 'payload_physicalAddress'[3:0]"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "message": "Signal is not used: 'payload_preload'"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "message": "Bits of signal are not used: 'io_dmw0'[28:6,2:1]"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "message": "Bits of signal are not used: 'io_dmw1'[28:6,2:1]"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "message": "Signal is not used: 'clock'"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "message": "Signal is not used: 'commitContract'"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "message": "Signal is not used: 'instrValid'"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "message": "Signal is not used: 'pc'"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "message": "Signal is not used: 'instruction'"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "message": "Signal is not used: 'isTlbFill'"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "message": "Signal is not used: 'tlbFillIndex'"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "message": "Signal is not used: 'isCounterInstruction'"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "message": "Signal is not used: 'timer'"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "message": "Signal is not used: 'gprWriteValid'"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "message": "Signal is not used: 'gprWriteIndex'"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "message": "Signal is not used: 'gprWriteData'"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "message": "Signal is not used: 'csrRstat'"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "message": "Signal is not used: 'csrReadData'"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "message": "Signal is not used: 'exceptionValid'"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "message": "Signal is not used: 'ertn'"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "message": "Signal is not used: 'interruptNumber'"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "message": "Signal is not used: 'exceptionCause'"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "message": "Signal is not used: 'exceptionPc'"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "message": "Signal is not used: 'exceptionInstruction'"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "message": "Signal is not used: 'trapValid'"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "message": "Signal is not used: 'trapCode'"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "message": "Signal is not used: 'cycleCount'"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "message": "Signal is not used: 'instructionCount'"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "message": "Signal is not used: 'storeValid'"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "message": "Signal is not used: 'storePhysicalAddress'"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "message": "Signal is not used: 'storeVirtualAddress'"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "message": "Signal is not used: 'storeData'"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "message": "Signal is not used: 'loadValid'"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "message": "Signal is not used: 'loadPhysicalAddress'"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "message": "Signal is not used: 'loadVirtualAddress'"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "message": "Signal is not used: 'csrState'"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "message": "Signal is not used: 'gprState'"
+    }
+  ],
+  "warnings": [
+    "%Warning-DECLFILENAME: /mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260714-1650-consolidated-spinal/build/20260715-1300-typed-axi-final/core_top/lint/input/core_top.v:188:8: Filename 'core_top' does not match MODULE name: 'SpinalCoreBackend'",
+    "%Warning-UNUSEDPARAM: /mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260714-1650-consolidated-spinal/build/20260715-1300-typed-axi-final/core_top/lint/input/core_top.v:7:13: Parameter is not used: 'TLBNUM'",
+    "%Warning-UNUSEDSIGNAL: /mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260714-1650-consolidated-spinal/build/20260715-1300-typed-axi-final/core_top/lint/input/core_top.v:345:23: Signal is not used: 'decode_io_btb_deleteEntry'",
+    "%Warning-UNUSEDSIGNAL: /mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260714-1650-consolidated-spinal/build/20260715-1300-typed-axi-final/core_top/lint/input/core_top.v:353:23: Signal is not used: 'decode_io_registers_0'",
+    "%Warning-UNUSEDSIGNAL: /mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260714-1650-consolidated-spinal/build/20260715-1300-typed-axi-final/core_top/lint/input/core_top.v:514:23: Signal is not used: 'writeback_io_realValid'",
+    "%Warning-UNUSEDSIGNAL: /mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260714-1650-consolidated-spinal/build/20260715-1300-typed-axi-final/core_top/lint/input/core_top.v:526:23: Signal is not used: 'writeback_io_exception_valid'",
+    "%Warning-UNUSEDSIGNAL: /mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260714-1650-consolidated-spinal/build/20260715-1300-typed-axi-final/core_top/lint/input/core_top.v:651:23: Signal is not used: 'addressTranslation_inst_tlb_d'",
+    "%Warning-UNUSEDSIGNAL: /mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260714-1650-consolidated-spinal/build/20260715-1300-typed-axi-final/core_top/lint/input/core_top.v:4872:24: Bits of signal are not used: 'rid'[3:1]",
+    "%Warning-UNUSEDSIGNAL: /mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260714-1650-consolidated-spinal/build/20260715-1300-typed-axi-final/core_top/lint/input/core_top.v:4874:24: Signal is not used: 'rresp'",
+    "%Warning-UNUSEDSIGNAL: /mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260714-1650-consolidated-spinal/build/20260715-1300-typed-axi-final/core_top/lint/input/core_top.v:4894:24: Signal is not used: 'bid'",
+    "%Warning-UNUSEDSIGNAL: /mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260714-1650-consolidated-spinal/build/20260715-1300-typed-axi-final/core_top/lint/input/core_top.v:4895:24: Signal is not used: 'bresp'",
+    "%Warning-UNUSEDSIGNAL: /mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260714-1650-consolidated-spinal/build/20260715-1300-typed-axi-final/core_top/lint/input/core_top.v:4905:24: Signal is not used: 'inst_wr_req'",
+    "%Warning-UNUSEDSIGNAL: /mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260714-1650-consolidated-spinal/build/20260715-1300-typed-axi-final/core_top/lint/input/core_top.v:4906:24: Signal is not used: 'inst_wr_type'",
+    "%Warning-UNUSEDSIGNAL: /mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260714-1650-consolidated-spinal/build/20260715-1300-typed-axi-final/core_top/lint/input/core_top.v:4907:24: Signal is not used: 'inst_wr_addr'",
+    "%Warning-UNUSEDSIGNAL: /mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260714-1650-consolidated-spinal/build/20260715-1300-typed-axi-final/core_top/lint/input/core_top.v:4908:24: Signal is not used: 'inst_wr_wstrb'",
+    "%Warning-UNUSEDSIGNAL: /mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260714-1650-consolidated-spinal/build/20260715-1300-typed-axi-final/core_top/lint/input/core_top.v:4909:24: Signal is not used: 'inst_wr_data'",
+    "%Warning-UNUSEDSIGNAL: /mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260714-1650-consolidated-spinal/build/20260715-1300-typed-axi-final/core_top/lint/input/core_top.v:5169:24: Signal is not used: 'preld_hint'",
+    "%Warning-UNUSEDSIGNAL: /mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260714-1650-consolidated-spinal/build/20260715-1300-typed-axi-final/core_top/lint/input/core_top.v:9135:24: Signal is not used: 'op'",
+    "%Warning-UNUSEDSIGNAL: /mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260714-1650-consolidated-spinal/build/20260715-1300-typed-axi-final/core_top/lint/input/core_top.v:9139:24: Signal is not used: 'wstrb'",
+    "%Warning-UNUSEDSIGNAL: /mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260714-1650-consolidated-spinal/build/20260715-1300-typed-axi-final/core_top/lint/input/core_top.v:9140:24: Signal is not used: 'wdata'",
+    "%Warning-UNUSEDSIGNAL: /mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260714-1650-consolidated-spinal/build/20260715-1300-typed-axi-final/core_top/lint/input/core_top.v:9164:24: Signal is not used: 'wr_rdy'",
+    "%Warning-UNUSEDSIGNAL: /mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260714-1650-consolidated-spinal/build/20260715-1300-typed-axi-final/core_top/lint/input/core_top.v:10028:24: Bits of signal are not used: 'tlbehi_in'[12:0]",
+    "%Warning-UNUSEDSIGNAL: /mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260714-1650-consolidated-spinal/build/20260715-1300-typed-axi-final/core_top/lint/input/core_top.v:10029:24: Bits of signal are not used: 'tlbelo0_in'[31:28,7]",
+    "%Warning-UNUSEDSIGNAL: /mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260714-1650-consolidated-spinal/build/20260715-1300-typed-axi-final/core_top/lint/input/core_top.v:10030:24: Bits of signal are not used: 'tlbelo1_in'[31:28,7]",
+    "%Warning-UNUSEDSIGNAL: /mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260714-1650-consolidated-spinal/build/20260715-1300-typed-axi-final/core_top/lint/input/core_top.v:10031:24: Bits of signal are not used: 'tlbidx_in'[30,23:5]",
+    "%Warning-UNUSEDSIGNAL: /mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260714-1650-consolidated-spinal/build/20260715-1300-typed-axi-final/core_top/lint/input/core_top.v:10042:24: Bits of signal are not used: 'csr_dmw0'[31:28,24:0]",
+    "%Warning-UNUSEDSIGNAL: /mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260714-1650-consolidated-spinal/build/20260715-1300-typed-axi-final/core_top/lint/input/core_top.v:10043:24: Bits of signal are not used: 'csr_dmw1'[31:28,24:0]",
+    "%Warning-UNUSEDSIGNAL: /mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260714-1650-consolidated-spinal/build/20260715-1300-typed-axi-final/core_top/lint/input/core_top.v:10102:23: Bits of signal are not used: 'instPhysical'[11:0]",
+    "%Warning-UNUSEDSIGNAL: /mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260714-1650-consolidated-spinal/build/20260715-1300-typed-axi-final/core_top/lint/input/core_top.v:10103:23: Bits of signal are not used: 'dataPhysical'[11:0]",
+    "%Warning-UNUSEDSIGNAL: /mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260714-1650-consolidated-spinal/build/20260715-1300-typed-axi-final/core_top/lint/input/core_top.v:10304:24: Bits of signal are not used: 'tlbehi_in'[12:0]",
+    "%Warning-UNUSEDSIGNAL: /mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260714-1650-consolidated-spinal/build/20260715-1300-typed-axi-final/core_top/lint/input/core_top.v:10305:24: Bits of signal are not used: 'tlbelo0_in'[31:28,7]",
+    "%Warning-UNUSEDSIGNAL: /mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260714-1650-consolidated-spinal/build/20260715-1300-typed-axi-final/core_top/lint/input/core_top.v:10306:24: Bits of signal are not used: 'tlbelo1_in'[31:28,7]",
+    "%Warning-UNUSEDSIGNAL: /mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260714-1650-consolidated-spinal/build/20260715-1300-typed-axi-final/core_top/lint/input/core_top.v:10307:24: Bits of signal are not used: 'tlbidx_in'[30,23:0]",
+    "%Warning-UNUSEDSIGNAL: /mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260714-1650-consolidated-spinal/build/20260715-1300-typed-axi-final/core_top/lint/input/core_top.v:10370:23: Signal is not used: 'logic_brk'",
+    "%Warning-UNUSEDSIGNAL: /mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260714-1650-consolidated-spinal/build/20260715-1300-typed-axi-final/core_top/lint/input/core_top.v:10371:23: Bits of signal are not used: 'logic_disableCache'[31:1]",
+    "%Warning-UNUSEDSIGNAL: /mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260714-1650-consolidated-spinal/build/20260715-1300-typed-axi-final/core_top/lint/input/core_top.v:11128:23: Bits of signal are not used: 'payload_exceptionCode'[10]",
+    "%Warning-UNUSEDSIGNAL: /mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260714-1650-consolidated-spinal/build/20260715-1300-typed-axi-final/core_top/lint/input/core_top.v:11150:23: Bits of signal are not used: 'payload_physicalAddress'[3:0]",
+    "%Warning-UNUSEDSIGNAL: /mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260714-1650-consolidated-spinal/build/20260715-1300-typed-axi-final/core_top/lint/input/core_top.v:11866:23: Signal is not used: 'payload_preload'",
+    "%Warning-UNUSEDSIGNAL: /mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260714-1650-consolidated-spinal/build/20260715-1300-typed-axi-final/core_top/lint/input/core_top.v:13521:24: Bits of signal are not used: 'io_dmw0'[28:6,2:1]",
+    "%Warning-UNUSEDSIGNAL: /mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260714-1650-consolidated-spinal/build/20260715-1300-typed-axi-final/core_top/lint/input/core_top.v:13522:24: Bits of signal are not used: 'io_dmw1'[28:6,2:1]",
+    "%Warning-UNUSEDSIGNAL: /mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260714-1650-consolidated-spinal/build/20260715-1300-typed-axi-final/core_top/lint/input/core_top.v:19176:26: Signal is not used: 'clock'",
+    "%Warning-UNUSEDSIGNAL: /mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260714-1650-consolidated-spinal/build/20260715-1300-typed-axi-final/core_top/lint/input/core_top.v:19177:26: Signal is not used: 'commitContract'",
+    "%Warning-UNUSEDSIGNAL: /mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260714-1650-consolidated-spinal/build/20260715-1300-typed-axi-final/core_top/lint/input/core_top.v:19178:26: Signal is not used: 'instrValid'",
+    "%Warning-UNUSEDSIGNAL: /mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260714-1650-consolidated-spinal/build/20260715-1300-typed-axi-final/core_top/lint/input/core_top.v:19179:26: Signal is not used: 'pc'",
+    "%Warning-UNUSEDSIGNAL: /mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260714-1650-consolidated-spinal/build/20260715-1300-typed-axi-final/core_top/lint/input/core_top.v:19180:26: Signal is not used: 'instruction'",
+    "%Warning-UNUSEDSIGNAL: /mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260714-1650-consolidated-spinal/build/20260715-1300-typed-axi-final/core_top/lint/input/core_top.v:19181:26: Signal is not used: 'isTlbFill'",
+    "%Warning-UNUSEDSIGNAL: /mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260714-1650-consolidated-spinal/build/20260715-1300-typed-axi-final/core_top/lint/input/core_top.v:19182:26: Signal is not used: 'tlbFillIndex'",
+    "%Warning-UNUSEDSIGNAL: /mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260714-1650-consolidated-spinal/build/20260715-1300-typed-axi-final/core_top/lint/input/core_top.v:19183:26: Signal is not used: 'isCounterInstruction'",
+    "%Warning-UNUSEDSIGNAL: /mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260714-1650-consolidated-spinal/build/20260715-1300-typed-axi-final/core_top/lint/input/core_top.v:19184:26: Signal is not used: 'timer'",
+    "%Warning-UNUSEDSIGNAL: /mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260714-1650-consolidated-spinal/build/20260715-1300-typed-axi-final/core_top/lint/input/core_top.v:19185:26: Signal is not used: 'gprWriteValid'",
+    "%Warning-UNUSEDSIGNAL: /mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260714-1650-consolidated-spinal/build/20260715-1300-typed-axi-final/core_top/lint/input/core_top.v:19186:26: Signal is not used: 'gprWriteIndex'",
+    "%Warning-UNUSEDSIGNAL: /mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260714-1650-consolidated-spinal/build/20260715-1300-typed-axi-final/core_top/lint/input/core_top.v:19187:26: Signal is not used: 'gprWriteData'",
+    "%Warning-UNUSEDSIGNAL: /mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260714-1650-consolidated-spinal/build/20260715-1300-typed-axi-final/core_top/lint/input/core_top.v:19188:26: Signal is not used: 'csrRstat'",
+    "%Warning-UNUSEDSIGNAL: /mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260714-1650-consolidated-spinal/build/20260715-1300-typed-axi-final/core_top/lint/input/core_top.v:19189:26: Signal is not used: 'csrReadData'",
+    "%Warning-UNUSEDSIGNAL: /mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260714-1650-consolidated-spinal/build/20260715-1300-typed-axi-final/core_top/lint/input/core_top.v:19190:26: Signal is not used: 'exceptionValid'",
+    "%Warning-UNUSEDSIGNAL: /mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260714-1650-consolidated-spinal/build/20260715-1300-typed-axi-final/core_top/lint/input/core_top.v:19191:26: Signal is not used: 'ertn'",
+    "%Warning-UNUSEDSIGNAL: /mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260714-1650-consolidated-spinal/build/20260715-1300-typed-axi-final/core_top/lint/input/core_top.v:19192:26: Signal is not used: 'interruptNumber'",
+    "%Warning-UNUSEDSIGNAL: /mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260714-1650-consolidated-spinal/build/20260715-1300-typed-axi-final/core_top/lint/input/core_top.v:19193:26: Signal is not used: 'exceptionCause'",
+    "%Warning-UNUSEDSIGNAL: /mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260714-1650-consolidated-spinal/build/20260715-1300-typed-axi-final/core_top/lint/input/core_top.v:19194:26: Signal is not used: 'exceptionPc'",
+    "%Warning-UNUSEDSIGNAL: /mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260714-1650-consolidated-spinal/build/20260715-1300-typed-axi-final/core_top/lint/input/core_top.v:19195:26: Signal is not used: 'exceptionInstruction'",
+    "%Warning-UNUSEDSIGNAL: /mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260714-1650-consolidated-spinal/build/20260715-1300-typed-axi-final/core_top/lint/input/core_top.v:19196:26: Signal is not used: 'trapValid'",
+    "%Warning-UNUSEDSIGNAL: /mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260714-1650-consolidated-spinal/build/20260715-1300-typed-axi-final/core_top/lint/input/core_top.v:19197:26: Signal is not used: 'trapCode'",
+    "%Warning-UNUSEDSIGNAL: /mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260714-1650-consolidated-spinal/build/20260715-1300-typed-axi-final/core_top/lint/input/core_top.v:19198:26: Signal is not used: 'cycleCount'",
+    "%Warning-UNUSEDSIGNAL: /mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260714-1650-consolidated-spinal/build/20260715-1300-typed-axi-final/core_top/lint/input/core_top.v:19199:26: Signal is not used: 'instructionCount'",
+    "%Warning-UNUSEDSIGNAL: /mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260714-1650-consolidated-spinal/build/20260715-1300-typed-axi-final/core_top/lint/input/core_top.v:19200:26: Signal is not used: 'storeValid'",
+    "%Warning-UNUSEDSIGNAL: /mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260714-1650-consolidated-spinal/build/20260715-1300-typed-axi-final/core_top/lint/input/core_top.v:19201:26: Signal is not used: 'storePhysicalAddress'",
+    "%Warning-UNUSEDSIGNAL: /mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260714-1650-consolidated-spinal/build/20260715-1300-typed-axi-final/core_top/lint/input/core_top.v:19202:26: Signal is not used: 'storeVirtualAddress'",
+    "%Warning-UNUSEDSIGNAL: /mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260714-1650-consolidated-spinal/build/20260715-1300-typed-axi-final/core_top/lint/input/core_top.v:19203:26: Signal is not used: 'storeData'",
+    "%Warning-UNUSEDSIGNAL: /mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260714-1650-consolidated-spinal/build/20260715-1300-typed-axi-final/core_top/lint/input/core_top.v:19204:26: Signal is not used: 'loadValid'",
+    "%Warning-UNUSEDSIGNAL: /mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260714-1650-consolidated-spinal/build/20260715-1300-typed-axi-final/core_top/lint/input/core_top.v:19205:26: Signal is not used: 'loadPhysicalAddress'",
+    "%Warning-UNUSEDSIGNAL: /mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260714-1650-consolidated-spinal/build/20260715-1300-typed-axi-final/core_top/lint/input/core_top.v:19206:26: Signal is not used: 'loadVirtualAddress'",
+    "%Warning-UNUSEDSIGNAL: /mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260714-1650-consolidated-spinal/build/20260715-1300-typed-axi-final/core_top/lint/input/core_top.v:19207:26: Signal is not used: 'csrState'",
+    "%Warning-UNUSEDSIGNAL: /mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260714-1650-consolidated-spinal/build/20260715-1300-typed-axi-final/core_top/lint/input/core_top.v:19208:26: Signal is not used: 'gprState'"
+  ]
+}

@@ -6,7 +6,7 @@ import spinal.lib._
 /** AXI3 read-address payload for the locked chiplab boundary. */
 final case class Axi3ReadAddress() extends Bundle {
   val id = Bits(4 bits)
-  val address = UInt(32 bits)
+  val address = Bits(32 bits)
   val len = Bits(8 bits)
   val size = Bits(3 bits)
   val burst = Bits(2 bits)
@@ -26,7 +26,7 @@ final case class Axi3ReadData() extends Bundle {
 /** AXI3 write-address payload for the locked chiplab boundary. */
 final case class Axi3WriteAddress() extends Bundle {
   val id = Bits(4 bits)
-  val address = UInt(32 bits)
+  val address = Bits(32 bits)
   val len = Bits(8 bits)
   val size = Bits(3 bits)
   val burst = Bits(2 bits)

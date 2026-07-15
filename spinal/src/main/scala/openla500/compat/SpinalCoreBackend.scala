@@ -8,7 +8,7 @@ import openla500.pipeline._
 import openla500.predict.OpenLa500Predictor
 import openla500.privileged.{OpenLa500AddrTrans, OpenLa500Csr}
 import spinal.core._
-import spinal.lib.Flow
+import spinal.lib._
 
 /** Active SpinalHDL implementation behind the locked chiplab compatibility boundary.
   *
@@ -24,46 +24,8 @@ private[compat] final class SpinalCoreBackend(
     val aresetn = in Bool ()
     val intrpt = in Bits (8 bits)
 
-    val arid = out Bits (4 bits)
-    val araddr = out Bits (32 bits)
-    val arlen = out Bits (8 bits)
-    val arsize = out Bits (3 bits)
-    val arburst = out Bits (2 bits)
-    val arlock = out Bits (2 bits)
-    val arcache = out Bits (4 bits)
-    val arprot = out Bits (3 bits)
-    val arvalid = out Bool ()
-    val arready = in Bool ()
-
-    val rid = in Bits (4 bits)
-    val rdata = in Bits (32 bits)
-    val rresp = in Bits (2 bits)
-    val rlast = in Bool ()
-    val rvalid = in Bool ()
-    val rready = out Bool ()
-
-    val awid = out Bits (4 bits)
-    val awaddr = out Bits (32 bits)
-    val awlen = out Bits (8 bits)
-    val awsize = out Bits (3 bits)
-    val awburst = out Bits (2 bits)
-    val awlock = out Bits (2 bits)
-    val awcache = out Bits (4 bits)
-    val awprot = out Bits (3 bits)
-    val awvalid = out Bool ()
-    val awready = in Bool ()
-
-    val wid = out Bits (4 bits)
-    val wdata = out Bits (32 bits)
-    val wstrb = out Bits (4 bits)
-    val wlast = out Bool ()
-    val wvalid = out Bool ()
-    val wready = in Bool ()
-
-    val bid = in Bits (4 bits)
-    val bresp = in Bits (2 bits)
-    val bvalid = in Bool ()
-    val bready = out Bool ()
+    /** Typed AXI3/WID contract; raw chiplab pin names belong only to CoreTopCompat. */
+    val axi = master(Axi3Compat())
 
     val break_point = in Bool ()
     val infor_flag = in Bool ()
@@ -466,42 +428,43 @@ private[compat] final class SpinalCoreBackend(
   decode.io.writeBufferEmpty := axiBridge.io.write_buffer_empty
 
   // Locked external AXI3/WID boundary.
-  axiBridge.io.arready := io.arready
-  axiBridge.io.rid := io.rid
-  axiBridge.io.rdata := io.rdata
-  axiBridge.io.rresp := io.rresp
-  axiBridge.io.rlast := io.rlast
-  axiBridge.io.rvalid := io.rvalid
-  axiBridge.io.awready := io.awready
-  axiBridge.io.wready := io.wready
-  axiBridge.io.bid := io.bid
-  axiBridge.io.bresp := io.bresp
-  axiBridge.io.bvalid := io.bvalid
-  io.arid := axiBridge.io.arid
-  io.araddr := axiBridge.io.araddr
-  io.arlen := axiBridge.io.arlen
-  io.arsize := axiBridge.io.arsize
-  io.arburst := axiBridge.io.arburst
-  io.arlock := axiBridge.io.arlock
-  io.arcache := axiBridge.io.arcache
-  io.arprot := axiBridge.io.arprot
-  io.arvalid := axiBridge.io.arvalid
-  io.rready := axiBridge.io.rready
-  io.awid := axiBridge.io.awid
-  io.awaddr := axiBridge.io.awaddr
-  io.awlen := axiBridge.io.awlen
-  io.awsize := axiBridge.io.awsize
-  io.awburst := axiBridge.io.awburst
-  io.awlock := axiBridge.io.awlock
-  io.awcache := axiBridge.io.awcache
-  io.awprot := axiBridge.io.awprot
-  io.awvalid := axiBridge.io.awvalid
-  io.wid := axiBridge.io.wid
-  io.wdata := axiBridge.io.wdata
-  io.wstrb := axiBridge.io.wstrb
-  io.wlast := axiBridge.io.wlast
-  io.wvalid := axiBridge.io.wvalid
-  io.bready := axiBridge.io.bready
+  axiBridge.io.arready := io.axi.ar.ready
+  axiBridge.io.rid := io.axi.r.payload.id
+  axiBridge.io.rdata := io.axi.r.payload.data
+  axiBridge.io.rresp := io.axi.r.payload.response
+  axiBridge.io.rlast := io.axi.r.payload.last
+  axiBridge.io.rvalid := io.axi.r.valid
+  axiBridge.io.awready := io.axi.aw.ready
+  axiBridge.io.wready := io.axi.w.ready
+  axiBridge.io.bid := io.axi.b.payload.id
+  axiBridge.io.bresp := io.axi.b.payload.response
+  axiBridge.io.bvalid := io.axi.b.valid
+
+  io.axi.ar.payload.id := axiBridge.io.arid
+  io.axi.ar.payload.address := axiBridge.io.araddr
+  io.axi.ar.payload.len := axiBridge.io.arlen
+  io.axi.ar.payload.size := axiBridge.io.arsize
+  io.axi.ar.payload.burst := axiBridge.io.arburst
+  io.axi.ar.payload.lock := axiBridge.io.arlock
+  io.axi.ar.payload.cache := axiBridge.io.arcache
+  io.axi.ar.payload.prot := axiBridge.io.arprot
+  io.axi.ar.valid := axiBridge.io.arvalid
+  io.axi.r.ready := axiBridge.io.rready
+  io.axi.aw.payload.id := axiBridge.io.awid
+  io.axi.aw.payload.address := axiBridge.io.awaddr
+  io.axi.aw.payload.len := axiBridge.io.awlen
+  io.axi.aw.payload.size := axiBridge.io.awsize
+  io.axi.aw.payload.burst := axiBridge.io.awburst
+  io.axi.aw.payload.lock := axiBridge.io.awlock
+  io.axi.aw.payload.cache := axiBridge.io.awcache
+  io.axi.aw.payload.prot := axiBridge.io.awprot
+  io.axi.aw.valid := axiBridge.io.awvalid
+  io.axi.w.payload.id := axiBridge.io.wid
+  io.axi.w.payload.data := axiBridge.io.wdata
+  io.axi.w.payload.byteMask := axiBridge.io.wstrb
+  io.axi.w.payload.last := axiBridge.io.wlast
+  io.axi.w.valid := axiBridge.io.wvalid
+  io.axi.b.ready := axiBridge.io.bready
 
   decode.io.debugReadSelect := io.infor_flag
   decode.io.debugReadAddress := io.reg_num.asUInt

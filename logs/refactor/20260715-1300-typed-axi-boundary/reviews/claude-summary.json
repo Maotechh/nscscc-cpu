@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "iteration_id": "20260715-1300-typed-axi-boundary",
+  "status": "unavailable",
+  "job_id": "unavailable-20260715-typed-axi-boundary",
+  "raw_sha256": "537588b819222cf3bbdf94cf230c4511f129c33591d5b087dae25f1cd9f83422",
+  "provider": "claude-review-mcp",
+  "model": null,
+  "reviewed_head_sha": null,
+  "provenance": {
+    "source": "claude-review-mcp",
+    "raw_path": "reviews/claude-raw.md",
+    "raw_sha256": "537588b819222cf3bbdf94cf230c4511f129c33591d5b087dae25f1cd9f83422",
+    "job_id": "unavailable-20260715-typed-axi-boundary",
+    "provider": "claude-review-mcp",
+    "model": null,
+    "reviewed_head_sha": null
+  },
+  "open_blocking_count": 1,
+  "fresh_against_head": false,
+  "allow_ready": false,
+  "allow_status_promotion": false,
+  "error": "Required provider environment variable is not set: GEEKPIE_CLAUDE_API_KEY",
+  "reviewer": "claude",
+  "claims": [
+    {"claim":"typed AXI boundary","decision":"open"},
+    {"claim":"complete functional refactor","decision":"open"}
+  ]
+}
