@@ -1,9 +1,11 @@
 import argparse
 import json
+import sys
 import tempfile
 import unittest
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from tools.candidate_closure_gate import run
 
 
@@ -20,7 +22,7 @@ class CandidateClosureGateTest(unittest.TestCase):
                 overlay_path.mkdir()
                 for name, content in overlay.items():
                     (overlay_path / name).write_text(content, encoding="utf-8")
-            result = run(argparse.Namespace(rtl=rtl_path, root_module="core_top", overlay_dir=overlay_path, out=out_path))
+            result = run(argparse.Namespace(rtl=rtl_path, root_module="core_top", overlay_dir=overlay_path, repo_root=None, out=out_path))
             return result, json.loads(out_path.read_text(encoding="utf-8"))
 
     def test_spinal_closure_passes(self):
@@ -51,6 +53,56 @@ class CandidateClosureGateTest(unittest.TestCase):
         )
         self.assertEqual(result, 1)
         self.assertEqual(report["pure_overlay_status"], "fail")
+
+    def test_repository_allows_only_generated_top_and_testbenches(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            rtl = root / "rtl" / "mycpu_top.v"
+            rtl.parent.mkdir()
+            rtl.write_text("module core_top; endmodule\n", encoding="utf-8")
+            testbench = root / "tests" / "rtl" / "if_stage_lockstep.sv"
+            testbench.parent.mkdir(parents=True)
+            testbench.write_text("module tb; endmodule\n", encoding="utf-8")
+            out = root / "report.json"
+            result = run(
+                argparse.Namespace(
+                    rtl=rtl,
+                    root_module="core_top",
+                    overlay_dir=None,
+                    repo_root=root,
+                    out=out,
+                )
+            )
+            report = json.loads(out.read_text(encoding="utf-8"))
+        self.assertEqual(0, result)
+        self.assertEqual("pass", report["repository_purity_status"])
+
+    def test_repository_rejects_historical_core_verilog(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            rtl = root / "rtl" / "mycpu_top.v"
+            rtl.parent.mkdir()
+            rtl.write_text("module core_top; endmodule\n", encoding="utf-8")
+            legacy = root / "reference" / "component-replacements" / "alu.v"
+            legacy.parent.mkdir(parents=True)
+            legacy.write_text("module alu; endmodule\n", encoding="utf-8")
+            out = root / "report.json"
+            result = run(
+                argparse.Namespace(
+                    rtl=rtl,
+                    root_module="core_top",
+                    overlay_dir=None,
+                    repo_root=root,
+                    out=out,
+                )
+            )
+            report = json.loads(out.read_text(encoding="utf-8"))
+        self.assertEqual(1, result)
+        self.assertEqual("fail", report["repository_purity_status"])
+        self.assertEqual(
+            ["reference/component-replacements/alu.v"],
+            report["repository_hdl"]["blocking_entries"],
+        )
 
 
 if __name__ == "__main__":

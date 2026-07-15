@@ -28,7 +28,7 @@ python3 -I tools/if_stage_gate.py --repo . \
   --candidate <generated>/if_stage.v --out-dir <fresh-output>
 ```
 
-The gate checks the port name/direction/width set, explicit Verilator warning-ID allowlists, Yosys hierarchy/check, a fixed-seed 2048-cycle golden/candidate lockstep, and a negative-control run which must report `IF_MISMATCH` and exit non-zero. The committed candidate and its hash live in `reference/component-replacements/if_stage.v` and `reference/component-replacements/if-stage.json`; local raw result locators and hashes are in the iteration artifacts log.
+The gate checks the port name/direction/width set, explicit Verilator warning-ID allowlists, Yosys hierarchy/check, a fixed-seed 2048-cycle golden/candidate lockstep, and a negative-control run which must report `IF_MISMATCH` and exit non-zero. Leaf RTL is generated into the selected build directory and is not committed; the self-contained `rtl/mycpu_top.v` is the only published CPU RTL. Historical result locators and hashes remain in the iteration artifacts log.
 
 ## Known boundary
 

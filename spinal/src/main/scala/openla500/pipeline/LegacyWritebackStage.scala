@@ -140,7 +140,7 @@ final class LegacyWritebackStage(config: CoreConfig = CoreConfig.Locked) extends
   io.invtlb_vpn := stage.io.tlb.invalidateVpn
   io.invtlb_op := stage.io.tlb.invalidateOperation
 
-  io.real_valid := stage.io.perf.retired
+  io.real_valid := stage.io.realValid
   io.real_br_inst := stage.io.perf.branch
   io.real_icache_miss := stage.io.perf.instructionCacheMiss
   io.real_dcache_miss := stage.io.perf.dataCacheMiss

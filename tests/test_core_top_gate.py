@@ -41,8 +41,10 @@ def complete_top_text(value: dict[str, object], *, parameter: bool = True) -> st
         + " (\n"
         + ",\n".join(declarations)
         + "\n);\n"
-        + "  reg activity;\n"
-        + "  always @(posedge aclk) activity <= ~activity;\n"
+        + "  reg resetCapture_delayedActiveHigh;\n"
+        + "  always @(posedge aclk) begin\n"
+        + "    resetCapture_delayedActiveHigh <= (! aresetn);\n"
+        + "  end\n"
         + "endmodule\n"
     )
 
@@ -155,6 +157,55 @@ class CoreTopPackagingTests(unittest.TestCase):
         with self.assertRaisesRegex(core_top_gate.CoreTopGateError, "unsupported default"):
             core_top_gate.ensure_top_parameter(source)
 
+    def test_tlbnum_override_is_bound_to_reset_capture(self) -> None:
+        guarded, count = core_top_gate.bind_tlbnum_to_reset_capture(
+            complete_top_text(contract())
+        )
+        self.assertEqual(1, count)
+        self.assertIn(
+            "resetCapture_delayedActiveHigh <= ((! aresetn) || (TLBNUM != 32));",
+            guarded,
+        )
+        guarded_again, second_count = core_top_gate.bind_tlbnum_to_reset_capture(guarded)
+        self.assertEqual(0, second_count)
+        self.assertEqual(guarded, guarded_again)
+
+    def test_missing_reset_capture_cannot_package_locked_parameter(self) -> None:
+        source = "module core_top #(parameter TLBNUM = 32) ();\nendmodule\n"
+        with self.assertRaisesRegex(core_top_gate.CoreTopGateError, "reset capture"):
+            core_top_gate.bind_tlbnum_to_reset_capture(source)
+
+    def test_filename_lint_annotation_is_scoped_per_module(self) -> None:
+        source = (
+            "module core_top ();\nendmodule\n"
+            "module generated_child ();\nendmodule\n"
+        )
+        annotated, count = core_top_gate.annotate_module_filename_lint(source)
+        self.assertEqual(2, count)
+        self.assertEqual(2, annotated.count("verilator lint_off DECLFILENAME"))
+        self.assertEqual(2, annotated.count("verilator lint_on DECLFILENAME"))
+        self.assertNotIn("Wno-DECLFILENAME", annotated)
+
+    def test_compat_unused_annotation_wraps_only_the_exact_declaration(self) -> None:
+        source = (
+            "module OpenLa500DCache (\n"
+            "  input wire [4:0] preld_hint,\n"
+            "  input wire unrelated\n"
+            ");\n"
+            "endmodule\n"
+        )
+        annotated, count = core_top_gate.annotate_compat_unused_signal_lint(source)
+        self.assertEqual(1, count)
+        self.assertEqual(1, annotated.count("verilator lint_off UNUSEDSIGNAL"))
+        self.assertEqual(1, annotated.count("verilator lint_on UNUSEDSIGNAL"))
+        self.assertIn("input wire [4:0] preld_hint", annotated)
+        self.assertNotIn("Wno-UNUSEDSIGNAL", annotated)
+
+    def test_known_compat_module_requires_its_expected_declaration(self) -> None:
+        source = "module OpenLa500DCache ();\nendmodule\n"
+        with self.assertRaisesRegex(core_top_gate.CoreTopGateError, "preld_hint"):
+            core_top_gate.annotate_compat_unused_signal_lint(source)
+
     def test_package_publishes_only_complete_spinal_rtl(self) -> None:
         generated = complete_top_text(contract(), parameter=False)
         with tempfile.TemporaryDirectory() as temporary:
@@ -178,6 +229,11 @@ class CoreTopPackagingTests(unittest.TestCase):
         self.assertTrue(summary["input_rtl"]["stable"])
         self.assertTrue(summary["contract"]["legacy_backend_absent"])
         self.assertEqual(49, summary["contract"]["port_count"])
+        self.assertEqual(1, summary["transformations"]["tlbnum_reset_guards"])
+        self.assertEqual(0, summary["transformations"]["compat_unused_signal_annotations"])
+        self.assertEqual(1, summary["transformations"]["module_filename_annotations"])
+        self.assertIn("(TLBNUM != 32)", packaged)
+        self.assertEqual(1, packaged.count("verilator lint_off DECLFILENAME"))
 
     def test_package_rejects_any_legacy_backend_marker(self) -> None:
         generated = complete_top_text(contract(), parameter=False) + "// openla500_legacy_core\n"
@@ -433,12 +489,18 @@ class CoreTopStaticGateTests(unittest.TestCase):
         self.assertFalse(summary["locked_manifest_asserted"])
         self.assertEqual(summary["warnings"], ["%Warning-UNUSEDSIGNAL: /tmp/core_top.v:1:1: evidence"])
 
-    def test_makefile_keeps_lint_waivers_explicit_and_locked_by_default(self) -> None:
+    def test_makefile_defaults_to_locked_strict_zero_lint(self) -> None:
         makefile = (REPOSITORY_ROOT / "Makefile").read_text(encoding="utf-8")
         self.assertIn("CORE_TOP_LINT_PROFILE ?= locked", makefile)
-        self.assertIn("CORE_TOP_LINT_WAIVERS ?=", makefile)
+        self.assertRegex(makefile, r"(?m)^CORE_TOP_LINT_WAIVERS \?=\s*$")
+        self.assertNotIn(
+            "CORE_TOP_LINT_WAIVERS ?= reference/core-top-lint-waivers.json", makefile
+        )
         self.assertIn('--environment-profile "$(CORE_TOP_LINT_PROFILE)"', makefile)
-        self.assertIn('--waivers "$(CORE_TOP_LINT_WAIVERS)"', makefile)
+        self.assertIn(
+            '$(if $(CORE_TOP_LINT_WAIVERS),--waivers "$(CORE_TOP_LINT_WAIVERS)",)',
+            makefile,
+        )
 
     def test_exact_lint_waiver_requires_unsuppressed_audit_then_clean_closure(
         self,

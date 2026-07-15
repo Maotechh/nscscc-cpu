@@ -56,7 +56,7 @@ class VivadoProbeTests(unittest.TestCase):
 class MakeContractTests(unittest.TestCase):
     ITERATION = "component-overlay-make-test"
     SOURCE_HEAD = "b" * 40
-    SPEC = "tests/fixtures/component-overlay/identity.json"
+    SPEC = "reference/component-replacements/core-top.json"
     WORK_ROOT = "/tmp/component overlay work"
     TOOL_ROOT = "/opt/component tools"
 

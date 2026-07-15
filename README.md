@@ -6,6 +6,7 @@
 
 - 行为候选基线固定为 `a158aa8`，但它在锁定 chiplab 的 `func/func_lab19` 上存在已复现 mismatch，因此不是已证明正确的 golden truth。
 - SpinalHDL 活动入口是 `openla500.compat.GenerateCoreTopCompat`，唯一提交的 CPU RTL 生成物是 `rtl/mycpu_top.v`；历史 `CPUCoreFlat` 草稿已移除。
+- 仓库不再保留历史 SoC/leaf Verilog 或 mixed-overlay RTL；除该生成物外仅保留 `tests/` 下明确白名单的 SystemVerilog 仿真 testbench，它们不会进入综合或 FPGA overlay。
 - `rtl/mycpu_top.v` 必须由锁定的 Scala/SBT/SpinalHDL 工具链两次一致生成，并通过 49 端口、发布一致性和候选闭包检查。
 - 已有 `func/func_lab19` diagnostic 功能观察不能替代严格 warning、58/81、random、20 perf、Linux 或 FPGA 门禁。
 - 变更只允许在 `refactor/*` 分支通过 Draft PR 推进；自动化代理不得合并到 `main`。

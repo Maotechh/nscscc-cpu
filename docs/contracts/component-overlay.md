@@ -40,7 +40,7 @@ make chiplab-overlay \
   CHIPLAB_REFERENCE=/opt/chiplab-reference \
   ITERATION_ID="$ITERATION_ID" \
   DUT_SOURCE=mixed DIAGNOSTIC=1 \
-  REPLACEMENT_SPEC=tests/fixtures/component-overlay/identity.json \
+  REPLACEMENT_SPEC=reference/component-replacements/core-top.json \
   SOURCE_HEAD="$SOURCE_HEAD"
 
 make rtl-smoke \
@@ -61,8 +61,8 @@ doctor、overlay、smoke 必须共用 `OUT_DIR`；doctor 与 overlay 必须共�
   "schema_version": 1,
   "replacements": [
     {
-      "target": "rtl/icache.v",
-      "source": "reference/component-replacements/icache.v",
+      "target": "rtl/mycpu_top.v",
+      "source": "rtl/mycpu_top.v",
       "base_sha256": "<64 lowercase hex>",
       "replacement_sha256": "<64 lowercase hex>"
     }

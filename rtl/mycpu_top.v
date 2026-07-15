@@ -3,6 +3,7 @@
 
 
 
+/* verilator lint_off DECLFILENAME */
 module core_top #(
   parameter TLBNUM = 32
 ) (
@@ -179,12 +180,14 @@ module core_top #(
   assign debug0_wb_rf_wdata = backendArea_core_debug0_wb_rf_wdata;
   assign debug0_wb_inst = backendArea_core_debug0_wb_inst;
   always @(posedge aclk) begin
-    resetCapture_delayedActiveHigh <= (! aresetn);
+    resetCapture_delayedActiveHigh <= ((! aresetn) || (TLBNUM != 32));
   end
 
 
 endmodule
+/* verilator lint_on DECLFILENAME */
 
+/* verilator lint_off DECLFILENAME */
 module SpinalCoreBackend (
   input  wire          aclk,
   input  wire          aresetn,
@@ -346,7 +349,9 @@ module SpinalCoreBackend (
   wire                decode_io_btb_popReturnStack;
   wire                decode_io_btb_pushReturnStack;
   wire                decode_io_btb_addEntry;
+  /* verilator lint_off UNUSEDSIGNAL */
   wire                decode_io_btb_deleteEntry;
+  /* verilator lint_on UNUSEDSIGNAL */
   wire                decode_io_btb_predictionError;
   wire                decode_io_btb_predictionRight;
   wire                decode_io_btb_targetError;
@@ -354,7 +359,9 @@ module SpinalCoreBackend (
   wire       [31:0]   decode_io_btb_actualTarget;
   wire       [31:0]   decode_io_btb_pc;
   wire       [4:0]    decode_io_btb_index;
+  /* verilator lint_off UNUSEDSIGNAL */
   wire       [31:0]   decode_io_registers_0;
+  /* verilator lint_on UNUSEDSIGNAL */
   wire       [31:0]   decode_io_registers_1;
   wire       [31:0]   decode_io_registers_2;
   wire       [31:0]   decode_io_registers_3;
@@ -550,7 +557,6 @@ module SpinalCoreBackend (
   wire                writeback_io_reservation_bitValue;
   wire                writeback_io_reservation_addressSet;
   wire       [27:0]   writeback_io_reservation_lineAddress;
-  wire                writeback_io_perf_retired;
   wire                writeback_io_perf_branch;
   wire                writeback_io_perf_instructionCacheMiss;
   wire                writeback_io_perf_dataCacheMiss;
@@ -652,7 +658,9 @@ module SpinalCoreBackend (
   wire       [3:0]    addressTranslation_inst_offset;
   wire                addressTranslation_inst_tlb_found;
   wire                addressTranslation_inst_tlb_v;
+  /* verilator lint_off UNUSEDSIGNAL */
   wire                addressTranslation_inst_tlb_d;
+  /* verilator lint_on UNUSEDSIGNAL */
   wire       [1:0]    addressTranslation_inst_tlb_mat;
   wire       [1:0]    addressTranslation_inst_tlb_plv;
   wire       [7:0]    addressTranslation_data_index;
@@ -1296,7 +1304,6 @@ module SpinalCoreBackend (
     .io_reservation_bitValue                    (writeback_io_reservation_bitValue                     ), //o
     .io_reservation_addressSet                  (writeback_io_reservation_addressSet                   ), //o
     .io_reservation_lineAddress                 (writeback_io_reservation_lineAddress[27:0]            ), //o
-    .io_perf_retired                            (writeback_io_perf_retired                             ), //o
     .io_perf_branch                             (writeback_io_perf_branch                              ), //o
     .io_perf_instructionCacheMiss               (writeback_io_perf_instructionCacheMiss                ), //o
     .io_perf_dataCacheMiss                      (writeback_io_perf_dataCacheMiss                       ), //o
@@ -1357,7 +1364,7 @@ module SpinalCoreBackend (
     .wr_data            (writeback_io_csrWrite_data[31:0]    ), //i
     .interrupt          (intrpt[7:0]                         ), //i
     .has_int            (csr_has_int                         ), //o
-    .excp_flush         (writeback_io_flush_exception        ), //i
+    .excp_flush         (writeback_io_exception_valid        ), //i
     .ertn_flush         (writeback_io_flush_ertn             ), //i
     .era_in             (csr_era_in[31:0]                    ), //i
     .esubcode_in        (csr_esubcode_in[8:0]                ), //i
@@ -1645,7 +1652,7 @@ module SpinalCoreBackend (
     .io_reset                       (reset                                 ), //i
     .io_events_dataCacheMiss        (writeback_io_perf_dataCacheMiss       ), //i
     .io_events_instructionCacheMiss (writeback_io_perf_instructionCacheMiss), //i
-    .io_events_retired              (writeback_io_perf_retired             ), //i
+    .io_events_retired              (writeback_io_realValid                ), //i
     .io_events_branch               (writeback_io_perf_branch              ), //i
     .io_events_memoryAccess         (writeback_io_perf_memoryAccess        ), //i
     .io_events_predictedBranch      (writeback_io_perf_predictedBranch     ), //i
@@ -1837,7 +1844,9 @@ module SpinalCoreBackend (
   assign debug0_wb_inst = writeback_io_debug_instruction;
 
 endmodule
+/* verilator lint_on DECLFILENAME */
 
+/* verilator lint_off DECLFILENAME */
 module ChiplabDiffTestAdapter (
   input  wire          io_clock,
   input  wire          io_commit_valid,
@@ -2214,7 +2223,9 @@ module ChiplabDiffTestAdapter (
 
 
 endmodule
+/* verilator lint_on DECLFILENAME */
 
+/* verilator lint_off DECLFILENAME */
 module OpenLa500Predictor (
   input  wire          io_lookup_valid,
   input  wire [31:0]   io_lookup_payload_pc,
@@ -4644,7 +4655,9 @@ module OpenLa500Predictor (
 
 
 endmodule
+/* verilator lint_on DECLFILENAME */
 
+/* verilator lint_off DECLFILENAME */
 module OpenLa500PerfCounter (
   input  wire          io_clk,
   input  wire          io_reset,
@@ -4701,7 +4714,9 @@ module OpenLa500PerfCounter (
 
 
 endmodule
+/* verilator lint_on DECLFILENAME */
 
+/* verilator lint_off DECLFILENAME */
 module OpenLa500Mul (
   input  wire          mul_clk,
   input  wire          reset,
@@ -4738,7 +4753,9 @@ module OpenLa500Mul (
 
 
 endmodule
+/* verilator lint_on DECLFILENAME */
 
+/* verilator lint_off DECLFILENAME */
 module OpenLa500Div (
   input  wire          div_clk,
   input  wire          reset,
@@ -4863,7 +4880,9 @@ module OpenLa500Div (
 
 
 endmodule
+/* verilator lint_on DECLFILENAME */
 
+/* verilator lint_off DECLFILENAME */
 module OpenLa500TypedAxiBridge (
   input  wire          clk,
   input  wire          reset,
@@ -5082,7 +5101,9 @@ module OpenLa500TypedAxiBridge (
   assign axi_b_ready = legacy_bready;
 
 endmodule
+/* verilator lint_on DECLFILENAME */
 
+/* verilator lint_off DECLFILENAME */
 module OpenLa500DCache (
   input  wire          clk,
   input  wire          reset,
@@ -5100,7 +5121,9 @@ module OpenLa500DCache (
   input  wire          uncache_en,
   input  wire          dcacop_op_en,
   input  wire [1:0]    cacop_op_mode,
+  /* verilator lint_off UNUSEDSIGNAL */
   input  wire [4:0]    preld_hint,
+  /* verilator lint_on UNUSEDSIGNAL */
   input  wire          preld_en,
   input  wire          tlb_excp_cancel_req,
   input  wire          sc_cancel_req,
@@ -9061,17 +9084,25 @@ module OpenLa500DCache (
 
 
 endmodule
+/* verilator lint_on DECLFILENAME */
 
+/* verilator lint_off DECLFILENAME */
 module OpenLa500ICache (
   input  wire          clk,
   input  wire          reset,
   input  wire          valid,
+  /* verilator lint_off UNUSEDSIGNAL */
   input  wire          op,
+  /* verilator lint_on UNUSEDSIGNAL */
   input  wire [7:0]    index,
   input  wire [19:0]   tag,
   input  wire [3:0]    offset,
+  /* verilator lint_off UNUSEDSIGNAL */
   input  wire [3:0]    wstrb,
+  /* verilator lint_on UNUSEDSIGNAL */
+  /* verilator lint_off UNUSEDSIGNAL */
   input  wire [31:0]   wdata,
+  /* verilator lint_on UNUSEDSIGNAL */
   output wire          addr_ok,
   output wire          data_ok,
   output wire [31:0]   rdata,
@@ -9095,7 +9126,9 @@ module OpenLa500ICache (
   output wire [31:0]   wr_addr,
   output wire [3:0]    wr_wstrb,
   output wire [127:0]  wr_data,
+  /* verilator lint_off UNUSEDSIGNAL */
   input  wire          wr_rdy,
+  /* verilator lint_on UNUSEDSIGNAL */
   output wire          cache_miss
 );
 
@@ -9924,7 +9957,9 @@ module OpenLa500ICache (
 
 
 endmodule
+/* verilator lint_on DECLFILENAME */
 
+/* verilator lint_off DECLFILENAME */
 module OpenLa500AddrTrans (
   input  wire          clk,
   input  wire [9:0]    asid,
@@ -9959,10 +9994,18 @@ module OpenLa500AddrTrans (
   input  wire          tlbfill_en,
   input  wire          tlbwr_en,
   input  wire [4:0]    rand_index,
+  /* verilator lint_off UNUSEDSIGNAL */
   input  wire [31:0]   tlbehi_in,
+  /* verilator lint_on UNUSEDSIGNAL */
+  /* verilator lint_off UNUSEDSIGNAL */
   input  wire [31:0]   tlbelo0_in,
+  /* verilator lint_on UNUSEDSIGNAL */
+  /* verilator lint_off UNUSEDSIGNAL */
   input  wire [31:0]   tlbelo1_in,
+  /* verilator lint_on UNUSEDSIGNAL */
+  /* verilator lint_off UNUSEDSIGNAL */
   input  wire [31:0]   tlbidx_in,
+  /* verilator lint_on UNUSEDSIGNAL */
   input  wire [5:0]    ecode_in,
   output wire [31:0]   tlbehi_out,
   output wire [31:0]   tlbelo0_out,
@@ -9973,8 +10016,12 @@ module OpenLa500AddrTrans (
   input  wire [9:0]    invtlb_asid,
   input  wire [18:0]   invtlb_vpn,
   input  wire [4:0]    invtlb_op,
+  /* verilator lint_off UNUSEDSIGNAL */
   input  wire [31:0]   csr_dmw0,
+  /* verilator lint_on UNUSEDSIGNAL */
+  /* verilator lint_off UNUSEDSIGNAL */
   input  wire [31:0]   csr_dmw1,
+  /* verilator lint_on UNUSEDSIGNAL */
   input  wire          csr_da,
   input  wire          csr_pg
 );
@@ -10033,8 +10080,12 @@ module OpenLa500AddrTrans (
   reg        [31:0]   captured_dataVaddr;
   wire                writeEnable;
   wire                pagingMode;
+  /* verilator lint_off UNUSEDSIGNAL */
   reg        [31:0]   instPhysical;
+  /* verilator lint_on UNUSEDSIGNAL */
+  /* verilator lint_off UNUSEDSIGNAL */
   reg        [31:0]   dataPhysical;
+  /* verilator lint_on UNUSEDSIGNAL */
   wire                when_OpenLa500AddrTrans_l141;
   wire                when_OpenLa500AddrTrans_l143;
   wire                when_OpenLa500AddrTrans_l147;
@@ -10184,7 +10235,9 @@ module OpenLa500AddrTrans (
 
 
 endmodule
+/* verilator lint_on DECLFILENAME */
 
+/* verilator lint_off DECLFILENAME */
 module OpenLa500Csr (
   input  wire          clk,
   input  wire          reset,
@@ -10235,10 +10288,18 @@ module OpenLa500Csr (
   output wire [1:0]    datm_out,
   output wire [5:0]    ecode_out,
   input  wire          tlbrd_en,
+  /* verilator lint_off UNUSEDSIGNAL */
   input  wire [31:0]   tlbehi_in,
+  /* verilator lint_on UNUSEDSIGNAL */
+  /* verilator lint_off UNUSEDSIGNAL */
   input  wire [31:0]   tlbelo0_in,
+  /* verilator lint_on UNUSEDSIGNAL */
+  /* verilator lint_off UNUSEDSIGNAL */
   input  wire [31:0]   tlbelo1_in,
+  /* verilator lint_on UNUSEDSIGNAL */
+  /* verilator lint_off UNUSEDSIGNAL */
   input  wire [31:0]   tlbidx_in,
+  /* verilator lint_on UNUSEDSIGNAL */
   input  wire [9:0]    asid_in,
   output wire [1:0]    plv_out,
   output wire [31:0]   csr_crmd_diff,
@@ -10301,8 +10362,12 @@ module OpenLa500Csr (
   reg        [31:0]   logic_dmw1;
   reg        [31:0]   logic_pgdl;
   reg        [31:0]   logic_pgdh;
+  /* verilator lint_off UNUSEDSIGNAL */
   reg        [31:0]   logic_brk;
+  /* verilator lint_on UNUSEDSIGNAL */
+  /* verilator lint_off UNUSEDSIGNAL */
   reg        [31:0]   logic_disableCache;
+  /* verilator lint_on UNUSEDSIGNAL */
   reg        [31:0]   logic_cpucfg1;
   reg        [31:0]   logic_cpucfg2;
   reg        [31:0]   logic_cpucfg10;
@@ -10914,7 +10979,9 @@ module OpenLa500Csr (
 
 
 endmodule
+/* verilator lint_on DECLFILENAME */
 
+/* verilator lint_off DECLFILENAME */
 module WritebackStage (
   input  wire          io_input_valid,
   output wire          io_input_ready,
@@ -10999,7 +11066,6 @@ module WritebackStage (
   output wire          io_reservation_bitValue,
   output wire          io_reservation_addressSet,
   output wire [27:0]   io_reservation_lineAddress,
-  output wire          io_perf_retired,
   output wire          io_perf_branch,
   output wire          io_perf_instructionCacheMiss,
   output wire          io_perf_dataCacheMiss,
@@ -11059,7 +11125,9 @@ module WritebackStage (
   reg        [31:0]   payload_csrResult;
   reg        [13:0]   payload_csrAddress;
   reg                 payload_csrWrite;
+  /* verilator lint_off UNUSEDSIGNAL */
   reg        [15:0]   payload_exceptionCode;
+  /* verilator lint_on UNUSEDSIGNAL */
   reg                 payload_isLl;
   reg                 payload_isSc;
   reg        [31:0]   payload_errorVirtualAddress;
@@ -11081,7 +11149,9 @@ module WritebackStage (
   reg                 payload_isPredictableBranch;
   reg                 payload_predictionError;
   reg                 payload_idle;
+  /* verilator lint_off UNUSEDSIGNAL */
   reg        [31:0]   payload_physicalAddress;
+  /* verilator lint_on UNUSEDSIGNAL */
   reg                 payload_dataUncached;
   reg        [31:0]   payload_instruction;
   reg        [63:0]   payload_timer;
@@ -11096,27 +11166,27 @@ module WritebackStage (
   wire                readyGo;
   wire                realValid;
   wire                registerWriteValid;
-  wire                when_WritebackStage_l139;
-  wire                when_WritebackStage_l141;
-  wire                when_WritebackStage_l145;
-  wire                when_WritebackStage_l152;
-  wire                when_WritebackStage_l158;
-  wire                when_WritebackStage_l164;
-  wire                when_WritebackStage_l166;
-  wire                when_WritebackStage_l168;
-  wire                when_WritebackStage_l170;
-  wire                when_WritebackStage_l172;
-  wire                when_WritebackStage_l176;
-  wire                when_WritebackStage_l183;
-  wire                when_WritebackStage_l189;
-  wire                when_WritebackStage_l195;
-  wire                when_WritebackStage_l201;
+  wire                when_WritebackStage_l138;
+  wire                when_WritebackStage_l140;
+  wire                when_WritebackStage_l144;
+  wire                when_WritebackStage_l151;
+  wire                when_WritebackStage_l157;
+  wire                when_WritebackStage_l163;
+  wire                when_WritebackStage_l165;
+  wire                when_WritebackStage_l167;
+  wire                when_WritebackStage_l169;
+  wire                when_WritebackStage_l171;
+  wire                when_WritebackStage_l175;
+  wire                when_WritebackStage_l182;
+  wire                when_WritebackStage_l188;
+  wire                when_WritebackStage_l194;
+  wire                when_WritebackStage_l200;
   reg        [3:0]    _zz_io_commit_payload_store_byteMask;
-  wire                when_WritebackStage_l256;
-  wire       [1:0]    switch_WritebackStage_l257;
+  wire                when_WritebackStage_l254;
+  wire       [1:0]    switch_WritebackStage_l255;
+  wire                when_WritebackStage_l261;
   wire                when_WritebackStage_l263;
-  wire                when_WritebackStage_l265;
-  wire                when_WritebackStage_l293;
+  wire                when_WritebackStage_l291;
   wire                io_input_fire;
 
   assign readyGo = (! io_debugBreakPoint);
@@ -11139,49 +11209,49 @@ module WritebackStage (
   assign io_exception_valid = io_flush_exception;
   always @(*) begin
     io_exception_ecode = 6'h0;
-    if(when_WritebackStage_l139) begin
+    if(when_WritebackStage_l138) begin
       io_exception_ecode = 6'h0;
     end else begin
-      if(when_WritebackStage_l141) begin
+      if(when_WritebackStage_l140) begin
         io_exception_ecode = 6'h08;
       end else begin
-        if(when_WritebackStage_l145) begin
+        if(when_WritebackStage_l144) begin
           io_exception_ecode = 6'h3f;
         end else begin
-          if(when_WritebackStage_l152) begin
+          if(when_WritebackStage_l151) begin
             io_exception_ecode = 6'h03;
           end else begin
-            if(when_WritebackStage_l158) begin
+            if(when_WritebackStage_l157) begin
               io_exception_ecode = 6'h07;
             end else begin
-              if(when_WritebackStage_l164) begin
+              if(when_WritebackStage_l163) begin
                 io_exception_ecode = 6'h0b;
               end else begin
-                if(when_WritebackStage_l166) begin
+                if(when_WritebackStage_l165) begin
                   io_exception_ecode = 6'h0c;
                 end else begin
-                  if(when_WritebackStage_l168) begin
+                  if(when_WritebackStage_l167) begin
                     io_exception_ecode = 6'h0d;
                   end else begin
-                    if(when_WritebackStage_l170) begin
+                    if(when_WritebackStage_l169) begin
                       io_exception_ecode = 6'h0e;
                     end else begin
-                      if(when_WritebackStage_l172) begin
+                      if(when_WritebackStage_l171) begin
                         io_exception_ecode = 6'h09;
                       end else begin
-                        if(when_WritebackStage_l176) begin
+                        if(when_WritebackStage_l175) begin
                           io_exception_ecode = 6'h3f;
                         end else begin
-                          if(when_WritebackStage_l183) begin
+                          if(when_WritebackStage_l182) begin
                             io_exception_ecode = 6'h04;
                           end else begin
-                            if(when_WritebackStage_l189) begin
+                            if(when_WritebackStage_l188) begin
                               io_exception_ecode = 6'h07;
                             end else begin
-                              if(when_WritebackStage_l195) begin
+                              if(when_WritebackStage_l194) begin
                                 io_exception_ecode = 6'h02;
                               end else begin
-                                if(when_WritebackStage_l201) begin
+                                if(when_WritebackStage_l200) begin
                                   io_exception_ecode = 6'h01;
                                 end
                               end
@@ -11203,39 +11273,39 @@ module WritebackStage (
   assign io_exception_esubcode = 9'h0;
   always @(*) begin
     io_exception_badVAddrValid = 1'b0;
-    if(!when_WritebackStage_l139) begin
-      if(when_WritebackStage_l141) begin
+    if(!when_WritebackStage_l138) begin
+      if(when_WritebackStage_l140) begin
         io_exception_badVAddrValid = valid;
       end else begin
-        if(when_WritebackStage_l145) begin
+        if(when_WritebackStage_l144) begin
           io_exception_badVAddrValid = valid;
         end else begin
-          if(when_WritebackStage_l152) begin
+          if(when_WritebackStage_l151) begin
             io_exception_badVAddrValid = valid;
           end else begin
-            if(when_WritebackStage_l158) begin
+            if(when_WritebackStage_l157) begin
               io_exception_badVAddrValid = valid;
             end else begin
-              if(!when_WritebackStage_l164) begin
-                if(!when_WritebackStage_l166) begin
-                  if(!when_WritebackStage_l168) begin
-                    if(!when_WritebackStage_l170) begin
-                      if(when_WritebackStage_l172) begin
+              if(!when_WritebackStage_l163) begin
+                if(!when_WritebackStage_l165) begin
+                  if(!when_WritebackStage_l167) begin
+                    if(!when_WritebackStage_l169) begin
+                      if(when_WritebackStage_l171) begin
                         io_exception_badVAddrValid = valid;
                       end else begin
-                        if(when_WritebackStage_l176) begin
+                        if(when_WritebackStage_l175) begin
                           io_exception_badVAddrValid = valid;
                         end else begin
-                          if(when_WritebackStage_l183) begin
+                          if(when_WritebackStage_l182) begin
                             io_exception_badVAddrValid = valid;
                           end else begin
-                            if(when_WritebackStage_l189) begin
+                            if(when_WritebackStage_l188) begin
                               io_exception_badVAddrValid = valid;
                             end else begin
-                              if(when_WritebackStage_l195) begin
+                              if(when_WritebackStage_l194) begin
                                 io_exception_badVAddrValid = valid;
                               end else begin
-                                if(when_WritebackStage_l201) begin
+                                if(when_WritebackStage_l200) begin
                                   io_exception_badVAddrValid = valid;
                                 end
                               end
@@ -11256,39 +11326,39 @@ module WritebackStage (
 
   always @(*) begin
     io_exception_badVAddr = 32'h0;
-    if(!when_WritebackStage_l139) begin
-      if(when_WritebackStage_l141) begin
+    if(!when_WritebackStage_l138) begin
+      if(when_WritebackStage_l140) begin
         io_exception_badVAddr = payload_pc;
       end else begin
-        if(when_WritebackStage_l145) begin
+        if(when_WritebackStage_l144) begin
           io_exception_badVAddr = payload_pc;
         end else begin
-          if(when_WritebackStage_l152) begin
+          if(when_WritebackStage_l151) begin
             io_exception_badVAddr = payload_pc;
           end else begin
-            if(when_WritebackStage_l158) begin
+            if(when_WritebackStage_l157) begin
               io_exception_badVAddr = payload_pc;
             end else begin
-              if(!when_WritebackStage_l164) begin
-                if(!when_WritebackStage_l166) begin
-                  if(!when_WritebackStage_l168) begin
-                    if(!when_WritebackStage_l170) begin
-                      if(when_WritebackStage_l172) begin
+              if(!when_WritebackStage_l163) begin
+                if(!when_WritebackStage_l165) begin
+                  if(!when_WritebackStage_l167) begin
+                    if(!when_WritebackStage_l169) begin
+                      if(when_WritebackStage_l171) begin
                         io_exception_badVAddr = payload_errorVirtualAddress;
                       end else begin
-                        if(when_WritebackStage_l176) begin
+                        if(when_WritebackStage_l175) begin
                           io_exception_badVAddr = payload_errorVirtualAddress;
                         end else begin
-                          if(when_WritebackStage_l183) begin
+                          if(when_WritebackStage_l182) begin
                             io_exception_badVAddr = payload_errorVirtualAddress;
                           end else begin
-                            if(when_WritebackStage_l189) begin
+                            if(when_WritebackStage_l188) begin
                               io_exception_badVAddr = payload_errorVirtualAddress;
                             end else begin
-                              if(when_WritebackStage_l195) begin
+                              if(when_WritebackStage_l194) begin
                                 io_exception_badVAddr = payload_errorVirtualAddress;
                               end else begin
-                                if(when_WritebackStage_l201) begin
+                                if(when_WritebackStage_l200) begin
                                   io_exception_badVAddr = payload_errorVirtualAddress;
                                 end
                               end
@@ -11309,19 +11379,19 @@ module WritebackStage (
 
   always @(*) begin
     io_exception_tlbRefill = 1'b0;
-    if(!when_WritebackStage_l139) begin
-      if(!when_WritebackStage_l141) begin
-        if(when_WritebackStage_l145) begin
+    if(!when_WritebackStage_l138) begin
+      if(!when_WritebackStage_l140) begin
+        if(when_WritebackStage_l144) begin
           io_exception_tlbRefill = valid;
         end else begin
-          if(!when_WritebackStage_l152) begin
-            if(!when_WritebackStage_l158) begin
-              if(!when_WritebackStage_l164) begin
-                if(!when_WritebackStage_l166) begin
-                  if(!when_WritebackStage_l168) begin
-                    if(!when_WritebackStage_l170) begin
-                      if(!when_WritebackStage_l172) begin
-                        if(when_WritebackStage_l176) begin
+          if(!when_WritebackStage_l151) begin
+            if(!when_WritebackStage_l157) begin
+              if(!when_WritebackStage_l163) begin
+                if(!when_WritebackStage_l165) begin
+                  if(!when_WritebackStage_l167) begin
+                    if(!when_WritebackStage_l169) begin
+                      if(!when_WritebackStage_l171) begin
+                        if(when_WritebackStage_l175) begin
                           io_exception_tlbRefill = valid;
                         end
                       end
@@ -11338,35 +11408,35 @@ module WritebackStage (
 
   always @(*) begin
     io_exception_tlbException = 1'b0;
-    if(!when_WritebackStage_l139) begin
-      if(!when_WritebackStage_l141) begin
-        if(when_WritebackStage_l145) begin
+    if(!when_WritebackStage_l138) begin
+      if(!when_WritebackStage_l140) begin
+        if(when_WritebackStage_l144) begin
           io_exception_tlbException = valid;
         end else begin
-          if(when_WritebackStage_l152) begin
+          if(when_WritebackStage_l151) begin
             io_exception_tlbException = valid;
           end else begin
-            if(when_WritebackStage_l158) begin
+            if(when_WritebackStage_l157) begin
               io_exception_tlbException = valid;
             end else begin
-              if(!when_WritebackStage_l164) begin
-                if(!when_WritebackStage_l166) begin
-                  if(!when_WritebackStage_l168) begin
-                    if(!when_WritebackStage_l170) begin
-                      if(!when_WritebackStage_l172) begin
-                        if(when_WritebackStage_l176) begin
+              if(!when_WritebackStage_l163) begin
+                if(!when_WritebackStage_l165) begin
+                  if(!when_WritebackStage_l167) begin
+                    if(!when_WritebackStage_l169) begin
+                      if(!when_WritebackStage_l171) begin
+                        if(when_WritebackStage_l175) begin
                           io_exception_tlbException = valid;
                         end else begin
-                          if(when_WritebackStage_l183) begin
+                          if(when_WritebackStage_l182) begin
                             io_exception_tlbException = valid;
                           end else begin
-                            if(when_WritebackStage_l189) begin
+                            if(when_WritebackStage_l188) begin
                               io_exception_tlbException = valid;
                             end else begin
-                              if(when_WritebackStage_l195) begin
+                              if(when_WritebackStage_l194) begin
                                 io_exception_tlbException = valid;
                               end else begin
-                                if(when_WritebackStage_l201) begin
+                                if(when_WritebackStage_l200) begin
                                   io_exception_tlbException = valid;
                                 end
                               end
@@ -11387,35 +11457,35 @@ module WritebackStage (
 
   always @(*) begin
     io_exception_tlbVppn = 19'h0;
-    if(!when_WritebackStage_l139) begin
-      if(!when_WritebackStage_l141) begin
-        if(when_WritebackStage_l145) begin
+    if(!when_WritebackStage_l138) begin
+      if(!when_WritebackStage_l140) begin
+        if(when_WritebackStage_l144) begin
           io_exception_tlbVppn = payload_pc[31 : 13];
         end else begin
-          if(when_WritebackStage_l152) begin
+          if(when_WritebackStage_l151) begin
             io_exception_tlbVppn = payload_pc[31 : 13];
           end else begin
-            if(when_WritebackStage_l158) begin
+            if(when_WritebackStage_l157) begin
               io_exception_tlbVppn = payload_pc[31 : 13];
             end else begin
-              if(!when_WritebackStage_l164) begin
-                if(!when_WritebackStage_l166) begin
-                  if(!when_WritebackStage_l168) begin
-                    if(!when_WritebackStage_l170) begin
-                      if(!when_WritebackStage_l172) begin
-                        if(when_WritebackStage_l176) begin
+              if(!when_WritebackStage_l163) begin
+                if(!when_WritebackStage_l165) begin
+                  if(!when_WritebackStage_l167) begin
+                    if(!when_WritebackStage_l169) begin
+                      if(!when_WritebackStage_l171) begin
+                        if(when_WritebackStage_l175) begin
                           io_exception_tlbVppn = payload_errorVirtualAddress[31 : 13];
                         end else begin
-                          if(when_WritebackStage_l183) begin
+                          if(when_WritebackStage_l182) begin
                             io_exception_tlbVppn = payload_errorVirtualAddress[31 : 13];
                           end else begin
-                            if(when_WritebackStage_l189) begin
+                            if(when_WritebackStage_l188) begin
                               io_exception_tlbVppn = payload_errorVirtualAddress[31 : 13];
                             end else begin
-                              if(when_WritebackStage_l195) begin
+                              if(when_WritebackStage_l194) begin
                                 io_exception_tlbVppn = payload_errorVirtualAddress[31 : 13];
                               end else begin
-                                if(when_WritebackStage_l201) begin
+                                if(when_WritebackStage_l200) begin
                                   io_exception_tlbVppn = payload_errorVirtualAddress[31 : 13];
                                 end
                               end
@@ -11434,21 +11504,21 @@ module WritebackStage (
     end
   end
 
-  assign when_WritebackStage_l139 = payload_exceptionCode[0];
-  assign when_WritebackStage_l141 = payload_exceptionCode[1];
-  assign when_WritebackStage_l145 = payload_exceptionCode[2];
-  assign when_WritebackStage_l152 = payload_exceptionCode[3];
-  assign when_WritebackStage_l158 = payload_exceptionCode[4];
-  assign when_WritebackStage_l164 = payload_exceptionCode[5];
-  assign when_WritebackStage_l166 = payload_exceptionCode[6];
-  assign when_WritebackStage_l168 = payload_exceptionCode[7];
-  assign when_WritebackStage_l170 = payload_exceptionCode[8];
-  assign when_WritebackStage_l172 = payload_exceptionCode[9];
-  assign when_WritebackStage_l176 = payload_exceptionCode[11];
-  assign when_WritebackStage_l183 = payload_exceptionCode[12];
-  assign when_WritebackStage_l189 = payload_exceptionCode[13];
-  assign when_WritebackStage_l195 = payload_exceptionCode[14];
-  assign when_WritebackStage_l201 = payload_exceptionCode[15];
+  assign when_WritebackStage_l138 = payload_exceptionCode[0];
+  assign when_WritebackStage_l140 = payload_exceptionCode[1];
+  assign when_WritebackStage_l144 = payload_exceptionCode[2];
+  assign when_WritebackStage_l151 = payload_exceptionCode[3];
+  assign when_WritebackStage_l157 = payload_exceptionCode[4];
+  assign when_WritebackStage_l163 = payload_exceptionCode[5];
+  assign when_WritebackStage_l165 = payload_exceptionCode[6];
+  assign when_WritebackStage_l167 = payload_exceptionCode[7];
+  assign when_WritebackStage_l169 = payload_exceptionCode[8];
+  assign when_WritebackStage_l171 = payload_exceptionCode[9];
+  assign when_WritebackStage_l175 = payload_exceptionCode[11];
+  assign when_WritebackStage_l182 = payload_exceptionCode[12];
+  assign when_WritebackStage_l188 = payload_exceptionCode[13];
+  assign when_WritebackStage_l194 = payload_exceptionCode[14];
+  assign when_WritebackStage_l200 = payload_exceptionCode[15];
   assign io_tlb_instructionStall = ((payload_tlbSearch || payload_tlbRead) && valid);
   assign io_tlb_search = (payload_tlbSearch && realValid);
   assign io_tlb_searchFound = payload_tlbFound;
@@ -11464,7 +11534,6 @@ module WritebackStage (
   assign io_reservation_bitValue = (payload_isLl && (! payload_dataUncached));
   assign io_reservation_addressSet = ((payload_isLl && (! payload_dataUncached)) && realValid);
   assign io_reservation_lineAddress = payload_physicalAddress[31 : 4];
-  assign io_perf_retired = realValid;
   assign io_perf_branch = (payload_isBranch && realValid);
   assign io_perf_instructionCacheMiss = (payload_instructionCacheMiss && realValid);
   assign io_perf_dataCacheMiss = (payload_dataCacheMiss && realValid);
@@ -11479,8 +11548,8 @@ module WritebackStage (
   assign io_debug_instruction = payload_instruction;
   always @(*) begin
     _zz_io_commit_payload_store_byteMask = 4'b0000;
-    if(when_WritebackStage_l256) begin
-      case(switch_WritebackStage_l257)
+    if(when_WritebackStage_l254) begin
+      case(switch_WritebackStage_l255)
         2'b00 : begin
           _zz_io_commit_payload_store_byteMask = 4'b0001;
         end
@@ -11495,20 +11564,20 @@ module WritebackStage (
         end
       endcase
     end else begin
-      if(when_WritebackStage_l263) begin
+      if(when_WritebackStage_l261) begin
         _zz_io_commit_payload_store_byteMask = (payload_memoryVirtualAddress[1] ? 4'b1100 : 4'b0011);
       end else begin
-        if(when_WritebackStage_l265) begin
+        if(when_WritebackStage_l263) begin
           _zz_io_commit_payload_store_byteMask = 4'b1111;
         end
       end
     end
   end
 
-  assign when_WritebackStage_l256 = payload_storeEvent[0];
-  assign switch_WritebackStage_l257 = payload_memoryVirtualAddress[1 : 0];
-  assign when_WritebackStage_l263 = payload_storeEvent[1];
-  assign when_WritebackStage_l265 = (payload_storeEvent[2] || payload_storeEvent[3]);
+  assign when_WritebackStage_l254 = payload_storeEvent[0];
+  assign switch_WritebackStage_l255 = payload_memoryVirtualAddress[1 : 0];
+  assign when_WritebackStage_l261 = payload_storeEvent[1];
+  assign when_WritebackStage_l263 = (payload_storeEvent[2] || payload_storeEvent[3]);
   assign io_commit_valid = (valid && readyGo);
   assign io_commit_payload_pc = payload_pc;
   assign io_commit_payload_instruction = payload_instruction;
@@ -11542,13 +11611,13 @@ module WritebackStage (
   assign io_commit_payload_store_byteMask = _zz_io_commit_payload_store_byteMask;
   assign io_commit_payload_tlbFill_valid = io_tlb_fill;
   assign io_commit_payload_tlbFill_index = io_tlbFillIndex;
-  assign when_WritebackStage_l293 = ((((io_flush_exception || io_flush_ertn) || io_flush_refetch) || io_flush_instructionCacheOperation) || io_flush_idle);
+  assign when_WritebackStage_l291 = ((((io_flush_exception || io_flush_ertn) || io_flush_refetch) || io_flush_instructionCacheOperation) || io_flush_idle);
   assign io_input_fire = (io_input_valid && io_input_ready);
   always @(posedge aclk) begin
     if(resetCapture_delayedActiveHigh) begin
       valid <= 1'b0;
     end else begin
-      if(when_WritebackStage_l293) begin
+      if(when_WritebackStage_l291) begin
         valid <= 1'b0;
       end else begin
         if(io_input_ready) begin
@@ -11608,7 +11677,9 @@ module WritebackStage (
 
 
 endmodule
+/* verilator lint_on DECLFILENAME */
 
+/* verilator lint_off DECLFILENAME */
 module MemoryStage (
   input  wire          io_input_valid,
   output wire          io_input_ready,
@@ -11797,7 +11868,9 @@ module MemoryStage (
   reg                 payload_instructionCacheMiss;
   reg                 payload_isPredictableBranch;
   reg                 payload_predictionError;
+  /* verilator lint_off UNUSEDSIGNAL */
   reg                 payload_preload;
+  /* verilator lint_on UNUSEDSIGNAL */
   reg                 payload_cacheOperation;
   reg                 payload_idle;
   reg        [31:0]   payload_errorVirtualAddress;
@@ -12049,7 +12122,9 @@ module MemoryStage (
 
 
 endmodule
+/* verilator lint_on DECLFILENAME */
 
+/* verilator lint_off DECLFILENAME */
 module ExecuteStage (
   input  wire          io_input_valid,
   output wire          io_input_ready,
@@ -12477,7 +12552,9 @@ module ExecuteStage (
 
 
 endmodule
+/* verilator lint_on DECLFILENAME */
 
+/* verilator lint_off DECLFILENAME */
 module DecodeStage (
   input  wire          io_input_valid,
   output wire          io_input_ready,
@@ -13416,7 +13493,9 @@ module DecodeStage (
 
 
 endmodule
+/* verilator lint_on DECLFILENAME */
 
+/* verilator lint_off DECLFILENAME */
 module FetchStage (
   output wire          io_downstream_valid,
   input  wire          io_downstream_ready,
@@ -13452,8 +13531,12 @@ module FetchStage (
   output wire          io_tlbCancel,
   input  wire          io_paging,
   input  wire          io_directAddress,
+  /* verilator lint_off UNUSEDSIGNAL */
   input  wire [31:0]   io_dmw0,
+  /* verilator lint_on UNUSEDSIGNAL */
+  /* verilator lint_off UNUSEDSIGNAL */
   input  wire [31:0]   io_dmw1,
+  /* verilator lint_on UNUSEDSIGNAL */
   input  wire [1:0]    io_currentPlv,
   input  wire [1:0]    io_directFetchMat,
   input  wire          io_disableCache,
@@ -13747,7 +13830,9 @@ module FetchStage (
 
 
 endmodule
+/* verilator lint_on DECLFILENAME */
 
+/* verilator lint_off DECLFILENAME */
 module OpenLa500AxiBridge (
   input  wire          clk,
   input  wire          reset,
@@ -13761,9 +13846,13 @@ module OpenLa500AxiBridge (
   output wire [2:0]    arprot,
   output wire          arvalid,
   input  wire          arready,
+  /* verilator lint_off UNUSEDSIGNAL */
   input  wire [3:0]    rid,
+  /* verilator lint_on UNUSEDSIGNAL */
   input  wire [31:0]   rdata,
+  /* verilator lint_off UNUSEDSIGNAL */
   input  wire [1:0]    rresp,
+  /* verilator lint_on UNUSEDSIGNAL */
   input  wire          rlast,
   input  wire          rvalid,
   output wire          rready,
@@ -13783,8 +13872,12 @@ module OpenLa500AxiBridge (
   output wire          wlast,
   output wire          wvalid,
   input  wire          wready,
+  /* verilator lint_off UNUSEDSIGNAL */
   input  wire [3:0]    bid,
+  /* verilator lint_on UNUSEDSIGNAL */
+  /* verilator lint_off UNUSEDSIGNAL */
   input  wire [1:0]    bresp,
+  /* verilator lint_on UNUSEDSIGNAL */
   input  wire          bvalid,
   output wire          bready,
   input  wire          inst_rd_req,
@@ -13794,11 +13887,21 @@ module OpenLa500AxiBridge (
   output wire          inst_ret_valid,
   output wire          inst_ret_last,
   output wire [31:0]   inst_ret_data,
+  /* verilator lint_off UNUSEDSIGNAL */
   input  wire          inst_wr_req,
+  /* verilator lint_on UNUSEDSIGNAL */
+  /* verilator lint_off UNUSEDSIGNAL */
   input  wire [2:0]    inst_wr_type,
+  /* verilator lint_on UNUSEDSIGNAL */
+  /* verilator lint_off UNUSEDSIGNAL */
   input  wire [31:0]   inst_wr_addr,
+  /* verilator lint_on UNUSEDSIGNAL */
+  /* verilator lint_off UNUSEDSIGNAL */
   input  wire [3:0]    inst_wr_wstrb,
+  /* verilator lint_on UNUSEDSIGNAL */
+  /* verilator lint_off UNUSEDSIGNAL */
   input  wire [127:0]  inst_wr_data,
+  /* verilator lint_on UNUSEDSIGNAL */
   output wire          inst_wr_rdy,
   input  wire          data_rd_req,
   input  wire [2:0]    data_rd_type,
@@ -14040,7 +14143,9 @@ module OpenLa500AxiBridge (
 
 
 endmodule
+/* verilator lint_on DECLFILENAME */
 
+/* verilator lint_off DECLFILENAME */
 module openla500_tlb_entry_impl (
   input  wire          clk,
   input  wire          s0_fetch,
@@ -19203,7 +19308,9 @@ module openla500_tlb_entry_impl (
 
 
 endmodule
+/* verilator lint_on DECLFILENAME */
 
+/* verilator lint_off DECLFILENAME */
 module OpenLa500Alu (
   input  wire [13:0]   alu_op,
   input  wire [31:0]   alu_src1,
@@ -19397,8 +19504,13 @@ module OpenLa500Alu (
   assign alu_result = (((((((((((resultTerms_0 | resultTerms_1) | resultTerms_2) | resultTerms_3) | resultTerms_4) | resultTerms_5) | resultTerms_6) | resultTerms_7) | resultTerms_8) | resultTerms_9) | resultTerms_10) | resultTerms_11);
 
 endmodule
+/* verilator lint_on DECLFILENAME */
 
 
+`ifndef DIFFTEST_EN
+/* verilator lint_off UNUSEDSIGNAL */
+`endif
+/* verilator lint_off DECLFILENAME */
 module ChiplabDiffTestBlackBox (
     input  wire          clock,
     input  wire [504:0]  commitContract,
@@ -19533,3 +19645,7 @@ module ChiplabDiffTestBlackBox (
   );
 `endif
 endmodule
+/* verilator lint_on DECLFILENAME */
+`ifndef DIFFTEST_EN
+/* verilator lint_on UNUSEDSIGNAL */
+`endif

@@ -86,7 +86,7 @@ private[compat] final class SpinalCoreBackend(
 
   performanceCounter.io.events.dataCacheMiss := writeback.io.perf.dataCacheMiss
   performanceCounter.io.events.instructionCacheMiss := writeback.io.perf.instructionCacheMiss
-  performanceCounter.io.events.retired := writeback.io.perf.retired
+  performanceCounter.io.events.retired := writeback.io.realValid
   performanceCounter.io.events.branch := writeback.io.perf.branch
   performanceCounter.io.events.memoryAccess := writeback.io.perf.memoryAccess
   performanceCounter.io.events.predictedBranch := writeback.io.perf.predictedBranch
@@ -173,7 +173,7 @@ private[compat] final class SpinalCoreBackend(
   csr.io.wr_addr := writeback.io.csrWrite.address.asBits
   csr.io.wr_data := writeback.io.csrWrite.data
   csr.io.interrupt := io.intrpt
-  csr.io.excp_flush := writeback.io.flush.exception
+  csr.io.excp_flush := writeback.io.exception.valid
   csr.io.ertn_flush := writeback.io.flush.ertn
   csr.io.era_in := writeback.io.debug.pc.asBits
   csr.io.esubcode_in := writeback.io.exception.esubcode.asBits

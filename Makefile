@@ -91,7 +91,7 @@ DCACHE_GENERATE_DIR ?= $(OUT_DIR)/dcache/generate
 DCACHE_RTL ?= $(DCACHE_GENERATE_DIR)/rtl/dcache.v
 CACOP_RECOVERY_OUT ?= $(OUT_DIR)/cacop-recovery/unit
 CACOP_RECOVERY_REPO ?= .
-TLB_RTL ?= reference/component-replacements/tlb_entry.v
+TLB_RTL ?= $(TLB_GENERATE_DIR)/rtl/tlb_entry.v
 TLB_CYCLES ?= 8192
 TLB_RANDOM_SEED ?= 0x158aa8
 TLB_GENERATE_DIR ?= $(OUT_DIR)/tlb/generate
@@ -105,7 +105,7 @@ CORE_TOP_RTL ?= $(CORE_TOP_PACKAGE_DIR)/rtl/mycpu_top.v
 CORE_TOP_TRACKED_RTL ?= rtl/mycpu_top.v
 CORE_TOP_REPLACEMENT_SPEC ?= reference/component-replacements/core-top.json
 CORE_TOP_LINT_PROFILE ?= locked
-CORE_TOP_LINT_WAIVERS ?= reference/core-top-lint-waivers.json
+CORE_TOP_LINT_WAIVERS ?=
 CORE_TOP_VERILATOR ?=
 LINT_WAIVERS ?= lint-waivers.yml
 
@@ -348,7 +348,7 @@ typed-axi-boundary:
 
 candidate-closure:
 	@test -f "$(CORE_TOP_RTL)" || (echo "generated core_top RTL is required: $(CORE_TOP_RTL)" && exit 2)
-	$(PYTHON) -I tools/candidate_closure_gate.py --rtl "$(CORE_TOP_RTL)" --out "$(OUT_DIR)/core_top/candidate-closure.json" $(if $(OVERLAY_DIR),--overlay-dir "$(OVERLAY_DIR)",)
+	$(PYTHON) -I tools/candidate_closure_gate.py --rtl "$(CORE_TOP_RTL)" --repo-root "." --out "$(OUT_DIR)/core_top/candidate-closure.json" $(if $(OVERLAY_DIR),--overlay-dir "$(OVERLAY_DIR)",)
 
 core-contract-check:
 	$(PYTHON) -I tests/test_core_contract_manifest.py

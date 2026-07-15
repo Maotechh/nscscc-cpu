@@ -26,6 +26,7 @@ CSR_SHA256 = "11f5550b887a2b507a5b916340069d6d127848c66c761f07d0303c7cc201026d"
 CSR_SIZE = 1409
 DEFAULT_CYCLES = 8192
 DEFAULT_SEED = 0x0158AA8D
+LOCKED_CANDIDATE_SHA256 = "37d0cba5ca2f8e901f77aaa26e56360e9205c4732f49ecd9c3189499f03e9bb1"
 
 INPUTS = {
     "clk": 1,
@@ -196,7 +197,7 @@ def load_central_waivers(repo: Path) -> dict[str, dict[str, object]]:
             waiver.get("owner") != "pipeline"
             or not waiver.get("reason")
             or not waiver.get("expires_when")
-            or waiver.get("source_sha256") != sha256_file(repo / "reference/component-replacements/mem_stage.v")
+            or waiver.get("source_sha256") != LOCKED_CANDIDATE_SHA256
         ):
             raise GateError(f"invalid central lint waiver: {waiver_id}")
     return indexed

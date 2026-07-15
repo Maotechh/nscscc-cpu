@@ -22,14 +22,16 @@ AXI bridge、mul/div 等 Spinal 组件；overlay 只能替换 `rtl/mycpu_top.v`�
 这一结构事实只证明活动手写真源已切换，不证明功能等价。官方 32-entry BTB、LACC、完整 DiffTest/
 ArchState、perf 以及官方 func/random/system/FPGA 门禁仍须分别取得证据。
 
-`TLBNUM` 历史默认值为 32。打包后的顶层保留该参数以兼容官方 source contract，但活动 Scala 后端在 elaboration 时固定为 32，Verilog 参数 override 不受支持且不会改变硬件结构；Scala API 明确拒绝其他值。可配置的 immutable `CoreConfig` 和配置矩阵由后续整机 PR 建立，不得把该兼容参数表述为运行时或 Verilog elaboration 可配置。
+`TLBNUM` 历史默认值为 32。打包后的顶层保留该参数以兼容官方 source contract，但活动 Scala 后端在 elaboration 时固定为 32，Verilog 参数 override 不受支持且不会改变硬件结构；Scala API 明确拒绝其他值。打包器把顶层 reset capture 约束为 `(!aresetn) || (TLBNUM != 32)`，因此任何非 32 override 都会让后端保持复位并 fail closed，而不会静默生成或运行错误配置；若唯一 reset capture 赋值不存在，打包直接失败。可配置的 immutable `CoreConfig` 和配置矩阵由后续整机 PR 建立，不得把该兼容参数表述为运行时或 Verilog elaboration 可配置。
+
+完整 package 不使用外部聚合 warning waiver，也不传递宽泛的 `-Wno-*`。单文件承载多个 Spinal 生成模块所需的 `DECLFILENAME` 注解逐模块开启并在对应 `endmodule` 后关闭；已锁定的 36 个未消费兼容字段只在 `(module, signal)` 清单指定的唯一声明前后局部开启/关闭 `UNUSEDSIGNAL`。声明缺失、重复或漂移都会使打包失败，注解不得扩大到整个文件或整个 warning 类别。锁定 Verilator 5.020 对当前完整 package 的严格 lint 结果为 0 warning、0 error、0 skip；`CORE_TOP_LINT_WAIVERS` 默认留空，只有调用方显式指定文件时才进入 waiver 审计流程。
 
 ## 强制检查
 
 - 49 端口名称、顺序、方向、宽度精确一致。
 - 生成定义名为 `core_top`，无 `_zz_*` 业务端口和额外 `clk/resetn`。
 - 结构化 Yosys netlist 证明每个顶层端口与后端同名端口一一连接，且无额外逻辑/寄存器。
-- Verilator/Yosys 对壳和审计 stub 零 error；这是 wrapper-only 结构检查，不替代官方 chiplab 对完整 package 的编译。
+- Verilator 对完整 package 严格执行并要求零 warning、零 error、零 skip；Yosys 对完整 package 进行结构检查。这些本地门禁不替代官方 chiplab 编译和上板验证。
 - fresh package、提交的 `mycpu_top.v` 和累计 replacement spec 必须逐字节及 SHA256 一致。
 - 打包 overlay 恰有一个 `core_top`，并且全文不存在 `openla500_legacy_core` 标记。
 - 官方 locked/mixed smoke 都实际运行；已有 baseline 失败必须与壳引入的新失败分开报告。

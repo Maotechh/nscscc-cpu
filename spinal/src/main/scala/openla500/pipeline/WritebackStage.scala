@@ -40,7 +40,6 @@ final case class WritebackReservation() extends Bundle {
 
 /** Performance events qualified by normal retirement. */
 final case class WritebackPerfEvent() extends Bundle {
-  val retired = Bool()
   val branch = Bool()
   val instructionCacheMiss = Bool()
   val dataCacheMiss = Bool()
@@ -223,7 +222,6 @@ final class WritebackStage(emitCommit: Boolean = true, exposeObservation: Boolea
   io.reservation.addressSet := payload.isLl && !payload.dataUncached && realValid
   io.reservation.lineAddress := payload.physicalAddress(31 downto 4)
 
-  io.perf.retired := realValid
   io.perf.branch := payload.isBranch && realValid
   io.perf.instructionCacheMiss := payload.instructionCacheMiss && realValid
   io.perf.dataCacheMiss := payload.dataCacheMiss && realValid

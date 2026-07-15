@@ -205,6 +205,9 @@ private final class ChiplabDiffTestBlackBox extends BlackBox {
     .mkString(",\n")
 
   setInlineVerilog(s"""
+`ifndef DIFFTEST_EN
+/* verilator lint_off UNUSEDSIGNAL */
+`endif
 module ChiplabDiffTestBlackBox (
     input  wire          clock,
     input  wire [504:0]  commitContract,
@@ -281,5 +284,8 @@ $csrConnections
 $gprConnections
   );
 `endif
-endmodule""")
+endmodule
+`ifndef DIFFTEST_EN
+/* verilator lint_on UNUSEDSIGNAL */
+`endif""")
 }

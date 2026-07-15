@@ -20,6 +20,18 @@ OLD_FILES = (
 OLD_MODULES = frozenset(Path(name).stem for name in OLD_FILES)
 ALLOWED_EXTERNAL = frozenset({"ChiplabDiffTestBlackBox"})
 IDENTIFIER = r"[A-Za-z_][A-Za-z0-9_$]*"
+HDL_SUFFIXES = frozenset({".v", ".vh", ".sv", ".svh"})
+PUBLISHED_RTL = "rtl/mycpu_top.v"
+ALLOWED_TESTBENCH_HDL = frozenset(
+    {
+        "tests/regfile_diff_tb.sv",
+        "tests/rtl/exe_stage_lockstep.sv",
+        "tests/rtl/id_stage_lockstep.sv",
+        "tests/rtl/if_stage_lockstep.sv",
+        "tests/rtl/lacc_core_lockstep.sv",
+        "tests/rtl/perf_counter_lockstep.sv",
+    }
+)
 
 
 def _mask_comments(text: str) -> str:
@@ -53,6 +65,38 @@ def _file_modules(path: Path) -> set[str]:
 def _write_report(path: Path, report: dict) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+
+def _repository_hdl_inventory(repo_root: Path) -> dict[str, object]:
+    entries: list[dict[str, object]] = []
+    blocking: list[str] = []
+    for path in sorted(repo_root.rglob("*")):
+        if not path.is_file():
+            continue
+        relative = path.relative_to(repo_root).as_posix()
+        if relative.split("/", 1)[0] in {".git", "build"}:
+            continue
+        if path.suffix.lower() not in HDL_SUFFIXES:
+            continue
+        if relative == PUBLISHED_RTL:
+            role = "spinal-generated-cpu-rtl"
+        elif relative in ALLOWED_TESTBENCH_HDL:
+            role = "simulation-testbench"
+        else:
+            role = "forbidden-extra-hdl"
+            blocking.append(relative)
+        entries.append({"path": relative, "role": role})
+    published_count = sum(item["path"] == PUBLISHED_RTL for item in entries)
+    if published_count != 1:
+        blocking.append(f"{PUBLISHED_RTL} count={published_count}")
+    return {
+        "root": str(repo_root),
+        "entries": entries,
+        "published_rtl": PUBLISHED_RTL,
+        "allowed_testbench_hdl": sorted(ALLOWED_TESTBENCH_HDL),
+        "blocking_entries": blocking,
+        "status": "pass" if not blocking else "fail",
+    }
 
 
 def run(args: argparse.Namespace) -> int:
@@ -90,6 +134,23 @@ def run(args: argparse.Namespace) -> int:
         pure_overlay_status = "pass" if not blocking_files else "fail"
         overlay = {"root": str(overlay_root), "entries": entries, "blocking_files": blocking_files, "status": pure_overlay_status}
 
+    repository_hdl = None
+    repository_purity_status = "not_checked"
+    if args.repo_root is not None:
+        repo_root = args.repo_root.resolve()
+        if not repo_root.is_dir():
+            raise ValueError(f"missing repository root: {repo_root}")
+        repository_hdl = _repository_hdl_inventory(repo_root)
+        repository_purity_status = str(repository_hdl["status"])
+
+    structural_pass = (
+        root_count == 1
+        and not legacy_definitions
+        and not legacy_instances
+        and not unresolved
+    )
+    status = "pass" if structural_pass and repository_purity_status != "fail" else "fail"
+
     report = {
         "schema_version": SCHEMA_VERSION,
         "gate": "candidate-closure",
@@ -106,7 +167,9 @@ def run(args: argparse.Namespace) -> int:
         "allowed_external_instance_types": sorted(ALLOWED_EXTERNAL),
         "pure_overlay": overlay,
         "pure_overlay_status": pure_overlay_status,
-        "status": "pass" if root_count == 1 and not legacy_definitions and not legacy_instances and not unresolved else "fail",
+        "repository_hdl": repository_hdl,
+        "repository_purity_status": repository_purity_status,
+        "status": status,
     }
     _write_report(args.out, report)
     print(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True))
@@ -118,6 +181,7 @@ def main() -> int:
     parser.add_argument("--rtl", type=Path, required=True)
     parser.add_argument("--root-module", default="core_top")
     parser.add_argument("--overlay-dir", type=Path)
+    parser.add_argument("--repo-root", type=Path)
     parser.add_argument("--out", type=Path, required=True)
     args = parser.parse_args()
     try:

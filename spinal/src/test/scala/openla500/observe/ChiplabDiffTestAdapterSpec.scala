@@ -44,6 +44,17 @@ class ChiplabDiffTestAdapterSpec extends AnyFunSuite {
       )
       officialModules.foreach(name => assert(rtl.contains(s"$name u_difftest_")))
       assert(rtl.contains("`ifdef DIFFTEST_EN"))
+      assert(rtl.contains("`ifndef DIFFTEST_EN"))
+      assert(
+        rtl
+          .sliding("verilator lint_off UNUSEDSIGNAL".length)
+          .count(_ == "verilator lint_off UNUSEDSIGNAL") == 1
+      )
+      assert(
+        rtl
+          .sliding("verilator lint_on UNUSEDSIGNAL".length)
+          .count(_ == "verilator lint_on UNUSEDSIGNAL") == 1
+      )
       assert(rtl.contains(".valid(instrValid)"))
       assert(rtl.contains(".skip(1'b0 & ^commitContract)"))
       assert(rtl.contains(".TLBFILL_index(tlbFillIndex)"))

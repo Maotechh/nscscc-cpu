@@ -39,6 +39,44 @@ ALLOWED_CONTRACT_KEYS = {
     "ports",
     "known_integration_risks",
 }
+COMPAT_UNUSED_SIGNALS = (
+    ("SpinalCoreBackend", "decode_io_btb_deleteEntry"),
+    ("SpinalCoreBackend", "decode_io_registers_0"),
+    ("SpinalCoreBackend", "addressTranslation_inst_tlb_d"),
+    ("OpenLa500DCache", "preld_hint"),
+    ("OpenLa500ICache", "op"),
+    ("OpenLa500ICache", "wstrb"),
+    ("OpenLa500ICache", "wdata"),
+    ("OpenLa500ICache", "wr_rdy"),
+    ("OpenLa500AddrTrans", "tlbehi_in"),
+    ("OpenLa500AddrTrans", "tlbelo0_in"),
+    ("OpenLa500AddrTrans", "tlbelo1_in"),
+    ("OpenLa500AddrTrans", "tlbidx_in"),
+    ("OpenLa500AddrTrans", "csr_dmw0"),
+    ("OpenLa500AddrTrans", "csr_dmw1"),
+    ("OpenLa500AddrTrans", "instPhysical"),
+    ("OpenLa500AddrTrans", "dataPhysical"),
+    ("OpenLa500Csr", "tlbehi_in"),
+    ("OpenLa500Csr", "tlbelo0_in"),
+    ("OpenLa500Csr", "tlbelo1_in"),
+    ("OpenLa500Csr", "tlbidx_in"),
+    ("OpenLa500Csr", "logic_brk"),
+    ("OpenLa500Csr", "logic_disableCache"),
+    ("WritebackStage", "payload_exceptionCode"),
+    ("WritebackStage", "payload_physicalAddress"),
+    ("MemoryStage", "payload_preload"),
+    ("FetchStage", "io_dmw0"),
+    ("FetchStage", "io_dmw1"),
+    ("OpenLa500AxiBridge", "rid"),
+    ("OpenLa500AxiBridge", "rresp"),
+    ("OpenLa500AxiBridge", "bid"),
+    ("OpenLa500AxiBridge", "bresp"),
+    ("OpenLa500AxiBridge", "inst_wr_req"),
+    ("OpenLa500AxiBridge", "inst_wr_type"),
+    ("OpenLa500AxiBridge", "inst_wr_addr"),
+    ("OpenLa500AxiBridge", "inst_wr_wstrb"),
+    ("OpenLa500AxiBridge", "inst_wr_data"),
+)
 
 
 class CoreTopGateError(RuntimeError):
@@ -509,6 +547,142 @@ def ensure_top_parameter(rtl: str) -> tuple[str, int]:
     return add_top_parameter(rtl)
 
 
+def bind_tlbnum_to_reset_capture(rtl: str) -> tuple[str, int]:
+    """Make an unsupported TLBNUM override hold the generated backend in reset."""
+
+    top = extract_module(rtl, TOP_MODULE)
+    guarded = re.compile(
+        r"(?m)^(?P<prefix>[ \t]*resetCapture_delayedActiveHigh[ \t]*<=[ \t]*)"
+        r"\(\(\![ \t]*aresetn\)[ \t]*\|\|[ \t]*\(TLBNUM[ \t]*!=[ \t]*32\)\)"
+        r"(?P<suffix>[ \t]*;[ \t]*\r?)$"
+    )
+    if len(uncommented_matches(guarded, top)) == 1:
+        return rtl, 0
+
+    original = re.compile(
+        r"(?m)^(?P<prefix>[ \t]*resetCapture_delayedActiveHigh[ \t]*<=[ \t]*)"
+        r"\(\![ \t]*aresetn\)(?P<suffix>[ \t]*;[ \t]*\r?)$"
+    )
+    matches = uncommented_matches(original, top)
+    if len(matches) != 1:
+        raise CoreTopGateError(
+            "generated core_top reset capture assignment is not unique"
+        )
+    match = matches[0]
+    guarded_top = (
+        top[: match.start()]
+        + match.group("prefix")
+        + "((! aresetn) || (TLBNUM != 32))"
+        + match.group("suffix")
+        + top[match.end() :]
+    )
+    top_start = rtl.index(top)
+    return rtl[:top_start] + guarded_top + rtl[top_start + len(top) :], 1
+
+
+def annotate_module_filename_lint(rtl: str) -> tuple[str, int]:
+    """Waive one-file DECLFILENAME only within each generated module."""
+
+    starts = uncommented_matches(
+        re.compile(r"(?m)^(?P<indent>[ \t]*)module\s+[A-Za-z_][A-Za-z0-9_$]*\b"),
+        rtl,
+    )
+    ends = uncommented_matches(
+        re.compile(r"(?m)^(?P<indent>[ \t]*)endmodule\b[^\r\n]*"), rtl
+    )
+    if not starts or len(starts) != len(ends):
+        raise CoreTopGateError("generated RTL module boundaries are unbalanced")
+    for start, end in zip(starts, ends, strict=True):
+        if start.start() >= end.start():
+            raise CoreTopGateError("generated RTL module boundaries are out of order")
+
+    newline = "\r\n" if "\r\n" in rtl else "\n"
+    insertions: list[tuple[int, str]] = []
+    for start, end in zip(starts, ends, strict=True):
+        indent = start.group("indent")
+        insertions.append(
+            (
+                start.start(),
+                f"{indent}/* verilator lint_off DECLFILENAME */{newline}",
+            )
+        )
+        insertions.append(
+            (
+                end.end(),
+                f"{newline}{indent}/* verilator lint_on DECLFILENAME */",
+            )
+        )
+    annotated = rtl
+    for offset, insertion in sorted(insertions, reverse=True):
+        annotated = annotated[:offset] + insertion + annotated[offset:]
+    return annotated, len(starts)
+
+
+def module_span(rtl: str, name: str) -> tuple[int, int] | None:
+    """Return one uncommented module span, or None when that module is absent."""
+
+    masked = mask_verilog_comments(rtl)
+    starts = list(re.finditer(rf"(?m)^[ \t]*module\s+{re.escape(name)}\b", masked))
+    if not starts:
+        return None
+    if len(starts) != 1:
+        raise CoreTopGateError(f"module {name} declaration is not unique: {len(starts)}")
+    start = starts[0].start()
+    end = re.search(r"(?m)^[ \t]*endmodule\b[^\r\n]*(?:\r?\n|$)", masked[start:])
+    if end is None:
+        raise CoreTopGateError(f"module {name} has no endmodule")
+    return start, start + end.end()
+
+
+def annotate_compat_unused_signal_lint(rtl: str) -> tuple[str, int]:
+    """Annotate only declarations for the locked, documented dead compatibility fields."""
+
+    replacements: list[tuple[int, int, str, str]] = []
+    for module_name, signal_name in COMPAT_UNUSED_SIGNALS:
+        span = module_span(rtl, module_name)
+        if span is None:
+            continue
+        module_start, module_end = span
+        module = rtl[module_start:module_end]
+        signal = re.escape(signal_name)
+        declaration = re.compile(
+            rf"(?m)^(?P<line>(?P<indent>[ \t]*)"
+            rf"(?:input|output|inout|wire|reg)\b[^\r\n]*"
+            rf"(?<![A-Za-z0-9_$]){signal}(?![A-Za-z0-9_$])"
+            rf"[^\r\n]*(?:,|;)[ \t]*)(?P<eol>\r?\n|$)"
+        )
+        matches = uncommented_matches(declaration, module)
+        if len(matches) != 1:
+            raise CoreTopGateError(
+                f"{module_name}.{signal_name} declaration is not unique: {len(matches)}"
+            )
+        match = matches[0]
+        eol = match.group("eol") or ("\r\n" if "\r\n" in rtl else "\n")
+        replacement = (
+            f"{match.group('indent')}/* verilator lint_off UNUSEDSIGNAL */{eol}"
+            f"{match.group('line')}{eol}"
+            f"{match.group('indent')}/* verilator lint_on UNUSEDSIGNAL */{eol}"
+        )
+        replacements.append(
+            (
+                module_start + match.start(),
+                module_start + match.end(),
+                replacement,
+                f"{module_name}.{signal_name}",
+            )
+        )
+
+    spans = [(start, end, label) for start, end, _, label in replacements]
+    for index, (start, end, label) in enumerate(sorted(spans)):
+        if index and start < sorted(spans)[index - 1][1]:
+            raise CoreTopGateError(f"compat lint annotation declarations overlap: {label}")
+
+    annotated = rtl
+    for start, end, replacement, _ in sorted(replacements, reverse=True):
+        annotated = annotated[:start] + replacement + annotated[end:]
+    return annotated, len(replacements)
+
+
 def verify_complete_rtl(text: str, contract: dict[str, Any]) -> dict[str, Any]:
     if module_declaration_count(text, TOP_MODULE) != 1:
         raise CoreTopGateError("complete Spinal RTL must define exactly one core_top")
@@ -544,7 +718,10 @@ def package_gate(args: argparse.Namespace) -> dict[str, Any]:
         input_rtl = input_payload.decode("utf-8")
     except UnicodeError as error:
         raise CoreTopGateError(f"complete Spinal RTL is not UTF-8: {error}") from error
-    transformed, top_count = ensure_top_parameter(input_rtl)
+    parameterized, top_count = ensure_top_parameter(input_rtl)
+    reset_guarded, reset_guard_count = bind_tlbnum_to_reset_capture(parameterized)
+    unused_annotated, unused_annotation_count = annotate_compat_unused_signal_lint(reset_guarded)
+    transformed, filename_annotation_count = annotate_module_filename_lint(unused_annotated)
     contract_check = verify_complete_rtl(transformed, contract)
     packaged = transformed.encode("utf-8")
     packaged_text = packaged.decode("utf-8")
@@ -578,6 +755,9 @@ def package_gate(args: argparse.Namespace) -> dict[str, Any]:
         },
         "transformations": {
             "top_parameter_insertions": top_count,
+            "tlbnum_reset_guards": reset_guard_count,
+            "compat_unused_signal_annotations": unused_annotation_count,
+            "module_filename_annotations": filename_annotation_count,
         },
         "contract": contract_check,
         "published_rtl": str(published),
