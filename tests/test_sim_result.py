@@ -64,6 +64,15 @@ class SimulationResultTests(unittest.TestCase):
         result = self.summarize("total clock is 10\ntotal instruction is 5\n")
         self.assertEqual(result["status"], "fail")
 
+    def test_staged_candidate_warning_is_classified_as_dut(self) -> None:
+        result = self.summarize(
+            PASS_LOG
+            + "%Warning-UNUSEDSIGNAL: /tmp/run/chiplab-source/mycpu_top.v:1:1: unused\n"
+        )
+        self.assertEqual("fail", result["status"])
+        self.assertEqual({"dut": 1, "official_environment": 0}, result["warning_counts_by_scope"])
+        self.assertEqual("dut", result["warnings"][0]["scope"])
+
     def test_compiler_warning_is_recorded_and_fails(self) -> None:
         result = self.summarize(PASS_LOG + "model.cpp:1: warning: unsafe conversion\n")
         self.assertEqual(result["status"], "fail")

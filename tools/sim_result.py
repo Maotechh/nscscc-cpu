@@ -14,24 +14,31 @@ sys.path.insert(0, str(REPO))
 from tools import refactor
 
 
+def warning_scope(line: str) -> str:
+    normalized = line.replace("\\", "/")
+    return (
+        "dut"
+        if "/.work/echo/" in normalized
+        or "/chiplab-source/" in normalized
+        or "/IP/myCPU/" in normalized
+        or "mycpu_top.v" in normalized
+        else "official_environment"
+    )
+
+
 def collect_warnings(text: str) -> list[dict[str, str]]:
     warnings = refactor.parse_verilator_warnings(text)
+    for warning in warnings:
+        warning["scope"] = warning_scope(warning["line"])
     seen = {item["line"] for item in warnings}
     for raw_line in text.splitlines():
         line = raw_line.strip()
         if not re.search(r"\bwarning:", line, re.IGNORECASE) or line in seen:
             continue
-        normalized = line.replace("\\", "/")
         warnings.append(
             {
                 "category": "COMPILER",
-                "scope": (
-                    "dut"
-                    if "/.work/echo/" in normalized
-                    or "/chiplab-source/" in normalized
-                    or "mycpu_top.v" in normalized
-                    else "official_environment"
-                ),
+                "scope": warning_scope(line),
                 "line": line,
             }
         )
@@ -61,6 +68,12 @@ def summarize(text: str, log_path: Path, case: str | None = None) -> dict[str, A
         "build_errors": build_errors,
         "warnings": warnings,
         "warning_count": len(warnings),
+        "warning_counts_by_scope": {
+            "dut": sum(item["scope"] == "dut" for item in warnings),
+            "official_environment": sum(
+                item["scope"] == "official_environment" for item in warnings
+            ),
+        },
         "evaluator_sha256": refactor.sha256_file(Path(__file__).resolve()),
     }
 
