@@ -2140,8 +2140,10 @@ def _command_chiplab_overlay_locked(args: argparse.Namespace, run_id: str) -> in
         )
         locked_names = {Path(path).name for path in read_golden_files()}
         for old_rtl in [*mycpu.glob("*.v"), *mycpu.glob("*.h")]:
+            if old_rtl.name in {"LICENSE", "mycpu.h"}:
+                continue
             if (
-                pure_spinal and old_rtl.name not in {"mycpu_top.v", "mycpu.h"}
+                pure_spinal and old_rtl.name != "mycpu_top.v"
             ) or (not pure_spinal and old_rtl.name not in locked_names):
                 removed_stale.append(old_rtl.name)
                 old_rtl.unlink()
