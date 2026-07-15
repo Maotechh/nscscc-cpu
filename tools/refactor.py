@@ -795,7 +795,10 @@ def validate_generated_lint_annotations(text: str, source: str) -> None:
     markers = marker.findall(text)
     if not markers:
         return
-    if source != "rtl/mycpu_top.v":
+    published_source = re.fullmatch(
+        r"(?:[0-9a-f]{40}:)?rtl/mycpu_top\.v", source
+    )
+    if published_source is None:
         raise RefactorError(f"replacement Verilog contains an inline lint waiver: {source}")
 
     lines = text.splitlines()

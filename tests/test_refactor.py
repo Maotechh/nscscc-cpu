@@ -1507,6 +1507,9 @@ class ComponentReplacementValidationTests(unittest.TestCase):
         refactor.validate_replacement_verilog(
             payload, "rtl/mycpu_top.v", base_payload=payload
         )
+        refactor.validate_replacement_verilog(
+            payload, f"{'a' * 40}:rtl/mycpu_top.v", base_payload=payload
+        )
 
         drifted = payload.replace(
             b"/* verilator lint_off DECLFILENAME */",
