@@ -1,8 +1,8 @@
 schema_version: 1
-updated_at: "2026-07-15T21:15:00+08:00"
+updated_at: "2026-07-16T02:12:36+08:00"
 active_iteration: "20260715-2010-release-closure"
 active_branch: "refactor/20260715-2010-release-closure"
-source_head: "9a29409242bf29436bf553e584b87018fb3f6fa6"
+source_head: "088d8d4cc9038488a03c27dcbf3a0751b1f76ad9"
 
 boundaries:
   pure_spinal_release_closure:
@@ -30,13 +30,14 @@ boundaries:
       - logs/refactor/20260715-2010-release-closure/evidence/chiplab-doctor.json
       - logs/refactor/20260715-2010-release-closure/evidence/func58.json
       - logs/refactor/20260715-2010-release-closure/evidence/func81.json
+      - logs/refactor/20260715-2010-release-closure/evidence/warning-closure.json
+      - logs/refactor/20260715-2010-release-closure/evidence/fpga-func58.json
       - logs/refactor/20260715-2010-release-closure/reviews/local-independent-review.json
     active_pr: null
     blocked_by:
-      - policy_compliant_lint_waivers_missing
-      - strict_func_warning_gates_failed
+      - official_environment_warning_policy_failed
       - random_vectors_missing
-      - perf20_system_vivado_fpga_pending
+      - perf20_and_system_pending
       - external_claim_review_unavailable
       - btb_32_vs_64_authority_unresolved
       - lacc_release_matrix_pending

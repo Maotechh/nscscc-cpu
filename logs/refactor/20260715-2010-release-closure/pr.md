@@ -1,33 +1,33 @@
-# Draft PR: publish the canonical pure-active-Spinal CPU candidate
+# Draft PR: close pure-Spinal warnings and validate func58 on FPGA
 
-Status: **Draft only**. Functional diagnostics pass; strict and release gates do not. Do not merge automatically.
+Status: **Draft only**. The requested pure-Spinal warning cleanup, repository HDL cleanup, Vivado build, programming, and one func58 hardware job pass. Do not merge automatically because broader release gates remain incomplete.
 
-## Iteration
+## Implementation
 
-- Iteration: `20260715-2010-release-closure`
 - Branch: `refactor/20260715-2010-release-closure`
 - Base: `56d74f4b92d85e6403689cbbe4f7b4b460e8f63a`
-- Reviewed implementation: `9a29409242bf29436bf553e584b87018fb3f6fa6`
-- Log: `logs/refactor/20260715-2010-release-closure/`
+- Implementation: `088d8d4cc9038488a03c27dcbf3a0751b1f76ad9`
+- Canonical CPU RTL: `rtl/mycpu_top.v`, SHA256 `cccb159952f10337566c2341eccafdab1fa3fa8882ff4db7565119b8e2e451d2`
 
-## Change and contract
-
-Publish the reproducible self-contained `core_top` at `rtl/mycpu_top.v`, the path consumed by the locked FPGA overlay. Remove the obsolete `CPUCoreFlat` RTL and inactive simplified Scala drafts. Bind the publication specs, tests, and generated-package checks to the canonical path. The public 49-port/reset contract and locked source/tool versions are unchanged; the committed CPU package changes from a nonfunctional flat draft to the pure-active-Spinal candidate. The locked openLA500 support license/header contract is unchanged.
+The active CPU is generated from SpinalHDL and packaged as one committed `core_top` file. Historical leaf replacement RTL and obsolete SoC Verilog were removed. Repository purity checks allow only this generated file as CPU synthesis HDL; the remaining `.sv` files are simulation-only testbenches.
 
 ## Verification
 
-- Locked Scala: 4/4 PASS; generation: 2/2 reproducible.
-- Port, publication, Yosys hierarchy/check, candidate closure, typed AXI, and replacement reachability: PASS.
-- Clean Linux automation: 390/390 PASS, zero skip.
-- func58: 58/58 functional PASS, live DiffTest, no mismatch; strict gate FAIL on 405 compile warnings.
-- func81: score 81, live DiffTest, no mismatch; strict gate FAIL on the same 40 DUT and 365 official-environment warnings.
-- Required lint: FAIL. The exact 73-warning aggregate suppression closes diagnostically but does not satisfy the repository's individual waiver policy.
-- External Claude review: unavailable because `GEEKPIE_CLAUDE_API_KEY` is absent; local fallback has open blockers.
+- Locked Scala: 4/4 PASS; 30 Scala tests PASS.
+- Reproducible generation: 2/2 PASS.
+- Strict Verilator 5.020 lint: 0 warning, 0 error, 0 skip, no external waiver file.
+- Port, publication, Yosys, candidate closure, typed AXI, reachability, and repository purity: PASS.
+- Clean Linux automation: 398/398 PASS, zero skip.
+- func58: 58/58 functional PASS, live DiffTest, no mismatch, DUT warnings 0.
+- func81: 81/81 functional PASS, live DiffTest, no mismatch, DUT warnings 0.
+- Whole-environment strict wrappers: FAIL because the locked official Verilator compile log emits 365 environment warnings; this is kept separate from DUT warning closure.
+- Vivado 2023.2: bitstream PASS, WNS `+0.977809 ns`, TNS `0`, part `xc7a200tfbg676-2`.
+- FPGA job `20260715-174319-8a924804`: PASS. VIO is `3A00003A`, LED `1/1` at 100/200/300 ms; package and result artifact hashes all match.
 
-## Missing release evidence
+## Remaining Scope
 
-Random DiffTest is blocked by an empty locked vector set. perf20, U-Boot, Linux, Vivado 2023.2 implementation/timing/resource/bitstream, FPGA hardware, and the LACC-on release matrix are not executed. The active official 32-entry predictor also conflicts with the completion contract's historical 64-entry target.
+Random DiffTest has no locked vectors. perf20, U-Boot/Linux system validation, the LACC-on release matrix, and a fresh external claim review remain open. The Vivado SoC build also retains 45 DRC warnings and external I/O delay-check warnings despite passing timing and hardware. The active 32-entry predictor still conflicts with the historical 64-entry completion target.
 
-## Risk, resource impact, and rollback
+## Rollback
 
-No Fmax/LUT/FF/BRAM delta is available. Six warning-backed compatibility/behavior debts remain documented. Revert the implementation and evidence commits to restore the prior reference-only publication layout; the original dirty worktrees and stable branch remain untouched.
+Revert the implementation commits and this evidence-only commit. The FPGA evidence is bound to `088d8d4`; it must not be reused for another commit or profile.

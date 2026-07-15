@@ -1,0 +1,130 @@
+{
+  "schema_version": 1,
+  "gate": "pure-spinal-warning-closure",
+  "status": "pass",
+  "source_head": "088d8d4cc9038488a03c27dcbf3a0751b1f76ad9",
+  "dut": {
+    "path": "rtl/mycpu_top.v",
+    "size": 862904,
+    "sha256": "cccb159952f10337566c2341eccafdab1fa3fa8882ff4db7565119b8e2e451d2",
+    "raw_reproducible_sha256": "c1233a56eee118c83af4796244f6dbd984d1eb15c5fd3c23033c1f1852a1fc49",
+    "generated_module_count": 21
+  },
+  "locked_scala": {
+    "status": "pass",
+    "planned": 4,
+    "executed": 4,
+    "passed": 4,
+    "failed": 0,
+    "skipped": 0,
+    "scala_tests": 30,
+    "scala_test_failures": 0,
+    "source_stable": true,
+    "dependency_cache_stable": true,
+    "versions": {
+      "scala": "2.13.16",
+      "sbt": "1.10.11",
+      "spinalhdl": "1.14.2",
+      "verilator": "5.020"
+    },
+    "summary": {
+      "path": "/mnt/d/flw/warning-clean-088d8d4-lf/build/warning-closure/evidence-scala/scala-check/summary.json",
+      "size": 333893,
+      "sha256": "714f6420cef981ba3ae2131dd89e097b2ab6b5dac3df33af2b29550e970c47b2"
+    },
+    "raw_log": {
+      "path": "/tmp/nscscc-warning-scala-evidence-088d8d4.log",
+      "size": 835,
+      "sha256": "0acc44e508881d2ae71ed11cc43ae48a355dcbe9978add20299dbc17262c9ab2"
+    }
+  },
+  "strict_rtl_lint": {
+    "status": "pass",
+    "profile": "locked",
+    "verilator_version": "5.020",
+    "warning_policy": "strict-zero",
+    "warnings": 0,
+    "errors": 0,
+    "skips": 0,
+    "external_waiver_file": null,
+    "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "summary": {
+      "path": "/mnt/d/flw/warning-clean-088d8d4-lf/build/warning-closure/final/core_top/lint/summary.json",
+      "size": 2658,
+      "sha256": "35bf82941b2cd99f4d2e33e40a500e07702c3d396eb5065b7abd2f1fa7bb2de7"
+    }
+  },
+  "local_static_gates": {
+    "reproducible_generate": {"status":"pass","planned":2,"executed":2,"passed":2,"failed":0,"skipped":0},
+    "core_top_contract": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0},
+    "publish_consistency": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0},
+    "port_check": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0},
+    "yosys": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0},
+    "candidate_closure": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0},
+    "typed_axi": {"status":"pass","planned":10,"executed":10,"passed":10,"failed":0,"skipped":0},
+    "replacement_reachability": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0}
+  },
+  "repository_purity": {
+    "status": "pass",
+    "synthesis_cpu_hdl": ["rtl/mycpu_top.v"],
+    "allowed_simulation_testbenches": [
+      "tests/regfile_diff_tb.sv",
+      "tests/rtl/exe_stage_lockstep.sv",
+      "tests/rtl/id_stage_lockstep.sv",
+      "tests/rtl/if_stage_lockstep.sv",
+      "tests/rtl/lacc_core_lockstep.sv",
+      "tests/rtl/perf_counter_lockstep.sv"
+    ],
+    "blocking_entries": [],
+    "legacy_definitions": [],
+    "legacy_instances": [],
+    "candidate_closure": {
+      "path": "/mnt/d/flw/warning-clean-088d8d4-lf/build/warning-closure/final/core_top/candidate-closure.json",
+      "size": 3284,
+      "sha256": "231acb403649e0e3df51f0b93c6cdc2840af83e892b780b3187f56ff2c5934be"
+    }
+  },
+  "committed_overlay": {
+    "status": "diagnostic",
+    "pure_spinal": true,
+    "replacement_count": 1,
+    "replacement_payload_source": "committed_git_blobs",
+    "source_head": "088d8d4cc9038488a03c27dcbf3a0751b1f76ad9",
+    "source_branch": "refactor/20260715-2010-release-closure",
+    "worktree_clean": true,
+    "replacement": {
+      "target": "rtl/mycpu_top.v",
+      "source": "rtl/mycpu_top.v",
+      "size": 862904,
+      "sha256": "cccb159952f10337566c2341eccafdab1fa3fa8882ff4db7565119b8e2e451d2"
+    },
+    "report": {
+      "path": "/tmp/nscscc-warning-func81-evidence-088d8d4/reports/iterations/20260716-0105-warning-func81/chiplab-overlay.json",
+      "size": 2698,
+      "sha256": "117b5b20574c17d63f12c7b4005653765780311f24c1274bbd92bfca08825eff"
+    },
+    "manifest": {
+      "path": "/tmp/nscscc-warning-func81-evidence-088d8d4/reports/iterations/20260716-0105-warning-func81/chiplab-overlay-manifest.json",
+      "size": 12024,
+      "sha256": "6d0a5dc57e55b54ecb3c555c16246fb9f4ad48e64b57c3c9d615f03ec20eb7c4"
+    }
+  },
+  "official_function_compile": {
+    "func58": {"dut_warnings":0,"official_environment_warnings":365,"errors":0},
+    "func81": {"dut_warnings":0,"official_environment_warnings":365,"errors":0},
+    "strict_wrapper_status": "fail",
+    "scope_note": "the strict function wrapper rejects official-environment warnings in addition to DUT warnings"
+  },
+  "synthesis_source_proof": {
+    "status": "pass",
+    "overlay_files": [
+      "IP/myCPU/mycpu_top.v",
+      "IP/myCPU/xilinx_ip/sram/data_bank_sram.xcix",
+      "IP/myCPU/xilinx_ip/sram/tagv_sram.xcix",
+      "IP/myCPU/mycpu.h"
+    ],
+    "cpu_verilog_sources": ["IP/myCPU/mycpu_top.v"],
+    "historical_cpu_verilog_sources": []
+  },
+  "claim_boundary": "This closes warnings and source purity for the committed Spinal-generated CPU RTL. It does not claim that the locked official simulation environment or the complete Vivado SoC is warning-free."
+}

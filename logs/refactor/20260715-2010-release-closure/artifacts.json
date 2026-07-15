@@ -2,11 +2,13 @@
   "schema_version": 1,
   "iteration_id": "20260715-2010-release-closure",
   "artifacts": [
-    {"id":"canonical-rtl","path":"rtl/mycpu_top.v","size":858573,"sha256":"5d11d66f2c1d44acfc343c98f0e76c87143a72a7bde901516b508ce660687d8a","retention":"git"},
-    {"id":"clean-linux-automation","path":"evidence/clean-linux-automation.json","size":926,"sha256":"a0aceac9c04ae2fcbe621f110c3aa918b4c19338d58ce0725669a4c223dde14f","retention":"git"},
-    {"id":"chiplab-doctor","path":"evidence/chiplab-doctor.json","size":700,"sha256":"c126bc2090067bd3a1bb69ea416b8ab0c8626a940df6c0734305dca8e2c1e49d","retention":"git"},
-    {"id":"func58-diagnostic","path":"evidence/func58.json","size":2887,"sha256":"a993877ecaf059ef674ce2af1b550d4907ed0bab609f693f2d7de9133af33e3e","retention":"git"},
-    {"id":"func81-diagnostic","path":"evidence/func81.json","size":1718,"sha256":"3fc605bdf1bb43e7d76055a583ffc0c394649d059f6c35bac589119ed331fa2e","retention":"git"},
-    {"id":"local-independent-review","path":"reviews/local-independent-review.json","size":1102,"sha256":"2d87601699ee49e92eff8298bfc6298625af13230f7daadd80961f05578e28ee","retention":"git"}
+    {"id":"canonical-rtl","path":"rtl/mycpu_top.v","size":862904,"sha256":"cccb159952f10337566c2341eccafdab1fa3fa8882ff4db7565119b8e2e451d2","retention":"git"},
+    {"id":"clean-linux-automation","path":"evidence/clean-linux-automation.json","size":922,"sha256":"419acd92eb63ae145ed4413fcfc2d24c469fe25de74177ad3b61352d3264ba2d","retention":"git"},
+    {"id":"chiplab-doctor","path":"evidence/chiplab-doctor.json","size":707,"sha256":"8b9a4c2e47f9c12fabce3af5bec76f5e475baa7ee8d9a196d2a934f8d78ba67e","retention":"git"},
+    {"id":"func58-diagnostic","path":"evidence/func58.json","size":2967,"sha256":"58d9cce798b63aa6d207206183b89ebd0bd67563344238af1bbe67dab9132065","retention":"git"},
+    {"id":"func81-diagnostic","path":"evidence/func81.json","size":3535,"sha256":"f13578bd106f43246a20bb7e50340176aafb0c5d52b1f3589762434856785a83","retention":"git"},
+    {"id":"warning-closure","path":"evidence/warning-closure.json","size":5312,"sha256":"02dc8f59164f6eddde75a1518e7ee9bcf5248f2049296c3a83baa545a83b2c24","retention":"git"},
+    {"id":"fpga-func58","path":"evidence/fpga-func58.json","size":8082,"sha256":"36a7c6a368753cfdceddb1b4cb8053c643f9b79ce747f5792eb944a42606ae02","retention":"git"},
+    {"id":"local-independent-review-historical","path":"reviews/local-independent-review.json","size":1102,"sha256":"2d87601699ee49e92eff8298bfc6298625af13230f7daadd80961f05578e28ee","retention":"git"}
   ]
 }

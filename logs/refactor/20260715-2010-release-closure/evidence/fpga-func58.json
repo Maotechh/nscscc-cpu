@@ -1,0 +1,162 @@
+{
+  "schema_version": 1,
+  "gate": "fpga-func58",
+  "status": "pass",
+  "source_head": "088d8d4cc9038488a03c27dcbf3a0751b1f76ad9",
+  "profile": "func58",
+  "client_doctor": {
+    "status": "pass",
+    "checks": 13,
+    "failed": 0,
+    "maintenance": false,
+    "vivado_version": "2023.2",
+    "reference_commit": "a2e11b38bc5c85abb4408a8e0c0f5ce903c7ba31",
+    "mycpu_gitlink": "aa3bde1f3e720e71c2c78d6b81930d797b810149"
+  },
+  "package": {
+    "path": "D:/fpga-agent-client/jobs/088d8d4-func58.fpgajob",
+    "size": 1152058,
+    "sha256": "6fc5c359119fa5392498cbbb6f1a56d37a7195bf2d80225aeaea03d0cdd06189",
+    "build_workspace": "D:/flw/job-554206614",
+    "build_elapsed_seconds": 1387.3,
+    "manifest": {
+      "size": 1481,
+      "sha256": "5f073d858281fa49bed9ed27ec5ddd60b766911ca15c51747f7770708631fa69",
+      "profile": "func58",
+      "repository": "team-cpu",
+      "source_commit": "088d8d4cc9038488a03c27dcbf3a0751b1f76ad9",
+      "chiplab_commit": "a2e11b38bc5c85abb4408a8e0c0f5ce903c7ba31",
+      "mycpu_gitlink": "aa3bde1f3e720e71c2c78d6b81930d797b810149",
+      "vivado_version": "2023.2",
+      "project_part": "xc7a200tfbg676-2"
+    },
+    "members": [
+      {"name":"check_timing.rpt","size":3980,"sha256":"8890336a45954fb3e3a0bd1234853dec9cc5182d0cb94f2c35545deda3cf1c81","verified":true},
+      {"name":"design.bit","size":9730756,"sha256":"e76724a09382ea48e78a0ed31e91310c6c9737f5e8e53b0438994d3fd1e058f2","verified":true},
+      {"name":"drc.rpt","size":35933,"sha256":"481de039c4f8bdf2fd1b83cbbf572cc603b0cccb7bce185403fc50db7fc659d0","verified":true},
+      {"name":"probes.ltx","size":17717,"sha256":"cbb0799a601e9c9a69cc594e74faf4c08fe028f1374760137317c037c2f395b8","verified":true},
+      {"name":"program.bin","size":532904,"sha256":"04e79fe1dcfac195b546cfab52959e03e530d08ba96deedab49cbae65b52501a","verified":true},
+      {"name":"timing_summary.rpt","size":732964,"sha256":"068c3cbd990c74efa9cb8d896d1577e783c2849011d801b957dfbe14ccd6a677","verified":true},
+      {"name":"utilization.rpt","size":14645,"sha256":"c7e9e040f987bba46051f1883438f23ffc94f697203f10bc99fd4603497d3edb","verified":true},
+      {"name":"vivado-metrics.txt","size":89,"sha256":"70c8df896ed0ec296a65dac598fa038da8575131f83f98e1a9eb29cb5c61ae91","verified":true}
+    ]
+  },
+  "source_overlay": {
+    "source_fetch": "https://github.com/Maotechh/nscscc-cpu.git",
+    "source_commit": "088d8d4cc9038488a03c27dcbf3a0751b1f76ad9",
+    "overlay_files": [
+      "IP/myCPU/mycpu_top.v",
+      "IP/myCPU/xilinx_ip/sram/data_bank_sram.xcix",
+      "IP/myCPU/xilinx_ip/sram/tagv_sram.xcix",
+      "IP/myCPU/mycpu.h@reference:aa3bde1f3e720e71c2c78d6b81930d797b810149"
+    ],
+    "cpu_hdl_sources": ["IP/myCPU/mycpu_top.v"],
+    "legacy_cpu_hdl_sources": [],
+    "core_top": {
+      "size": 862904,
+      "sha256": "cccb159952f10337566c2341eccafdab1fa3fa8882ff4db7565119b8e2e451d2"
+    }
+  },
+  "implementation": {
+    "status": "pass",
+    "run_status": "write_bitstream Complete!",
+    "vivado_version": "2023.2",
+    "part": "xc7a200tfbg676-2",
+    "wns_ns": 0.977809,
+    "tns_ns": 0.0,
+    "timing_constraints_met": true,
+    "utilization": {
+      "slice_luts": 22120,
+      "slice_registers": 23471,
+      "block_ram_tiles": 36.5,
+      "dsps": 8
+    },
+    "drc": {
+      "errors": 0,
+      "warnings": 45,
+      "by_rule": {
+        "BUFC-1": 2,
+        "CFGBVS-1": 1,
+        "CHECK-3": 1,
+        "DPOP-1": 8,
+        "DPOP-2": 8,
+        "PDCN-1569": 3,
+        "REQP-1709": 1,
+        "REQP-1840": 20,
+        "RTSTAT-10": 1
+      }
+    },
+    "check_timing": {
+      "unconstrained_internal_endpoints": 0,
+      "no_clock": 0,
+      "constant_clock": 0,
+      "combinational_loops": 0,
+      "no_input_delay_ports": 17,
+      "no_output_delay_ports": 42
+    }
+  },
+  "job": {
+    "job_id": "20260715-174319-8a924804",
+    "idempotency_key": "nscscc-088d8d4-func58-warning-closure-v1",
+    "repository": "team-cpu",
+    "commit": "088d8d4cc9038488a03c27dcbf3a0751b1f76ad9",
+    "package_size": 1152058,
+    "package_sha256": "6fc5c359119fa5392498cbbb6f1a56d37a7195bf2d80225aeaea03d0cdd06189",
+    "state": "passed",
+    "verdict": "passed",
+    "warnings_present": false,
+    "timeline": [
+      {"state":"queued","at":"2026-07-15T17:43:19.3620795Z"},
+      {"state":"programming","at":"2026-07-15T17:43:20.3650285Z"},
+      {"state":"testing","at":"2026-07-15T17:44:34Z"},
+      {"state":"passed","at":"2026-07-15T17:45:16.4015299Z"}
+    ],
+    "environment": {
+      "vivado_expected": "2023.2",
+      "board_device": "xc7a200t_0",
+      "board_part": "xc7a200tfbg676-2",
+      "chiplab_commit": "a2e11b38bc5c85abb4408a8e0c0f5ce903c7ba31",
+      "chiplab_mycpu_gitlink": "aa3bde1f3e720e71c2c78d6b81930d797b810149"
+    }
+  },
+  "programming": {
+    "verdict": "pass",
+    "device": "xc7a200t_0",
+    "actual_part": "xc7a200t",
+    "bitstream": "design.bit",
+    "program": "program.bin"
+  },
+  "board": {
+    "mode": "func",
+    "verdict": "pass",
+    "terminal_num_data": "3A00003A",
+    "terminal_led0": 1,
+    "terminal_led1": 1,
+    "samples": [
+      {"elapsed_ms":0,"num_data":"04000004","led0":1,"led1":2,"transitional":true},
+      {"elapsed_ms":100,"num_data":"3A00003A","led0":1,"led1":1,"pass":true},
+      {"elapsed_ms":200,"num_data":"3A00003A","led0":1,"led1":1,"pass":true},
+      {"elapsed_ms":300,"num_data":"3A00003A","led0":1,"led1":1,"pass":true}
+    ]
+  },
+  "artifacts": [
+    {"name":"board-summary.txt","source":"downloaded","expected_sha256":"cc393b820b76eabbf0987aeddb9e045f82978c8abd335d82aacc2033db34397d","actual_sha256":"cc393b820b76eabbf0987aeddb9e045f82978c8abd335d82aacc2033db34397d","verified":true},
+    {"name":"check_timing.rpt","source":"package","expected_sha256":"8890336a45954fb3e3a0bd1234853dec9cc5182d0cb94f2c35545deda3cf1c81","actual_sha256":"8890336a45954fb3e3a0bd1234853dec9cc5182d0cb94f2c35545deda3cf1c81","verified":true},
+    {"name":"drc.rpt","source":"package","expected_sha256":"481de039c4f8bdf2fd1b83cbbf572cc603b0cccb7bce185403fc50db7fc659d0","actual_sha256":"481de039c4f8bdf2fd1b83cbbf572cc603b0cccb7bce185403fc50db7fc659d0","verified":true},
+    {"name":"func_vio.csv","source":"downloaded","expected_sha256":"cbbda20492ee1e17fad29a7de24dfa19172fcba68b1d141b7a181e1c3ef2f973","actual_sha256":"cbbda20492ee1e17fad29a7de24dfa19172fcba68b1d141b7a181e1c3ef2f973","verified":true},
+    {"name":"programming-summary.txt","source":"downloaded","expected_sha256":"f1cef4cf86b9ed871cf7929a5d45029c468baa3d1ac7beb31fa592affbb78797","actual_sha256":"f1cef4cf86b9ed871cf7929a5d45029c468baa3d1ac7beb31fa592affbb78797","verified":true},
+    {"name":"timing_summary.rpt","source":"package","expected_sha256":"068c3cbd990c74efa9cb8d896d1577e783c2849011d801b957dfbe14ccd6a677","actual_sha256":"068c3cbd990c74efa9cb8d896d1577e783c2849011d801b957dfbe14ccd6a677","verified":true},
+    {"name":"utilization.rpt","source":"package","expected_sha256":"c7e9e040f987bba46051f1883438f23ffc94f697203f10bc99fd4603497d3edb","actual_sha256":"c7e9e040f987bba46051f1883438f23ffc94f697203f10bc99fd4603497d3edb","verified":true},
+    {"name":"vivado-metrics.txt","source":"downloaded","expected_sha256":"70c8df896ed0ec296a65dac598fa038da8575131f83f98e1a9eb29cb5c61ae91","actual_sha256":"70c8df896ed0ec296a65dac598fa038da8575131f83f98e1a9eb29cb5c61ae91","verified":true}
+  ],
+  "raw_service_evidence": {
+    "directory": "D:/fpga-agent-client/results/20260715-174319-8a924804",
+    "status_json": {"size":396,"sha256":"ac4fe6eabfef15b7a6f13ef4c4d6eec3bea4e1c11fad1c6632a4f2653f427d8b"},
+    "result_json": {"size":2065,"sha256":"8fe138c42c2c9ba9bf0ea7e47e4a93406745640e0626b1b0712d46bfafff0bdb"}
+  },
+  "limitations": [
+    "This is one locked func58 hardware profile and does not prove the complete 58-case or 81-case suites on hardware.",
+    "This result does not cover perf20, random DiffTest, U-Boot, Linux, or the LACC-on release matrix.",
+    "Vivado met timing and produced a passing bitstream, but the locked SoC build still reports 45 DRC warnings and unconstrained external I/O delay checks; this is not a zero-warning Vivado claim."
+  ]
+}
