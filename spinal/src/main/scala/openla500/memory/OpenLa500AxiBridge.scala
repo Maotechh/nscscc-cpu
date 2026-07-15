@@ -1,6 +1,8 @@
 package openla500.memory
 
+import openla500.compat.Axi3Compat
 import spinal.core._
+import spinal.lib._
 
 /** Cycle-compatible implementation of `a158aa8:rtl/axi_bridge.v`.
   *
@@ -270,4 +272,97 @@ final class OpenLa500AxiBridge extends Component {
   io.data_ret_data := io.rdata
   io.data_wr_rdy := !logic.writeBusy
   io.write_buffer_empty := (logic.writeBufferCount === 0) && !logic.writeBusy
+}
+
+/** Typed cache/AXI boundary around the cycle-compatible legacy bridge.
+  *
+  * The adapter owns no state. It only maps the existing cache transaction pins to the directioned
+  * line contracts and maps the legacy AXI3/WID pins to [[Axi3Compat]]. Keeping the legacy bridge as
+  * a child preserves its verified arbitration, burst, and reset behavior while allowing the active
+  * backend to depend on typed contracts.
+  */
+final class OpenLa500TypedAxiBridge extends Component {
+  val io = new Bundle {
+    val clk = in Bool ()
+    val reset = in Bool ()
+    val inst = slave(LineReadWritePort())
+    val data = slave(LineReadWritePort())
+    val axi = master(Axi3Compat())
+    val writeBufferEmpty = out Bool ()
+  }
+
+  noIoPrefix()
+
+  private val legacy = new OpenLa500AxiBridge
+  legacy.io.clk := io.clk
+  legacy.io.reset := io.reset
+
+  legacy.io.inst_rd_req := io.inst.read.valid
+  legacy.io.inst_rd_type := io.inst.read.payload.requestType
+  legacy.io.inst_rd_addr := io.inst.read.payload.address.asBits
+  io.inst.read.ready := legacy.io.inst_rd_rdy
+  io.inst.readResponse.valid := legacy.io.inst_ret_valid
+  io.inst.readResponse.payload.last := legacy.io.inst_ret_last
+  io.inst.readResponse.payload.data := legacy.io.inst_ret_data
+
+  legacy.io.inst_wr_req := io.inst.write.valid
+  legacy.io.inst_wr_type := io.inst.write.payload.requestType
+  legacy.io.inst_wr_addr := io.inst.write.payload.address.asBits
+  legacy.io.inst_wr_wstrb := io.inst.write.payload.byteMask
+  legacy.io.inst_wr_data := io.inst.write.payload.data
+  io.inst.write.ready := legacy.io.inst_wr_rdy
+
+  legacy.io.data_rd_req := io.data.read.valid
+  legacy.io.data_rd_type := io.data.read.payload.requestType
+  legacy.io.data_rd_addr := io.data.read.payload.address.asBits
+  io.data.read.ready := legacy.io.data_rd_rdy
+  io.data.readResponse.valid := legacy.io.data_ret_valid
+  io.data.readResponse.payload.last := legacy.io.data_ret_last
+  io.data.readResponse.payload.data := legacy.io.data_ret_data
+
+  legacy.io.data_wr_req := io.data.write.valid
+  legacy.io.data_wr_type := io.data.write.payload.requestType
+  legacy.io.data_wr_addr := io.data.write.payload.address.asBits
+  legacy.io.data_wr_wstrb := io.data.write.payload.byteMask
+  legacy.io.data_wr_data := io.data.write.payload.data
+  io.data.write.ready := legacy.io.data_wr_rdy
+  io.writeBufferEmpty := legacy.io.write_buffer_empty
+
+  legacy.io.arready := io.axi.ar.ready
+  legacy.io.rid := io.axi.r.payload.id
+  legacy.io.rdata := io.axi.r.payload.data
+  legacy.io.rresp := io.axi.r.payload.response
+  legacy.io.rlast := io.axi.r.payload.last
+  legacy.io.rvalid := io.axi.r.valid
+  legacy.io.awready := io.axi.aw.ready
+  legacy.io.wready := io.axi.w.ready
+  legacy.io.bid := io.axi.b.payload.id
+  legacy.io.bresp := io.axi.b.payload.response
+  legacy.io.bvalid := io.axi.b.valid
+
+  io.axi.ar.payload.id := legacy.io.arid
+  io.axi.ar.payload.address := legacy.io.araddr
+  io.axi.ar.payload.len := legacy.io.arlen
+  io.axi.ar.payload.size := legacy.io.arsize
+  io.axi.ar.payload.burst := legacy.io.arburst
+  io.axi.ar.payload.lock := legacy.io.arlock
+  io.axi.ar.payload.cache := legacy.io.arcache
+  io.axi.ar.payload.prot := legacy.io.arprot
+  io.axi.ar.valid := legacy.io.arvalid
+  io.axi.r.ready := legacy.io.rready
+  io.axi.aw.payload.id := legacy.io.awid
+  io.axi.aw.payload.address := legacy.io.awaddr
+  io.axi.aw.payload.len := legacy.io.awlen
+  io.axi.aw.payload.size := legacy.io.awsize
+  io.axi.aw.payload.burst := legacy.io.awburst
+  io.axi.aw.payload.lock := legacy.io.awlock
+  io.axi.aw.payload.cache := legacy.io.awcache
+  io.axi.aw.payload.prot := legacy.io.awprot
+  io.axi.aw.valid := legacy.io.awvalid
+  io.axi.w.payload.id := legacy.io.wid
+  io.axi.w.payload.data := legacy.io.wdata
+  io.axi.w.payload.byteMask := legacy.io.wstrb
+  io.axi.w.payload.last := legacy.io.wlast
+  io.axi.w.valid := legacy.io.wvalid
+  io.axi.b.ready := legacy.io.bready
 }

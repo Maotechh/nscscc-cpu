@@ -2,7 +2,7 @@ package openla500.compat
 
 import openla500.config.CoreConfig
 import openla500.execute.{OpenLa500Div, OpenLa500LaccCore, OpenLa500Mul}
-import openla500.memory.{OpenLa500AxiBridge, OpenLa500DCache, OpenLa500ICache}
+import openla500.memory.{OpenLa500DCache, OpenLa500ICache, OpenLa500TypedAxiBridge}
 import openla500.observe.{ArchState, ChiplabDiffTestAdapter, CommitEvent, OpenLa500PerfCounter}
 import openla500.pipeline._
 import openla500.predict.OpenLa500Predictor
@@ -57,7 +57,7 @@ private[compat] final class SpinalCoreBackend(
   val addressTranslation = new OpenLa500AddrTrans
   val instructionCache = new OpenLa500ICache
   val dataCache = new OpenLa500DCache
-  val axiBridge = new OpenLa500AxiBridge
+  val axiBridge = new OpenLa500TypedAxiBridge
   val divider = new OpenLa500Div
   val multiplier = new OpenLa500Mul
   val performanceCounter = new OpenLa500PerfCounter
@@ -398,73 +398,73 @@ private[compat] final class SpinalCoreBackend(
   memory.io.mulResult := multiplier.io.result
 
   // Cache refill/writeback channels are arbitrated only by the verified AXI bridge.
-  axiBridge.io.inst_rd_req := instructionCache.io.rd_req
-  axiBridge.io.inst_rd_type := instructionCache.io.rd_type
-  axiBridge.io.inst_rd_addr := instructionCache.io.rd_addr
-  instructionCache.io.rd_rdy := axiBridge.io.inst_rd_rdy
-  instructionCache.io.ret_valid := axiBridge.io.inst_ret_valid
-  instructionCache.io.ret_last := axiBridge.io.inst_ret_last
-  instructionCache.io.ret_data := axiBridge.io.inst_ret_data
-  axiBridge.io.inst_wr_req := instructionCache.io.wr_req
-  axiBridge.io.inst_wr_type := instructionCache.io.wr_type
-  axiBridge.io.inst_wr_addr := instructionCache.io.wr_addr
-  axiBridge.io.inst_wr_wstrb := instructionCache.io.wr_wstrb
-  axiBridge.io.inst_wr_data := instructionCache.io.wr_data
-  instructionCache.io.wr_rdy := axiBridge.io.inst_wr_rdy
+  axiBridge.io.inst.read.valid := instructionCache.io.rd_req
+  axiBridge.io.inst.read.payload.requestType := instructionCache.io.rd_type
+  axiBridge.io.inst.read.payload.address := instructionCache.io.rd_addr.asUInt
+  instructionCache.io.rd_rdy := axiBridge.io.inst.read.ready
+  instructionCache.io.ret_valid := axiBridge.io.inst.readResponse.valid
+  instructionCache.io.ret_last := axiBridge.io.inst.readResponse.payload.last
+  instructionCache.io.ret_data := axiBridge.io.inst.readResponse.payload.data
+  axiBridge.io.inst.write.valid := instructionCache.io.wr_req
+  axiBridge.io.inst.write.payload.requestType := instructionCache.io.wr_type
+  axiBridge.io.inst.write.payload.address := instructionCache.io.wr_addr.asUInt
+  axiBridge.io.inst.write.payload.byteMask := instructionCache.io.wr_wstrb
+  axiBridge.io.inst.write.payload.data := instructionCache.io.wr_data
+  instructionCache.io.wr_rdy := axiBridge.io.inst.write.ready
 
-  axiBridge.io.data_rd_req := dataCache.io.rd_req
-  axiBridge.io.data_rd_type := dataCache.io.rd_type
-  axiBridge.io.data_rd_addr := dataCache.io.rd_addr
-  dataCache.io.rd_rdy := axiBridge.io.data_rd_rdy
-  dataCache.io.ret_valid := axiBridge.io.data_ret_valid
-  dataCache.io.ret_last := axiBridge.io.data_ret_last
-  dataCache.io.ret_data := axiBridge.io.data_ret_data
-  axiBridge.io.data_wr_req := dataCache.io.wr_req
-  axiBridge.io.data_wr_type := dataCache.io.wr_type
-  axiBridge.io.data_wr_addr := dataCache.io.wr_addr
-  axiBridge.io.data_wr_wstrb := dataCache.io.wr_wstrb
-  axiBridge.io.data_wr_data := dataCache.io.wr_data
-  dataCache.io.wr_rdy := axiBridge.io.data_wr_rdy
-  decode.io.writeBufferEmpty := axiBridge.io.write_buffer_empty
+  axiBridge.io.data.read.valid := dataCache.io.rd_req
+  axiBridge.io.data.read.payload.requestType := dataCache.io.rd_type
+  axiBridge.io.data.read.payload.address := dataCache.io.rd_addr.asUInt
+  dataCache.io.rd_rdy := axiBridge.io.data.read.ready
+  dataCache.io.ret_valid := axiBridge.io.data.readResponse.valid
+  dataCache.io.ret_last := axiBridge.io.data.readResponse.payload.last
+  dataCache.io.ret_data := axiBridge.io.data.readResponse.payload.data
+  axiBridge.io.data.write.valid := dataCache.io.wr_req
+  axiBridge.io.data.write.payload.requestType := dataCache.io.wr_type
+  axiBridge.io.data.write.payload.address := dataCache.io.wr_addr.asUInt
+  axiBridge.io.data.write.payload.byteMask := dataCache.io.wr_wstrb
+  axiBridge.io.data.write.payload.data := dataCache.io.wr_data
+  dataCache.io.wr_rdy := axiBridge.io.data.write.ready
+  decode.io.writeBufferEmpty := axiBridge.io.writeBufferEmpty
 
   // Locked external AXI3/WID boundary.
-  axiBridge.io.arready := io.axi.ar.ready
-  axiBridge.io.rid := io.axi.r.payload.id
-  axiBridge.io.rdata := io.axi.r.payload.data
-  axiBridge.io.rresp := io.axi.r.payload.response
-  axiBridge.io.rlast := io.axi.r.payload.last
-  axiBridge.io.rvalid := io.axi.r.valid
-  axiBridge.io.awready := io.axi.aw.ready
-  axiBridge.io.wready := io.axi.w.ready
-  axiBridge.io.bid := io.axi.b.payload.id
-  axiBridge.io.bresp := io.axi.b.payload.response
-  axiBridge.io.bvalid := io.axi.b.valid
+  axiBridge.io.axi.ar.ready := io.axi.ar.ready
+  axiBridge.io.axi.r.payload.id := io.axi.r.payload.id
+  axiBridge.io.axi.r.payload.data := io.axi.r.payload.data
+  axiBridge.io.axi.r.payload.response := io.axi.r.payload.response
+  axiBridge.io.axi.r.payload.last := io.axi.r.payload.last
+  axiBridge.io.axi.r.valid := io.axi.r.valid
+  axiBridge.io.axi.aw.ready := io.axi.aw.ready
+  axiBridge.io.axi.w.ready := io.axi.w.ready
+  axiBridge.io.axi.b.payload.id := io.axi.b.payload.id
+  axiBridge.io.axi.b.payload.response := io.axi.b.payload.response
+  axiBridge.io.axi.b.valid := io.axi.b.valid
 
-  io.axi.ar.payload.id := axiBridge.io.arid
-  io.axi.ar.payload.address := axiBridge.io.araddr
-  io.axi.ar.payload.len := axiBridge.io.arlen
-  io.axi.ar.payload.size := axiBridge.io.arsize
-  io.axi.ar.payload.burst := axiBridge.io.arburst
-  io.axi.ar.payload.lock := axiBridge.io.arlock
-  io.axi.ar.payload.cache := axiBridge.io.arcache
-  io.axi.ar.payload.prot := axiBridge.io.arprot
-  io.axi.ar.valid := axiBridge.io.arvalid
-  io.axi.r.ready := axiBridge.io.rready
-  io.axi.aw.payload.id := axiBridge.io.awid
-  io.axi.aw.payload.address := axiBridge.io.awaddr
-  io.axi.aw.payload.len := axiBridge.io.awlen
-  io.axi.aw.payload.size := axiBridge.io.awsize
-  io.axi.aw.payload.burst := axiBridge.io.awburst
-  io.axi.aw.payload.lock := axiBridge.io.awlock
-  io.axi.aw.payload.cache := axiBridge.io.awcache
-  io.axi.aw.payload.prot := axiBridge.io.awprot
-  io.axi.aw.valid := axiBridge.io.awvalid
-  io.axi.w.payload.id := axiBridge.io.wid
-  io.axi.w.payload.data := axiBridge.io.wdata
-  io.axi.w.payload.byteMask := axiBridge.io.wstrb
-  io.axi.w.payload.last := axiBridge.io.wlast
-  io.axi.w.valid := axiBridge.io.wvalid
-  io.axi.b.ready := axiBridge.io.bready
+  io.axi.ar.payload.id := axiBridge.io.axi.ar.payload.id
+  io.axi.ar.payload.address := axiBridge.io.axi.ar.payload.address
+  io.axi.ar.payload.len := axiBridge.io.axi.ar.payload.len
+  io.axi.ar.payload.size := axiBridge.io.axi.ar.payload.size
+  io.axi.ar.payload.burst := axiBridge.io.axi.ar.payload.burst
+  io.axi.ar.payload.lock := axiBridge.io.axi.ar.payload.lock
+  io.axi.ar.payload.cache := axiBridge.io.axi.ar.payload.cache
+  io.axi.ar.payload.prot := axiBridge.io.axi.ar.payload.prot
+  io.axi.ar.valid := axiBridge.io.axi.ar.valid
+  io.axi.r.ready := axiBridge.io.axi.r.ready
+  io.axi.aw.payload.id := axiBridge.io.axi.aw.payload.id
+  io.axi.aw.payload.address := axiBridge.io.axi.aw.payload.address
+  io.axi.aw.payload.len := axiBridge.io.axi.aw.payload.len
+  io.axi.aw.payload.size := axiBridge.io.axi.aw.payload.size
+  io.axi.aw.payload.burst := axiBridge.io.axi.aw.payload.burst
+  io.axi.aw.payload.lock := axiBridge.io.axi.aw.payload.lock
+  io.axi.aw.payload.cache := axiBridge.io.axi.aw.payload.cache
+  io.axi.aw.payload.prot := axiBridge.io.axi.aw.payload.prot
+  io.axi.aw.valid := axiBridge.io.axi.aw.valid
+  io.axi.w.payload.id := axiBridge.io.axi.w.payload.id
+  io.axi.w.payload.data := axiBridge.io.axi.w.payload.data
+  io.axi.w.payload.byteMask := axiBridge.io.axi.w.payload.byteMask
+  io.axi.w.payload.last := axiBridge.io.axi.w.payload.last
+  io.axi.w.valid := axiBridge.io.axi.w.valid
+  io.axi.b.ready := axiBridge.io.axi.b.ready
 
   decode.io.debugReadSelect := io.infor_flag
   decode.io.debugReadAddress := io.reg_num.asUInt

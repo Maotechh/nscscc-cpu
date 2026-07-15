@@ -457,6 +457,35 @@ boundaries:
       - claude_bridge_missing_GEEKPIE_CLAUDE_API_KEY
     last_iteration: "20260713-0613-core-contracts"
 
+  typed_memory_bridge:
+    owner: memory
+    state: implementation_in_review
+    golden_ref: a158aa8:rtl/axi_bridge.v
+    dependencies:
+      - core_contracts
+      - core_top_compat
+    contract: docs/contracts/core-contracts.md
+    required_gates:
+      - scala
+      - typed_bridge_contract
+      - reproducible_generate
+      - core_top_contract
+      - rtl_static
+      - sequential_equivalence
+      - func_smoke
+      - claim_review
+    evidence:
+      - logs/refactor/20260715-1402-typed-memory/iteration.md
+      - logs/refactor/20260715-1402-typed-memory/summary.json
+      - logs/refactor/20260715-1402-typed-memory/evidence/typed-bridge-contract.json
+      - logs/refactor/20260715-1402-typed-memory/evidence/sequential-equivalence.json
+    active_pr: null
+    blocked_by:
+      - strict_warning_policy_unapproved
+      - committed_chiplab_smoke_not_executed
+      - claude_claim_review_not_executed
+    last_iteration: "20260715-1402-typed-memory"
+
   pipeline:
     owner: pipeline
     state: implementation_in_review

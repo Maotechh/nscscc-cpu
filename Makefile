@@ -343,7 +343,8 @@ core-top-publish-check:
 	$(PYTHON) -I tools/core_top_gate.py publish-check --repo-root "." --manifest "reference/manifest.lock" --ports "$(CORE_TOP_PORTS)" --rtl "$(CORE_TOP_RTL)" --tracked-rtl "$(CORE_TOP_TRACKED_RTL)" --replacement-spec "$(CORE_TOP_REPLACEMENT_SPEC)" --out-dir "$(OUT_DIR)/core_top/publish-check"
 
 typed-axi-boundary:
-	$(PYTHON) -I tools/typed_axi_boundary_gate.py --rtl "$(CORE_TOP_RTL)" --backend-source "spinal/src/main/scala/openla500/compat/SpinalCoreBackend.scala" --compat-source "spinal/src/main/scala/openla500/compat/CoreTopCompat.scala" --out "$(OUT_DIR)/core_top/typed-axi-boundary.json"
+	$(PYTHON) -I tests/test_typed_axi_boundary_gate.py
+	$(PYTHON) -I tools/typed_axi_boundary_gate.py --rtl "$(CORE_TOP_RTL)" --backend-source "spinal/src/main/scala/openla500/compat/SpinalCoreBackend.scala" --compat-source "spinal/src/main/scala/openla500/compat/CoreTopCompat.scala" --bridge-source "spinal/src/main/scala/openla500/memory/OpenLa500AxiBridge.scala" --out "$(OUT_DIR)/core_top/typed-axi-boundary.json"
 
 candidate-closure:
 	@test -f "$(CORE_TOP_RTL)" || (echo "generated core_top RTL is required: $(CORE_TOP_RTL)" && exit 2)

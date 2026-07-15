@@ -268,6 +268,10 @@ module SpinalCoreBackend (
   wire       [31:0]   addressTranslation_inst_vaddr;
   wire       [31:0]   addressTranslation_data_vaddr;
   wire       [4:0]    addressTranslation_rand_index;
+  wire       [31:0]   axiBridge_inst_read_payload_address;
+  wire       [31:0]   axiBridge_inst_write_payload_address;
+  wire       [31:0]   axiBridge_data_read_payload_address;
+  wire       [31:0]   axiBridge_data_write_payload_address;
   wire                fetch_io_downstream_valid;
   wire       [31:0]   fetch_io_downstream_payload_pc;
   wire       [31:0]   fetch_io_downstream_payload_instruction;
@@ -691,42 +695,42 @@ module SpinalCoreBackend (
   wire       [3:0]    dataCache_wr_wstrb;
   wire       [127:0]  dataCache_wr_data;
   wire                dataCache_cache_miss;
-  wire       [3:0]    axiBridge_arid;
-  wire       [31:0]   axiBridge_araddr;
-  wire       [7:0]    axiBridge_arlen;
-  wire       [2:0]    axiBridge_arsize;
-  wire       [1:0]    axiBridge_arburst;
-  wire       [1:0]    axiBridge_arlock;
-  wire       [3:0]    axiBridge_arcache;
-  wire       [2:0]    axiBridge_arprot;
-  wire                axiBridge_arvalid;
-  wire                axiBridge_rready;
-  wire       [3:0]    axiBridge_awid;
-  wire       [31:0]   axiBridge_awaddr;
-  wire       [7:0]    axiBridge_awlen;
-  wire       [2:0]    axiBridge_awsize;
-  wire       [1:0]    axiBridge_awburst;
-  wire       [1:0]    axiBridge_awlock;
-  wire       [3:0]    axiBridge_awcache;
-  wire       [2:0]    axiBridge_awprot;
-  wire                axiBridge_awvalid;
-  wire       [3:0]    axiBridge_wid;
-  wire       [31:0]   axiBridge_wdata;
-  wire       [3:0]    axiBridge_wstrb;
-  wire                axiBridge_wlast;
-  wire                axiBridge_wvalid;
-  wire                axiBridge_bready;
-  wire                axiBridge_inst_rd_rdy;
-  wire                axiBridge_inst_ret_valid;
-  wire                axiBridge_inst_ret_last;
-  wire       [31:0]   axiBridge_inst_ret_data;
-  wire                axiBridge_inst_wr_rdy;
-  wire                axiBridge_data_rd_rdy;
-  wire                axiBridge_data_ret_valid;
-  wire                axiBridge_data_ret_last;
-  wire       [31:0]   axiBridge_data_ret_data;
-  wire                axiBridge_data_wr_rdy;
-  wire                axiBridge_write_buffer_empty;
+  wire                axiBridge_inst_read_ready;
+  wire                axiBridge_inst_readResponse_valid;
+  wire       [31:0]   axiBridge_inst_readResponse_payload_data;
+  wire                axiBridge_inst_readResponse_payload_last;
+  wire                axiBridge_inst_write_ready;
+  wire                axiBridge_data_read_ready;
+  wire                axiBridge_data_readResponse_valid;
+  wire       [31:0]   axiBridge_data_readResponse_payload_data;
+  wire                axiBridge_data_readResponse_payload_last;
+  wire                axiBridge_data_write_ready;
+  wire                axiBridge_axi_ar_valid;
+  wire       [3:0]    axiBridge_axi_ar_payload_id;
+  wire       [31:0]   axiBridge_axi_ar_payload_address;
+  wire       [7:0]    axiBridge_axi_ar_payload_len;
+  wire       [2:0]    axiBridge_axi_ar_payload_size;
+  wire       [1:0]    axiBridge_axi_ar_payload_burst;
+  wire       [1:0]    axiBridge_axi_ar_payload_lock;
+  wire       [3:0]    axiBridge_axi_ar_payload_cache;
+  wire       [2:0]    axiBridge_axi_ar_payload_prot;
+  wire                axiBridge_axi_r_ready;
+  wire                axiBridge_axi_aw_valid;
+  wire       [3:0]    axiBridge_axi_aw_payload_id;
+  wire       [31:0]   axiBridge_axi_aw_payload_address;
+  wire       [7:0]    axiBridge_axi_aw_payload_len;
+  wire       [2:0]    axiBridge_axi_aw_payload_size;
+  wire       [1:0]    axiBridge_axi_aw_payload_burst;
+  wire       [1:0]    axiBridge_axi_aw_payload_lock;
+  wire       [3:0]    axiBridge_axi_aw_payload_cache;
+  wire       [2:0]    axiBridge_axi_aw_payload_prot;
+  wire                axiBridge_axi_w_valid;
+  wire       [3:0]    axiBridge_axi_w_payload_id;
+  wire       [31:0]   axiBridge_axi_w_payload_data;
+  wire       [3:0]    axiBridge_axi_w_payload_byteMask;
+  wire                axiBridge_axi_w_payload_last;
+  wire                axiBridge_axi_b_ready;
+  wire                axiBridge_writeBufferEmpty;
   wire       [31:0]   divider_s;
   wire       [31:0]   divider_r;
   wire                divider_complete;
@@ -878,7 +882,7 @@ module SpinalCoreBackend (
     .io_executeOccupied                     (execute_io_forward_valid                        ), //i
     .io_memoryOccupied                      (memory_io_forward_valid                         ), //i
     .io_writebackOccupied                   (writeback_io_stageValid                         ), //i
-    .io_writeBufferEmpty                    (axiBridge_write_buffer_empty                    ), //i
+    .io_writeBufferEmpty                    (axiBridge_writeBufferEmpty                      ), //i
     .io_dataCacheEmpty                      (dataCache_dcache_empty                          ), //i
     .io_registerWrite_valid                 (writeback_io_registerWrite_valid                ), //i
     .io_registerWrite_destination           (writeback_io_registerWrite_index[4:0]           ), //i
@@ -1478,144 +1482,144 @@ module SpinalCoreBackend (
     .csr_pg             (csr_pg_out                               )  //i
   );
   OpenLa500ICache instructionCache (
-    .clk                  (aclk                                       ), //i
-    .reset                (reset                                      ), //i
-    .valid                (fetch_io_instructionRequest                ), //i
-    .op                   (1'b0                                       ), //i
-    .index                (addressTranslation_inst_index[7:0]         ), //i
-    .tag                  (addressTranslation_inst_tag[19:0]          ), //i
-    .offset               (addressTranslation_inst_offset[3:0]        ), //i
-    .wstrb                (4'b0000                                    ), //i
-    .wdata                (32'h0                                      ), //i
-    .addr_ok              (instructionCache_addr_ok                   ), //o
-    .data_ok              (instructionCache_data_ok                   ), //o
-    .rdata                (instructionCache_rdata[31:0]               ), //o
-    .uncache_en           (fetch_io_instructionUncached               ), //i
-    .icacop_op_en         (execute_io_cache_instructionOperationEnable), //i
-    .cacop_op_mode        (execute_io_cache_operationMode[1:0]        ), //i
-    .cacop_op_addr_index  (addressTranslation_data_index[7:0]         ), //i
-    .cacop_op_addr_tag    (addressTranslation_data_tag[19:0]          ), //i
-    .cacop_op_addr_offset (addressTranslation_data_offset[3:0]        ), //i
-    .icache_unbusy        (instructionCache_icache_unbusy             ), //o
-    .tlb_excp_cancel_req  (fetch_io_tlbCancel                         ), //i
-    .rd_req               (instructionCache_rd_req                    ), //o
-    .rd_type              (instructionCache_rd_type[2:0]              ), //o
-    .rd_addr              (instructionCache_rd_addr[31:0]             ), //o
-    .rd_rdy               (axiBridge_inst_rd_rdy                      ), //i
-    .ret_valid            (axiBridge_inst_ret_valid                   ), //i
-    .ret_last             (axiBridge_inst_ret_last                    ), //i
-    .ret_data             (axiBridge_inst_ret_data[31:0]              ), //i
-    .wr_req               (instructionCache_wr_req                    ), //o
-    .wr_type              (instructionCache_wr_type[2:0]              ), //o
-    .wr_addr              (instructionCache_wr_addr[31:0]             ), //o
-    .wr_wstrb             (instructionCache_wr_wstrb[3:0]             ), //o
-    .wr_data              (instructionCache_wr_data[127:0]            ), //o
-    .wr_rdy               (axiBridge_inst_wr_rdy                      ), //i
-    .cache_miss           (instructionCache_cache_miss                )  //o
+    .clk                  (aclk                                          ), //i
+    .reset                (reset                                         ), //i
+    .valid                (fetch_io_instructionRequest                   ), //i
+    .op                   (1'b0                                          ), //i
+    .index                (addressTranslation_inst_index[7:0]            ), //i
+    .tag                  (addressTranslation_inst_tag[19:0]             ), //i
+    .offset               (addressTranslation_inst_offset[3:0]           ), //i
+    .wstrb                (4'b0000                                       ), //i
+    .wdata                (32'h0                                         ), //i
+    .addr_ok              (instructionCache_addr_ok                      ), //o
+    .data_ok              (instructionCache_data_ok                      ), //o
+    .rdata                (instructionCache_rdata[31:0]                  ), //o
+    .uncache_en           (fetch_io_instructionUncached                  ), //i
+    .icacop_op_en         (execute_io_cache_instructionOperationEnable   ), //i
+    .cacop_op_mode        (execute_io_cache_operationMode[1:0]           ), //i
+    .cacop_op_addr_index  (addressTranslation_data_index[7:0]            ), //i
+    .cacop_op_addr_tag    (addressTranslation_data_tag[19:0]             ), //i
+    .cacop_op_addr_offset (addressTranslation_data_offset[3:0]           ), //i
+    .icache_unbusy        (instructionCache_icache_unbusy                ), //o
+    .tlb_excp_cancel_req  (fetch_io_tlbCancel                            ), //i
+    .rd_req               (instructionCache_rd_req                       ), //o
+    .rd_type              (instructionCache_rd_type[2:0]                 ), //o
+    .rd_addr              (instructionCache_rd_addr[31:0]                ), //o
+    .rd_rdy               (axiBridge_inst_read_ready                     ), //i
+    .ret_valid            (axiBridge_inst_readResponse_valid             ), //i
+    .ret_last             (axiBridge_inst_readResponse_payload_last      ), //i
+    .ret_data             (axiBridge_inst_readResponse_payload_data[31:0]), //i
+    .wr_req               (instructionCache_wr_req                       ), //o
+    .wr_type              (instructionCache_wr_type[2:0]                 ), //o
+    .wr_addr              (instructionCache_wr_addr[31:0]                ), //o
+    .wr_wstrb             (instructionCache_wr_wstrb[3:0]                ), //o
+    .wr_data              (instructionCache_wr_data[127:0]               ), //o
+    .wr_rdy               (axiBridge_inst_write_ready                    ), //i
+    .cache_miss           (instructionCache_cache_miss                   )  //o
   );
   OpenLa500DCache dataCache (
-    .clk                 (aclk                                ), //i
-    .reset               (reset                               ), //i
-    .valid               (execute_io_memory_valid             ), //i
-    .op                  (execute_io_memory_isWrite           ), //i
-    .size                (execute_io_memory_size[2:0]         ), //i
-    .index               (addressTranslation_data_index[7:0]  ), //i
-    .tag                 (addressTranslation_data_tag[19:0]   ), //i
-    .offset              (addressTranslation_data_offset[3:0] ), //i
-    .wstrb               (execute_io_memory_byteMask[3:0]     ), //i
-    .wdata               (execute_io_memory_writeData[31:0]   ), //i
-    .addr_ok             (dataCache_addr_ok                   ), //o
-    .data_ok             (dataCache_data_ok                   ), //o
-    .rdata               (dataCache_rdata[31:0]               ), //o
-    .uncache_en          (memory_io_dataUncached              ), //i
-    .dcacop_op_en        (execute_io_cache_dataOperationEnable), //i
-    .cacop_op_mode       (execute_io_cache_operationMode[1:0] ), //i
-    .preld_hint          (execute_io_cache_preloadHint[4:0]   ), //i
-    .preld_en            (execute_io_cache_preloadEnable      ), //i
-    .tlb_excp_cancel_req (memory_io_tlbExceptionCancel        ), //i
-    .sc_cancel_req       (memory_io_scCancel                  ), //i
-    .dcache_empty        (dataCache_dcache_empty              ), //o
-    .rd_req              (dataCache_rd_req                    ), //o
-    .rd_type             (dataCache_rd_type[2:0]              ), //o
-    .rd_addr             (dataCache_rd_addr[31:0]             ), //o
-    .rd_rdy              (axiBridge_data_rd_rdy               ), //i
-    .ret_valid           (axiBridge_data_ret_valid            ), //i
-    .ret_last            (axiBridge_data_ret_last             ), //i
-    .ret_data            (axiBridge_data_ret_data[31:0]       ), //i
-    .wr_req              (dataCache_wr_req                    ), //o
-    .wr_type             (dataCache_wr_type[2:0]              ), //o
-    .wr_addr             (dataCache_wr_addr[31:0]             ), //o
-    .wr_wstrb            (dataCache_wr_wstrb[3:0]             ), //o
-    .wr_data             (dataCache_wr_data[127:0]            ), //o
-    .wr_rdy              (axiBridge_data_wr_rdy               ), //i
-    .cache_miss          (dataCache_cache_miss                )  //o
+    .clk                 (aclk                                          ), //i
+    .reset               (reset                                         ), //i
+    .valid               (execute_io_memory_valid                       ), //i
+    .op                  (execute_io_memory_isWrite                     ), //i
+    .size                (execute_io_memory_size[2:0]                   ), //i
+    .index               (addressTranslation_data_index[7:0]            ), //i
+    .tag                 (addressTranslation_data_tag[19:0]             ), //i
+    .offset              (addressTranslation_data_offset[3:0]           ), //i
+    .wstrb               (execute_io_memory_byteMask[3:0]               ), //i
+    .wdata               (execute_io_memory_writeData[31:0]             ), //i
+    .addr_ok             (dataCache_addr_ok                             ), //o
+    .data_ok             (dataCache_data_ok                             ), //o
+    .rdata               (dataCache_rdata[31:0]                         ), //o
+    .uncache_en          (memory_io_dataUncached                        ), //i
+    .dcacop_op_en        (execute_io_cache_dataOperationEnable          ), //i
+    .cacop_op_mode       (execute_io_cache_operationMode[1:0]           ), //i
+    .preld_hint          (execute_io_cache_preloadHint[4:0]             ), //i
+    .preld_en            (execute_io_cache_preloadEnable                ), //i
+    .tlb_excp_cancel_req (memory_io_tlbExceptionCancel                  ), //i
+    .sc_cancel_req       (memory_io_scCancel                            ), //i
+    .dcache_empty        (dataCache_dcache_empty                        ), //o
+    .rd_req              (dataCache_rd_req                              ), //o
+    .rd_type             (dataCache_rd_type[2:0]                        ), //o
+    .rd_addr             (dataCache_rd_addr[31:0]                       ), //o
+    .rd_rdy              (axiBridge_data_read_ready                     ), //i
+    .ret_valid           (axiBridge_data_readResponse_valid             ), //i
+    .ret_last            (axiBridge_data_readResponse_payload_last      ), //i
+    .ret_data            (axiBridge_data_readResponse_payload_data[31:0]), //i
+    .wr_req              (dataCache_wr_req                              ), //o
+    .wr_type             (dataCache_wr_type[2:0]                        ), //o
+    .wr_addr             (dataCache_wr_addr[31:0]                       ), //o
+    .wr_wstrb            (dataCache_wr_wstrb[3:0]                       ), //o
+    .wr_data             (dataCache_wr_data[127:0]                      ), //o
+    .wr_rdy              (axiBridge_data_write_ready                    ), //i
+    .cache_miss          (dataCache_cache_miss                          )  //o
   );
-  OpenLa500AxiBridge axiBridge (
-    .clk                (aclk                           ), //i
-    .reset              (reset                          ), //i
-    .arid               (axiBridge_arid[3:0]            ), //o
-    .araddr             (axiBridge_araddr[31:0]         ), //o
-    .arlen              (axiBridge_arlen[7:0]           ), //o
-    .arsize             (axiBridge_arsize[2:0]          ), //o
-    .arburst            (axiBridge_arburst[1:0]         ), //o
-    .arlock             (axiBridge_arlock[1:0]          ), //o
-    .arcache            (axiBridge_arcache[3:0]         ), //o
-    .arprot             (axiBridge_arprot[2:0]          ), //o
-    .arvalid            (axiBridge_arvalid              ), //o
-    .arready            (axi_ar_ready                   ), //i
-    .rid                (axi_r_payload_id[3:0]          ), //i
-    .rdata              (axi_r_payload_data[31:0]       ), //i
-    .rresp              (axi_r_payload_response[1:0]    ), //i
-    .rlast              (axi_r_payload_last             ), //i
-    .rvalid             (axi_r_valid                    ), //i
-    .rready             (axiBridge_rready               ), //o
-    .awid               (axiBridge_awid[3:0]            ), //o
-    .awaddr             (axiBridge_awaddr[31:0]         ), //o
-    .awlen              (axiBridge_awlen[7:0]           ), //o
-    .awsize             (axiBridge_awsize[2:0]          ), //o
-    .awburst            (axiBridge_awburst[1:0]         ), //o
-    .awlock             (axiBridge_awlock[1:0]          ), //o
-    .awcache            (axiBridge_awcache[3:0]         ), //o
-    .awprot             (axiBridge_awprot[2:0]          ), //o
-    .awvalid            (axiBridge_awvalid              ), //o
-    .awready            (axi_aw_ready                   ), //i
-    .wid                (axiBridge_wid[3:0]             ), //o
-    .wdata              (axiBridge_wdata[31:0]          ), //o
-    .wstrb              (axiBridge_wstrb[3:0]           ), //o
-    .wlast              (axiBridge_wlast                ), //o
-    .wvalid             (axiBridge_wvalid               ), //o
-    .wready             (axi_w_ready                    ), //i
-    .bid                (axi_b_payload_id[3:0]          ), //i
-    .bresp              (axi_b_payload_response[1:0]    ), //i
-    .bvalid             (axi_b_valid                    ), //i
-    .bready             (axiBridge_bready               ), //o
-    .inst_rd_req        (instructionCache_rd_req        ), //i
-    .inst_rd_type       (instructionCache_rd_type[2:0]  ), //i
-    .inst_rd_addr       (instructionCache_rd_addr[31:0] ), //i
-    .inst_rd_rdy        (axiBridge_inst_rd_rdy          ), //o
-    .inst_ret_valid     (axiBridge_inst_ret_valid       ), //o
-    .inst_ret_last      (axiBridge_inst_ret_last        ), //o
-    .inst_ret_data      (axiBridge_inst_ret_data[31:0]  ), //o
-    .inst_wr_req        (instructionCache_wr_req        ), //i
-    .inst_wr_type       (instructionCache_wr_type[2:0]  ), //i
-    .inst_wr_addr       (instructionCache_wr_addr[31:0] ), //i
-    .inst_wr_wstrb      (instructionCache_wr_wstrb[3:0] ), //i
-    .inst_wr_data       (instructionCache_wr_data[127:0]), //i
-    .inst_wr_rdy        (axiBridge_inst_wr_rdy          ), //o
-    .data_rd_req        (dataCache_rd_req               ), //i
-    .data_rd_type       (dataCache_rd_type[2:0]         ), //i
-    .data_rd_addr       (dataCache_rd_addr[31:0]        ), //i
-    .data_rd_rdy        (axiBridge_data_rd_rdy          ), //o
-    .data_ret_valid     (axiBridge_data_ret_valid       ), //o
-    .data_ret_last      (axiBridge_data_ret_last        ), //o
-    .data_ret_data      (axiBridge_data_ret_data[31:0]  ), //o
-    .data_wr_req        (dataCache_wr_req               ), //i
-    .data_wr_type       (dataCache_wr_type[2:0]         ), //i
-    .data_wr_addr       (dataCache_wr_addr[31:0]        ), //i
-    .data_wr_wstrb      (dataCache_wr_wstrb[3:0]        ), //i
-    .data_wr_data       (dataCache_wr_data[127:0]       ), //i
-    .data_wr_rdy        (axiBridge_data_wr_rdy          ), //o
-    .write_buffer_empty (axiBridge_write_buffer_empty   )  //o
+  OpenLa500TypedAxiBridge axiBridge (
+    .clk                            (aclk                                          ), //i
+    .reset                          (reset                                         ), //i
+    .inst_read_valid                (instructionCache_rd_req                       ), //i
+    .inst_read_ready                (axiBridge_inst_read_ready                     ), //o
+    .inst_read_payload_requestType  (instructionCache_rd_type[2:0]                 ), //i
+    .inst_read_payload_address      (axiBridge_inst_read_payload_address[31:0]     ), //i
+    .inst_readResponse_valid        (axiBridge_inst_readResponse_valid             ), //o
+    .inst_readResponse_payload_data (axiBridge_inst_readResponse_payload_data[31:0]), //o
+    .inst_readResponse_payload_last (axiBridge_inst_readResponse_payload_last      ), //o
+    .inst_write_valid               (instructionCache_wr_req                       ), //i
+    .inst_write_ready               (axiBridge_inst_write_ready                    ), //o
+    .inst_write_payload_requestType (instructionCache_wr_type[2:0]                 ), //i
+    .inst_write_payload_address     (axiBridge_inst_write_payload_address[31:0]    ), //i
+    .inst_write_payload_byteMask    (instructionCache_wr_wstrb[3:0]                ), //i
+    .inst_write_payload_data        (instructionCache_wr_data[127:0]               ), //i
+    .data_read_valid                (dataCache_rd_req                              ), //i
+    .data_read_ready                (axiBridge_data_read_ready                     ), //o
+    .data_read_payload_requestType  (dataCache_rd_type[2:0]                        ), //i
+    .data_read_payload_address      (axiBridge_data_read_payload_address[31:0]     ), //i
+    .data_readResponse_valid        (axiBridge_data_readResponse_valid             ), //o
+    .data_readResponse_payload_data (axiBridge_data_readResponse_payload_data[31:0]), //o
+    .data_readResponse_payload_last (axiBridge_data_readResponse_payload_last      ), //o
+    .data_write_valid               (dataCache_wr_req                              ), //i
+    .data_write_ready               (axiBridge_data_write_ready                    ), //o
+    .data_write_payload_requestType (dataCache_wr_type[2:0]                        ), //i
+    .data_write_payload_address     (axiBridge_data_write_payload_address[31:0]    ), //i
+    .data_write_payload_byteMask    (dataCache_wr_wstrb[3:0]                       ), //i
+    .data_write_payload_data        (dataCache_wr_data[127:0]                      ), //i
+    .axi_ar_valid                   (axiBridge_axi_ar_valid                        ), //o
+    .axi_ar_ready                   (axi_ar_ready                                  ), //i
+    .axi_ar_payload_id              (axiBridge_axi_ar_payload_id[3:0]              ), //o
+    .axi_ar_payload_address         (axiBridge_axi_ar_payload_address[31:0]        ), //o
+    .axi_ar_payload_len             (axiBridge_axi_ar_payload_len[7:0]             ), //o
+    .axi_ar_payload_size            (axiBridge_axi_ar_payload_size[2:0]            ), //o
+    .axi_ar_payload_burst           (axiBridge_axi_ar_payload_burst[1:0]           ), //o
+    .axi_ar_payload_lock            (axiBridge_axi_ar_payload_lock[1:0]            ), //o
+    .axi_ar_payload_cache           (axiBridge_axi_ar_payload_cache[3:0]           ), //o
+    .axi_ar_payload_prot            (axiBridge_axi_ar_payload_prot[2:0]            ), //o
+    .axi_r_valid                    (axi_r_valid                                   ), //i
+    .axi_r_ready                    (axiBridge_axi_r_ready                         ), //o
+    .axi_r_payload_id               (axi_r_payload_id[3:0]                         ), //i
+    .axi_r_payload_data             (axi_r_payload_data[31:0]                      ), //i
+    .axi_r_payload_response         (axi_r_payload_response[1:0]                   ), //i
+    .axi_r_payload_last             (axi_r_payload_last                            ), //i
+    .axi_aw_valid                   (axiBridge_axi_aw_valid                        ), //o
+    .axi_aw_ready                   (axi_aw_ready                                  ), //i
+    .axi_aw_payload_id              (axiBridge_axi_aw_payload_id[3:0]              ), //o
+    .axi_aw_payload_address         (axiBridge_axi_aw_payload_address[31:0]        ), //o
+    .axi_aw_payload_len             (axiBridge_axi_aw_payload_len[7:0]             ), //o
+    .axi_aw_payload_size            (axiBridge_axi_aw_payload_size[2:0]            ), //o
+    .axi_aw_payload_burst           (axiBridge_axi_aw_payload_burst[1:0]           ), //o
+    .axi_aw_payload_lock            (axiBridge_axi_aw_payload_lock[1:0]            ), //o
+    .axi_aw_payload_cache           (axiBridge_axi_aw_payload_cache[3:0]           ), //o
+    .axi_aw_payload_prot            (axiBridge_axi_aw_payload_prot[2:0]            ), //o
+    .axi_w_valid                    (axiBridge_axi_w_valid                         ), //o
+    .axi_w_ready                    (axi_w_ready                                   ), //i
+    .axi_w_payload_id               (axiBridge_axi_w_payload_id[3:0]               ), //o
+    .axi_w_payload_data             (axiBridge_axi_w_payload_data[31:0]            ), //o
+    .axi_w_payload_byteMask         (axiBridge_axi_w_payload_byteMask[3:0]         ), //o
+    .axi_w_payload_last             (axiBridge_axi_w_payload_last                  ), //o
+    .axi_b_valid                    (axi_b_valid                                   ), //i
+    .axi_b_ready                    (axiBridge_axi_b_ready                         ), //o
+    .axi_b_payload_id               (axi_b_payload_id[3:0]                         ), //i
+    .axi_b_payload_response         (axi_b_payload_response[1:0]                   ), //i
+    .writeBufferEmpty               (axiBridge_writeBufferEmpty                    )  //o
   );
   OpenLa500Div divider (
     .div_clk    (aclk                               ), //i
@@ -1794,31 +1798,35 @@ module SpinalCoreBackend (
   assign addressTranslation_data_vaddr = execute_io_memory_virtualAddress;
   assign memory_io_dataTlbIndex = addressTranslation_data_tlb_index;
   assign addressTranslation_rand_index = csr_rand_index;
-  assign axi_ar_payload_id = axiBridge_arid;
-  assign axi_ar_payload_address = axiBridge_araddr;
-  assign axi_ar_payload_len = axiBridge_arlen;
-  assign axi_ar_payload_size = axiBridge_arsize;
-  assign axi_ar_payload_burst = axiBridge_arburst;
-  assign axi_ar_payload_lock = axiBridge_arlock;
-  assign axi_ar_payload_cache = axiBridge_arcache;
-  assign axi_ar_payload_prot = axiBridge_arprot;
-  assign axi_ar_valid = axiBridge_arvalid;
-  assign axi_r_ready = axiBridge_rready;
-  assign axi_aw_payload_id = axiBridge_awid;
-  assign axi_aw_payload_address = axiBridge_awaddr;
-  assign axi_aw_payload_len = axiBridge_awlen;
-  assign axi_aw_payload_size = axiBridge_awsize;
-  assign axi_aw_payload_burst = axiBridge_awburst;
-  assign axi_aw_payload_lock = axiBridge_awlock;
-  assign axi_aw_payload_cache = axiBridge_awcache;
-  assign axi_aw_payload_prot = axiBridge_awprot;
-  assign axi_aw_valid = axiBridge_awvalid;
-  assign axi_w_payload_id = axiBridge_wid;
-  assign axi_w_payload_data = axiBridge_wdata;
-  assign axi_w_payload_byteMask = axiBridge_wstrb;
-  assign axi_w_payload_last = axiBridge_wlast;
-  assign axi_w_valid = axiBridge_wvalid;
-  assign axi_b_ready = axiBridge_bready;
+  assign axiBridge_inst_read_payload_address = instructionCache_rd_addr;
+  assign axiBridge_inst_write_payload_address = instructionCache_wr_addr;
+  assign axiBridge_data_read_payload_address = dataCache_rd_addr;
+  assign axiBridge_data_write_payload_address = dataCache_wr_addr;
+  assign axi_ar_payload_id = axiBridge_axi_ar_payload_id;
+  assign axi_ar_payload_address = axiBridge_axi_ar_payload_address;
+  assign axi_ar_payload_len = axiBridge_axi_ar_payload_len;
+  assign axi_ar_payload_size = axiBridge_axi_ar_payload_size;
+  assign axi_ar_payload_burst = axiBridge_axi_ar_payload_burst;
+  assign axi_ar_payload_lock = axiBridge_axi_ar_payload_lock;
+  assign axi_ar_payload_cache = axiBridge_axi_ar_payload_cache;
+  assign axi_ar_payload_prot = axiBridge_axi_ar_payload_prot;
+  assign axi_ar_valid = axiBridge_axi_ar_valid;
+  assign axi_r_ready = axiBridge_axi_r_ready;
+  assign axi_aw_payload_id = axiBridge_axi_aw_payload_id;
+  assign axi_aw_payload_address = axiBridge_axi_aw_payload_address;
+  assign axi_aw_payload_len = axiBridge_axi_aw_payload_len;
+  assign axi_aw_payload_size = axiBridge_axi_aw_payload_size;
+  assign axi_aw_payload_burst = axiBridge_axi_aw_payload_burst;
+  assign axi_aw_payload_lock = axiBridge_axi_aw_payload_lock;
+  assign axi_aw_payload_cache = axiBridge_axi_aw_payload_cache;
+  assign axi_aw_payload_prot = axiBridge_axi_aw_payload_prot;
+  assign axi_aw_valid = axiBridge_axi_aw_valid;
+  assign axi_w_payload_id = axiBridge_axi_w_payload_id;
+  assign axi_w_payload_data = axiBridge_axi_w_payload_data;
+  assign axi_w_payload_byteMask = axiBridge_axi_w_payload_byteMask;
+  assign axi_w_payload_last = axiBridge_axi_w_payload_last;
+  assign axi_w_valid = axiBridge_axi_w_valid;
+  assign axi_b_ready = axiBridge_axi_b_ready;
   assign decode_io_debugReadAddress = reg_num;
   assign rf_rdata = decode_io_debugLegacyValue;
   assign ws_valid = writeback_io_debug_stageValid;
@@ -4856,296 +4864,222 @@ module OpenLa500Div (
 
 endmodule
 
-module OpenLa500AxiBridge (
+module OpenLa500TypedAxiBridge (
   input  wire          clk,
   input  wire          reset,
-  output wire [3:0]    arid,
-  output wire [31:0]   araddr,
-  output wire [7:0]    arlen,
-  output wire [2:0]    arsize,
-  output wire [1:0]    arburst,
-  output wire [1:0]    arlock,
-  output wire [3:0]    arcache,
-  output wire [2:0]    arprot,
-  output wire          arvalid,
-  input  wire          arready,
-  input  wire [3:0]    rid,
-  input  wire [31:0]   rdata,
-  input  wire [1:0]    rresp,
-  input  wire          rlast,
-  input  wire          rvalid,
-  output wire          rready,
-  output wire [3:0]    awid,
-  output wire [31:0]   awaddr,
-  output wire [7:0]    awlen,
-  output wire [2:0]    awsize,
-  output wire [1:0]    awburst,
-  output wire [1:0]    awlock,
-  output wire [3:0]    awcache,
-  output wire [2:0]    awprot,
-  output wire          awvalid,
-  input  wire          awready,
-  output wire [3:0]    wid,
-  output wire [31:0]   wdata,
-  output wire [3:0]    wstrb,
-  output wire          wlast,
-  output wire          wvalid,
-  input  wire          wready,
-  input  wire [3:0]    bid,
-  input  wire [1:0]    bresp,
-  input  wire          bvalid,
-  output wire          bready,
-  input  wire          inst_rd_req,
-  input  wire [2:0]    inst_rd_type,
-  input  wire [31:0]   inst_rd_addr,
-  output wire          inst_rd_rdy,
-  output wire          inst_ret_valid,
-  output wire          inst_ret_last,
-  output wire [31:0]   inst_ret_data,
-  input  wire          inst_wr_req,
-  input  wire [2:0]    inst_wr_type,
-  input  wire [31:0]   inst_wr_addr,
-  input  wire [3:0]    inst_wr_wstrb,
-  input  wire [127:0]  inst_wr_data,
-  output wire          inst_wr_rdy,
-  input  wire          data_rd_req,
-  input  wire [2:0]    data_rd_type,
-  input  wire [31:0]   data_rd_addr,
-  output wire          data_rd_rdy,
-  output wire          data_ret_valid,
-  output wire          data_ret_last,
-  output wire [31:0]   data_ret_data,
-  input  wire          data_wr_req,
-  input  wire [2:0]    data_wr_type,
-  input  wire [31:0]   data_wr_addr,
-  input  wire [3:0]    data_wr_wstrb,
-  input  wire [127:0]  data_wr_data,
-  output wire          data_wr_rdy,
-  output wire          write_buffer_empty
+  input  wire          inst_read_valid,
+  output wire          inst_read_ready,
+  input  wire [2:0]    inst_read_payload_requestType,
+  input  wire [31:0]   inst_read_payload_address,
+  output wire          inst_readResponse_valid,
+  output wire [31:0]   inst_readResponse_payload_data,
+  output wire          inst_readResponse_payload_last,
+  input  wire          inst_write_valid,
+  output wire          inst_write_ready,
+  input  wire [2:0]    inst_write_payload_requestType,
+  input  wire [31:0]   inst_write_payload_address,
+  input  wire [3:0]    inst_write_payload_byteMask,
+  input  wire [127:0]  inst_write_payload_data,
+  input  wire          data_read_valid,
+  output wire          data_read_ready,
+  input  wire [2:0]    data_read_payload_requestType,
+  input  wire [31:0]   data_read_payload_address,
+  output wire          data_readResponse_valid,
+  output wire [31:0]   data_readResponse_payload_data,
+  output wire          data_readResponse_payload_last,
+  input  wire          data_write_valid,
+  output wire          data_write_ready,
+  input  wire [2:0]    data_write_payload_requestType,
+  input  wire [31:0]   data_write_payload_address,
+  input  wire [3:0]    data_write_payload_byteMask,
+  input  wire [127:0]  data_write_payload_data,
+  output wire          axi_ar_valid,
+  input  wire          axi_ar_ready,
+  output wire [3:0]    axi_ar_payload_id,
+  output wire [31:0]   axi_ar_payload_address,
+  output wire [7:0]    axi_ar_payload_len,
+  output wire [2:0]    axi_ar_payload_size,
+  output wire [1:0]    axi_ar_payload_burst,
+  output wire [1:0]    axi_ar_payload_lock,
+  output wire [3:0]    axi_ar_payload_cache,
+  output wire [2:0]    axi_ar_payload_prot,
+  input  wire          axi_r_valid,
+  output wire          axi_r_ready,
+  input  wire [3:0]    axi_r_payload_id,
+  input  wire [31:0]   axi_r_payload_data,
+  input  wire [1:0]    axi_r_payload_response,
+  input  wire          axi_r_payload_last,
+  output wire          axi_aw_valid,
+  input  wire          axi_aw_ready,
+  output wire [3:0]    axi_aw_payload_id,
+  output wire [31:0]   axi_aw_payload_address,
+  output wire [7:0]    axi_aw_payload_len,
+  output wire [2:0]    axi_aw_payload_size,
+  output wire [1:0]    axi_aw_payload_burst,
+  output wire [1:0]    axi_aw_payload_lock,
+  output wire [3:0]    axi_aw_payload_cache,
+  output wire [2:0]    axi_aw_payload_prot,
+  output wire          axi_w_valid,
+  input  wire          axi_w_ready,
+  output wire [3:0]    axi_w_payload_id,
+  output wire [31:0]   axi_w_payload_data,
+  output wire [3:0]    axi_w_payload_byteMask,
+  output wire          axi_w_payload_last,
+  input  wire          axi_b_valid,
+  output wire          axi_b_ready,
+  input  wire [3:0]    axi_b_payload_id,
+  input  wire [1:0]    axi_b_payload_response,
+  output wire          writeBufferEmpty
 );
 
-  wire       [2:0]    logic_WriteEmpty;
-  wire       [2:0]    logic_WriteDataTransform;
-  wire       [2:0]    logic_WriteDataWait;
-  wire       [2:0]    logic_WriteWaitResponse;
-  reg                 logic_readRequestBusy;
-  reg                 logic_readResponseBusy;
-  reg        [2:0]    logic_writeState;
-  reg        [3:0]    logic_arid;
-  reg        [31:0]   logic_araddr;
-  reg        [7:0]    logic_arlen;
-  reg        [2:0]    logic_arsize;
-  reg                 logic_arvalid;
-  reg                 logic_rready;
-  reg        [31:0]   logic_awaddr;
-  reg        [7:0]    logic_awlen;
-  reg        [2:0]    logic_awsize;
-  reg                 logic_awvalid;
-  reg        [31:0]   logic_wdata;
-  reg        [3:0]    logic_wstrb;
-  reg                 logic_wlast;
-  reg                 logic_wvalid;
-  reg                 logic_bready;
-  reg        [127:0]  logic_writeBufferData;
-  reg        [2:0]    logic_writeBufferCount;
-  wire                logic_writeBusy;
-  wire                logic_completingWrite;
-  wire                when_OpenLa500AxiBridge_l149;
-  wire                when_OpenLa500AxiBridge_l151;
-  wire                _zz_logic_arlen;
-  wire                when_OpenLa500AxiBridge_l155;
-  wire                _zz_logic_arlen_1;
-  wire                when_OpenLa500AxiBridge_l164;
-  wire                when_OpenLa500AxiBridge_l165;
-  wire                when_OpenLa500AxiBridge_l169;
-  wire                when_OpenLa500AxiBridge_l186;
-  wire                when_OpenLa500AxiBridge_l209;
-  wire                when_OpenLa500AxiBridge_l220;
-  wire                readCanReceive;
+  wire       [31:0]   legacy_inst_rd_addr;
+  wire       [31:0]   legacy_inst_wr_addr;
+  wire       [31:0]   legacy_data_rd_addr;
+  wire       [31:0]   legacy_data_wr_addr;
+  wire       [3:0]    legacy_arid;
+  wire       [31:0]   legacy_araddr;
+  wire       [7:0]    legacy_arlen;
+  wire       [2:0]    legacy_arsize;
+  wire       [1:0]    legacy_arburst;
+  wire       [1:0]    legacy_arlock;
+  wire       [3:0]    legacy_arcache;
+  wire       [2:0]    legacy_arprot;
+  wire                legacy_arvalid;
+  wire                legacy_rready;
+  wire       [3:0]    legacy_awid;
+  wire       [31:0]   legacy_awaddr;
+  wire       [7:0]    legacy_awlen;
+  wire       [2:0]    legacy_awsize;
+  wire       [1:0]    legacy_awburst;
+  wire       [1:0]    legacy_awlock;
+  wire       [3:0]    legacy_awcache;
+  wire       [2:0]    legacy_awprot;
+  wire                legacy_awvalid;
+  wire       [3:0]    legacy_wid;
+  wire       [31:0]   legacy_wdata;
+  wire       [3:0]    legacy_wstrb;
+  wire                legacy_wlast;
+  wire                legacy_wvalid;
+  wire                legacy_bready;
+  wire                legacy_inst_rd_rdy;
+  wire                legacy_inst_ret_valid;
+  wire                legacy_inst_ret_last;
+  wire       [31:0]   legacy_inst_ret_data;
+  wire                legacy_inst_wr_rdy;
+  wire                legacy_data_rd_rdy;
+  wire                legacy_data_ret_valid;
+  wire                legacy_data_ret_last;
+  wire       [31:0]   legacy_data_ret_data;
+  wire                legacy_data_wr_rdy;
+  wire                legacy_write_buffer_empty;
 
-  assign logic_WriteEmpty = 3'b000;
-  assign logic_WriteDataTransform = 3'b100;
-  assign logic_WriteDataWait = 3'b101;
-  assign logic_WriteWaitResponse = 3'b110;
-  assign logic_writeBusy = (logic_writeState != logic_WriteEmpty);
-  assign logic_completingWrite = (bvalid && logic_bready);
-  assign when_OpenLa500AxiBridge_l149 = (! logic_readRequestBusy);
-  assign when_OpenLa500AxiBridge_l151 = ((! logic_writeBusy) || logic_completingWrite);
-  assign _zz_logic_arlen = (data_rd_type == 3'b100);
-  assign when_OpenLa500AxiBridge_l155 = ((! logic_writeBusy) || logic_completingWrite);
-  assign _zz_logic_arlen_1 = (inst_rd_type == 3'b100);
-  assign when_OpenLa500AxiBridge_l164 = (! logic_readResponseBusy);
-  assign when_OpenLa500AxiBridge_l165 = (rvalid && logic_rready);
-  assign when_OpenLa500AxiBridge_l169 = (rlast && rvalid);
-  assign when_OpenLa500AxiBridge_l186 = (data_wr_type == 3'b100);
-  assign when_OpenLa500AxiBridge_l209 = (logic_writeBufferCount == 3'b001);
-  assign when_OpenLa500AxiBridge_l220 = (bvalid && logic_bready);
-  assign readCanReceive = ((! logic_readRequestBusy) && (! (logic_writeBusy && (! (bvalid && logic_bready)))));
-  assign arid = logic_arid;
-  assign araddr = logic_araddr;
-  assign arlen = logic_arlen;
-  assign arsize = logic_arsize;
-  assign arburst = 2'b01;
-  assign arlock = 2'b00;
-  assign arcache = 4'b0000;
-  assign arprot = 3'b000;
-  assign arvalid = logic_arvalid;
-  assign rready = logic_rready;
-  assign awid = 4'b0001;
-  assign awaddr = logic_awaddr;
-  assign awlen = logic_awlen;
-  assign awsize = logic_awsize;
-  assign awburst = 2'b01;
-  assign awlock = 2'b00;
-  assign awcache = 4'b0000;
-  assign awprot = 3'b000;
-  assign awvalid = logic_awvalid;
-  assign wid = 4'b0001;
-  assign wdata = logic_wdata;
-  assign wstrb = logic_wstrb;
-  assign wlast = logic_wlast;
-  assign wvalid = logic_wvalid;
-  assign bready = logic_bready;
-  assign inst_rd_rdy = ((! data_rd_req) && readCanReceive);
-  assign inst_ret_valid = ((! rid[0]) && rvalid);
-  assign inst_ret_last = ((! rid[0]) && rlast);
-  assign inst_ret_data = rdata;
-  assign inst_wr_rdy = 1'b1;
-  assign data_rd_rdy = readCanReceive;
-  assign data_ret_valid = (rid[0] && rvalid);
-  assign data_ret_last = (rid[0] && rlast);
-  assign data_ret_data = rdata;
-  assign data_wr_rdy = (! logic_writeBusy);
-  assign write_buffer_empty = ((logic_writeBufferCount == 3'b000) && (! logic_writeBusy));
-  always @(posedge clk) begin
-    if(reset) begin
-      logic_readRequestBusy <= 1'b0;
-      logic_readResponseBusy <= 1'b0;
-      logic_writeState <= logic_WriteEmpty;
-      logic_arvalid <= 1'b0;
-      logic_rready <= 1'b1;
-      logic_awvalid <= 1'b0;
-      logic_wlast <= 1'b0;
-      logic_wvalid <= 1'b0;
-      logic_bready <= 1'b0;
-      logic_writeBufferData <= 128'h0;
-      logic_writeBufferCount <= 3'b000;
-    end else begin
-      logic_rready <= logic_rready;
-      if(when_OpenLa500AxiBridge_l149) begin
-        if(data_rd_req) begin
-          if(when_OpenLa500AxiBridge_l151) begin
-            logic_readRequestBusy <= 1'b1;
-            logic_arvalid <= 1'b1;
-          end
-        end else begin
-          if(inst_rd_req) begin
-            if(when_OpenLa500AxiBridge_l155) begin
-              logic_readRequestBusy <= 1'b1;
-              logic_arvalid <= 1'b1;
-            end
-          end
-        end
-      end else begin
-        if(arready) begin
-          logic_readRequestBusy <= 1'b0;
-          logic_arvalid <= 1'b0;
-        end
-      end
-      if(when_OpenLa500AxiBridge_l164) begin
-        if(when_OpenLa500AxiBridge_l165) begin
-          logic_readResponseBusy <= 1'b1;
-        end
-      end else begin
-        if(when_OpenLa500AxiBridge_l169) begin
-          logic_readResponseBusy <= 1'b0;
-        end
-      end
-      if((logic_writeState == logic_WriteEmpty)) begin
-          if(data_wr_req) begin
-            logic_writeState <= logic_WriteDataWait;
-            logic_awvalid <= 1'b1;
-            logic_writeBufferData <= {32'h0,data_wr_data[127 : 32]};
-            if(when_OpenLa500AxiBridge_l186) begin
-              logic_writeBufferCount <= 3'b011;
-            end else begin
-              logic_writeBufferCount <= 3'b000;
-              logic_wlast <= 1'b1;
-            end
-          end
-      end else if((logic_writeState == logic_WriteDataWait)) begin
-          if(awready) begin
-            logic_writeState <= logic_WriteDataTransform;
-            logic_awvalid <= 1'b0;
-            logic_wvalid <= 1'b1;
-          end
-      end else if((logic_writeState == logic_WriteDataTransform)) begin
-          if(wready) begin
-            if(logic_wlast) begin
-              logic_writeState <= logic_WriteWaitResponse;
-              logic_wvalid <= 1'b0;
-              logic_wlast <= 1'b0;
-              logic_bready <= 1'b1;
-            end else begin
-              if(when_OpenLa500AxiBridge_l209) begin
-                logic_wlast <= 1'b1;
-              end
-              logic_wvalid <= 1'b1;
-              logic_writeBufferData <= {32'h0,logic_writeBufferData[127 : 32]};
-              logic_writeBufferCount <= (logic_writeBufferCount - 3'b001);
-            end
-          end
-      end else if((logic_writeState == logic_WriteWaitResponse)) begin
-          if(when_OpenLa500AxiBridge_l220) begin
-            logic_writeState <= logic_WriteEmpty;
-            logic_bready <= 1'b0;
-          end
-      end else begin
-          logic_writeState <= logic_WriteEmpty;
-      end
-    end
-  end
-
-  always @(posedge clk) begin
-    if(when_OpenLa500AxiBridge_l149) begin
-      if(data_rd_req) begin
-        if(when_OpenLa500AxiBridge_l151) begin
-          logic_arid <= 4'b0001;
-          logic_araddr <= data_rd_addr;
-          logic_arsize <= (_zz_logic_arlen ? 3'b010 : data_rd_type);
-          logic_arlen <= (_zz_logic_arlen ? 8'h03 : 8'h0);
-        end
-      end else begin
-        if(inst_rd_req) begin
-          if(when_OpenLa500AxiBridge_l155) begin
-            logic_arid <= 4'b0000;
-            logic_araddr <= inst_rd_addr;
-            logic_arsize <= (_zz_logic_arlen_1 ? 3'b010 : inst_rd_type);
-            logic_arlen <= (_zz_logic_arlen_1 ? 8'h03 : 8'h0);
-          end
-        end
-      end
-    end
-    if((logic_writeState == logic_WriteEmpty)) begin
-        if(data_wr_req) begin
-          logic_awaddr <= data_wr_addr;
-          logic_awsize <= (when_OpenLa500AxiBridge_l186 ? 3'b010 : data_wr_type);
-          logic_awlen <= (when_OpenLa500AxiBridge_l186 ? 8'h03 : 8'h0);
-          logic_wdata <= data_wr_data[31 : 0];
-          logic_wstrb <= data_wr_wstrb;
-        end
-    end else if((logic_writeState == logic_WriteDataWait)) begin
-    end else if((logic_writeState == logic_WriteDataTransform)) begin
-        if(wready) begin
-          if(!logic_wlast) begin
-            logic_wdata <= logic_writeBufferData[31 : 0];
-          end
-        end
-    end else if((logic_writeState == logic_WriteWaitResponse)) begin
-    end else begin
-    end
-  end
-
+  OpenLa500AxiBridge legacy (
+    .clk                (clk                                ), //i
+    .reset              (reset                              ), //i
+    .arid               (legacy_arid[3:0]                   ), //o
+    .araddr             (legacy_araddr[31:0]                ), //o
+    .arlen              (legacy_arlen[7:0]                  ), //o
+    .arsize             (legacy_arsize[2:0]                 ), //o
+    .arburst            (legacy_arburst[1:0]                ), //o
+    .arlock             (legacy_arlock[1:0]                 ), //o
+    .arcache            (legacy_arcache[3:0]                ), //o
+    .arprot             (legacy_arprot[2:0]                 ), //o
+    .arvalid            (legacy_arvalid                     ), //o
+    .arready            (axi_ar_ready                       ), //i
+    .rid                (axi_r_payload_id[3:0]              ), //i
+    .rdata              (axi_r_payload_data[31:0]           ), //i
+    .rresp              (axi_r_payload_response[1:0]        ), //i
+    .rlast              (axi_r_payload_last                 ), //i
+    .rvalid             (axi_r_valid                        ), //i
+    .rready             (legacy_rready                      ), //o
+    .awid               (legacy_awid[3:0]                   ), //o
+    .awaddr             (legacy_awaddr[31:0]                ), //o
+    .awlen              (legacy_awlen[7:0]                  ), //o
+    .awsize             (legacy_awsize[2:0]                 ), //o
+    .awburst            (legacy_awburst[1:0]                ), //o
+    .awlock             (legacy_awlock[1:0]                 ), //o
+    .awcache            (legacy_awcache[3:0]                ), //o
+    .awprot             (legacy_awprot[2:0]                 ), //o
+    .awvalid            (legacy_awvalid                     ), //o
+    .awready            (axi_aw_ready                       ), //i
+    .wid                (legacy_wid[3:0]                    ), //o
+    .wdata              (legacy_wdata[31:0]                 ), //o
+    .wstrb              (legacy_wstrb[3:0]                  ), //o
+    .wlast              (legacy_wlast                       ), //o
+    .wvalid             (legacy_wvalid                      ), //o
+    .wready             (axi_w_ready                        ), //i
+    .bid                (axi_b_payload_id[3:0]              ), //i
+    .bresp              (axi_b_payload_response[1:0]        ), //i
+    .bvalid             (axi_b_valid                        ), //i
+    .bready             (legacy_bready                      ), //o
+    .inst_rd_req        (inst_read_valid                    ), //i
+    .inst_rd_type       (inst_read_payload_requestType[2:0] ), //i
+    .inst_rd_addr       (legacy_inst_rd_addr[31:0]          ), //i
+    .inst_rd_rdy        (legacy_inst_rd_rdy                 ), //o
+    .inst_ret_valid     (legacy_inst_ret_valid              ), //o
+    .inst_ret_last      (legacy_inst_ret_last               ), //o
+    .inst_ret_data      (legacy_inst_ret_data[31:0]         ), //o
+    .inst_wr_req        (inst_write_valid                   ), //i
+    .inst_wr_type       (inst_write_payload_requestType[2:0]), //i
+    .inst_wr_addr       (legacy_inst_wr_addr[31:0]          ), //i
+    .inst_wr_wstrb      (inst_write_payload_byteMask[3:0]   ), //i
+    .inst_wr_data       (inst_write_payload_data[127:0]     ), //i
+    .inst_wr_rdy        (legacy_inst_wr_rdy                 ), //o
+    .data_rd_req        (data_read_valid                    ), //i
+    .data_rd_type       (data_read_payload_requestType[2:0] ), //i
+    .data_rd_addr       (legacy_data_rd_addr[31:0]          ), //i
+    .data_rd_rdy        (legacy_data_rd_rdy                 ), //o
+    .data_ret_valid     (legacy_data_ret_valid              ), //o
+    .data_ret_last      (legacy_data_ret_last               ), //o
+    .data_ret_data      (legacy_data_ret_data[31:0]         ), //o
+    .data_wr_req        (data_write_valid                   ), //i
+    .data_wr_type       (data_write_payload_requestType[2:0]), //i
+    .data_wr_addr       (legacy_data_wr_addr[31:0]          ), //i
+    .data_wr_wstrb      (data_write_payload_byteMask[3:0]   ), //i
+    .data_wr_data       (data_write_payload_data[127:0]     ), //i
+    .data_wr_rdy        (legacy_data_wr_rdy                 ), //o
+    .write_buffer_empty (legacy_write_buffer_empty          )  //o
+  );
+  assign legacy_inst_rd_addr = inst_read_payload_address;
+  assign inst_read_ready = legacy_inst_rd_rdy;
+  assign inst_readResponse_valid = legacy_inst_ret_valid;
+  assign inst_readResponse_payload_last = legacy_inst_ret_last;
+  assign inst_readResponse_payload_data = legacy_inst_ret_data;
+  assign legacy_inst_wr_addr = inst_write_payload_address;
+  assign inst_write_ready = legacy_inst_wr_rdy;
+  assign legacy_data_rd_addr = data_read_payload_address;
+  assign data_read_ready = legacy_data_rd_rdy;
+  assign data_readResponse_valid = legacy_data_ret_valid;
+  assign data_readResponse_payload_last = legacy_data_ret_last;
+  assign data_readResponse_payload_data = legacy_data_ret_data;
+  assign legacy_data_wr_addr = data_write_payload_address;
+  assign data_write_ready = legacy_data_wr_rdy;
+  assign writeBufferEmpty = legacy_write_buffer_empty;
+  assign axi_ar_payload_id = legacy_arid;
+  assign axi_ar_payload_address = legacy_araddr;
+  assign axi_ar_payload_len = legacy_arlen;
+  assign axi_ar_payload_size = legacy_arsize;
+  assign axi_ar_payload_burst = legacy_arburst;
+  assign axi_ar_payload_lock = legacy_arlock;
+  assign axi_ar_payload_cache = legacy_arcache;
+  assign axi_ar_payload_prot = legacy_arprot;
+  assign axi_ar_valid = legacy_arvalid;
+  assign axi_r_ready = legacy_rready;
+  assign axi_aw_payload_id = legacy_awid;
+  assign axi_aw_payload_address = legacy_awaddr;
+  assign axi_aw_payload_len = legacy_awlen;
+  assign axi_aw_payload_size = legacy_awsize;
+  assign axi_aw_payload_burst = legacy_awburst;
+  assign axi_aw_payload_lock = legacy_awlock;
+  assign axi_aw_payload_cache = legacy_awcache;
+  assign axi_aw_payload_prot = legacy_awprot;
+  assign axi_aw_valid = legacy_awvalid;
+  assign axi_w_payload_id = legacy_wid;
+  assign axi_w_payload_data = legacy_wdata;
+  assign axi_w_payload_byteMask = legacy_wstrb;
+  assign axi_w_payload_last = legacy_wlast;
+  assign axi_w_valid = legacy_wvalid;
+  assign axi_b_ready = legacy_bready;
 
 endmodule
 
@@ -13808,6 +13742,299 @@ module FetchStage (
       if(when_FetchStage_l219) begin
         instructionBuffer <= io_instructionData;
       end
+    end
+  end
+
+
+endmodule
+
+module OpenLa500AxiBridge (
+  input  wire          clk,
+  input  wire          reset,
+  output wire [3:0]    arid,
+  output wire [31:0]   araddr,
+  output wire [7:0]    arlen,
+  output wire [2:0]    arsize,
+  output wire [1:0]    arburst,
+  output wire [1:0]    arlock,
+  output wire [3:0]    arcache,
+  output wire [2:0]    arprot,
+  output wire          arvalid,
+  input  wire          arready,
+  input  wire [3:0]    rid,
+  input  wire [31:0]   rdata,
+  input  wire [1:0]    rresp,
+  input  wire          rlast,
+  input  wire          rvalid,
+  output wire          rready,
+  output wire [3:0]    awid,
+  output wire [31:0]   awaddr,
+  output wire [7:0]    awlen,
+  output wire [2:0]    awsize,
+  output wire [1:0]    awburst,
+  output wire [1:0]    awlock,
+  output wire [3:0]    awcache,
+  output wire [2:0]    awprot,
+  output wire          awvalid,
+  input  wire          awready,
+  output wire [3:0]    wid,
+  output wire [31:0]   wdata,
+  output wire [3:0]    wstrb,
+  output wire          wlast,
+  output wire          wvalid,
+  input  wire          wready,
+  input  wire [3:0]    bid,
+  input  wire [1:0]    bresp,
+  input  wire          bvalid,
+  output wire          bready,
+  input  wire          inst_rd_req,
+  input  wire [2:0]    inst_rd_type,
+  input  wire [31:0]   inst_rd_addr,
+  output wire          inst_rd_rdy,
+  output wire          inst_ret_valid,
+  output wire          inst_ret_last,
+  output wire [31:0]   inst_ret_data,
+  input  wire          inst_wr_req,
+  input  wire [2:0]    inst_wr_type,
+  input  wire [31:0]   inst_wr_addr,
+  input  wire [3:0]    inst_wr_wstrb,
+  input  wire [127:0]  inst_wr_data,
+  output wire          inst_wr_rdy,
+  input  wire          data_rd_req,
+  input  wire [2:0]    data_rd_type,
+  input  wire [31:0]   data_rd_addr,
+  output wire          data_rd_rdy,
+  output wire          data_ret_valid,
+  output wire          data_ret_last,
+  output wire [31:0]   data_ret_data,
+  input  wire          data_wr_req,
+  input  wire [2:0]    data_wr_type,
+  input  wire [31:0]   data_wr_addr,
+  input  wire [3:0]    data_wr_wstrb,
+  input  wire [127:0]  data_wr_data,
+  output wire          data_wr_rdy,
+  output wire          write_buffer_empty
+);
+
+  wire       [2:0]    logic_WriteEmpty;
+  wire       [2:0]    logic_WriteDataTransform;
+  wire       [2:0]    logic_WriteDataWait;
+  wire       [2:0]    logic_WriteWaitResponse;
+  reg                 logic_readRequestBusy;
+  reg                 logic_readResponseBusy;
+  reg        [2:0]    logic_writeState;
+  reg        [3:0]    logic_arid;
+  reg        [31:0]   logic_araddr;
+  reg        [7:0]    logic_arlen;
+  reg        [2:0]    logic_arsize;
+  reg                 logic_arvalid;
+  reg                 logic_rready;
+  reg        [31:0]   logic_awaddr;
+  reg        [7:0]    logic_awlen;
+  reg        [2:0]    logic_awsize;
+  reg                 logic_awvalid;
+  reg        [31:0]   logic_wdata;
+  reg        [3:0]    logic_wstrb;
+  reg                 logic_wlast;
+  reg                 logic_wvalid;
+  reg                 logic_bready;
+  reg        [127:0]  logic_writeBufferData;
+  reg        [2:0]    logic_writeBufferCount;
+  wire                logic_writeBusy;
+  wire                logic_completingWrite;
+  wire                when_OpenLa500AxiBridge_l151;
+  wire                when_OpenLa500AxiBridge_l153;
+  wire                _zz_logic_arlen;
+  wire                when_OpenLa500AxiBridge_l157;
+  wire                _zz_logic_arlen_1;
+  wire                when_OpenLa500AxiBridge_l166;
+  wire                when_OpenLa500AxiBridge_l167;
+  wire                when_OpenLa500AxiBridge_l171;
+  wire                when_OpenLa500AxiBridge_l188;
+  wire                when_OpenLa500AxiBridge_l211;
+  wire                when_OpenLa500AxiBridge_l222;
+  wire                readCanReceive;
+
+  assign logic_WriteEmpty = 3'b000;
+  assign logic_WriteDataTransform = 3'b100;
+  assign logic_WriteDataWait = 3'b101;
+  assign logic_WriteWaitResponse = 3'b110;
+  assign logic_writeBusy = (logic_writeState != logic_WriteEmpty);
+  assign logic_completingWrite = (bvalid && logic_bready);
+  assign when_OpenLa500AxiBridge_l151 = (! logic_readRequestBusy);
+  assign when_OpenLa500AxiBridge_l153 = ((! logic_writeBusy) || logic_completingWrite);
+  assign _zz_logic_arlen = (data_rd_type == 3'b100);
+  assign when_OpenLa500AxiBridge_l157 = ((! logic_writeBusy) || logic_completingWrite);
+  assign _zz_logic_arlen_1 = (inst_rd_type == 3'b100);
+  assign when_OpenLa500AxiBridge_l166 = (! logic_readResponseBusy);
+  assign when_OpenLa500AxiBridge_l167 = (rvalid && logic_rready);
+  assign when_OpenLa500AxiBridge_l171 = (rlast && rvalid);
+  assign when_OpenLa500AxiBridge_l188 = (data_wr_type == 3'b100);
+  assign when_OpenLa500AxiBridge_l211 = (logic_writeBufferCount == 3'b001);
+  assign when_OpenLa500AxiBridge_l222 = (bvalid && logic_bready);
+  assign readCanReceive = ((! logic_readRequestBusy) && (! (logic_writeBusy && (! (bvalid && logic_bready)))));
+  assign arid = logic_arid;
+  assign araddr = logic_araddr;
+  assign arlen = logic_arlen;
+  assign arsize = logic_arsize;
+  assign arburst = 2'b01;
+  assign arlock = 2'b00;
+  assign arcache = 4'b0000;
+  assign arprot = 3'b000;
+  assign arvalid = logic_arvalid;
+  assign rready = logic_rready;
+  assign awid = 4'b0001;
+  assign awaddr = logic_awaddr;
+  assign awlen = logic_awlen;
+  assign awsize = logic_awsize;
+  assign awburst = 2'b01;
+  assign awlock = 2'b00;
+  assign awcache = 4'b0000;
+  assign awprot = 3'b000;
+  assign awvalid = logic_awvalid;
+  assign wid = 4'b0001;
+  assign wdata = logic_wdata;
+  assign wstrb = logic_wstrb;
+  assign wlast = logic_wlast;
+  assign wvalid = logic_wvalid;
+  assign bready = logic_bready;
+  assign inst_rd_rdy = ((! data_rd_req) && readCanReceive);
+  assign inst_ret_valid = ((! rid[0]) && rvalid);
+  assign inst_ret_last = ((! rid[0]) && rlast);
+  assign inst_ret_data = rdata;
+  assign inst_wr_rdy = 1'b1;
+  assign data_rd_rdy = readCanReceive;
+  assign data_ret_valid = (rid[0] && rvalid);
+  assign data_ret_last = (rid[0] && rlast);
+  assign data_ret_data = rdata;
+  assign data_wr_rdy = (! logic_writeBusy);
+  assign write_buffer_empty = ((logic_writeBufferCount == 3'b000) && (! logic_writeBusy));
+  always @(posedge clk) begin
+    if(reset) begin
+      logic_readRequestBusy <= 1'b0;
+      logic_readResponseBusy <= 1'b0;
+      logic_writeState <= logic_WriteEmpty;
+      logic_arvalid <= 1'b0;
+      logic_rready <= 1'b1;
+      logic_awvalid <= 1'b0;
+      logic_wlast <= 1'b0;
+      logic_wvalid <= 1'b0;
+      logic_bready <= 1'b0;
+      logic_writeBufferData <= 128'h0;
+      logic_writeBufferCount <= 3'b000;
+    end else begin
+      logic_rready <= logic_rready;
+      if(when_OpenLa500AxiBridge_l151) begin
+        if(data_rd_req) begin
+          if(when_OpenLa500AxiBridge_l153) begin
+            logic_readRequestBusy <= 1'b1;
+            logic_arvalid <= 1'b1;
+          end
+        end else begin
+          if(inst_rd_req) begin
+            if(when_OpenLa500AxiBridge_l157) begin
+              logic_readRequestBusy <= 1'b1;
+              logic_arvalid <= 1'b1;
+            end
+          end
+        end
+      end else begin
+        if(arready) begin
+          logic_readRequestBusy <= 1'b0;
+          logic_arvalid <= 1'b0;
+        end
+      end
+      if(when_OpenLa500AxiBridge_l166) begin
+        if(when_OpenLa500AxiBridge_l167) begin
+          logic_readResponseBusy <= 1'b1;
+        end
+      end else begin
+        if(when_OpenLa500AxiBridge_l171) begin
+          logic_readResponseBusy <= 1'b0;
+        end
+      end
+      if((logic_writeState == logic_WriteEmpty)) begin
+          if(data_wr_req) begin
+            logic_writeState <= logic_WriteDataWait;
+            logic_awvalid <= 1'b1;
+            logic_writeBufferData <= {32'h0,data_wr_data[127 : 32]};
+            if(when_OpenLa500AxiBridge_l188) begin
+              logic_writeBufferCount <= 3'b011;
+            end else begin
+              logic_writeBufferCount <= 3'b000;
+              logic_wlast <= 1'b1;
+            end
+          end
+      end else if((logic_writeState == logic_WriteDataWait)) begin
+          if(awready) begin
+            logic_writeState <= logic_WriteDataTransform;
+            logic_awvalid <= 1'b0;
+            logic_wvalid <= 1'b1;
+          end
+      end else if((logic_writeState == logic_WriteDataTransform)) begin
+          if(wready) begin
+            if(logic_wlast) begin
+              logic_writeState <= logic_WriteWaitResponse;
+              logic_wvalid <= 1'b0;
+              logic_wlast <= 1'b0;
+              logic_bready <= 1'b1;
+            end else begin
+              if(when_OpenLa500AxiBridge_l211) begin
+                logic_wlast <= 1'b1;
+              end
+              logic_wvalid <= 1'b1;
+              logic_writeBufferData <= {32'h0,logic_writeBufferData[127 : 32]};
+              logic_writeBufferCount <= (logic_writeBufferCount - 3'b001);
+            end
+          end
+      end else if((logic_writeState == logic_WriteWaitResponse)) begin
+          if(when_OpenLa500AxiBridge_l222) begin
+            logic_writeState <= logic_WriteEmpty;
+            logic_bready <= 1'b0;
+          end
+      end else begin
+          logic_writeState <= logic_WriteEmpty;
+      end
+    end
+  end
+
+  always @(posedge clk) begin
+    if(when_OpenLa500AxiBridge_l151) begin
+      if(data_rd_req) begin
+        if(when_OpenLa500AxiBridge_l153) begin
+          logic_arid <= 4'b0001;
+          logic_araddr <= data_rd_addr;
+          logic_arsize <= (_zz_logic_arlen ? 3'b010 : data_rd_type);
+          logic_arlen <= (_zz_logic_arlen ? 8'h03 : 8'h0);
+        end
+      end else begin
+        if(inst_rd_req) begin
+          if(when_OpenLa500AxiBridge_l157) begin
+            logic_arid <= 4'b0000;
+            logic_araddr <= inst_rd_addr;
+            logic_arsize <= (_zz_logic_arlen_1 ? 3'b010 : inst_rd_type);
+            logic_arlen <= (_zz_logic_arlen_1 ? 8'h03 : 8'h0);
+          end
+        end
+      end
+    end
+    if((logic_writeState == logic_WriteEmpty)) begin
+        if(data_wr_req) begin
+          logic_awaddr <= data_wr_addr;
+          logic_awsize <= (when_OpenLa500AxiBridge_l188 ? 3'b010 : data_wr_type);
+          logic_awlen <= (when_OpenLa500AxiBridge_l188 ? 8'h03 : 8'h0);
+          logic_wdata <= data_wr_data[31 : 0];
+          logic_wstrb <= data_wr_wstrb;
+        end
+    end else if((logic_writeState == logic_WriteDataWait)) begin
+    end else if((logic_writeState == logic_WriteDataTransform)) begin
+        if(wready) begin
+          if(!logic_wlast) begin
+            logic_wdata <= logic_writeBufferData[31 : 0];
+          end
+        end
+    end else if((logic_writeState == logic_WriteWaitResponse)) begin
+    end else begin
     end
   end
 

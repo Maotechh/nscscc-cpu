@@ -1,0 +1,40 @@
+{
+  "contract": {
+    "header_sha256": "b2db20e7012ff21e931738a624a964274f779e3f3de664150f3cec40e87b9a79",
+    "input_count": 17,
+    "legacy_backend_absent": true,
+    "module_count": 1,
+    "output_count": 32,
+    "port_count": 49,
+    "tlbnum_default": 32
+  },
+  "gate": "core-top-package",
+  "generated_at": "2026-07-15T14:39:25+08:00",
+  "input_rtl": {
+    "path": "/mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260714-1650-consolidated-spinal/build/20260715-1402-typed-memory-generate/core_top/generate/rtl/core_top.v",
+    "sha256": "8d326eb48b5caba7f6af2deccf62ef799d40b8dfb3930625ac9a9a44833457a9",
+    "size": 858544,
+    "stable": true
+  },
+  "provenance": {
+    "evaluator": "/mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260714-1650-consolidated-spinal/tools/core_top_gate.py",
+    "evaluator_sha256": "de3b69dce99ea8a78c4ac0e15f3835ed8d31f861cc2119618a907b3a5eba2a51",
+    "manifest": "/mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260714-1650-consolidated-spinal/reference/manifest.lock",
+    "manifest_sha256": "743dd7e58d77e456cfe664d80c2e6614ab426f72bfecd9088ff18d702afa2f20",
+    "ports_contract": "/mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260714-1650-consolidated-spinal/reference/core-top.ports.json",
+    "ports_contract_sha256": "effa486ff707e480ff8ee13d7f20b2d524bd26908726915c99abf1b37eeab576",
+    "repository": "/mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260714-1650-consolidated-spinal",
+    "repository_head": "f3f61aa38f002b7a9fac3ba3feffeb2762c40707",
+    "repository_status_sha256": "0d71e8d6dbf42bab3e266a31b2c8b3069699c255f6b95fb64fe85e9a26678654"
+  },
+  "published_rtl": "/mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260714-1650-consolidated-spinal/build/20260715-1402-typed-memory-generate/core_top/package/rtl/mycpu_top.v",
+  "published_sha256": "5d11d66f2c1d44acfc343c98f0e76c87143a72a7bde901516b508ce660687d8a",
+  "published_size": 858573,
+  "schema_version": 1,
+  "scope": "complete-spinal-rtl-publication",
+  "status": "pass",
+  "target": "core-top-compat",
+  "transformations": {
+    "top_parameter_insertions": 1
+  }
+}

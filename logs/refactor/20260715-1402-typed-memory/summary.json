@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "iteration_id": "20260715-1402-typed-memory",
+  "status": "draft",
+  "branch": "refactor/20260715-1402-typed-memory",
+  "base_sha": "f3f61aa38f002b7a9fac3ba3feffeb2762c40707",
+  "head_sha": null,
+  "selected_boundary": "typed_cache_axi_bridge_contract",
+  "gates": {
+    "scala": {"status":"pass","planned":4,"executed":4,"passed":4,"failed":0,"skipped":0,"evidence":"evidence/scala-check.json"},
+    "typed_bridge_contract": {"status":"pass","planned":10,"executed":10,"passed":10,"failed":0,"skipped":0,"evidence":"evidence/typed-bridge-contract.json"},
+    "generate_publish": {"status":"pass","planned":4,"executed":4,"passed":4,"failed":0,"skipped":0,"evidence":"evidence/generate.json"},
+    "rtl_static": {"status":"fail","planned":2,"executed":2,"passed":1,"failed":1,"skipped":0,"evidence":"evidence/lint.json"},
+    "sequential_equivalence": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0,"evidence":"evidence/sequential-equivalence.json"},
+    "automation": {"status":"fail","planned":390,"executed":380,"passed":380,"failed":0,"skipped":10,"evidence":"iteration.md"},
+    "rtl_smoke": {"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":0,"evidence":"evidence/rtl-smoke.json"},
+    "claim_review": {"status":"pending","planned":1,"executed":0,"passed":0,"failed":0,"skipped":0,"evidence":"reviews/claude-summary.json"}
+  },
+  "claims": [
+    {"claim":"active cache-to-bridge and bridge-to-AXI connections use typed contracts while the adapter owns no state","status":"supported","evidence":"evidence/typed-bridge-contract.json"},
+    {"claim":"old/new generated core_top are equivalent under the recorded Yosys two-state structural flow","status":"supported","evidence":"evidence/sequential-equivalence.json"},
+    {"claim":"strict RTL static gate passes","status":"unsupported","evidence":"evidence/lint.json"},
+    {"claim":"complete CPU refactor is release ready","status":"unsupported","evidence":"full regression and FPGA gates are not part of this iteration"}
+  ],
+  "blocked_by": ["strict_warning_policy_unapproved", "committed_chiplab_smoke_not_executed", "claude_claim_review_not_executed"],
+  "residual_risks": ["legacy bridge leaf remains raw internally", "full cache transaction random backpressure is not executed", "Yosys equivalence is two-state only"]
+}

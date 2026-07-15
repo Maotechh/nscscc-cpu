@@ -1,0 +1,29 @@
+{
+  "base_sha256": "ff286f559dbc9131349c9fb8c842110569d231b6a34e76ded172c403d8f90afa",
+  "fresh_package": "/mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260714-1650-consolidated-spinal/build/20260715-1402-typed-memory-generate/core_top/package/rtl/mycpu_top.v",
+  "gate": "publish-check",
+  "generated_at": "2026-07-15T14:50:18+08:00",
+  "package_sha256": "5d11d66f2c1d44acfc343c98f0e76c87143a72a7bde901516b508ce660687d8a",
+  "package_size": 858573,
+  "provenance": {
+    "evaluator": "/mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260714-1650-consolidated-spinal/tools/core_top_gate.py",
+    "evaluator_sha256": "de3b69dce99ea8a78c4ac0e15f3835ed8d31f861cc2119618a907b3a5eba2a51",
+    "manifest": "/mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260714-1650-consolidated-spinal/reference/manifest.lock",
+    "manifest_sha256": "743dd7e58d77e456cfe664d80c2e6614ab426f72bfecd9088ff18d702afa2f20",
+    "ports_contract": "/mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260714-1650-consolidated-spinal/reference/core-top.ports.json",
+    "ports_contract_sha256": "effa486ff707e480ff8ee13d7f20b2d524bd26908726915c99abf1b37eeab576",
+    "repository": "/mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260714-1650-consolidated-spinal",
+    "repository_head": "f3f61aa38f002b7a9fac3ba3feffeb2762c40707",
+    "repository_status_sha256": "ad5debd4f79545755cdc4294450c2cdc80b14f2653704d12303ed4586e94d138"
+  },
+  "published_source": "reference/component-replacements/mycpu_top.v",
+  "published_target": "rtl/mycpu_top.v",
+  "replacement_sha256": "5d11d66f2c1d44acfc343c98f0e76c87143a72a7bde901516b508ce660687d8a",
+  "replacement_spec": "/mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260714-1650-consolidated-spinal/reference/component-replacements/core-top.json",
+  "replacement_spec_sha256": "a45947a1b7d0d4a141732964a58d1bf2262fda0ad5438805adaa1cf989fa525e",
+  "schema_version": 1,
+  "scope": "publication-consistency",
+  "status": "pass",
+  "target": "core-top-compat",
+  "tracked_package": "/mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260714-1650-consolidated-spinal/reference/component-replacements/mycpu_top.v"
+}
