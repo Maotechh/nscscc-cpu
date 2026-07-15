@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "iteration_id": "20260715-2010-release-closure",
+  "artifacts": [
+    {"path":"rtl/mycpu_top.v","size":858573,"sha256":"5d11d66f2c1d44acfc343c98f0e76c87143a72a7bde901516b508ce660687d8a","retention":"git"},
+    {"path":"build/release-closure/doctor/reports/doctor.json","size":4444,"sha256":"c29ce432ef9c586c0081cfeb80a2ec2c76d9fffaf2c1ab178bda313625f8edce","retention":"local-build"},
+    {"path":"build/release-closure/final-gates/core_top/generate/summary.json","size":91521,"sha256":"e5498f0d2fabdb607868e3d4ce7b22575f93d5fc51d7c5b71de35ace499520a4","retention":"local-build"},
+    {"path":"build/release-closure/final-gates/core_top/lint/summary.json","size":28827,"sha256":"9ba4f704d65a01937d5aa93f6d402ba263641962fe19b5a38ee8e4b104ddaa90","retention":"local-build"},
+    {"path":"build/release-closure/final-gates/core_top/yosys-check/summary.json","size":3001,"sha256":"3039b17575178efda99a2385ca2fc5c94d608d0e1a1d0f029c5eedba56d714a6","retention":"local-build"},
+    {"path":"build/release-closure/final-gates/replacement-reachability/reachability.json","size":4204,"sha256":"781df5d7fcabee241217585f3c9fd7c5598e065f4e6221ff5163dc2093327dab","retention":"local-build"}
+  ]
+}

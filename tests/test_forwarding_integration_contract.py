@@ -8,7 +8,7 @@ REPO = Path(__file__).resolve().parents[1]
 class ForwardingIntegrationContractTest(unittest.TestCase):
     def test_generated_backend_separates_stage_occupancy_from_forwarding_enable(self) -> None:
         rtl = (
-            REPO / "reference" / "component-replacements" / "mycpu_top.v"
+            REPO / "rtl" / "mycpu_top.v"
         ).read_text(encoding="utf-8")
 
         self.assertIn(

@@ -10,7 +10,7 @@ import unittest
 
 REPO = Path(__file__).resolve().parents[1]
 SCRIPT = REPO / "tools" / "typed_axi_boundary_gate.py"
-RTL = REPO / "reference" / "component-replacements" / "mycpu_top.v"
+RTL = REPO / "rtl" / "mycpu_top.v"
 BACKEND = REPO / "spinal" / "src" / "main" / "scala" / "openla500" / "compat" / "SpinalCoreBackend.scala"
 COMPAT = REPO / "spinal" / "src" / "main" / "scala" / "openla500" / "compat" / "CoreTopCompat.scala"
 BRIDGE = REPO / "spinal" / "src" / "main" / "scala" / "openla500" / "memory" / "OpenLa500AxiBridge.scala"

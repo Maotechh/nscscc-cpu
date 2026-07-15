@@ -26,7 +26,7 @@ EXPECTED_PORT_COUNT = 49
 EXPECTED_INPUT_COUNT = 17
 EXPECTED_OUTPUT_COUNT = 32
 PUBLISHED_TARGET = "rtl/mycpu_top.v"
-PUBLISHED_SOURCE = "reference/component-replacements/mycpu_top.v"
+PUBLISHED_SOURCE = "rtl/mycpu_top.v"
 ALLOWED_CONTRACT_KEYS = {
     "schema_version",
     "module",

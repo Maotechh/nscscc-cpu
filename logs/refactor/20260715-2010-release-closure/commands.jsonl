@@ -1,0 +1,10 @@
+{"timestamp":"2026-07-15T20:10:01+08:00","operation":"git_preflight","exit_code":0,"branch":"refactor/20260715-2010-release-closure","head":"56d74f4b92d85e6403689cbbe4f7b4b460e8f63a","origin_main":"20cae5fd66391f4a1bccc1b87035be421039144b","remote":"https://github.com/Maotechh/nscscc-cpu.git","dirty":false}
+{"timestamp":"2026-07-15T20:11:44+08:00","operation":"local_doctor","exit_code":1,"result":"expected local sibling chiplab and refactor/ECHO branch are absent from the isolated worktree; not a locked gate"}
+{"timestamp":"2026-07-15T20:13:42+08:00","operation":"doctor","exit_code":0,"result":"manifest, branch, golden files, Spinal versions, and Vivado 2023.2 hashes pass"}
+{"timestamp":"2026-07-15T20:16:00+08:00","operation":"scala_check_windows","exit_code":1,"result":"/opt tool root was interpreted as D:/opt; rerouted to locked WSL"}
+{"timestamp":"2026-07-15T20:19:00+08:00","operation":"scala_check_locked_wsl","exit_code":0,"result":"scalafmt, compile, test compile, and tests pass"}
+{"timestamp":"2026-07-15T20:29:43+08:00","operation":"lint_locked_exact_waiver","exit_code":0,"result":"73 exact unsuppressed signatures match; closure has zero warnings/errors/skips"}
+{"timestamp":"2026-07-15T20:35:10+08:00","operation":"generate_core_top","exit_code":0,"result":"2/2 reproducible; raw 8d326eb48b5caba7f6af2deccf62ef799d40b8dfb3930625ac9a9a44833457a9; package 5d11d66f2c1d44acfc343c98f0e76c87143a72a7bde901516b508ce660687d8a"}
+{"timestamp":"2026-07-15T20:35:30+08:00","operation":"automation_wsl_linked_worktree","exit_code":1,"result":"GIT_DIR override leaked into temporary fixture repos; 4 failures and 10 old-path errors; old paths fixed, final clean clone pending"}
+{"timestamp":"2026-07-15T20:36:50+08:00","operation":"automation_windows","exit_code":0,"result":"390 passed, 10 POSIX-only skipped; incomplete by repository policy"}
+{"timestamp":"2026-07-15T20:39:45+08:00","operation":"core_top_structural_gates","exit_code":0,"result":"contract, port, publish, Yosys, closure, typed AXI, and reachability pass"}

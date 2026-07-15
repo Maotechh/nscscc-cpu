@@ -22,7 +22,7 @@ AXI bridge、mul/div 等 Spinal 组件；overlay 只能替换 `rtl/mycpu_top.v`�
 这一结构事实只证明活动手写真源已切换，不证明功能等价。官方 32-entry BTB、LACC、完整 DiffTest/
 ArchState、perf 以及官方 func/random/system/FPGA 门禁仍须分别取得证据。
 
-`TLBNUM` 历史默认值为 32。打包后的顶层保留该参数并原样转发给兼容后端；本轮只验证默认值 32，Scala API 也暂时拒绝其他值。可配置的 immutable `CoreConfig` 和配置矩阵由后续整机 PR 建立，不据此声称统一配置已经完成。
+`TLBNUM` 历史默认值为 32。打包后的顶层保留该参数以兼容官方 source contract，但活动 Scala 后端在 elaboration 时固定为 32，Verilog 参数 override 不受支持且不会改变硬件结构；Scala API 明确拒绝其他值。可配置的 immutable `CoreConfig` 和配置矩阵由后续整机 PR 建立，不得把该兼容参数表述为运行时或 Verilog elaboration 可配置。
 
 ## 强制检查
 

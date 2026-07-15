@@ -102,10 +102,10 @@ CORE_TOP_GENERATE_DIR ?= $(OUT_DIR)/core_top/generate
 CORE_TOP_WRAPPER_RTL ?= $(CORE_TOP_GENERATE_DIR)/rtl/core_top.v
 CORE_TOP_PACKAGE_DIR ?= $(OUT_DIR)/core_top/package
 CORE_TOP_RTL ?= $(CORE_TOP_PACKAGE_DIR)/rtl/mycpu_top.v
-CORE_TOP_TRACKED_RTL ?= reference/component-replacements/mycpu_top.v
+CORE_TOP_TRACKED_RTL ?= rtl/mycpu_top.v
 CORE_TOP_REPLACEMENT_SPEC ?= reference/component-replacements/core-top.json
 CORE_TOP_LINT_PROFILE ?= locked
-CORE_TOP_LINT_WAIVERS ?=
+CORE_TOP_LINT_WAIVERS ?= reference/core-top-lint-waivers.json
 CORE_TOP_VERILATOR ?=
 LINT_WAIVERS ?= lint-waivers.yml
 

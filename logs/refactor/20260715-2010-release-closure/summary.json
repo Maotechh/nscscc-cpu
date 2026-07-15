@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "iteration_id": "20260715-2010-release-closure",
+  "status": "implementation_ready_for_commit",
+  "branch": "refactor/20260715-2010-release-closure",
+  "base_sha": "56d74f4b92d85e6403689cbbe4f7b4b460e8f63a",
+  "head_sha": "56d74f4b92d85e6403689cbbe4f7b4b460e8f63a",
+  "selected_boundary": "pure_spinal_release_closure",
+  "gates": {
+    "doctor": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0,"evidence":"build/release-closure/doctor/reports/doctor.json"},
+    "scala": {"status":"pass","planned":4,"executed":4,"passed":4,"failed":0,"skipped":0,"evidence":"build/release-closure/postedit/scala-check/summary.json"},
+    "reproducible_generate": {"status":"pass","planned":2,"executed":2,"passed":2,"failed":0,"skipped":0,"evidence":"build/release-closure/final-gates/core_top/generate/summary.json"},
+    "core_top_contract": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0,"evidence":"build/release-closure/final-gates/core_top/contract/summary.json"},
+    "publish_consistency": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0,"evidence":"build/release-closure/final-gates/core_top/publish-check/summary.json"},
+    "port_check": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0,"evidence":"build/release-closure/final-gates/core_top/port-check/summary.json"},
+    "rtl_lint": {"status":"pass_with_exact_waiver","planned":2,"executed":2,"passed":2,"failed":0,"skipped":0,"evidence":"build/release-closure/final-gates/core_top/lint/summary.json","warning_count":73,"warning_signature_sha256":"6cb7110012904a4b0a7648d89815dd23599646f92fa1027255e5b3a352995d37"},
+    "yosys": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0,"evidence":"build/release-closure/final-gates/core_top/yosys-check/summary.json"},
+    "candidate_closure": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0,"evidence":"build/release-closure/final-gates/core_top/candidate-closure.json"},
+    "typed_axi": {"status":"pass","planned":10,"executed":10,"passed":10,"failed":0,"skipped":0,"evidence":"build/release-closure/final-gates/core_top/typed-axi-boundary.json"},
+    "replacement_reachability": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0,"evidence":"build/release-closure/final-gates/replacement-reachability/reachability.json"},
+    "automation_windows": {"status":"incomplete","planned":390,"executed":390,"passed":390,"failed":0,"skipped":10,"reason":"POSIX-only tests require a clean Linux clone"}
+  },
+  "claims": [
+    {"claim":"the committed FPGA overlay path contains the reproducible self-contained Spinal core_top and no CPUCoreFlat","status":"supported","evidence":"rtl/mycpu_top.v and reproducible_generate"},
+    {"claim":"the complete package closes under the official port contract, Yosys, candidate closure, and the locked exact-warning waiver","status":"supported","evidence":"core_top gate summaries"},
+    {"claim":"the source is strict-zero lint clean","status":"unsupported","evidence":"73 warnings require the exact reviewed waiver"},
+    {"claim":"the refactor is release ready","status":"unsupported","evidence":"functional/random/performance/system/FPGA gates remain incomplete"}
+  ],
+  "blocked_by": [
+    "clean_linux_automation_pending",
+    "func58_func81_random_perf_system_fpga_pending",
+    "independent_claim_review_pending"
+  ],
+  "residual_risks": [
+    "locked exact-warning waiver is required; source is not strict-zero clean",
+    "six warning-backed behavior or contract debts remain explicit",
+    "full functional, random, performance, system, and FPGA gates are not yet verified"
+  ]
+}
