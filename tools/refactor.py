@@ -2027,6 +2027,9 @@ def _command_chiplab_overlay_locked(args: argparse.Namespace, run_id: str) -> in
     tool_root = Path(args.tool_root).resolve()
     manifest = parse_lock(MANIFEST_PATH)
     replacement_spec, source_head = validate_overlay_source_selection(args)
+    pure_spinal = bool(getattr(args, "pure_spinal", False))
+    if pure_spinal and (args.dut_source != "mixed" or not args.diagnostic):
+        raise RefactorError("--pure-spinal requires diagnostic mixed DUT source")
     if not chiplab_ref.is_dir():
         raise RefactorError(f"missing --chiplab-ref directory: {chiplab_ref}")
     fs_type = filesystem_type(work_root)
@@ -2137,10 +2140,12 @@ def _command_chiplab_overlay_locked(args: argparse.Namespace, run_id: str) -> in
         )
         locked_names = {Path(path).name for path in read_golden_files()}
         for old_rtl in mycpu.glob("*.v"):
-            if old_rtl.name not in locked_names:
+            if (pure_spinal and old_rtl.name != "mycpu_top.v") or old_rtl.name not in locked_names:
                 removed_stale.append(old_rtl.name)
                 old_rtl.unlink()
         for entry in golden_manifest["files"]:
+            if pure_spinal and entry.get("logical_path") != "rtl/mycpu_top.v":
+                continue
             source = golden_dir / entry["path"]
             target = mycpu / entry["path"]
             shutil.copyfile(source, target)
@@ -2191,6 +2196,7 @@ def _command_chiplab_overlay_locked(args: argparse.Namespace, run_id: str) -> in
             golden_manifest.get("gate_kind") if golden_manifest is not None else "official_control"
         ),
         "mode": "diagnostic" if args.diagnostic else "baseline",
+        "pure_spinal": pure_spinal,
         "gate_eligible": bool(
             not args.diagnostic
             and args.dut_source == "candidate"
@@ -2239,6 +2245,19 @@ def _command_chiplab_overlay_locked(args: argparse.Namespace, run_id: str) -> in
         ),
         "work_filesystem": fs_type,
     }
+    if pure_spinal:
+        selection = [
+            {
+                "logical_path": entry["logical_path"],
+                "source": entry["source"],
+                "sha256": entry["sha256"],
+                "size": entry["size"],
+            }
+            for entry in overlay_entries
+        ]
+        overlay_manifest["selection_sha256"] = sha256_bytes(
+            json.dumps(selection, sort_keys=True, separators=(",", ":")).encode("utf-8")
+        )
     if replacement_plan is not None:
         final_source_state = require_clean_source_head(replacement_plan.source_head)
         if (
@@ -3218,6 +3237,56 @@ def verify_component_replacement_bindings(
     verify_candidate_support_bindings(work, overlay, manifest)
 
 
+def verify_pure_component_replacement_bindings(
+    work: Path,
+    overlay: dict[str, Any],
+    manifest: dict[str, str],
+) -> None:
+    """Validate the diagnostic profile that publishes only the self-contained Spinal top."""
+    if (
+        overlay.get("dut_source") != "mixed"
+        or overlay.get("pure_spinal") is not True
+        or overlay.get("mode") != "diagnostic"
+        or overlay.get("gate_eligible") is not False
+        or overlay.get("candidate_locked") is not False
+    ):
+        raise RefactorError("pure Spinal overlay provenance shape is invalid")
+    metadata = overlay.get("component_replacement")
+    if not isinstance(metadata, dict):
+        raise RefactorError("pure Spinal overlay lacks replacement provenance")
+    plan = load_component_replacement_plan(metadata.get("spec_path", ""), metadata.get("source_head", ""))
+    if metadata != plan.metadata():
+        raise RefactorError("pure Spinal replacement spec changed after overlay")
+    top = next((item for item in plan.replacements if item.target == "rtl/mycpu_top.v"), None)
+    if top is None:
+        raise RefactorError("pure Spinal overlay requires a mycpu_top replacement")
+    entries = overlay.get("files")
+    if not isinstance(entries, list) or len(entries) != 1:
+        raise RefactorError("pure Spinal overlay must contain exactly one HDL file")
+    entry = entries[0]
+    expected_source = f"{plan.source_head}:{top.source}"
+    if (
+        entry.get("logical_path") != "rtl/mycpu_top.v"
+        or entry.get("path") != "mycpu_top.v"
+        or entry.get("source_kind") != "replacement"
+        or entry.get("source") != expected_source
+        or entry.get("replacement_source") != expected_source
+        or entry.get("replacement_source_path") != top.source
+        or entry.get("replacement_oid") != top.source_oid
+        or entry.get("replacement_mode") != top.source_mode
+        or entry.get("replacement_spec_source") != f"{plan.spec_commit}:{plan.spec_path}"
+        or entry.get("replacement_spec_sha256") != plan.spec_sha256
+        or entry.get("sha256") != top.replacement_sha256
+        or entry.get("size") != len(top.payload)
+    ):
+        raise RefactorError("pure Spinal top replacement binding mismatch")
+    selection = [{"logical_path": "rtl/mycpu_top.v", "source": expected_source, "sha256": top.replacement_sha256, "size": len(top.payload)}]
+    selection_sha = sha256_bytes(json.dumps(selection, sort_keys=True, separators=(",", ":")).encode("utf-8"))
+    if overlay.get("selection_sha256") != selection_sha:
+        raise RefactorError("pure Spinal overlay selection hash mismatch")
+    verify_candidate_support_bindings(work, overlay, manifest)
+
+
 def verify_dut_source_bindings(
     work: Path,
     overlay: dict[str, Any],
@@ -3226,7 +3295,10 @@ def verify_dut_source_bindings(
     verify_overlay_files(work, overlay)
     dut_source = overlay.get("dut_source")
     if dut_source == "mixed":
-        verify_component_replacement_bindings(work, overlay, manifest)
+        if overlay.get("pure_spinal") is True:
+            verify_pure_component_replacement_bindings(work, overlay, manifest)
+        else:
+            verify_component_replacement_bindings(work, overlay, manifest)
     elif dut_source == "candidate":
         verify_candidate_source_bindings(work, overlay, manifest)
     elif dut_source == "official":
@@ -4340,6 +4412,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--dut-source", choices=("candidate", "mixed", "official"), default="candidate"
     )
     overlay.add_argument("--diagnostic", action="store_true")
+    overlay.add_argument(
+        "--pure-spinal",
+        action="store_true",
+        help="Diagnostic mixed profile: keep only the self-contained Spinal mycpu_top.v and support files.",
+    )
     overlay.add_argument("--doctor-max-age-seconds", type=int, default=3600)
     overlay.add_argument(
         "--candidate-commit",

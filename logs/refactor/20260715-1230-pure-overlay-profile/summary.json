@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "iteration_id": "20260715-1230-pure-overlay-profile",
+  "status": "draft",
+  "branch": "refactor/20260714-1650-consolidated-spinal",
+  "base_sha": "df25f38153373150c757fa1503ea433a55414aee",
+  "head_sha": "df25f38153373150c757fa1503ea433a55414aee",
+  "selected_boundary": "pure_spinal_chiplab_overlay_profile",
+  "gates": {
+    "python_compile": {"status": "pass", "planned": 1, "executed": 1, "passed": 1, "failed": 0, "skipped": 0, "evidence": "commands.jsonl"},
+    "automation": {"status": "pass", "planned": 1, "executed": 1, "passed": 1, "failed": 0, "skipped": 0, "evidence": "commands.jsonl"},
+    "chiplab_doctor": {"status": "pending", "planned": 1, "executed": 0, "passed": 0, "failed": 0, "skipped": 1, "evidence": "iteration.md"},
+    "pure_overlay": {"status": "pending", "planned": 1, "executed": 0, "passed": 0, "failed": 0, "skipped": 1, "evidence": "iteration.md"},
+    "candidate_closure": {"status": "pending", "planned": 1, "executed": 0, "passed": 0, "failed": 0, "skipped": 1, "evidence": "iteration.md"},
+    "rtl_smoke": {"status": "pending", "planned": 1, "executed": 0, "passed": 0, "failed": 0, "skipped": 1, "evidence": "iteration.md"},
+    "claude_review": {"status": "pending", "planned": 1, "executed": 0, "passed": 0, "failed": 0, "skipped": 1, "evidence": "reviews/claude-summary.json"}
+  },
+  "claims": [
+    {"claim": "pure overlay profile is implemented without changing default overlay", "status": "pending", "evidence": "待 clean clone 验证"},
+    {"claim": "official native compile/smoke works without old CPU HDL", "status": "pending", "evidence": "待执行"}
+  ],
+  "blocked_by": ["official pure profile not executed", "Claude bridge not yet called"],
+  "residual_risks": ["chiplab Makefile may depend on old files outside generated top", "full functional and FPGA gates remain absent"]
+}

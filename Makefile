@@ -9,6 +9,7 @@ DUT_SOURCE ?= candidate
 REPLACEMENT_SPEC ?=
 SOURCE_HEAD ?=
 DIAGNOSTIC ?=
+PURE_SPINAL ?=
 LOCKED_ITERATION_ID ?=
 MIXED_ITERATION_ID ?=$(ITERATION_ID)
 VIVADO_HOME ?=
@@ -25,6 +26,7 @@ ifneq ($(strip $(filter-out 0 1,$(DIAGNOSTIC))),)
 $(error DIAGNOSTIC must be empty, 0, or 1)
 endif
 DIAGNOSTIC_ARG = $(if $(filter 1,$(DIAGNOSTIC)),--diagnostic,)
+PURE_SPINAL_ARG = $(if $(filter 1,$(PURE_SPINAL)),--pure-spinal,)
 
 TARGET ?=
 ALU_GENERATE_DIR ?= $(OUT_DIR)/alu/generate
@@ -437,7 +439,7 @@ golden-export:
 	$(PYTHON) -I tools/refactor.py golden-export --out-dir "$(OUT_DIR)"
 
 chiplab-overlay:
-	$(PYTHON) -I tools/refactor.py chiplab-overlay --out-dir "$(OUT_DIR)" --work-root "$(CHIPLAB_WORK_ROOT)" --iteration-id "$(ITERATION_ID)" --chiplab-ref "$(CHIPLAB_REFERENCE)" --tool-root "$(CHIPLAB_TOOL_ROOT)" --dut-source "$(DUT_SOURCE)" $(if $(REPLACEMENT_SPEC),--replacement-spec "$(REPLACEMENT_SPEC)",) $(if $(SOURCE_HEAD),--source-head "$(SOURCE_HEAD)",) $(DIAGNOSTIC_ARG)
+	$(PYTHON) -I tools/refactor.py chiplab-overlay --out-dir "$(OUT_DIR)" --work-root "$(CHIPLAB_WORK_ROOT)" --iteration-id "$(ITERATION_ID)" --chiplab-ref "$(CHIPLAB_REFERENCE)" --tool-root "$(CHIPLAB_TOOL_ROOT)" --dut-source "$(DUT_SOURCE)" $(if $(REPLACEMENT_SPEC),--replacement-spec "$(REPLACEMENT_SPEC)",) $(if $(SOURCE_HEAD),--source-head "$(SOURCE_HEAD)",) $(DIAGNOSTIC_ARG) $(PURE_SPINAL_ARG)
 
 rtl-smoke:
 	$(PYTHON) -I tools/refactor.py rtl-smoke --out-dir "$(OUT_DIR)" --work-root "$(CHIPLAB_WORK_ROOT)" --iteration-id "$(ITERATION_ID)" --tool-root "$(CHIPLAB_TOOL_ROOT)" $(DIAGNOSTIC_ARG)
