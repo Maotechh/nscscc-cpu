@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "iteration_id": "20260715-2010-release-closure",
+  "status": "unavailable",
+  "job_id": "8c1ce5c9c1544d80935d48d6fddbb9a8",
+  "provider": null,
+  "model": null,
+  "reviewed_head_sha": null,
+  "raw_sha256": "fc81b689f556c698ec61267752ce3fab50dc10936076e241630ab276bac8de83",
+  "provenance": {
+    "source": "claude-review-mcp",
+    "raw_path": "reviews/claude-raw.md",
+    "raw_sha256": "fc81b689f556c698ec61267752ce3fab50dc10936076e241630ab276bac8de83",
+    "job_id": "8c1ce5c9c1544d80935d48d6fddbb9a8",
+    "provider": null,
+    "model": null,
+    "reviewed_head_sha": null
+  },
+  "error": "Required provider environment variable is not set: GEEKPIE_CLAUDE_API_KEY",
+  "open_blocking_count": 1,
+  "fresh_against_head": false,
+  "allow_ready": false,
+  "allow_status_promotion": false,
+  "fallback_review": "reviews/local-independent-review.json"
+}

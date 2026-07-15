@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "gate": "rtl-func-58-diagnostic",
+  "status": "diagnostic",
+  "source_head": "9a29409242bf29436bf553e584b87018fb3f6fa6",
+  "case": "func/func_lab9",
+  "dut": {
+    "path": "rtl/mycpu_top.v",
+    "size": 858573,
+    "sha256": "5d11d66f2c1d44acfc343c98f0e76c87143a72a7bde901516b508ce660687d8a"
+  },
+  "commands": [
+    {"argv":["./configure.sh","--run","func/func_lab9"],"exit_code":0,"elapsed_seconds":0.009},
+    {"argv":["make","verilator","testbench","soft_compile"],"exit_code":0,"elapsed_seconds":35.018},
+    {"argv":["make","simulation_run_prog"],"exit_code":0,"elapsed_seconds":4.263}
+  ],
+  "functional_result": {
+    "status": "pass",
+    "planned": 58,
+    "executed": 58,
+    "passed": 58,
+    "failed": 0,
+    "skipped": 0,
+    "score_register": 26,
+    "score_sequence": "strictly-contiguous-0-through-58",
+    "group_boundaries": [20, 36, 46, 47, 58],
+    "success_path": true,
+    "failure_path_executed": false
+  },
+  "difftest": {
+    "library_loaded": true,
+    "enabled": true,
+    "first_mismatch": null,
+    "mismatch_count": 0
+  },
+  "termination": {
+    "reached_test_end": true,
+    "end_by_syscall": true,
+    "timed_out": false,
+    "clocks": 1010174,
+    "instructions": 120485
+  },
+  "strict_gate": {
+    "status": "fail",
+    "reason": "405 compile warnings have no accepted file/line-specific smoke waiver",
+    "dut_warnings": 40,
+    "official_environment_warnings": 365,
+    "errors": 0
+  },
+  "artifacts": [
+    {"path":"/tmp/nscscc-func58-evidence-9a29409/raw/04-make-build-locked.log","size":246973,"sha256":"cabce6b7d441d38637b6dd00cd955ca45c1a64089e9483e120214251bf05b249"},
+    {"path":"/tmp/nscscc-func58-evidence-9a29409/raw/05-simulation-run-prog-locked.log","size":1950,"sha256":"adde62ede067c22f70f76c8c73cbe8dcda29f8465908ec6714e61fb5e03ab6e9"},
+    {"path":"/tmp/nscscc-func58-work-9a29409/20260715-2010-release-func58/sims/verilator/run_prog/log/compile.log","size":188980,"sha256":"6ed636c7d956c1d40c943d4063873c95fe8f1a2d64bc6962c2db530d9f1d31a4"},
+    {"path":"/tmp/nscscc-func58-work-9a29409/20260715-2010-release-func58/sims/verilator/run_prog/log/func/func_lab9_log/simu_trace.txt","size":9638800,"sha256":"0d8ea8930d2c2075a0f055c76c7efecf1ce07389b606b059538441639fe7d279"}
+  ],
+  "failed_attempts": [
+    {
+      "reason": "CHIPLAB_HOME was absent from the first literal invocation",
+      "configure_exit_code": 0,
+      "build_exit_code": 2,
+      "accepted_as_dut_result": false,
+      "raw_paths": [
+        "/tmp/nscscc-func58-evidence-9a29409/raw/01-configure-literal.log",
+        "/tmp/nscscc-func58-evidence-9a29409/raw/02-make-build-literal.log"
+      ]
+    }
+  ],
+  "limitations": [
+    "Functional PASS is not a strict warning-policy PASS.",
+    "The optional golden_trace.txt and tmp/logs/*.fst artifacts were absent; live DiffTest, score, trace, and termination evidence were present."
+  ]
+}

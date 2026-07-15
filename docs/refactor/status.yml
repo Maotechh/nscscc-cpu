@@ -1,10 +1,47 @@
 schema_version: 1
-updated_at: "2026-07-15T12:45:00+08:00"
-active_iteration: "20260715-1230-pure-overlay-profile"
-active_branch: "refactor/20260714-1650-consolidated-spinal"
-source_head: "e420eba344d45f7333ef2c0a6eb538e850863a8a"
+updated_at: "2026-07-15T21:15:00+08:00"
+active_iteration: "20260715-2010-release-closure"
+active_branch: "refactor/20260715-2010-release-closure"
+source_head: "9a29409242bf29436bf553e584b87018fb3f6fa6"
 
 boundaries:
+  pure_spinal_release_closure:
+    owner: integration
+    state: implementation_in_review
+    golden_ref: a158aa8ab4d49cece1a0fe488d7ac7dc02bd8cf6
+    dependencies:
+      - candidate_closure
+      - typed_memory_bridge
+      - predictor_full
+    contract: docs/contracts/candidate-closure.md
+    required_gates:
+      - reproducible_generate
+      - core_top_contract
+      - rtl_static
+      - func58
+      - func81
+      - random
+      - perf20
+      - system
+      - fpga
+      - claim_review
+    evidence:
+      - logs/refactor/20260715-2010-release-closure/evidence/clean-linux-automation.json
+      - logs/refactor/20260715-2010-release-closure/evidence/chiplab-doctor.json
+      - logs/refactor/20260715-2010-release-closure/evidence/func58.json
+      - logs/refactor/20260715-2010-release-closure/evidence/func81.json
+      - logs/refactor/20260715-2010-release-closure/reviews/local-independent-review.json
+    active_pr: null
+    blocked_by:
+      - policy_compliant_lint_waivers_missing
+      - strict_func_warning_gates_failed
+      - random_vectors_missing
+      - perf20_system_vivado_fpga_pending
+      - external_claim_review_unavailable
+      - btb_32_vs_64_authority_unresolved
+      - lacc_release_matrix_pending
+    last_iteration: "20260715-2010-release-closure"
+
   refactor_branch_convergence:
     owner: integration
     state: implementation_in_review

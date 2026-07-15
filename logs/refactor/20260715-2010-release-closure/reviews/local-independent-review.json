@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "iteration_id": "20260715-2010-release-closure",
+  "review_type": "local-independent-read-only-fallback",
+  "reviewed_head_sha": "9a29409242bf29436bf553e584b87018fb3f6fa6",
+  "status": "blocking_findings",
+  "draft_pr_allowed": true,
+  "merge_allowed": false,
+  "release_claim_allowed": false,
+  "findings": [
+    {"severity":"high","id":"iteration-schema","status":"fixed-in-evidence-followup"},
+    {"severity":"high","id":"lint-waiver-policy","status":"open"},
+    {"severity":"high","id":"strict-func-warning-gates","status":"open"},
+    {"severity":"high","id":"release-gates-missing","status":"open"},
+    {"severity":"medium","id":"btb-32-vs-64-authority","status":"open"},
+    {"severity":"medium","id":"lacc-release-matrix","status":"open"}
+  ],
+  "claims": [
+    {"claim":"pure active Spinal candidate","disposition":"accepted_with_qualifiers"},
+    {"claim":"strict-zero lint clean","disposition":"rejected"},
+    {"claim":"func58 and func81 strict pass","disposition":"rejected"},
+    {"claim":"fully refactored and release ready","disposition":"rejected"}
+  ]
+}

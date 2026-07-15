@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "gate": "clean-linux-automation",
+  "status": "pass",
+  "source_head": "9a29409242bf29436bf553e584b87018fb3f6fa6",
+  "clone_path": "/tmp/nscscc-release-9a29409",
+  "command": ["make", "test-automation"],
+  "counts": {
+    "planned": 390,
+    "executed": 390,
+    "passed": 390,
+    "failed": 0,
+    "skipped": 0
+  },
+  "elapsed_seconds": 10.808,
+  "raw_artifact": {
+    "path": "/tmp/nscscc-release-evidence-9a29409/raw/iterations/20260715-2010-release-closure/automation-clean/test-automation-clean.log",
+    "size": 36686,
+    "sha256": "1db69ab577b0d67f1382ab6f9b79344c463f6473a89236f23d472375a46fa1f0"
+  },
+  "environment_notes": [
+    "The accepted run used a clean Linux clone and explicitly removed inherited GIT_DIR and GIT_WORK_TREE.",
+    "Earlier linked-worktree invocations with leaked Git environment variables are recorded as harness failures and are excluded from this result."
+  ]
+}

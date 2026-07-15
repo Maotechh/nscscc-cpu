@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "iteration_id": "20260715-2010-release-closure",
+  "status": "unavailable",
+  "requested_auditor": "gpt-5.4-xhigh-via-codex-mcp",
+  "error": "mcp__codex__codex is not available in this session",
+  "fallback": "local-independent-read-only-review",
+  "integrity_findings": {
+    "phantom_results": "none promoted; missing gates remain explicitly unsupported",
+    "scope": "func58 and func81 functional diagnostics do not authorize strict or release claims",
+    "warning_policy": "both official functional diagnostics fail the strict warning gate",
+    "result_existence": "committed summaries bind external artifacts by path, size, and SHA256"
+  },
+  "claim_impact": "release-ready and fully-refactored completion claims remain unsupported"
+}

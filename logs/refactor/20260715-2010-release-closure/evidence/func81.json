@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "gate": "rtl-func-81-diagnostic",
+  "status": "diagnostic",
+  "source_head": "9a29409242bf29436bf553e584b87018fb3f6fa6",
+  "case": "func/func_lab19",
+  "dut": {
+    "path": "rtl/mycpu_top.v",
+    "size": 858573,
+    "sha256": "5d11d66f2c1d44acfc343c98f0e76c87143a72a7bde901516b508ce660687d8a"
+  },
+  "functional_result": {
+    "status": "pass",
+    "planned": 81,
+    "executed": 81,
+    "passed": 81,
+    "failed": 0,
+    "skipped": 0,
+    "score_register": 26,
+    "terminal_score_hex": "0x51",
+    "terminal_score_decimal": 81,
+    "first_mismatch": null
+  },
+  "parser": {
+    "status": "pass",
+    "difftest_library_loaded": true,
+    "difftest_enabled": true,
+    "reached_test_end": true,
+    "end_by_syscall": true,
+    "clocks": 609660,
+    "instructions": 174059
+  },
+  "strict_gate": {
+    "status": "fail",
+    "reason": "405 compile warnings have no accepted file/line-specific smoke waiver",
+    "dut_warnings": 40,
+    "official_environment_warnings": 365,
+    "errors": 0
+  },
+  "artifacts": [
+    {"path":"/tmp/nscscc-release-evidence-9a29409/reports/iterations/20260715-2010-release-closure/rtl-smoke.json","size":128179,"sha256":"4aad1756bb57a007c488cbef0e901bd218982eee0a7569fb1f31426b9a1b5edb"},
+    {"path":"/tmp/nscscc-release-work-9a29409/20260715-2010-release-closure/sims/verilator/run_prog/log/func/func_lab19_log/simu_trace.txt","size":13924720,"sha256":"911597f5360579a65f2a9a957a485b62273a1d55a04195ea6a"}
+  ],
+  "limitations": [
+    "The repository evaluator reports gate_eligible=false and overall gate failure because warning policy fails.",
+    "This functional result does not cover random DiffTest, perf20, U-Boot, Linux, Vivado, or FPGA hardware."
+  ]
+}
