@@ -869,6 +869,14 @@ def _validate_parser(value: Any, label: str) -> dict[str, Any]:
         raise IdentityCompareError(f"{label} parser marker set is incomplete")
     for name in expected_markers:
         _boolean(markers.get(name), f"{label} parser marker {name}")
+    if (
+        parser.get("termination_expectation") != "end_by_syscall"
+        or parser.get("termination_mode") != "end_by_syscall"
+        or parser.get("termination_valid") is not True
+    ):
+        raise IdentityCompareError(
+            f"{label} parser does not prove the locked syscall termination path"
+        )
     if not markers["difftest_library_loaded"] or not markers["difftest_enabled"]:
         raise IdentityCompareError(f"{label} parser did not observe active DiffTest")
     if not markers["nonzero_instructions"] or not markers["nonzero_clocks"]:
@@ -1213,7 +1221,17 @@ def _verify_physical_smoke_artifacts(
         raise IdentityCompareError(
             f"{label} build error report differs from compile/raw build logs"
         )
-    if refactor.parse_simulation_log(simulation_text) != smoke.get("parser"):
+    expected_termination = (
+        "end_by_syscall"
+        if smoke.get("requested_case") == refactor.LOCKED_SMOKE_CASE
+        else None
+    )
+    if (
+        refactor.parse_simulation_log(
+            simulation_text, expected_termination=expected_termination
+        )
+        != smoke.get("parser")
+    ):
         raise IdentityCompareError(f"{label} parser report differs from the simulation log")
 
 

@@ -39,14 +39,20 @@ def collect_warnings(text: str) -> list[dict[str, str]]:
     return warnings
 
 
-def summarize(text: str, log_path: Path) -> dict[str, Any]:
-    simulation = refactor.parse_simulation_log(text)
+def summarize(text: str, log_path: Path, case: str | None = None) -> dict[str, Any]:
+    expected_termination = (
+        "end_by_syscall" if case == refactor.LOCKED_SMOKE_CASE else None
+    )
+    simulation = refactor.parse_simulation_log(
+        text, expected_termination=expected_termination
+    )
     build_errors = refactor.parse_build_errors(text)
     warnings = collect_warnings(text)
     passed = simulation["status"] == "pass" and not build_errors and not warnings
     return {
         "schema_version": 1,
         "gate": "chiplab-simulation-transcript",
+        "case": case,
         "status": "pass" if passed else "fail",
         "generated_at": refactor.now_iso(),
         "log": str(log_path.resolve()),
@@ -63,9 +69,10 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--log", type=Path, required=True)
     parser.add_argument("--out", type=Path, required=True)
+    parser.add_argument("--case")
     args = parser.parse_args()
     text = args.log.read_text(encoding="utf-8", errors="replace")
-    result = summarize(text, args.log)
+    result = summarize(text, args.log, args.case)
     refactor.write_json(args.out, result)
     print(args.out)
     return 0 if result["status"] == "pass" else 1

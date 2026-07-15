@@ -2332,7 +2332,11 @@ def parse_build_errors(text: str) -> list[str]:
     ]
 
 
-def parse_simulation_log(text: str) -> dict[str, Any]:
+def parse_simulation_log(
+    text: str, *, expected_termination: str | None = None
+) -> dict[str, Any]:
+    if expected_termination not in {None, "good_trap", "end_by_syscall"}:
+        raise RefactorError(f"unsupported simulation termination expectation: {expected_termination}")
     bad_patterns = {
         "difftest_mismatch": r"different at pc",
         "trace_error": r"Error\(Code:",
@@ -2356,16 +2360,33 @@ def parse_simulation_log(text: str) -> dict[str, Any]:
         "nonzero_instructions": instructions > 0,
         "nonzero_clocks": clocks > 0,
     }
-    mismatch_lines = [line.strip() for line in text.splitlines() if "different at pc" in line]
+    if markers["end_by_syscall"]:
+        termination_mode = "end_by_syscall"
+    elif markers["good_trap"]:
+        termination_mode = "good_trap"
+    else:
+        termination_mode = "missing"
+    termination_valid = (
+        termination_mode != "missing"
+        if expected_termination is None
+        else markers[expected_termination]
+    )
     diagnostic_lines = [
         line.strip()
         for line in text.splitlines()
         if re.search(r"different at pc|Error\(Code:|Both Error|HIT BAD TRAP|ABORT", line)
     ]
+    if not termination_valid:
+        failures.append("termination_marker")
+        diagnostic_lines.append(
+            f"termination marker mismatch: expected {expected_termination or 'good_trap-or-syscall'}, "
+            f"observed {termination_mode}"
+        )
+    mismatch_lines = [line.strip() for line in text.splitlines() if "different at pc" in line]
     mandatory_markers = (
         markers["difftest_library_loaded"]
         and markers["difftest_enabled"]
-        and (markers["good_trap"] or markers["end_by_syscall"])
+        and termination_valid
         and markers["reached_test_end"]
         and markers["nonzero_instructions"]
         and markers["nonzero_clocks"]
@@ -2373,6 +2394,9 @@ def parse_simulation_log(text: str) -> dict[str, Any]:
     return {
         "status": "pass" if mandatory_markers and not failures else "fail",
         "markers": markers,
+        "termination_expectation": expected_termination,
+        "termination_mode": termination_mode,
+        "termination_valid": termination_valid,
         "failures": failures,
         "instructions": instructions,
         "clocks": clocks,
@@ -3566,7 +3590,12 @@ def _command_rtl_smoke_locked(args: argparse.Namespace) -> int:
             )
             commands.append(simulation)
         simulation_text = (simulation.stdout + "\n" + simulation.stderr) if simulation else ""
-        parsed = parse_simulation_log(simulation_text)
+        parsed = parse_simulation_log(
+            simulation_text,
+            expected_termination=(
+                "end_by_syscall" if args.case == LOCKED_SMOKE_CASE else None
+            ),
+        )
         output_paths = {
             "simu_trace": case_log_dir / "simu_trace.txt",
             "uart": case_log_dir / "uart_output.txt",

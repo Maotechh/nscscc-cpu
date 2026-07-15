@@ -35,6 +35,7 @@ class IdentityCompareTests(unittest.TestCase):
         "Using /tmp/la32r-nemu-interpreter-so for difftest\n"
         "Difftest enabled.\n"
         "HIT GOOD TRAP\n"
+        "END by Syscall\n"
         "Reached test end PC.\n"
         "total instruction is 12\n"
         "total clock is 34\n"
@@ -328,7 +329,9 @@ class IdentityCompareTests(unittest.TestCase):
             for artifact in artifacts[:6]
         ]
         warnings = refactor.parse_verilator_warnings(self.BASE_BUILD_LOG)
-        parser = refactor.parse_simulation_log(self.PASS_SIMULATION_LOG)
+        parser = refactor.parse_simulation_log(
+            self.PASS_SIMULATION_LOG, expected_termination="end_by_syscall"
+        )
         environment = {
             "HOME": "/tmp/home",
             "PATH": "/locked/tool/bin:/usr/bin:/bin",
@@ -656,8 +659,10 @@ class IdentityCompareTests(unittest.TestCase):
         log_path = Path(smoke["commands"][2]["log_path"])
         payload = simulation_text.encode("utf-8")
         log_path.write_bytes(payload)
+        smoke["parser"] = refactor.parse_simulation_log(
+            simulation_text, expected_termination="end_by_syscall"
+        )
         smoke["commands"][2]["log_sha256"] = refactor.sha256_bytes(payload)
-        smoke["parser"] = refactor.parse_simulation_log(simulation_text)
         self._rewrite_smoke(out_dir, iteration_id, smoke)
 
     def _replace_physical_artifact(

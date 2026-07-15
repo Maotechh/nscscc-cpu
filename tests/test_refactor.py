@@ -171,6 +171,19 @@ Reached test end PC.
         parsed = refactor.parse_simulation_log("total clock is 10\ntotal instruction is 2\nReached test end PC.\n")
         self.assertEqual("fail", parsed["status"])
 
+    def test_locked_func_lab19_requires_syscall_termination(self) -> None:
+        missing = refactor.parse_simulation_log(
+            self.PASS_LOG, expected_termination="end_by_syscall"
+        )
+        self.assertEqual("fail", missing["status"])
+        self.assertIn("termination_marker", missing["failures"])
+        complete = refactor.parse_simulation_log(
+            self.PASS_LOG + "END by Syscall\n",
+            expected_termination="end_by_syscall",
+        )
+        self.assertEqual("pass", complete["status"])
+        self.assertEqual("end_by_syscall", complete["termination_mode"])
+
     def test_locked_nemu_end_marker_is_accepted_without_good_trap_text(self) -> None:
         parsed = refactor.parse_simulation_log(
             self.PASS_LOG.replace("HIT GOOD TRAP", "END by Syscall")

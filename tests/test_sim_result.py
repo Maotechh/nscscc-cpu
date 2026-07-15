@@ -34,6 +34,27 @@ class SimulationResultTests(unittest.TestCase):
         self.assertEqual(result["status"], "pass")
         self.assertEqual(result["warning_count"], 0)
 
+    def test_func_lab19_requires_syscall_termination(self) -> None:
+        missing = self.summarize(PASS_LOG)
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "simulation.log"
+            path.write_text(PASS_LOG, encoding="utf-8")
+            locked_missing = sim_result.summarize(
+                PASS_LOG, path, sim_result.refactor.LOCKED_SMOKE_CASE
+            )
+            locked_complete = sim_result.summarize(
+                PASS_LOG + "END by Syscall\n",
+                path,
+                sim_result.refactor.LOCKED_SMOKE_CASE,
+            )
+        self.assertEqual("pass", missing["status"])
+        self.assertEqual("fail", locked_missing["status"])
+        self.assertEqual("pass", locked_complete["status"])
+        self.assertEqual(
+            "end_by_syscall",
+            locked_complete["simulation"]["termination_expectation"],
+        )
+
     def test_time_limit_is_failure_even_when_chiplab_returns_zero(self) -> None:
         result = self.summarize(PASS_LOG + "Time limit exceeded.\n")
         self.assertEqual(result["status"], "fail")
