@@ -2,7 +2,7 @@ schema_version: 1
 updated_at: "2026-07-15T12:45:00+08:00"
 active_iteration: "20260715-1230-pure-overlay-profile"
 active_branch: "refactor/20260714-1650-consolidated-spinal"
-source_head: "01c9b21a6288a0fd06562aa049607124fd01f532"
+source_head: "e420eba344d45f7333ef2c0a6eb538e850863a8a"
 
 boundaries:
   refactor_branch_convergence:

@@ -1,7 +1,7 @@
 # 20260715-1230-pure-overlay-profile
 
 - 状态：`draft`
-- 分支 / Base SHA / 当前 Head：`refactor/20260714-1650-consolidated-spinal` / `df25f38153373150c757fa1503ea433a55414aee` / `01c9b21a6288a0fd06562aa049607124fd01f532`
+- 分支 / Base SHA / 当前 Head：`refactor/20260714-1650-consolidated-spinal` / `df25f38153373150c757fa1503ea433a55414aee` / `e420eba344d45f7333ef2c0a6eb538e850863a8a`
 - 选择边界：把 candidate-closure 检查接入官方隔离 overlay 的 diagnostic profile，验证只保留 self-contained Spinal `mycpu_top.v` 是否能被 chiplab 原生入口编译和运行。
 - 本轮新增 `--pure-spinal`：仅允许 diagnostic mixed source；临时 `IP/myCPU` 删除旧 CPU HDL，保留生成 top、`mycpu.h` 和 LICENSE；manifest 记录删除清单和单文件选择 hash。默认 candidate/mixed profile 不改变。
 
@@ -19,6 +19,7 @@
 - 第一次 pure overlay 因旧 `csr.h` 未删除被 manifest 完整性检查拒绝。
 - 第二次因清理条件误删 `mycpu.h` 被 required-support 检查拒绝。
 - 两个问题均在进入 Verilator 前失败并被修复；第三次 overlay 及完整 smoke 使用 clean clone 和提交 SHA `01c9b21a...`。
+- 随后因补充 `pure_spinal` report 字段产生新提交，按 freshness 规则在 `e420eba...` clean clone 再跑 doctor/overlay/closure/smoke；最终证据均来自该 head。
 
 ## 风险与回退
 

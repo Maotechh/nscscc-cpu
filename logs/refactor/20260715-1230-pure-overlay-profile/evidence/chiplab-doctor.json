@@ -271,10 +271,10 @@
   ],
   "chiplab_reference": "/opt/chiplab-reference",
   "command": "chiplab-doctor",
-  "evaluator_sha256": "bdadbe97c871eb63ecac4bbf4d8ccbd27b1c97e6ebfb1ce48e408aa13cfb6be5",
-  "generated_at": "2026-07-15T12:38:58+08:00",
+  "evaluator_sha256": "4c1a57dddbd4bafadab4b2b083fa929884b0d42baf61cff11e4e1eae58c588b8",
+  "generated_at": "2026-07-15T12:47:45+08:00",
   "manifest_sha256": "743dd7e58d77e456cfe664d80c2e6614ab426f72bfecd9088ff18d702afa2f20",
-  "repo_head_sha": "01c9b21a6288a0fd06562aa049607124fd01f532",
+  "repo_head_sha": "e420eba344d45f7333ef2c0a6eb538e850863a8a",
   "schema_version": 1,
   "status": "pass",
   "tool_fingerprints": [

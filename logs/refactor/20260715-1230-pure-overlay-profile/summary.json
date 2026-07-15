@@ -4,7 +4,7 @@
   "status": "draft",
   "branch": "refactor/20260714-1650-consolidated-spinal",
   "base_sha": "df25f38153373150c757fa1503ea433a55414aee",
-  "head_sha": "01c9b21a6288a0fd06562aa049607124fd01f532",
+  "head_sha": "e420eba344d45f7333ef2c0a6eb538e850863a8a",
   "selected_boundary": "pure_spinal_chiplab_overlay_profile",
   "gates": {
     "python_compile": {"status": "pass", "planned": 1, "executed": 1, "passed": 1, "failed": 0, "skipped": 0, "evidence": "commands.jsonl"},

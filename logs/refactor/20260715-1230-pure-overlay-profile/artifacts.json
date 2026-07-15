@@ -2,11 +2,11 @@
   "schema_version": 1,
   "iteration_id": "20260715-1230-pure-overlay-profile",
   "artifacts": [
-    {"path": "evidence/chiplab-doctor.json", "sha256": "6a3920ba094a0f646a5994e6510ca4454c7050fd723d671d8c82f49411c5a74b", "size": 16175},
-    {"path": "evidence/chiplab-overlay.json", "sha256": "ba76bdd659762d95676e85ee27568908a4f9364a1e76c397ba580c60a4f4bddd", "size": 4458},
-    {"path": "evidence/chiplab-overlay-manifest.json", "sha256": "f96edfeba6cfdf282a9fac866a74847bf823b33f3f6da8438986f08933d34b29", "size": 13912},
+    {"path": "evidence/chiplab-doctor.json", "sha256": "7e2cca3e8007f82061ef46100fb7d3d913f911fb9f81a64e3e19dbe95ef61969", "size": 16175},
+    {"path": "evidence/chiplab-overlay.json", "sha256": "9c6639b80cd80c13e34a06b044d1a6ac020fb5d6e0919b74de007993b9013c93", "size": 4481},
+    {"path": "evidence/chiplab-overlay-manifest.json", "sha256": "356204d3cfb6328e28e53ae30dd9a41bbc352ebcfc1ff13efd80dca5b39fe35b", "size": 13912},
     {"path": "evidence/candidate-closure.json", "sha256": "afed149eec2eb4271e8a35e6e4820d904f7f8ad26cec19a4d2a7805f3faaaeb1", "size": 4259},
-    {"path": "evidence/rtl-smoke.json", "sha256": "a1e58c6ab13a7ae8eeefdb0e2fa11a1b545eeae39ff047ca03094a2f0dfa2c8c", "size": 127841}
+    {"path": "evidence/rtl-smoke.json", "sha256": "c03959fef45d0b869b63eda6b19aea6c610f36cc1c2ea8fc065a7551b5399f13", "size": 127841}
   ],
   "external_artifacts": [
     {"path": "/home/nscscc-pure-work/20260715-1230-pure-overlay-profile/sims/verilator/run_prog/log/func/func_lab19_log/simu_trace.txt", "sha256": "911597f5360579a65f2a9f6c9ec863ac0b9a957a485b62273a1d55a04195ea6a", "size": 13924720, "retention": "external-temp"},

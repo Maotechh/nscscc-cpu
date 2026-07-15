@@ -107,9 +107,9 @@
         "func/func_lab19"
       ],
       "cwd": "/home/nscscc-pure-work/20260715-1230-pure-overlay-profile/sims/verilator/run_prog",
-      "elapsed_seconds": 0.037,
+      "elapsed_seconds": 0.008,
       "exit_code": 0,
-      "log_path": "/home/nscscc-pure-evidence/raw/iterations/20260715-1230-pure-overlay-profile/rtl-smoke/1784090371293239639-2126/01-configure.log",
+      "log_path": "/home/nscscc-pure-evidence/raw/iterations/20260715-1230-pure-overlay-profile/rtl-smoke/1784090882997736668-3302/01-configure.log",
       "log_sha256": "88d0d2b3bea4d22c370a255b232d9a1fe6037cbc0a1b785d84411e4f51bd6e2f",
       "timed_out": false
     },
@@ -121,9 +121,9 @@
         "soft_compile"
       ],
       "cwd": "/home/nscscc-pure-work/20260715-1230-pure-overlay-profile/sims/verilator/run_prog",
-      "elapsed_seconds": 37.573,
+      "elapsed_seconds": 34.939,
       "exit_code": 0,
-      "log_path": "/home/nscscc-pure-evidence/raw/iterations/20260715-1230-pure-overlay-profile/rtl-smoke/1784090371293239639-2126/02-build.log",
+      "log_path": "/home/nscscc-pure-evidence/raw/iterations/20260715-1230-pure-overlay-profile/rtl-smoke/1784090882997736668-3302/02-build.log",
       "log_sha256": "2ec2537d9873778d0989a903d8a15e8db829629a161c0332982944207850a3b9",
       "timed_out": false
     },
@@ -133,10 +133,10 @@
         "simulation_run_prog"
       ],
       "cwd": "/home/nscscc-pure-work/20260715-1230-pure-overlay-profile/sims/verilator/run_prog",
-      "elapsed_seconds": 3.745,
+      "elapsed_seconds": 3.402,
       "exit_code": 0,
-      "log_path": "/home/nscscc-pure-evidence/raw/iterations/20260715-1230-pure-overlay-profile/rtl-smoke/1784090371293239639-2126/03-simulation.log",
-      "log_sha256": "c517c19dc3002b8778957be1bd182fc5ff5110684563ffb21388bf38ed38047a",
+      "log_path": "/home/nscscc-pure-evidence/raw/iterations/20260715-1230-pure-overlay-profile/rtl-smoke/1784090882997736668-3302/03-simulation.log",
+      "log_sha256": "8cb741545f69c6737b9c754024af46f3177e3f7eebb680cacb24a6c8b6032e0e",
       "timed_out": false
     }
   ],
@@ -201,12 +201,12 @@
     ],
     "schema_version": 1,
     "source_branch": "refactor/20260714-1650-consolidated-spinal",
-    "source_head": "01c9b21a6288a0fd06562aa049607124fd01f532",
-    "source_tree": "6c4c7efd5bed86aea2518961720f098ab91f11ad",
-    "spec_commit": "01c9b21a6288a0fd06562aa049607124fd01f532",
+    "source_head": "e420eba344d45f7333ef2c0a6eb538e850863a8a",
+    "source_tree": "7271cbb06da1dceb95b52e969604ba3636769840",
+    "spec_commit": "e420eba344d45f7333ef2c0a6eb538e850863a8a",
     "spec_path": "reference/component-replacements/spinal-active-runtime.json",
     "spec_sha256": "cb1a7ee3fdc6e79d7700d183d61f0a8a63f700d7d5c5ade0e0904b5289349690",
-    "spec_source": "01c9b21a6288a0fd06562aa049607124fd01f532:reference/component-replacements/spinal-active-runtime.json",
+    "spec_source": "e420eba344d45f7333ef2c0a6eb538e850863a8a:reference/component-replacements/spinal-active-runtime.json",
     "worktree_clean": true,
     "worktree_eol_normalization_only": false,
     "worktree_porcelain_clean": true,
@@ -222,7 +222,7 @@
     "planned": 1,
     "skipped": 0
   },
-  "doctor_report_sha256": "6a3920ba094a0f646a5994e6510ca4454c7050fd723d671d8c82f49411c5a74b",
+  "doctor_report_sha256": "7e2cca3e8007f82061ef46100fb7d3d913f911fb9f81a64e3e19dbe95ef61969",
   "dut_source": "mixed",
   "environment": {
     "CHIPLAB_HOME": "/home/nscscc-pure-work/20260715-1230-pure-overlay-profile",
@@ -233,7 +233,7 @@
     "TZ": "UTC"
   },
   "environment_sha256": "fa918500e65486dbf0c62e4b66830e44ab70ee9f12faa1ab5b96e70e3ac54381",
-  "evaluator_sha256": "bdadbe97c871eb63ecac4bbf4d8ccbd27b1c97e6ebfb1ce48e408aa13cfb6be5",
+  "evaluator_sha256": "4c1a57dddbd4bafadab4b2b083fa929884b0d42baf61cff11e4e1eae58c588b8",
   "functional_counts": {
     "executed": 1,
     "failed": 0,
@@ -245,7 +245,7 @@
   "gate_eligible": false,
   "gate_kind": "component_replacement",
   "gate_result": "fail",
-  "generated_at": "2026-07-15T12:40:13+08:00",
+  "generated_at": "2026-07-15T12:48:42+08:00",
   "golden_candidate_commit": "a158aa8ab4d49cece1a0fe488d7ac7dc02bd8cf6",
   "iteration_id": "20260715-1230-pure-overlay-profile",
   "lock_policy": {
@@ -282,7 +282,7 @@
       "size": 0
     }
   },
-  "overlay_report_sha256": "ba76bdd659762d95676e85ee27568908a4f9364a1e76c397ba580c60a4f4bddd",
+  "overlay_report_sha256": "9c6639b80cd80c13e34a06b044d1a6ac020fb5d6e0919b74de007993b9013c93",
   "parser": {
     "clocks": 609660,
     "failure_excerpt": [],
@@ -319,14 +319,14 @@
       "entry_count": 1535,
       "sha256": "a089db6e8f4fc1cffdfc46d4f76b1233b1004c127a87b03a3feac0ca35eb26b8"
     },
-    "overlay_manifest_sha256": "f96edfeba6cfdf282a9fac866a74847bf823b33f3f6da8438986f08933d34b29",
-    "overlay_report_sha256": "ba76bdd659762d95676e85ee27568908a4f9364a1e76c397ba580c60a4f4bddd",
-    "selection_sha256": "d51600752d99cfe1f722d1287725e2166f6bc4907799afc0140fb57815aa0a1c",
+    "overlay_manifest_sha256": "356204d3cfb6328e28e53ae30dd9a41bbc352ebcfc1ff13efd80dca5b39fe35b",
+    "overlay_report_sha256": "9c6639b80cd80c13e34a06b044d1a6ac020fb5d6e0919b74de007993b9013c93",
+    "selection_sha256": "20949c19ef024ee21c2dc25c021a7ab61dd7c558b2da3a1b1b445cd17559ab3f",
     "status": "pass",
-    "work_marker_sha256": "f96edfeba6cfdf282a9fac866a74847bf823b33f3f6da8438986f08933d34b29"
+    "work_marker_sha256": "356204d3cfb6328e28e53ae30dd9a41bbc352ebcfc1ff13efd80dca5b39fe35b"
   },
   "provenance_mode": "mixed_candidate",
-  "raw_dir": "/home/nscscc-pure-evidence/raw/iterations/20260715-1230-pure-overlay-profile/rtl-smoke/1784090371293239639-2126",
+  "raw_dir": "/home/nscscc-pure-evidence/raw/iterations/20260715-1230-pure-overlay-profile/rtl-smoke/1784090882997736668-3302",
   "removed_generated_paths": [
     "/home/nscscc-pure-work/20260715-1230-pure-overlay-profile/sims/verilator/run_prog/config-software.mak"
   ],
@@ -336,9 +336,9 @@
     "status": "not_provided_by_locked_func_lab19"
   },
   "rtl_static_gate": "not_executed_by_rtl_smoke",
-  "run_id": "1784090371293239639-2126",
+  "run_id": "1784090882997736668-3302",
   "schema_version": 1,
-  "selection_sha256": "d51600752d99cfe1f722d1287725e2166f6bc4907799afc0140fb57815aa0a1c",
+  "selection_sha256": "20949c19ef024ee21c2dc25c021a7ab61dd7c558b2da3a1b1b445cd17559ab3f",
   "simulation_eligible": true,
   "status": "diagnostic",
   "verilator_compile_counts": {
