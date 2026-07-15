@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "iteration_id": "20260713-0729-exe-stage-spinal",
+  "external_artifact_policy": "Git 只保存摘要、哈希和 locator；原始 simulator、生成 RTL 副本和大日志留在 build、.work 或 CI artifact。",
+  "retention": "local_until_explicit_clean",
+  "artifacts": [
+    {"id":"replacement-rtl","path":"reference/component-replacements/exe_stage.v","sha256":"839d5932db50baac933205c26765549344147a58ab056a886a374c0d694351aa","size":58153,"tracked":true},
+    {"id":"automation-summary","path":"evidence/automation.json","sha256":"5287aef2573591c4504ce8b86ddbf47638ab574d7c20ee39e736537a664c84d9","size":320,"tracked":true},
+    {"id":"local-gates-summary","path":"evidence/local-gates.json","sha256":"3c950699a5432be7637c21f6fefc052679bbe36d57185df25f3f46c1502489b7","size":805,"tracked":true},
+    {"id":"scala-summary","path":"evidence/scala.json","sha256":"ee65e617c7cb17e6c7d3ed1ab467a7c3eb8f74f6794e4979337f74420cc8870e","size":7782,"tracked":true},
+    {"id":"diff-off","path":"evidence/diff-off.json","sha256":"7975bcd608193d38d78da7a97735034cf2bbb2764259ff0d87e3ccec23a8cbd5","size":984,"tracked":true},
+    {"id":"diff-on","path":"evidence/diff-on.json","sha256":"27adc47a99ff3036a2c7233f5a35ad9f918dcc095d1aa77c7c6d37a5c29cc6ba","size":1028,"tracked":true},
+    {"id":"negative-off","path":"evidence/negative-off.json","sha256":"f72471a0083616075a4c02d3c039167deb41d200bebfa2f4d99cfce16f45b130","size":444,"tracked":true},
+    {"id":"negative-on","path":"evidence/negative-on.json","sha256":"65c7438c8b262df1eebc42c1e83160de1fa0bfd35272aa70bdda313e1171d05e","size":443,"tracked":true},
+    {"id":"port-off","path":"evidence/port-off.json","sha256":"a2468d9ce753867e62fc2addd498a2cf7dbc5e9f5f0cd228049ddc1302e370d4","size":13374,"tracked":true},
+    {"id":"port-on","path":"evidence/port-on.json","sha256":"cfc685e86914a096be1a7bf536a62ba5549cff9a8770bbc1c3d6474dcb8f2d9c","size":18477,"tracked":true},
+    {"id":"yosys","path":"evidence/yosys.json","sha256":"fc8c5c6d514ef07640b44a691dc1547da23511d4bbd4edcd7ce5450981f11203","size":294,"tracked":true},
+    {"id":"doctor","path":"evidence/doctor.json","sha256":"01c902d82c06686d2d43764f831dfcc9e530057eca1de97a5a491547e66d6aaf","size":1537,"tracked":true}
+  ],
+  "external_artifacts": [
+    {"id":"automation-log","path":"/tmp/nscscc-exe-stage-automation2.log","sha256":"f92ce7f9483e647f71d9b5766763c9b7f9dc1a39b17e763ec5eaf825d5f243b0","size":24244,"tracked":false},
+    {"id":"generated-off-rtl","path":"/tmp/nscscc-exe-stage-gen-current/exe_stage/lacc_off/generate/rtl/exe_stage.v","sha256":"839d5932db50baac933205c26765549344147a58ab056a886a374c0d694351aa","size":58153,"tracked":false},
+    {"id":"generated-on-rtl","path":"/tmp/nscscc-exe-stage-gen-current/exe_stage/lacc_on/generate/rtl/exe_stage.v","sha256":"3c48600bddd14fea696767e85c9941de45d765959c5d31392be43903b14e7e57","size":63049,"tracked":false}
+  ]
+}

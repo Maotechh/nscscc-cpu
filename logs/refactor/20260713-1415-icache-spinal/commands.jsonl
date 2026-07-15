@@ -1,0 +1,12 @@
+{"command":"git status --short --branch; git rev-parse HEAD; git rev-parse --verify origin/main; git remote -v","exit_code":0,"result":"clean new branch at locked AXI base","head":"fb5a63fbb3c5378a0d99d6122c0cf66b89a332c5"}
+{"command":"make scala-check OUT_DIR=/tmp/nscscc-icache-final","exit_code":0,"result":"scalafmt, compile, test all pass; locked JDK17/Scala2.13.16/Spinal1.14.2"}
+{"command":"make generate TARGET=icache OUT_DIR=/tmp/nscscc-icache-final","exit_code":0,"result":"two isolated runs pass; generated SHA256 1e4c4f10db5a99f12b263c95f4dd61e7a51f298e8c15cc193ac01fc72b7680c5"}
+{"command":"make icache-contract port-check lint yosys-check unit TARGET=icache OUT_DIR=/tmp/nscscc-icache-final ICACHE_CYCLES=12000","exit_code":0,"result":"34-port exact; lint approved dead inputs only; Yosys pass; 16096/16096 differential and negative control"}
+{"command":"python3 -I -m unittest discover -s tests -p test_*.py","exit_code":0,"result":"Ran 309 tests in 12.092s; OK"}
+{"command":"python -I tools/refactor.py doctor --out-dir build/icache/doctor --vivado-home D:/Xilinx/Vivado/2023.2","exit_code":0,"result":"19/19 checks pass; Vivado 2023.2 ML Standard probe pass"}
+{"command":"make chiplab-doctor CHIPLAB_REFERENCE=/tmp/chiplab-clean-a2e11b3-exe CHIPLAB_TOOL_ROOT=/opt/chiplab-tools/root","exit_code":0,"result":"locked chiplab/a2e11b3, gitlink, symlinks and tools pass"}
+{"command":"make chiplab-overlay ... DUT_SOURCE=mixed REPLACEMENT_SPEC=reference/component-replacements/icache.json SOURCE_HEAD=528b79ca... DIAGNOSTIC=1","exit_code":0,"result":"committed replacement overlay created; diagnostic gate_eligible=false"}
+{"command":"make rtl-smoke ... ITERATION_ID=20260713-1415-icache-mixed DIAGNOSTIC=1","exit_code":1,"result":"configure/build/simulation commands exit 0; wrapper returns diagnostic because candidate_locked=false and baseline_exact=false; existing func_lab19 baseline mismatch is not attributed to I-cache"}
+{"command":"mcp__claude_review__review","exit_code":1,"result":"Required provider environment variable is not set: GEEKPIE_CLAUDE_API_KEY"}
+{"command":"git push -u origin refactor/20260713-1415-icache-spinal","exit_code":0,"result":"remote branch created; PR creation URL returned; no PR created"}
+{"command":"git push","exit_code":124,"result":"connection reset while pushing metadata commit 0e0c60f; branch ahead 1"}

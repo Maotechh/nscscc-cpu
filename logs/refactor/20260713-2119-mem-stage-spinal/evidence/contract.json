@@ -1,0 +1,27 @@
+{
+  "actual_count": 49,
+  "command": {
+    "argv": [
+      "/usr/bin/yosys",
+      "-q",
+      "-p",
+      "read_verilog -I/tmp/mem-contract7 /tmp/mem-contract7/mem_stage.v; hierarchy -check -top mem_stage; proc; write_json /tmp/mem-contract7/projection/ports.json"
+    ],
+    "elapsed_seconds": 0.028,
+    "returncode": 0,
+    "stdout": "",
+    "timed_out": false
+  },
+  "csr_header_sha256": "11f5550b887a2b507a5b916340069d6d127848c66c761f07d0303c7cc201026d",
+  "executed": 1,
+  "expected_count": 49,
+  "failed": 0,
+  "gate": "mem-stage-contract",
+  "generated_at": "2026-07-13T22:21:22+08:00",
+  "golden_sha256": "86592ed33afd5dde9e944860c7088ad70e5d62ee22f72999e336a64902d881a7",
+  "matched": true,
+  "passed": 1,
+  "schema_version": 1,
+  "skipped": 0,
+  "status": "pass"
+}

@@ -1,0 +1,42 @@
+{
+  "gate": "yosys-check",
+  "input": {
+    "sha256": "0c022398490e29cb92cd7adc31d2e35b26e47c3ea5a4b84316a54cfbbae0f349",
+    "size": 4747,
+    "snapshot": "/tmp/nscscc-div-9e78538-yosys/div/yosys-check/input/div.v",
+    "snapshot_stable": true,
+    "source": "/mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260713-0302-div-spinal/reference/component-replacements/div.v",
+    "source_stable": true
+  },
+  "provenance": {
+    "evaluator_sha256": "42153b372bdede205e03cba5614190173ea354f3ee8aa29c68c68d7644abe3e3",
+    "manifest": "/mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260713-0302-div-spinal/reference/manifest.lock",
+    "manifest_sha256": "743dd7e58d77e456cfe664d80c2e6614ab426f72bfecd9088ff18d702afa2f20",
+    "repository_head": "9e78538c0dec08fa9fcace49e068b8bc9d4d5af1"
+  },
+  "rtl": "/tmp/nscscc-div-9e78538-yosys/div/yosys-check/input/div.v",
+  "rtl_sha256": "0c022398490e29cb92cd7adc31d2e35b26e47c3ea5a4b84316a54cfbbae0f349",
+  "schema_version": 1,
+  "status": "pass",
+  "target": "div",
+  "yosys": {
+    "argv": [
+      "/usr/bin/yosys",
+      "-l",
+      "/tmp/nscscc-div-9e78538-yosys/div/yosys-check/yosys.log",
+      "-s",
+      "/tmp/nscscc-div-9e78538-yosys/div/yosys-check/gate.ys"
+    ],
+    "elapsed_seconds": 0.034,
+    "log": "/tmp/nscscc-div-9e78538-yosys/div/yosys-check/yosys.log",
+    "log_sha256": "004c6bbc0365012800334530ec4a1f69d2d1b8c70e8b58aa80f0a75689d130fb",
+    "returncode": 0,
+    "timed_out": false,
+    "tool": {
+      "path": "/usr/bin/yosys",
+      "sha256": "88c0a12bb814a1a8716b1ae10b482e35d3005ed558e1f5f626b3dc983ea3abd0",
+      "version": "Yosys 0.33 (git sha1 2584903a060)"
+    },
+    "warnings": []
+  }
+}

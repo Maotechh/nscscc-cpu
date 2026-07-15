@@ -1,0 +1,14 @@
+{"at":"2026-07-13T07:29:00+08:00","command":"git status --short --branch; git rev-parse HEAD; git rev-parse --verify origin/main; git remote -v","exit_code":0,"summary":"clean branch refactor/20260713-0729-axi-bridge-spinal; base f621c7a1; origin/main 20cae5fd; GitHub origin"}
+{"at":"2026-07-13T07:35:00+08:00","command":"make scala-check from Windows worktree under WSL","exit_code":1,"summary":"fail-closed: WSL cannot resolve Windows D:/... Git worktree pointer"}
+{"at":"2026-07-13T07:37:00+08:00","command":"make scala-check in WSL-native clone, first attempt","exit_code":1,"summary":"scalafmt failed for 2 files; compile failed because clockDomain shadowed Component member"}
+{"at":"2026-07-13T07:39:00+08:00","command":"make scala-check in WSL-native clone","exit_code":0,"summary":"format/compile/test-compile/test 4/4 pass"}
+{"at":"2026-07-13T07:41:00+08:00","command":"spinal_generate.py axi_bridge --runs 2, first attempt","exit_code":1,"summary":"SpinalExit marker from unassigned rready hold register; generated output not accepted"}
+{"at":"2026-07-13T07:42:00+08:00","command":"spinal_generate.py axi_bridge --runs 2","exit_code":0,"summary":"2/2 reproducible; RTL 10819 bytes SHA256 4c307033...e70a0"}
+{"at":"2026-07-13T07:46:00+08:00","command":"axi_bridge contract/port/lint/yosys","exit_code":0,"summary":"golden identity, 65 ports, Verilator and Yosys pass"}
+{"at":"2026-07-13T07:46:00+08:00","command":"axi_bridge cycle diff, first attempt","exit_code":1,"summary":"cycle 1 mismatch only in invalid AW/W payload window; RTL unchanged"}
+{"at":"2026-07-13T07:47:00+08:00","command":"axi_bridge cycle diff --cycles 8192 --seed 0x158aa8","exit_code":0,"summary":"8192/8192 cycles match; 3/3 negative controls detected"}
+{"at":"2026-07-13T07:49:00+08:00","command":"make test-automation","exit_code":0,"summary":"308/308 pass"}
+{"at":"2026-07-13T07:50:00+08:00","command":"unified make contract/generate/port/lint/yosys/unit TARGET=axi_bridge","exit_code":0,"summary":"all local RTL gates pass from unified entry"}
+{"at":"2026-07-13T07:51:00+08:00","command":"Windows doctor + chiplab doctor + locked scala-check","exit_code":0,"summary":"Vivado 2023.2 and locked chiplab/toolchain pass; Scala 4/4"}
+{"at":"2026-07-13T07:54:00+08:00","command":"make elaborate TARGET=axi_bridge, first attempt","exit_code":2,"summary":"generic reproducibility gate rejects --runs 1"}
+{"at":"2026-07-13T07:55:00+08:00","command":"make elaborate TARGET=axi_bridge --runs 2","exit_code":0,"summary":"2/2 reproducible elaboration/generation pass"}

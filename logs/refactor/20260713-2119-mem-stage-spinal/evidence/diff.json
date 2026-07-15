@@ -1,0 +1,127 @@
+{
+  "build": {
+    "argv": [
+      "/usr/bin/verilator",
+      "--binary",
+      "--timing",
+      "--top-module",
+      "tb",
+      "-Wall",
+      "-Wno-fatal",
+      "-Wno-DECLFILENAME",
+      "-Wno-UNUSEDSIGNAL",
+      "--x-initial",
+      "0",
+      "--x-assign",
+      "0",
+      "-I/tmp/mem-diff7",
+      "--Mdir",
+      "/tmp/mem-diff7/obj",
+      "/tmp/mem-diff7/tb.sv",
+      "/tmp/mem-diff7/golden.v",
+      "/tmp/mem-diff7/candidate.v"
+    ],
+    "elapsed_seconds": 30.566,
+    "returncode": 0,
+    "stdout": "%Warning-WIDTHTRUNC: /tmp/mem-diff7/golden.v:286:26: Logical operator LOGNOT expects 1 bit on the LHS, but LHS's VARREF 'ms_mem_size' generates 2 bits.\n                                                   : ... note: In instance 'tb.dut_g'\n  286 |                     ({32{!ms_mem_size}}                         &   ms_rdata                                  ) ;\n      |                          ^\n                     ... For warning description see https://verilator.org/warn/WIDTHTRUNC?v=5.020\n                     ... Use \"/* verilator lint_off WIDTHTRUNC */\" and lint_on around source to disable this message.\n%Warning-WIDTHTRUNC: /tmp/mem-diff7/golden.v:293:31: Logical operator LOGNOT expects 1 bit on the LHS, but LHS's VARREF 'ms_mul_div_op' generates 4 bits.\n                                                   : ... note: In instance 'tb.dut_g'\n  293 |                          ({32{!ms_mul_div_op && !ms_load_op}} & (ms_exe_result&{32{!sc_cancel_req}}));\n      |                               ^\nmake: Entering directory '/tmp/mem-diff7/obj'\ng++ -Os  -I.  -MMD -I/usr/share/verilator/include -I/usr/share/verilator/include/vltstd -DVM_COVERAGE=0 -DVM_SC=0 -DVM_TRACE=0 -DVM_TRACE_FST=0 -DVM_TRACE_VCD=0 -faligned-new -fcf-protection=none -Wno-bool-operation -Wno-overloaded-virtual -Wno-shadow -Wno-sign-compare -Wno-uninitialized -Wno-unused-but-set-parameter -Wno-unused-but-set-variable -Wno-unused-parameter -Wno-unused-variable     -DVL_TIME_CONTEXT   -fcoroutines -c -o verilated.o /usr/share/verilator/include/verilated.cpp\ng++ -Os  -I.  -MMD -I/usr/share/verilator/include -I/usr/share/verilator/include/vltstd -DVM_COVERAGE=0 -DVM_SC=0 -DVM_TRACE=0 -DVM_TRACE_FST=0 -DVM_TRACE_VCD=0 -faligned-new -fcf-protection=none -Wno-bool-operation -Wno-overloaded-virtual -Wno-shadow -Wno-sign-compare -Wno-uninitialized -Wno-unused-but-set-parameter -Wno-unused-but-set-variable -Wno-unused-parameter -Wno-unused-variable     -DVL_TIME_CONTEXT   -fcoroutines -c -o verilated_timing.o /usr/share/verilator/include/verilated_timing.cpp\ng++ -Os  -I.  -MMD -I/usr/share/verilator/include -I/usr/share/verilator/include/vltstd -DVM_COVERAGE=0 -DVM_SC=0 -DVM_TRACE=0 -DVM_TRACE_FST=0 -DVM_TRACE_VCD=0 -faligned-new -fcf-protection=none -Wno-bool-operation -Wno-overloaded-virtual -Wno-shadow -Wno-sign-compare -Wno-uninitialized -Wno-unused-but-set-parameter -Wno-unused-but-set-variable -Wno-unused-parameter -Wno-unused-variable     -DVL_TIME_CONTEXT   -fcoroutines -c -o verilated_threads.o /usr/share/verilator/include/verilated_threads.cpp\ng++ -Os  -I.  -MMD -I/usr/share/verilator/include -I/usr/share/verilator/include/vltstd -DVM_COVERAGE=0 -DVM_SC=0 -DVM_TRACE=0 -DVM_TRACE_FST=0 -DVM_TRACE_VCD=0 -faligned-new -fcf-protection=none -Wno-bool-operation -Wno-overloaded-virtual -Wno-shadow -Wno-sign-compare -Wno-uninitialized -Wno-unused-but-set-parameter -Wno-unused-but-set-variable -Wno-unused-parameter -Wno-unused-variable     -DVL_TIME_CONTEXT   -fcoroutines -x c++-header Vtb__pch.h -o Vtb__pch.h.fast.gch\ng++ -Os  -I.  -MMD -I/usr/share/verilator/include -I/usr/share/verilator/include/vltstd -DVM_COVERAGE=0 -DVM_SC=0 -DVM_TRACE=0 -DVM_TRACE_FST=0 -DVM_TRACE_VCD=0 -faligned-new -fcf-protection=none -Wno-bool-operation -Wno-overloaded-virtual -Wno-shadow -Wno-sign-compare -Wno-uninitialized -Wno-unused-but-set-parameter -Wno-unused-but-set-variable -Wno-unused-parameter -Wno-unused-variable     -DVL_TIME_CONTEXT   -fcoroutines -include Vtb__pch.h.fast -c -o Vtb.o Vtb.cpp\ng++ -Os  -I.  -MMD -I/usr/share/verilator/include -I/usr/share/verilator/include/vltstd -DVM_COVERAGE=0 -DVM_SC=0 -DVM_TRACE=0 -DVM_TRACE_FST=0 -DVM_TRACE_VCD=0 -faligned-new -fcf-protection=none -Wno-bool-operation -Wno-overloaded-virtual -Wno-shadow -Wno-sign-compare -Wno-uninitialized -Wno-unused-but-set-parameter -Wno-unused-but-set-variable -Wno-unused-parameter -Wno-unused-variable     -DVL_TIME_CONTEXT   -fcoroutines -include Vtb__pch.h.fast -c -o Vtb___024root__DepSet_hfe20aad3__0.o Vtb___024root__DepSet_hfe20aad3__0.cpp\ng++ -Os  -I.  -MMD -I/usr/share/verilator/include -I/usr/share/verilator/include/vltstd -DVM_COVERAGE=0 -DVM_SC=0 -DVM_TRACE=0 -DVM_TRACE_FST=0 -DVM_TRACE_VCD=0 -faligned-new -fcf-protection=none -Wno-bool-operation -Wno-overloaded-virtual -Wno-shadow -Wno-sign-compare -Wno-uninitialized -Wno-unused-but-set-parameter -Wno-unused-but-set-variable -Wno-unused-parameter -Wno-unused-variable     -DVL_TIME_CONTEXT   -fcoroutines -include Vtb__pch.h.fast -c -o Vtb___024root__DepSet_hfe20aad3__1.o Vtb___024root__DepSet_hfe20aad3__1.cpp\ng++ -Os  -I.  -MMD -I/usr/share/verilator/include -I/usr/share/verilator/include/vltstd -DVM_COVERAGE=0 -DVM_SC=0 -DVM_TRACE=0 -DVM_TRACE_FST=0 -DVM_TRACE_VCD=0 -faligned-new -fcf-protection=none -Wno-bool-operation -Wno-overloaded-virtual -Wno-shadow -Wno-sign-compare -Wno-uninitialized -Wno-unused-but-set-parameter -Wno-unused-but-set-variable -Wno-unused-parameter -Wno-unused-variable     -DVL_TIME_CONTEXT   -fcoroutines -include Vtb__pch.h.fast -c -o Vtb___024root__DepSet_hfe20aad3__2.o Vtb___024root__DepSet_hfe20aad3__2.cpp\ng++ -Os  -I.  -MMD -I/usr/share/verilator/include -I/usr/share/verilator/include/vltstd -DVM_COVERAGE=0 -DVM_SC=0 -DVM_TRACE=0 -DVM_TRACE_FST=0 -DVM_TRACE_VCD=0 -faligned-new -fcf-protection=none -Wno-bool-operation -Wno-overloaded-virtual -Wno-shadow -Wno-sign-compare -Wno-uninitialized -Wno-unused-but-set-parameter -Wno-unused-but-set-variable -Wno-unused-parameter -Wno-unused-variable     -DVL_TIME_CONTEXT   -fcoroutines -include Vtb__pch.h.fast -c -o Vtb___024root__DepSet_hfe20aad3__3.o Vtb___024root__DepSet_hfe20aad3__3.cpp\ng++ -Os  -I.  -MMD -I/usr/share/verilator/include -I/usr/share/verilator/include/vltstd -DVM_COVERAGE=0 -DVM_SC=0 -DVM_TRACE=0 -DVM_TRACE_FST=0 -DVM_TRACE_VCD=0 -faligned-new -fcf-protection=none -Wno-bool-operation -Wno-overloaded-virtual -Wno-shadow -Wno-sign-compare -Wno-uninitialized -Wno-unused-but-set-parameter -Wno-unused-but-set-variable -Wno-unused-parameter -Wno-unused-variable     -DVL_TIME_CONTEXT   -fcoroutines -include Vtb__pch.h.fast -c -o Vtb___024root__DepSet_hfe20aad3__4.o Vtb___024root__DepSet_hfe20aad3__4.cpp\ng++ -Os  -I.  -MMD -I/usr/share/verilator/include -I/usr/share/verilator/include/vltstd -DVM_COVERAGE=0 -DVM_SC=0 -DVM_TRACE=0 -DVM_TRACE_FST=0 -DVM_TRACE_VCD=0 -faligned-new -fcf-protection=none -Wno-bool-operation -Wno-overloaded-virtual -Wno-shadow -Wno-sign-compare -Wno-uninitialized -Wno-unused-but-set-parameter -Wno-unused-but-set-variable -Wno-unused-parameter -Wno-unused-variable     -DVL_TIME_CONTEXT   -fcoroutines -include Vtb__pch.h.fast -c -o Vtb___024root__DepSet_hfe20aad3__5.o Vtb___024root__DepSet_hfe20aad3__5.cpp\ng++ -Os  -I.  -MMD -I/usr/share/verilator/include -I/usr/share/verilator/include/vltstd -DVM_COVERAGE=0 -DVM_SC=0 -DVM_TRACE=0 -DVM_TRACE_FST=0 -DVM_TRACE_VCD=0 -faligned-new -fcf-protection=none -Wno-bool-operation -Wno-overloaded-virtual -Wno-shadow -Wno-sign-compare -Wno-uninitialized -Wno-unused-but-set-parameter -Wno-unused-but-set-variable -Wno-unused-parameter -Wno-unused-variable     -DVL_TIME_CONTEXT   -fcoroutines -include Vtb__pch.h.fast -c -o Vtb___024root__DepSet_hfe20aad3__6.o Vtb___024root__DepSet_hfe20aad3__6.cpp\ng++ -Os  -I.  -MMD -I/usr/share/verilator/include -I/usr/share/verilator/include/vltstd -DVM_COVERAGE=0 -DVM_SC=0 -DVM_TRACE=0 -DVM_TRACE_FST=0 -DVM_TRACE_VCD=0 -faligned-new -fcf-protection=none -Wno-bool-operation -Wno-overloaded-virtual -Wno-shadow -Wno-sign-compare -Wno-uninitialized -Wno-unused-but-set-parameter -Wno-unused-but-set-variable -Wno-unused-parameter -Wno-unused-variable     -DVL_TIME_CONTEXT   -fcoroutines -include Vtb__pch.h.fast -c -o Vtb___024root__DepSet_hfe20aad3__7.o Vtb___024root__DepSet_hfe20aad3__7.cpp\ng++ -Os  -I.  -MMD -I/usr/share/verilator/include -I/usr/share/verilator/include/vltstd -DVM_COVERAGE=0 -DVM_SC=0 -DVM_TRACE=0 -DVM_TRACE_FST=0 -DVM_TRACE_VCD=0 -faligned-new -fcf-protection=none -Wno-bool-operation -Wno-overloaded-virtual -Wno-shadow -Wno-sign-compare -Wno-uninitialized -Wno-unused-but-set-parameter -Wno-unused-but-set-variable -Wno-unused-parameter -Wno-unused-variable     -DVL_TIME_CONTEXT   -fcoroutines -include Vtb__pch.h.fast -c -o Vtb___024root__DepSet_ha183790c__0.o Vtb___024root__DepSet_ha183790c__0.cpp\ng++ -Os  -I.  -MMD -I/usr/share/verilator/include -I/usr/share/verilator/include/vltstd -DVM_COVERAGE=0 -DVM_SC=0 -DVM_TRACE=0 -DVM_TRACE_FST=0 -DVM_TRACE_VCD=0 -faligned-new -fcf-protection=none -Wno-bool-operation -Wno-overloaded-virtual -Wno-shadow -Wno-sign-compare -Wno-uninitialized -Wno-unused-but-set-parameter -Wno-unused-but-set-variable -Wno-unused-parameter -Wno-unused-variable     -DVL_TIME_CONTEXT   -fcoroutines -include Vtb__pch.h.fast -c -o Vtb__main.o Vtb__main.cpp\ng++   -I.  -MMD -I/usr/share/verilator/include -I/usr/share/verilator/include/vltstd -DVM_COVERAGE=0 -DVM_SC=0 -DVM_TRACE=0 -DVM_TRACE_FST=0 -DVM_TRACE_VCD=0 -faligned-new -fcf-protection=none -Wno-bool-operation -Wno-overloaded-virtual -Wno-shadow -Wno-sign-compare -Wno-uninitialized -Wno-unused-but-set-parameter -Wno-unused-but-set-variable -Wno-unused-parameter -Wno-unused-variable     -DVL_TIME_CONTEXT   -fcoroutines -x c++-header Vtb__pch.h -o Vtb__pch.h.slow.gch\ng++   -I.  -MMD -I/usr/share/verilator/include -I/usr/share/verilator/include/vltstd -DVM_COVERAGE=0 -DVM_SC=0 -DVM_TRACE=0 -DVM_TRACE_FST=0 -DVM_TRACE_VCD=0 -faligned-new -fcf-protection=none -Wno-bool-operation -Wno-overloaded-virtual -Wno-shadow -Wno-sign-compare -Wno-uninitialized -Wno-unused-but-set-parameter -Wno-unused-but-set-variable -Wno-unused-parameter -Wno-unused-variable     -DVL_TIME_CONTEXT   -fcoroutines -include Vtb__pch.h.slow -c -o Vtb__ConstPool_0.o Vtb__ConstPool_0.cpp\ng++   -I.  -MMD -I/usr/share/verilator/include -I/usr/share/verilator/include/vltstd -DVM_COVERAGE=0 -DVM_SC=0 -DVM_TRACE=0 -DVM_TRACE_FST=0 -DVM_TRACE_VCD=0 -faligned-new -fcf-protection=none -Wno-bool-operation -Wno-overloaded-virtual -Wno-shadow -Wno-sign-compare -Wno-uninitialized -Wno-unused-but-set-parameter -Wno-unused-but-set-variable -Wno-unused-parameter -Wno-unused-variable     -DVL_TIME_CONTEXT   -fcoroutines -include Vtb__pch.h.slow -c -o Vtb___024root__Slow.o Vtb___024root__Slow.cpp\ng++   -I.  -MMD -I/usr/share/verilator/include -I/usr/share/verilator/include/vltstd -DVM_COVERAGE=0 -DVM_SC=0 -DVM_TRACE=0 -DVM_TRACE_FST=0 -DVM_TRACE_VCD=0 -faligned-new -fcf-protection=none -Wno-bool-operation -Wno-overloaded-virtual -Wno-shadow -Wno-sign-compare -Wno-uninitialized -Wno-unused-but-set-parameter -Wno-unused-but-set-variable -Wno-unused-parameter -Wno-unused-variable     -DVL_TIME_CONTEXT   -fcoroutines -include Vtb__pch.h.slow -c -o Vtb___024root__DepSet_hfe20aad3__0__Slow.o Vtb___024root__DepSet_hfe20aad3__0__Slow.cpp\ng++   -I.  -MMD -I/usr/share/verilator/include -I/usr/share/verilator/include/vltstd -DVM_COVERAGE=0 -DVM_SC=0 -DVM_TRACE=0 -DVM_TRACE_FST=0 -DVM_TRACE_VCD=0 -faligned-new -fcf-protection=none -Wno-bool-operation -Wno-overloaded-virtual -Wno-shadow -Wno-sign-compare -Wno-uninitialized -Wno-unused-but-set-parameter -Wno-unused-but-set-variable -Wno-unused-parameter -Wno-unused-variable     -DVL_TIME_CONTEXT   -fcoroutines -include Vtb__pch.h.slow -c -o Vtb___024root__DepSet_ha183790c__0__Slow.o Vtb___024root__DepSet_ha183790c__0__Slow.cpp\ng++   -I.  -MMD -I/usr/share/verilator/include -I/usr/share/verilator/include/vltstd -DVM_COVERAGE=0 -DVM_SC=0 -DVM_TRACE=0 -DVM_TRACE_FST=0 -DVM_TRACE_VCD=0 -faligned-new -fcf-protection=none -Wno-bool-operation -Wno-overloaded-virtual -Wno-shadow -Wno-sign-compare -Wno-uninitialized -Wno-unused-but-set-parameter -Wno-unused-but-set-variable -Wno-unused-parameter -Wno-unused-variable     -DVL_TIME_CONTEXT   -fcoroutines -include Vtb__pch.h.slow -c -o Vtb__Syms.o Vtb__Syms.cpp\necho \"\" > Vtb__ALL.verilator_deplist.tmp\nArchive ar -rcs Vtb__ALL.a Vtb.o Vtb___024root__DepSet_hfe20aad3__0.o Vtb___024root__DepSet_hfe20aad3__1.o Vtb___024root__DepSet_hfe20aad3__2.o Vtb___024root__DepSet_hfe20aad3__3.o Vtb___024root__DepSet_hfe20aad3__4.o Vtb___024root__DepSet_hfe20aad3__5.o Vtb___024root__DepSet_hfe20aad3__6.o Vtb___024root__DepSet_hfe20aad3__7.o Vtb___024root__DepSet_ha183790c__0.o Vtb__main.o Vtb__ConstPool_0.o Vtb___024root__Slow.o Vtb___024root__DepSet_hfe20aad3__0__Slow.o Vtb___024root__DepSet_ha183790c__0__Slow.o Vtb__Syms.o\ng++     verilated.o verilated_timing.o verilated_threads.o Vtb__ALL.a    -pthread -lpthread -latomic   -o Vtb\nrm Vtb__ALL.verilator_deplist.tmp\nmake: Leaving directory '/tmp/mem-diff7/obj'\n",
+    "timed_out": false
+  },
+  "build_warning_policy": {
+    "actual": [
+      [
+        "WIDTHTRUNC",
+        "ms_mem_size"
+      ],
+      [
+        "WIDTHTRUNC",
+        "ms_mul_div_op"
+      ]
+    ],
+    "expected_golden_only": [
+      [
+        "WIDTHTRUNC",
+        "ms_mem_size"
+      ],
+      [
+        "WIDTHTRUNC",
+        "ms_mul_div_op"
+      ]
+    ],
+    "status": "pass"
+  },
+  "candidate_sha256": "37d0cba5ca2f8e901f77aaa26e56360e9205c4732f49ecd9c3189499f03e9bb1",
+  "compared_outputs": [
+    "ms_allowin",
+    "ms_to_ws_valid",
+    "ms_to_ws_bus",
+    "ms_to_ds_forward_bus",
+    "ms_to_ds_valid",
+    "tlb_inst_stall",
+    "ms_wr_tlbehi",
+    "ms_flush",
+    "data_uncache_en",
+    "tlb_excp_cancel_req",
+    "sc_cancel_req",
+    "data_addr_trans_en",
+    "dmw0_en",
+    "dmw1_en",
+    "cacop_op_mode_di"
+  ],
+  "comparison_phases_per_cycle": 3,
+  "cycles_requested": 8192,
+  "directed_scenarios": [
+    "reset_and_flush_priority",
+    "alu_and_mul_div_result_selection",
+    "load_alignment_and_sign_extension",
+    "load_response_buffer_under_writeback_backpressure",
+    "tlb_exception_and_address_translation",
+    "dmw_uncached_and_sc_cancel"
+  ],
+  "executed": 1,
+  "failed": 0,
+  "gate": "mem-stage-cycle-diff",
+  "generated_at": "2026-07-13T22:21:52+08:00",
+  "golden_sha256": "86592ed33afd5dde9e944860c7088ad70e5d62ee22f72999e336a64902d881a7",
+  "negative_control": {
+    "command": {
+      "argv": [
+        "/tmp/mem-diff7/obj/Vtb",
+        "+negative-control"
+      ],
+      "elapsed_seconds": 0.629,
+      "returncode": -6,
+      "stdout": "MEM_MISMATCH cycle=3 phase=1 g_valid=1 c_valid=1 g_allow=1 c_allow=1 g_pc=1c001234 c_pc=1c001234\nMEM_OUTPUT_MISMATCH output=ms_to_ws_valid g=1 c=0\n[35] %Fatal: tb.sv:88: Assertion failed in TOP.tb.check\n%Error: /tmp/mem-diff7/tb.sv:88: Verilog $stop\nAborting...\n",
+      "timed_out": false
+    },
+    "first_mismatch": {
+      "candidate_pc": "1c001234",
+      "cycle": 3,
+      "differing_outputs": [
+        "ms_to_ws_valid"
+      ],
+      "golden_pc": "1c001234",
+      "phase": 1
+    },
+    "mutation": "candidate ms_to_ws_valid forced low while asserted",
+    "status": "pass"
+  },
+  "normal": {
+    "argv": [
+      "/tmp/mem-diff7/obj/Vtb"
+    ],
+    "elapsed_seconds": 0.011,
+    "first_mismatch": null,
+    "returncode": 0,
+    "stdout": "MEM_DIFF_PASS random_cycles=8192 total_cycles=8248\n- /tmp/mem-diff7/tb.sv:140: Verilog $finish\n",
+    "timed_out": false
+  },
+  "passed": 1,
+  "schema_version": 1,
+  "seed": "0x0158aa8d",
+  "simulation_compile_waivers": [
+    "DECLFILENAME: combined golden/candidate one-file modules",
+    "UNUSEDSIGNAL: golden oracle and testbench scaffolding only; candidate standalone lint is a separate required gate"
+  ],
+  "skipped": 0,
+  "status": "pass"
+}

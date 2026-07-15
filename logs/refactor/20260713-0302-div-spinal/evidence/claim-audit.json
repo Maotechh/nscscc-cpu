@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "iteration_id": "20260713-0302-div-spinal",
+  "reviewed_head": "9e78538c0dec08fa9fcace49e068b8bc9d4d5af1",
+  "status": "pass_with_open_gate_failures",
+  "counts": {"planned":24,"executed":24,"passed":24,"failed":0,"skipped":0},
+  "checks": [
+    {"id":"head","status":"pass","evidence":"所有最终本地摘要绑定 9e78538 或其 committed RTL hash"},
+    {"id":"candidate-rtl","status":"pass","evidence":"4747 bytes, SHA256 0c022398...0f349"},
+    {"id":"golden-rtl","status":"pass","evidence":"2642 bytes, SHA256 7e499f4c...66dc6"},
+    {"id":"scala","status":"pass","evidence":"4/4 tasks, 0 failed, 0 skipped；不把既有 ScalaTest 数量表述为 div 测试数"},
+    {"id":"generate","status":"pass","evidence":"2 次生成字节一致且与 committed RTL 一致"},
+    {"id":"ports","status":"pass","evidence":"精确 9 端口，无隐式 clk/reset"},
+    {"id":"lint","status":"pass","evidence":"0 warning；明确记录仅模块名 div->div_lint 的私有 lint normalization"},
+    {"id":"yosys","status":"pass","evidence":"hierarchy/check 使用未改名 committed RTL"},
+    {"id":"golden-diff","status":"pass","evidence":"1 次正向 runner 加 3 个负控，4/4"},
+    {"id":"candidate-diff","status":"pass","evidence":"1 次 runner，4136 transactions / 145131 edges / 0 mismatch"},
+    {"id":"driver","status":"pass","evidence":"两侧 driver SHA256 7fd34bfa...a28ce0"},
+    {"id":"vectors","status":"pass","evidence":"两侧 vector SHA256 754ee2e0...99ead"},
+    {"id":"formal","status":"pass","evidence":"3/3；仅 2-state unbounded protocol，arithmetic/equivalence=false"},
+    {"id":"vivado-dcp","status":"pass","evidence":"两侧 DCP 存在且哈希已记录"},
+    {"id":"vivado-findings","status":"pass","evidence":"WNS/TNS、DRC、methodology 与 Synth 8-7080 均按 fail 记录"},
+    {"id":"vivado-scope","status":"pass","evidence":"只声称 standalone leaf synthesis，不声称 implementation/bitstream/Fmax"},
+    {"id":"chiplab-doctor","status":"pass","evidence":"锁定 a2e11b3、aa3bde1 与 source HEAD 9e78538"},
+    {"id":"smoke-execution","status":"pass","evidence":"locked/mixed 各执行 1、失败 1、skip 0"},
+    {"id":"smoke-mismatch","status":"pass","evidence":"两侧首错 0x1c07c79c，172552 instructions / 602903 clocks"},
+    {"id":"smoke-trace","status":"pass","evidence":"两侧 trace SHA256 8efa7942...38acb"},
+    {"id":"smoke-warnings","status":"pass","evidence":"locked 644；mixed 641，均按 warning gate fail"},
+    {"id":"identity","status":"pass","evidence":"identity-comparison status=fail，未包装成 PASS"},
+    {"id":"claude","status":"pass","evidence":"模型启动前缺少 API key，原样记为 unavailable"},
+    {"id":"release-scope","status":"pass","evidence":"58/81、multi-seed、perf、U-Boot/Linux、implementation/bitstream/board 均明确未执行"}
+  ],
+  "allowed_claims": [
+    "在锁定的合法 held-request 合同窗口和固定 4136 个事务上逐拍一致",
+    "通过精确端口、静态 RTL 和有限协议形式检查",
+    "单个已知失败 func_lab19 上没有产生更早的选定可观察分歧",
+    "Vivado 2023.2 完成 standalone leaf synthesis 并获得原始资源观测"
+  ],
+  "forbidden_claims": [
+    "完整、穷举或顺序形式等价",
+    "所有 invalid window 的所有输出等价",
+    "official func、整机集成、Vivado timing 或 FPGA PASS",
+    "Fmax、整机资源或性能改善",
+    "identity comparison PASS",
+    "divider 或 CPU 已完成重构"
+  ],
+  "maximum_boundary_state": "differential_pass"
+}

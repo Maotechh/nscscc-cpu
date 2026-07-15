@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "iteration_id": "20260714-2328-perf-counter",
+  "status": "unavailable",
+  "job_id": "unavailable-20260715-perf-counter",
+  "raw_sha256": "7cd84a701d00fc8af79bc1ea0135ad4a2252ed5fc66386d9462aaa666ca84fc0",
+  "provider": "claude-review-mcp",
+  "model": null,
+  "reviewed_head_sha": null,
+  "provenance": {"source": "claude-review-mcp", "raw_path": "reviews/claude-raw.md", "raw_sha256": "7cd84a701d00fc8af79bc1ea0135ad4a2252ed5fc66386d9462aaa666ca84fc0", "job_id": "unavailable-20260715-perf-counter", "provider": "claude-review-mcp", "model": null, "reviewed_head_sha": null},
+  "open_blocking_count": 1,
+  "fresh_against_head": false,
+  "allow_ready": false,
+  "allow_status_promotion": false,
+  "error": "Required provider environment variable is not set: GEEKPIE_CLAUDE_API_KEY",
+  "reviewer": "claude",
+  "claims": [
+    {"claim": "perf_counter active logic migrated", "decision": "accepted"},
+    {"claim": "official func smoke passes", "decision": "open"},
+    {"claim": "whole core release ready", "decision": "open"}
+  ]
+}

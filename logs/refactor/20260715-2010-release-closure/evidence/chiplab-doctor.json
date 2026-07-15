@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "gate": "chiplab-doctor",
+  "status": "pass",
+  "source_head": "088d8d4cc9038488a03c27dcbf3a0751b1f76ad9",
+  "locked_reference": {
+    "chiplab_commit": "a2e11b38bc5c85abb4408a8e0c0f5ce903c7ba31",
+    "mycpu_gitlink": "aa3bde1f3e720e71c2c78d6b81930d797b810149",
+    "verilator": "5.020",
+    "yosys": "0.33",
+    "jdk": "17.0.19",
+    "sbt": "1.10.11"
+  },
+  "checks": {
+    "planned": 44,
+    "executed": 44,
+    "passed": 44,
+    "failed": 0,
+    "skipped": 0
+  },
+  "raw_artifact": {
+    "path": "/tmp/nscscc-warning-func81-evidence-088d8d4/reports/chiplab-doctor.json",
+    "size": 16175,
+    "sha256": "b90d0dc066630c8981b8ede8dcdbb820831228fb8b440d338ece092cfd284928"
+  }
+}

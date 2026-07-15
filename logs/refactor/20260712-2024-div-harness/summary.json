@@ -1,0 +1,86 @@
+{
+  "schema_version": 1,
+  "iteration_id": "20260712-2024-div-harness",
+  "status": "draft",
+  "branch": "refactor/20260712-2024-div-harness",
+  "base_sha": "de6e0845660296d2d3e22a447d31d345afce4333",
+  "head_sha": "03c7fb6fec46107ae44183ed3262198641b333bb",
+  "review_target_sha": "03c7fb6fec46107ae44183ed3262198641b333bb",
+  "implementation_commit": "03c7fb6fec46107ae44183ed3262198641b333bb",
+  "implementation_tested_sha": "03c7fb6fec46107ae44183ed3262198641b333bb",
+  "selected_boundary": "div_golden_harness",
+  "required_gates": [
+    "doctor",
+    "automation_tests",
+    "contract_schema",
+    "golden_port_check",
+    "golden_cycle_self_check",
+    "negative_controls",
+    "independent_claim_review",
+    "claim_review"
+  ],
+  "gates": {
+    "doctor": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0},
+    "automation_tests": {"status":"pass","planned":233,"executed":233,"passed":233,"failed":0,"skipped":0},
+    "contract_schema": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0},
+    "golden_port_check": {"status":"pass","planned":9,"executed":9,"passed":9,"failed":0,"skipped":0},
+    "golden_cycle_self_check": {"status":"pass","planned":4136,"executed":4136,"passed":4136,"failed":0,"skipped":0},
+    "negative_controls": {"status":"pass","planned":3,"executed":3,"passed":3,"failed":0,"skipped":0},
+    "independent_claim_review": {"status":"pass","planned":8,"executed":8,"passed":8,"failed":0,"skipped":0},
+    "claim_review": {"status":"unavailable","planned":1,"executed":1,"passed":0,"failed":1,"skipped":0},
+    "artifact_claim_audit": {"status":"pass","planned":20,"executed":20,"passed":20,"failed":0,"skipped":0}
+  },
+  "results": {
+    "golden_transactions": 4136,
+    "directed": 40,
+    "random": 4096,
+    "signed": 2041,
+    "unsigned": 2095,
+    "divide_by_zero": 18,
+    "complete_pulses": 4136,
+    "e33_quotient_checks": 4136,
+    "e33_historical_remainder_checks": 4136,
+    "e34_result_checks": 4136,
+    "reset_checks": 54,
+    "abort_checks": 16,
+    "late_abort_checks": 1,
+    "held_high_cleanup_checks": 1,
+    "held_high_restart_checks": 1,
+    "mismatches": 0,
+    "warnings": {
+      "golden_source_bound": 3,
+      "candidate_waivers": 0
+    }
+  },
+  "claims": [
+    {
+      "id": "locked_golden_div_harness",
+      "status": "supported_with_claude_unavailable",
+      "text": "锁定 a158aa8 的 div.v 在合法 held-request 合同下通过 4136 个逐周期事务；E33 通知窗口、E34 最终结果窗口及 rearm/abort 均有可执行证据。",
+      "evidence": [
+        "logs/refactor/20260712-2024-div-harness/evidence/contract.json",
+        "logs/refactor/20260712-2024-div-harness/evidence/golden-diff.json",
+        "logs/refactor/20260712-2024-div-harness/evidence/claim-audit.json",
+        "logs/refactor/20260712-2024-div-harness/reviews/local-independent-review.md"
+      ]
+    },
+    {
+      "id": "spinal_or_cpu_equivalence",
+      "status": "not_claimed",
+      "text": "本迭代未实现或集成 Spinal div，不支持 whole-CPU、功能、性能、Linux 或 FPGA claim。",
+      "evidence": ["docs/contracts/div.md"]
+    }
+  ],
+  "blocked_by": [
+    "claude_bridge_missing_GEEKPIE_CLAUDE_API_KEY"
+  ],
+  "pr": {
+    "status": "awaiting_pr",
+    "url": null,
+    "draft_only": true,
+    "auto_merge": false,
+    "created": false,
+    "branch_pushed": true
+  },
+  "updated_at": "2026-07-12T23:05:30+08:00"
+}

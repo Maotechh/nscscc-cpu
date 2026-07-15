@@ -1,0 +1,366 @@
+{
+  "candidate_locked": true,
+  "chiplab_commit": "a2e11b38bc5c85abb4408a8e0c0f5ce903c7ba31",
+  "chiplab_reference": "/opt/chiplab-reference",
+  "chiplab_tree": "6cce2248de400bc94fc28c575ec3ec06ab30e1a0",
+  "doctor_generated_at": "2026-07-11T14:36:22+08:00",
+  "doctor_report": "/tmp/nscscc-baseline-final-45043bd/reports/chiplab-doctor.json",
+  "doctor_report_sha256": "f42905de8f79071e535e355a33fc1df1ea3b5f3e64dfccf288557be7b7e8546c",
+  "dut_source": "candidate",
+  "evaluator_sha256": "de2c6e0b1aad5c5b8e2091cad62e1a48cb3e2a61e9b34528a4907c5aaa6a33cd",
+  "files": [
+    {
+      "overlay_path": "IP/myCPU/addr_trans.v",
+      "overlay_sha256": "b25c7585ca410363cbbb25e6669687083687fed1a0641a91ff58b7837c371697",
+      "path": "addr_trans.v",
+      "sha256": "b25c7585ca410363cbbb25e6669687083687fed1a0641a91ff58b7837c371697",
+      "size": 8901,
+      "source": "a158aa8ab4d49cece1a0fe488d7ac7dc02bd8cf6:rtl/addr_trans.v"
+    },
+    {
+      "overlay_path": "IP/myCPU/alu.v",
+      "overlay_sha256": "5d73aa7f57367311f5d6f6fad5f750e5f97bc2bd1e52c7d0b9e543596ffc7d32",
+      "path": "alu.v",
+      "sha256": "5d73aa7f57367311f5d6f6fad5f750e5f97bc2bd1e52c7d0b9e543596ffc7d32",
+      "size": 3066,
+      "source": "a158aa8ab4d49cece1a0fe488d7ac7dc02bd8cf6:rtl/alu.v"
+    },
+    {
+      "overlay_path": "IP/myCPU/axi_bridge.v",
+      "overlay_sha256": "07c30c8e5e99373ecb988b2a5cc03e4e8cb7b6e22af26b1b37171a808b144f9e",
+      "path": "axi_bridge.v",
+      "sha256": "07c30c8e5e99373ecb988b2a5cc03e4e8cb7b6e22af26b1b37171a808b144f9e",
+      "size": 10106,
+      "source": "a158aa8ab4d49cece1a0fe488d7ac7dc02bd8cf6:rtl/axi_bridge.v"
+    },
+    {
+      "overlay_path": "IP/myCPU/btb.v",
+      "overlay_sha256": "81b34945ad638d6211301aafe48cfd22344933ba9c66f56e7c0472d24bf47ae9",
+      "path": "btb.v",
+      "sha256": "81b34945ad638d6211301aafe48cfd22344933ba9c66f56e7c0472d24bf47ae9",
+      "size": 6976,
+      "source": "a158aa8ab4d49cece1a0fe488d7ac7dc02bd8cf6:rtl/btb.v"
+    },
+    {
+      "overlay_path": "IP/myCPU/csr.h",
+      "overlay_sha256": "11f5550b887a2b507a5b916340069d6d127848c66c761f07d0303c7cc201026d",
+      "path": "csr.h",
+      "sha256": "11f5550b887a2b507a5b916340069d6d127848c66c761f07d0303c7cc201026d",
+      "size": 1409,
+      "source": "a158aa8ab4d49cece1a0fe488d7ac7dc02bd8cf6:rtl/csr.h"
+    },
+    {
+      "overlay_path": "IP/myCPU/csr.v",
+      "overlay_sha256": "7349b5b83975b6da8efe69f42d8ee43d93312f7e13def4ed2f6c48a3a868c433",
+      "path": "csr.v",
+      "sha256": "7349b5b83975b6da8efe69f42d8ee43d93312f7e13def4ed2f6c48a3a868c433",
+      "size": 25307,
+      "source": "a158aa8ab4d49cece1a0fe488d7ac7dc02bd8cf6:rtl/csr.v"
+    },
+    {
+      "overlay_path": "IP/myCPU/dcache.v",
+      "overlay_sha256": "8c9c968723710ca741bb5253cc0a1f29c9c6f9f8b3e5e2b14b69f11483e60e97",
+      "path": "dcache.v",
+      "sha256": "8c9c968723710ca741bb5253cc0a1f29c9c6f9f8b3e5e2b14b69f11483e60e97",
+      "size": 23305,
+      "source": "a158aa8ab4d49cece1a0fe488d7ac7dc02bd8cf6:rtl/dcache.v"
+    },
+    {
+      "overlay_path": "IP/myCPU/div.v",
+      "overlay_sha256": "7e499f4c43c92154d1d4e21be2f269ac140b4f2b2d944677c71f6f4213b66dc6",
+      "path": "div.v",
+      "sha256": "7e499f4c43c92154d1d4e21be2f269ac140b4f2b2d944677c71f6f4213b66dc6",
+      "size": 2642,
+      "source": "a158aa8ab4d49cece1a0fe488d7ac7dc02bd8cf6:rtl/div.v"
+    },
+    {
+      "overlay_path": "IP/myCPU/exe_stage.v",
+      "overlay_sha256": "cab20e05205c6bddff19f01fd15ad4cb671144debf0836982b45b334c686f526",
+      "path": "exe_stage.v",
+      "sha256": "cab20e05205c6bddff19f01fd15ad4cb671144debf0836982b45b334c686f526",
+      "size": 16242,
+      "source": "a158aa8ab4d49cece1a0fe488d7ac7dc02bd8cf6:rtl/exe_stage.v"
+    },
+    {
+      "overlay_path": "IP/myCPU/icache.v",
+      "overlay_sha256": "85ba1acc69616dd8b19dae1578fc7e002c83fd435f90227f54068e4fa492675b",
+      "path": "icache.v",
+      "sha256": "85ba1acc69616dd8b19dae1578fc7e002c83fd435f90227f54068e4fa492675b",
+      "size": 14887,
+      "source": "a158aa8ab4d49cece1a0fe488d7ac7dc02bd8cf6:rtl/icache.v"
+    },
+    {
+      "overlay_path": "IP/myCPU/id_stage.v",
+      "overlay_sha256": "dcd896a12fda42faff9f7c1bcd43de3bbd7bb181be688b0cef21dded5e05d807",
+      "path": "id_stage.v",
+      "sha256": "dcd896a12fda42faff9f7c1bcd43de3bbd7bb181be688b0cef21dded5e05d807",
+      "size": 38974,
+      "source": "a158aa8ab4d49cece1a0fe488d7ac7dc02bd8cf6:rtl/id_stage.v"
+    },
+    {
+      "overlay_path": "IP/myCPU/if_stage.v",
+      "overlay_sha256": "9fcc66200e549825c89737b420c68e97a22af1082e370536ad67e3d72e035547",
+      "path": "if_stage.v",
+      "sha256": "9fcc66200e549825c89737b420c68e97a22af1082e370536ad67e3d72e035547",
+      "size": 12929,
+      "source": "a158aa8ab4d49cece1a0fe488d7ac7dc02bd8cf6:rtl/if_stage.v"
+    },
+    {
+      "overlay_path": "IP/myCPU/lacc_core.v",
+      "overlay_sha256": "0b17abbd83cbbf088993dcb30a38981e99d600ebaeaa5c566ad4eaff75ac97b5",
+      "path": "lacc_core.v",
+      "sha256": "0b17abbd83cbbf088993dcb30a38981e99d600ebaeaa5c566ad4eaff75ac97b5",
+      "size": 1707,
+      "source": "a158aa8ab4d49cece1a0fe488d7ac7dc02bd8cf6:rtl/lacc_core.v"
+    },
+    {
+      "overlay_path": "IP/myCPU/lacc_demo.v",
+      "overlay_sha256": "8cae09cc7f0acb0ea5cc24352704d80baf116e29f4ae372ca9eac6b63bac2ea0",
+      "path": "lacc_demo.v",
+      "sha256": "8cae09cc7f0acb0ea5cc24352704d80baf116e29f4ae372ca9eac6b63bac2ea0",
+      "size": 6081,
+      "source": "a158aa8ab4d49cece1a0fe488d7ac7dc02bd8cf6:rtl/lacc_demo.v"
+    },
+    {
+      "overlay_path": "IP/myCPU/mem_stage.v",
+      "overlay_sha256": "86592ed33afd5dde9e944860c7088ad70e5d62ee22f72999e336a64902d881a7",
+      "path": "mem_stage.v",
+      "sha256": "86592ed33afd5dde9e944860c7088ad70e5d62ee22f72999e336a64902d881a7",
+      "size": 13988,
+      "source": "a158aa8ab4d49cece1a0fe488d7ac7dc02bd8cf6:rtl/mem_stage.v"
+    },
+    {
+      "overlay_path": "IP/myCPU/mul.v",
+      "overlay_sha256": "251d2bba3e659c294c9a004bbb2b542435fcfa0b0c1582cc1a7a3edca765a4c0",
+      "path": "mul.v",
+      "sha256": "251d2bba3e659c294c9a004bbb2b542435fcfa0b0c1582cc1a7a3edca765a4c0",
+      "size": 6045,
+      "source": "a158aa8ab4d49cece1a0fe488d7ac7dc02bd8cf6:rtl/mul.v"
+    },
+    {
+      "overlay_path": "IP/myCPU/mycpu_top.v",
+      "overlay_sha256": "ff286f559dbc9131349c9fb8c842110569d231b6a34e76ded172c403d8f90afa",
+      "path": "mycpu_top.v",
+      "sha256": "ff286f559dbc9131349c9fb8c842110569d231b6a34e76ded172c403d8f90afa",
+      "size": 46274,
+      "source": "a158aa8ab4d49cece1a0fe488d7ac7dc02bd8cf6:rtl/mycpu_top.v"
+    },
+    {
+      "overlay_path": "IP/myCPU/perf_counter.v",
+      "overlay_sha256": "a2f8f337422097699b91d217afb1eb896fa1aa02a7fdd1ed829c183de00935b6",
+      "path": "perf_counter.v",
+      "sha256": "a2f8f337422097699b91d217afb1eb896fa1aa02a7fdd1ed829c183de00935b6",
+      "size": 1623,
+      "source": "a158aa8ab4d49cece1a0fe488d7ac7dc02bd8cf6:rtl/perf_counter.v"
+    },
+    {
+      "overlay_path": "IP/myCPU/regfile.v",
+      "overlay_sha256": "e98d043d5166f8c2baf33692e74e3e2f203c8a80a3a2fae6b0f913ffb45d1203",
+      "path": "regfile.v",
+      "sha256": "e98d043d5166f8c2baf33692e74e3e2f203c8a80a3a2fae6b0f913ffb45d1203",
+      "size": 872,
+      "source": "a158aa8ab4d49cece1a0fe488d7ac7dc02bd8cf6:rtl/regfile.v"
+    },
+    {
+      "overlay_path": "IP/myCPU/tlb_entry.v",
+      "overlay_sha256": "a3e3508a0c755375336ba6db392f9038e1d793042fc21b7cd088fde9febcba1f",
+      "path": "tlb_entry.v",
+      "sha256": "a3e3508a0c755375336ba6db392f9038e1d793042fc21b7cd088fde9febcba1f",
+      "size": 9268,
+      "source": "a158aa8ab4d49cece1a0fe488d7ac7dc02bd8cf6:rtl/tlb_entry.v"
+    },
+    {
+      "overlay_path": "IP/myCPU/tools.v",
+      "overlay_sha256": "0160c1b8a80f09670a0cc1942b72b44350a4d79d1866fdaa5eb4ea8fa77e9bef",
+      "path": "tools.v",
+      "sha256": "0160c1b8a80f09670a0cc1942b72b44350a4d79d1866fdaa5eb4ea8fa77e9bef",
+      "size": 4758,
+      "source": "a158aa8ab4d49cece1a0fe488d7ac7dc02bd8cf6:rtl/tools.v"
+    },
+    {
+      "overlay_path": "IP/myCPU/wb_stage.v",
+      "overlay_sha256": "8a6f6cb282d152e4b43673397b8c00f598e3d116589e5797fb6feaadbc032a09",
+      "path": "wb_stage.v",
+      "sha256": "8a6f6cb282d152e4b43673397b8c00f598e3d116589e5797fb6feaadbc032a09",
+      "size": 12315,
+      "source": "a158aa8ab4d49cece1a0fe488d7ac7dc02bd8cf6:rtl/wb_stage.v"
+    }
+  ],
+  "gate_eligible": true,
+  "generated_at": "2026-07-11T14:36:34+08:00",
+  "golden_candidate_commit": "a158aa8ab4d49cece1a0fe488d7ac7dc02bd8cf6",
+  "golden_export_manifest_sha256": "39a5456412ba11964fa0dc38955a5dfd5b98b20184f72d982a40366288743cfb",
+  "golden_files_lock_sha256": "da1bc6d450c1977a8bc491c9ac10887c30f91253aa75d367c1ae4a250ac1c8db",
+  "iteration_id": "20260710-2026-baseline",
+  "manifest_sha256": "743dd7e58d77e456cfe664d80c2e6614ab426f72bfecd9088ff18d702afa2f20",
+  "mode": "baseline",
+  "mycpu_reference_commit": "aa3bde1f3e720e71c2c78d6b81930d797b810149",
+  "official_workspace_fingerprint": {
+    "entry_count": 1536,
+    "sha256": "46ac829c70bc1898df34c9284c41f8f3e4e3ae379d0ae30df2d5514befa37315"
+  },
+  "preserved_official_files": [
+    "IP/myCPU/LICENSE"
+  ],
+  "removed_stale_verilog": [],
+  "schema_version": 1,
+  "support_files": [
+    {
+      "path": "IP/myCPU/mycpu.h",
+      "reason": "a158aa8 omitted this included header; the chiplab gitlink header lacks LACC definitions",
+      "sha256": "3597a0d64a955d4e4191e2590b46fe449d3ff2ed753f6f9964292ce023c82eb8",
+      "source": "f89c604845d8092d0efe1cc700ccedee748d7a0b:mycpu.h"
+    },
+    {
+      "path": "IP/myCPU/LICENSE",
+      "reason": "preserved official Mulan PSL v2 license",
+      "sha256": "6326ae60dd78c85b1f2f6ff308ef1615ff939323270d838e8ebab20f5de1a8c5",
+      "size": 9719,
+      "source": "aa3bde1f3e720e71c2c78d6b81930d797b810149:LICENSE"
+    }
+  ],
+  "tool_fingerprints": [
+    {
+      "actual_sha256": "f29812336f8f0cedfd55a56f834ec9a88178d3bfb31fd67e105342aa8ed2ef7c",
+      "expected_sha256": "f29812336f8f0cedfd55a56f834ec9a88178d3bfb31fd67e105342aa8ed2ef7c",
+      "manifest_key": "gcc_binary_sha256",
+      "name": "gcc",
+      "path": "/opt/chiplab-tools/root/loongson-gnu-toolchain-8.3-x86_64-loongarch32r-linux-gnusf-v2.0/bin/loongarch32r-linux-gnusf-gcc",
+      "size": 1813392
+    },
+    {
+      "actual_sha256": "fbdb9c0a2fc8038b592636b012f578a9e87b5c3264a8ab2f12a08b64a7e09409",
+      "expected_sha256": "fbdb9c0a2fc8038b592636b012f578a9e87b5c3264a8ab2f12a08b64a7e09409",
+      "manifest_key": "as_binary_sha256",
+      "name": "as",
+      "path": "/opt/chiplab-tools/root/loongson-gnu-toolchain-8.3-x86_64-loongarch32r-linux-gnusf-v2.0/bin/loongarch32r-linux-gnusf-as",
+      "size": 2101520
+    },
+    {
+      "actual_sha256": "c5b83d2ef6761d0ffffcfe7bf71145c8abcc2eae185812dd2b23113df8a50a35",
+      "expected_sha256": "c5b83d2ef6761d0ffffcfe7bf71145c8abcc2eae185812dd2b23113df8a50a35",
+      "manifest_key": "ld_binary_sha256",
+      "name": "ld",
+      "path": "/opt/chiplab-tools/root/loongson-gnu-toolchain-8.3-x86_64-loongarch32r-linux-gnusf-v2.0/bin/loongarch32r-linux-gnusf-ld",
+      "size": 2310224
+    },
+    {
+      "actual_sha256": "a7379e4bfb5dff237d59f1606aeac04cb8a1b82697cb89b8efbb69b237775b8c",
+      "expected_sha256": "a7379e4bfb5dff237d59f1606aeac04cb8a1b82697cb89b8efbb69b237775b8c",
+      "manifest_key": "gcc_cc1_sha256",
+      "name": "gcc_cc1",
+      "path": "/opt/chiplab-tools/root/loongson-gnu-toolchain-8.3-x86_64-loongarch32r-linux-gnusf-v2.0/libexec/gcc/loongarch32r-linux-gnusf/8.3.0/cc1",
+      "size": 17921200
+    },
+    {
+      "actual_sha256": "ff8603a2b7e1e225f71d95df3e31d47f203709842f571c07a4d348d08710c961",
+      "expected_sha256": "ff8603a2b7e1e225f71d95df3e31d47f203709842f571c07a4d348d08710c961",
+      "manifest_key": "gcc_collect2_sha256",
+      "name": "gcc_collect2",
+      "path": "/opt/chiplab-tools/root/loongson-gnu-toolchain-8.3-x86_64-loongarch32r-linux-gnusf-v2.0/libexec/gcc/loongarch32r-linux-gnusf/8.3.0/collect2",
+      "size": 1396208
+    },
+    {
+      "actual_sha256": "3fa8ddd5c1b11d378caade5a6ab2b428c669c14d0925e2c79e155a767a995a89",
+      "expected_sha256": "3fa8ddd5c1b11d378caade5a6ab2b428c669c14d0925e2c79e155a767a995a89",
+      "manifest_key": "nemu_binary_sha256",
+      "name": "nemu",
+      "path": "/opt/chiplab-tools/root/nemu/la32r-nemu-interpreter-so",
+      "size": 74280
+    },
+    {
+      "actual_sha256": "2a601edbbca47f45cacc860b6314072e1c5738ea05dcc1b58f89a65fd743f0c5",
+      "expected_sha256": "2a601edbbca47f45cacc860b6314072e1c5738ea05dcc1b58f89a65fd743f0c5",
+      "manifest_key": "picolibc_libc_sha256",
+      "name": "picolibc",
+      "path": "/opt/chiplab-tools/root/picolibc/lib/libc.a",
+      "size": 13875076
+    },
+    {
+      "actual_sha256": "a21bba8032e132ca447261415b6f13ac71ebf53f94a2369c5921f51a00a06758",
+      "expected_sha256": "a21bba8032e132ca447261415b6f13ac71ebf53f94a2369c5921f51a00a06758",
+      "manifest_key": "qemu_binary_sha256",
+      "name": "qemu",
+      "path": "/opt/chiplab-tools/root/la32r-QEMU-x86_64-ubuntu-22.04/qemu-system-loongarch32",
+      "size": 9306792
+    },
+    {
+      "actual_sha256": "b9732e3e9673acf5e7c8e604dd50f7d2ca719c91b47c33f4af42fdaf1dedaf02",
+      "expected_sha256": "b9732e3e9673acf5e7c8e604dd50f7d2ca719c91b47c33f4af42fdaf1dedaf02",
+      "manifest_key": "sbt_script_sha256",
+      "name": "sbt",
+      "path": "/opt/chiplab-tools/root/sbt-1.10.11/bin/sbt",
+      "size": 29854
+    },
+    {
+      "actual_sha256": "e988d533a020e5b60ec22c3b5df4cd3e3df465f4fdc3951c63036e21483978e4",
+      "expected_sha256": "e988d533a020e5b60ec22c3b5df4cd3e3df465f4fdc3951c63036e21483978e4",
+      "manifest_key": "sbt_launch_jar_sha256",
+      "name": "sbt_launch_jar",
+      "path": "/opt/chiplab-tools/root/sbt-1.10.11/bin/sbt-launch.jar",
+      "size": 3847513
+    },
+    {
+      "actual_sha256": "4c6292ab82e57b7f34ab26dbae86ba9c494bacfb088b6ff34be93c553d1301b1",
+      "expected_sha256": "4c6292ab82e57b7f34ab26dbae86ba9c494bacfb088b6ff34be93c553d1301b1",
+      "manifest_key": "verilator_binary_sha256",
+      "name": "verilator",
+      "path": "/usr/bin/verilator",
+      "size": 23493
+    },
+    {
+      "actual_sha256": "25f33046f0055a6982c67cdc55081685a844abb50d044cfda087bd418db9be6c",
+      "expected_sha256": "25f33046f0055a6982c67cdc55081685a844abb50d044cfda087bd418db9be6c",
+      "manifest_key": "verilator_engine_sha256",
+      "name": "verilator_engine",
+      "path": "/usr/bin/verilator_bin",
+      "size": 10993608
+    },
+    {
+      "actual_sha256": "b784038c3cf821588ff4576653b540355889c0621bc258d1b349c29a63836c35",
+      "expected_sha256": "b784038c3cf821588ff4576653b540355889c0621bc258d1b349c29a63836c35",
+      "manifest_key": "verilator_runtime_sha256",
+      "name": "verilator_runtime",
+      "path": "/usr/share/verilator/include/verilated.cpp",
+      "size": 131544
+    },
+    {
+      "actual_sha256": "88c0a12bb814a1a8716b1ae10b482e35d3005ed558e1f5f626b3dc983ea3abd0",
+      "expected_sha256": "88c0a12bb814a1a8716b1ae10b482e35d3005ed558e1f5f626b3dc983ea3abd0",
+      "manifest_key": "yosys_binary_sha256",
+      "name": "yosys",
+      "path": "/usr/bin/yosys",
+      "size": 8174408
+    },
+    {
+      "actual_sha256": "c0a86c03d2acbe2f389d5198142309f8e61db0c498920893977a494c4e9fd69b",
+      "expected_sha256": "c0a86c03d2acbe2f389d5198142309f8e61db0c498920893977a494c4e9fd69b",
+      "manifest_key": "java_binary_sha256",
+      "name": "java",
+      "path": "/usr/lib/jvm/java-17-openjdk-amd64/bin/java",
+      "size": 14464
+    },
+    {
+      "actual_sha256": "1643dacd9feaedc58f3cc581e4d22577dfe25c09b10282936186ccf0f2e61118",
+      "expected_sha256": "1643dacd9feaedc58f3cc581e4d22577dfe25c09b10282936186ccf0f2e61118",
+      "manifest_key": "python_binary_sha256",
+      "name": "python",
+      "path": "/usr/bin/python3.12",
+      "size": 8020928
+    },
+    {
+      "actual_sha256": "2d9de349be2aaa70adf53f78a88b8ca9bff70e910795655022808b4f61cbdc15",
+      "expected_sha256": "2d9de349be2aaa70adf53f78a88b8ca9bff70e910795655022808b4f61cbdc15",
+      "manifest_key": "jdk_modules_sha256",
+      "name": "jdk_modules",
+      "path": "/usr/lib/jvm/java-17-openjdk-amd64/lib/modules",
+      "size": 128880903
+    }
+  ],
+  "tool_links": {
+    "gcc": "/opt/chiplab-tools/root/loongson-gnu-toolchain-8.3-x86_64-loongarch32r-linux-gnusf-v2.0",
+    "nemu": "/opt/chiplab-tools/root/nemu",
+    "picolibc": "/opt/chiplab-tools/root/picolibc"
+  },
+  "work_filesystem": "ext2/ext3"
+}

@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "iteration_id": "20260715-2010-release-closure",
+  "status": "draft",
+  "branch": "refactor/20260715-2010-release-closure",
+  "base_sha": "56d74f4b92d85e6403689cbbe4f7b4b460e8f63a",
+  "head_sha": "63d590af5728bb5219f5b4053038eee729aecaf6",
+  "review_target_sha": "9a29409242bf29436bf553e584b87018fb3f6fa6",
+  "selected_boundary": "pure_spinal_release_closure",
+  "gates": {
+    "doctor": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0,"evidence":"logs/refactor/20260715-2010-release-closure/evidence/fpga-func58.json"},
+    "scala": {"status":"pass","planned":4,"executed":4,"passed":4,"failed":0,"skipped":0,"evidence":"logs/refactor/20260715-2010-release-closure/evidence/warning-closure.json","scala_tests":30},
+    "reproducible_generate": {"status":"pass","planned":2,"executed":2,"passed":2,"failed":0,"skipped":0,"evidence":"logs/refactor/20260715-2010-release-closure/evidence/warning-closure.json"},
+    "core_top_contract": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0,"evidence":"logs/refactor/20260715-2010-release-closure/evidence/warning-closure.json"},
+    "publish_consistency": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0,"evidence":"logs/refactor/20260715-2010-release-closure/evidence/warning-closure.json"},
+    "port_check": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0,"evidence":"logs/refactor/20260715-2010-release-closure/evidence/warning-closure.json"},
+    "rtl_lint": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0,"evidence":"logs/refactor/20260715-2010-release-closure/evidence/warning-closure.json","warning_count":0,"error_count":0,"skip_count":0,"policy":"strict-zero"},
+    "yosys": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0,"evidence":"logs/refactor/20260715-2010-release-closure/evidence/warning-closure.json"},
+    "candidate_closure": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0,"evidence":"logs/refactor/20260715-2010-release-closure/evidence/warning-closure.json"},
+    "repository_purity": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0,"evidence":"logs/refactor/20260715-2010-release-closure/evidence/warning-closure.json"},
+    "typed_axi": {"status":"pass","planned":10,"executed":10,"passed":10,"failed":0,"skipped":0,"evidence":"logs/refactor/20260715-2010-release-closure/evidence/warning-closure.json"},
+    "replacement_reachability": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0,"evidence":"logs/refactor/20260715-2010-release-closure/evidence/warning-closure.json"},
+    "automation_linux_clean_clone": {"status":"pass","planned":398,"executed":398,"passed":398,"failed":0,"skipped":0,"evidence":"logs/refactor/20260715-2010-release-closure/evidence/clean-linux-automation.json"},
+    "chiplab_doctor": {"status":"pass","planned":44,"executed":44,"passed":44,"failed":0,"skipped":0,"evidence":"logs/refactor/20260715-2010-release-closure/evidence/chiplab-doctor.json"},
+    "func58_functional": {"status":"pass","planned":58,"executed":58,"passed":58,"failed":0,"skipped":0,"evidence":"logs/refactor/20260715-2010-release-closure/evidence/func58.json"},
+    "func58_strict": {"status":"fail","planned":1,"executed":1,"passed":0,"failed":1,"skipped":0,"evidence":"logs/refactor/20260715-2010-release-closure/evidence/func58.json","dut_warnings":0,"official_environment_warnings":365},
+    "func81_functional": {"status":"pass","planned":81,"executed":81,"passed":81,"failed":0,"skipped":0,"evidence":"logs/refactor/20260715-2010-release-closure/evidence/func81.json"},
+    "func81_strict": {"status":"fail","planned":1,"executed":1,"passed":0,"failed":1,"skipped":0,"evidence":"logs/refactor/20260715-2010-release-closure/evidence/func81.json","dut_warnings":0,"official_environment_warnings":365},
+    "random_difftest": {"status":"unavailable","planned":1,"executed":0,"passed":0,"failed":0,"skipped":1,"reason":"the locked random_res directory contains zero cases"},
+    "perf20": {"status":"pending","planned":20,"executed":0,"passed":0,"failed":0,"skipped":20},
+    "system": {"status":"pending","planned":2,"executed":0,"passed":0,"failed":0,"skipped":2},
+    "vivado_fpga": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0,"evidence":"logs/refactor/20260715-2010-release-closure/evidence/fpga-func58.json"},
+    "claim_review": {"status":"unavailable","planned":1,"executed":1,"passed":0,"failed":1,"skipped":0,"evidence":"logs/refactor/20260715-2010-release-closure/reviews/claude-summary.json"},
+    "experiment_audit": {"status":"unavailable","planned":1,"executed":0,"passed":0,"failed":0,"skipped":1,"evidence":"logs/refactor/20260715-2010-release-closure/reviews/experiment-audit.json"}
+  },
+  "claims": [
+    {"claim":"the committed FPGA overlay contains only the Spinal-generated CPU RTL plus locked header and Xilinx SRAM IP","status":"supported","evidence":"evidence/warning-closure.json and evidence/fpga-func58.json"},
+    {"claim":"the active CPU hierarchy contains no historical CPU Verilog definition or instance","status":"supported","evidence":"evidence/warning-closure.json"},
+    {"claim":"locked Verilator 5.020 strict lint passes with zero warnings, errors, and skips","status":"supported","evidence":"evidence/warning-closure.json"},
+    {"claim":"func58 and func81 software checks pass with live DiffTest and no mismatch","status":"supported_as_diagnostic","evidence":"evidence/func58.json and evidence/func81.json"},
+    {"claim":"the strict official function wrappers pass","status":"unsupported","evidence":"the DUT has zero warnings, but each wrapper rejects 365 warnings from the official Verilator compile log"},
+    {"claim":"Vivado 2023.2 implementation meets timing and the locked func58 board job passes","status":"supported_for_one_func58_job","evidence":"evidence/fpga-func58.json"},
+    {"claim":"the refactor is fully release ready","status":"unsupported","evidence":"random, perf20, system, LACC matrix, and external claim review remain incomplete"}
+  ],
+  "blocked_by": [
+    "official_environment_warning_policy_failed",
+    "random_vectors_missing",
+    "perf20_and_system_pending",
+    "external_claim_review_unavailable",
+    "btb_32_vs_64_authority_unresolved",
+    "lacc_release_matrix_pending"
+  ],
+  "residual_risks": [
+    "the locked official Verilator compile log emits 365 environment warnings even though the DUT emits zero",
+    "one func58 hardware job does not prove the complete 58/81 suites or perf20 on hardware",
+    "the Vivado SoC build passes timing and hardware but still reports 45 DRC warnings and unconstrained external I/O delay checks",
+    "random, performance, and system gates remain incomplete",
+    "the active 32-entry predictor conflicts with the completion contract's historical 64-entry target"
+  ]
+}

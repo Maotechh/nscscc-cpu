@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "iteration_id": "20260715-1402-typed-memory",
+  "artifacts": [
+    {"path":"evidence/candidate-closure.json","sha256":"9428f4d1274e89b7b85111510285538b8bed4a92a456e1a6705031a4e9e3d11a","size":2232},
+    {"path":"evidence/generate.json","sha256":"98dd95a01ce6083e7de7332db05d22900e4475b658270fc8b454c10dfd11e368","size":110317},
+    {"path":"evidence/lint.json","sha256":"88de8d69d72ed52db9a826a96f9458ffb7b73e4f7b3c460dfa52ee40dfb4da41","size":28860},
+    {"path":"evidence/package.json","sha256":"5c2ad24804153d6dfcde0fed8c7580a5133d09991608849e03358147f0dd28ad","size":2167},
+    {"path":"evidence/port-check.json","sha256":"15d7fe24de4065c29534ba69cf81082a425036460d99688d4a47a3ea5aec1666","size":7905},
+    {"path":"evidence/publish-check.json","sha256":"b88e9419a9040d02eb87316dd26e941488d29026334c7b3689d48b30e7650b6f","size":2215},
+    {"path":"evidence/replacement-reachability.json","sha256":"2e617d4b25ee8be794e239d076713cb2e53da206fb3cea1a9a74631b7a6c9d94","size":4335},
+    {"path":"evidence/scala-check.json","sha256":"27ef93464c5a33cdb3e37e3f8b658049ac6ab32bb23fb37e24c315e38e4c7b17","size":410672},
+    {"path":"evidence/sequential-equivalence.json","sha256":"44c736839f93af58f5f426e3de7f7a1f496da81aad60696c4342e27d97eac6f3","size":1881},
+    {"path":"evidence/typed-bridge-contract.json","sha256":"6f97015176eb10548b58a5a48a7dd663c07eefd1259bfa822fc1684ac2a2b204","size":9255},
+    {"path":"evidence/yosys-check.json","sha256":"7733ad6aac983e9d13d83936e775340e62fe14de14e98996dd3a6d73ad1024a6","size":3131}
+  ],
+  "external_artifacts": [
+    {"path":"build/20260715-1402-typed-memory-generate/core_top/sequential-equivalence/yosys.log","sha256":"5cd0347fc5ee5d15be80fc3b078e8e15f9bd1b685afd28d58035c2d85487584d","size":12002847,"retention":"local ignored build artifact"},
+    {"path":"build/20260715-1402-typed-memory-generate/core_top/sequential-equivalence/yosys-struct.log","sha256":"94920f240417ca57095bcdc4871fe826ca0e4614fc5a03a69273f3e8f0f86a95","size":13726589,"retention":"local ignored build artifact"},
+    {"path":"build/20260715-1402-typed-memory-generate/core_top/lint/verilator.log","retention":"local ignored build artifact"}
+  ]
+}

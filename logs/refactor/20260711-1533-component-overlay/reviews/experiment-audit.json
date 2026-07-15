@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "date": "2026-07-12",
+  "auditor": "independent-read-only-codex-subagent",
+  "reviewed_source_head": "71a1995b7ca4dd922d1896e6b820e8029ff88575",
+  "overall_verdict": "warn",
+  "integrity_status": "warn",
+  "checks": {
+    "oracle_provenance": {"status":"pass","detail":"Locked chiplab/NEMU/a158aa8 plus committed byte-identical replacement; no model-derived oracle."},
+    "score_normalization": {"status":"pass","detail":"No normalized score is claimed."},
+    "result_existence": {"status":"pass","detail":"24/24 raw-artifact hashes and 18/18 sizes independently matched; publication chains matched."},
+    "dead_or_unexecuted": {"status":"warn","detail":"Independent rtl-static/Yosys was not executed; Windows automation has 8 skips."},
+    "scope": {"status":"warn","detail":"One official case; both locked and mixed fail."},
+    "evaluation_type": "simulation_only"
+  },
+  "claims": [
+    {"id":"C1","impact":"supported_with_narrow_scope"},
+    {"id":"C2","impact":"needs_qualifier"},
+    {"id":"CPU_PASS","impact":"unsupported"},
+    {"id":"RTL_EQUIVALENCE","impact":"unsupported"}
+  ]
+}

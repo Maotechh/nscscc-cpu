@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "date": "2026-07-13",
+  "auditor": "independent-read-only-codex-subagent",
+  "cross_model": false,
+  "overall_verdict": "pass_with_scope_warnings",
+  "integrity_status": "pass",
+  "phantom_results": false,
+  "number_mismatches": 0,
+  "path_corrections": 2,
+  "claims": [
+    {"id":"C1","impact":"supported_with_wrapper_only_qualifier"},
+    {"id":"C2","impact":"supported"},
+    {"id":"C3","impact":"observation_only"},
+    {"id":"C4","impact":"partial_strict_gate_fails"},
+    {"id":"C5","impact":"supported_negative_scope"}
+  ]
+}

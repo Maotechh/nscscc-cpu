@@ -1,0 +1,1 @@
+{"status":"pass","checks":{"scalafmt": "pass", "compile":"pass", "test_compile":"pass", "test":"pass"},"source_locator":"/tmp/mem-active-scala/scala-check/summary.json","source_sha256":"9463cd9d154e38ce70e6381a6e4e08328817aeb378f114acc220ce60084e8f1a","source_size":93470}

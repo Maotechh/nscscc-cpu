@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "retention": "committed summaries; raw Verilator/Vivado logs remain external artifacts",
+  "artifacts": [
+    {"path": "evidence/cycle-diff-normal.json", "sha256": "5db829b97eef10485485210ce069c167ebf84f8cb44a18aad18b598b6ee3441f"},
+    {"path": "evidence/cycle-diff-difftest.json", "sha256": "080b6dee1fc546ccdd825b9f2b6ec2acf971df27016b14b2edbef30f71dcc4b8"},
+    {"path": "evidence/cycle-diff-lacc.json", "sha256": "af09f4c942c0bbd571a10bf1d5e8d9c6b3bdc41fafff325024ede425b94bcf75"},
+    {"path": "evidence/cycle-diff-lacc-difftest.json", "sha256": "d35d32cd7aed25f78567aacff03acf2740d036f41a14db8f5ac4e22cdf48ef46"},
+    {"path": "evidence/scala.json", "sha256": "d4c90876ec6a25a0aa5e64083f1088c642f42d1893d1aab0ec0d5984ce66735a"}
+  ]
+}

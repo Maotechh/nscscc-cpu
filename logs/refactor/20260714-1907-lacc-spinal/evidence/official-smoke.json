@@ -1,0 +1,84 @@
+{
+  "schema_version": 1,
+  "iteration_id": "20260714-1907-lacc-spinal",
+  "source_head": "7364f89ab5caa4e95234fa938022bc356092e54e",
+  "source_branch": "refactor/20260714-1650-consolidated-spinal",
+  "status": "diagnostic",
+  "gate_result": "fail",
+  "gate_eligible": false,
+  "mode": "mixed_candidate",
+  "case": "func/func_lab19",
+  "locked_environment": {
+    "chiplab_commit": "a2e11b38bc5c85abb4408a8e0c0f5ce903c7ba31",
+    "chiplab_mycpu_gitlink": "aa3bde1f3e720e71c2c78d6b81930d797b810149",
+    "verilator": "5.020",
+    "yosys": "0.33",
+    "jdk": "17.0.19",
+    "python": "3.12.3",
+    "la32r_gcc": "8.3.0",
+    "doctor": "pass"
+  },
+  "overlay": {
+    "base_candidate": "a158aa8ab4d49cece1a0fe488d7ac7dc02bd8cf6",
+    "file_count": 22,
+    "replacement_count": 4,
+    "replacement_payload_source": "committed_git_blobs",
+    "selection_sha256": "04345345788e298f2717ee9ac9c9b8d41afbbd16be4fba97cbc59f99a5c5cac4",
+    "replacements": {
+      "rtl/mycpu_top.v": "07a2a2d9cfa2446dd3e4d77d66ff1e2d17b525871241bbf4bfb3bd583d125be1",
+      "rtl/div.v": "3cbd0370718c501cc2d01b47858ee4bf036c430fce4d85aced5b7224a04df9ac",
+      "rtl/lacc_core.v": "0e2ec81fa4859155816f6e58c4b783ab0de38cdc15837cef4c876aec0583c22b",
+      "rtl/lacc_demo.v": "d1c103f3117893a072af91203a2d7d203b2d09b0cd25ef72590a3150a2ab1d2f"
+    }
+  },
+  "commands": [
+    {"argv":["./configure.sh","--run","func/func_lab19"],"exit_code":0,"elapsed_seconds":0.287,"timed_out":false},
+    {"argv":["make","verilator","testbench","soft_compile"],"exit_code":0,"elapsed_seconds":117.665,"timed_out":false},
+    {"argv":["make","simulation_run_prog"],"exit_code":0,"elapsed_seconds":5.732,"timed_out":false}
+  ],
+  "parser": {
+    "status": "pass",
+    "instructions": 174069,
+    "clocks": 609803,
+    "first_mismatch": null,
+    "difftest_library_loaded": true,
+    "end_by_syscall": true,
+    "reached_test_end": true,
+    "good_trap": false
+  },
+  "warning_policy": {
+    "status": "fail",
+    "dut": 244,
+    "official_environment": 364,
+    "rule": "No warning is accepted without a file/line-specific reviewed waiver."
+  },
+  "comparison": {
+    "locked_a158_baseline": {
+      "status": "fail",
+      "instructions": 172552,
+      "clocks": 602903,
+      "first_mismatch_pc": "0x1c07c79c",
+      "expected_t0": "0x000006e2",
+      "actual_t0": "0x00000008",
+      "evidence": "logs/refactor/20260710-2026-baseline/evidence/rtl-smoke-summary.json"
+    },
+    "prior_default_lacc_off_eadf441": {
+      "parser_equal": true,
+      "trace_sha256_equal": true,
+      "trace_sha256": "80420ff3a497ae7a31cff4543a2fa1648a24253d69184b89268179184648c6fb",
+      "previous_evidence": "logs/refactor/20260714-1733-btb-spinal-full/evidence/rtl-smoke.json",
+      "previous_dut_warnings": 251,
+      "current_dut_warnings": 244,
+      "official_environment_warnings": 364
+    }
+  },
+  "artifacts": {
+    "doctor_report": {"path":"/tmp/nscscc-lacc-smoke-7364f89-evidence/reports/chiplab-doctor.json","sha256":"3a21e3ba29af92e3107efff434220895a4815224ad62a09d9b9b69e40d6d0e0c"},
+    "overlay_report": {"path":"/tmp/nscscc-lacc-smoke-7364f89-evidence/reports/iterations/20260714-2228-lacc-commit-smoke/chiplab-overlay.json","sha256":"686409c5b2804486bc6ea4a7567f9e01142177c6d24bb220316395405bd0c932"},
+    "overlay_manifest": {"path":"/tmp/nscscc-lacc-smoke-7364f89-evidence/reports/iterations/20260714-2228-lacc-commit-smoke/chiplab-overlay-manifest.json","sha256":"ebee3396af3833b7646c900eb02c3e68eb55c114eab3befd6d60fa25d92a2306"},
+    "smoke_report": {"path":"/tmp/nscscc-lacc-smoke-7364f89-evidence/reports/iterations/20260714-2228-lacc-commit-smoke/rtl-smoke.json","sha256":"b7618a9a206445db22b89c5ce6c6967eeb234e2bdfaae9ddf941c8012e3fe707"},
+    "compile_log": {"path":"/tmp/nscscc-lacc-smoke-7364f89-work/20260714-2228-lacc-commit-smoke/sims/verilator/run_prog/log/compile.log","sha256":"0634caafefe65fbbcd8f705e60a4e22affec346dd5faa16aac3a294fc691b1f5"},
+    "trace": {"path":"/tmp/nscscc-lacc-smoke-7364f89-work/20260714-2228-lacc-commit-smoke/sims/verilator/run_prog/log/func/func_lab19_log/simu_trace.txt","sha256":"80420ff3a497ae7a31cff4543a2fa1648a24253d69184b89268179184648c6fb"}
+  },
+  "claim_limit": "one default LACC-off diagnostic trace is unchanged from eadf441; official func PASS, LACC-on, 58/81, random, perf, system, FPGA and release claims are unsupported"
+}

@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "status": "pass",
+  "source_head": "8f18ff7b7a01fce0ab5b21f6a71680a3fb8540c3",
+  "profile": "legacy_lacc_off_difftest_on",
+  "selected_count": 13,
+  "id_stage": {"target":"rtl/id_stage.v","module":"id_stage","reachable":true,"source":"reference/component-replacements/difftest/id_stage.v","replacement_sha256":"0148176ca9cbc477aa07363e5d0fcc897881a01da6481b66095c61a94331853b"},
+  "source_report": "/tmp/id-active-final/replacement-reachability/reachability.json",
+  "source_sha256": "bd2011cc8365070a2f8208fd7a2263342a1b2321d1928f99c94c4d9862274888",
+  "source_size": 2149,
+  "claim_scope": "static locked-topology reachability only"
+}

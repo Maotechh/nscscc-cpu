@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "iteration_id": "20260714-1650-refactor-convergence",
+  "pre_merge_commit": "50bce6fd720e3d649fac8caa2a394f330aef844b",
+  "pre_merge_tree": "c06788dbf5d96baaa5ddd5311c6cead87d3ab4ec",
+  "merge_commit": "09cfa96a1b67e2f5764b1ab015e3e51d307558fa",
+  "merge_tree": "c06788dbf5d96baaa5ddd5311c6cead87d3ab4ec",
+  "git_diff_exit_code": 0,
+  "tree_identical": true,
+  "protected_later_fixes": [
+    "9709b10 DiffTest/writeback integration",
+    "2e5409a forwarding enable and stage occupancy separation",
+    "dacb0c9 and 31ac100 CACOP recovery",
+    "9ff8f59 and 944dd23 BTB accepted-request and invalid-payload fixes"
+  ],
+  "claim": "历史收敛 merge 没有改变任何 tracked file；它只增加 Git parent 关系。"
+}

@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "gate": "div-harness-claim-audit",
+  "status": "pass",
+  "generated_at": "2026-07-12T23:00:56.3949086+08:00",
+  "audit_scope": "artifact existence, hashes, machine-readable counts, and claim-number consistency",
+  "external_model_review": "unavailable",
+  "independent_local_review": "pass_after_fixes",
+  "artifacts": [
+    {
+      "path": "logs/refactor/20260712-2024-div-harness/evidence/contract.json",
+      "sha256": "3f103a883f758e78f2dc8ff1e6ddb952b4edbca4501604466f48c55e148c8c75",
+      "size": 3700
+    },
+    {
+      "path": "logs/refactor/20260712-2024-div-harness/evidence/golden-diff.json",
+      "sha256": "4bf0186eefe08cc4bd2e56047cdbb948d4710c948b684ea6c9d9bd9a1daa9bdd",
+      "size": 25691
+    },
+    {
+      "path": "logs/refactor/20260712-2024-div-harness/evidence/doctor.json",
+      "sha256": "94c7ec0b01a1478b4fc26f4f54772d8de9f24f1e9510baf7d27f46ee512d9b84",
+      "size": 5291
+    },
+    {
+      "path": "build/20260712-2024-div-harness/automation-final5.log",
+      "sha256": "c6e7e288e880d6d913488ed56a99a659e6d7de83cc3bfd6a64bdb1e5938e5b25",
+      "size": 45271
+    }
+  ],
+  "checks": [
+    {"name":"contract_status","expected":"pass","actual":"pass","passed":true},
+    {"name":"golden_blob_sha256","expected":"7e499f4c43c92154d1d4e21be2f269ac140b4f2b2d944677c71f6f4213b66dc6","actual":"7e499f4c43c92154d1d4e21be2f269ac140b4f2b2d944677c71f6f4213b66dc6","passed":true},
+    {"name":"diff_status","expected":"pass","actual":"pass","passed":true},
+    {"name":"diff_counts","expected":"4/4/0","actual":"4/4/0","passed":true},
+    {"name":"diff_count_arithmetic","expected":"executed=passed+failed; planned=executed+skipped","actual":"4=4+0; 4=4+0","passed":true},
+    {"name":"active_transactions","expected":4136,"actual":4136,"passed":true},
+    {"name":"complete_pulses","expected":4136,"actual":4136,"passed":true},
+    {"name":"e33_quotient_checks","expected":4136,"actual":4136,"passed":true},
+    {"name":"e33_historical_remainder_checks","expected":4136,"actual":4136,"passed":true},
+    {"name":"e34_result_checks","expected":4136,"actual":4136,"passed":true},
+    {"name":"late_abort","expected":1,"actual":1,"passed":true},
+    {"name":"held_high_cleanup","expected":1,"actual":1,"passed":true},
+    {"name":"held_high_restart","expected":1,"actual":1,"passed":true},
+    {"name":"warning_waivers_consumed","expected":3,"actual":3,"passed":true},
+    {"name":"negative_controls","expected":3,"actual":3,"passed":true},
+    {"name":"e34_remainder_negative_control","expected":"result","actual":"result","passed":true},
+    {"name":"driver_version","expected":"div-diff-driver-v2","actual":"div-diff-driver-v2","passed":true},
+    {"name":"doctor_status","expected":"pass","actual":"pass","passed":true},
+    {"name":"doctor_head","expected":"03c7fb6fec46107ae44183ed3262198641b333bb","actual":"03c7fb6fec46107ae44183ed3262198641b333bb","passed":true},
+    {"name":"automation","expected":"233 tests, OK","actual":"Ran 233 tests in 16.196s; OK","passed":true}
+  ],
+  "counts": {
+    "planned": 20,
+    "executed": 20,
+    "passed": 20,
+    "failed": 0,
+    "skipped": 0
+  },
+  "claim_limit": "仅支持锁定 golden divider harness；不支持 Spinal candidate、whole CPU、功能、性能、Linux 或 FPGA claim"
+}

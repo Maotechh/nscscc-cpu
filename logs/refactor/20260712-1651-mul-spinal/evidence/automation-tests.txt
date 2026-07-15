@@ -1,0 +1,13 @@
+Iteration: 20260712-1651-mul-spinal
+Review target: f6c55e6dcb42761c283febf99460214452628fd0
+Clean clone: /tmp/nscscc-mul-f6c55e6-src
+Command: python3 -I -m unittest discover -s tests -p test_*.py
+Result: Ran 193 tests in 10.430s
+Verdict: OK
+Executed: 193
+Passed: 193
+Failed: 0
+Skipped: 0
+Raw output: /tmp/nscscc-mul-f6c55e6-automation.txt
+Raw SHA256: e2389575196eea89cf087005c4a4bcc58ab8bc4346f79cab5711fbb931ab3833
+Raw size: 12511 bytes

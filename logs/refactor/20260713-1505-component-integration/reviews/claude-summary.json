@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "iteration_id": "20260713-1505-component-integration",
+  "status": "unavailable",
+  "job_id": "0220c1d902be4b17b320b2ea0eebea84",
+  "provider": null,
+  "model": null,
+  "reviewed_head_sha": null,
+  "raw_sha256": "6dd939db9129d08c59835923adf8070110efc8a6c9b5acb8126efe3ea93e3cbd",
+  "provenance": {
+    "source": "claude-review-mcp",
+    "raw_path": "reviews/claude-raw.md",
+    "raw_sha256": "6dd939db9129d08c59835923adf8070110efc8a6c9b5acb8126efe3ea93e3cbd",
+    "job_id": "0220c1d902be4b17b320b2ea0eebea84",
+    "provider": null,
+    "model": null,
+    "reviewed_head_sha": null
+  },
+  "error": "Required provider environment variable is not set: GEEKPIE_CLAUDE_API_KEY",
+  "open_blocking_count": 1,
+  "fresh_against_head": false,
+  "allow_ready": false,
+  "allow_status_promotion": false
+}

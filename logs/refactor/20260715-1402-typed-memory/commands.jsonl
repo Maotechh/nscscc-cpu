@@ -1,0 +1,18 @@
+{"id":"preflight","argv":["git","status","--short","--branch"],"exit_code":0,"result":"branch created from f3f61aa; worktree clean before iteration","evidence":"iteration.md"}
+{"id":"base-lock","argv":["git","rev-parse","HEAD"],"exit_code":0,"result":"f3f61aa38f002b7a9fac3ba3feffeb2762c40707","evidence":"iteration.md"}
+{"id":"scala-wrapper-pruned-warning","argv":["make","scala-check"],"exit_code":1,"result":"实验性 typed wrapper RTL 测试产生 12 个 pruned-signal warning；严格 warning parser 拒绝","evidence":"iteration.md"}
+{"id":"scala-wrapper-multiple-top","argv":["make","scala-check"],"exit_code":1,"result":"第二种实验性反射测试触发 Spinal MULTIPLE TOPLEVEL；测试文件删除","evidence":"iteration.md"}
+{"id":"scala-check-final","argv":["make","scala-check","OUT_DIR=build/20260715-1402-typed-memory-final3"],"exit_code":0,"elapsed_seconds":126.8,"result":"4/4 PASS，31 tests，0 skipped","evidence":"evidence/scala-check.json"}
+{"id":"typed-gate-mutations","argv":["python","-I","tests/test_typed_axi_boundary_gate.py"],"exit_code":0,"elapsed_seconds":3.7,"result":"9/9 正负和突变用例 PASS","evidence":"evidence/typed-bridge-contract.json"}
+{"id":"generate-stale-publish","argv":["make","generate","TARGET=core_top","OUT_DIR=build/20260715-1402-typed-memory-generate"],"exit_code":1,"elapsed_seconds":80.8,"result":"2/2 reproducible generate 与 package PASS；publish-check 正确拒绝旧 tracked package","evidence":"evidence/generate.json"}
+{"id":"port-check-stale-outdir","argv":["core_top_gate.py","port-check"],"exit_code":1,"result":"输出目录已存在，gate fail-closed","evidence":"iteration.md"}
+{"id":"port-check","argv":["core_top_gate.py","port-check","--rtl","fresh mycpu_top.v"],"exit_code":0,"elapsed_seconds":5.3,"result":"49-port、TLBNUM=32、21 modules PASS","evidence":"evidence/port-check.json"}
+{"id":"candidate-closure","argv":["candidate_closure_gate.py","--rtl","fresh mycpu_top.v"],"exit_code":0,"result":"legacy definitions/instances 为 0，unresolved 为空","evidence":"evidence/candidate-closure.json"}
+{"id":"yosys-check","argv":["core_top_gate.py","yosys-check","--rtl","fresh mycpu_top.v"],"exit_code":0,"elapsed_seconds":5.3,"result":"hierarchy/check PASS，0 warning","evidence":"evidence/yosys-check.json"}
+{"id":"lint","argv":["core_top_gate.py","lint","--environment-profile","locked"],"exit_code":1,"elapsed_seconds":3.6,"result":"strict-zero FAIL：73 DECLFILENAME/UNUSEDPARAM/UNUSEDSIGNAL","evidence":"evidence/lint.json"}
+{"id":"sequential-equivalence-name-only","argv":["yosys","equiv_make; equiv_simple; equiv_induct; equiv_status -assert"],"exit_code":1,"elapsed_seconds":78.9,"result":"17728 proven，95 unproven；wrapper 改变了 legacy 状态层级名","evidence":"evidence/sequential-equivalence.json"}
+{"id":"sequential-equivalence-structural","argv":["yosys","equiv_make -inames; equiv_struct -icells; equiv_simple; equiv_induct -seq 8; equiv_status -assert"],"exit_code":0,"elapsed_seconds":70.9,"result":"31106 proven，0 unproven，Equivalence successfully proven","evidence":"evidence/sequential-equivalence.json"}
+{"id":"publish-check-final","argv":["core_top_gate.py","publish-check"],"exit_code":0,"result":"fresh/tracked package/hash binding PASS：5d11d66f...7d8a","evidence":"evidence/publish-check.json"}
+{"id":"replacement-reachability","argv":["replacement_reachability.py"],"exit_code":0,"result":"active runtime replacement hash binding PASS","evidence":"evidence/replacement-reachability.json"}
+{"id":"test-local","argv":["make","test-local","PYTHON=python"],"exit_code":0,"elapsed_seconds":28.1,"result":"390 tests ran，380 executed PASS，10 skip；按零 skip 合同总 gate FAIL","evidence":"iteration.md"}
+{"id":"remote-ls-retry","argv":["git","ls-remote","--heads","origin"],"exit_code":1,"elapsed_seconds":46.9,"result":"GitHub connection reset；live remote 本次未确认","evidence":"iteration.md"}

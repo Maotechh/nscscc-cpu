@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "status": "pass_with_platform_exclusions",
+  "source_head": "8f18ff7b7a01fce0ab5b21f6a71680a3fb8540c3",
+  "runner": "Windows PowerShell / python -m pytest -q",
+  "passed": 323,
+  "failed": 0,
+  "platform_exclusions": 10,
+  "elapsed_seconds": 21.18,
+  "raw_output": "%TEMP%/id-active-final-pytest.txt",
+  "raw_sha256": "54ae6eb8b3add4dcb99a35fdfcf91565e7828db550985bfa8c8ae92576702883",
+  "raw_size": 880
+}

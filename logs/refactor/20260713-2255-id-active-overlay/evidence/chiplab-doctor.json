@@ -1,0 +1,9 @@
+{
+  "schema_version": 1,
+  "status": "pass",
+  "source_head": "8f18ff7b7a01fce0ab5b21f6a71680a3fb8540c3",
+  "chiplab_commit": "a2e11b38bc5c85abb4408a8e0c0f5ce903c7ba31",
+  "source_report": "/tmp/id-active-clean3/reports/chiplab-doctor.json",
+  "source_sha256": "ae4baec46d6b067f59512277bf22e0185b8e2d7b32749a495efbefae722f896f",
+  "source_size": 16175
+}

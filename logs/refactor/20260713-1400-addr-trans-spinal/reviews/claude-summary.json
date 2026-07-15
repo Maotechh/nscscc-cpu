@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "status": "unavailable",
+  "provider": "claude-review",
+  "reason": "GEEKPIE_CLAUDE_API_KEY missing",
+  "claim_decisions": {
+    "reproducible_generation": "accepted_with_evidence",
+    "tlb_2state_cycle_diff": "accepted_with_narrow_scope",
+    "addr_trans_equivalence": "open",
+    "whole_cpu_function": "open",
+    "func58_func81_random_linux_vivado": "open"
+  }
+}

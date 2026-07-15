@@ -1,0 +1,122 @@
+{
+  "schema_version": 1,
+  "iteration_id": "20260713-0302-div-spinal",
+  "status": "draft",
+  "branch": "refactor/20260713-0302-div-spinal",
+  "base_sha": "46173cd421f211f8978d27e768297e26ad10fd7e",
+  "head_sha": "9e78538c0dec08fa9fcace49e068b8bc9d4d5af1",
+  "review_target_sha": "9e78538c0dec08fa9fcace49e068b8bc9d4d5af1",
+  "implementation_commit": "dcd51542e8540704463b777f5e4b1bd15ce8eae5",
+  "implementation_tested_sha": "9e78538c0dec08fa9fcace49e068b8bc9d4d5af1",
+  "selected_boundary": "div",
+  "boundary_state": "differential_pass",
+  "required_gates": [
+    "doctor",
+    "automation_tests",
+    "contract",
+    "scala",
+    "elaborate",
+    "generate",
+    "port_check",
+    "lint",
+    "yosys_check",
+    "unit_diff",
+    "formal",
+    "diagnostic_overlay",
+    "func_smoke",
+    "vivado_leaf_synth",
+    "claim_review"
+  ],
+  "gates": {
+    "doctor": {"status":"pass","planned":2,"executed":2,"passed":2,"failed":0,"skipped":0,"detail":"Windows Vivado 2023.2 doctor 与 WSL 锁定 chiplab doctor 均绑定 9e78538。"},
+    "automation_tests": {"status":"pass","planned":255,"executed":255,"passed":255,"failed":0,"skipped":0},
+    "contract": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0},
+    "scala": {"status":"pass","planned":4,"executed":4,"passed":4,"failed":0,"skipped":0,"detail":"format/compile/test-compile/test；不把既有 ScalaTest case 数称为 div 测试数。"},
+    "elaborate": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0},
+    "generate": {"status":"pass","planned":2,"executed":2,"passed":2,"failed":0,"skipped":0,"detail":"两次生成字节一致，且与 committed RTL SHA256 0c022398...0f349 一致。"},
+    "port_check": {"status":"pass","planned":9,"executed":9,"passed":9,"failed":0,"skipped":0},
+    "lint": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0,"detail":"Verilator 0 warning；仅私有 lint 快照把模块名 div 改为 div_lint。"},
+    "yosys_check": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0},
+    "unit_diff": {"status":"pass","planned":4136,"executed":4136,"passed":4136,"failed":0,"skipped":0,"detail":"40 directed + 4096 fixed-seed random，145131 sampled edges，0 mismatch。"},
+    "oracle_negative_controls": {"status":"pass","planned":3,"executed":3,"passed":3,"failed":0,"skipped":0},
+    "formal": {"status":"pass","planned":3,"executed":3,"passed":3,"failed":0,"skipped":0,"detail":"仅 2-state unbounded protocol induction + 2 个 counterexample 负控；不含算术或 golden 等价证明。"},
+    "diagnostic_overlay": {"status":"pass","planned":2,"executed":2,"passed":2,"failed":0,"skipped":0,"detail":"locked 0 replacement；mixed 精确替换 committed div.v，mixed gate_eligible=false。"},
+    "identity_compare": {"status":"fail","planned":1,"executed":1,"passed":0,"failed":1,"skipped":0,"detail":"parser/trace/ROM/ELF 相同，但 RTL projection、replacement bytes 和 warning counts 不同。"},
+    "func_smoke": {"status":"fail","planned":2,"executed":2,"passed":0,"failed":2,"skipped":0,"detail":"locked/mixed 都在 PC 0x1c07c79c 失败，172552 instructions / 602903 clocks；warning gate 同时失败。"},
+    "vivado_leaf_synth": {"status":"fail","planned":2,"executed":2,"passed":0,"failed":2,"skipped":0,"detail":"两侧 synthesis rc=0，但 timing、DRC、methodology 和未批准 warning 使严格 gate 失败。"},
+    "independent_claim_review": {"status":"pass","planned":3,"executed":3,"passed":3,"failed":0,"skipped":0},
+    "artifact_claim_audit": {"status":"pass","planned":24,"executed":24,"passed":24,"failed":0,"skipped":0},
+    "claim_review": {"status":"unavailable","planned":1,"executed":1,"passed":0,"failed":1,"skipped":0,"detail":"Claude bridge 在模型启动前缺少 GEEKPIE_CLAUDE_API_KEY。"}
+  },
+  "observations": {
+    "rtl_sha256": "0c022398490e29cb92cd7adc31d2e35b26e47c3ea5a4b84316a54cfbbae0f349",
+    "rtl_size": 4747,
+    "golden_sha256": "7e499f4c43c92154d1d4e21be2f269ac140b4f2b2d944677c71f6f4213b66dc6",
+    "driver_sha256": "7fd34bfa459b8bdbb5e5db1f6e29ce7667f4e62fba97a592d787c2ee06a28ce0",
+    "vectors_sha256": "754ee2e0308b21c4bc6cd2d808e0112b14a4e30a380f8dfff5d5175fcda99ead",
+    "transactions": 4136,
+    "sampled_edges": 145131,
+    "mismatches": 0,
+    "case": "func/func_lab19",
+    "locked_status": "fail",
+    "mixed_status": "diagnostic_fail",
+    "instructions": 172552,
+    "cycles": 602903,
+    "first_mismatch": "t0(r12) different at pc = 0x1c07c79c, right= 0x000006e2, wrong = 0x00000008",
+    "trace_sha256": "8efa7942ab6d4702129dc0c7eb0676c6cfcd87361ee8ecf99411567c3db38acb",
+    "warnings": {
+      "locked": {"total":644,"dut":280,"official_environment":364},
+      "mixed": {"total":641,"dut":277,"official_environment":364}
+    },
+    "vivado": {
+      "scope": "leaf_synthesis_only",
+      "golden": {"lut":290,"ff":107,"bram":0,"dsp":0,"wns_ns":-0.364,"tns_ns":-7.803,"failing_endpoints":41},
+      "candidate": {"lut":245,"ff":107,"bram":0,"dsp":0,"wns_ns":-1.800,"tns_ns":-86.872,"failing_endpoints":62},
+      "timing_met": false,
+      "drc_pass": false,
+      "methodology_pass": false,
+      "implementation_executed": false,
+      "bitstream_executed": false,
+      "fmax": null
+    }
+  },
+  "claims": [
+    {
+      "id": "C1",
+      "status": "supported_with_narrow_scope",
+      "text": "9e78538 的 Spinal-generated divider 在合同定义的合法 held-request 可观察窗口和固定 4136 个事务上逐拍一致，并通过精确端口、静态 RTL 和有限协议形式检查。",
+      "excludes": ["invalid-window exhaustive equivalence","complete sequential formal equivalence","whole-CPU correctness","4-state X/Z equivalence"]
+    },
+    {
+      "id": "C2",
+      "status": "supported_with_narrow_scope",
+      "text": "单个已知失败 func_lab19 中，isolated div replacement 与 locked baseline 的首错、计数和选定 trace/parser 观测相同。",
+      "excludes": ["func smoke PASS","identity PASS","integrated_pass","58/81","random/perf/Linux/FPGA"]
+    },
+    {
+      "id": "C3",
+      "status": "supported_as_observation_only",
+      "text": "Vivado 2023.2 完成 standalone divider leaf synthesis 并产出资源观测。",
+      "excludes": ["timing PASS","Fmax","performance improvement","implementation","bitstream"]
+    }
+  ],
+  "blocked_by": [
+    "div_harness_pr_unmerged",
+    "func_lab19_locked_and_mixed_mismatch_at_1c07c79c",
+    "641_unapproved_verilator_warnings_in_mixed_compile",
+    "vivado_leaf_drc_methodology_and_timing_fail",
+    "identity_comparison_fail",
+    "golden_sequential_formal_equivalence_not_proved",
+    "claude_bridge_missing_GEEKPIE_CLAUDE_API_KEY"
+  ],
+  "not_executed": ["func58","func81","multi_seed_random_difftest","perf20","uboot","linux","vivado_implementation","bitstream","remote_fpga_board"],
+  "pr": {
+    "status": "awaiting_pr",
+    "url": null,
+    "draft_only": true,
+    "auto_merge": false,
+    "created": false,
+    "branch_pushed": true
+  },
+  "updated_at": "2026-07-13T03:58:00+08:00"
+}

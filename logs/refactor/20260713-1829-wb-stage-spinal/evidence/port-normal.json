@@ -1,0 +1,27 @@
+{
+  "actual_count": 52,
+  "command": {
+    "argv": [
+      "/usr/bin/yosys",
+      "-q",
+      "-p",
+      "read_verilog  /tmp/wb-final/wb_stage/generate/rtl/wb_stage.v; hierarchy -check -top wb_stage; proc; write_json /tmp/wb-gates-final/wb_stage/port-normal/ports-normal.json"
+    ],
+    "elapsed_seconds": 0.066,
+    "returncode": 0,
+    "stdout": "",
+    "timed_out": false
+  },
+  "executed": 1,
+  "expected_count": 52,
+  "failed": 0,
+  "gate": "wb-stage-port-normal",
+  "generated_at": "2026-07-13T19:23:53+08:00",
+  "matched": true,
+  "passed": 1,
+  "profile": "normal",
+  "rtl_sha256": "4f37e07bbbba77e8af966ab8d9016aec1010863ad0c5fc6caa35c71f36624887",
+  "schema_version": 1,
+  "skipped": 0,
+  "status": "pass"
+}

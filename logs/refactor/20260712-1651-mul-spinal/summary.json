@@ -1,0 +1,223 @@
+{
+  "schema_version": 1,
+  "iteration_id": "20260712-1651-mul-spinal",
+  "status": "draft",
+  "branch": "refactor/20260712-1651-mul-spinal",
+  "base_sha": "a17b30165a70f2eae37a6f7074f5fbf7a25ee688",
+  "head_sha": "f6c55e6dcb42761c283febf99460214452628fd0",
+  "review_target_sha": "f6c55e6dcb42761c283febf99460214452628fd0",
+  "implementation_commit": "f6c55e6dcb42761c283febf99460214452628fd0",
+  "implementation_tested_sha": "f6c55e6dcb42761c283febf99460214452628fd0",
+  "selected_boundary": "mul",
+  "required_gates": [
+    "doctor",
+    "automation_tests",
+    "contract",
+    "scala",
+    "elaborate",
+    "generate",
+    "port_check",
+    "lint",
+    "yosys_check",
+    "unit_diff",
+    "formal",
+    "diagnostic_overlay",
+    "func_smoke",
+    "vivado_leaf_synth",
+    "claim_review"
+  ],
+  "gates": {
+    "doctor": {
+      "status": "pass",
+      "planned": 2,
+      "executed": 2,
+      "passed": 2,
+      "failed": 0,
+      "skipped": 0,
+      "detail": "f6c55e6 的 Windows Vivado doctor 与锁定 chiplab/toolchain doctor 均通过。"
+    },
+    "automation_tests": {
+      "status": "pass",
+      "planned": 193,
+      "executed": 193,
+      "passed": 193,
+      "failed": 0,
+      "skipped": 0
+    },
+    "contract": {
+      "status": "pass",
+      "planned": 1,
+      "executed": 1,
+      "passed": 1,
+      "failed": 0,
+      "skipped": 0,
+      "detail": "golden blob、精确六端口、一拍/reset-hold 合同和 evaluator hash 均锁定。"
+    },
+    "scala": {
+      "status": "pass",
+      "planned": 4,
+      "executed": 4,
+      "passed": 4,
+      "failed": 0,
+      "skipped": 0
+    },
+    "elaborate": {
+      "status": "pass",
+      "planned": 1,
+      "executed": 1,
+      "passed": 1,
+      "failed": 0,
+      "skipped": 0
+    },
+    "generate": {
+      "status": "pass",
+      "planned": 2,
+      "executed": 2,
+      "passed": 2,
+      "failed": 0,
+      "skipped": 0,
+      "detail": "双生成字节一致；426 个 dependency artifact 前后稳定；与提交 RTL 一致。"
+    },
+    "port_check": {
+      "status": "pass",
+      "planned": 1,
+      "executed": 1,
+      "passed": 1,
+      "failed": 0,
+      "skipped": 0
+    },
+    "lint": {
+      "status": "pass",
+      "planned": 1,
+      "executed": 1,
+      "passed": 1,
+      "failed": 0,
+      "skipped": 0,
+      "detail": "Verilator 5.020 -Wall，0 warning。"
+    },
+    "yosys_check": {
+      "status": "pass",
+      "planned": 1,
+      "executed": 1,
+      "passed": 1,
+      "failed": 0,
+      "skipped": 0
+    },
+    "unit_diff": {
+      "status": "pass",
+      "planned": 4128,
+      "executed": 4128,
+      "passed": 4128,
+      "failed": 0,
+      "skipped": 0,
+      "detail": "32 directed + 4096 random；4127 perturb；32 reset-hold；编译 hash snapshot。"
+    },
+    "formal": {
+      "status": "pass",
+      "planned": 3,
+      "executed": 3,
+      "passed": 3,
+      "failed": 0,
+      "skipped": 0,
+      "detail": "仅 candidate 2-state contract temporal induction 与两项负控；golden formal equivalence=false。"
+    },
+    "diagnostic_overlay": {
+      "status": "pass",
+      "planned": 2,
+      "executed": 2,
+      "passed": 2,
+      "failed": 0,
+      "skipped": 0,
+      "detail": "locked candidate baseline 与 f6c55e6 committed mixed overlay 均通过 provenance/integrity；mixed gate_eligible=false。"
+    },
+    "func_smoke": {
+      "status": "fail",
+      "planned": 2,
+      "executed": 2,
+      "passed": 0,
+      "failed": 2,
+      "skipped": 0,
+      "detail": "两侧均在 PC 0x1c07c79c 功能失败；172552 instructions / 602903 cycles；trace 相同；warning policy 也失败。"
+    },
+    "vivado_leaf_synth": {
+      "status": "fail",
+      "planned": 2,
+      "executed": 2,
+      "passed": 0,
+      "failed": 2,
+      "skipped": 0,
+      "detail": "两侧 synth_design rc=0，但 golden 3/candidate 63 条 warning 未批准；无 I/O delay、implementation 或 bitstream。"
+    },
+    "claim_review": {
+      "status": "unavailable",
+      "planned": 2,
+      "executed": 2,
+      "passed": 0,
+      "failed": 2,
+      "skipped": 0,
+      "detail": "两次 claude-review job 均在模型启动前失败；降级审查不能替代 Claude。"
+    }
+  },
+  "observations": {
+    "rtl_sha256": "5ff75243dd504bf74c01645862364cd416dffc554d64c82dea6be8f7181660d6",
+    "rtl_size": 1260,
+    "random_seed": "0x158aa8",
+    "directed_vectors": 32,
+    "random_vectors": 4096,
+    "golden_formal_equivalence": "open_solver_timeout",
+    "case": "func/func_lab19",
+    "candidate_status": "fail",
+    "mixed_status": "diagnostic_fail",
+    "instructions": 172552,
+    "cycles": 602903,
+    "first_mismatch": "t0(r12) different at pc = 0x1c07c79c, right= 0x000006e2, wrong = 0x00000008",
+    "trace_sha256": "8efa7942ab6d4702129dc0c7eb0676c6cfcd87361ee8ecf99411567c3db38acb",
+    "warnings": {
+      "candidate": {"total": 644, "dut": 280, "official_environment": 364},
+      "mixed": {"total": 640, "dut": 276, "official_environment": 364},
+      "delta_total": -4
+    },
+    "vivado": {
+      "part": "xc7a200tfbg676-2",
+      "scope": "leaf_synth_only",
+      "golden": {"lut": 1537, "ff": 592, "dsp": 0, "warnings": 3},
+      "candidate": {"lut": 50, "ff": 34, "dsp": 4, "warnings": 63},
+      "fmax": null
+    }
+  },
+  "claims": [
+    {
+      "id": "C1",
+      "status": "supported_with_narrow_scope",
+      "text": "f6c55e6 的 Spinal-generated mul 可复现、精确匹配历史端口，并通过独立数学模型 cycle differential 与 candidate 2-state 时序合同证明。",
+      "excludes": ["golden complete formal equivalence", "4-state X/Z", "whole-CPU correctness", "post-synth or timing/resource equivalence"]
+    },
+    {
+      "id": "C2",
+      "status": "supported_with_narrow_scope",
+      "text": "单一失败的 func_lab19 中 candidate/mixed 首错、指令/周期计数和 trace 相同，mixed 少 4 条 DUT warning。",
+      "excludes": ["functional PASS", "integrated_pass", "whole-CPU equivalence", "58/81", "random/perf/Linux/FPGA"]
+    },
+    {
+      "id": "C3",
+      "status": "unsupported",
+      "text": "mul 已通过完整 CPU 官方功能验证。"
+    }
+  ],
+  "blocked_by": [
+    "func_lab19_candidate_and_mixed_mismatch_at_1c07c79c",
+    "640_unapproved_verilator_warnings_in_mixed_compile",
+    "vivado_leaf_63_unapproved_warnings",
+    "golden_sequential_formal_solver_timeout",
+    "claude_bridge_missing_GEEKPIE_CLAUDE_API_KEY"
+  ],
+  "pr": {
+    "status": "awaiting_pr",
+    "url": null,
+    "draft_only": true,
+    "auto_merge": false,
+    "created": false,
+    "branch_pushed": true
+  },
+  "updated_at": "2026-07-12T20:15:00+08:00"
+}

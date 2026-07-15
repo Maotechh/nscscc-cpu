@@ -1,0 +1,19 @@
+{
+  "contract_sha256": "cf3ae72e2267b911d7a32200818563d4ff14154746e9d5eebfa54df032fc6ee5",
+  "gate": "axi-bridge-contract",
+  "generated_at": "2026-07-13T07:50:12+08:00",
+  "golden": {
+    "commit": "a158aa8ab4d49cece1a0fe488d7ac7dc02bd8cf6",
+    "git_blob_sha1": "4219790c25c653da1a061c5f4c674e062201b8e9",
+    "path": "rtl/axi_bridge.v",
+    "sha256": "07c30c8e5e99373ecb988b2a5cc03e4e8cb7b6e22af26b1b37171a808b144f9e",
+    "size": 10106
+  },
+  "ports": {
+    "actual": 65,
+    "expected": 65,
+    "matched": true
+  },
+  "schema_version": 1,
+  "status": "pass"
+}

@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "iteration_id": "20260714-2328-perf-counter",
+  "artifacts": [],
+  "external_artifacts": [
+    {"path": "evidence/rtl-smoke-20260715-0118/chiplab-overlay-manifest.json", "sha256": "57d1167e3115186b2987ac976329dd2cf8f9a832592c561c69329d2781f2dd6d", "size": 30822, "retention": "git"},
+    {"path": "evidence/rtl-smoke-20260715-0118/chiplab-overlay.json", "sha256": "11633a30ad172d5ce9162f2d500341805dc0984483062491cabef61d5d3ff29b", "size": 4482, "retention": "git"},
+    {"path": "evidence/rtl-smoke-20260715-0118/rtl-smoke.json", "sha256": "4ac0ea6a27b77bfb3f1736ba4f734592bc9acf3a28d0d39351dea76c49e6eb71", "size": 180923, "retention": "git"},
+    {"path": "/tmp/nscscc-perf-counter-work/20260715-0118-perf-counter-diagnostic/sims/verilator/run_prog/log/func/func_lab19_log/simu_trace.txt", "sha256": "80420ff3a497ae7a31cff4543a2fa1648a24253d69184b89268179184648c6fb", "size": 13925520, "retention": "external-temp"}
+  ]
+}

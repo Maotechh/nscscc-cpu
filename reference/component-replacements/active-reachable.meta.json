@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "root_module": "core_top",
+  "golden_commit_key": "team_golden_candidate",
+  "profile": "spinal_active_lacc_off_difftest_internal",
+  "defined_macros": [
+    "DIFFTEST_EN"
+  ],
+  "undefined_macros": [
+    "HAS_LACC"
+  ],
+  "selected_replacements": [
+    "rtl/mycpu_top.v"
+  ],
+  "deferred_reachable": {
+    "rtl/if_stage.v": "完整纯 Spinal mycpu_top.v 已内嵌 FetchStage，禁止重复定义",
+    "rtl/id_stage.v": "完整纯 Spinal mycpu_top.v 已内嵌 DecodeStage，禁止重复定义",
+    "rtl/exe_stage.v": "完整纯 Spinal mycpu_top.v 已内嵌 ExecuteStage 和 ALU，禁止重复定义",
+    "rtl/mem_stage.v": "完整纯 Spinal mycpu_top.v 已内嵌 MemoryStage，禁止重复定义",
+    "rtl/wb_stage.v": "完整纯 Spinal mycpu_top.v 已内嵌 WritebackStage，禁止重复定义",
+    "rtl/csr.v": "完整纯 Spinal mycpu_top.v 已内嵌 CSR，禁止重复定义",
+    "rtl/addr_trans.v": "完整纯 Spinal mycpu_top.v 已内嵌 AddrTrans/TLB，禁止重复定义",
+    "rtl/icache.v": "完整纯 Spinal mycpu_top.v 已内嵌 ICache，禁止重复定义",
+    "rtl/dcache.v": "完整纯 Spinal mycpu_top.v 已内嵌 DCache，禁止重复定义",
+    "rtl/axi_bridge.v": "完整纯 Spinal mycpu_top.v 已内嵌 AXI bridge，禁止重复定义",
+    "rtl/mul.v": "完整纯 Spinal mycpu_top.v 已内嵌 multiplier，禁止重复定义",
+    "rtl/div.v": "完整纯 Spinal mycpu_top.v 已内嵌 divider，禁止重复定义",
+    "rtl/perf_counter.v": "完整纯 Spinal mycpu_top.v 已内嵌七个活动性能计数器，禁止重复定义",
+    "rtl/regfile.v": "活动 DecodeStage 内部拥有 GPR 状态，禁止重复定义旧 regfile"
+  },
+  "unreachable_or_backup": [
+    "rtl/lacc_core.v",
+    "rtl/lacc_demo.v"
+  ]
+}

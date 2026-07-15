@@ -1,0 +1,135 @@
+{
+  "schema_version": 1,
+  "date": "2026-07-11",
+  "audited_source_head": "45043bd8a89b0e4dea3911ed609d128252f0319f",
+  "evidence_root": "logs/refactor/20260710-2026-baseline/evidence",
+  "auditor": {
+    "identity": "codex-subagent-local-readonly",
+    "independent_from_executor_context": true,
+    "same_model_family_review": true,
+    "claude_review": false,
+    "gpt_5_4_cross_model_review": false,
+    "cross_model_requirement_satisfied": false,
+    "limitation": "这是独立 Codex 子代理的只读证据复核，不是 Claude、GPT-5.4 或其他模型家族的 cross-model 审核，不能替代 AGENTS.md 要求的 Claude review。"
+  },
+  "overall_verdict": "warn",
+  "integrity_status": "warn",
+  "functional_verdict": "fail",
+  "scope_verdict": "warn",
+  "checks": {
+    "oracle_provenance": {
+      "status": "pass",
+      "evaluation_type": "official_reference_difftest",
+      "details": "锁定 chiplab/NEMU DPI DiffTest 与 simulator termination marker 是功能 oracle；a158aa8 是 DUT candidate，不是从 DUT 输出派生的 ground truth。"
+    },
+    "score_normalization": {
+      "status": "pass",
+      "details": "没有以 DUT 自身统计量归一化评分；使用原始 instructions、clocks、warning counts 和首 mismatch。"
+    },
+    "result_existence": {
+      "status": "pass",
+      "retention_warning": true,
+      "details": "5 份 WSL 原报告与证据副本逐字节一致；24/24 唯一 raw/artifact locator hash 匹配，16/16 size 匹配；14/14 artifacts.json 索引项匹配。/tmp artifact 缺长期保留保证。"
+    },
+    "dead_code_or_phantom_gate": {
+      "status": "pass",
+      "details": "Make exit 0 和 build integrity 没有被误报成功能 PASS；未执行 gate 均明确列为未执行或 unsupported。"
+    },
+    "scope": {
+      "status": "warn",
+      "details": "只有一个 func_lab19、一个固定 bus-delay seed、一次 locked candidate run，以及一个 12-result-vector/4-flag-assertion Scala ALU local smoke。"
+    },
+    "review_independence": {
+      "status": "warn",
+      "details": "本次是同模型家族 Codex 子代理复核；Claude/GPT-5.4 cross-model review 不可用。"
+    }
+  },
+  "hash_audit": {
+    "refactor_evaluator_sha256": "de2c6e0b1aad5c5b8e2091cad62e1a48cb3e2a61e9b34528a4907c5aaa6a33cd",
+    "scala_evaluator_sha256": "8e5b695c0c71b6e0d297c82bc44e846b1862e05525eed06e5b0bf33818568978",
+    "manifest_sha256": "743dd7e58d77e456cfe664d80c2e6614ab426f72bfecd9088ff18d702afa2f20",
+    "golden_files_lock_sha256": "da1bc6d450c1977a8bc491c9ac10887c30f91253aa75d367c1ae4a250ac1c8db",
+    "scala_dependency_lock_sha256": "0a5b155ce209d52cb12f24006be105b498796c7a6906c1981093c935fc4aa51d",
+    "report_copies_checked": 5,
+    "report_copy_mismatches": 0,
+    "unique_raw_and_artifact_locators_checked": 24,
+    "missing_locators": 0,
+    "hash_mismatches": 0,
+    "size_entries_checked": 16,
+    "size_mismatches": 0,
+    "artifact_index_entries_checked": 14,
+    "artifact_index_mismatches": 0,
+    "candidate_source_export_overlay_files_checked": 22,
+    "candidate_file_mismatches": 0,
+    "support_files_checked": 2,
+    "support_file_mismatches": 0
+  },
+  "exact_results": {
+    "windows_doctor": {"planned": 19, "executed": 19, "passed": 19, "failed": 0, "skipped": 0},
+    "automation_tests": {"planned": 59, "executed": 59, "passed": 59, "failed": 0, "skipped": 0, "independent_rerun_passed": 59},
+    "scala_tasks": {"planned": 4, "executed": 4, "passed": 4, "failed": 0, "skipped": 0, "main_sources": 16, "test_sources": 1, "scalatest_tests": 1},
+    "chiplab_doctor": {"planned": 44, "executed": 44, "passed": 44, "failed": 0, "skipped": 0},
+    "overlay": {"files": 22, "support_files": 2, "status": "pass", "candidate_locked": true},
+    "rtl_smoke": {
+      "case": "func/func_lab19",
+      "bus_delay_seed": 5570815,
+      "status": "fail",
+      "build_integrity_status": "pass",
+      "compile_warning_policy": "fail",
+      "command_exit_codes": [0, 0, 0],
+      "instructions": 172552,
+      "clocks": 602903,
+      "first_mismatch_pc": "0x1c07c79c",
+      "register": "t0(r12)",
+      "expected": "0x000006e2",
+      "actual": "0x00000008",
+      "actual_this_pc": "0x1c07c7a4",
+      "termination": "Both Error(Code:0x700)",
+      "verilator_warnings_total": 644,
+      "verilator_warnings_dut": 280,
+      "verilator_warnings_official_environment": 364,
+      "verilator_errors": 0,
+      "rtl_static_gate": "not_executed"
+    },
+    "vivado": {
+      "probe": "pass",
+      "version": "2023.2",
+      "sw_build": "4029153",
+      "raw_probe_log_archived": false,
+      "license_checked": false,
+      "device_checked": false,
+      "synthesis": "not_executed",
+      "implementation": "not_executed",
+      "timing": "not_executed",
+      "bitstream": "not_executed"
+    }
+  },
+  "claims": [
+    {"id": "C1", "impact": "supported", "details": "分支/base/main 状态与当前 Git/evidence 一致。"},
+    {"id": "C2", "impact": "supported", "details": "锁定 doctor 与 22-file candidate overlay 的 source/export/overlay hash 链一致；被测 DUT 是 a158aa8，不是 Scala core。"},
+    {"id": "C3", "impact": "supported", "details": "raw simulation 支持 172552 instructions、602903 clocks 和 PC/t0/this_pc mismatch。"},
+    {"id": "C4", "impact": "needs_qualifier", "details": "Scala 仅证明 4/4 task 和一个有限 local ALU smoke，不证明 ALU 或整核 golden equivalence。"},
+    {"id": "C5", "impact": "needs_qualifier", "details": "Vivado 只证明 version/build/binary probe；raw probe log、许可、器件和 FPGA flow 均无证据。"},
+    {"id": "C6", "impact": "diagnostic_only", "details": "d22/d76 matrix 只作单 case/固定 seed 回归定位，不证明完整根因或新 golden。"},
+    {"id": "C7", "impact": "unsupported", "details": "不支持 rtl-static、58/81、random、perf、Linux、FPGA、Scala 整核等价或完全重构完成。"}
+  ],
+  "not_executed": [
+    "independent_verilator_lint",
+    "yosys_hierarchy_check",
+    "func_58",
+    "func_81",
+    "random_difftest",
+    "multi_seed_bus_backpressure_reset",
+    "perf_20",
+    "uboot",
+    "linux",
+    "vivado_synthesis_implementation_timing_resource_drc_bitstream"
+  ],
+  "required_actions": [
+    "保持 blocked 与 Draft PR，不合并 main",
+    "在独立 golden-recovery/cacop PR 修复并复跑 locked smoke",
+    "执行并归档独立 Verilator lint 和 Yosys",
+    "把 /tmp raw artifact 迁移到有 URL、SHA256、size、retention 的持久存储",
+    "Claude bridge 恢复后补 required cross-model claim review"
+  ]
+}

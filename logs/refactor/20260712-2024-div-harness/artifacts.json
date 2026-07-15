@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "iteration_id": "20260712-2024-div-harness",
+  "external_artifact_policy": "原始 simulator 日志与 build 输出不提交 Git；本文件固定 locator、SHA256、大小和本地保留策略。",
+  "retention": "local_until_explicit_clean",
+  "artifacts": [
+    {"id":"doctor","path":"evidence/doctor.json","sha256":"94c7ec0b01a1478b4fc26f4f54772d8de9f24f1e9510baf7d27f46ee512d9b84","size":5291,"tracked":true},
+    {"id":"contract","path":"evidence/contract.json","sha256":"3f103a883f758e78f2dc8ff1e6ddb952b4edbca4501604466f48c55e148c8c75","size":3700,"tracked":true},
+    {"id":"golden-diff","path":"evidence/golden-diff.json","sha256":"4bf0186eefe08cc4bd2e56047cdbb948d4710c948b684ea6c9d9bd9a1daa9bdd","size":25691,"tracked":true},
+    {"id":"claim-audit","path":"evidence/claim-audit.json","sha256":"b8f43df1c10ea8d1b6e3baba3823da1d5748611d442bd5ff4204eccef8187a88","size":3281,"tracked":true},
+    {"id":"claude-raw","path":"reviews/claude-raw.md","sha256":"2e16d1b271a568f97dbd08748a79c425a1a9ecc6acda310fa941f215abfdb334","size":460,"tracked":true},
+    {"id":"claude-summary","path":"reviews/claude-summary.json","sha256":"c7945c825bc2bcf414da2a567db903fd77e1f99e0fe4e5922c7e8610fc271189","size":1586,"tracked":true},
+    {"id":"claude-summary-md","path":"reviews/claude-summary.md","sha256":"44fabdd3e71030986dd51a80c3d829f88909c481b9cde891f4396223d2999bc7","size":459,"tracked":true},
+    {"id":"local-independent-review","path":"reviews/local-independent-review.md","sha256":"330929cb83da903959d340382c1ae14157da0a6bf04c03c913c71fc45b2156ce","size":2029,"tracked":true},
+    {"id":"experiment-audit-json","path":"reviews/experiment-audit.json","sha256":"06d67147013d01bad43ac85bce679fa1e7315e6f05c53db9379b5cf4724b98d1","size":873,"tracked":true},
+    {"id":"experiment-audit-md","path":"reviews/experiment-audit.md","sha256":"ded12ff298e9aec910d51355d081d04c1c2d8d8cad5e9e1540b219931cd41bdc","size":1090,"tracked":true}
+  ],
+  "external_artifacts": [
+    {"id":"doctor-raw","path":"build/20260712-2024-div-harness/doctor-final5/reports/doctor.json","sha256":"94c7ec0b01a1478b4fc26f4f54772d8de9f24f1e9510baf7d27f46ee512d9b84","size":5291,"tracked":false},
+    {"id":"contract-raw","path":"/tmp/nscscc-div-harness-contract-final5/div/contract/summary.json","sha256":"3f103a883f758e78f2dc8ff1e6ddb952b4edbca4501604466f48c55e148c8c75","size":3700,"tracked":false},
+    {"id":"golden-diff-raw","path":"/tmp/nscscc-div-harness-unit-final5/div/unit/summary.json","sha256":"4bf0186eefe08cc4bd2e56047cdbb948d4710c948b684ea6c9d9bd9a1daa9bdd","size":25691,"tracked":false},
+    {"id":"automation-raw","path":"build/20260712-2024-div-harness/automation-final5.log","sha256":"c6e7e288e880d6d913488ed56a99a659e6d7de83cc3bfd6a64bdb1e5938e5b25","size":45271,"tracked":false}
+  ]
+}

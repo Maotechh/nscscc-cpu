@@ -1,0 +1,76 @@
+{
+  "schema_version": 1,
+  "iteration_id": "20260714-1907-lacc-spinal",
+  "generated_at": "2026-07-14T21:45:00+08:00",
+  "locked_tools": {
+    "jdk": "17.0.19+10",
+    "sbt": "1.10.11",
+    "scala": "2.13.16",
+    "spinalhdl": "1.14.2",
+    "verilator": "5.020",
+    "yosys": "0.33"
+  },
+  "results": {
+    "lacc_generate": {
+      "status": "pass",
+      "runs": 2,
+      "rtl_sha256": "6f6d57014bcb893f88b07c30a00dbffa18614c6766bc17f168fef1e7bc4509d8",
+      "summary_sha256": "f0d9a3591b215a3d3417d3539ab34c2cdd22627c4a00c4f256e9ec01359cab0a",
+      "artifact": "build/lacc-final-stable/lacc/generate/summary.json"
+    },
+    "lacc_cycle_diff": {
+      "status": "pass",
+      "cycles": 8192,
+      "seed": "0x158aa8",
+      "counts": {"requests":145,"responses":39,"data":56,"reads":30,"writes":15,"stalls":11,"drsp":30,"resets":11,"flushes":32},
+      "negative_control_detected": true,
+      "candidate_warning_count": 0,
+      "summary_sha256": "459f5ea9dc78f7722a84821bec8ef1f8bc67f5cc3a7506eff9961da3d3f8e818",
+      "artifact": "build/lacc-main-unit/lacc/unit/summary.json"
+    },
+    "scala_check": {
+      "status": "pass",
+      "steps": {"planned":4,"executed":4,"passed":4,"failed":0,"skipped":0},
+      "suites": 18,
+      "tests": 29,
+      "failed_tests": 0,
+      "summary_sha256": "35900c7b531718d48861ab4fc54ee3b5c8d83d55e8d5d9e1f95b1a95a49ab3f2",
+      "artifact": "/tmp/nscscc-lacc-scala-20260714-2056/build/lacc-scala-final2/scala-check/summary.json"
+    },
+    "core_top_off_elaboration": {
+      "status": "pass",
+      "runs": 2,
+      "modules": 19,
+      "rtl_sha256": "1b9340cd27c103ae0282b6e779394b31a87978d11532c5de52fd1b31bea61e07",
+      "summary_sha256": "c4fd110c16bfdf557d48beed73713048157428d6027acf6c8de231d171589cb0",
+      "artifact": "build/lacc-core-top-final/core_top/elaborate/summary.json"
+    },
+    "core_top_on_elaboration": {
+      "status": "pass",
+      "runs": 2,
+      "modules": 20,
+      "rtl_sha256": "c5bf10523be1406e2b5025ca52f3b61ab5969ea84ac7309b1ddb332b3094dea4",
+      "summary_sha256": "1ba1262805528fa2ecdafe81983e7e14ebcac1ec524514b5a80bc492676b11ff",
+      "artifact": "build/lacc-core-top-final/core_top-lacc/elaborate/summary.json"
+    },
+    "core_top_contract": {
+      "status": "pass",
+      "ports": 49,
+      "inputs": 17,
+      "outputs": 32,
+      "summary_sha256": "eeaa6acd5fdd4c4a81ebd1c23569bccc23c40dcdb1431c6755c398db85f9124f",
+      "artifact": "build/lacc-contract-top-clean/core_top/contract/summary.json"
+    },
+    "core_top_yosys": {
+      "off": {"status":"pass","warnings":0,"summary_sha256":"81b4c35c6e3b270456d332b2a8f5d5e78dbd6160bce1bfebf7eab0bba6e00566","artifact":"build/lacc-static-off-clean/core_top/yosys-check/summary.json"},
+      "on": {"status":"pass","warnings":0,"summary_sha256":"5cf24a6a34b59ad1d745d5a3673c4a54006a8a27a34fa11e333b133f00c0d4bb","artifact":"build/lacc-static-on-clean/core_top/yosys-check/summary.json"}
+    },
+    "core_top_strict_lint": {
+      "off": {"status":"fail","warnings":80,"rules":{"UNUSEDSIGNAL":78,"DECLFILENAME":1,"UNUSEDPARAM":1}},
+      "on": {"status":"fail","warnings":81,"rules":{"UNUSEDSIGNAL":79,"DECLFILENAME":1,"UNUSEDPARAM":1}},
+      "lacc_only_delta": "io_laccInput_requestReady is unused"
+    },
+    "official_func_smoke": {"status":"not_executed","reason":"requires committed source head and isolated overlay"},
+    "vivado_fpga": {"status":"not_executed"}
+  }
+}

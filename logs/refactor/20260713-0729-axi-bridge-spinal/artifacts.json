@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "iteration_id": "20260713-0729-axi-bridge-spinal",
+  "artifacts": [
+    {"name":"generated-rtl","path":"reference/component-replacements/axi_bridge.v","sha256":"4c307033b1d79da6cc257d314d92ef69830ed87cddc24eb7269ff278927e70a0","size":10819,"retention":"git"},
+    {"name":"cycle-diff-summary","path":"logs/refactor/20260713-0729-axi-bridge-spinal/evidence/cycle-diff.json","sha256":"da85411909a0c1db4ccd998f3c47d5324092684d2a6d352d0b927cdfdb238368","size":3109,"retention":"git"},
+    {"name":"raw-cycle-traces","path":"/tmp/axi-unified/axi_bridge/unit/{golden,candidate}/trace.txt","sha256":"d940e413491705cf70504fb2fdbb96e2738080ecf29ad6849a07f2cf8a9e93f8","retention":"local temporary artifact"},
+    {"name":"local-gates","path":"/tmp/axi-unified","retention":"local temporary artifact"}
+  ]
+}

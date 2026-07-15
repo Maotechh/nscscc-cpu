@@ -1,0 +1,81 @@
+{
+  "schema_version": 1,
+  "target": "lacc",
+  "module": "lacc_core",
+  "generated_file": "lacc_core.v",
+  "golden": {
+    "commit_key": "team_golden_candidate",
+    "files": [
+      {
+        "path": "rtl/lacc_core.v",
+        "sha256": "0b17abbd83cbbf088993dcb30a38981e99d600ebaeaa5c566ad4eaff75ac97b5"
+      },
+      {
+        "path": "rtl/lacc_demo.v",
+        "sha256": "8cae09cc7f0acb0ea5cc24352704d80baf116e29f4ae372ca9eac6b63bac2ea0"
+      }
+    ]
+  },
+  "ports": {
+    "clk": {"direction": "input", "width": 1},
+    "reset": {"direction": "input", "width": 1},
+    "lacc_flush": {"direction": "input", "width": 1},
+    "lacc_req_valid": {"direction": "input", "width": 1},
+    "lacc_req_command": {"direction": "input", "width": 2},
+    "lacc_req_imm": {"direction": "input", "width": 7},
+    "lacc_req_rj": {"direction": "input", "width": 32},
+    "lacc_req_rk": {"direction": "input", "width": 32},
+    "lacc_rsp_valid": {"direction": "output", "width": 1},
+    "lacc_rsp_rdat": {"direction": "output", "width": 32},
+    "lacc_data_valid": {"direction": "output", "width": 1},
+    "lacc_data_ready": {"direction": "input", "width": 1},
+    "lacc_data_addr": {"direction": "output", "width": 32},
+    "lacc_data_read": {"direction": "output", "width": 1},
+    "lacc_data_wdata": {"direction": "output", "width": 32},
+    "lacc_data_size": {"direction": "output", "width": 2},
+    "lacc_drsp_valid": {"direction": "input", "width": 1},
+    "lacc_drsp_rdata": {"direction": "input", "width": 32}
+  },
+  "clock_reset": {
+    "clock": "clk",
+    "edge": "rising",
+    "reset": "reset",
+    "reset_kind": "synchronous",
+    "reset_level": "high",
+    "flush": "lacc_flush"
+  },
+  "observability": {
+    "always": ["lacc_rsp_valid", "lacc_data_valid"],
+    "response_valid": ["lacc_rsp_rdat"],
+    "memory_valid": ["lacc_data_addr", "lacc_data_read", "lacc_data_size"],
+    "memory_write": ["lacc_data_wdata"],
+    "invalid_payload_is_oracle": false
+  },
+  "stimulus": {
+    "seed": "0x158aa8",
+    "random_cycles": 8192,
+    "minimum_cycles": 8192,
+    "randomized": [
+      "request",
+      "memory_ready",
+      "ordered_read_response_delay",
+      "ordered_read_response_data",
+      "reset",
+      "flush"
+    ],
+    "legal_read_responses": true
+  },
+  "warning_policy": {
+    "candidate": "zero_warnings_required",
+    "golden": "record_separately_as_historical",
+    "combined_compile": "classify_by_source_and_reject_unclassified"
+  },
+  "diff": {
+    "engine": "verilator_cycle_lockstep",
+    "verilator": "5.020",
+    "two_state": true,
+    "cycle_exact": true,
+    "backpressure_stability": true,
+    "negative_control": "candidate_response_valid_inversion"
+  }
+}

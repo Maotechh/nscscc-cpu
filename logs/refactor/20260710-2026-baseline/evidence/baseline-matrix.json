@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-07-11T14:38:30+08:00",
+  "evidence_source_head": "45043bd8a89b0e4dea3911ed609d128252f0319f",
+  "case": "func/func_lab19",
+  "environment": {
+    "chiplab_commit": "a2e11b38bc5c85abb4408a8e0c0f5ce903c7ba31",
+    "mycpu_gitlink": "aa3bde1f3e720e71c2c78d6b81930d797b810149",
+    "verilator": "5.020",
+    "nemu": "v1.0.5-x86",
+    "bus_delay_seed": 5570815
+  },
+  "runs": [
+    {"commit":"d22c13c1ecbee7b0423b7e4f4616f24d98457f02","locked":false,"purpose":"diagnostic","functional_status":"pass","rtl_static_status":"fail","instructions":174059,"clocks":609660,"first_mismatch":null,"report_sha256":"3cdd8c6060569173be2704bea114e05c3e4e1aef5ea01c4c8fa5b4a7b17e1a92"},
+    {"commit":"d76ca40be528eb8de6e258d1ba249a44eaaed6b6","locked":false,"purpose":"diagnostic","functional_status":"fail","rtl_static_status":"fail","instructions":172559,"clocks":602471,"first_mismatch":"t0(r12) different at pc = 0x1c07c79c, right=0x000006e2, wrong=0x00000008","report_sha256":"38493e11cebfe3206a94fe3b84ce288183784118a6fd0d75a1953a2608a0818b"},
+    {"commit":"2ffb1abe4e23eb2272c1b0f899a4ef0727994e05","locked":false,"purpose":"diagnostic","functional_status":"fail","rtl_static_status":"fail","instructions":172559,"clocks":602464,"first_mismatch":"t0(r12) different at pc = 0x1c07c79c, right=0x000006e2, wrong=0x00000008","report_sha256":"ff2bdd27600541c0e0351930dadb0337d839502c7fbeece059c2542504ec15ef"},
+    {"commit":"40830b8307be27128cb215dc4ea66908bd128334","locked":false,"purpose":"diagnostic","functional_status":"fail","rtl_static_status":"fail","instructions":172559,"clocks":602464,"first_mismatch":"t0(r12) different at pc = 0x1c07c79c, right=0x000006e2, wrong=0x00000008","report_sha256":"3a529b37aa564db4be619a283c148b5f93b30f62a5c38a4a9919f149ec41a38b"},
+    {"commit":"a158aa8ab4d49cece1a0fe488d7ac7dc02bd8cf6","locked":true,"purpose":"baseline_candidate","functional_status":"fail","rtl_static_status":"fail","instructions":172552,"clocks":602903,"first_mismatch":"t0(r12) different at pc = 0x1c07c79c, right= 0x000006e2, wrong = 0x00000008","report_sha256":"2360489c56046b3e6a04bfcc640da7a37af2d1e47bd1fbc702e33d4b762a5ec1"}
+  ],
+  "conclusion": {
+    "locked_candidate_is_golden": false,
+    "last_functionally_passing_team_commit": "d22c13c1ecbee7b0423b7e4f4616f24d98457f02",
+    "first_functionally_failing_team_commit": "d76ca40be528eb8de6e258d1ba249a44eaaed6b6",
+    "failure_scope": "n73_icacop_op0 instruction-cache invalidation test",
+    "limitations": [
+      "Only func_lab19 with one fixed bus-delay seed was used for commit localization.",
+      "Diagnostic commits are not locked golden replacements.",
+      "All runs still fail the strict unwaived Verilator warning gate."
+    ]
+  }
+}

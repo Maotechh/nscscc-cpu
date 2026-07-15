@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "iteration_id": "20260712-1651-mul-spinal",
+  "reviewer": "/root/mul_result_claim",
+  "review_target_sha": "f6c55e6dcb42761c283febf99460214452628fd0",
+  "overall_claim_supported": "partial",
+  "confidence": "high",
+  "claims": [
+    {
+      "id": "C1",
+      "claim_supported": "yes",
+      "scope": "candidate satisfies the locked mathematical and timing contract",
+      "excludes": ["golden complete formal equivalence", "4-state X/Z", "whole CPU", "post-synth equivalence", "FPGA implementation"]
+    },
+    {
+      "id": "C2",
+      "claim_supported": "yes",
+      "scope": "one failing func_lab19 diagnostic observation through the common first mismatch",
+      "excludes": ["func smoke PASS", "integrated_pass", "whole-CPU equivalence", "58/81", "random/perf/Linux/FPGA"]
+    },
+    {
+      "id": "C3",
+      "claim_supported": "no",
+      "scope": "complete official CPU validation"
+    }
+  ],
+  "missing_evidence": [
+    "golden versus candidate complete sequential equivalence",
+    "passing multiplication-directed official cases",
+    "58 and 81 functional suites",
+    "random multi-seed DiffTest",
+    "perf, U-Boot and Linux",
+    "approved warnings, post-synth equivalence, implementation, timing and bitstream"
+  ],
+  "recommended_state": "implementation_in_review"
+}

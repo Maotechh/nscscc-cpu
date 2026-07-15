@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "iteration_id": "20260712-0430-alu-spinal",
+  "external_artifact_policy": "原始 simulator/Vivado/chiplab 日志不提交 Git；本文件固定 locator、SHA256、大小和本地保留策略。",
+  "artifact_root": "/tmp/nscscc-alu-final-d0cd4b3",
+  "worktree_root": "/tmp/nscscc-alu-final-d0cd4b3-work",
+  "retention": "local_until_explicit_clean",
+  "artifacts": [
+    {"id":"local-gates","path":"evidence/local-gates.json","sha256":"5dcfef8caa891d1451138f0a62b496fe524866d57e3e7e982916ee76417b64a7","size":1579,"tracked":true},
+    {"id":"chiplab-comparison","path":"evidence/chiplab-comparison.json","sha256":"b9286dc62906a1dc1e8b5b530f49b537dd6913a4bd3235a4bb9fb3764d9a2912","size":2326,"tracked":true},
+    {"id":"automation-tests","path":"evidence/automation-tests.txt","sha256":"ec0f5a3be0d435884d6b45eb9d9f68b80d5eb0896ac5b4fb590e0bd8f56a8ba0","size":1780,"tracked":true},
+    {"id":"claude-raw","path":"reviews/claude-raw.md","sha256":"d7d4fb82203f0c805d0acf766dca864e6709993781eb3dd2aac1504df9e8397d","size":1175,"tracked":true},
+    {"id":"claude-summary","path":"reviews/claude-summary.json","sha256":"2206b096b3eb7b2076ea73fc575cb288726620391a41df049e0f915097c940d4","size":1893,"tracked":true},
+    {"id":"claude-summary-md","path":"reviews/claude-summary.md","sha256":"f0e831f831530424cd08109b6d76a41be057c17da836837d9795c2febb5153f8","size":770,"tracked":true},
+    {"id":"local-independent-review","path":"reviews/local-independent-review.md","sha256":"4fda111bc82c5ff5bfc61c90318b51439a4ff1073cacd4087566bc2fed551923","size":2012,"tracked":true},
+    {"id":"experiment-audit","path":"reviews/experiment-audit.json","sha256":"d371b10d6088f4d77567fe2dfe8b4ea0c2fda3230263b6238474dead16da51fa","size":1238,"tracked":true},
+    {"id":"experiment-audit-md","path":"reviews/experiment-audit.md","sha256":"d70a0b525a9da82d2279685732d350d17d9e2bd2578607fa0696a28a0bbe09c1","size":1536,"tracked":true},
+    {"id":"result-to-claim","path":"reviews/result-to-claim.json","sha256":"7aa2c3c4b376047d51535530055ad99888763858b1cf9486db91092a3f094771","size":824,"tracked":true},
+    {"id":"result-to-claim-md","path":"reviews/result-to-claim.md","sha256":"3bdc25a5ca7a0005b2b6a132d72fd4a5fcfb1715837cc035f0dc5f98ea6b49b0","size":1101,"tracked":true}
+  ],
+  "external_artifacts": [
+    {"id":"windows-doctor","path":"build/20260712-0430-alu-spinal-clean-doctor/reports/doctor.json","sha256":"7ec2846d020242c54b7bd5d3f311607b4d366d76374f4f1410283f2f5d08c284","size":3940,"tracked":false},
+    {"id":"scala-summary","path":"/tmp/nscscc-alu-clean-4743235-scala/scala-check/summary.json","sha256":"ef9fadf42dd4fbafdd06d9a866cab4ff7b4cfbaaf811b20477011e1f16db0f1c","size":39345,"tracked":false},
+    {"id":"elaborate-summary","path":"/tmp/nscscc-alu-clean-4743235-elaborate/alu/elaborate/summary.json","sha256":"d025004dcd0bb31b44a79f35dcf0016271d0ec9eb2ac752a5b417cbd33a18068","size":10158,"tracked":false},
+    {"id":"generate-1-summary","path":"/tmp/nscscc-alu-clean-4743235-generate1/alu/generate/summary.json","sha256":"08c4e1965cde5447eb0a11a090f9618b4fb4022d917d84d42da6c6239e626dd2","size":10767,"tracked":false},
+    {"id":"generate-2-summary","path":"/tmp/nscscc-alu-clean-4743235-generate2/alu/generate/summary.json","sha256":"f1272ffbe6cdd3d1fdd6947fd39fa9c40af0ce0831d3cf2153111afa56694cfb","size":10766,"tracked":false},
+    {"id":"port-summary","path":"/tmp/nscscc-alu-clean-4743235-port/alu/port-check/summary.json","sha256":"31a18358817bbacf706ca6506a3e8dea968a841392af255570c56449acc4071c","size":1149,"tracked":false},
+    {"id":"lint-summary","path":"/tmp/nscscc-alu-clean-4743235-lint/alu/lint/summary.json","sha256":"cb33e939d1dd3703f65718b6b15ae6f2460c1e714b87b1e5f34c471f785ca161","size":701,"tracked":false},
+    {"id":"yosys-summary","path":"/tmp/nscscc-alu-clean-4743235-yosys/alu/yosys-check/summary.json","sha256":"0edb018da71d826658631c159f30e6bf1320e0e334898e3af6296654861003df","size":712,"tracked":false},
+    {"id":"unit-summary","path":"/tmp/nscscc-alu-clean-4743235-unit/alu/unit/summary.json","sha256":"2f82bd1fb57857716c338fff7b4a9c7b0a23932b8e15b73640099c284a285ce4","size":1398,"tracked":false},
+    {"id":"formal-summary","path":"/tmp/nscscc-alu-clean-4743235-formal/alu/formal/summary.json","sha256":"379113d79298c597f549a62f4b51b04fe8b34f84a3181d0848fc045027a68d14","size":980,"tracked":false},
+    {"id":"chiplab-doctor","path":"/tmp/nscscc-alu-final-d0cd4b3/reports/chiplab-doctor.json","sha256":"42e07bb53dfe506cd31cb4806c1de9401a01d98940cdad7ff13115d3659bb2bc","size":16175,"tracked":false},
+    {"id":"candidate-overlay","path":"/tmp/nscscc-alu-final-d0cd4b3/reports/iterations/20260712-0430-alu-candidate-final/chiplab-overlay.json","sha256":"0e381bfbc441cc4ae94c051198e3a0b3bc42f33097e981943eee9a075037ccba","size":1310,"tracked":false},
+    {"id":"candidate-smoke","path":"/tmp/nscscc-alu-final-d0cd4b3/reports/iterations/20260712-0430-alu-candidate-final/rtl-smoke.json","sha256":"96d99ff902d43775dcbf60bfe9648587b6c2c6ea1161113bbef01271a24130d0","size":195244,"tracked":false},
+    {"id":"mixed-overlay","path":"/tmp/nscscc-alu-final-d0cd4b3/reports/iterations/20260712-0430-alu-mixed-final/chiplab-overlay.json","sha256":"be809f5076eb835aeea048998d830c54efca6c15123739743871e22d42ca6d04","size":2664,"tracked":false},
+    {"id":"mixed-smoke","path":"/tmp/nscscc-alu-final-d0cd4b3/reports/iterations/20260712-0430-alu-mixed-final/rtl-smoke.json","sha256":"f0febf8db79ce109093ffe1f549683265356e734823fc43f866b8faea2c02445","size":193414,"tracked":false}
+  ]
+}

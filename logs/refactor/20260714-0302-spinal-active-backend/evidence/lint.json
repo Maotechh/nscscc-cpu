@@ -1,0 +1,9 @@
+{
+  "error": "Verilator complete core_top lint failed or warned",
+  "evaluator_sha256": "63490b44b7c4e9eee730281a4a12ad62eeea238aeb7031df05f7bf2fc4e33641",
+  "gate": "lint",
+  "generated_at": "2026-07-14T03:24:05+08:00",
+  "schema_version": 1,
+  "status": "fail",
+  "target": "core-top-compat"
+}

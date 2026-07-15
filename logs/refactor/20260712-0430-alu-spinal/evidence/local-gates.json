@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "iteration_id": "20260712-0430-alu-spinal",
+  "implementation_tested_sha": "4743235630f69dc96a77ff995ad00a9412d422c7",
+  "contract_sha": "ecdc699e10a20c4071f80de55e39f8a4255aa985",
+  "evidence_publication_sha": "d0cd4b33da9a984f66d803943e3e97621124d1ec",
+  "rtl": {
+    "path": "reference/component-replacements/alu.v",
+    "sha256": "1349173904c772225ed4184a7e65aa88f7278fbcd060d33d81c966954c128146",
+    "size": 6398,
+    "matches_clean_generation": true
+  },
+  "gates": {
+    "doctor": {"status":"pass","vivado":"2023.2 ML Standard"},
+    "automation": {"status":"pass","tests":137,"failed":0,"skipped":0},
+    "scala": {"status":"pass","executed":4,"passed":4,"failed":0,"skipped":0},
+    "elaborate": {"status":"pass","note":"单次全配置 elaboration；可复现性由两个 generate summary 的双跑证据支持。"},
+    "generate_1": {"status":"pass","reproducible":true,"sha256":"1349173904c772225ed4184a7e65aa88f7278fbcd060d33d81c966954c128146"},
+    "generate_2": {"status":"pass","reproducible":true,"sha256":"1349173904c772225ed4184a7e65aa88f7278fbcd060d33d81c966954c128146"},
+    "port_check": {"status":"pass","ports":4,"extra_clock_reset":0},
+    "lint": {"status":"pass","warnings":0},
+    "yosys_check": {"status":"pass","warnings":0},
+    "unit_diff": {"status":"pass","tests":3,"random_seed":"0x158aa8","random_vectors":4096,"skipped":0},
+    "formal": {"status":"pass","method":"equiv_make/equiv_simple/equiv_status -assert","two_state":true,"input_bits":78}
+  },
+  "external_locator_root": "/tmp/nscscc-alu-clean-4743235-*"
+}

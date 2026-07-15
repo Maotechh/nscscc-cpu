@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "iteration_id": "20260715-1230-pure-overlay-profile",
+  "status": "draft",
+  "branch": "refactor/20260714-1650-consolidated-spinal",
+  "base_sha": "df25f38153373150c757fa1503ea433a55414aee",
+  "head_sha": "e420eba344d45f7333ef2c0a6eb538e850863a8a",
+  "selected_boundary": "pure_spinal_chiplab_overlay_profile",
+  "gates": {
+    "python_compile": {"status": "pass", "planned": 1, "executed": 1, "passed": 1, "failed": 0, "skipped": 0, "evidence": "commands.jsonl"},
+    "automation": {"status": "pass", "planned": 1, "executed": 1, "passed": 1, "failed": 0, "skipped": 0, "evidence": "commands.jsonl"},
+    "chiplab_doctor": {"status": "pass", "planned": 1, "executed": 1, "passed": 1, "failed": 0, "skipped": 0, "evidence": "evidence/chiplab-doctor.json"},
+    "pure_overlay": {"status": "pass", "planned": 1, "executed": 1, "passed": 1, "failed": 0, "skipped": 0, "evidence": "evidence/chiplab-overlay.json"},
+    "candidate_closure": {"status": "pass", "planned": 1, "executed": 1, "passed": 1, "failed": 0, "skipped": 0, "evidence": "evidence/candidate-closure.json"},
+    "rtl_smoke": {"status": "fail", "planned": 1, "executed": 1, "passed": 0, "failed": 1, "skipped": 0, "evidence": "evidence/rtl-smoke.json", "reason": "functional_status=pass; strict warning policy failed with DUT=40 and official=365"},
+    "claude_review": {"status": "unavailable", "planned": 1, "executed": 0, "passed": 0, "failed": 0, "skipped": 1, "evidence": "reviews/claude-summary.json"}
+  },
+  "claims": [
+    {"claim": "pure overlay profile is implemented without changing default overlay", "status": "supported", "evidence": "evidence/chiplab-overlay-manifest.json"},
+    {"claim": "official native compile/simulation works without old CPU HDL", "status": "supported", "evidence": "evidence/rtl-smoke.json commands all exit 0 and functional_status=pass"},
+    {"claim": "strict official smoke gate passes", "status": "unsupported", "evidence": "warning policy fail; diagnostic provenance is not gate-eligible"}
+  ],
+  "blocked_by": ["strict warning policy unapproved", "diagnostic profile not gate-eligible", "Claude bridge not yet called"],
+  "residual_risks": ["chiplab Makefile may depend on old files outside generated top", "full functional and FPGA gates remain absent"]
+}

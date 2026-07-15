@@ -1,0 +1,973 @@
+python3 -I -m unittest discover -s tests -p "test_*.py"
+..ERROR: unsupported TARGET='cache'; expected 'alu'
+............error: timeout must be positive
+.............................ERROR: output directory must be fresh: /tmp/tmp0n882xou/out
+...............................................ERROR: unsupported TARGET='alu'; expected 'div'
+......{
+  "actual_ports": {
+    "alu_op": [
+      "input",
+      14
+    ],
+    "alu_result": [
+      "output",
+      32
+    ],
+    "alu_src1": [
+      "input",
+      32
+    ],
+    "alu_src2": [
+      "input",
+      32
+    ]
+  },
+  "expected_ports": {
+    "alu_op": [
+      "input",
+      14
+    ],
+    "alu_result": [
+      "output",
+      32
+    ],
+    "alu_src1": [
+      "input",
+      32
+    ],
+    "alu_src2": [
+      "input",
+      32
+    ]
+  },
+  "gate": "port-check",
+  "rtl": "/tmp/tmpr_bfqz0j/alu.v",
+  "rtl_sha256": "7525a9af125b4e64165912c47d49f1c54bdd8ba58d43f078d3ad7f8408a6a64f",
+  "schema_version": 1,
+  "status": "pass",
+  "yosys": {
+    "returncode": 0,
+    "warnings": []
+  }
+}
+{
+  "actual_ports": {
+    "alu_op": [
+      "input",
+      14
+    ],
+    "alu_result": [
+      "output",
+      32
+    ],
+    "alu_src1": [
+      "input",
+      32
+    ],
+    "alu_src2": [
+      "input",
+      32
+    ],
+    "clk": [
+      "input",
+      1
+    ]
+  },
+  "expected_ports": {
+    "alu_op": [
+      "input",
+      14
+    ],
+    "alu_result": [
+      "output",
+      32
+    ],
+    "alu_src1": [
+      "input",
+      32
+    ],
+    "alu_src2": [
+      "input",
+      32
+    ]
+  },
+  "gate": "port-check",
+  "rtl": "/tmp/tmpg6pi72ed/alu.v",
+  "rtl_sha256": "7525a9af125b4e64165912c47d49f1c54bdd8ba58d43f078d3ad7f8408a6a64f",
+  "schema_version": 1,
+  "status": "fail",
+  "yosys": {
+    "returncode": 0,
+    "warnings": []
+  }
+}
+{
+  "error": "protocol.active_edges_to_complete must be 33",
+  "evaluator_sha256": "5728d0495d22337d3b8efb61ab1175daf04f51123ca7b3ecfc5916a8ed4a0027",
+  "gate": "div-contract",
+  "generated_at": "2026-07-13T07:16:42+08:00",
+  "schema_version": 1,
+  "status": "fail"
+}
+{
+  "elapsed_seconds": 0.006,
+  "evaluator_sha256": "42153b372bdede205e03cba5614190173ea354f3ee8aa29c68c68d7644abe3e3",
+  "gate": "generate",
+  "generated_at": "2026-07-13T07:16:43+08:00",
+  "generator_main": "openla500.execute.GenerateOpenLa500Div",
+  "manifest_sha256": "008d8329e5727dc2ece7e878f23aadcb20dce00459d0df7323d61a7dbb370106",
+  "published_rtl": null,
+  "published_sha256": null,
+  "published_size": null,
+  "repo_head_sha": "1111111111111111111111111111111111111111",
+  "reproducible": false,
+  "runs": [
+    {
+      "cleanup_error": null,
+      "elapsed_seconds": 0.001,
+      "generated_files": [
+        "div.v"
+      ],
+      "log": "/tmp/tmpgk17on41/out/generate-1.log",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "passed": true,
+      "returncode": 0,
+      "rtl_sha256": "8dd74faa0041124f5e496262d07d63d021783441671bfffb642c6acfd20a52e1",
+      "rtl_size": 22,
+      "run": 1,
+      "runtime_workspace": "/tmp/nscscc-div-530528db5067",
+      "runtime_workspace_cleaned": true,
+      "timed_out": false,
+      "warnings": []
+    },
+    {
+      "cleanup_error": null,
+      "elapsed_seconds": 0.001,
+      "generated_files": [
+        "div.v"
+      ],
+      "log": "/tmp/tmpgk17on41/out/generate-2.log",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "passed": true,
+      "returncode": 0,
+      "rtl_sha256": "df5134acec8885e36cbce1bb12ae71b0023adc1b6fd0c0845cf7ac81a5feb479",
+      "rtl_size": 34,
+      "run": 2,
+      "runtime_workspace": "/tmp/nscscc-div-41365bc300dd",
+      "runtime_workspace_cleaned": true,
+      "timed_out": false,
+      "warnings": []
+    }
+  ],
+  "scala_dependencies_after": {
+    "artifact_count": 1,
+    "artifacts_sha256": "2222222222222222222222222222222222222222222222222222222222222222"
+  },
+  "scala_dependencies_before": {
+    "artifact_count": 1,
+    "artifacts_sha256": "2222222222222222222222222222222222222222222222222222222222222222"
+  },
+  "scala_dependencies_stable": true,
+  "schema_version": 1,
+  "source_after": {
+    "files": [
+      {
+        "path": ".scalafmt.conf",
+        "sha256": "d140f20e52967f7bf4113edbd6078d7f4ec5f1ff4263bcbd2340d866f3b1ad81",
+        "size": 15
+      },
+      {
+        "path": "build.sbt",
+        "sha256": "a1a88486a04a22eee5e2f2d65444aa412f0155018cf219ace47bbce6d33d318b",
+        "size": 10
+      },
+      {
+        "path": "project/build.properties",
+        "sha256": "e4ba9c360d17eae356943a8241ee3f1345cf461ac9c285dd0345efac287506e1",
+        "size": 25
+      },
+      {
+        "path": "project/plugins.sbt",
+        "sha256": "2392161283cef1d29cc4c7dcf0a5315e4d2f7fd822918035b4bf0e7a56dbd2fd",
+        "size": 20
+      },
+      {
+        "path": "src/main/scala/openla500/execute/OpenLa500Div.scala",
+        "sha256": "7e7469eed9a675122e28d2140b7ec404b42764cfc99af5e73a599f5f34680752",
+        "size": 52
+      }
+    ],
+    "sha256": "231606cbb8eb1af533a213e3ecea12f6e177b939d6208be195fbd1e8a744ca5b"
+  },
+  "source_before": {
+    "files": [
+      {
+        "path": ".scalafmt.conf",
+        "sha256": "d140f20e52967f7bf4113edbd6078d7f4ec5f1ff4263bcbd2340d866f3b1ad81",
+        "size": 15
+      },
+      {
+        "path": "build.sbt",
+        "sha256": "a1a88486a04a22eee5e2f2d65444aa412f0155018cf219ace47bbce6d33d318b",
+        "size": 10
+      },
+      {
+        "path": "project/build.properties",
+        "sha256": "e4ba9c360d17eae356943a8241ee3f1345cf461ac9c285dd0345efac287506e1",
+        "size": 25
+      },
+      {
+        "path": "project/plugins.sbt",
+        "sha256": "2392161283cef1d29cc4c7dcf0a5315e4d2f7fd822918035b4bf0e7a56dbd2fd",
+        "size": 20
+      },
+      {
+        "path": "src/main/scala/openla500/execute/OpenLa500Div.scala",
+        "sha256": "7e7469eed9a675122e28d2140b7ec404b42764cfc99af5e73a599f5f34680752",
+        "size": 52
+      }
+    ],
+    "sha256": "231606cbb8eb1af533a213e3ecea12f6e177b939d6208be195fbd1e8a744ca5b"
+  },
+  "source_stable": true,
+  "status": "fail",
+  "target": "div"
+}
+{
+  "elapsed_seconds": 0.005,
+  "evaluator_sha256": "42153b372bdede205e03cba5614190173ea354f3ee8aa29c68c68d7644abe3e3",
+  "gate": "generate",
+  "generated_at": "2026-07-13T07:16:44+08:00",
+  "generator_main": "openla500.execute.GenerateOpenLa500Div",
+  "manifest_sha256": "008d8329e5727dc2ece7e878f23aadcb20dce00459d0df7323d61a7dbb370106",
+  "published_rtl": "/tmp/tmpnyxjmy43/out/rtl/div.v",
+  "published_sha256": "8dd74faa0041124f5e496262d07d63d021783441671bfffb642c6acfd20a52e1",
+  "published_size": 22,
+  "repo_head_sha": "1111111111111111111111111111111111111111",
+  "reproducible": true,
+  "runs": [
+    {
+      "cleanup_error": null,
+      "elapsed_seconds": 0.001,
+      "generated_files": [
+        "div.v"
+      ],
+      "log": "/tmp/tmpnyxjmy43/out/generate-1.log",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "passed": true,
+      "returncode": 0,
+      "rtl_sha256": "8dd74faa0041124f5e496262d07d63d021783441671bfffb642c6acfd20a52e1",
+      "rtl_size": 22,
+      "run": 1,
+      "runtime_workspace": "/tmp/nscscc-div-f1dd3f655e55",
+      "runtime_workspace_cleaned": true,
+      "timed_out": false,
+      "warnings": []
+    },
+    {
+      "cleanup_error": null,
+      "elapsed_seconds": 0.001,
+      "generated_files": [
+        "div.v"
+      ],
+      "log": "/tmp/tmpnyxjmy43/out/generate-2.log",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "passed": true,
+      "returncode": 0,
+      "rtl_sha256": "8dd74faa0041124f5e496262d07d63d021783441671bfffb642c6acfd20a52e1",
+      "rtl_size": 22,
+      "run": 2,
+      "runtime_workspace": "/tmp/nscscc-div-cca5871c6c5f",
+      "runtime_workspace_cleaned": true,
+      "timed_out": false,
+      "warnings": []
+    }
+  ],
+  "scala_dependencies_after": {
+    "artifact_count": 1,
+    "artifacts_sha256": "2222222222222222222222222222222222222222222222222222222222222222"
+  },
+  "scala_dependencies_before": {
+    "artifact_count": 1,
+    "artifacts_sha256": "2222222222222222222222222222222222222222222222222222222222222222"
+  },
+  "scala_dependencies_stable": true,
+  "schema_version": 1,
+  "source_after": {
+    "files": [
+      {
+        "path": ".scalafmt.conf",
+        "sha256": "d140f20e52967f7bf4113edbd6078d7f4ec5f1ff4263bcbd2340d866f3b1ad81",
+        "size": 15
+      },
+      {
+        "path": "build.sbt",
+        "sha256": "a1a88486a04a22eee5e2f2d65444aa412f0155018cf219ace47bbce6d33d318b",
+        "size": 10
+      },
+      {
+        "path": "project/build.properties",
+        "sha256": "e4ba9c360d17eae356943a8241ee3f1345cf461ac9c285dd0345efac287506e1",
+        "size": 25
+      },
+      {
+        "path": "project/plugins.sbt",
+        "sha256": "2392161283cef1d29cc4c7dcf0a5315e4d2f7fd822918035b4bf0e7a56dbd2fd",
+        "size": 20
+      },
+      {
+        "path": "src/main/scala/openla500/execute/OpenLa500Div.scala",
+        "sha256": "7e7469eed9a675122e28d2140b7ec404b42764cfc99af5e73a599f5f34680752",
+        "size": 52
+      }
+    ],
+    "sha256": "231606cbb8eb1af533a213e3ecea12f6e177b939d6208be195fbd1e8a744ca5b"
+  },
+  "source_before": {
+    "files": [
+      {
+        "path": ".scalafmt.conf",
+        "sha256": "d140f20e52967f7bf4113edbd6078d7f4ec5f1ff4263bcbd2340d866f3b1ad81",
+        "size": 15
+      },
+      {
+        "path": "build.sbt",
+        "sha256": "a1a88486a04a22eee5e2f2d65444aa412f0155018cf219ace47bbce6d33d318b",
+        "size": 10
+      },
+      {
+        "path": "project/build.properties",
+        "sha256": "e4ba9c360d17eae356943a8241ee3f1345cf461ac9c285dd0345efac287506e1",
+        "size": 25
+      },
+      {
+        "path": "project/plugins.sbt",
+        "sha256": "2392161283cef1d29cc4c7dcf0a5315e4d2f7fd822918035b4bf0e7a56dbd2fd",
+        "size": 20
+      },
+      {
+        "path": "src/main/scala/openla500/execute/OpenLa500Div.scala",
+        "sha256": "7e7469eed9a675122e28d2140b7ec404b42764cfc99af5e73a599f5f34680752",
+        "size": 52
+      }
+    ],
+    "sha256": "231606cbb8eb1af533a213e3ecea12f6e177b939d6208be195fbd1e8a744ca5b"
+  },
+  "source_stable": true,
+  "status": "pass",
+  "target": "div"
+}.........................................................................................ERROR: unsupported TARGET='alu'; expected 'mul'
+....
+{
+  "actual_ports": {
+    "complete": [
+      "output",
+      1
+    ],
+    "div": [
+      "input",
+      1
+    ],
+    "div_clk": [
+      "input",
+      1
+    ],
+    "div_signed": [
+      "input",
+      1
+    ],
+    "r": [
+      "output",
+      32
+    ],
+    "reset": [
+      "input",
+      1
+    ],
+    "s": [
+      "output",
+      32
+    ],
+    "x": [
+      "input",
+      32
+    ],
+    "y": [
+      "input",
+      32
+    ]
+  },
+  "expected_ports": {
+    "complete": [
+      "output",
+      1
+    ],
+    "div": [
+      "input",
+      1
+    ],
+    "div_clk": [
+      "input",
+      1
+    ],
+    "div_signed": [
+      "input",
+      1
+    ],
+    "r": [
+      "output",
+      32
+    ],
+    "reset": [
+      "input",
+      1
+    ],
+    "s": [
+      "output",
+      32
+    ],
+    "x": [
+      "input",
+      32
+    ],
+    "y": [
+      "input",
+      32
+    ]
+  },
+  "gate": "port-check",
+  "input": {
+    "sha256": "8dd74faa0041124f5e496262d07d63d021783441671bfffb642c6acfd20a52e1",
+    "size": 22,
+    "snapshot": "/tmp/tmp108wsk5_/out/input/div.v",
+    "snapshot_stable": true,
+    "source": "/tmp/tmp108wsk5_/div.v",
+    "source_stable": true
+  },
+  "provenance": {
+    "repository_head": "1111111111111111111111111111111111111111"
+  },
+  "rtl": "/tmp/tmp108wsk5_/out/input/div.v",
+  "rtl_sha256": "8dd74faa0041124f5e496262d07d63d021783441671bfffb642c6acfd20a52e1",
+  "schema_version": 1,
+  "status": "pass",
+  "target": "div",
+  "yosys": {
+    "returncode": 0,
+    "timed_out": false,
+    "warnings": []
+  }
+}
+{
+  "actual_ports": {
+    "clk": [
+      "input",
+      1
+    ],
+    "complete": [
+      "output",
+      1
+    ],
+    "div": [
+      "input",
+      1
+    ],
+    "div_clk": [
+      "input",
+      1
+    ],
+    "div_signed": [
+      "input",
+      1
+    ],
+    "r": [
+      "output",
+      32
+    ],
+    "reset": [
+      "input",
+      1
+    ],
+    "s": [
+      "output",
+      32
+    ],
+    "x": [
+      "input",
+      32
+    ],
+    "y": [
+      "input",
+      32
+    ]
+  },
+  "expected_ports": {
+    "complete": [
+      "output",
+      1
+    ],
+    "div": [
+      "input",
+      1
+    ],
+    "div_clk": [
+      "input",
+      1
+    ],
+    "div_signed": [
+      "input",
+      1
+    ],
+    "r": [
+      "output",
+      32
+    ],
+    "reset": [
+      "input",
+      1
+    ],
+    "s": [
+      "output",
+      32
+    ],
+    "x": [
+      "input",
+      32
+    ],
+    "y": [
+      "input",
+      32
+    ]
+  },
+  "gate": "port-check",
+  "input": {
+    "sha256": "8dd74faa0041124f5e496262d07d63d021783441671bfffb642c6acfd20a52e1",
+    "size": 22,
+    "snapshot": "/tmp/tmp9y_boh69/out/input/div.v",
+    "snapshot_stable": true,
+    "source": "/tmp/tmp9y_boh69/div.v",
+    "source_stable": true
+  },
+  "provenance": {
+    "repository_head": "1111111111111111111111111111111111111111"
+  },
+  "rtl": "/tmp/tmp9y_boh69/out/input/div.v",
+  "rtl_sha256": "8dd74faa0041124f5e496262d07d63d021783441671bfffb642c6acfd20a52e1",
+  "schema_version": 1,
+  "status": "fail",
+  "target": "div",
+  "yosys": {
+    "returncode": 0,
+    "timed_out": false,
+    "warnings": []
+  }
+}
+{
+  "elapsed_seconds": 0.005,
+  "evaluator_sha256": "ea1811d89b04a9669fc630ab489ef3b3274ccef6854375e58496058005f71102",
+  "gate": "generate",
+  "generated_at": "2026-07-13T07:16:52+08:00",
+  "generator_main": "openla500.execute.GenerateOpenLa500Mul",
+  "manifest_sha256": "008d8329e5727dc2ece7e878f23aadcb20dce00459d0df7323d61a7dbb370106",
+  "published_rtl": null,
+  "published_sha256": null,
+  "published_size": null,
+  "repo_head_sha": "1111111111111111111111111111111111111111",
+  "reproducible": false,
+  "runs": [
+    {
+      "cleanup_error": null,
+      "elapsed_seconds": 0.001,
+      "generated_files": [
+        "mul.v"
+      ],
+      "log": "/tmp/tmph7vuasb6/out/generate-1.log",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "passed": true,
+      "returncode": 0,
+      "rtl_sha256": "95c78be997411f4c15fe547027c900eecc6842a6842433b80e594a498fc82538",
+      "rtl_size": 22,
+      "run": 1,
+      "runtime_workspace": "/tmp/nscscc-mul-a08bca1c3091",
+      "runtime_workspace_cleaned": true,
+      "timed_out": false,
+      "warnings": []
+    },
+    {
+      "cleanup_error": null,
+      "elapsed_seconds": 0.001,
+      "generated_files": [
+        "mul.v"
+      ],
+      "log": "/tmp/tmph7vuasb6/out/generate-2.log",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "passed": true,
+      "returncode": 0,
+      "rtl_sha256": "eff3aceef4d256e47e10f5b159ac7eec077d04ac0151da3aa84c0e04787bfeef",
+      "rtl_size": 34,
+      "run": 2,
+      "runtime_workspace": "/tmp/nscscc-mul-c93cedb3551e",
+      "runtime_workspace_cleaned": true,
+      "timed_out": false,
+      "warnings": []
+    }
+  ],
+  "scala_dependencies_after": {
+    "artifact_count": 1,
+    "artifacts_sha256": "2222222222222222222222222222222222222222222222222222222222222222"
+  },
+  "scala_dependencies_before": {
+    "artifact_count": 1,
+    "artifacts_sha256": "2222222222222222222222222222222222222222222222222222222222222222"
+  },
+  "scala_dependencies_stable": true,
+  "schema_version": 1,
+  "source_after": {
+    "files": [
+      {
+        "path": ".scalafmt.conf",
+        "sha256": "d140f20e52967f7bf4113edbd6078d7f4ec5f1ff4263bcbd2340d866f3b1ad81",
+        "size": 15
+      },
+      {
+        "path": "build.sbt",
+        "sha256": "a1a88486a04a22eee5e2f2d65444aa412f0155018cf219ace47bbce6d33d318b",
+        "size": 10
+      },
+      {
+        "path": "project/build.properties",
+        "sha256": "e4ba9c360d17eae356943a8241ee3f1345cf461ac9c285dd0345efac287506e1",
+        "size": 25
+      },
+      {
+        "path": "project/plugins.sbt",
+        "sha256": "2392161283cef1d29cc4c7dcf0a5315e4d2f7fd822918035b4bf0e7a56dbd2fd",
+        "size": 20
+      },
+      {
+        "path": "src/main/scala/openla500/execute/OpenLa500Mul.scala",
+        "sha256": "869dfac2befc4e895b47e84e61da4e4b7a0a96e11826029d0d8ee29d2ec2b7ff",
+        "size": 52
+      }
+    ],
+    "sha256": "e197c3bf777fcea58e1bd67d6379d9ddcbe6ea273e2a94e4475de30ab4cbac1f"
+  },
+  "source_before": {
+    "files": [
+      {
+        "path": ".scalafmt.conf",
+        "sha256": "d140f20e52967f7bf4113edbd6078d7f4ec5f1ff4263bcbd2340d866f3b1ad81",
+        "size": 15
+      },
+      {
+        "path": "build.sbt",
+        "sha256": "a1a88486a04a22eee5e2f2d65444aa412f0155018cf219ace47bbce6d33d318b",
+        "size": 10
+      },
+      {
+        "path": "project/build.properties",
+        "sha256": "e4ba9c360d17eae356943a8241ee3f1345cf461ac9c285dd0345efac287506e1",
+        "size": 25
+      },
+      {
+        "path": "project/plugins.sbt",
+        "sha256": "2392161283cef1d29cc4c7dcf0a5315e4d2f7fd822918035b4bf0e7a56dbd2fd",
+        "size": 20
+      },
+      {
+        "path": "src/main/scala/openla500/execute/OpenLa500Mul.scala",
+        "sha256": "869dfac2befc4e895b47e84e61da4e4b7a0a96e11826029d0d8ee29d2ec2b7ff",
+        "size": 52
+      }
+    ],
+    "sha256": "e197c3bf777fcea58e1bd67d6379d9ddcbe6ea273e2a94e4475de30ab4cbac1f"
+  },
+  "source_stable": true,
+  "status": "fail",
+  "target": "mul"
+}
+{
+  "elapsed_seconds": 0.005,
+  "evaluator_sha256": "ea1811d89b04a9669fc630ab489ef3b3274ccef6854375e58496058005f71102",
+  "gate": "generate",
+  "generated_at": "2026-07-13T07:16:52+08:00",
+  "generator_main": "openla500.execute.GenerateOpenLa500Mul",
+  "manifest_sha256": "008d8329e5727dc2ece7e878f23aadcb20dce00459d0df7323d61a7dbb370106",
+  "published_rtl": "/tmp/tmp4t_bpsvn/out/rtl/mul.v",
+  "published_sha256": "95c78be997411f4c15fe547027c900eecc6842a6842433b80e594a498fc82538",
+  "published_size": 22,
+  "repo_head_sha": "1111111111111111111111111111111111111111",
+  "reproducible": true,
+  "runs": [
+    {
+      "cleanup_error": null,
+      "elapsed_seconds": 0.001,
+      "generated_files": [
+        "mul.v"
+      ],
+      "log": "/tmp/tmp4t_bpsvn/out/generate-1.log",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "passed": true,
+      "returncode": 0,
+      "rtl_sha256": "95c78be997411f4c15fe547027c900eecc6842a6842433b80e594a498fc82538",
+      "rtl_size": 22,
+      "run": 1,
+      "runtime_workspace": "/tmp/nscscc-mul-e531290b2c9d",
+      "runtime_workspace_cleaned": true,
+      "timed_out": false,
+      "warnings": []
+    },
+    {
+      "cleanup_error": null,
+      "elapsed_seconds": 0.001,
+      "generated_files": [
+        "mul.v"
+      ],
+      "log": "/tmp/tmp4t_bpsvn/out/generate-2.log",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "passed": true,
+      "returncode": 0,
+      "rtl_sha256": "95c78be997411f4c15fe547027c900eecc6842a6842433b80e594a498fc82538",
+      "rtl_size": 22,
+      "run": 2,
+      "runtime_workspace": "/tmp/nscscc-mul-3d27e9e9578d",
+      "runtime_workspace_cleaned": true,
+      "timed_out": false,
+      "warnings": []
+    }
+  ],
+  "scala_dependencies_after": {
+    "artifact_count": 1,
+    "artifacts_sha256": "2222222222222222222222222222222222222222222222222222222222222222"
+  },
+  "scala_dependencies_before": {
+    "artifact_count": 1,
+    "artifacts_sha256": "2222222222222222222222222222222222222222222222222222222222222222"
+  },
+  "scala_dependencies_stable": true,
+  "schema_version": 1,
+  "source_after": {
+    "files": [
+      {
+        "path": ".scalafmt.conf",
+        "sha256": "d140f20e52967f7bf4113edbd6078d7f4ec5f1ff4263bcbd2340d866f3b1ad81",
+        "size": 15
+      },
+      {
+        "path": "build.sbt",
+        "sha256": "a1a88486a04a22eee5e2f2d65444aa412f0155018cf219ace47bbce6d33d318b",
+        "size": 10
+      },
+      {
+        "path": "project/build.properties",
+        "sha256": "e4ba9c360d17eae356943a8241ee3f1345cf461ac9c285dd0345efac287506e1",
+        "size": 25
+      },
+      {
+        "path": "project/plugins.sbt",
+        "sha256": "2392161283cef1d29cc4c7dcf0a5315e4d2f7fd822918035b4bf0e7a56dbd2fd",
+        "size": 20
+      },
+      {
+        "path": "src/main/scala/openla500/execute/OpenLa500Mul.scala",
+        "sha256": "869dfac2befc4e895b47e84e61da4e4b7a0a96e11826029d0d8ee29d2ec2b7ff",
+        "size": 52
+      }
+    ],
+    "sha256": "e197c3bf777fcea58e1bd67d6379d9ddcbe6ea273e2a94e4475de30ab4cbac1f"
+  },
+  "source_before": {
+    "files": [
+      {
+        "path": ".scalafmt.conf",
+        "sha256": "d140f20e52967f7bf4113edbd6078d7f4ec5f1ff4263bcbd2340d866f3b1ad81",
+        "size": 15
+      },
+      {
+        "path": "build.sbt",
+        "sha256": "a1a88486a04a22eee5e2f2d65444aa412f0155018cf219ace47bbce6d33d318b",
+        "size": 10
+      },
+      {
+        "path": "project/build.properties",
+        "sha256": "e4ba9c360d17eae356943a8241ee3f1345cf461ac9c285dd0345efac287506e1",
+        "size": 25
+      },
+      {
+        "path": "project/plugins.sbt",
+        "sha256": "2392161283cef1d29cc4c7dcf0a5315e4d2f7fd822918035b4bf0e7a56dbd2fd",
+        "size": 20
+      },
+      {
+        "path": "src/main/scala/openla500/execute/OpenLa500Mul.scala",
+        "sha256": "869dfac2befc4e895b47e84e61da4e4b7a0a96e11826029d0d8ee29d2ec2b7ff",
+        "size": 52
+      }
+    ],
+    "sha256": "e197c3bf777fcea58e1bd67d6379d9ddcbe6ea273e2a94e4475de30ab4cbac1f"
+  },
+  "source_stable": true,
+  "status": "pass",
+  "target": "mul"
+}...................................................................................................................
+----------------------------------------------------------------------
+Ran 304 tests in 11.341s
+
+OK
+
+{
+  "actual_ports": {
+    "mul_clk": [
+      "input",
+      1
+    ],
+    "mul_signed": [
+      "input",
+      1
+    ],
+    "reset": [
+      "input",
+      1
+    ],
+    "result": [
+      "output",
+      64
+    ],
+    "x": [
+      "input",
+      32
+    ],
+    "y": [
+      "input",
+      32
+    ]
+  },
+  "expected_ports": {
+    "mul_clk": [
+      "input",
+      1
+    ],
+    "mul_signed": [
+      "input",
+      1
+    ],
+    "reset": [
+      "input",
+      1
+    ],
+    "result": [
+      "output",
+      64
+    ],
+    "x": [
+      "input",
+      32
+    ],
+    "y": [
+      "input",
+      32
+    ]
+  },
+  "gate": "port-check",
+  "input": {
+    "sha256": "95c78be997411f4c15fe547027c900eecc6842a6842433b80e594a498fc82538",
+    "size": 22,
+    "snapshot": "/tmp/tmpten0qmrm/out/input/mul.v",
+    "snapshot_stable": true,
+    "source": "/tmp/tmpten0qmrm/mul.v",
+    "source_stable": true
+  },
+  "provenance": {
+    "repository_head": "1111111111111111111111111111111111111111"
+  },
+  "rtl": "/tmp/tmpten0qmrm/out/input/mul.v",
+  "rtl_sha256": "95c78be997411f4c15fe547027c900eecc6842a6842433b80e594a498fc82538",
+  "schema_version": 1,
+  "status": "pass",
+  "target": "mul",
+  "yosys": {
+    "returncode": 0,
+    "timed_out": false,
+    "warnings": []
+  }
+}
+{
+  "actual_ports": {
+    "clk": [
+      "input",
+      1
+    ],
+    "mul_clk": [
+      "input",
+      1
+    ],
+    "mul_signed": [
+      "input",
+      1
+    ],
+    "reset": [
+      "input",
+      1
+    ],
+    "result": [
+      "output",
+      64
+    ],
+    "x": [
+      "input",
+      32
+    ],
+    "y": [
+      "input",
+      32
+    ]
+  },
+  "expected_ports": {
+    "mul_clk": [
+      "input",
+      1
+    ],
+    "mul_signed": [
+      "input",
+      1
+    ],
+    "reset": [
+      "input",
+      1
+    ],
+    "result": [
+      "output",
+      64
+    ],
+    "x": [
+      "input",
+      32
+    ],
+    "y": [
+      "input",
+      32
+    ]
+  },
+  "gate": "port-check",
+  "input": {
+    "sha256": "95c78be997411f4c15fe547027c900eecc6842a6842433b80e594a498fc82538",
+    "size": 22,
+    "snapshot": "/tmp/tmpdhwxz50_/out/input/mul.v",
+    "snapshot_stable": true,
+    "source": "/tmp/tmpdhwxz50_/mul.v",
+    "source_stable": true
+  },
+  "provenance": {
+    "repository_head": "1111111111111111111111111111111111111111"
+  },
+  "rtl": "/tmp/tmpdhwxz50_/out/input/mul.v",
+  "rtl_sha256": "95c78be997411f4c15fe547027c900eecc6842a6842433b80e594a498fc82538",
+  "schema_version": 1,
+  "status": "fail",
+  "target": "mul",
+  "yosys": {
+    "returncode": 0,
+    "timed_out": false,
+    "warnings": []
+  }
+}

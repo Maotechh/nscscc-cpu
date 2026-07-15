@@ -1,0 +1,77 @@
+{
+  "schema_version": 1,
+  "iteration_id": "20260713-0729-exe-stage-spinal",
+  "status": "draft",
+  "branch": "refactor/20260713-0729-exe-stage-spinal",
+  "base_sha": "f621c7a1e056b9f128b86efddbdd2598b3692ecc",
+  "head_sha": "f621c7a1e056b9f128b86efddbdd2598b3692ecc",
+  "review_target_sha": "f621c7a1e056b9f128b86efddbdd2598b3692ecc",
+  "selected_boundary": "exe_stage",
+  "boundary_state": "implementation_in_review",
+  "required_gates": [
+    "doctor",
+    "automation_tests",
+    "scala",
+    "generate",
+    "port_check",
+    "lint",
+    "yosys_check",
+    "unit_diff",
+    "func_full",
+    "random",
+    "claim_review"
+  ],
+  "gates": {
+    "doctor": {"status": "pass", "planned": 19, "executed": 19, "passed": 19, "failed": 0, "skipped": 0},
+    "automation_tests": {"status": "pass", "planned": 304, "executed": 304, "passed": 304, "failed": 0, "skipped": 0},
+    "scala": {"status": "pass", "planned": 4, "executed": 4, "passed": 4, "failed": 0, "skipped": 0},
+    "generate": {"status": "pass", "planned": 4, "executed": 4, "passed": 4, "failed": 0, "skipped": 0},
+    "port_check": {"status": "pass", "planned": 2, "executed": 2, "passed": 2, "failed": 0, "skipped": 0},
+    "lint": {"status": "pass", "planned": 2, "executed": 2, "passed": 2, "failed": 0, "skipped": 0, "detail": "candidate-only Verilator -Wall; 0 warnings"},
+    "yosys_check": {"status": "pass", "planned": 2, "executed": 2, "passed": 2, "failed": 0, "skipped": 0},
+    "unit_diff": {"status": "pass", "planned": 16384, "executed": 16384, "passed": 16384, "failed": 0, "skipped": 0, "detail": "8192 cycles each for LACC off/on"},
+    "negative_controls": {"status": "pass", "planned": 2, "executed": 2, "passed": 2, "failed": 0, "skipped": 0},
+    "func_full": {"status": "skipped", "planned": 139, "executed": 0, "passed": 0, "failed": 0, "skipped": 139},
+    "random": {"status": "skipped", "planned": 1, "executed": 0, "passed": 0, "failed": 0, "skipped": 1},
+    "claim_review": {"status": "unavailable", "planned": 2, "executed": 2, "passed": 1, "failed": 1, "skipped": 0, "detail": "Claude failed before model start because GEEKPIE_CLAUDE_API_KEY is absent; local independent review completed"}
+  },
+  "claims": [
+    {
+      "id": "C1",
+      "status": "supported_with_narrow_scope",
+      "text": "在锁定 Verilator 5.020、固定 seed 0x00158aa8 和 2-state 合法驱动窗口内，Spinal-generated EXE stage 的 off/on profile 分别与 a158aa8 golden 逐拍一致。",
+      "excludes": ["four-state X/Z equivalence", "whole CPU correctness", "func_full", "random DiffTest", "performance", "Linux", "FPGA timing"]
+    },
+    {
+      "id": "C2",
+      "status": "supported",
+      "text": "off/on public port manifest、candidate-only Verilator lint、Yosys hierarchy/proc/check 和负控均通过。",
+      "excludes": ["official chiplab functional PASS"]
+    },
+    {
+      "id": "C3",
+      "status": "open_risk",
+      "text": "LACC lacc_flush 的 golden 四态行为尚未证明；当前仅保留历史 2-state 可观察行为。"
+    }
+  ],
+  "observations": {
+    "golden_sha256": "cab20e05205c6bddff19f01fd15ad4cb671144debf0836982b45b334c686f526",
+    "replacement_sha256": "839d5932db50baac933205c26765549344147a58ab056a886a374c0d694351aa",
+    "replacement_size": 58153,
+    "profiles": {
+      "lacc_off": {"cycles": 8192, "candidate_sha256": "839d5932db50baac933205c26765549344147a58ab056a886a374c0d694351aa", "candidate_lint_warnings": 0},
+      "lacc_on": {"cycles": 8192, "candidate_sha256": "3c48600bddd14fea696767e85c9941de45d765959c5d31392be43903b14e7e57", "candidate_lint_warnings": 0}
+    },
+    "negative_control_first_mismatch_cycle": 0,
+    "vivado_version": "2023.2 ML Standard"
+  },
+  "blocked_by": [
+    "func_lab19_locked_and_mixed_mismatch_at_1c07c79c",
+    "legacy_mem_csr_tlb_cache_axi_still_active",
+    "lacc_flush_four_state_semantics_unproven",
+    "claude_bridge_missing_GEEKPIE_CLAUDE_API_KEY"
+  ],
+  "not_executed": ["func58", "func81", "multi_seed_random_difftest", "perf20", "uboot", "linux", "vivado_implementation", "bitstream", "remote_fpga_board"],
+  "pr": {"status": "awaiting_commit", "url": null, "draft_only": true, "auto_merge": false, "created": false, "branch_pushed": false},
+  "updated_at": "2026-07-13T14:10:00+08:00"
+}

@@ -1,0 +1,57 @@
+{
+  "approved_unused": [
+    {
+      "bits": "[10]",
+      "category": "UNUSEDSIGNAL",
+      "signal": "payload_exceptionCode"
+    },
+    {
+      "bits": "[3:0]",
+      "category": "UNUSEDSIGNAL",
+      "signal": "payload_physicalAddress"
+    }
+  ],
+  "command": {
+    "argv": [
+      "/usr/bin/verilator",
+      "--lint-only",
+      "--top-module",
+      "wb_stage",
+      "-Wall",
+      "-Wno-fatal",
+      "-Wno-DECLFILENAME",
+      "/tmp/wb-final/wb_stage/generate-diff/rtl/wb_stage.v"
+    ],
+    "elapsed_seconds": 0.046,
+    "returncode": 0,
+    "stdout": "%Warning-UNUSEDSIGNAL: /tmp/wb-final/wb_stage/generate-diff/rtl/wb_stage.v:508:23: Bits of signal are not used: 'payload_exceptionCode'[10]\n                                                                                 : ... note: In instance 'wb_stage.area_stage'\n  508 |   reg        [15:0]   payload_exceptionCode;\n      |                       ^~~~~~~~~~~~~~~~~~~~~\n                       ... For warning description see https://verilator.org/warn/UNUSEDSIGNAL?v=5.020\n                       ... Use \"/* verilator lint_off UNUSEDSIGNAL */\" and lint_on around source to disable this message.\n%Warning-UNUSEDSIGNAL: /tmp/wb-final/wb_stage/generate-diff/rtl/wb_stage.v:530:23: Bits of signal are not used: 'payload_physicalAddress'[3:0]\n                                                                                 : ... note: In instance 'wb_stage.area_stage'\n  530 |   reg        [31:0]   payload_physicalAddress;\n      |                       ^~~~~~~~~~~~~~~~~~~~~~~\n",
+    "timed_out": false
+  },
+  "diagnostics": [
+    {
+      "bits": "[10]",
+      "category": "UNUSEDSIGNAL",
+      "signal": "payload_exceptionCode"
+    },
+    {
+      "bits": "[3:0]",
+      "category": "UNUSEDSIGNAL",
+      "signal": "payload_physicalAddress"
+    }
+  ],
+  "executed": 1,
+  "failed": 0,
+  "gate": "wb-stage-lint-difftest",
+  "generated_at": "2026-07-13T19:23:53+08:00",
+  "log_sha256": "6fcf399b8a0312ee814d549f65c02c958f20ed6ac925b9023b84d00f21a0dd3e",
+  "missing_expected": [],
+  "passed": 1,
+  "profile": "difftest",
+  "schema_version": 1,
+  "skipped": 0,
+  "status": "pass",
+  "suppressed_at_tool": [
+    "DECLFILENAME only: reproducible one-file SpinalHDL component output"
+  ],
+  "unapproved": []
+}

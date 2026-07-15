@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "iteration_id": "20260715-1210-core-publish-closure",
+  "status": "draft",
+  "branch": "refactor/20260714-1650-consolidated-spinal",
+  "base_sha": "ba4ce0364a51e4c5ff9f5e674c20578c31e7e769",
+  "head_sha": "31bdc18020339a0b57365d0ac66a8c1008465ace",
+  "selected_boundary": "core_top_publish_and_candidate_closure",
+  "gates": {
+    "scala": {"status": "pass", "planned": 4, "executed": 4, "passed": 4, "failed": 0, "skipped": 0, "evidence": "evidence/scala-check.json"},
+    "reproducible_generate": {"status": "pass", "planned": 2, "executed": 2, "passed": 2, "failed": 0, "skipped": 0, "evidence": "evidence/generate.json"},
+    "core_top_package": {"status": "pass", "planned": 1, "executed": 1, "passed": 1, "failed": 0, "skipped": 0, "evidence": "evidence/package.json"},
+    "publish_check": {"status": "pass", "planned": 1, "executed": 1, "passed": 1, "failed": 0, "skipped": 0, "evidence": "evidence/publish-check.json"},
+    "candidate_hierarchy_closure": {"status": "pass", "planned": 1, "executed": 1, "passed": 1, "failed": 0, "skipped": 0, "evidence": "evidence/candidate-closure.json"},
+    "automation": {"status": "pass", "planned": 1, "executed": 1, "passed": 1, "failed": 0, "skipped": 0, "evidence": "commands.jsonl"},
+    "clock_domain_experiment": {"status": "fail", "planned": 1, "executed": 1, "passed": 0, "failed": 1, "skipped": 0, "evidence": "commands.jsonl", "reason": "Spinal PhaseCheckHierarchy rejects child access to parent aclk"},
+    "pure_overlay_file_set": {"status": "pending", "planned": 1, "executed": 0, "passed": 0, "failed": 0, "skipped": 1, "evidence": "iteration.md"},
+    "func_smoke": {"status": "pending", "planned": 1, "executed": 0, "passed": 0, "failed": 0, "skipped": 1, "evidence": "iteration.md"},
+    "claude_review": {"status": "unavailable", "planned": 1, "executed": 0, "passed": 0, "failed": 0, "skipped": 1, "evidence": "reviews/claude-summary.json"}
+  },
+  "claims": [
+    {"claim": "fresh tracked package matches current Scala generation", "status": "supported", "evidence": "evidence/publish-check.json"},
+    {"claim": "generated candidate hierarchy has no legacy CPU module definitions or instances", "status": "supported", "evidence": "evidence/candidate-closure.json"},
+    {"claim": "official overlay is pure Spinal", "status": "unsupported", "evidence": "pure overlay gate not executed; old files remain in wrapper input"},
+    {"claim": "complete CPU functional refactor is verified", "status": "unsupported", "evidence": "full/random/system/FPGA gates remain"}
+  ],
+  "blocked_by": ["pure_overlay_file_set_not_enabled", "strict_warning_policy_unapproved", "Claude bridge unavailable"],
+  "residual_risks": ["typed Axi3Compat/MemReq contracts are not yet active producer/consumer paths", "PipelineCtrl remains uninstantiated", "full functional and FPGA evidence absent"]
+}

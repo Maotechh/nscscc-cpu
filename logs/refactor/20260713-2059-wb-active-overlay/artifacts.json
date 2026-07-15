@@ -1,0 +1,13 @@
+{
+  "schema_version":1,
+  "iteration_id":"20260713-2059-wb-active-overlay",
+  "artifacts":[
+    {"path":"evidence/reachability.json","sha256":"50c9804ed0738bdfd5c955100f7f8963989e375b23bdf3d1c2aa26ee3f86fa20","size":2125,"retention":"git"},
+    {"path":"evidence/scala.json","sha256":"81e76a93c814cc51c16ade6b641789288044daec0fcb050154eb45ef453d2168","size":91759,"retention":"git"},
+    {"path":"evidence/chiplab-doctor.json","sha256":"046a13f1fcfb99dd399c6c2ff41a7d8c25a39ba52bf96a4c90b7849c14de91df","size":16175,"retention":"git"},
+    {"path":"evidence/chiplab-overlay-manifest.json","sha256":"edecba6465f941370fa3781fe4dc0a0ffea6cc100d7ea3b0ed9735bce4438d0f","size":36552,"retention":"git"},
+    {"path":"evidence/rtl-smoke.json","sha256":"52589067450a3a4143e61807b4d247abaaf6fb040c71d8a69bc79e5e7d60c3e6","size":190394,"retention":"git"},
+    {"path":"evidence/doctor-vivado.json","sha256":"1e27bbe3b0f2d315637980f2920fc5545e7d15a607a9fd757e498d40a6642759","size":4108,"retention":"git"},
+    {"path":"summary.json","sha256":"a220acc0dad5e54330b182781df0bb1399200df85cefac6902128c7c0ab28fcc","size":2254,"retention":"git"}
+  ]
+}

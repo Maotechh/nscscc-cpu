@@ -1,0 +1,29 @@
+{
+  "base_sha256": "ff286f559dbc9131349c9fb8c842110569d231b6a34e76ded172c403d8f90afa",
+  "fresh_package": "/tmp/cacop-final-b2a/core_top/package/rtl/mycpu_top.v",
+  "gate": "publish-check",
+  "generated_at": "2026-07-14T14:39:52+08:00",
+  "package_sha256": "517005efedf63a705a94569688cef4e9333b8809a17e74556f5f20fb89907c57",
+  "package_size": 765879,
+  "provenance": {
+    "evaluator": "/tmp/nscscc-cacop-0db763d/tools/core_top_gate.py",
+    "evaluator_sha256": "63490b44b7c4e9eee730281a4a12ad62eeea238aeb7031df05f7bf2fc4e33641",
+    "manifest": "/tmp/nscscc-cacop-0db763d/reference/manifest.lock",
+    "manifest_sha256": "743dd7e58d77e456cfe664d80c2e6614ab426f72bfecd9088ff18d702afa2f20",
+    "ports_contract": "/tmp/nscscc-cacop-0db763d/reference/core-top.ports.json",
+    "ports_contract_sha256": "effa486ff707e480ff8ee13d7f20b2d524bd26908726915c99abf1b37eeab576",
+    "repository": "/tmp/nscscc-cacop-0db763d",
+    "repository_head": "b2a73c83f9d849c6f67828e8dcfdd39a620e00ed",
+    "repository_status_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "published_source": "reference/component-replacements/mycpu_top.v",
+  "published_target": "rtl/mycpu_top.v",
+  "replacement_sha256": "517005efedf63a705a94569688cef4e9333b8809a17e74556f5f20fb89907c57",
+  "replacement_spec": "/tmp/nscscc-cacop-0db763d/reference/component-replacements/core-top.json",
+  "replacement_spec_sha256": "c41bb6ab19cda64b70b5fcb2f698014b9bf5ab7ae65f99ce08aca03f1a713737",
+  "schema_version": 1,
+  "scope": "publication-consistency",
+  "status": "pass",
+  "target": "core-top-compat",
+  "tracked_package": "/tmp/nscscc-cacop-0db763d/reference/component-replacements/mycpu_top.v"
+}

@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "iteration_id": "20260713-0302-div-spinal",
+  "source_head": "9e78538c0dec08fa9fcace49e068b8bc9d4d5af1",
+  "rtl": {
+    "path": "reference/component-replacements/div.v",
+    "sha256": "0c022398490e29cb92cd7adc31d2e35b26e47c3ea5a4b84316a54cfbbae0f349",
+    "size": 4747,
+    "golden_sha256": "7e499f4c43c92154d1d4e21be2f269ac140b4f2b2d944677c71f6f4213b66dc6"
+  },
+  "gates": {
+    "windows_doctor": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0},
+    "automation_tests": {"status":"pass","planned":255,"executed":255,"passed":255,"failed":0,"skipped":0},
+    "contract": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0},
+    "scala": {"status":"pass","planned":4,"executed":4,"passed":4,"failed":0,"skipped":0},
+    "elaborate": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0},
+    "generate": {"status":"pass","planned":2,"executed":2,"passed":2,"failed":0,"skipped":0},
+    "port_check": {"status":"pass","planned":9,"executed":9,"passed":9,"failed":0,"skipped":0},
+    "lint": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0,"warnings":0},
+    "yosys_check": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0},
+    "unit_diff": {"status":"pass","planned":4136,"executed":4136,"passed":4136,"failed":0,"skipped":0},
+    "oracle_negative_controls": {"status":"pass","planned":3,"executed":3,"passed":3,"failed":0,"skipped":0},
+    "formal_protocol": {"status":"pass","planned":3,"executed":3,"passed":3,"failed":0,"skipped":0},
+    "unknown_make_target": {"status":"pass","planned":1,"executed":1,"passed":1,"failed":0,"skipped":0,"observed_exit_code":2}
+  },
+  "differential": {
+    "driver_sha256": "7fd34bfa459b8bdbb5e5db1f6e29ce7667f4e62fba97a592d787c2ee06a28ce0",
+    "vectors_sha256": "754ee2e0308b21c4bc6cd2d808e0112b14a4e30a380f8dfff5d5175fcda99ead",
+    "transactions": 4136,
+    "edges": 145131,
+    "mismatches": 0,
+    "complete_pulses": 4136,
+    "reset_checks": 54,
+    "abort_checks": 16,
+    "late_abort_checks": 1,
+    "divide_by_zero": 18,
+    "held_high_cleanup_checks": 1,
+    "held_high_restart_checks": 1
+  },
+  "formal_scope": {
+    "semantics": "2-state sequential",
+    "unbounded_protocol_induction": true,
+    "arithmetic_proved": false,
+    "golden_formal_equivalence": false
+  },
+  "status": "pass"
+}

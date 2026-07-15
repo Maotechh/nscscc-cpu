@@ -1,0 +1,13 @@
+{
+  "gate": "icache-port",
+  "generated_at": "2026-07-13T14:51:59+08:00",
+  "ports": {
+    "actual": 34,
+    "expected": 34,
+    "matched": true
+  },
+  "rtl_sha256": "1e4c4f10db5a99f12b263c95f4dd61e7a51f298e8c15cc193ac01fc72b7680c5",
+  "rtl_size": 42001,
+  "schema_version": 1,
+  "status": "pass"
+}

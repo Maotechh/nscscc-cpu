@@ -1,0 +1,14 @@
+﻿{
+    "schema_version":  1,
+    "status":  "pass",
+    "gate":  "exe-stage-cycle-lockstep",
+    "profile":  "lacc_on",
+    "cycles":  8192,
+    "seed":  "0x00158aa8",
+    "negative_control":  true,
+    "compile_exit_code":  0,
+    "simulation_exit_code":  -6,
+    "mismatch_detected":  true,
+    "candidate_lint_warning_count":  0,
+    "candidate_sha256":  "3c48600bddd14fea696767e85c9941de45d765959c5d31392be43903b14e7e57"
+}

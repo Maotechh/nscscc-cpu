@@ -1,0 +1,126 @@
+{
+  "schema_version": 1,
+  "status": "pass",
+  "root_module": "core_top",
+  "profile": "spinal_active_lacc_off_difftest_internal",
+  "defined_macros": [
+    "DIFFTEST_EN"
+  ],
+  "undefined_macros": [
+    "HAS_LACC"
+  ],
+  "golden_commit": "a158aa8ab4d49cece1a0fe488d7ac7dc02bd8cf6",
+  "golden_file_count": 21,
+  "reachable_modules": [
+    "BoothBase",
+    "BoothInterBase",
+    "WallaceTreeBase",
+    "YDecoder",
+    "addr",
+    "addr_trans",
+    "alu",
+    "axi_bridge",
+    "btb",
+    "core_top",
+    "csr",
+    "dcache",
+    "decoder_2_4",
+    "decoder_4_16",
+    "decoder_5_32",
+    "decoder_6_64",
+    "div",
+    "encoder_16_4",
+    "encoder_32_5",
+    "encoder_4_2",
+    "encoder_64_6",
+    "exe_stage",
+    "icache",
+    "id_stage",
+    "if_stage",
+    "lfsr",
+    "mem_stage",
+    "mul",
+    "one_valid_16",
+    "one_valid_64",
+    "one_valid_n",
+    "perf_counter",
+    "regfile",
+    "tlb_entry",
+    "wb_stage"
+  ],
+  "selected_replacements": [
+    "rtl/mycpu_top.v"
+  ],
+  "selected_target_modules": {
+    "rtl/mycpu_top.v": "core_top"
+  },
+  "deferred_reachable": {
+    "rtl/addr_trans.v": {
+      "module": "addr_trans",
+      "reachable": true,
+      "reason": "\u5b8c\u6574\u7eaf Spinal mycpu_top.v \u5df2\u5185\u5d4c AddrTrans/TLB\uff0c\u7981\u6b62\u91cd\u590d\u5b9a\u4e49"
+    },
+    "rtl/axi_bridge.v": {
+      "module": "axi_bridge",
+      "reachable": true,
+      "reason": "\u5b8c\u6574\u7eaf Spinal mycpu_top.v \u5df2\u5185\u5d4c AXI bridge\uff0c\u7981\u6b62\u91cd\u590d\u5b9a\u4e49"
+    },
+    "rtl/csr.v": {
+      "module": "csr",
+      "reachable": true,
+      "reason": "\u5b8c\u6574\u7eaf Spinal mycpu_top.v \u5df2\u5185\u5d4c CSR\uff0c\u7981\u6b62\u91cd\u590d\u5b9a\u4e49"
+    },
+    "rtl/dcache.v": {
+      "module": "dcache",
+      "reachable": true,
+      "reason": "\u5b8c\u6574\u7eaf Spinal mycpu_top.v \u5df2\u5185\u5d4c DCache\uff0c\u7981\u6b62\u91cd\u590d\u5b9a\u4e49"
+    },
+    "rtl/div.v": {
+      "module": "div",
+      "reachable": true,
+      "reason": "\u5b8c\u6574\u7eaf Spinal mycpu_top.v \u5df2\u5185\u5d4c divider\uff0c\u7981\u6b62\u91cd\u590d\u5b9a\u4e49"
+    },
+    "rtl/exe_stage.v": {
+      "module": "exe_stage",
+      "reachable": true,
+      "reason": "\u5b8c\u6574\u7eaf Spinal mycpu_top.v \u5df2\u5185\u5d4c ExecuteStage \u548c ALU\uff0c\u7981\u6b62\u91cd\u590d\u5b9a\u4e49"
+    },
+    "rtl/icache.v": {
+      "module": "icache",
+      "reachable": true,
+      "reason": "\u5b8c\u6574\u7eaf Spinal mycpu_top.v \u5df2\u5185\u5d4c ICache\uff0c\u7981\u6b62\u91cd\u590d\u5b9a\u4e49"
+    },
+    "rtl/id_stage.v": {
+      "module": "id_stage",
+      "reachable": true,
+      "reason": "\u5b8c\u6574\u7eaf Spinal mycpu_top.v \u5df2\u5185\u5d4c DecodeStage\uff0c\u7981\u6b62\u91cd\u590d\u5b9a\u4e49"
+    },
+    "rtl/if_stage.v": {
+      "module": "if_stage",
+      "reachable": true,
+      "reason": "\u5b8c\u6574\u7eaf Spinal mycpu_top.v \u5df2\u5185\u5d4c FetchStage\uff0c\u7981\u6b62\u91cd\u590d\u5b9a\u4e49"
+    },
+    "rtl/mem_stage.v": {
+      "module": "mem_stage",
+      "reachable": true,
+      "reason": "\u5b8c\u6574\u7eaf Spinal mycpu_top.v \u5df2\u5185\u5d4c MemoryStage\uff0c\u7981\u6b62\u91cd\u590d\u5b9a\u4e49"
+    },
+    "rtl/mul.v": {
+      "module": "mul",
+      "reachable": true,
+      "reason": "\u5b8c\u6574\u7eaf Spinal mycpu_top.v \u5df2\u5185\u5d4c multiplier\uff0c\u7981\u6b62\u91cd\u590d\u5b9a\u4e49"
+    },
+    "rtl/regfile.v": {
+      "module": "regfile",
+      "reachable": true,
+      "reason": "\u6d3b\u52a8 DecodeStage \u5185\u90e8\u62e5\u6709 GPR \u72b6\u6001\uff0c\u7981\u6b62\u91cd\u590d\u5b9a\u4e49\u65e7 regfile"
+    },
+    "rtl/wb_stage.v": {
+      "module": "wb_stage",
+      "reachable": true,
+      "reason": "\u5b8c\u6574\u7eaf Spinal mycpu_top.v \u5df2\u5185\u5d4c WritebackStage\uff0c\u7981\u6b62\u91cd\u590d\u5b9a\u4e49"
+    }
+  },
+  "selected_count": 1,
+  "deferred_count": 13
+}

@@ -1,0 +1,7 @@
+{
+  "gate": "dcache-yosys",
+  "generated_at": "2026-07-13T18:01:26+08:00",
+  "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "schema_version": 1,
+  "status": "pass"
+}

@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "gate": "difftest-static-link",
+  "status": "pass_with_warnings",
+  "generated_at": "2026-07-14T11:17:54.7197692+08:00",
+  "command": [
+    "verilator",
+    "--lint-only",
+    "--sv",
+    "-Wall",
+    "-Wno-fatal",
+    "-DDIFFTEST_EN",
+    "--top-module",
+    "core_top",
+    "reference/component-replacements/mycpu_top.v",
+    "locked-chiplab/sims/verilator/testbench/difftest.v"
+  ],
+  "exit_code": 0,
+  "warning_count": 58,
+  "warning_policy": "Warnings were non-fatal only for this compatibility probe; strict RTL lint remains failed.",
+  "tool": {
+    "name": "Verilator",
+    "version": "5.020"
+  },
+  "inputs": {
+    "rtl_sha256": "748b025cedac922dbf6ff2707b61e6e230138b091c89ebe778b0eede446dea41",
+    "difftest_v_sha256": "8e9d5156ab56f5f2ab511916bfd2f208e3cea1da7d90a07b8f698b7c76348a85",
+    "chiplab_commit": "a2e11b38bc5c85abb4408a8e0c0f5ce903c7ba31"
+  },
+  "raw_log": {
+    "path": "build/difftest-static-link.log",
+    "sha256": "040558df39cc0847d63f17c5b73dc46edbac631cf40853851d9c501b7766849e",
+    "retention": "local-until-explicit-clean"
+  },
+  "claim_scope": "The generated conditional wrapper compiles with the locked seven simulator modules. This is not a runtime or functional DiffTest pass."
+}

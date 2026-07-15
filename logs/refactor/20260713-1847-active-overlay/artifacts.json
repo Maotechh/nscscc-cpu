@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "iteration_id": "20260713-1847-active-overlay",
+  "artifacts": [
+    {"id":"chiplab-doctor","path":"evidence/chiplab-doctor.json","sha256":"de060e9112aa9c5b7f8488ad593b6644d4b3be2ef909ac4d74f895d76147206b","size":16175,"retention":"git"},
+    {"id":"chiplab-overlay-manifest","path":"evidence/chiplab-overlay-manifest.json","sha256":"8f11f5f33ba34cf208fe4a190ee0c68a745c8a458d41852d3ef42a1fa1842b4f","size":35566,"retention":"git","gate_eligible":false},
+    {"id":"reachability","path":"evidence/reachability.json","sha256":"8fc75ceb92a3f2e726e75ea7e6e20824c67c1ae475851ed3d4b7a83ad81196da","size":2067,"retention":"git"},
+    {"id":"scala","path":"evidence/scala.json","sha256":"752fda162652b760c4cc02f4a3bab1fa35f310791270fed9bfcb42ec9a8e10d7","size":86608,"retention":"git"},
+    {"id":"rtl-smoke-summary","path":"evidence/rtl-smoke-summary.json","sha256":"93b8abc7427b098e8c3fde329adb82784cb4b5bd48956611af1a4478aaabc388","size":12224,"retention":"git","gate_eligible":false}
+  ]
+}

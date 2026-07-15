@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "iteration_id": "20260714-1316-golden-recovery-cacop",
+  "status": "unavailable",
+  "job_id": "8780b724cf5d4b599c906aaf68d34655",
+  "provider": null,
+  "model": null,
+  "reviewed_head_sha": "b2a73c83f9d849c6f67828e8dcfdd39a620e00ed",
+  "raw_sha256": "65b686cdbed0a3a1205817d564b68f714348ff916b2318726a89573a5629f466",
+  "provenance": {
+    "source": "claude-review-mcp",
+    "raw_path": "reviews/claude-raw.md",
+    "raw_sha256": "65b686cdbed0a3a1205817d564b68f714348ff916b2318726a89573a5629f466",
+    "job_id": "8780b724cf5d4b599c906aaf68d34655",
+    "provider": null,
+    "model": null,
+    "reviewed_head_sha": "b2a73c83f9d849c6f67828e8dcfdd39a620e00ed"
+  },
+  "error": "Required provider environment variable is not set: GEEKPIE_CLAUDE_API_KEY",
+  "open_blocking_count": 1,
+  "fresh_against_head": false,
+  "allow_ready": false,
+  "allow_status_promotion": false
+}

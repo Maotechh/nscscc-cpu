@@ -1,0 +1,105 @@
+{
+  "schema_version": 1,
+  "iteration_id": "20260712-1651-mul-spinal",
+  "review_target_sha": "f6c55e6dcb42761c283febf99460214452628fd0",
+  "clean_clone": "/tmp/nscscc-mul-f6c55e6-src",
+  "rtl": {
+    "path": "reference/component-replacements/mul.v",
+    "sha256": "5ff75243dd504bf74c01645862364cd416dffc554d64c82dea6be8f7181660d6",
+    "size": 1260,
+    "fresh_generate_byte_identical": true
+  },
+  "gates": {
+    "automation_tests": {
+      "status": "pass",
+      "executed": 193,
+      "passed": 193,
+      "failed": 0,
+      "skipped": 0,
+      "raw_path": "/tmp/nscscc-mul-f6c55e6-automation.txt",
+      "raw_sha256": "e2389575196eea89cf087005c4a4bcc58ab8bc4346f79cab5711fbb931ab3833"
+    },
+    "scala": {
+      "status": "pass",
+      "executed": 4,
+      "passed": 4,
+      "failed": 0,
+      "skipped": 0,
+      "summary_sha256": "3bb66ca1ec720d9e4b1271f3aabb1ab31e8845b0002b251d181e9b9aacff03ab"
+    },
+    "contract": {
+      "status": "pass",
+      "golden_sha256": "251d2bba3e659c294c9a004bbb2b542435fcfa0b0c1582cc1a7a3edca765a4c0",
+      "evaluator_sha256": "cd4c55d65dc426d9531389a9b222066a9885189c1c11f0f4dc2b53e746d3d515",
+      "summary_sha256": "70df604eee89fc54ab6a12ea602e201163a57eb759f90a526328442a94022311"
+    },
+    "elaborate": {
+      "status": "pass",
+      "executed": 1,
+      "skipped": 0,
+      "summary_sha256": "903af18aa04fca54161ce75ee51ee5884572d7183ead7302f7308f1d3e90ace2"
+    },
+    "generate": {
+      "status": "pass",
+      "executed": 2,
+      "passed": 2,
+      "skipped": 0,
+      "dependency_artifacts": 426,
+      "dependency_sha256": "f84701a4773644e383c0c658a264d00f04fcbf5e8d03c358af56569a17eb3a35",
+      "summary_sha256": "9743f497e1f4e705b055f4c99eb00893ad9606fe6626d5d0217679ad823fa4df"
+    },
+    "port_check": {
+      "status": "pass",
+      "ports": ["mul_clk", "reset", "mul_signed", "x", "y", "result"],
+      "summary_sha256": "a0ad4f8af1e72bd0272a8795fe152cda3d75e0b61be00df9911162fe4dad6a73"
+    },
+    "lint": {
+      "status": "pass",
+      "tool": "Verilator 5.020",
+      "warnings": 0,
+      "summary_sha256": "2f5706a5bbb6352be483106591a79673f0622c553754080f79a5b212db119471"
+    },
+    "yosys_check": {
+      "status": "pass",
+      "tool": "Yosys 0.33",
+      "summary_sha256": "0316c345159cb283304d5650168d43b729b2d881c5b5267fbe001692de5b3eb2"
+    },
+    "unit_diff": {
+      "status": "pass",
+      "executed": 4128,
+      "passed": 4128,
+      "failed": 0,
+      "skipped": 0,
+      "directed": 32,
+      "random": 4096,
+      "seed": "0x158aa8",
+      "no_clock_perturb": 4127,
+      "reset_hold": 32,
+      "compiled_snapshot": true,
+      "source_and_snapshot_stable": true,
+      "summary_sha256": "18d0e40af1b89e7ce817b5e0bb8b8891fc5354aded249abfe2eb6474ef6bbd08"
+    },
+    "formal": {
+      "status": "pass",
+      "executed": 3,
+      "passed": 3,
+      "failed": 0,
+      "skipped": 0,
+      "scope": "candidate 2-state contract after first active capture",
+      "unbounded": true,
+      "negative_controls": ["active_product_bit_flip", "reset_hold_bit_flip"],
+      "golden_formal_equivalence": false,
+      "summary_sha256": "3d2ee2cf63c30624ce9c6f998334e3d29730a27f1c877b9b3357e8725ae99576"
+    },
+    "doctor": {
+      "status": "pass",
+      "windows_summary_sha256": "42b3f2af5f94c72f5e3b6fb3f702d0a714e2681a66be3e044f07beada4df6bcb",
+      "chiplab_summary_sha256": "467f0908c1ce5e0f254f74b47b416c8b347bece31192409777a37e85b9baf58f"
+    }
+  },
+  "open_results": {
+    "golden_formal_equivalence": "solver_timeout_without_proof_or_counterexample",
+    "whole_cpu": "see chiplab-comparison.json",
+    "vivado_strict": "see vivado-leaf.json"
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "gate": "clean-linux-automation",
+  "status": "pass",
+  "source_head": "088d8d4cc9038488a03c27dcbf3a0751b1f76ad9",
+  "clone_path": "/mnt/d/flw/warning-clean-088d8d4-lf",
+  "command": ["make", "test-automation"],
+  "counts": {
+    "planned": 398,
+    "executed": 398,
+    "passed": 398,
+    "failed": 0,
+    "skipped": 0
+  },
+  "test_elapsed_seconds": 32.326,
+  "command_elapsed_seconds": 35.5,
+  "raw_artifact": {
+    "path": "/tmp/nscscc-warning-automation-evidence-088d8d4.log",
+    "size": 40189,
+    "sha256": "029522eb2715638fd96801c82304f1a36e53408a746f7f4800987260af09f7d6"
+  },
+  "environment_notes": [
+    "The accepted run used an LF-clean clone at the exact source commit.",
+    "GIT_DIR and GIT_WORK_TREE were explicitly removed from the command environment.",
+    "Negative-control diagnostics printed by tests are expected; the unittest result is 398 passed with zero skip."
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "status": "pass",
+  "executed": 4,
+  "passed": 4,
+  "failed": 0,
+  "skipped": 0,
+  "source_report": "/tmp/id-active-scala/scala-check/summary.json",
+  "source_sha256": "f9dbdff6104a6c07cad98dc9f1ea35c509d182cd293fc6a7f954f67261c83bff",
+  "source_size": 94983
+}

@@ -1,0 +1,8 @@
+{
+  "gate": "axi-bridge-yosys",
+  "generated_at": "2026-07-13T07:50:46+08:00",
+  "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "returncode": 0,
+  "schema_version": 1,
+  "status": "pass"
+}

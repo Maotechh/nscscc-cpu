@@ -1,0 +1,48 @@
+{
+  "csr_header_sha256": "11f5550b887a2b507a5b916340069d6d127848c66c761f07d0303c7cc201026d",
+  "executed": 1,
+  "failed": 0,
+  "gate": "wb-stage-contract",
+  "generated_at": "2026-07-13T19:23:52+08:00",
+  "golden_sha256": "8a6f6cb282d152e4b43673397b8c00f598e3d116589e5797fb6feaadbc032a09",
+  "passed": 1,
+  "profiles": {
+    "difftest": {
+      "actual_count": 64,
+      "command": {
+        "argv": [
+          "/usr/bin/yosys",
+          "-q",
+          "-p",
+          "read_verilog -I/tmp/wb-gates-final/wb_stage/contract -D DIFFTEST_EN /tmp/wb-gates-final/wb_stage/contract/wb_stage.v; hierarchy -check -top wb_stage; proc; write_json /tmp/wb-gates-final/wb_stage/contract/difftest/ports-diff.json"
+        ],
+        "elapsed_seconds": 0.015,
+        "returncode": 0,
+        "stdout": "",
+        "timed_out": false
+      },
+      "expected_count": 64,
+      "matched": true
+    },
+    "normal": {
+      "actual_count": 52,
+      "command": {
+        "argv": [
+          "/usr/bin/yosys",
+          "-q",
+          "-p",
+          "read_verilog -I/tmp/wb-gates-final/wb_stage/contract /tmp/wb-gates-final/wb_stage/contract/wb_stage.v; hierarchy -check -top wb_stage; proc; write_json /tmp/wb-gates-final/wb_stage/contract/normal/ports-normal.json"
+        ],
+        "elapsed_seconds": 0.015,
+        "returncode": 0,
+        "stdout": "",
+        "timed_out": false
+      },
+      "expected_count": 52,
+      "matched": true
+    }
+  },
+  "schema_version": 1,
+  "skipped": 0,
+  "status": "pass"
+}

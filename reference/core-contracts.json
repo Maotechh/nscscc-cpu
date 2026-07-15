@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "golden_commit": "a158aa8ab4d49cece1a0fe488d7ac7dc02bd8cf6",
+  "sources": [
+    {"path":"rtl/if_stage.v","blob_sha1":"f0684f133ffd509dcda14d6a29f03779822001e5","contract":"fs_to_ds"},
+    {"path":"rtl/id_stage.v","blob_sha1":"93bb0283a06a0f4e88b5c37022f550b45ea4e6ed","contract":"ds_to_es"},
+    {"path":"rtl/exe_stage.v","blob_sha1":"e95171aba43330a3b0bf267d3bdd45162889cb3b","contract":"es_to_ms"},
+    {"path":"rtl/mem_stage.v","blob_sha1":"ebeacf81c498b3041f5c55b16c2abe220e87ecd4","contract":"ms_to_ws"},
+    {"path":"rtl/wb_stage.v","blob_sha1":"90ae54b4ea13298aa64ee83aa33eee14813392d7","contract":"commit"},
+    {"path":"rtl/axi_bridge.v","blob_sha1":"4219790c25c653da1a061c5f4c674e062201b8e9","contract":"memory_axi"},
+    {"path":"rtl/btb.v","blob_sha1":"3f697590399a6cde0fc6b79becbdc0cda1dfc315","contract":"predictor_geometry"}
+  ],
+  "pipeline_widths": {"fetch":109,"decode_lacc_off":350,"decode_lacc_on":353,"execute":425,"memory":493},
+  "locked_config": {
+    "xlen":32,"gpr_count":32,"reset_vector":"0x1c000000","legacy_reset_delay_cycles":1,
+    "tlb_entries":32,"btb_entries":32,"ras_entries":16,
+    "debug_enabled":true,
+    "active_features":["integer","mul_div","privileged","tlb_dmw","cache_cacop","ll_sc","barrier","preload","branch_prediction","performance_counters"],
+    "i_cache":{"sets":256,"ways":2,"line_bytes":16},
+    "d_cache":{"sets":256,"ways":2,"line_bytes":16}
+  },
+  "supported_elaboration_matrix": [
+    {"lacc":false,"difftest":false},
+    {"lacc":true,"difftest":false},
+    {"lacc":false,"difftest":true},
+    {"lacc":true,"difftest":true}
+  ],
+  "lacc": {
+    "operation_count":3,"operation_width":2,
+    "source_repo":"https://gitee.com/loongson-edu/open-la500.git",
+    "source_commit":"f89c604845d8092d0efe1cc700ccedee748d7a0b",
+    "candidate_tree_has_header":false
+  },
+  "locked_chiplab_header": {
+    "mycpu_gitlink":"aa3bde1f3e720e71c2c78d6b81930d797b810149",
+    "path":"mycpu.h","blob_sha1":"6e3c073cbc09261c607acfa0b855edc0337b87c2",
+    "pipeline_widths":{"fetch":109,"decode_lacc_off":350,"execute":425,"memory":493}
+  },
+  "locked_chiplab_difftest": {
+    "commit":"a2e11b38bc5c85abb4408a8e0c0f5ce903c7ba31",
+    "path":"sims/verilator/testbench/difftest.v",
+    "blob_sha1":"3ba49572d1772ba9c41b907e84774036374162b9",
+    "instruction_commit_fields":["is_CNTinst","timer_64_value","csr_rstat","csr_data"],
+    "load_store_valid_mask_width":8
+  },
+  "official_behavioral_source": {
+    "commit":"aa3bde1f3e720e71c2c78d6b81930d797b810149",
+    "repository":"../chiplab/IP/myCPU",
+    "btb_path":"btb.v",
+    "btb_git_blob_sha1":"e2f6e340c1f4f98ce93493192030c32943935229",
+    "btb_sha256":"6d540a983075e8ed3a9bd1f791bc4ec14e3b08ff04c4c8f13ae1c0fa8a081bfb"
+  }
+}

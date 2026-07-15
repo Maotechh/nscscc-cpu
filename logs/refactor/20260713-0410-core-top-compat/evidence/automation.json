@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "head_sha": "0e2787fc5ab30e246da5be1c6080e2847b2645cf",
+  "command": ["python3", "-I", "-m", "unittest", "discover", "-s", "tests", "-p", "test_*.py"],
+  "status": "pass",
+  "counts": {"planned": 296, "executed": 296, "passed": 296, "failed": 0, "skipped": 0},
+  "raw_log": {
+    "path": "/tmp/nscscc-core-top-0e2787f/automation.log",
+    "size": 24235,
+    "sha256": "a9ba3a5b5caebfa9161b957261fb306ebfdb3033d883338e27aa6c59060a4da4"
+  }
+}

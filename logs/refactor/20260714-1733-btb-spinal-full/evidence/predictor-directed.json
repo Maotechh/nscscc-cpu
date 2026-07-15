@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "gate": "predictor-directed",
+  "status": "pass",
+  "toolchain": {
+    "jdk": "17.0.19+10",
+    "scala": "2.13.16",
+    "spinalhdl": "1.14.2",
+    "verilator": "5.020"
+  },
+  "seed": "0x158aa8",
+  "executed": 1,
+  "passed": 1,
+  "failed": 0,
+  "skipped": 0,
+  "test": "openla500.predict.OpenLa500PredictorSpec",
+  "coverage": [
+    "one_cycle_lookup_and_zero_miss_payload",
+    "64_entry_full_associative_and_legacy_index_collision",
+    "two_bit_saturating_counter",
+    "target_correction_delete_and_pc_miss",
+    "invalid_strongly_untaken_lfsr_replacement",
+    "16_entry_return_site_matcher",
+    "8_depth_return_stack_full_empty_lifo_and_push_pop_priority",
+    "return_prediction_priority_over_btb"
+  ],
+  "scalatest_report_sha256": "e8886bb8e8c5f7483d9f335753db173c648b115b2b3bfeaecfbf15ea45f9c8e3",
+  "generated_rtl_sha256": "705d6794901cca77edfc70b9652eeea2491fcb4621d3ed7a5082fd8712de0ee2",
+  "simulator_binary_sha256": "9c972c1ad597b71fa8ec580f7a492cb75520669c044c8ec3f06fa8577e17afe3",
+  "verilator_script_sha256": "f5530d95cb3fb4572a982e54d20b2ba27fa453dec9c32cf5d34e962fc5a79b53"
+}

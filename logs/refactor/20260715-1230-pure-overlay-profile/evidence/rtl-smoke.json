@@ -1,0 +1,2379 @@
+{
+  "actual_case": "func/func_lab19",
+  "artifacts": [
+    {
+      "path": "/home/nscscc-pure-work/20260715-1230-pure-overlay-profile/sims/verilator/run_prog/log/compile.log",
+      "sha256": "72e96eb5911eb8b0b5aa6688d2702f93d13fa379661969c971fd7eb6a0b98e7e",
+      "size": 186772
+    },
+    {
+      "path": "/home/nscscc-pure-work/20260715-1230-pure-overlay-profile/sims/verilator/run_prog/obj_dir/Vsimu_top.mk",
+      "sha256": "717a288a7854a238b61a60c8038233aa0b9920668665dace6733602528f319fb",
+      "size": 1694
+    },
+    {
+      "path": "/home/nscscc-pure-work/20260715-1230-pure-overlay-profile/sims/verilator/run_prog/obj_dir/Vsimu_top__ALL.a",
+      "sha256": "6cd40222aa573fd59228596f388c0b27b7661fd9f6f8aca519cc1572942a3661",
+      "size": 2223430
+    },
+    {
+      "path": "/home/nscscc-pure-work/20260715-1230-pure-overlay-profile/sims/verilator/run_prog/output",
+      "sha256": "fccd9bdfd104ca7deab0be730195a05200b3b9286a099c2eadbdbe5073360d1f",
+      "size": 2040560
+    },
+    {
+      "path": "/home/nscscc-pure-work/20260715-1230-pure-overlay-profile/sims/verilator/run_prog/obj/func/func_lab19_obj/obj/main.elf",
+      "sha256": "139f8bed74e0a1a6da04ad8df58cfc7527c9393d93f635afcfe5e18db7c96cbe",
+      "size": 556872
+    },
+    {
+      "path": "/home/nscscc-pure-work/20260715-1230-pure-overlay-profile/sims/verilator/run_prog/obj/func/func_lab19_obj/obj/rom.vlog",
+      "sha256": "b916b85553da2795d6d80332c40056f960c6c4fd36ae341eb7d8cf494b26281e",
+      "size": 1627045
+    },
+    {
+      "path": "/home/nscscc-pure-work/20260715-1230-pure-overlay-profile/sims/verilator/run_prog/log/func/func_lab19_log/simu_trace.txt",
+      "sha256": "911597f5360579a65f2a9f6c9ec863ac0b9a957a485b62273a1d55a04195ea6a",
+      "size": 13924720
+    },
+    {
+      "path": "/home/nscscc-pure-work/20260715-1230-pure-overlay-profile/sims/verilator/run_prog/log/func/func_lab19_log/uart_output.txt",
+      "sha256": "6e340b9cffb37a989ca544e6bb780a2c78901d3fb33738768511a30617afa01d",
+      "size": 1
+    },
+    {
+      "path": "/home/nscscc-pure-work/20260715-1230-pure-overlay-profile/sims/verilator/run_prog/log/func/func_lab19_log/uart_output.txt.real",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size": 0
+    }
+  ],
+  "base_candidate_locked": true,
+  "baseline_exact": false,
+  "build_artifacts": [
+    {
+      "exists": true,
+      "fresh": true,
+      "path": "/home/nscscc-pure-work/20260715-1230-pure-overlay-profile/sims/verilator/run_prog/log/compile.log",
+      "sha256": "72e96eb5911eb8b0b5aa6688d2702f93d13fa379661969c971fd7eb6a0b98e7e",
+      "size": 186772
+    },
+    {
+      "exists": true,
+      "fresh": true,
+      "path": "/home/nscscc-pure-work/20260715-1230-pure-overlay-profile/sims/verilator/run_prog/obj_dir/Vsimu_top.mk",
+      "sha256": "717a288a7854a238b61a60c8038233aa0b9920668665dace6733602528f319fb",
+      "size": 1694
+    },
+    {
+      "exists": true,
+      "fresh": true,
+      "path": "/home/nscscc-pure-work/20260715-1230-pure-overlay-profile/sims/verilator/run_prog/obj_dir/Vsimu_top__ALL.a",
+      "sha256": "6cd40222aa573fd59228596f388c0b27b7661fd9f6f8aca519cc1572942a3661",
+      "size": 2223430
+    },
+    {
+      "exists": true,
+      "fresh": true,
+      "path": "/home/nscscc-pure-work/20260715-1230-pure-overlay-profile/sims/verilator/run_prog/output",
+      "sha256": "fccd9bdfd104ca7deab0be730195a05200b3b9286a099c2eadbdbe5073360d1f",
+      "size": 2040560
+    },
+    {
+      "exists": true,
+      "fresh": true,
+      "path": "/home/nscscc-pure-work/20260715-1230-pure-overlay-profile/sims/verilator/run_prog/obj/func/func_lab19_obj/obj/main.elf",
+      "sha256": "139f8bed74e0a1a6da04ad8df58cfc7527c9393d93f635afcfe5e18db7c96cbe",
+      "size": 556872
+    },
+    {
+      "exists": true,
+      "fresh": true,
+      "path": "/home/nscscc-pure-work/20260715-1230-pure-overlay-profile/sims/verilator/run_prog/obj/func/func_lab19_obj/obj/rom.vlog",
+      "sha256": "b916b85553da2795d6d80332c40056f960c6c4fd36ae341eb7d8cf494b26281e",
+      "size": 1627045
+    }
+  ],
+  "build_artifacts_fresh": true,
+  "build_errors": [],
+  "build_integrity_status": "pass",
+  "candidate_locked": false,
+  "chiplab_commit": "a2e11b38bc5c85abb4408a8e0c0f5ce903c7ba31",
+  "command": "rtl-smoke",
+  "commands": [
+    {
+      "command": [
+        "./configure.sh",
+        "--run",
+        "func/func_lab19"
+      ],
+      "cwd": "/home/nscscc-pure-work/20260715-1230-pure-overlay-profile/sims/verilator/run_prog",
+      "elapsed_seconds": 0.008,
+      "exit_code": 0,
+      "log_path": "/home/nscscc-pure-evidence/raw/iterations/20260715-1230-pure-overlay-profile/rtl-smoke/1784090882997736668-3302/01-configure.log",
+      "log_sha256": "88d0d2b3bea4d22c370a255b232d9a1fe6037cbc0a1b785d84411e4f51bd6e2f",
+      "timed_out": false
+    },
+    {
+      "command": [
+        "make",
+        "verilator",
+        "testbench",
+        "soft_compile"
+      ],
+      "cwd": "/home/nscscc-pure-work/20260715-1230-pure-overlay-profile/sims/verilator/run_prog",
+      "elapsed_seconds": 34.939,
+      "exit_code": 0,
+      "log_path": "/home/nscscc-pure-evidence/raw/iterations/20260715-1230-pure-overlay-profile/rtl-smoke/1784090882997736668-3302/02-build.log",
+      "log_sha256": "2ec2537d9873778d0989a903d8a15e8db829629a161c0332982944207850a3b9",
+      "timed_out": false
+    },
+    {
+      "command": [
+        "make",
+        "simulation_run_prog"
+      ],
+      "cwd": "/home/nscscc-pure-work/20260715-1230-pure-overlay-profile/sims/verilator/run_prog",
+      "elapsed_seconds": 3.402,
+      "exit_code": 0,
+      "log_path": "/home/nscscc-pure-evidence/raw/iterations/20260715-1230-pure-overlay-profile/rtl-smoke/1784090882997736668-3302/03-simulation.log",
+      "log_sha256": "8cb741545f69c6737b9c754024af46f3177e3f7eebb680cacb24a6c8b6032e0e",
+      "timed_out": false
+    }
+  ],
+  "compile_log_fresh": true,
+  "compile_warning_policy": {
+    "counts_by_scope": {
+      "dut": 40,
+      "official_environment": 365
+    },
+    "rule": "No warning is accepted without a file/line-specific reviewed waiver.",
+    "status": "fail"
+  },
+  "component_replacement": {
+    "base_candidate_commit": "a158aa8ab4d49cece1a0fe488d7ac7dc02bd8cf6",
+    "replacement_payload_source": "committed_git_blobs",
+    "replacements": [
+      {
+        "base_sha256": "ff286f559dbc9131349c9fb8c842110569d231b6a34e76ded172c403d8f90afa",
+        "replacement_sha256": "ded57a4a2b494e5342481a2d87e5b286ebb703bedde8e79df3fe299894dc4cad",
+        "size": 842817,
+        "source": "reference/component-replacements/mycpu_top.v",
+        "source_mode": "100644",
+        "source_oid": "cd3301e7ca487d91e6f5544a9e3d22fda3faf63c",
+        "target": "rtl/mycpu_top.v"
+      },
+      {
+        "base_sha256": "7e499f4c43c92154d1d4e21be2f269ac140b4f2b2d944677c71f6f4213b66dc6",
+        "replacement_sha256": "3cbd0370718c501cc2d01b47858ee4bf036c430fce4d85aced5b7224a04df9ac",
+        "size": 139,
+        "source": "reference/component-replacements/difftest/div.v",
+        "source_mode": "100644",
+        "source_oid": "64751404dd03f9a7b52cb4d6cf36f51caddd0165",
+        "target": "rtl/div.v"
+      },
+      {
+        "base_sha256": "a2f8f337422097699b91d217afb1eb896fa1aa02a7fdd1ed829c183de00935b6",
+        "replacement_sha256": "a443937ee8f2643f21b564821514dae72a393f9ff8f2e18a3e47da6f4a3ed344",
+        "size": 90,
+        "source": "reference/component-replacements/difftest/perf_counter.v",
+        "source_mode": "100644",
+        "source_oid": "80d07016553fec60f5d97a199cdcc3f961181d2e",
+        "target": "rtl/perf_counter.v"
+      },
+      {
+        "base_sha256": "0b17abbd83cbbf088993dcb30a38981e99d600ebaeaa5c566ad4eaff75ac97b5",
+        "replacement_sha256": "0e2ec81fa4859155816f6e58c4b783ab0de38cdc15837cef4c876aec0583c22b",
+        "size": 232,
+        "source": "reference/component-replacements/difftest/lacc_core.v",
+        "source_mode": "100644",
+        "source_oid": "6c2e4f5b80d618e43f37c63089650fad9922ac84",
+        "target": "rtl/lacc_core.v"
+      },
+      {
+        "base_sha256": "8cae09cc7f0acb0ea5cc24352704d80baf116e29f4ae372ca9eac6b63bac2ea0",
+        "replacement_sha256": "d1c103f3117893a072af91203a2d7d203b2d09b0cd25ef72590a3150a2ab1d2f",
+        "size": 230,
+        "source": "reference/component-replacements/difftest/lacc_demo.v",
+        "source_mode": "100644",
+        "source_oid": "2900b5c6996cea254998f982e35d7b53f5115b02",
+        "target": "rtl/lacc_demo.v"
+      }
+    ],
+    "schema_version": 1,
+    "source_branch": "refactor/20260714-1650-consolidated-spinal",
+    "source_head": "e420eba344d45f7333ef2c0a6eb538e850863a8a",
+    "source_tree": "7271cbb06da1dceb95b52e969604ba3636769840",
+    "spec_commit": "e420eba344d45f7333ef2c0a6eb538e850863a8a",
+    "spec_path": "reference/component-replacements/spinal-active-runtime.json",
+    "spec_sha256": "cb1a7ee3fdc6e79d7700d183d61f0a8a63f700d7d5c5ade0e0904b5289349690",
+    "spec_source": "e420eba344d45f7333ef2c0a6eb538e850863a8a:reference/component-replacements/spinal-active-runtime.json",
+    "worktree_clean": true,
+    "worktree_eol_normalization_only": false,
+    "worktree_porcelain_clean": true,
+    "worktree_raw_status_entry_count": 0,
+    "worktree_semantic_clean": true,
+    "worktree_semantic_diff_policy": "ignore-cr-at-eol-only"
+  },
+  "configure_valid": true,
+  "counts": {
+    "executed": 1,
+    "failed": 1,
+    "passed": 0,
+    "planned": 1,
+    "skipped": 0
+  },
+  "doctor_report_sha256": "7e2cca3e8007f82061ef46100fb7d3d913f911fb9f81a64e3e19dbe95ef61969",
+  "dut_source": "mixed",
+  "environment": {
+    "CHIPLAB_HOME": "/home/nscscc-pure-work/20260715-1230-pure-overlay-profile",
+    "HOME": "/root",
+    "LANG": "C.UTF-8",
+    "LC_ALL": "C.UTF-8",
+    "PATH": "/opt/chiplab-tools/root/loongson-gnu-toolchain-8.3-x86_64-loongarch32r-linux-gnusf-v2.0/bin:/opt/chiplab-tools/root/la32r-QEMU-x86_64-ubuntu-22.04:/usr/local/bin:/usr/bin:/bin",
+    "TZ": "UTC"
+  },
+  "environment_sha256": "fa918500e65486dbf0c62e4b66830e44ab70ee9f12faa1ab5b96e70e3ac54381",
+  "evaluator_sha256": "4c1a57dddbd4bafadab4b2b083fa929884b0d42baf61cff11e4e1eae58c588b8",
+  "functional_counts": {
+    "executed": 1,
+    "failed": 0,
+    "passed": 1,
+    "planned": 1,
+    "skipped": 0
+  },
+  "functional_status": "pass",
+  "gate_eligible": false,
+  "gate_kind": "component_replacement",
+  "gate_result": "fail",
+  "generated_at": "2026-07-15T12:48:42+08:00",
+  "golden_candidate_commit": "a158aa8ab4d49cece1a0fe488d7ac7dc02bd8cf6",
+  "iteration_id": "20260715-1230-pure-overlay-profile",
+  "lock_policy": {
+    "interrupted_run_requires_new_overlay": true,
+    "path": "/home/nscscc-pure-work/20260715-1230-pure-overlay-profile/.rtl-smoke.lock",
+    "release": "normal report completion only"
+  },
+  "mode": "diagnostic",
+  "observed_result": "fail",
+  "output_contract_ok": true,
+  "output_evidence": {
+    "simu_trace": {
+      "exists": true,
+      "fresh": true,
+      "oracle_role": "trace_artifact",
+      "path": "/home/nscscc-pure-work/20260715-1230-pure-overlay-profile/sims/verilator/run_prog/log/func/func_lab19_log/simu_trace.txt",
+      "sha256": "911597f5360579a65f2a9f6c9ec863ac0b9a957a485b62273a1d55a04195ea6a",
+      "size": 13924720
+    },
+    "uart": {
+      "exists": true,
+      "fresh": true,
+      "oracle_role": "not_applicable_for_func_lab19",
+      "path": "/home/nscscc-pure-work/20260715-1230-pure-overlay-profile/sims/verilator/run_prog/log/func/func_lab19_log/uart_output.txt",
+      "sha256": "6e340b9cffb37a989ca544e6bb780a2c78901d3fb33738768511a30617afa01d",
+      "size": 1
+    },
+    "uart_real": {
+      "exists": true,
+      "fresh": true,
+      "oracle_role": "not_applicable_for_func_lab19",
+      "path": "/home/nscscc-pure-work/20260715-1230-pure-overlay-profile/sims/verilator/run_prog/log/func/func_lab19_log/uart_output.txt.real",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size": 0
+    }
+  },
+  "overlay_report_sha256": "9c6639b80cd80c13e34a06b044d1a6ac020fb5d6e0919b74de007993b9013c93",
+  "parser": {
+    "clocks": 609660,
+    "failure_excerpt": [],
+    "failures": [],
+    "first_mismatch": null,
+    "instructions": 174059,
+    "markers": {
+      "difftest_enabled": true,
+      "difftest_library_loaded": true,
+      "end_by_syscall": true,
+      "good_trap": false,
+      "nonzero_clocks": true,
+      "nonzero_instructions": true,
+      "reached_test_end": true
+    },
+    "status": "pass",
+    "termination_expectation": "end_by_syscall",
+    "termination_mode": "end_by_syscall",
+    "termination_valid": true
+  },
+  "post_run_dut_verification": {
+    "generated_path_exclusions": [
+      "sims/verilator/run_prog/config-software.mak",
+      "sims/verilator/run_prog/config.log",
+      "sims/verilator/run_prog/log/compile.log",
+      "sims/verilator/run_prog/log/func/func_lab19_log",
+      "sims/verilator/run_prog/obj/func/func_lab19_obj",
+      "sims/verilator/run_prog/obj_dir",
+      "sims/verilator/run_prog/output",
+      "sims/verilator/run_prog/tmp",
+      "software/examples/func/func_lab19/obj"
+    ],
+    "official_workspace_fingerprint": {
+      "entry_count": 1535,
+      "sha256": "a089db6e8f4fc1cffdfc46d4f76b1233b1004c127a87b03a3feac0ca35eb26b8"
+    },
+    "overlay_manifest_sha256": "356204d3cfb6328e28e53ae30dd9a41bbc352ebcfc1ff13efd80dca5b39fe35b",
+    "overlay_report_sha256": "9c6639b80cd80c13e34a06b044d1a6ac020fb5d6e0919b74de007993b9013c93",
+    "selection_sha256": "20949c19ef024ee21c2dc25c021a7ab61dd7c558b2da3a1b1b445cd17559ab3f",
+    "status": "pass",
+    "work_marker_sha256": "356204d3cfb6328e28e53ae30dd9a41bbc352ebcfc1ff13efd80dca5b39fe35b"
+  },
+  "provenance_mode": "mixed_candidate",
+  "raw_dir": "/home/nscscc-pure-evidence/raw/iterations/20260715-1230-pure-overlay-profile/rtl-smoke/1784090882997736668-3302",
+  "removed_generated_paths": [
+    "/home/nscscc-pure-work/20260715-1230-pure-overlay-profile/sims/verilator/run_prog/config-software.mak"
+  ],
+  "requested_case": "func/func_lab19",
+  "result_file_policy": {
+    "functional_oracle": "NEMU DPI DiffTest markers and simulator termination output",
+    "status": "not_provided_by_locked_func_lab19"
+  },
+  "rtl_static_gate": "not_executed_by_rtl_smoke",
+  "run_id": "1784090882997736668-3302",
+  "schema_version": 1,
+  "selection_sha256": "20949c19ef024ee21c2dc25c021a7ab61dd7c558b2da3a1b1b445cd17559ab3f",
+  "simulation_eligible": true,
+  "status": "diagnostic",
+  "verilator_compile_counts": {
+    "executed": 1,
+    "failed": 1,
+    "passed": 0,
+    "planned": 1,
+    "skipped": 0
+  },
+  "verilator_compile_status": "warning",
+  "verilator_warnings": [
+    {
+      "category": "DECLFILENAME",
+      "line": "%Warning-DECLFILENAME: ../testbench/difftest.v:67:3: Filename 'difftest' does not match MODULE name: 'DifftestInstrCommit'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "DECLFILENAME",
+      "line": "%Warning-DECLFILENAME: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/myCPU/mycpu_top.v:6:8: Filename 'mycpu_top' does not match MODULE name: 'core_top'",
+      "scope": "dut"
+    },
+    {
+      "category": "DECLFILENAME",
+      "line": "%Warning-DECLFILENAME: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/CONFREG/confreg_sim.v:104:8: Filename 'confreg_sim' does not match MODULE name: 'confreg'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "DECLFILENAME",
+      "line": "%Warning-DECLFILENAME: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/AMBA/axi2apb.v:36:8: Filename 'axi2apb' does not match MODULE name: 'axi2apb_bridge'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "DECLFILENAME",
+      "line": "%Warning-DECLFILENAME: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/AMBA/axi_mux_sim.v:37:8: Filename 'axi_mux_sim' does not match MODULE name: 'axi_slave_mux'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "DECLFILENAME",
+      "line": "%Warning-DECLFILENAME: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/apb_dev_top_no_nand.v:36:8: Filename 'apb_dev_top_no_nand' does not match MODULE name: 'axi2apb_misc'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "PINCONNECTEMPTY",
+      "line": "%Warning-PINCONNECTEMPTY: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/apb_dev_top_no_nand.v:319:2: Cell pin connected by name with empty reference: 'apb1_req'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "PINCONNECTEMPTY",
+      "line": "%Warning-PINCONNECTEMPTY: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/apb_dev_top_no_nand.v:321:2: Cell pin connected by name with empty reference: 'apb1_rw'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "PINCONNECTEMPTY",
+      "line": "%Warning-PINCONNECTEMPTY: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/apb_dev_top_no_nand.v:322:2: Cell pin connected by name with empty reference: 'apb1_enab'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "PINCONNECTEMPTY",
+      "line": "%Warning-PINCONNECTEMPTY: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/apb_dev_top_no_nand.v:323:2: Cell pin connected by name with empty reference: 'apb1_psel'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "PINCONNECTEMPTY",
+      "line": "%Warning-PINCONNECTEMPTY: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/apb_dev_top_no_nand.v:324:2: Cell pin connected by name with empty reference: 'apb1_addr'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "PINCONNECTEMPTY",
+      "line": "%Warning-PINCONNECTEMPTY: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/apb_dev_top_no_nand.v:325:2: Cell pin connected by name with empty reference: 'apb1_datai'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "DECLFILENAME",
+      "line": "%Warning-DECLFILENAME: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/apb_mux2.v:185:8: Filename 'apb_mux2' does not match MODULE name: 'arb_2_1'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "DECLFILENAME",
+      "line": "%Warning-DECLFILENAME: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/URT/uart_top.v:36:8: Filename 'uart_top' does not match MODULE name: 'UART_TOP'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "DECLFILENAME",
+      "line": "%Warning-DECLFILENAME: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:34:8: Filename 'nand' does not match MODULE name: 'NAND_top'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "PINCONNECTEMPTY",
+      "line": "%Warning-PINCONNECTEMPTY: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/chip/soc_demo/sim/soc_top.v:386:6: Cell pin connected by name with empty reference: 'ws_valid'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "PINCONNECTEMPTY",
+      "line": "%Warning-PINCONNECTEMPTY: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/chip/soc_demo/sim/soc_top.v:387:6: Cell pin connected by name with empty reference: 'rf_rdata'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "PINMISSING",
+      "line": "%Warning-PINMISSING: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/chip/soc_demo/sim/soc_top.v:340:10: Cell has missing pin: 'debug0_wb_inst'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "PINCONNECTEMPTY",
+      "line": "%Warning-PINCONNECTEMPTY: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/chip/soc_demo/sim/soc_top.v:572:2: Cell pin connected by name with empty reference: 's1_awid'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "PINCONNECTEMPTY",
+      "line": "%Warning-PINCONNECTEMPTY: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/chip/soc_demo/sim/soc_top.v:573:2: Cell pin connected by name with empty reference: 's1_awaddr'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "PINCONNECTEMPTY",
+      "line": "%Warning-PINCONNECTEMPTY: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/chip/soc_demo/sim/soc_top.v:574:2: Cell pin connected by name with empty reference: 's1_awlen'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "PINCONNECTEMPTY",
+      "line": "%Warning-PINCONNECTEMPTY: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/chip/soc_demo/sim/soc_top.v:575:2: Cell pin connected by name with empty reference: 's1_awsize'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "PINCONNECTEMPTY",
+      "line": "%Warning-PINCONNECTEMPTY: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/chip/soc_demo/sim/soc_top.v:576:2: Cell pin connected by name with empty reference: 's1_awburst'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "PINCONNECTEMPTY",
+      "line": "%Warning-PINCONNECTEMPTY: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/chip/soc_demo/sim/soc_top.v:577:2: Cell pin connected by name with empty reference: 's1_awlock'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "PINCONNECTEMPTY",
+      "line": "%Warning-PINCONNECTEMPTY: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/chip/soc_demo/sim/soc_top.v:578:2: Cell pin connected by name with empty reference: 's1_awcache'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "PINCONNECTEMPTY",
+      "line": "%Warning-PINCONNECTEMPTY: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/chip/soc_demo/sim/soc_top.v:579:2: Cell pin connected by name with empty reference: 's1_awprot'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "PINCONNECTEMPTY",
+      "line": "%Warning-PINCONNECTEMPTY: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/chip/soc_demo/sim/soc_top.v:580:2: Cell pin connected by name with empty reference: 's1_awvalid'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "PINCONNECTEMPTY",
+      "line": "%Warning-PINCONNECTEMPTY: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/chip/soc_demo/sim/soc_top.v:582:2: Cell pin connected by name with empty reference: 's1_wid'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "PINCONNECTEMPTY",
+      "line": "%Warning-PINCONNECTEMPTY: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/chip/soc_demo/sim/soc_top.v:583:2: Cell pin connected by name with empty reference: 's1_wdata'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "PINCONNECTEMPTY",
+      "line": "%Warning-PINCONNECTEMPTY: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/chip/soc_demo/sim/soc_top.v:584:2: Cell pin connected by name with empty reference: 's1_wstrb'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "PINCONNECTEMPTY",
+      "line": "%Warning-PINCONNECTEMPTY: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/chip/soc_demo/sim/soc_top.v:585:2: Cell pin connected by name with empty reference: 's1_wlast'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "PINCONNECTEMPTY",
+      "line": "%Warning-PINCONNECTEMPTY: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/chip/soc_demo/sim/soc_top.v:586:2: Cell pin connected by name with empty reference: 's1_wvalid'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "PINCONNECTEMPTY",
+      "line": "%Warning-PINCONNECTEMPTY: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/chip/soc_demo/sim/soc_top.v:588:2: Cell pin connected by name with empty reference: 's1_bid'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "PINCONNECTEMPTY",
+      "line": "%Warning-PINCONNECTEMPTY: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/chip/soc_demo/sim/soc_top.v:589:2: Cell pin connected by name with empty reference: 's1_bresp'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "PINCONNECTEMPTY",
+      "line": "%Warning-PINCONNECTEMPTY: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/chip/soc_demo/sim/soc_top.v:591:2: Cell pin connected by name with empty reference: 's1_bready'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "PINCONNECTEMPTY",
+      "line": "%Warning-PINCONNECTEMPTY: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/chip/soc_demo/sim/soc_top.v:592:2: Cell pin connected by name with empty reference: 's1_arid'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "PINCONNECTEMPTY",
+      "line": "%Warning-PINCONNECTEMPTY: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/chip/soc_demo/sim/soc_top.v:593:2: Cell pin connected by name with empty reference: 's1_araddr'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "PINCONNECTEMPTY",
+      "line": "%Warning-PINCONNECTEMPTY: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/chip/soc_demo/sim/soc_top.v:594:2: Cell pin connected by name with empty reference: 's1_arlen'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "PINCONNECTEMPTY",
+      "line": "%Warning-PINCONNECTEMPTY: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/chip/soc_demo/sim/soc_top.v:595:2: Cell pin connected by name with empty reference: 's1_arsize'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "PINCONNECTEMPTY",
+      "line": "%Warning-PINCONNECTEMPTY: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/chip/soc_demo/sim/soc_top.v:596:2: Cell pin connected by name with empty reference: 's1_arburst'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "PINCONNECTEMPTY",
+      "line": "%Warning-PINCONNECTEMPTY: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/chip/soc_demo/sim/soc_top.v:597:2: Cell pin connected by name with empty reference: 's1_arlock'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "PINCONNECTEMPTY",
+      "line": "%Warning-PINCONNECTEMPTY: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/chip/soc_demo/sim/soc_top.v:598:2: Cell pin connected by name with empty reference: 's1_arcache'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "PINCONNECTEMPTY",
+      "line": "%Warning-PINCONNECTEMPTY: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/chip/soc_demo/sim/soc_top.v:599:2: Cell pin connected by name with empty reference: 's1_arprot'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "PINCONNECTEMPTY",
+      "line": "%Warning-PINCONNECTEMPTY: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/chip/soc_demo/sim/soc_top.v:600:2: Cell pin connected by name with empty reference: 's1_arvalid'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "PINCONNECTEMPTY",
+      "line": "%Warning-PINCONNECTEMPTY: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/chip/soc_demo/sim/soc_top.v:602:2: Cell pin connected by name with empty reference: 's1_rid'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "PINCONNECTEMPTY",
+      "line": "%Warning-PINCONNECTEMPTY: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/chip/soc_demo/sim/soc_top.v:603:2: Cell pin connected by name with empty reference: 's1_rdata'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "PINCONNECTEMPTY",
+      "line": "%Warning-PINCONNECTEMPTY: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/chip/soc_demo/sim/soc_top.v:604:2: Cell pin connected by name with empty reference: 's1_rresp'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "PINCONNECTEMPTY",
+      "line": "%Warning-PINCONNECTEMPTY: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/chip/soc_demo/sim/soc_top.v:605:2: Cell pin connected by name with empty reference: 's1_rlast'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "PINCONNECTEMPTY",
+      "line": "%Warning-PINCONNECTEMPTY: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/chip/soc_demo/sim/soc_top.v:607:2: Cell pin connected by name with empty reference: 's1_rready'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "PINCONNECTEMPTY",
+      "line": "%Warning-PINCONNECTEMPTY: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/chip/soc_demo/sim/soc_top.v:685:2: Cell pin connected by name with empty reference: 's4_awid'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "PINCONNECTEMPTY",
+      "line": "%Warning-PINCONNECTEMPTY: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/chip/soc_demo/sim/soc_top.v:686:2: Cell pin connected by name with empty reference: 's4_awaddr'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "PINCONNECTEMPTY",
+      "line": "%Warning-PINCONNECTEMPTY: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/chip/soc_demo/sim/soc_top.v:687:2: Cell pin connected by name with empty reference: 's4_awlen'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "PINCONNECTEMPTY",
+      "line": "%Warning-PINCONNECTEMPTY: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/chip/soc_demo/sim/soc_top.v:688:2: Cell pin connected by name with empty reference: 's4_awsize'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "PINCONNECTEMPTY",
+      "line": "%Warning-PINCONNECTEMPTY: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/chip/soc_demo/sim/soc_top.v:689:2: Cell pin connected by name with empty reference: 's4_awburst'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "PINCONNECTEMPTY",
+      "line": "%Warning-PINCONNECTEMPTY: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/chip/soc_demo/sim/soc_top.v:690:2: Cell pin connected by name with empty reference: 's4_awlock'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "PINCONNECTEMPTY",
+      "line": "%Warning-PINCONNECTEMPTY: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/chip/soc_demo/sim/soc_top.v:691:2: Cell pin connected by name with empty reference: 's4_awcache'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "PINCONNECTEMPTY",
+      "line": "%Warning-PINCONNECTEMPTY: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/chip/soc_demo/sim/soc_top.v:692:2: Cell pin connected by name with empty reference: 's4_awprot'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "PINCONNECTEMPTY",
+      "line": "%Warning-PINCONNECTEMPTY: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/chip/soc_demo/sim/soc_top.v:693:2: Cell pin connected by name with empty reference: 's4_awvalid'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "PINCONNECTEMPTY",
+      "line": "%Warning-PINCONNECTEMPTY: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/chip/soc_demo/sim/soc_top.v:695:2: Cell pin connected by name with empty reference: 's4_wid'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "PINCONNECTEMPTY",
+      "line": "%Warning-PINCONNECTEMPTY: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/chip/soc_demo/sim/soc_top.v:696:2: Cell pin connected by name with empty reference: 's4_wdata'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "PINCONNECTEMPTY",
+      "line": "%Warning-PINCONNECTEMPTY: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/chip/soc_demo/sim/soc_top.v:697:2: Cell pin connected by name with empty reference: 's4_wstrb'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "PINCONNECTEMPTY",
+      "line": "%Warning-PINCONNECTEMPTY: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/chip/soc_demo/sim/soc_top.v:698:2: Cell pin connected by name with empty reference: 's4_wlast'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "PINCONNECTEMPTY",
+      "line": "%Warning-PINCONNECTEMPTY: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/chip/soc_demo/sim/soc_top.v:699:2: Cell pin connected by name with empty reference: 's4_wvalid'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "PINCONNECTEMPTY",
+      "line": "%Warning-PINCONNECTEMPTY: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/chip/soc_demo/sim/soc_top.v:701:2: Cell pin connected by name with empty reference: 's4_bid'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "PINCONNECTEMPTY",
+      "line": "%Warning-PINCONNECTEMPTY: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/chip/soc_demo/sim/soc_top.v:702:2: Cell pin connected by name with empty reference: 's4_bresp'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "PINCONNECTEMPTY",
+      "line": "%Warning-PINCONNECTEMPTY: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/chip/soc_demo/sim/soc_top.v:704:2: Cell pin connected by name with empty reference: 's4_bready'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "PINCONNECTEMPTY",
+      "line": "%Warning-PINCONNECTEMPTY: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/chip/soc_demo/sim/soc_top.v:705:2: Cell pin connected by name with empty reference: 's4_arid'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "PINCONNECTEMPTY",
+      "line": "%Warning-PINCONNECTEMPTY: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/chip/soc_demo/sim/soc_top.v:706:2: Cell pin connected by name with empty reference: 's4_araddr'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "PINCONNECTEMPTY",
+      "line": "%Warning-PINCONNECTEMPTY: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/chip/soc_demo/sim/soc_top.v:707:2: Cell pin connected by name with empty reference: 's4_arlen'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "PINCONNECTEMPTY",
+      "line": "%Warning-PINCONNECTEMPTY: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/chip/soc_demo/sim/soc_top.v:708:2: Cell pin connected by name with empty reference: 's4_arsize'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "PINCONNECTEMPTY",
+      "line": "%Warning-PINCONNECTEMPTY: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/chip/soc_demo/sim/soc_top.v:709:2: Cell pin connected by name with empty reference: 's4_arburst'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "PINCONNECTEMPTY",
+      "line": "%Warning-PINCONNECTEMPTY: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/chip/soc_demo/sim/soc_top.v:710:2: Cell pin connected by name with empty reference: 's4_arlock'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "PINCONNECTEMPTY",
+      "line": "%Warning-PINCONNECTEMPTY: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/chip/soc_demo/sim/soc_top.v:711:2: Cell pin connected by name with empty reference: 's4_arcache'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "PINCONNECTEMPTY",
+      "line": "%Warning-PINCONNECTEMPTY: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/chip/soc_demo/sim/soc_top.v:712:2: Cell pin connected by name with empty reference: 's4_arprot'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "PINCONNECTEMPTY",
+      "line": "%Warning-PINCONNECTEMPTY: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/chip/soc_demo/sim/soc_top.v:713:2: Cell pin connected by name with empty reference: 's4_arvalid'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "PINCONNECTEMPTY",
+      "line": "%Warning-PINCONNECTEMPTY: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/chip/soc_demo/sim/soc_top.v:715:2: Cell pin connected by name with empty reference: 's4_rid'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "PINCONNECTEMPTY",
+      "line": "%Warning-PINCONNECTEMPTY: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/chip/soc_demo/sim/soc_top.v:716:2: Cell pin connected by name with empty reference: 's4_rdata'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "PINCONNECTEMPTY",
+      "line": "%Warning-PINCONNECTEMPTY: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/chip/soc_demo/sim/soc_top.v:717:2: Cell pin connected by name with empty reference: 's4_rresp'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "PINCONNECTEMPTY",
+      "line": "%Warning-PINCONNECTEMPTY: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/chip/soc_demo/sim/soc_top.v:718:2: Cell pin connected by name with empty reference: 's4_rlast'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "PINCONNECTEMPTY",
+      "line": "%Warning-PINCONNECTEMPTY: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/chip/soc_demo/sim/soc_top.v:720:2: Cell pin connected by name with empty reference: 's4_rready'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "PINMISSING",
+      "line": "%Warning-PINMISSING: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/chip/soc_demo/sim/soc_top.v:726:14: Cell has missing pin: 'apb_rw_dma'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "PINMISSING",
+      "line": "%Warning-PINMISSING: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/chip/soc_demo/sim/soc_top.v:726:14: Cell has missing pin: 'apb_psel_dma'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "PINMISSING",
+      "line": "%Warning-PINMISSING: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/chip/soc_demo/sim/soc_top.v:726:14: Cell has missing pin: 'apb_enab_dma'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "PINMISSING",
+      "line": "%Warning-PINMISSING: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/chip/soc_demo/sim/soc_top.v:726:14: Cell has missing pin: 'apb_addr_dma'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "PINMISSING",
+      "line": "%Warning-PINMISSING: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/chip/soc_demo/sim/soc_top.v:726:14: Cell has missing pin: 'apb_valid_dma'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "PINMISSING",
+      "line": "%Warning-PINMISSING: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/chip/soc_demo/sim/soc_top.v:726:14: Cell has missing pin: 'apb_wdata_dma'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "PINMISSING",
+      "line": "%Warning-PINMISSING: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/chip/soc_demo/sim/soc_top.v:726:14: Cell has missing pin: 'apb_rdata_dma'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "PINMISSING",
+      "line": "%Warning-PINMISSING: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/chip/soc_demo/sim/soc_top.v:726:14: Cell has missing pin: 'apb_ready_dma'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "PINMISSING",
+      "line": "%Warning-PINMISSING: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/chip/soc_demo/sim/soc_top.v:726:14: Cell has missing pin: 'dma_grant'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "PINMISSING",
+      "line": "%Warning-PINMISSING: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/chip/soc_demo/sim/soc_top.v:726:14: Cell has missing pin: 'dma_req_o'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "PINMISSING",
+      "line": "%Warning-PINMISSING: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/chip/soc_demo/sim/soc_top.v:726:14: Cell has missing pin: 'dma_ack_i'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "MULTITOP",
+      "line": "%Warning-MULTITOP: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:34:8: Multiple top level modules",
+      "scope": "official_environment"
+    },
+    {
+      "category": "MISINDENT",
+      "line": "%Warning-MISINDENT: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/URT/uart_receiver.v:160:46: Misleading indentation",
+      "scope": "official_environment"
+    },
+    {
+      "category": "DEFPARAM",
+      "line": "%Warning-DEFPARAM: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/URT/uart_regs.v:259:41: defparam is deprecated (IEEE 1800-2017 C.4.1)",
+      "scope": "official_environment"
+    },
+    {
+      "category": "DEFPARAM",
+      "line": "%Warning-DEFPARAM: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/URT/uart_regs.v:260:41: defparam is deprecated (IEEE 1800-2017 C.4.1)",
+      "scope": "official_environment"
+    },
+    {
+      "category": "IMPLICIT",
+      "line": "%Warning-IMPLICIT: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/apb_dev_top_no_nand.v:183:9: Signal definition not found, creating implicitly: 'nand_dma_ack_i'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/URT/uart_rfifo.v:90:10: Operator ASSIGNDLY expects 4 bits on the Assign RHS, but Assign RHS's CONST '1'h0' generates 1 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/URT/uart_rfifo.v:112:10: Operator ASSIGNDLY expects 4 bits on the Assign RHS, but Assign RHS's CONST '1'h0' generates 1 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/URT/uart_tfifo.v:86:11: Operator ASSIGNDLY expects 4 bits on the Assign RHS, but Assign RHS's CONST '1'h0' generates 1 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/URT/uart_tfifo.v:92:11: Operator ASSIGNDLY expects 4 bits on the Assign RHS, but Assign RHS's CONST '1'h0' generates 1 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: ../testbench/difftest.v:111:3: Operator TASKREF 'v_difftest_ExcpEvent' expects 8 bits on the Function Argument, but Function Argument's VARREF 'excp_valid' generates 1 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: ../testbench/difftest.v:85:3: Operator TASKREF 'v_difftest_InstrCommit' expects 8 bits on the Function Argument, but Function Argument's VARREF 'TLBFILL_index' generates 5 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/URT/uart_transmitter.v:231:18: Operator ASSIGNDLY expects 5 bits on the Assign RHS, but Assign RHS's CONST '4'h0' generates 4 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/URT/uart_transmitter.v:264:48: Operator ADD expects 3 bits on the RHS, but RHS's LOGNOT generates 1 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/URT/uart_regs.v:166:23: Operator EQ expects 8 bits on the RHS, but RHS's SEL generates 7 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/URT/uart_regs.v:277:25: Operator COND expects 8 bits on the Conditional False, but Conditional False's VARREF 'ier' generates 4 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/URT/uart_regs.v:531:14: Operator ASSIGNDLY expects 9 bits on the Assign RHS, but Assign RHS's CONST '8'h0' generates 8 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/URT/uart_regs.v:534:22: Operator ADD expects 32 or 24 bits on the RHS, but RHS's VARREF 'M_toggle' generates 1 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHTRUNC",
+      "line": "%Warning-WIDTHTRUNC: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/URT/uart_regs.v:534:12: Operator ASSIGNDLY expects 16 bits on the Assign RHS, but Assign RHS's ADD generates 32 or 24 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/AMBA/axi_mux_sim.v:1102:19: Operator ASSIGNDLY expects 3 bits on the Assign RHS, but Assign RHS's CONST '2'h0' generates 2 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/AMBA/axi2apb.v:293:100: Operator ADD expects 20 bits on the RHS, but RHS's CONST '2'h1' generates 2 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/AMBA/axi2apb.v:294:100: Operator ADD expects 20 bits on the RHS, but RHS's CONST '2'h2' generates 2 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/AMBA/axi2apb.v:295:100: Operator ADD expects 20 bits on the RHS, but RHS's CONST '2'h3' generates 2 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/AMBA/axi2apb.v:296:100: Operator ADD expects 20 bits on the RHS, but RHS's CONST '2'h1' generates 2 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/AMBA/axi2apb.v:297:100: Operator ADD expects 20 bits on the RHS, but RHS's CONST '2'h2' generates 2 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/AMBA/axi2apb.v:487:66: Operator EQ expects 3 bits on the RHS, but RHS's CONST '2'h1' generates 2 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/AMBA/axi2apb.v:488:66: Operator EQ expects 3 bits on the RHS, but RHS's CONST '2'h1' generates 2 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHTRUNC",
+      "line": "%Warning-WIDTHTRUNC: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/AMBA/axi2apb.v:589:37: Operator ASSIGNDLY expects 20 bits on the Assign RHS, but Assign RHS's CONST '32'h0' generates 32 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/CONFREG/confreg_sim.v:171:28: Operator EQ expects 16 bits on the LHS, but LHS's SEL generates 13 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/AMBA/axi_mux_sim.v:806:67: Operator EQ expects 32 bits on the LHS, but LHS's VARREF 'wr_resp_sel' generates 3 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/AMBA/axi_mux_sim.v:806:113: Operator EQ expects 32 bits on the LHS, but LHS's VARREF 'wr_resp_sel_reg' generates 3 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/AMBA/axi_mux_sim.v:814:38: Operator GT expects 3 bits on the RHS, but RHS's CONST '2'h2' generates 2 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHTRUNC",
+      "line": "%Warning-WIDTHTRUNC: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/AMBA/axi_mux_sim.v:819:29: Operator ASSIGN expects 4 bits on the Assign RHS, but Assign RHS's CONST '8'h0' generates 8 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHTRUNC",
+      "line": "%Warning-WIDTHTRUNC: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/AMBA/axi_mux_sim.v:844:21: Operator ASSIGN expects 3 bits on the Assign RHS, but Assign RHS's VARREF 'w_addr_dir_int' generates 32 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/AMBA/axi_mux_sim.v:851:68: Operator EQ expects 32 bits on the LHS, but LHS's VARREF 'wr_data_dir' generates 3 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/AMBA/axi_mux_sim.v:858:44: Operator EQ expects 16 bits on the LHS, but LHS's SEL generates 13 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/AMBA/axi_mux_sim.v:859:26: Operator EQ expects 16 bits on the LHS, but LHS's SEL generates 13 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/AMBA/axi_mux_sim.v:951:47: Operator EQ expects 16 bits on the LHS, but LHS's SEL generates 13 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/AMBA/axi_mux_sim.v:952:26: Operator EQ expects 16 bits on the LHS, but LHS's SEL generates 13 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/AMBA/axi_mux_sim.v:955:50: Operator EQ expects 16 bits on the LHS, but LHS's SEL generates 13 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/AMBA/axi_mux_sim.v:955:87: Operator EQ expects 16 bits on the LHS, but LHS's SEL generates 13 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHTRUNC",
+      "line": "%Warning-WIDTHTRUNC: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/AMBA/axi_mux_sim.v:964:21: Operator ASSIGN expects 3 bits on the Assign RHS, but Assign RHS's VARREF 'rd_addr_dir_int' generates 32 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHTRUNC",
+      "line": "%Warning-WIDTHTRUNC: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/AMBA/axi_mux_sim.v:970:29: Operator ASSIGN expects 4 bits on the Assign RHS, but Assign RHS's CONST '8'h0' generates 8 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHTRUNC",
+      "line": "%Warning-WIDTHTRUNC: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/AMBA/axi_mux_sim.v:971:29: Operator ASSIGN expects 32 bits on the Assign RHS, but Assign RHS's CONST '128'h0' generates 128 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/AMBA/axi_mux_sim.v:978:27: Operator EQ expects 32 bits on the LHS, but LHS's VARREF 'rd_data_sel' generates 3 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/chip/soc_demo/sim/soc_top.v:348:6: Output port connection 'arlen' expects 8 bits on the pin connection, but pin connection's VARREF 'cpu_arlen' generates 4 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/chip/soc_demo/sim/soc_top.v:358:6: Output port connection 'awlen' expects 8 bits on the pin connection, but pin connection's VARREF 'cpu_awlen' generates 4 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/chip/soc_demo/sim/soc_top.v:391:6: Output port connection 'debug0_wb_rf_wen' expects 4 bits on the pin connection, but pin connection's VARREF 'debug0_wb_rf_wen' generates 1 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: ../testbench/simu_top.v:137:21: Operator ASSIGNW expects 128 bits on the Assign RHS, but Assign RHS's REPLICATE generates 104 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:154:24: Operator ASSIGNDLY expects 32 bits on the Assign RHS, but Assign RHS's REPLICATE generates 15 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:194:27: Operator ASSIGNDLY expects 32 bits on the Assign RHS, but Assign RHS's REPLICATE generates 30 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:197:28: Operator ASSIGNDLY expects 32 bits on the Assign RHS, but Assign RHS's REPLICATE generates 30 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHTRUNC",
+      "line": "%Warning-WIDTHTRUNC: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:228:26: Operator ASSIGNDLY expects 38 bits on the Assign RHS, but Assign RHS's REPLICATE generates 41 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:286:42: Operator EQ expects 4 bits on the LHS, but LHS's VARREF 'nand_number' generates 2 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:287:42: Operator EQ expects 4 bits on the LHS, but LHS's VARREF 'nand_number' generates 2 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:288:42: Operator EQ expects 4 bits on the LHS, but LHS's VARREF 'nand_number' generates 2 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:289:42: Operator EQ expects 4 bits on the LHS, but LHS's VARREF 'nand_number' generates 2 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:290:38: Operator EQ expects 4 bits on the LHS, but LHS's VARREF 'nand_number' generates 2 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:291:38: Operator EQ expects 4 bits on the LHS, but LHS's VARREF 'nand_number' generates 2 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:292:38: Operator EQ expects 4 bits on the LHS, but LHS's VARREF 'nand_number' generates 2 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:293:38: Operator EQ expects 4 bits on the LHS, but LHS's VARREF 'nand_number' generates 2 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHTRUNC",
+      "line": "%Warning-WIDTHTRUNC: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:339:22: Operator ASSIGN expects 32 bits on the Assign RHS, but Assign RHS's REPLICATE generates 34 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:343:22: Operator ASSIGN expects 32 bits on the Assign RHS, but Assign RHS's VARREF 'nand_timing' generates 16 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:347:22: Operator ASSIGN expects 32 bits on the Assign RHS, but Assign RHS's REPLICATE generates 24 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:617:92: Operator ADD expects 8 bits on the RHS, but RHS's CONST '2'h3' generates 2 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:621:92: Operator ADD expects 8 bits on the RHS, but RHS's CONST '2'h3' generates 2 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:625:92: Operator ADD expects 8 bits on the RHS, but RHS's CONST '2'h3' generates 2 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:629:92: Operator ADD expects 8 bits on the RHS, but RHS's CONST '2'h3' generates 2 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHTRUNC",
+      "line": "%Warning-WIDTHTRUNC: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:591:63: Logical operator LOGAND expects 1 bit on the RHS, but RHS's VARREF 'WAIT_NUM' generates 8 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:688:68: Operator ASSIGNDLY expects 8 bits on the Assign RHS, but Assign RHS's SEL generates 4 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:675:70: Operator EQ expects 3 bits on the RHS, but RHS's CONST '2'h2' generates 2 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:671:64: Operator EQ expects 3 bits on the RHS, but RHS's CONST '2'h3' generates 2 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:700:81: Operator ADD expects 8 bits on the RHS, but RHS's CONST '2'h2' generates 2 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHTRUNC",
+      "line": "%Warning-WIDTHTRUNC: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:691:68: Logical operator LOGAND expects 1 bit on the RHS, but RHS's VARREF 'WAIT_NUM' generates 8 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:756:69: Operator ASSIGNDLY expects 8 bits on the Assign RHS, but Assign RHS's SEL generates 6 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:767:78: Operator ADD expects 8 bits on the RHS, but RHS's CONST '2'h2' generates 2 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHTRUNC",
+      "line": "%Warning-WIDTHTRUNC: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:759:64: Logical operator LOGAND expects 1 bit on the RHS, but RHS's VARREF 'WAIT_NUM' generates 8 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:838:102: Operator ADD expects 23 bits on the RHS, but RHS's CONST '2'h2' generates 2 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:840:81: Operator SUB expects 32 bits on the RHS, but RHS's SEL generates 8 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:840:104: Operator SUB expects 32 bits on the RHS, but RHS's SEL generates 8 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHTRUNC",
+      "line": "%Warning-WIDTHTRUNC: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:840:61: Operator ASSIGNDLY expects 14 bits on the Assign RHS, but Assign RHS's COND generates 32 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:842:80: Operator SUB expects 32 bits on the RHS, but RHS's SEL generates 4 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:842:102: Operator SUB expects 32 bits on the RHS, but RHS's SEL generates 4 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHTRUNC",
+      "line": "%Warning-WIDTHTRUNC: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:842:61: Operator ASSIGNDLY expects 14 bits on the Assign RHS, but Assign RHS's COND generates 32 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:844:81: Operator SUB expects 32 bits on the RHS, but RHS's SEL generates 8 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:844:104: Operator SUB expects 32 bits on the RHS, but RHS's SEL generates 8 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHTRUNC",
+      "line": "%Warning-WIDTHTRUNC: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:844:61: Operator ASSIGNDLY expects 14 bits on the Assign RHS, but Assign RHS's COND generates 32 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:855:86: Operator SUB expects 32 bits on the LHS, but LHS's VARREF 'op_scope' generates 14 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:855:86: Operator SUB expects 32 bits on the RHS, but RHS's SEL generates 12 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:855:115: Operator SUB expects 32 bits on the LHS, but LHS's VARREF 'op_scope' generates 14 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:855:115: Operator SUB expects 32 bits on the RHS, but RHS's SEL generates 12 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHTRUNC",
+      "line": "%Warning-WIDTHTRUNC: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:855:61: Operator ASSIGNDLY expects 14 bits on the Assign RHS, but Assign RHS's COND generates 32 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:857:86: Operator SUB expects 32 bits on the LHS, but LHS's VARREF 'op_scope' generates 14 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:857:86: Operator SUB expects 32 bits on the RHS, but RHS's SEL generates 6 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:857:115: Operator SUB expects 32 bits on the LHS, but LHS's VARREF 'op_scope' generates 14 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:857:115: Operator SUB expects 32 bits on the RHS, but RHS's SEL generates 6 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHTRUNC",
+      "line": "%Warning-WIDTHTRUNC: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:857:61: Operator ASSIGNDLY expects 14 bits on the Assign RHS, but Assign RHS's COND generates 32 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:859:86: Operator SUB expects 32 bits on the LHS, but LHS's VARREF 'op_scope' generates 14 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:859:86: Operator SUB expects 32 bits on the RHS, but RHS's SEL generates 11 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:859:115: Operator SUB expects 32 bits on the LHS, but LHS's VARREF 'op_scope' generates 14 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:859:115: Operator SUB expects 32 bits on the RHS, but RHS's SEL generates 11 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHTRUNC",
+      "line": "%Warning-WIDTHTRUNC: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:859:61: Operator ASSIGNDLY expects 14 bits on the Assign RHS, but Assign RHS's COND generates 32 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:866:86: Operator SUB expects 32 bits on the LHS, but LHS's VARREF 'op_scope' generates 14 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:866:86: Operator SUB expects 32 bits on the RHS, but RHS's SEL generates 13 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:866:115: Operator SUB expects 32 bits on the LHS, but LHS's VARREF 'op_scope' generates 14 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:866:115: Operator SUB expects 32 bits on the RHS, but RHS's SEL generates 13 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHTRUNC",
+      "line": "%Warning-WIDTHTRUNC: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:866:61: Operator ASSIGNDLY expects 14 bits on the Assign RHS, but Assign RHS's COND generates 32 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:868:86: Operator SUB expects 32 bits on the LHS, but LHS's VARREF 'op_scope' generates 14 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:868:86: Operator SUB expects 32 bits on the RHS, but RHS's SEL generates 7 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:868:115: Operator SUB expects 32 bits on the LHS, but LHS's VARREF 'op_scope' generates 14 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:868:115: Operator SUB expects 32 bits on the RHS, but RHS's SEL generates 7 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHTRUNC",
+      "line": "%Warning-WIDTHTRUNC: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:868:61: Operator ASSIGNDLY expects 14 bits on the Assign RHS, but Assign RHS's COND generates 32 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:870:86: Operator SUB expects 32 bits on the LHS, but LHS's VARREF 'op_scope' generates 14 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:870:86: Operator SUB expects 32 bits on the RHS, but RHS's SEL generates 12 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:870:115: Operator SUB expects 32 bits on the LHS, but LHS's VARREF 'op_scope' generates 14 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:870:115: Operator SUB expects 32 bits on the RHS, but RHS's SEL generates 12 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHTRUNC",
+      "line": "%Warning-WIDTHTRUNC: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:870:61: Operator ASSIGNDLY expects 14 bits on the Assign RHS, but Assign RHS's COND generates 32 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:879:87: Operator SUB expects 32 bits on the LHS, but LHS's VARREF 'op_scope' generates 14 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:879:87: Operator SUB expects 32 bits on the RHS, but RHS's SEL generates 14 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:879:116: Operator SUB expects 32 bits on the LHS, but LHS's VARREF 'op_scope' generates 14 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:879:116: Operator SUB expects 32 bits on the RHS, but RHS's SEL generates 14 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHTRUNC",
+      "line": "%Warning-WIDTHTRUNC: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:879:62: Operator ASSIGNDLY expects 14 bits on the Assign RHS, but Assign RHS's COND generates 32 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:881:87: Operator SUB expects 32 bits on the LHS, but LHS's VARREF 'op_scope' generates 14 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:881:87: Operator SUB expects 32 bits on the RHS, but RHS's SEL generates 8 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:881:116: Operator SUB expects 32 bits on the LHS, but LHS's VARREF 'op_scope' generates 14 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:881:116: Operator SUB expects 32 bits on the RHS, but RHS's SEL generates 8 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHTRUNC",
+      "line": "%Warning-WIDTHTRUNC: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:881:62: Operator ASSIGNDLY expects 14 bits on the Assign RHS, but Assign RHS's COND generates 32 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:883:87: Operator SUB expects 32 bits on the LHS, but LHS's VARREF 'op_scope' generates 14 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:883:87: Operator SUB expects 32 bits on the RHS, but RHS's SEL generates 13 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:883:116: Operator SUB expects 32 bits on the LHS, but LHS's VARREF 'op_scope' generates 14 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:883:116: Operator SUB expects 32 bits on the RHS, but RHS's SEL generates 13 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHTRUNC",
+      "line": "%Warning-WIDTHTRUNC: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:883:62: Operator ASSIGNDLY expects 14 bits on the Assign RHS, but Assign RHS's COND generates 32 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:907:132: Operator SUB expects 14 bits on the RHS, but RHS's CONST '3'h4' generates 3 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:1001:102: Operator ADD expects 23 bits on the RHS, but RHS's CONST '2'h2' generates 2 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:1003:82: Operator SUB expects 32 bits on the RHS, but RHS's SEL generates 8 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:1003:105: Operator SUB expects 32 bits on the RHS, but RHS's SEL generates 8 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHTRUNC",
+      "line": "%Warning-WIDTHTRUNC: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:1003:62: Operator ASSIGNDLY expects 14 bits on the Assign RHS, but Assign RHS's COND generates 32 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:1005:81: Operator SUB expects 32 bits on the RHS, but RHS's SEL generates 4 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:1005:104: Operator SUB expects 32 bits on the RHS, but RHS's SEL generates 4 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHTRUNC",
+      "line": "%Warning-WIDTHTRUNC: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:1005:62: Operator ASSIGNDLY expects 14 bits on the Assign RHS, but Assign RHS's COND generates 32 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:1007:82: Operator SUB expects 32 bits on the RHS, but RHS's SEL generates 8 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:1007:105: Operator SUB expects 32 bits on the RHS, but RHS's SEL generates 8 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHTRUNC",
+      "line": "%Warning-WIDTHTRUNC: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:1007:62: Operator ASSIGNDLY expects 14 bits on the Assign RHS, but Assign RHS's COND generates 32 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:1018:87: Operator SUB expects 32 bits on the LHS, but LHS's VARREF 'op_scope' generates 14 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:1018:87: Operator SUB expects 32 bits on the RHS, but RHS's SEL generates 12 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:1018:116: Operator SUB expects 32 bits on the LHS, but LHS's VARREF 'op_scope' generates 14 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:1018:116: Operator SUB expects 32 bits on the RHS, but RHS's SEL generates 12 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHTRUNC",
+      "line": "%Warning-WIDTHTRUNC: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:1018:62: Operator ASSIGNDLY expects 14 bits on the Assign RHS, but Assign RHS's COND generates 32 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:1020:87: Operator SUB expects 32 bits on the LHS, but LHS's VARREF 'op_scope' generates 14 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:1020:87: Operator SUB expects 32 bits on the RHS, but RHS's SEL generates 6 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:1020:116: Operator SUB expects 32 bits on the LHS, but LHS's VARREF 'op_scope' generates 14 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:1020:116: Operator SUB expects 32 bits on the RHS, but RHS's SEL generates 6 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHTRUNC",
+      "line": "%Warning-WIDTHTRUNC: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:1020:62: Operator ASSIGNDLY expects 14 bits on the Assign RHS, but Assign RHS's COND generates 32 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:1022:87: Operator SUB expects 32 bits on the LHS, but LHS's VARREF 'op_scope' generates 14 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:1022:87: Operator SUB expects 32 bits on the RHS, but RHS's SEL generates 11 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:1022:116: Operator SUB expects 32 bits on the LHS, but LHS's VARREF 'op_scope' generates 14 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:1022:116: Operator SUB expects 32 bits on the RHS, but RHS's SEL generates 11 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHTRUNC",
+      "line": "%Warning-WIDTHTRUNC: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:1022:62: Operator ASSIGNDLY expects 14 bits on the Assign RHS, but Assign RHS's COND generates 32 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:1029:87: Operator SUB expects 32 bits on the LHS, but LHS's VARREF 'op_scope' generates 14 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:1029:87: Operator SUB expects 32 bits on the RHS, but RHS's SEL generates 13 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:1029:116: Operator SUB expects 32 bits on the LHS, but LHS's VARREF 'op_scope' generates 14 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:1029:116: Operator SUB expects 32 bits on the RHS, but RHS's SEL generates 13 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHTRUNC",
+      "line": "%Warning-WIDTHTRUNC: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:1029:62: Operator ASSIGNDLY expects 14 bits on the Assign RHS, but Assign RHS's COND generates 32 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:1031:87: Operator SUB expects 32 bits on the LHS, but LHS's VARREF 'op_scope' generates 14 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:1031:87: Operator SUB expects 32 bits on the RHS, but RHS's SEL generates 7 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:1031:116: Operator SUB expects 32 bits on the LHS, but LHS's VARREF 'op_scope' generates 14 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:1031:116: Operator SUB expects 32 bits on the RHS, but RHS's SEL generates 7 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHTRUNC",
+      "line": "%Warning-WIDTHTRUNC: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:1031:62: Operator ASSIGNDLY expects 14 bits on the Assign RHS, but Assign RHS's COND generates 32 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:1033:87: Operator SUB expects 32 bits on the LHS, but LHS's VARREF 'op_scope' generates 14 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:1033:87: Operator SUB expects 32 bits on the RHS, but RHS's SEL generates 12 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:1033:116: Operator SUB expects 32 bits on the LHS, but LHS's VARREF 'op_scope' generates 14 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:1033:116: Operator SUB expects 32 bits on the RHS, but RHS's SEL generates 12 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHTRUNC",
+      "line": "%Warning-WIDTHTRUNC: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:1033:62: Operator ASSIGNDLY expects 14 bits on the Assign RHS, but Assign RHS's COND generates 32 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:1042:88: Operator SUB expects 32 bits on the LHS, but LHS's VARREF 'op_scope' generates 14 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:1042:88: Operator SUB expects 32 bits on the RHS, but RHS's SEL generates 14 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:1042:117: Operator SUB expects 32 bits on the LHS, but LHS's VARREF 'op_scope' generates 14 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:1042:117: Operator SUB expects 32 bits on the RHS, but RHS's SEL generates 14 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHTRUNC",
+      "line": "%Warning-WIDTHTRUNC: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:1042:63: Operator ASSIGNDLY expects 14 bits on the Assign RHS, but Assign RHS's COND generates 32 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:1044:88: Operator SUB expects 32 bits on the LHS, but LHS's VARREF 'op_scope' generates 14 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:1044:88: Operator SUB expects 32 bits on the RHS, but RHS's SEL generates 8 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:1044:117: Operator SUB expects 32 bits on the LHS, but LHS's VARREF 'op_scope' generates 14 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:1044:117: Operator SUB expects 32 bits on the RHS, but RHS's SEL generates 8 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHTRUNC",
+      "line": "%Warning-WIDTHTRUNC: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:1044:63: Operator ASSIGNDLY expects 14 bits on the Assign RHS, but Assign RHS's COND generates 32 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:1046:88: Operator SUB expects 32 bits on the LHS, but LHS's VARREF 'op_scope' generates 14 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:1046:88: Operator SUB expects 32 bits on the RHS, but RHS's SEL generates 13 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:1046:117: Operator SUB expects 32 bits on the LHS, but LHS's VARREF 'op_scope' generates 14 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:1046:117: Operator SUB expects 32 bits on the RHS, but RHS's SEL generates 13 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHTRUNC",
+      "line": "%Warning-WIDTHTRUNC: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:1046:63: Operator ASSIGNDLY expects 14 bits on the Assign RHS, but Assign RHS's COND generates 32 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:1060:132: Operator SUB expects 14 bits on the RHS, but RHS's CONST '3'h4' generates 3 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:1094:84: Operator SUB expects 32 bits on the RHS, but RHS's CONST '3'h4' generates 3 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:1100:83: Operator ADD expects 14 bits on the RHS, but RHS's CONST '3'h4' generates 3 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:1087:57: Operator EQ expects 8 bits on the RHS, but RHS's CONST '1'h1' generates 1 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:1073:56: Operator GT expects 8 bits on the RHS, but RHS's CONST '1'h1' generates 1 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:1135:67: Operator ADD expects 8 bits on the RHS, but RHS's CONST '2'h3' generates 2 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHTRUNC",
+      "line": "%Warning-WIDTHTRUNC: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:1207:46: Logical operator LOGAND expects 1 bit on the LHS, but LHS's VARREF 'WAIT_NUM' generates 8 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:1292:74: Operator ADD expects 8 bits on the RHS, but RHS's CONST '2'h3' generates 2 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:1302:55: Operator ASSIGNDLY expects 38 bits on the Assign RHS, but Assign RHS's CONST '36'h0' generates 36 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "WIDTHEXPAND",
+      "line": "%Warning-WIDTHEXPAND: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:1408:63: Operator ADD expects 8 bits on the RHS, but RHS's CONST '2'h3' generates 2 bits.",
+      "scope": "official_environment"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "line": "%Warning-UNUSEDSIGNAL: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:111:15: Signal is not used: 'nand_dma_ack_i'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "line": "%Warning-UNUSEDSIGNAL: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/NAND/nand.v:382:9: Signal is not used: 'NAND_ACK'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "line": "%Warning-UNUSEDSIGNAL: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/URT/uart_top.v:52:19: Bits of signal are not used: 'PADDR'[7:4]",
+      "scope": "official_environment"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "line": "%Warning-UNUSEDSIGNAL: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/chip/soc_demo/sim/soc_top.v:302:14: Signal is not used: 'reset'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "line": "%Warning-UNUSEDSIGNAL: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/chip/soc_demo/sim/soc_top.v:310:18: Signal is not used: 'UART_RTS'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "line": "%Warning-UNUSEDSIGNAL: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/chip/soc_demo/sim/soc_top.v:311:6: Signal is not used: 'UART_DTR'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "UNDRIVEN",
+      "line": "%Warning-UNDRIVEN: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/chip/soc_demo/sim/soc_top.v:312:6: Signal is not driven: 'UART_RI'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "UNUSEDPARAM",
+      "line": "%Warning-UNUSEDPARAM: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/myCPU/mycpu_top.v:7:13: Parameter is not used: 'TLBNUM'",
+      "scope": "dut"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "line": "%Warning-UNUSEDSIGNAL: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/AMBA/axi_mux_sim.v:263:21: Signal is not used: 'spi_boot'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "line": "%Warning-UNUSEDSIGNAL: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/AMBA/axi_mux_sim.v:746:11: Signal is not driven, nor used: 'BASE_ADDR'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "line": "%Warning-UNUSEDSIGNAL: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/AMBA/axi_mux_sim.v:752:11: Signal is not driven, nor used: 'rd_sel_group_0'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "line": "%Warning-UNUSEDSIGNAL: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/AMBA/axi_mux_sim.v:753:11: Signal is not driven, nor used: 'rd_sel_group_1'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "line": "%Warning-UNUSEDSIGNAL: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/AMBA/axi_mux_sim.v:754:11: Signal is not used: 'rd_valid_group_0'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "line": "%Warning-UNUSEDSIGNAL: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/AMBA/axi_mux_sim.v:755:11: Signal is not used: 'rd_valid_group_1'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "line": "%Warning-UNUSEDSIGNAL: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/AMBA/axi_mux_sim.v:926:11: Signal is not used: 'rd_data_pre_sel'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "line": "%Warning-UNUSEDSIGNAL: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/AMBA/axi_mux_sim.v:929:11: Signal is not driven, nor used: 'rd_addr_hit_int'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "UNUSEDPARAM",
+      "line": "%Warning-UNUSEDPARAM: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/apb_dev_top_no_nand.v:109:11: Parameter is not used: 'L_ADDR'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "UNUSEDPARAM",
+      "line": "%Warning-UNUSEDPARAM: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/apb_dev_top_no_nand.v:110:11: Parameter is not used: 'L_ID'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "UNUSEDPARAM",
+      "line": "%Warning-UNUSEDPARAM: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/apb_dev_top_no_nand.v:111:11: Parameter is not used: 'L_DATA'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "UNUSEDPARAM",
+      "line": "%Warning-UNUSEDPARAM: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/apb_dev_top_no_nand.v:112:11: Parameter is not used: 'L_MASK'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "line": "%Warning-UNUSEDSIGNAL: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/apb_dev_top_no_nand.v:183:9: Signal is not used: 'nand_dma_ack_i'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "line": "%Warning-UNUSEDSIGNAL: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/apb_dev_top_no_nand.v:192:25: Signal is not used: 'apb_clk_cpu'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "line": "%Warning-UNUSEDSIGNAL: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/apb_dev_top_no_nand.v:193:25: Signal is not used: 'apb_reset_n_cpu'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "line": "%Warning-UNUSEDSIGNAL: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/apb_dev_top_no_nand.v:205:25: Signal is not driven, nor used: 'apb_clk_dma'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "line": "%Warning-UNUSEDSIGNAL: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/apb_dev_top_no_nand.v:206:25: Signal is not driven, nor used: 'apb_reset_n_dma'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "line": "%Warning-UNUSEDSIGNAL: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/apb_dev_top_no_nand.v:208:21: Signal is not used: 'apb_uart0_req'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "line": "%Warning-UNUSEDSIGNAL: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/apb_dev_top_no_nand.v:213:23: Bits of signal are not used: 'apb_uart0_addr'[19:8]",
+      "scope": "official_environment"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "line": "%Warning-UNUSEDSIGNAL: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/apb_dev_top_no_nand.v:217:21: Signal is not driven, nor used: 'apb_nand_req'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "line": "%Warning-UNUSEDSIGNAL: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/apb_dev_top_no_nand.v:218:21: Signal is not driven, nor used: 'apb_nand_ack'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "line": "%Warning-UNUSEDSIGNAL: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/apb_dev_top_no_nand.v:219:21: Signal is not driven, nor used: 'apb_nand_rw'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "line": "%Warning-UNUSEDSIGNAL: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/apb_dev_top_no_nand.v:220:21: Signal is not driven, nor used: 'apb_nand_enab'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "line": "%Warning-UNUSEDSIGNAL: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/apb_dev_top_no_nand.v:221:21: Signal is not driven, nor used: 'apb_nand_psel'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "line": "%Warning-UNUSEDSIGNAL: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/apb_dev_top_no_nand.v:222:23: Signal is not driven, nor used: 'apb_nand_addr'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "line": "%Warning-UNUSEDSIGNAL: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/apb_dev_top_no_nand.v:223:21: Signal is not driven, nor used: 'apb_nand_datai'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "line": "%Warning-UNUSEDSIGNAL: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/apb_dev_top_no_nand.v:224:21: Signal is not driven, nor used: 'apb_nand_datao'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "UNUSEDPARAM",
+      "line": "%Warning-UNUSEDPARAM: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/AXI_DELAY_RAND/soc_axi_delay_rand.v:8:17: Parameter is not used: 'CPU_WIDTH'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "line": "%Warning-UNUSEDSIGNAL: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/AXI_DELAY_RAND/soc_axi_delay_rand.v:100:13: Signal is not used: 'mask_no_delay'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "line": "%Warning-UNUSEDSIGNAL: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/AXI_DELAY_RAND/soc_axi_delay_rand.v:106:13: Signal is not used: 'mask_short_delay'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "UNUSEDPARAM",
+      "line": "%Warning-UNUSEDPARAM: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/AXI_SRAM_BRIDGE/soc_axi_sram_bridge.v:8:17: Parameter is not used: 'CPU_WIDTH'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "line": "%Warning-UNUSEDSIGNAL: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/AXI_SRAM_BRIDGE/soc_axi_sram_bridge.v:21:37: Signal is not used: 'm_arcache'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "line": "%Warning-UNUSEDSIGNAL: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/AXI_SRAM_BRIDGE/soc_axi_sram_bridge.v:24:37: Signal is not used: 'm_arlock'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "line": "%Warning-UNUSEDSIGNAL: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/AXI_SRAM_BRIDGE/soc_axi_sram_bridge.v:25:37: Signal is not used: 'm_arprot'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "line": "%Warning-UNUSEDSIGNAL: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/AXI_SRAM_BRIDGE/soc_axi_sram_bridge.v:31:37: Signal is not used: 'm_awcache'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "line": "%Warning-UNUSEDSIGNAL: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/AXI_SRAM_BRIDGE/soc_axi_sram_bridge.v:34:37: Signal is not used: 'm_awlock'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "line": "%Warning-UNUSEDSIGNAL: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/AXI_SRAM_BRIDGE/soc_axi_sram_bridge.v:35:37: Signal is not used: 'm_awprot'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "line": "%Warning-UNUSEDSIGNAL: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/AXI_SRAM_BRIDGE/soc_axi_sram_bridge.v:50:37: Signal is not used: 'm_wid'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "line": "%Warning-UNUSEDSIGNAL: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/AXI_SRAM_BRIDGE/soc_axi_sram_bridge.v:58:29: Signal is not used: 'ram_r_a_data'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "line": "%Warning-UNUSEDSIGNAL: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/AXI_SRAM_BRIDGE/soc_axi_sram_bridge.v:92:29: Signal is not used: 'ram_r_data'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "line": "%Warning-UNUSEDSIGNAL: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/AXI_SRAM_BRIDGE/soc_axi_sram_bridge.v:99:29: Signal is not used: 'ram_w_a_data'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "UNUSEDPARAM",
+      "line": "%Warning-UNUSEDPARAM: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/CONFREG/confreg_sim.v:108:17: Parameter is not used: 'CPU_WIDTH'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "line": "%Warning-UNUSEDSIGNAL: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/CONFREG/confreg_sim.v:117:34: Bits of signal are not used: 'conf_raddr'[31:29]",
+      "scope": "official_environment"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "line": "%Warning-UNUSEDSIGNAL: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/CONFREG/confreg_sim.v:118:34: Bits of signal are not used: 'conf_waddr'[31:16]",
+      "scope": "official_environment"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "line": "%Warning-UNUSEDSIGNAL: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/CONFREG/confreg_sim.v:150:17: Signal is not used: 'confreg_uart_valid'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "line": "%Warning-UNUSEDSIGNAL: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/myCPU/mycpu_top.v:345:23: Signal is not used: 'decode_io_btb_deleteEntry'",
+      "scope": "dut"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "line": "%Warning-UNUSEDSIGNAL: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/myCPU/mycpu_top.v:353:23: Signal is not used: 'decode_io_registers_0'",
+      "scope": "dut"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "line": "%Warning-UNUSEDSIGNAL: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/myCPU/mycpu_top.v:514:23: Signal is not used: 'writeback_io_realValid'",
+      "scope": "dut"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "line": "%Warning-UNUSEDSIGNAL: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/myCPU/mycpu_top.v:526:23: Signal is not used: 'writeback_io_exception_valid'",
+      "scope": "dut"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "line": "%Warning-UNUSEDSIGNAL: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/myCPU/mycpu_top.v:651:23: Signal is not used: 'addressTranslation_inst_tlb_d'",
+      "scope": "dut"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "line": "%Warning-UNUSEDSIGNAL: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/AMBA/axi2apb.v:96:26: Signal is not used: 'axi_s_awid'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "line": "%Warning-UNUSEDSIGNAL: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/AMBA/axi2apb.v:97:23: Bits of signal are not used: 'axi_s_awaddr'[31:20]",
+      "scope": "official_environment"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "line": "%Warning-UNUSEDSIGNAL: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/AMBA/axi2apb.v:98:23: Signal is not used: 'axi_s_awlen'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "line": "%Warning-UNUSEDSIGNAL: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/AMBA/axi2apb.v:100:21: Signal is not used: 'axi_s_awburst'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "line": "%Warning-UNUSEDSIGNAL: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/AMBA/axi2apb.v:101:22: Signal is not used: 'axi_s_awlock'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "line": "%Warning-UNUSEDSIGNAL: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/AMBA/axi2apb.v:102:21: Signal is not used: 'axi_s_awcache'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "line": "%Warning-UNUSEDSIGNAL: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/AMBA/axi2apb.v:103:22: Signal is not used: 'axi_s_awprot'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "line": "%Warning-UNUSEDSIGNAL: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/AMBA/axi2apb.v:109:29: Signal is not used: 'axi_s_wlast'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "line": "%Warning-UNUSEDSIGNAL: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/AMBA/axi2apb.v:117:23: Bits of signal are not used: 'axi_s_araddr'[31:20]",
+      "scope": "official_environment"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "line": "%Warning-UNUSEDSIGNAL: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/AMBA/axi2apb.v:118:23: Signal is not used: 'axi_s_arlen'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "line": "%Warning-UNUSEDSIGNAL: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/AMBA/axi2apb.v:120:21: Signal is not used: 'axi_s_arburst'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "line": "%Warning-UNUSEDSIGNAL: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/AMBA/axi2apb.v:121:22: Signal is not used: 'axi_s_arlock'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "line": "%Warning-UNUSEDSIGNAL: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/AMBA/axi2apb.v:122:21: Signal is not used: 'axi_s_arcache'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "line": "%Warning-UNUSEDSIGNAL: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/AMBA/axi2apb.v:123:22: Signal is not used: 'axi_s_arprot'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "line": "%Warning-UNUSEDSIGNAL: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/AMBA/axi2apb.v:177:10: Bits of signal are not used: 'axi_s_rstrb'[3:2]",
+      "scope": "official_environment"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "line": "%Warning-UNUSEDSIGNAL: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/AMBA/axi2apb.v:183:11: Signal is not used: 'apb_wr_size'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "UNUSEDPARAM",
+      "line": "%Warning-UNUSEDPARAM: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/apb_mux2.v:84:11: Parameter is not used: 'DATA_APB_32'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "line": "%Warning-UNUSEDSIGNAL: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/myCPU/mycpu_top.v:4872:24: Bits of signal are not used: 'rid'[3:1]",
+      "scope": "dut"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "line": "%Warning-UNUSEDSIGNAL: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/myCPU/mycpu_top.v:4874:24: Signal is not used: 'rresp'",
+      "scope": "dut"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "line": "%Warning-UNUSEDSIGNAL: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/myCPU/mycpu_top.v:4894:24: Signal is not used: 'bid'",
+      "scope": "dut"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "line": "%Warning-UNUSEDSIGNAL: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/myCPU/mycpu_top.v:4895:24: Signal is not used: 'bresp'",
+      "scope": "dut"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "line": "%Warning-UNUSEDSIGNAL: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/myCPU/mycpu_top.v:4905:24: Signal is not used: 'inst_wr_req'",
+      "scope": "dut"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "line": "%Warning-UNUSEDSIGNAL: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/myCPU/mycpu_top.v:4906:24: Signal is not used: 'inst_wr_type'",
+      "scope": "dut"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "line": "%Warning-UNUSEDSIGNAL: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/myCPU/mycpu_top.v:4907:24: Signal is not used: 'inst_wr_addr'",
+      "scope": "dut"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "line": "%Warning-UNUSEDSIGNAL: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/myCPU/mycpu_top.v:4908:24: Signal is not used: 'inst_wr_wstrb'",
+      "scope": "dut"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "line": "%Warning-UNUSEDSIGNAL: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/myCPU/mycpu_top.v:4909:24: Signal is not used: 'inst_wr_data'",
+      "scope": "dut"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "line": "%Warning-UNUSEDSIGNAL: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/myCPU/mycpu_top.v:5169:24: Signal is not used: 'preld_hint'",
+      "scope": "dut"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "line": "%Warning-UNUSEDSIGNAL: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/myCPU/mycpu_top.v:9135:24: Signal is not used: 'op'",
+      "scope": "dut"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "line": "%Warning-UNUSEDSIGNAL: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/myCPU/mycpu_top.v:9139:24: Signal is not used: 'wstrb'",
+      "scope": "dut"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "line": "%Warning-UNUSEDSIGNAL: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/myCPU/mycpu_top.v:9140:24: Signal is not used: 'wdata'",
+      "scope": "dut"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "line": "%Warning-UNUSEDSIGNAL: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/myCPU/mycpu_top.v:9164:24: Signal is not used: 'wr_rdy'",
+      "scope": "dut"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "line": "%Warning-UNUSEDSIGNAL: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/myCPU/mycpu_top.v:10028:24: Bits of signal are not used: 'tlbehi_in'[12:0]",
+      "scope": "dut"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "line": "%Warning-UNUSEDSIGNAL: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/myCPU/mycpu_top.v:10029:24: Bits of signal are not used: 'tlbelo0_in'[31:28,7]",
+      "scope": "dut"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "line": "%Warning-UNUSEDSIGNAL: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/myCPU/mycpu_top.v:10030:24: Bits of signal are not used: 'tlbelo1_in'[31:28,7]",
+      "scope": "dut"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "line": "%Warning-UNUSEDSIGNAL: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/myCPU/mycpu_top.v:10031:24: Bits of signal are not used: 'tlbidx_in'[30,23:5]",
+      "scope": "dut"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "line": "%Warning-UNUSEDSIGNAL: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/myCPU/mycpu_top.v:10042:24: Bits of signal are not used: 'csr_dmw0'[31:28,24:0]",
+      "scope": "dut"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "line": "%Warning-UNUSEDSIGNAL: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/myCPU/mycpu_top.v:10043:24: Bits of signal are not used: 'csr_dmw1'[31:28,24:0]",
+      "scope": "dut"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "line": "%Warning-UNUSEDSIGNAL: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/myCPU/mycpu_top.v:10102:23: Bits of signal are not used: 'instPhysical'[11:0]",
+      "scope": "dut"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "line": "%Warning-UNUSEDSIGNAL: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/myCPU/mycpu_top.v:10103:23: Bits of signal are not used: 'dataPhysical'[11:0]",
+      "scope": "dut"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "line": "%Warning-UNUSEDSIGNAL: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/myCPU/mycpu_top.v:10304:24: Bits of signal are not used: 'tlbehi_in'[12:0]",
+      "scope": "dut"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "line": "%Warning-UNUSEDSIGNAL: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/myCPU/mycpu_top.v:10305:24: Bits of signal are not used: 'tlbelo0_in'[31:28,7]",
+      "scope": "dut"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "line": "%Warning-UNUSEDSIGNAL: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/myCPU/mycpu_top.v:10306:24: Bits of signal are not used: 'tlbelo1_in'[31:28,7]",
+      "scope": "dut"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "line": "%Warning-UNUSEDSIGNAL: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/myCPU/mycpu_top.v:10307:24: Bits of signal are not used: 'tlbidx_in'[30,23:0]",
+      "scope": "dut"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "line": "%Warning-UNUSEDSIGNAL: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/myCPU/mycpu_top.v:10370:23: Signal is not used: 'logic_brk'",
+      "scope": "dut"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "line": "%Warning-UNUSEDSIGNAL: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/myCPU/mycpu_top.v:10371:23: Bits of signal are not used: 'logic_disableCache'[31:1]",
+      "scope": "dut"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "line": "%Warning-UNUSEDSIGNAL: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/myCPU/mycpu_top.v:11128:23: Bits of signal are not used: 'payload_exceptionCode'[10]",
+      "scope": "dut"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "line": "%Warning-UNUSEDSIGNAL: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/myCPU/mycpu_top.v:11150:23: Bits of signal are not used: 'payload_physicalAddress'[3:0]",
+      "scope": "dut"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "line": "%Warning-UNUSEDSIGNAL: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/myCPU/mycpu_top.v:11866:23: Signal is not used: 'payload_preload'",
+      "scope": "dut"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "line": "%Warning-UNUSEDSIGNAL: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/myCPU/mycpu_top.v:13521:24: Bits of signal are not used: 'io_dmw0'[28:6,2:1]",
+      "scope": "dut"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "line": "%Warning-UNUSEDSIGNAL: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/myCPU/mycpu_top.v:13522:24: Bits of signal are not used: 'io_dmw1'[28:6,2:1]",
+      "scope": "dut"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "line": "%Warning-UNUSEDSIGNAL: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/URT/uart_regs.v:222:13: Signal is not used: 'rstate'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "line": "%Warning-UNUSEDSIGNAL: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/URT/uart_receiver.v:64:14: Signal is not used: 'rbit_in'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "line": "%Warning-UNUSEDSIGNAL: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/URT/uart_receiver.v:95:12: Signal is not used: 'rcounter16_eq_1'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "line": "%Warning-UNUSEDSIGNAL: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/URT/uart_transmitter.v:43:14: Bits of signal are not used: 'lcr'[7]",
+      "scope": "official_environment"
+    },
+    {
+      "category": "UNUSEDSIGNAL",
+      "line": "%Warning-UNUSEDSIGNAL: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/URT/uart_transmitter.v:75:6: Signal is not used: 'tf_overrun'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "UNUSEDPARAM",
+      "line": "%Warning-UNUSEDPARAM: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/URT/uart_sync_flops.v:44:11: Parameter is not used: 'Tp'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "CASEX",
+      "line": "%Warning-CASEX: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/APB_DEV/URT/uart_transmitter.v:242:19: Suggest casez (with ?'s) in place of casex (with X's)",
+      "scope": "official_environment"
+    },
+    {
+      "category": "SYMRSVDWORD",
+      "line": "%Warning-SYMRSVDWORD: ../testbench/simu_top.v:69:23: Symbol matches C++ keyword: 'switch'",
+      "scope": "official_environment"
+    },
+    {
+      "category": "UNOPTFLAT",
+      "line": "%Warning-UNOPTFLAT: /home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/AMBA/axi_mux_sim.v:508:13: Signal unoptimizable: Circular combinational logic: 'simu_top.soc.AXI_SLAVE_MUX.wr_addr_hit'",
+      "scope": "official_environment"
+    }
+  ]
+}

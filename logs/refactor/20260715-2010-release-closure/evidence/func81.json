@@ -1,0 +1,92 @@
+{
+  "schema_version": 1,
+  "gate": "rtl-func-81-diagnostic",
+  "status": "diagnostic",
+  "source_head": "088d8d4cc9038488a03c27dcbf3a0751b1f76ad9",
+  "case": "func/func_lab19",
+  "dut": {
+    "path": "rtl/mycpu_top.v",
+    "size": 862904,
+    "sha256": "cccb159952f10337566c2341eccafdab1fa3fa8882ff4db7565119b8e2e451d2"
+  },
+  "commands": [
+    {"argv":["./configure.sh","--run","func/func_lab19"],"exit_code":0,"elapsed_seconds":0.024},
+    {"argv":["make","verilator","testbench","soft_compile"],"exit_code":0,"elapsed_seconds":35.305},
+    {"argv":["make","simulation_run_prog"],"exit_code":0,"elapsed_seconds":3.801}
+  ],
+  "functional_result": {
+    "status": "pass",
+    "planned": 81,
+    "executed": 81,
+    "passed": 81,
+    "failed": 0,
+    "skipped": 0,
+    "score_register": 26,
+    "score_write_count": 82,
+    "score_sequence": "strictly-contiguous-0-through-81",
+    "terminal_score_hex": "0x51",
+    "terminal_score_decimal": 81,
+    "terminal_success_word": "0x51000051"
+  },
+  "difftest": {
+    "library_loaded": true,
+    "enabled": true,
+    "first_mismatch": null,
+    "mismatch_count": 0
+  },
+  "termination": {
+    "reached_test_end": true,
+    "end_by_syscall": true,
+    "timed_out": false,
+    "clocks": 609660,
+    "instructions": 174059,
+    "transcript_persisted": true
+  },
+  "compile_warning_policy": {
+    "source": "compile.log",
+    "verilator_warnings": 365,
+    "counts_by_scope": {
+      "dut": 0,
+      "official_environment": 365
+    },
+    "build_errors": 0,
+    "strict_wrapper_status": "fail",
+    "strict_wrapper_reason": "the repository wrapper also rejects warnings emitted by the locked official environment"
+  },
+  "artifacts": [
+    {
+      "path": "/tmp/nscscc-warning-func81-evidence-088d8d4/reports/iterations/20260716-0105-warning-func81/rtl-smoke.json",
+      "size": 120747,
+      "sha256": "dd37f7b84696e9a2a869a5f480c882f355e72e1ac29b62bdcb19ca6e65d6b5cb"
+    },
+    {
+      "path": "/tmp/nscscc-warning-func81-evidence-088d8d4/raw/iterations/20260716-0105-warning-func81/rtl-smoke/1784135164065838729-26898/01-configure.log",
+      "size": 59,
+      "sha256": "88d0d2b3bea4d22c370a255b232d9a1fe6037cbc0a1b785d84411e4f51bd6e2f"
+    },
+    {
+      "path": "/tmp/nscscc-warning-func81-evidence-088d8d4/raw/iterations/20260716-0105-warning-func81/rtl-smoke/1784135164065838729-26898/02-build.log",
+      "size": 235501,
+      "sha256": "a2f89828bfddd16269e6d6d4e514d5b2f816efc4b6cada28aaab64f199fd176c"
+    },
+    {
+      "path": "/tmp/nscscc-warning-func81-evidence-088d8d4/raw/iterations/20260716-0105-warning-func81/rtl-smoke/1784135164065838729-26898/03-simulation.log",
+      "size": 6116,
+      "sha256": "943843419d63fbab212bdae7b7a73cbb84a7bd25c387945b1c6616c99ebc0ec8"
+    },
+    {
+      "path": "/tmp/nscscc-warning-func81-work-088d8d4/20260716-0105-warning-func81/sims/verilator/run_prog/log/compile.log",
+      "size": 177172,
+      "sha256": "f1db341d234b7699d16229bdad3437bfc98680705e89399adc94f31a4815af2f"
+    },
+    {
+      "path": "/tmp/nscscc-warning-func81-work-088d8d4/20260716-0105-warning-func81/sims/verilator/run_prog/log/func/func_lab19_log/simu_trace.txt",
+      "size": 13924720,
+      "sha256": "911597f5360579a65f2a9f6c9ec863ac0b9a957a485b62273a1d55a04195ea6a"
+    }
+  ],
+  "limitations": [
+    "Functional PASS is distinct from the strict wrapper result because the locked official environment emits 365 warnings while the DUT emits zero.",
+    "This result does not cover random DiffTest, perf20, U-Boot, Linux, or the LACC-on release matrix."
+  ]
+}

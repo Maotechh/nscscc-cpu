@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "iteration_id": "20260714-1845-refactor-prune",
+  "status": "unavailable",
+  "job_id": "68d779be107c452d8df4f38799093ca5",
+  "provider": null,
+  "model": null,
+  "reviewed_head_sha": null,
+  "raw_sha256": "acf0a62ef8455c5282da5fd654f94eee02d09c54cfd50349f1a5fb9b27c26fae",
+  "provenance": {
+    "source": "claude-review-mcp",
+    "raw_path": "reviews/claude-raw.md",
+    "raw_sha256": "acf0a62ef8455c5282da5fd654f94eee02d09c54cfd50349f1a5fb9b27c26fae",
+    "job_id": "68d779be107c452d8df4f38799093ca5",
+    "provider": null,
+    "model": null,
+    "reviewed_head_sha": null
+  },
+  "error": "Required provider environment variable is not set: GEEKPIE_CLAUDE_API_KEY",
+  "open_blocking_count": 1,
+  "fresh_against_head": false,
+  "allow_ready": false,
+  "allow_status_promotion": false
+}

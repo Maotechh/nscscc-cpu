@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "iteration_id": "20260714-1316-golden-recovery-cacop",
+  "reviewed_head_sha": "b2a73c83f9d849c6f67828e8dcfdd39a620e00ed",
+  "reviewer": "independent-subagent-read-only",
+  "status": "open",
+  "is_claude_review": false,
+  "claims": [
+    {"id":"C1","decision":"accepted_with_scope","scope":"958-cycle directed CACOP lockstep for recorded I/D RTL SHA256 only; source HEAD unbound"},
+    {"id":"C2","decision":"accepted_with_scope","scope":"Scala/generate/package/publish/port/Yosys; lint excluded and failing"},
+    {"id":"C3","decision":"accepted_with_scope","scope":"old mismatch passed, current smoke still fails at 0x1c07cfcc"},
+    {"id":"complete_core_or_function","decision":"unsupported"}
+  ],
+  "open_blocking_findings": [
+    "strict_lint_failed_with_unapproved_warnings",
+    "func_lab19_failed_at_1c07cfcc",
+    "diagnostic_mixed_overlay_is_not_gate_eligible",
+    "external_raw_artifacts_no_longer_available",
+    "claude_review_unavailable"
+  ],
+  "allow_ready": false,
+  "allow_status_promotion": false
+}

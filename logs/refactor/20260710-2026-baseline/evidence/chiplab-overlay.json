@@ -1,0 +1,16 @@
+{
+  "command": "chiplab-overlay",
+  "doctor_report_sha256": "f42905de8f79071e535e355a33fc1df1ea3b5f3e64dfccf288557be7b7e8546c",
+  "dut_source": "candidate",
+  "file_count": 22,
+  "gate_eligible": true,
+  "generated_at": "2026-07-11T14:36:34+08:00",
+  "iteration_id": "20260710-2026-baseline",
+  "mode": "baseline",
+  "overlay_manifest": "/tmp/nscscc-baseline-final-45043bd/reports/iterations/20260710-2026-baseline/chiplab-overlay-manifest.json",
+  "overlay_manifest_sha256": "86e0a2306c6ed3e4f98d93ae69cb80b2c6ecef961119d1e128da8e480aa6c917",
+  "schema_version": 1,
+  "status": "pass",
+  "work_dir": "/tmp/nscscc-refactor-work-final-45043bd/20260710-2026-baseline",
+  "work_marker_sha256": "86e0a2306c6ed3e4f98d93ae69cb80b2c6ecef961119d1e128da8e480aa6c917"
+}

@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "captured_at": "2026-07-14T18:50:00+08:00",
+  "integration_branch": "refactor/20260714-1650-consolidated-spinal",
+  "integration_head": "eadf4415a94d890a09c382af215fd76f66ef1b54",
+  "pre_cleanup": {
+    "local_refactor_refs": 33,
+    "remote_refactor_refs": 27,
+    "registered_worktrees": 30,
+    "all_deleted_tips_are_integration_ancestors": true
+  },
+  "deleted": {
+    "local_refactor_refs": 31,
+    "remote_refactor_refs": 26,
+    "worktrees": 28
+  },
+  "post_cleanup": {
+    "remote_refactor_refs": [
+      {"branch":"refactor/20260714-1650-consolidated-spinal","head":"eadf4415a94d890a09c382af215fd76f66ef1b54"}
+    ],
+    "local_refactor_refs": [
+      {"branch":"refactor/20260714-1650-consolidated-spinal","head":"eadf4415a94d890a09c382af215fd76f66ef1b54","role":"only active development branch"},
+      {"branch":"refactor/20260712-1600-mul-harness","head":"a17b30165a70f2eae37a6f7074f5fbf7a25ee688","role":"protected dirty primary worktree; remote deleted"}
+    ],
+    "registered_worktrees": 2
+  },
+  "protected_primary_worktree": {
+    "path": "D:/schoolworks/CS110/longxin/nscscc-cpu",
+    "branch": "refactor/20260712-1600-mul-harness",
+    "head": "a17b30165a70f2eae37a6f7074f5fbf7a25ee688",
+    "untracked_paths": [
+      "spinal/src/main/scala/openla500/execute/GenerateOpenLa500Mul.scala",
+      "spinal/src/main/scala/openla500/execute/OpenLa500Mul.scala",
+      "spinal/src/test/scala/openla500/execute/OpenLa500MulSpec.scala",
+      "worktrees/"
+    ],
+    "action": "preserved_without_reset_stash_checkout_or_delete"
+  }
+}

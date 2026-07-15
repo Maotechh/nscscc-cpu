@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "iteration_id": "20260714-1907-lacc-spinal",
+  "reviewer": "/root/lacc_dcache_harness",
+  "review_type": "independent_read_only",
+  "is_claude_review": false,
+  "reviewed_base_sha": "2d09948802ed9bef9e63afd92061173ba5a3714b",
+  "reviewed_worktree_state": "dirty_source_snapshot",
+  "status": "warn_draft_only",
+  "maximum_boundary_state": "differential_pass",
+  "maximum_iteration_state": "draft",
+  "claims": [
+    {
+      "id": "lacc_two_state_cycle_diff",
+      "decision": "qualified",
+      "scope": "Verilator 5.020 two-state, seed 0x158aa8, 8192 cycles, legal ordered responses, observable valid/payload/memory/backpressure only"
+    },
+    {
+      "id": "lacc_dcache_directed",
+      "decision": "qualified",
+      "scope": "one typed LACC+DCache cross-line miss/refill directed scenario"
+    },
+    {
+      "id": "dual_config_elaboration_yosys",
+      "decision": "accepted",
+      "scope": "reproducible LACC-off/on elaboration, canonical package and Yosys hierarchy/check; strict Verilator lint excluded and failing"
+    },
+    {
+      "id": "standalone_candidate_lint_clean",
+      "decision": "accepted",
+      "scope": "standalone LACC candidate only"
+    },
+    {
+      "id": "complete_integration_or_release",
+      "decision": "rejected"
+    },
+    {
+      "id": "claude_review_completed",
+      "decision": "rejected"
+    }
+  ],
+  "blocking_issues": [
+    "source_snapshot_not_yet_commit_bound",
+    "whole_top_strict_lint_failed_with_80_81_warnings",
+    "official_func_smoke_not_executed_on_iteration_commit",
+    "top_level_lacc_flush_contract_not_closed"
+  ],
+  "allow_ready": false,
+  "allow_status_promotion": false
+}

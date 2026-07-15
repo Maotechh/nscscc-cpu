@@ -1,0 +1,29 @@
+﻿{
+    "schema_version":  1,
+    "status":  "pass",
+    "branch":  "refactor/20260713-0729-exe-stage-spinal",
+    "head_sha":  "f621c7a1e056b9f128b86efddbdd2598b3692ecc",
+    "manifest_sha256":  "743dd7e58d77e456cfe664d80c2e6614ab426f72bfecd9088ff18d702afa2f20",
+    "golden_files_sha256":  "da1bc6d450c1977a8bc491c9ac10887c30f91253aa75d367c1ae4a250ac1c8db",
+    "check_count":  19,
+    "failed_checks":  0,
+    "vivado_home":  "D:\\Xilinx\\Vivado\\2023.2",
+    "vivado_probe":  {
+                         "command":  [
+                                         "D:\\Xilinx\\Vivado\\2023.2\\bin\\vivado.bat",
+                                         "-mode",
+                                         "batch",
+                                         "-nolog",
+                                         "-nojournal",
+                                         "-notrace",
+                                         "-source",
+                                         "D:\\schoolworks\\CS110\\longxin\\nscscc-cpu\\.work\\worktrees\\20260713-0729-exe-stage-spinal\\tools\\vivado_probe.tcl"
+                                     ],
+                         "cwd":  "D:\\schoolworks\\CS110\\longxin\\nscscc-cpu\\.work\\worktrees\\20260713-0729-exe-stage-spinal",
+                         "elapsed_seconds":  12.203,
+                         "exit_code":  0,
+                         "log_path":  null,
+                         "log_sha256":  null,
+                         "timed_out":  false
+                     }
+}

@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "status": "same_failed_trace_artifact",
+  "baseline_report": "logs/refactor/20260710-2026-baseline/evidence/rtl-smoke-summary.json",
+  "baseline_report_sha256": "2360489c56046b3e6a04bfcc640da7a37af2d1e47bd1fbc702e33d4b762a5ec1",
+  "baseline_report_size": 189880,
+  "candidate_report": "evidence/rtl-smoke.json",
+  "baseline": {"status":"fail","instructions":172552,"clocks":602903,"first_mismatch_pc":"0x1c07c79c","trace_sha256":"8efa7942ab6d4702129dc0c7eb0676c6cfcd87361ee8ecf99411567c3db38acb","trace_size":13805441},
+  "candidate": {"status":"fail","instructions":172552,"clocks":602903,"first_mismatch_pc":"0x1c07c79c","trace_sha256":"8efa7942ab6d4702129dc0c7eb0676c6cfcd87361ee8ecf99411567c3db38acb","trace_size":13805441},
+  "allowed_claim": "this single failed run shows no earlier visible divergence than the locked baseline",
+  "forbidden_claims": ["official function pass","sequential equivalence","integrated_pass","complete refactor"]
+}

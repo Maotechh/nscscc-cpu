@@ -1,0 +1,91 @@
+{
+  "base_candidate_locked": true,
+  "baseline_exact": false,
+  "candidate_locked": false,
+  "command": "chiplab-overlay",
+  "component_replacement": {
+    "base_candidate_commit": "a158aa8ab4d49cece1a0fe488d7ac7dc02bd8cf6",
+    "replacement_payload_source": "committed_git_blobs",
+    "replacements": [
+      {
+        "base_sha256": "ff286f559dbc9131349c9fb8c842110569d231b6a34e76ded172c403d8f90afa",
+        "replacement_sha256": "ac6a631e696d3bc75f41604b1f7191ad62655834b9f9ed37abcab030c6e706f1",
+        "size": 947082,
+        "source": "reference/component-replacements/mycpu_top.v",
+        "source_mode": "100644",
+        "source_oid": "dfdcff855c7d3eef4b69ec3461f6300cb2b804bf",
+        "target": "rtl/mycpu_top.v"
+      },
+      {
+        "base_sha256": "7e499f4c43c92154d1d4e21be2f269ac140b4f2b2d944677c71f6f4213b66dc6",
+        "replacement_sha256": "3cbd0370718c501cc2d01b47858ee4bf036c430fce4d85aced5b7224a04df9ac",
+        "size": 139,
+        "source": "reference/component-replacements/difftest/div.v",
+        "source_mode": "100644",
+        "source_oid": "64751404dd03f9a7b52cb4d6cf36f51caddd0165",
+        "target": "rtl/div.v"
+      },
+      {
+        "base_sha256": "a2f8f337422097699b91d217afb1eb896fa1aa02a7fdd1ed829c183de00935b6",
+        "replacement_sha256": "a443937ee8f2643f21b564821514dae72a393f9ff8f2e18a3e47da6f4a3ed344",
+        "size": 90,
+        "source": "reference/component-replacements/difftest/perf_counter.v",
+        "source_mode": "100644",
+        "source_oid": "80d07016553fec60f5d97a199cdcc3f961181d2e",
+        "target": "rtl/perf_counter.v"
+      },
+      {
+        "base_sha256": "0b17abbd83cbbf088993dcb30a38981e99d600ebaeaa5c566ad4eaff75ac97b5",
+        "replacement_sha256": "0e2ec81fa4859155816f6e58c4b783ab0de38cdc15837cef4c876aec0583c22b",
+        "size": 232,
+        "source": "reference/component-replacements/difftest/lacc_core.v",
+        "source_mode": "100644",
+        "source_oid": "6c2e4f5b80d618e43f37c63089650fad9922ac84",
+        "target": "rtl/lacc_core.v"
+      },
+      {
+        "base_sha256": "8cae09cc7f0acb0ea5cc24352704d80baf116e29f4ae372ca9eac6b63bac2ea0",
+        "replacement_sha256": "d1c103f3117893a072af91203a2d7d203b2d09b0cd25ef72590a3150a2ab1d2f",
+        "size": 230,
+        "source": "reference/component-replacements/difftest/lacc_demo.v",
+        "source_mode": "100644",
+        "source_oid": "2900b5c6996cea254998f982e35d7b53f5115b02",
+        "target": "rtl/lacc_demo.v"
+      }
+    ],
+    "schema_version": 1,
+    "source_branch": "refactor/20260714-1650-consolidated-spinal",
+    "source_head": "b015be13f468d34debc912e77db8b8423e846a98",
+    "source_tree": "f8fa64d2e99aac9942d0028fbe86e15bcf7b0e7c",
+    "spec_commit": "b015be13f468d34debc912e77db8b8423e846a98",
+    "spec_path": "reference/component-replacements/spinal-active-runtime.json",
+    "spec_sha256": "ee0041d26d9657e27aa2c83915a37a5e32812d3a259a57592d685b0ba776b18a",
+    "spec_source": "b015be13f468d34debc912e77db8b8423e846a98:reference/component-replacements/spinal-active-runtime.json",
+    "worktree_clean": true,
+    "worktree_eol_normalization_only": false,
+    "worktree_porcelain_clean": true,
+    "worktree_raw_status_entry_count": 0,
+    "worktree_semantic_clean": true,
+    "worktree_semantic_diff_policy": "ignore-cr-at-eol-only"
+  },
+  "doctor_report_sha256": "9086f68ee84030a459c80849c467fc5d5d9daeeca07d2bf8691899de2e44122b",
+  "dut_source": "mixed",
+  "evaluator_sha256": "5c99b47b812cfb4b76869126e23c201259799736221425ba05253c58c9e852da",
+  "file_count": 22,
+  "gate_eligible": false,
+  "gate_kind": "component_replacement",
+  "generated_at": "2026-07-15T01:23:05+08:00",
+  "golden_candidate_commit": "a158aa8ab4d49cece1a0fe488d7ac7dc02bd8cf6",
+  "iteration_id": "20260715-0118-perf-counter-diagnostic",
+  "mode": "diagnostic",
+  "overlay_manifest": "/tmp/nscscc-perf-counter-evidence/reports/iterations/20260715-0118-perf-counter-diagnostic/chiplab-overlay-manifest.json",
+  "overlay_manifest_sha256": "57d1167e3115186b2987ac976329dd2cf8f9a832592c561c69329d2781f2dd6d",
+  "provenance_mode": "mixed_candidate",
+  "replacement_count": 5,
+  "run_id": "overlay-1784049782755439499-1326",
+  "schema_version": 1,
+  "selection_sha256": "ddfc924e3326b08c4faac65be207d9d6f5834111fae9ee3a258f98d6149c7afc",
+  "status": "diagnostic",
+  "work_dir": "/tmp/nscscc-perf-counter-work/20260715-0118-perf-counter-diagnostic",
+  "work_marker_sha256": "57d1167e3115186b2987ac976329dd2cf8f9a832592c561c69329d2781f2dd6d"
+}

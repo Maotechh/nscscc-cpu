@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "iteration_id": "20260713-1829-wb-stage-spinal",
+  "artifacts": [
+    {"path":"evidence/scala-check.json","sha256":"5b0a32e57a41bc066f0ada5991244bacea9ec7032d3323098f9a9b54db93d240","size":90165,"retention":"git"},
+    {"path":"evidence/unit-diff.json","sha256":"84da305c206d020b8cc8b330610ed07e5323decc2bda48774e8e68fa2d66c966","size":14149,"retention":"git"},
+    {"path":"reference/component-replacements/wb_stage.v","sha256":"a7899e91ba02dec7b2c4cd798969ae012c0c2bee5efe83bda224896f406373bc","size":52529,"retention":"git"},
+    {"path":"summary.json","sha256":"442817255dbaa41347f9cec5102ca66f0ff70f95c2419a7632a10595ac473b9e","size":2905,"retention":"git"}
+  ]
+}

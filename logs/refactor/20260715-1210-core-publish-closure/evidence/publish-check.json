@@ -1,0 +1,29 @@
+{
+  "base_sha256": "ff286f559dbc9131349c9fb8c842110569d231b6a34e76ded172c403d8f90afa",
+  "fresh_package": "/mnt/d/tmp/nscscc-restore-core/core_top/package/rtl/mycpu_top.v",
+  "gate": "publish-check",
+  "generated_at": "2026-07-15T12:08:08+08:00",
+  "package_sha256": "ded57a4a2b494e5342481a2d87e5b286ebb703bedde8e79df3fe299894dc4cad",
+  "package_size": 842817,
+  "provenance": {
+    "evaluator": "/mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260714-1650-consolidated-spinal/tools/core_top_gate.py",
+    "evaluator_sha256": "de3b69dce99ea8a78c4ac0e15f3835ed8d31f861cc2119618a907b3a5eba2a51",
+    "manifest": "/mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260714-1650-consolidated-spinal/reference/manifest.lock",
+    "manifest_sha256": "743dd7e58d77e456cfe664d80c2e6614ab426f72bfecd9088ff18d702afa2f20",
+    "ports_contract": "/mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260714-1650-consolidated-spinal/reference/core-top.ports.json",
+    "ports_contract_sha256": "effa486ff707e480ff8ee13d7f20b2d524bd26908726915c99abf1b37eeab576",
+    "repository": "/mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260714-1650-consolidated-spinal",
+    "repository_head": "ba4ce0364a51e4c5ff9f5e674c20578c31e7e769",
+    "repository_status_sha256": "a744016dbd1cd4fe5c41c04526d5752bfda8a56eb23dae375f5c916fac91c9d1"
+  },
+  "published_source": "reference/component-replacements/mycpu_top.v",
+  "published_target": "rtl/mycpu_top.v",
+  "replacement_sha256": "ded57a4a2b494e5342481a2d87e5b286ebb703bedde8e79df3fe299894dc4cad",
+  "replacement_spec": "/mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260714-1650-consolidated-spinal/reference/component-replacements/core-top.json",
+  "replacement_spec_sha256": "41b9d0dae8bacd0b9248734cecacf220c6d961504d359dd097d7c2ae1e2040be",
+  "schema_version": 1,
+  "scope": "publication-consistency",
+  "status": "pass",
+  "target": "core-top-compat",
+  "tracked_package": "/mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260714-1650-consolidated-spinal/reference/component-replacements/mycpu_top.v"
+}

@@ -1,0 +1,10 @@
+{"argv":["git","status","--short","--branch"],"cwd":".","exit_code":0,"elapsed_seconds":2,"result":"clean refactor branch recorded","evidence":"iteration.md"}
+{"argv":["python","-I","tests/test_replacement_reachability.py"],"cwd":".","exit_code":1,"elapsed_seconds":24,"result":"initial full test exposed old selected_count=10 assertion","evidence":"evidence/reachability.json"}
+{"argv":["python","-I","-m","pytest","-q","tests"],"cwd":".","exit_code":0,"elapsed_seconds":21,"result":"318 passed, 10 known skips after updating count to 11","evidence":"iteration.md"}
+{"argv":["make","replacement-reachability","OUT_DIR=build/wb-active-reachability"],"cwd":".","exit_code":0,"elapsed_seconds":3,"result":"11 selected modules reachable; ALU/TLB deferred","evidence":"evidence/reachability.json"}
+{"argv":["make","chiplab-doctor","CHIPLAB_REFERENCE=/opt/chiplab-reference"],"cwd":".","exit_code":0,"elapsed_seconds":5,"result":"locked chiplab/tool hashes pass","evidence":"evidence/chiplab-doctor.json"}
+{"argv":["make","doctor","VIVADO_HOME=D:/Xilinx/Vivado/2023.2"],"cwd":".","exit_code":0,"elapsed_seconds":20,"result":"Vivado 2023.2 ML Standard probe pass","evidence":"evidence/doctor-vivado.json"}
+{"argv":["make","chiplab-overlay","DUT_SOURCE=mixed","DIAGNOSTIC=1","SOURCE_HEAD=b2946f8ac93fc9ccfa9c8748bb53f444976c36cb"],"cwd":".","exit_code":0,"elapsed_seconds":35,"result":"11 committed replacement blobs accepted; gate_eligible=false","evidence":"evidence/chiplab-overlay-manifest.json"}
+{"argv":["make","rtl-smoke","DUT_SOURCE=mixed","DIAGNOSTIC=1"],"cwd":".","exit_code":1,"elapsed_seconds":69,"result":"configure/build/simulation exit 0; strict warning fail and mismatch at 0x1c07c79c","evidence":"evidence/rtl-smoke.json"}
+{"argv":["mcp__claude_review__review_start"],"cwd":".","exit_code":0,"elapsed_seconds":0,"result":"job bbe91d6f81a94976a40abfdcd43c6b80 queued","evidence":"reviews/claude-raw.md"}
+{"argv":["mcp__claude_review__review_status","bbe91d6f81a94976a40abfdcd43c6b80"],"cwd":".","exit_code":1,"elapsed_seconds":0,"result":"failed: GEEKPIE_CLAUDE_API_KEY missing","evidence":"reviews/claude-raw.md"}

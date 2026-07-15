@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "date": "2026-07-14",
+  "auditor": "independent-read-only-subagent-degraded",
+  "cross_model_status": "unavailable",
+  "overall_verdict": "warn",
+  "integrity_status": "warn",
+  "checks": {
+    "ground_truth_provenance": {"status":"pass","details":"locked official chiplab/NEMU and a separately committed baseline report are referenced"},
+    "score_normalization": {"status":"pass","details":"no normalized score or self-derived denominator is claimed"},
+    "result_existence": {"status":"pass","details":"all claimed numbers match the located source reports; compact evidence records SHA256 and size"},
+    "dead_code": {"status":"not_applicable","details":"this iteration audits RTL gates rather than metric functions"},
+    "scope": {"status":"warn","details":"only one failing func case; full 58/81, random, perf, system and FPGA gates were not executed"},
+    "evaluation_type": "simulation_only_official_difftest"
+  },
+  "claims": [
+    {"id":"C1","claim":"diagnostic overlay accepted 13 committed replacements","impact":"supported_with_diagnostic_qualifier"},
+    {"id":"C2","claim":"single failed trace has no earlier visible divergence than baseline","impact":"supported_with_single_case_failure_qualifier"},
+    {"id":"C3","claim":"functional or sequential equivalence","impact":"unsupported"}
+  ]
+}

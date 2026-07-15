@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "reviewer": "independent_read_only_agent",
+  "status": "accepted_with_blocking_issues",
+  "items": [
+    {"id":"directed_claim","status":"accepted","resolution":"limit to isolated predictor contract"},
+    {"id":"final_evidence_provenance","status":"fixed","resolution":"eadf441 summaries and artifact locators committed"},
+    {"id":"mixed_smoke_claim","status":"accepted","resolution":"diagnostic functional path only; gate remains fail"},
+    {"id":"strict_lint","status":"open","resolution":"resolve warnings without global waiver"},
+    {"id":"full_regression","status":"open","resolution":"implement and run func58/81/random/perf/system/fpga gates"}
+  ],
+  "maximum_state": "implementation_in_review"
+}

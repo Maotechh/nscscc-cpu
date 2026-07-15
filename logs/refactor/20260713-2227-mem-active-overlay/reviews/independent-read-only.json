@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "reviewer": "independent_read_only_agent",
+  "status": "blocking",
+  "claude_available": false,
+  "blocking": ["diagnostic_not_gate_eligible", "253_unwaived_dut_warnings", "full_regression_unexecuted", "claude_bridge_missing_api_key"],
+  "claims": {
+    "twelve_replacements_loaded": "partial",
+    "same_first_mismatch_as_baseline": "partial_with_dual_evidence",
+    "func_smoke_pass": "unsupported",
+    "integrated_pass": "unsupported",
+    "complete_refactor": "unsupported"
+  },
+  "allowed_claim": "clean diagnostic overlay accepts 12 committed replacements and the single func_lab19 trace reaches the same first mismatch as the locked baseline; strict smoke remains FAIL"
+}

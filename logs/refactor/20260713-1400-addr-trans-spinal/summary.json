@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "iteration_id": "20260713-1400-addr-trans-spinal",
+  "status": "implementation_in_review",
+  "branch": "refactor/20260713-1400-addr-trans-spinal",
+  "base_sha": "9d319136ce20a7bf8547896fb29a58e2f86ce4f4",
+  "head_sha": "3f10123",
+  "boundary": "tlb_addr_trans",
+  "gates": {
+    "automation_tests": {"status": "pass_with_existing_skips", "planned": 311, "executed": 301, "passed": 301, "failed": 0, "skipped": 10, "detail": "unittest discover return code 0; existing environment-dependent skips retained"},
+    "scala": {"status": "pass", "planned": 4, "executed": 4, "passed": 4, "failed": 0, "skipped": 0},
+    "generate_addr_trans": {"status": "pass", "planned": 2, "executed": 2, "passed": 2, "failed": 0, "skipped": 0, "sha256": "c7920aa144dfafb60ce89cca9f8267c185909437cf86124d187dd49ba0a532f1"},
+    "generate_tlb": {"status": "pass", "planned": 2, "executed": 2, "passed": 2, "failed": 0, "skipped": 0, "sha256": "710a0e5644f4c93c7e77d03afd79d3cf725080fcdd080fcc09322f598bffa531"},
+    "addr_trans_port_contract": {"status": "pass", "planned": 51, "executed": 51, "passed": 51, "failed": 0, "skipped": 0, "detail": "Yosys JSON direction/width exact; TLBNUM default 32 exact"},
+    "yosys": {"status": "pass", "planned": 2, "executed": 2, "passed": 2, "failed": 0, "skipped": 0},
+    "tlb_unit_diff": {"status": "pass", "planned": 16577, "executed": 16577, "passed": 16577, "failed": 0, "skipped": 0, "cycles": 8258, "seed": "0x158aa8", "negative_controls_detected": 1},
+    "addr_trans_verilator": {"status": "pass_with_scoped_waivers", "planned": 1, "executed": 1, "passed": 1, "failed": 0, "skipped": 0, "detail": "DECLFILENAME and exact legacy input unused-bit warnings are bound to candidate hash in lint-waivers.yml; no global rule suppression"},
+    "claude_review": {"status": "unavailable", "planned": 1, "executed": 1, "passed": 0, "failed": 1, "skipped": 0, "detail": "GEEKPIE_CLAUDE_API_KEY missing; raw response recorded"}
+  },
+  "claims": [
+    {"id": "C1", "status": "supported_with_narrow_scope", "text": "锁定工具链下 TLB/addr_trans 生成可复现，TLB 2-state directed+8192 random cycle diff 通过。", "excludes": ["4-state equivalence", "addr_trans cycle diff", "whole CPU", "func58/81", "random DiffTest", "Linux", "Vivado"]},
+    {"id": "C2", "status": "accepted_with_scoped_waivers", "text": "addr_trans 静态 lint 的单文件子模块名和精确遗留端口未使用位已绑定生成物哈希记录 waiver。"},
+    {"id": "C3", "status": "accepted", "text": "官方 func_lab19 首错属于 baseline evidence，不能作为本迭代整机 PASS。"}
+  ],
+  "evidence": {
+    "scala_summary": "logs/refactor/20260713-1400-addr-trans-spinal/evidence/scala.json",
+    "addr_generate_summary": "logs/refactor/20260713-1400-addr-trans-spinal/evidence/generate-addr-trans.json",
+    "tlb_generate_summary": "logs/refactor/20260713-1400-addr-trans-spinal/evidence/generate-tlb.json",
+    "tlb_diff_summary": "logs/refactor/20260713-1400-addr-trans-spinal/evidence/tlb-diff.json"
+  },
+  "pr": {"status": "awaiting_push", "url": null, "draft_only": true, "auto_merge": false, "created": false, "push_attempted": true, "push_error": "GitHub HTTPS Recv failure: Connection was reset"}
+}

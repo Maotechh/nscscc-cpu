@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "gate": "automation-tests",
+  "generated_at": "2026-07-14T12:08:15+08:00",
+  "status": "warning",
+  "command": "python -I -m unittest discover -s tests -p test_*.py",
+  "planned": 337,
+  "executed": 327,
+  "passed": 327,
+  "failed": 0,
+  "skipped": 10,
+  "skip_reason": "仅 Windows/Posix 平台互斥测试；不是 RTL 功能门禁，未表述为全通过",
+  "forwarding_integration_contract": "pass"
+}

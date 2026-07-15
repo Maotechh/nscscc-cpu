@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "external_auditor": "unavailable",
+  "overall_verdict": "warn",
+  "integrity_status": "pass_with_external_review_unavailable",
+  "artifact_audit": {
+    "status": "pass",
+    "planned": 20,
+    "executed": 20,
+    "passed": 20,
+    "failed": 0,
+    "skipped": 0,
+    "evidence": "logs/refactor/20260712-2024-div-harness/evidence/claim-audit.json"
+  },
+  "independent_code_review": {
+    "status": "pass_after_fixes",
+    "reviewed_head": "e47f144152db7a3596bf699f24c36ad0a0681ca2",
+    "evidence": "logs/refactor/20260712-2024-div-harness/reviews/local-independent-review.md"
+  },
+  "evaluation_type": "locked_golden_cycle_differential",
+  "claim_scope": "divider leaf harness only",
+  "unsupported_claims": [
+    "spinal_equivalence",
+    "whole_cpu",
+    "func58",
+    "func81",
+    "random_difftest",
+    "perf",
+    "linux",
+    "fpga"
+  ]
+}

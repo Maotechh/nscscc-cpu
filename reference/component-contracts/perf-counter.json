@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "id": "perf_counter",
+  "golden_commit": "a158aa8ab4d49cece1a0fe488d7ac7dc02bd8cf6",
+  "golden_path": "rtl/perf_counter.v",
+  "golden_sha256": "a2f8f337422097699b91d217afb1eb896fa1aa02a7fdd1ed829c183de00935b6",
+  "module": "perf_counter",
+  "clock": {"name": "clk", "edge": "rising"},
+  "reset": {"name": "reset", "kind": "synchronous", "active_level": "high"},
+  "counter_width": 32,
+  "ports": [
+    {"name":"clk","direction":"input","width":1},
+    {"name":"reset","direction":"input","width":1},
+    {"name":"dcache_miss","direction":"input","width":1},
+    {"name":"icache_miss","direction":"input","width":1},
+    {"name":"commit_inst","direction":"input","width":1},
+    {"name":"br_inst","direction":"input","width":1},
+    {"name":"mem_inst","direction":"input","width":1},
+    {"name":"br_pre","direction":"input","width":1},
+    {"name":"br_pre_error","direction":"input","width":1}
+  ],
+  "events": [
+    {"port":"dcache_miss","counter":"dcache_miss_counter"},
+    {"port":"icache_miss","counter":"icache_miss_counter"},
+    {"port":"commit_inst","counter":"commit_inst_counter"},
+    {"port":"br_inst","counter":"br_inst_counter"},
+    {"port":"mem_inst","counter":"mem_inst_counter"},
+    {"port":"br_pre","counter":"br_pre_counter"},
+    {"port":"br_pre_error","counter":"br_pre_error_counter"}
+  ],
+  "random": {"cycles":8192,"seed":"0x0158aa8e"},
+  "required_cases": ["reset_priority","idle_hold","single_event","all_events","wraparound","random_lockstep","negative_control"]
+}

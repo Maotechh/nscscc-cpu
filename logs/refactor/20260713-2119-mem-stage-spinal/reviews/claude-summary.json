@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "reviewer": "claude-review",
+  "job_id": "eb4b8cfe8d9f42e997839d6af9dba9cf",
+  "status": "tool_error",
+  "error": "Required provider environment variable is not set: GEEKPIE_CLAUDE_API_KEY",
+  "items": [
+    {"id":"external_review","disposition":"open","detail":"Claude 未产生评审响应"}
+  ],
+  "claim_review_passed": false
+}

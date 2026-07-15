@@ -1,0 +1,40 @@
+{
+  "contract": {
+    "header_sha256": "b2db20e7012ff21e931738a624a964274f779e3f3de664150f3cec40e87b9a79",
+    "input_count": 17,
+    "legacy_backend_absent": true,
+    "module_count": 1,
+    "output_count": 32,
+    "port_count": 49,
+    "tlbnum_default": 32
+  },
+  "gate": "core-top-package",
+  "generated_at": "2026-07-14T16:12:24+08:00",
+  "input_rtl": {
+    "path": "/tmp/btb-replay-final-4/core_top/generate/rtl/core_top.v",
+    "sha256": "a65702aa37f5435efce88bd03aabaaa35b3b665a405f6585998ec60703100216",
+    "size": 766022,
+    "stable": true
+  },
+  "provenance": {
+    "evaluator": "/tmp/nscscc-btb-replay-clean/tools/core_top_gate.py",
+    "evaluator_sha256": "63490b44b7c4e9eee730281a4a12ad62eeea238aeb7031df05f7bf2fc4e33641",
+    "manifest": "/tmp/nscscc-btb-replay-clean/reference/manifest.lock",
+    "manifest_sha256": "743dd7e58d77e456cfe664d80c2e6614ab426f72bfecd9088ff18d702afa2f20",
+    "ports_contract": "/tmp/nscscc-btb-replay-clean/reference/core-top.ports.json",
+    "ports_contract_sha256": "effa486ff707e480ff8ee13d7f20b2d524bd26908726915c99abf1b37eeab576",
+    "repository": "/tmp/nscscc-btb-replay-clean",
+    "repository_head": "75523504912c1b390dc1d1e3cddb5c3a0cc43a27",
+    "repository_status_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "published_rtl": "/tmp/btb-replay-final-4/core_top/package/rtl/mycpu_top.v",
+  "published_sha256": "27b578ce4bf3c3157b65d2e05e2b45603da6e67e776a79a93630bede8981c6c0",
+  "published_size": 766051,
+  "schema_version": 1,
+  "scope": "complete-spinal-rtl-publication",
+  "status": "pass",
+  "target": "core-top-compat",
+  "transformations": {
+    "top_parameter_insertions": 1
+  }
+}

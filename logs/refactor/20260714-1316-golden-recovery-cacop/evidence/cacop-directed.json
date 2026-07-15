@@ -1,0 +1,339 @@
+{
+  "candidate": {
+    "dcache": {
+      "cycles": 497,
+      "first_mismatch": null,
+      "mismatches": 0,
+      "rtl_sha256": "ebf5f12a1be68a2951bf1cf5a27ff2536fc297db049f66d22ce443c4ee8b392a"
+    },
+    "icache": {
+      "cycles": 461,
+      "first_mismatch": null,
+      "mismatches": 0,
+      "rtl_sha256": "0e0a39e59fedb1937bb49c94e62b8cf9d5c2ff2acead3f3e9402241d136b932c"
+    }
+  },
+  "counts": {
+    "candidate_lockstep_cycles": 958,
+    "executed": 10,
+    "failed": 0,
+    "negative_controls_detected": 3,
+    "passed": 10,
+    "planned": 10,
+    "simulation_cycles_executed": 4790,
+    "skipped": 0
+  },
+  "coverage": {
+    "dcache_dirty_writeback_scenarios": 6,
+    "lookup_classes": [
+      "hit",
+      "miss",
+      "selected-way",
+      "selected-way-alias"
+    ],
+    "modes": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "observed": {
+      "dcache": {
+        "cacop_lookup_without_data_ok": 10,
+        "dirty_writebacks": 6,
+        "mode2_miss_retention_probes": 2,
+        "normal_rd_rdy_backpressure_cycles": 60,
+        "single_cycle_invalidation_probes": 8
+      },
+      "icache": {
+        "cacop_lookup_without_data_ok": 10,
+        "dirty_writebacks": 0,
+        "mode2_miss_retention_probes": 2,
+        "normal_rd_rdy_backpressure_cycles": 60,
+        "single_cycle_invalidation_probes": 8
+      }
+    },
+    "rd_rdy_backpressure_scenarios": 20,
+    "scenario_count": 20,
+    "scenarios": [
+      {
+        "dirty_writeback": false,
+        "id": "s0",
+        "lookup": "selected-way",
+        "mode": 0,
+        "rd_rdy_backpressure": true,
+        "single_cycle_invalidation": true,
+        "target": "icache",
+        "way": 0
+      },
+      {
+        "dirty_writeback": false,
+        "id": "s1",
+        "lookup": "selected-way",
+        "mode": 0,
+        "rd_rdy_backpressure": true,
+        "single_cycle_invalidation": true,
+        "target": "icache",
+        "way": 1
+      },
+      {
+        "dirty_writeback": false,
+        "id": "s2",
+        "lookup": "selected-way",
+        "mode": 1,
+        "rd_rdy_backpressure": true,
+        "single_cycle_invalidation": true,
+        "target": "icache",
+        "way": 0
+      },
+      {
+        "dirty_writeback": false,
+        "id": "s3",
+        "lookup": "selected-way",
+        "mode": 1,
+        "rd_rdy_backpressure": true,
+        "single_cycle_invalidation": true,
+        "target": "icache",
+        "way": 1
+      },
+      {
+        "dirty_writeback": false,
+        "id": "s4",
+        "lookup": "selected-way-alias",
+        "mode": 3,
+        "rd_rdy_backpressure": true,
+        "single_cycle_invalidation": true,
+        "target": "icache",
+        "way": 0
+      },
+      {
+        "dirty_writeback": false,
+        "id": "s5",
+        "lookup": "selected-way-alias",
+        "mode": 3,
+        "rd_rdy_backpressure": true,
+        "single_cycle_invalidation": true,
+        "target": "icache",
+        "way": 1
+      },
+      {
+        "dirty_writeback": false,
+        "id": "s6",
+        "lookup": "hit",
+        "mode": 2,
+        "rd_rdy_backpressure": true,
+        "single_cycle_invalidation": true,
+        "target": "icache",
+        "way": 0
+      },
+      {
+        "dirty_writeback": false,
+        "id": "s7",
+        "lookup": "hit",
+        "mode": 2,
+        "rd_rdy_backpressure": true,
+        "single_cycle_invalidation": true,
+        "target": "icache",
+        "way": 1
+      },
+      {
+        "dirty_writeback": false,
+        "id": "s8",
+        "lookup": "miss",
+        "mode": 2,
+        "rd_rdy_backpressure": true,
+        "single_cycle_invalidation": false,
+        "target": "icache",
+        "way": 0
+      },
+      {
+        "dirty_writeback": false,
+        "id": "s9",
+        "lookup": "miss",
+        "mode": 2,
+        "rd_rdy_backpressure": true,
+        "single_cycle_invalidation": false,
+        "target": "icache",
+        "way": 1
+      },
+      {
+        "dirty_writeback": false,
+        "id": "s0",
+        "lookup": "selected-way",
+        "mode": 0,
+        "rd_rdy_backpressure": true,
+        "single_cycle_invalidation": true,
+        "target": "dcache",
+        "way": 0
+      },
+      {
+        "dirty_writeback": false,
+        "id": "s1",
+        "lookup": "selected-way",
+        "mode": 0,
+        "rd_rdy_backpressure": true,
+        "single_cycle_invalidation": true,
+        "target": "dcache",
+        "way": 1
+      },
+      {
+        "dirty_writeback": true,
+        "id": "s2",
+        "lookup": "selected-way",
+        "mode": 1,
+        "rd_rdy_backpressure": true,
+        "single_cycle_invalidation": true,
+        "target": "dcache",
+        "way": 0
+      },
+      {
+        "dirty_writeback": true,
+        "id": "s3",
+        "lookup": "selected-way",
+        "mode": 1,
+        "rd_rdy_backpressure": true,
+        "single_cycle_invalidation": true,
+        "target": "dcache",
+        "way": 1
+      },
+      {
+        "dirty_writeback": true,
+        "id": "s4",
+        "lookup": "selected-way-alias",
+        "mode": 3,
+        "rd_rdy_backpressure": true,
+        "single_cycle_invalidation": true,
+        "target": "dcache",
+        "way": 0
+      },
+      {
+        "dirty_writeback": true,
+        "id": "s5",
+        "lookup": "selected-way-alias",
+        "mode": 3,
+        "rd_rdy_backpressure": true,
+        "single_cycle_invalidation": true,
+        "target": "dcache",
+        "way": 1
+      },
+      {
+        "dirty_writeback": true,
+        "id": "s6",
+        "lookup": "hit",
+        "mode": 2,
+        "rd_rdy_backpressure": true,
+        "single_cycle_invalidation": true,
+        "target": "dcache",
+        "way": 0
+      },
+      {
+        "dirty_writeback": true,
+        "id": "s7",
+        "lookup": "hit",
+        "mode": 2,
+        "rd_rdy_backpressure": true,
+        "single_cycle_invalidation": true,
+        "target": "dcache",
+        "way": 1
+      },
+      {
+        "dirty_writeback": false,
+        "id": "s8",
+        "lookup": "miss",
+        "mode": 2,
+        "rd_rdy_backpressure": true,
+        "single_cycle_invalidation": false,
+        "target": "dcache",
+        "way": 0
+      },
+      {
+        "dirty_writeback": false,
+        "id": "s9",
+        "lookup": "miss",
+        "mode": 2,
+        "rd_rdy_backpressure": true,
+        "single_cycle_invalidation": false,
+        "target": "dcache",
+        "way": 1
+      }
+    ],
+    "single_cycle_invalidation_scenarios": 16,
+    "ways": [
+      0,
+      1
+    ]
+  },
+  "gate": "cacop-d22-directed-lockstep",
+  "generated_at": "2026-07-14T14:22:09+08:00",
+  "negative_controls": {
+    "2ff-lookup-bypass": {
+      "dcache": {
+        "detected": true,
+        "first_mismatch": {
+          "cycle": 32,
+          "label": "s0:mode0-way0-selected-way:lookup",
+          "observed": "20 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0",
+          "oracle": "20 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0"
+        }
+      },
+      "detected": true,
+      "icache": {
+        "detected": true,
+        "first_mismatch": {
+          "cycle": 32,
+          "label": "s0:mode0-way0-selected-way:lookup",
+          "observed": "20 1 1 58480000 0 0 0 0 0 0 0 0 0 0 0 0 0",
+          "oracle": "20 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0"
+        }
+      }
+    },
+    "408-immediate-data-ok": {
+      "dcache": {
+        "detected": true,
+        "first_mismatch": {
+          "cycle": 32,
+          "label": "s0:mode0-way0-selected-way:lookup",
+          "observed": "20 1 1 58480000 0 0 0 0 0 0 0 0 0 0 0 0 0",
+          "oracle": "20 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0"
+        }
+      },
+      "detected": true,
+      "icache": {
+        "detected": true,
+        "first_mismatch": {
+          "cycle": 32,
+          "label": "s0:mode0-way0-selected-way:lookup",
+          "observed": "20 1 1 58480000 0 0 0 0 0 0 0 0 0 0 0 0 0",
+          "oracle": "20 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0"
+        }
+      }
+    },
+    "d76-ghost-hit": {
+      "dcache": {
+        "detected": true,
+        "first_mismatch": {
+          "cycle": 32,
+          "label": "s0:mode0-way0-selected-way:lookup",
+          "observed": "20 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0",
+          "oracle": "20 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0"
+        }
+      },
+      "detected": true,
+      "icache": {
+        "detected": true,
+        "first_mismatch": {
+          "cycle": 32,
+          "label": "s0:mode0-way0-selected-way:lookup",
+          "observed": "20 1 1 58480000 0 0 0 0 0 0 0 0 0 0 0 0 0",
+          "oracle": "20 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0"
+        }
+      }
+    }
+  },
+  "oracle": {
+    "commit": "d22c13c1ecbee7b0423b7e4f4616f24d98457f02",
+    "scope": "iteration-local CACOP recovery oracle; global manifest unchanged"
+  },
+  "schema_version": 1,
+  "status": "pass"
+}

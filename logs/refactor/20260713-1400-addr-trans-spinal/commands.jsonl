@@ -1,0 +1,9 @@
+{"command":"make scala-check OUT_DIR=/tmp/nscscc-addr-trans-final-gates","exit_code":0,"result":"4/4 PASS"}
+{"command":"spinal_generate GenerateOpenLa500AddrTrans --runs 2","exit_code":0,"result":"2/2 reproducible; sha256 c7920aa144dfafb60ce89cca9f8267c185909437cf86124d187dd49ba0a532f1"}
+{"command":"spinal_generate GenerateOpenLa500TlbEntry --runs 2","exit_code":0,"result":"2/2 reproducible; sha256 710a0e5644f4c93c7e77d03afd79d3cf725080fcdd080fcc09322f598bffa531"}
+{"command":"yosys JSON port/parameter compare golden vs candidate addr_trans","exit_code":0,"result":"51/51 exact; TLBNUM default 32 exact"}
+{"command":"verilator --lint-only -Wall with hash-bound DECLFILENAME/UNUSEDSIGNAL waivers","exit_code":0,"result":"PASS with scoped waivers; raw unwaived warnings retained in iteration narrative"}
+{"command":"make unit TARGET=tlb OUT_DIR=/tmp/addrtrans-make-gates TLB_CYCLES=8192","exit_code":0,"result":"8258 cycles; 16577 checks; negative control detected"}
+{"command":"python -I -m unittest discover -s tests -p test_*.py","exit_code":0,"result":"311 discovered; 301 pass; 10 existing skips; 0 fail"}
+{"command":"mcp__claude_review__review","exit_code":1,"result":"GEEKPIE_CLAUDE_API_KEY missing"}
+{"command":"git push -u origin refactor/20260713-1400-addr-trans-spinal","exit_code":1,"result":"GitHub HTTPS Recv failure: Connection was reset after 52 seconds"}

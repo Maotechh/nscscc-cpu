@@ -1,0 +1,57 @@
+{
+  "gate": "core-top-yosys-check",
+  "generated_at": "2026-07-15T14:41:47+08:00",
+  "input": {
+    "complete_rtl": "/mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260714-1650-consolidated-spinal/build/20260715-1402-typed-memory-generate/core_top/package/rtl/mycpu_top.v",
+    "complete_rtl_sha256": "5d11d66f2c1d44acfc343c98f0e76c87143a72a7bde901516b508ce660687d8a",
+    "complete_rtl_size": 858573,
+    "contract": {
+      "header_sha256": "b2db20e7012ff21e931738a624a964274f779e3f3de664150f3cec40e87b9a79",
+      "input_count": 17,
+      "legacy_backend_absent": true,
+      "module_count": 1,
+      "output_count": 32,
+      "port_count": 49,
+      "tlbnum_default": 32
+    },
+    "snapshot": "/mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260714-1650-consolidated-spinal/build/20260715-1402-typed-memory-generate/core_top/yosys-check/input/core_top.v",
+    "snapshot_sha256": "5d11d66f2c1d44acfc343c98f0e76c87143a72a7bde901516b508ce660687d8a",
+    "stable": true
+  },
+  "provenance": {
+    "evaluator": "/mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260714-1650-consolidated-spinal/tools/core_top_gate.py",
+    "evaluator_sha256": "de3b69dce99ea8a78c4ac0e15f3835ed8d31f861cc2119618a907b3a5eba2a51",
+    "manifest": "/mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260714-1650-consolidated-spinal/reference/manifest.lock",
+    "manifest_sha256": "743dd7e58d77e456cfe664d80c2e6614ab426f72bfecd9088ff18d702afa2f20",
+    "ports_contract": "/mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260714-1650-consolidated-spinal/reference/core-top.ports.json",
+    "ports_contract_sha256": "effa486ff707e480ff8ee13d7f20b2d524bd26908726915c99abf1b37eeab576",
+    "repository": "/mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260714-1650-consolidated-spinal",
+    "repository_head": "f3f61aa38f002b7a9fac3ba3feffeb2762c40707",
+    "repository_status_sha256": "0d71e8d6dbf42bab3e266a31b2c8b3069699c255f6b95fb64fe85e9a26678654"
+  },
+  "schema_version": 1,
+  "scope": "complete-spinal-rtl",
+  "status": "pass",
+  "target": "core-top-compat",
+  "yosys": {
+    "argv": [
+      "/usr/bin/yosys",
+      "-l",
+      "/mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260714-1650-consolidated-spinal/build/20260715-1402-typed-memory-generate/core_top/yosys-check/yosys.log",
+      "-s",
+      "/mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260714-1650-consolidated-spinal/build/20260715-1402-typed-memory-generate/core_top/yosys-check/gate.ys"
+    ],
+    "elapsed_seconds": 2.102,
+    "log": "/mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260714-1650-consolidated-spinal/build/20260715-1402-typed-memory-generate/core_top/yosys-check/yosys.log",
+    "log_sha256": "1a000b351060d78cc053dcce9b63f71278ddb76699d03090fb55bfb8ea54f418",
+    "returncode": 0,
+    "skip_markers": [],
+    "timed_out": false,
+    "tool": {
+      "path": "/usr/bin/yosys",
+      "sha256": "88c0a12bb814a1a8716b1ae10b482e35d3005ed558e1f5f626b3dc983ea3abd0",
+      "version": "Yosys 0.33 (git sha1 2584903a060)"
+    },
+    "warnings": []
+  }
+}

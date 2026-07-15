@@ -1,0 +1,9 @@
+{
+  "schema_version": 1,
+  "reviewed_source_head": "71a1995b7ca4dd922d1896e6b820e8029ff88575",
+  "claim_supported": "partial",
+  "confidence": "high",
+  "supported_claim": "One locked func_lab19 case has the same manifest-bound input projection and selected failing observations for a byte-identical ALU replacement.",
+  "unsupported": ["CPU correctness", "RTL equivalence", "Spinal ALU integration", "func gate pass", "performance", "Linux", "FPGA"],
+  "next_action": "Start a stacked ALU golden-differential SpinalHDL iteration; do not optimize performance."
+}

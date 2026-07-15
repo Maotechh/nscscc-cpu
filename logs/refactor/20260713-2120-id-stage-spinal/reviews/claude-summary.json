@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "reviewer": "claude-review",
+  "status": "unavailable",
+  "tool_error": "Required provider environment variable is not set: GEEKPIE_CLAUDE_API_KEY",
+  "claim_review": "degraded_local_read_only_review",
+  "items": [
+    {"claim": "four locked ID-stage profiles pass local differential", "status": "accepted"},
+    {"claim": "active core_top integration", "status": "open"},
+    {"claim": "official func/random/perf/Linux/Vivado", "status": "open"},
+    {"claim": "direct Yosys DiffTest unpacked-array pass", "status": "disputed_with_evidence"},
+    {"claim": "complete refactor", "status": "open"}
+  ]
+}

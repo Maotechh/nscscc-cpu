@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "iteration_id": "20260713-1415-icache-spinal",
+  "status": "implementation_in_review",
+  "branch": "refactor/20260713-1415-icache-spinal",
+  "base_sha": "fb5a63fbb3c5378a0d99d6122c0cf66b89a332c5",
+  "head_sha": "e9c4946f033bc0f6e685042fc616eb523a9dc34b",
+  "boundary": "icache",
+  "claims": [
+    "Scala OpenLa500ICache generates one exact 34-port icache module",
+    "candidate matches locked golden for the executed 12000-cycle 2-state trace"
+  ],
+  "gates": [
+    {"name": "doctor", "status": "pass", "evidence": "evidence/doctor.json"},
+    {"name": "automation_tests", "status": "pass", "executed": 309, "passed": 309, "failed": 0, "skipped": 0, "evidence": "evidence/automation-tests.log"},
+    {"name": "scala", "status": "pass", "evidence": "evidence/scala-check.json"},
+    {"name": "generate", "status": "pass", "executed": 2, "passed": 2, "failed": 0, "skipped": 0, "evidence": "evidence/generate.json"},
+    {"name": "contract", "status": "pass", "evidence": "evidence/contract.json"},
+    {"name": "port_check", "status": "pass", "evidence": "evidence/port-check.json"},
+    {"name": "lint", "status": "pass", "evidence": "evidence/lint.json"},
+    {"name": "yosys_check", "status": "pass", "evidence": "evidence/yosys.json"},
+    {"name": "unit_diff", "status": "pass", "executed": 16096, "passed": 16096, "failed": 0, "skipped": 0, "evidence": "evidence/cycle-diff.json"},
+    {"name": "negative_control", "status": "pass", "evidence": "evidence/cycle-diff.json"},
+    {"name": "chiplab_doctor", "status": "pass", "evidence": "evidence/chiplab/chiplab-doctor.json"},
+    {"name": "chiplab_overlay", "status": "diagnostic", "evidence": "evidence/chiplab/chiplab-overlay.json", "gate_eligible": false},
+    {"name": "func_smoke", "status": "diagnostic", "evidence": "evidence/chiplab/rtl-smoke.json", "gate_eligible": false, "reason": "official wrapper reports candidate_locked=false, baseline_exact=false"},
+    {"name": "vivado_leaf", "status": "not_run", "reason": "I-cache leaf has no locked FPGA wrapper; Vivado doctor probe passed"},
+    {"name": "claim_review", "status": "unavailable", "evidence": "reviews/claude-summary.json", "reason": "GEEKPIE_CLAUDE_API_KEY missing; local review retained"}
+  ],
+  "counts": {"planned": 16, "executed": 14, "passed": 11, "failed": 0, "skipped": 2},
+  "pr": {"status": "awaiting_push", "url": "https://github.com/Maotechh/nscscc-cpu/pull/new/refactor/20260713-1415-icache-spinal", "draft_only": true, "auto_merge": false, "created": false, "push_attempted": true, "push_error": "connection reset while pushing metadata commit 0e0c60f"}
+}

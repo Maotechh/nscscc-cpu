@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "iteration_id": "20260713-2227-mem-active-overlay",
+  "status": "unavailable",
+  "job_id": "6466a63ad05245ee9bd7bc059ff305c0",
+  "provider": "claude-review-mcp",
+  "model": "claude-review",
+  "reviewed_head_sha": null,
+  "raw_sha256": "b80c8103044b02f3ad0c20938f39b68d65d63ee24d1a198e80fabb929dff9482",
+  "error": "Required provider environment variable is not set: GEEKPIE_CLAUDE_API_KEY",
+  "open_blocking_count": 1,
+  "fresh_against_head": false,
+  "allow_ready": false,
+  "allow_status_promotion": false,
+  "provenance": {"source":"claude-review-mcp","raw_path":"reviews/claude-raw.md","raw_sha256":"b80c8103044b02f3ad0c20938f39b68d65d63ee24d1a198e80fabb929dff9482","job_id":"6466a63ad05245ee9bd7bc059ff305c0","provider":"claude-review-mcp","model":"claude-review","reviewed_head_sha":null},
+  "fallback": "independent_read_only_review"
+}

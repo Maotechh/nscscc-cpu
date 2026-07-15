@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "gate": "core-top-sequential-equivalence",
+  "status": "pass",
+  "old_rtl": {
+    "path": "reference/component-replacements/mycpu_top.v@f3f61aa38f002b7a9fac3ba3feffeb2762c40707",
+    "sha256": "51e400e3d3c56bed3201c9599224aaaf361c22d8f1dc272054094adc8a9e9ebc"
+  },
+  "new_rtl": {
+    "path": "build/20260715-1402-typed-memory-generate/core_top/package/rtl/mycpu_top.v",
+    "sha256": "5d11d66f2c1d44acfc343c98f0e76c87143a72a7bde901516b508ce660687d8a"
+  },
+  "tool": {
+    "name": "Yosys",
+    "version": "0.33",
+    "semantics": "two-state flattened sequential equivalence"
+  },
+  "attempts": [
+    {
+      "name": "name_based_flow",
+      "status": "fail",
+      "exit_code": 1,
+      "method": "equiv_make; equiv_simple; equiv_induct; equiv_status -assert",
+      "proven": 17728,
+      "unproven": 95,
+      "reason": "typed wrapper changed legacy bridge state hierarchy names, leaving state correspondence unmatched",
+      "log": "build/20260715-1402-typed-memory-generate/core_top/sequential-equivalence/yosys.log",
+      "log_sha256": "5cd0347fc5ee5d15be80fc3b078e8e15f9bd1b685afd28d58035c2d85487584d"
+    },
+    {
+      "name": "structural_state_correspondence",
+      "status": "pass",
+      "exit_code": 0,
+      "method": "equiv_make -inames; equiv_struct -icells; equiv_simple; equiv_induct -seq 8; equiv_status -assert",
+      "proven": 31106,
+      "unproven": 0,
+      "result": "Equivalence successfully proven!",
+      "log": "build/20260715-1402-typed-memory-generate/core_top/sequential-equivalence/yosys-struct.log",
+      "log_sha256": "94920f240417ca57095bcdc4871fe826ca0e4614fc5a03a69273f3e8f0f86a95"
+    }
+  ],
+  "claim_boundary": "This proves old/new generated core_top equivalence only under the recorded Yosys two-state structural flow. It does not replace four-state simulation, chiplab, random DiffTest, or FPGA evidence."
+}

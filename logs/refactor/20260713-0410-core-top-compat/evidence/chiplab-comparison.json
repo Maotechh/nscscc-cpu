@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "head_sha": "0e2787fc5ab30e246da5be1c6080e2847b2645cf",
+  "case": "func/func_lab19",
+  "locked": {
+    "iteration_id": "20260713-0410-core-top-locked-0e2787f-cmp2",
+    "mode": "baseline",
+    "replacement_count": 0,
+    "gate_eligible": true,
+    "status": "fail",
+    "functional_status": "fail",
+    "compile_status": "warning",
+    "warnings": {"total": 644, "dut": 280, "official_environment": 364},
+    "report": {"path": "/tmp/nscscc-core-top-0e2787f/compare-run/reports/iterations/20260713-0410-core-top-locked-0e2787f-cmp2/rtl-smoke.json", "size": 195333, "sha256": "c0a218a49ea5d921e77666b12bd9778f760e38c726aa2010cd8463c4cf85b811"}
+  },
+  "mixed": {
+    "iteration_id": "20260713-0410-core-top-mixed-0e2787f-cmp",
+    "mode": "diagnostic",
+    "replacement_count": 4,
+    "replacement_spec": "reference/component-replacements/core-top.json",
+    "gate_eligible": false,
+    "status": "diagnostic",
+    "functional_status": "fail",
+    "compile_status": "warning",
+    "warnings": {"total": 635, "dut": 271, "official_environment": 364},
+    "report": {"path": "/tmp/nscscc-core-top-0e2787f/compare-run/reports/iterations/20260713-0410-core-top-mixed-0e2787f-cmp/rtl-smoke.json", "size": 194386, "sha256": "a30eaf26047697b43e4f9a187658b4ac737835af194d59afe4601f78e73ba503"}
+  },
+  "selected_observation": {
+    "parser_equal": true,
+    "trace_uart_equal": true,
+    "functional_status": "fail",
+    "instructions": 172552,
+    "clocks": 602903,
+    "first_mismatch": "t0(r12) different at pc = 0x1c07c79c, right= 0x000006e2, wrong = 0x00000008",
+    "trace_sha256": "8efa7942ab6d4702129dc0c7eb0676c6cfcd87361ee8ecf99411567c3db38acb",
+    "trace_size": 13805441
+  },
+  "identity": {
+    "status": "fail",
+    "checks": {"parser_equal": true, "trace_uart_equal": true, "elf_equal": true, "rom_equal": true, "physical_evidence_verified": true, "identity_replacement": false, "rtl_file_union_equal": false, "warning_counts_equal": false},
+    "mismatches": ["locked and mixed DUT file projections differ", "mixed replacement is not byte-identical", "Verilator warning counts differ"],
+    "report": {"path": "/tmp/nscscc-core-top-0e2787f/compare-run/reports/iterations/20260713-0410-core-top-mixed-0e2787f-cmp/identity-comparison.json", "size": 9658, "sha256": "7fd483d4240577a4bac6eab150015be1a41e04f1ab671b06c989f8aaef21cf99"}
+  },
+  "claim_limit": "仅支持一个已知失败 case 的 parser/trace 观测相同；不支持功能 PASS、RTL 等价或 integrated_pass。"
+}

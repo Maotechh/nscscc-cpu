@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "iteration_id": "20260714-1650-refactor-convergence",
+  "status": "unavailable",
+  "job_id": "b0a97b665ce7495096c5f2e694c7de6a",
+  "provider": null,
+  "model": null,
+  "reviewed_head_sha": "09cfa96a1b67e2f5764b1ab015e3e51d307558fa",
+  "raw_sha256": "904bb6cd9b26adf9022bf7682fb7767c524341bf3bda7b0aff49249272443cc5",
+  "provenance": {
+    "source": "claude-review-mcp",
+    "raw_path": "reviews/claude-raw.md",
+    "raw_sha256": "904bb6cd9b26adf9022bf7682fb7767c524341bf3bda7b0aff49249272443cc5",
+    "job_id": "b0a97b665ce7495096c5f2e694c7de6a",
+    "provider": null,
+    "model": null,
+    "reviewed_head_sha": "09cfa96a1b67e2f5764b1ab015e3e51d307558fa"
+  },
+  "error": "Required provider environment variable is not set: GEEKPIE_CLAUDE_API_KEY",
+  "open_blocking_count": 1,
+  "fresh_against_head": false,
+  "allow_ready": false,
+  "allow_status_promotion": false
+}

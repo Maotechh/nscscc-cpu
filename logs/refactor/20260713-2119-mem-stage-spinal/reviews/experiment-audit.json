@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "auditor": "independent_codex_read_only_agent",
+  "overall_verdict": "pass_scoped",
+  "checks": {
+    "oracle_provenance": "pass_locked_git_blob_and_sha256",
+    "result_existence": "pass_committed_structured_json",
+    "number_match": "pass_8248_total_8192_random_15_outputs_3_phases",
+    "negative_control": "pass_cycle_3_phase_1_ms_to_ws_valid",
+    "scope": "warn_single_seed_2state_leaf_only",
+    "phantom_result": "not_found"
+  },
+  "claim_impact": "leaf differential claim supported only with explicit trace scope; all integration/system claims unsupported"
+}

@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "reviewer": "independent_codex_read_only_agent",
+  "reviewed_source_sha": "81bb0c4",
+  "status": "pass_scoped_claim",
+  "blocking_for_ready": ["active_overlay_and_change_impact_gates_missing", "claude_bridge_no_response"],
+  "fixed": ["directed_all_five_flush_types", "central_lint_waiver_metadata_and_hash_check"],
+  "open": ["single_seed_2state_trace_is_not_exhaustive", "branch_head_includes_evidence_followup"],
+  "allowed_claim": "locked a158aa8 MEM leaf differential pass for seed 0x0158aa8d and 8248-cycle directed/random Verilator trace",
+  "claim_supported": true
+}

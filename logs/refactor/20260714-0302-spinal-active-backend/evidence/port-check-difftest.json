@@ -1,0 +1,310 @@
+{
+  "contract": {
+    "actual_ports": [
+      {
+        "direction": "input",
+        "name": "aclk",
+        "width": 1
+      },
+      {
+        "direction": "input",
+        "name": "aresetn",
+        "width": 1
+      },
+      {
+        "direction": "input",
+        "name": "intrpt",
+        "width": 8
+      },
+      {
+        "direction": "output",
+        "name": "arid",
+        "width": 4
+      },
+      {
+        "direction": "output",
+        "name": "araddr",
+        "width": 32
+      },
+      {
+        "direction": "output",
+        "name": "arlen",
+        "width": 8
+      },
+      {
+        "direction": "output",
+        "name": "arsize",
+        "width": 3
+      },
+      {
+        "direction": "output",
+        "name": "arburst",
+        "width": 2
+      },
+      {
+        "direction": "output",
+        "name": "arlock",
+        "width": 2
+      },
+      {
+        "direction": "output",
+        "name": "arcache",
+        "width": 4
+      },
+      {
+        "direction": "output",
+        "name": "arprot",
+        "width": 3
+      },
+      {
+        "direction": "output",
+        "name": "arvalid",
+        "width": 1
+      },
+      {
+        "direction": "input",
+        "name": "arready",
+        "width": 1
+      },
+      {
+        "direction": "input",
+        "name": "rid",
+        "width": 4
+      },
+      {
+        "direction": "input",
+        "name": "rdata",
+        "width": 32
+      },
+      {
+        "direction": "input",
+        "name": "rresp",
+        "width": 2
+      },
+      {
+        "direction": "input",
+        "name": "rlast",
+        "width": 1
+      },
+      {
+        "direction": "input",
+        "name": "rvalid",
+        "width": 1
+      },
+      {
+        "direction": "output",
+        "name": "rready",
+        "width": 1
+      },
+      {
+        "direction": "output",
+        "name": "awid",
+        "width": 4
+      },
+      {
+        "direction": "output",
+        "name": "awaddr",
+        "width": 32
+      },
+      {
+        "direction": "output",
+        "name": "awlen",
+        "width": 8
+      },
+      {
+        "direction": "output",
+        "name": "awsize",
+        "width": 3
+      },
+      {
+        "direction": "output",
+        "name": "awburst",
+        "width": 2
+      },
+      {
+        "direction": "output",
+        "name": "awlock",
+        "width": 2
+      },
+      {
+        "direction": "output",
+        "name": "awcache",
+        "width": 4
+      },
+      {
+        "direction": "output",
+        "name": "awprot",
+        "width": 3
+      },
+      {
+        "direction": "output",
+        "name": "awvalid",
+        "width": 1
+      },
+      {
+        "direction": "input",
+        "name": "awready",
+        "width": 1
+      },
+      {
+        "direction": "output",
+        "name": "wid",
+        "width": 4
+      },
+      {
+        "direction": "output",
+        "name": "wdata",
+        "width": 32
+      },
+      {
+        "direction": "output",
+        "name": "wstrb",
+        "width": 4
+      },
+      {
+        "direction": "output",
+        "name": "wlast",
+        "width": 1
+      },
+      {
+        "direction": "output",
+        "name": "wvalid",
+        "width": 1
+      },
+      {
+        "direction": "input",
+        "name": "wready",
+        "width": 1
+      },
+      {
+        "direction": "input",
+        "name": "bid",
+        "width": 4
+      },
+      {
+        "direction": "input",
+        "name": "bresp",
+        "width": 2
+      },
+      {
+        "direction": "input",
+        "name": "bvalid",
+        "width": 1
+      },
+      {
+        "direction": "output",
+        "name": "bready",
+        "width": 1
+      },
+      {
+        "direction": "input",
+        "name": "break_point",
+        "width": 1
+      },
+      {
+        "direction": "input",
+        "name": "infor_flag",
+        "width": 1
+      },
+      {
+        "direction": "input",
+        "name": "reg_num",
+        "width": 5
+      },
+      {
+        "direction": "output",
+        "name": "ws_valid",
+        "width": 1
+      },
+      {
+        "direction": "output",
+        "name": "rf_rdata",
+        "width": 32
+      },
+      {
+        "direction": "output",
+        "name": "debug0_wb_pc",
+        "width": 32
+      },
+      {
+        "direction": "output",
+        "name": "debug0_wb_rf_wen",
+        "width": 4
+      },
+      {
+        "direction": "output",
+        "name": "debug0_wb_rf_wnum",
+        "width": 5
+      },
+      {
+        "direction": "output",
+        "name": "debug0_wb_rf_wdata",
+        "width": 32
+      },
+      {
+        "direction": "output",
+        "name": "debug0_wb_inst",
+        "width": 32
+      }
+    ],
+    "design_module_count": 18,
+    "legacy_backend_absent": true,
+    "top_cell_count": 4,
+    "top_tlbnum": 32
+  },
+  "gate": "core-top-port-check",
+  "generated_at": "2026-07-14T11:09:11+08:00",
+  "input": {
+    "complete_rtl": "/tmp/difftest-adapter-source/reference/component-replacements/mycpu_top.v",
+    "complete_rtl_sha256": "748b025cedac922dbf6ff2707b61e6e230138b091c89ebe778b0eede446dea41",
+    "complete_rtl_size": 766147,
+    "contract": {
+      "header_sha256": "b2db20e7012ff21e931738a624a964274f779e3f3de664150f3cec40e87b9a79",
+      "input_count": 17,
+      "legacy_backend_absent": true,
+      "module_count": 1,
+      "output_count": 32,
+      "port_count": 49,
+      "tlbnum_default": 32
+    },
+    "snapshot": "/tmp/difftest-root-port2/core_top/port-check/input/core_top.v",
+    "snapshot_sha256": "748b025cedac922dbf6ff2707b61e6e230138b091c89ebe778b0eede446dea41",
+    "stable": true
+  },
+  "provenance": {
+    "evaluator": "/tmp/difftest-adapter-source/tools/core_top_gate.py",
+    "evaluator_sha256": "63490b44b7c4e9eee730281a4a12ad62eeea238aeb7031df05f7bf2fc4e33641",
+    "manifest": "/tmp/difftest-adapter-source/reference/manifest.lock",
+    "manifest_sha256": "743dd7e58d77e456cfe664d80c2e6614ab426f72bfecd9088ff18d702afa2f20",
+    "ports_contract": "/tmp/difftest-adapter-source/reference/core-top.ports.json",
+    "ports_contract_sha256": "effa486ff707e480ff8ee13d7f20b2d524bd26908726915c99abf1b37eeab576",
+    "repository": "/tmp/difftest-adapter-source",
+    "repository_head": "210f596689e7ca01c9711e1b226f4276b3c2ae05",
+    "repository_status_sha256": "a3b7d65f5b2506a271057655204d11d09993f8724e304ddb1c17022d94cf4735"
+  },
+  "schema_version": 1,
+  "scope": "complete-spinal-rtl",
+  "status": "pass",
+  "target": "core-top-compat",
+  "yosys": {
+    "argv": [
+      "/usr/bin/yosys",
+      "-l",
+      "/tmp/difftest-root-port2/core_top/port-check/yosys.log",
+      "-s",
+      "/tmp/difftest-root-port2/core_top/port-check/gate.ys"
+    ],
+    "elapsed_seconds": 1.367,
+    "log": "/tmp/difftest-root-port2/core_top/port-check/yosys.log",
+    "log_sha256": "2753b88587d447f8023efb2b944bca7c645ff0f92ae64643b755b51d5ec2cc0f",
+    "returncode": 0,
+    "skip_markers": [],
+    "timed_out": false,
+    "tool": {
+      "path": "/usr/bin/yosys",
+      "sha256": "88c0a12bb814a1a8716b1ae10b482e35d3005ed558e1f5f626b3dc983ea3abd0",
+      "version": "Yosys 0.33 (git sha1 2584903a060)"
+    },
+    "warnings": []
+  }
+}

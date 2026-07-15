@@ -1,0 +1,12 @@
+{"command":"git status --short --branch","exit_code":0,"result":"clean iteration branch"}
+{"command":"git rev-parse HEAD","exit_code":0,"result":"f621c7a1e056b9f128b86efddbdd2598b3692ecc"}
+{"command":"git rev-parse --verify origin/main","exit_code":0,"result":"20cae5fd66391f4a1bccc1b87035be421039144b"}
+{"command":"git remote -v","exit_code":0,"result":"origin github Maotechh/nscscc-cpu"}
+{"command":"make scala-check (native WSL clone, locked tool root)","exit_code":0,"result":"4/4 PASS"}
+{"command":"GenerateOpenLa500Csr off/on, two runs each","exit_code":0,"result":"reproducible; 55/81 port variants"}
+{"command":"csr_gate.py port-check off/on","exit_code":0,"result":"55/55 and 81/81 exact ports"}
+{"command":"csr_gate.py static","exit_code":0,"result":"Yosys PASS; Verilator PASS with 8 recorded legacy waivers"}
+{"command":"csr_gate.py diff --cycles 4096","exit_code":0,"result":"CSR_DIFF_PASS cycles=4174"}
+{"command":"csr_gate.py diff against CPUCFG1 mutant","exit_code":1,"result":"expected negative-control mismatch cycle 59 at CSR 0x00b1"}
+{"command":"python3 -I -m unittest discover -s tests","exit_code":0,"result":"307/307 PASS"}
+{"command":"locked myCPU Verilator compile with csr replacement","exit_code":0,"result":"compile compatible; 145 warnings mean strict integrated gate FAIL"}

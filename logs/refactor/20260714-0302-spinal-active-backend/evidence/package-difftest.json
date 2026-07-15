@@ -1,0 +1,40 @@
+{
+  "contract": {
+    "header_sha256": "b2db20e7012ff21e931738a624a964274f779e3f3de664150f3cec40e87b9a79",
+    "input_count": 17,
+    "legacy_backend_absent": true,
+    "module_count": 1,
+    "output_count": 32,
+    "port_count": 49,
+    "tlbnum_default": 32
+  },
+  "gate": "core-top-package",
+  "generated_at": "2026-07-14T11:08:29+08:00",
+  "input_rtl": {
+    "path": "/tmp/difftest-root-elaborate2/core_top/elaborate/rtl/core_top.v",
+    "sha256": "1f9bec77f851848b5c2fd6ee327db11d424137fa0b64ed9fc2e00a93109b7aeb",
+    "size": 766118,
+    "stable": true
+  },
+  "provenance": {
+    "evaluator": "/tmp/difftest-adapter-source/tools/core_top_gate.py",
+    "evaluator_sha256": "63490b44b7c4e9eee730281a4a12ad62eeea238aeb7031df05f7bf2fc4e33641",
+    "manifest": "/tmp/difftest-adapter-source/reference/manifest.lock",
+    "manifest_sha256": "743dd7e58d77e456cfe664d80c2e6614ab426f72bfecd9088ff18d702afa2f20",
+    "ports_contract": "/tmp/difftest-adapter-source/reference/core-top.ports.json",
+    "ports_contract_sha256": "effa486ff707e480ff8ee13d7f20b2d524bd26908726915c99abf1b37eeab576",
+    "repository": "/tmp/difftest-adapter-source",
+    "repository_head": "210f596689e7ca01c9711e1b226f4276b3c2ae05",
+    "repository_status_sha256": "a3b7d65f5b2506a271057655204d11d09993f8724e304ddb1c17022d94cf4735"
+  },
+  "published_rtl": "/tmp/difftest-root-package2/core_top/package/rtl/mycpu_top.v",
+  "published_sha256": "748b025cedac922dbf6ff2707b61e6e230138b091c89ebe778b0eede446dea41",
+  "published_size": 766147,
+  "schema_version": 1,
+  "scope": "complete-spinal-rtl-publication",
+  "status": "pass",
+  "target": "core-top-compat",
+  "transformations": {
+    "top_parameter_insertions": 1
+  }
+}

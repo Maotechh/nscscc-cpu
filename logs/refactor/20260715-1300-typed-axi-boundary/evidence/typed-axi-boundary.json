@@ -1,0 +1,64 @@
+{
+  "checks": {
+    "backend_typed_contract": true,
+    "compat_raw_pin_owner": true,
+    "mapping_count": {
+      "expected_inputs": 11,
+      "expected_outputs": 25,
+      "inputs": 11,
+      "outputs": 25
+    },
+    "mapping_is_direct": true,
+    "raw_input_mapping": {
+      "arready": "pass",
+      "awready": "pass",
+      "bid": "pass",
+      "bresp": "pass",
+      "bvalid": "pass",
+      "rdata": "pass",
+      "rid": "pass",
+      "rlast": "pass",
+      "rresp": "pass",
+      "rvalid": "pass",
+      "wready": "pass"
+    },
+    "raw_output_mapping": {
+      "araddr": "pass",
+      "arburst": "pass",
+      "arcache": "pass",
+      "arid": "pass",
+      "arlen": "pass",
+      "arlock": "pass",
+      "arprot": "pass",
+      "arsize": "pass",
+      "arvalid": "pass",
+      "awaddr": "pass",
+      "awburst": "pass",
+      "awcache": "pass",
+      "awid": "pass",
+      "awlen": "pass",
+      "awlock": "pass",
+      "awprot": "pass",
+      "awsize": "pass",
+      "awvalid": "pass",
+      "bready": "pass",
+      "rready": "pass",
+      "wdata": "pass",
+      "wid": "pass",
+      "wlast": "pass",
+      "wstrb": "pass",
+      "wvalid": "pass"
+    },
+    "rtl_sha256": "51e400e3d3c56bed3201c9599224aaaf361c22d8f1dc272054094adc8a9e9ebc",
+    "source_sha256": {
+      "backend": "0fccfadcd05ec1de7b5e3b0fa1376f5b90c7aabe8bfeefa7b8852f693d8cb923",
+      "compat": "871a12d6798b53d62e8a967ce297b2bd08faff013496649a54f382acef9de5c7"
+    }
+  },
+  "failures": [],
+  "gate": "typed-axi-boundary",
+  "generated_at": "2026-07-15T13:27:24+08:00",
+  "schema_version": 1,
+  "scope": "CoreTopCompat raw AXI3/WID pin to SpinalCoreBackend Axi3Compat flattening",
+  "status": "pass"
+}

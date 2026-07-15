@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "iteration_id": "20260714-0302-spinal-active-backend",
+  "reviewed_head_sha": "2e5409a73841424540978e8dc43f6ba8b576a31e",
+  "reviewer": "independent-codex-subagent",
+  "status": "accepted_with_open_limits",
+  "claim_supported": "partial",
+  "accepted": [
+    "2e5409a fixes the 0x1c0752b8 false store forwarding regression",
+    "the candidate reaches the locked baseline's first architectural mismatch at 0x1c07c79c",
+    "the normalized final 30 trace lines match exactly"
+  ],
+  "fixed": [
+    "the MEM forwarding directed case is included in the current Scala evidence",
+    "the post-fix official diagnostic smoke was executed and archived",
+    "the clean rerun Scala evidence records repo_head_sha=2e5409a"
+  ],
+  "open": [
+    "baseline and candidate instruction counts differ by four and their clock counts differ",
+    "strict Verilator lint fails with 86 unwaived warnings",
+    "func_lab19 still fails",
+    "Claude review is unavailable"
+  ],
+  "disallowed_claims": [
+    "func_lab19 passes",
+    "complete sequential trace equivalence",
+    "whole-core equivalence",
+    "complete SpinalHDL refactor"
+  ],
+  "allow_ready": false,
+  "allow_status_promotion": false
+}

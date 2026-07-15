@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "head_sha": "0e2787fc5ab30e246da5be1c6080e2847b2645cf",
+  "auditor": "independent_read_only_codex_subagent",
+  "cross_model": false,
+  "status": "pass_with_scope_warnings",
+  "checks": {"planned":11,"executed":11,"artifact_numbers_matched":10,"unsupported_broad_claims":1,"missing_claimed_results":0},
+  "verified": [
+    "automation 296/296",
+    "Scala tasks 4/4",
+    "wrapper RTL 8377 bytes / 2bf5d472...04704",
+    "package 54777 bytes / fec64111...258a3",
+    "49 ports and 49 same-name wrapper connections",
+    "locked/mixed first mismatch, instructions and clocks",
+    "trace size/hash equality",
+    "Verilator warnings 644/635",
+    "Vivado synth/impl status and timing",
+    "bitstream size/hash and 46 post-route DRC warnings"
+  ],
+  "unsupported": ["Vivado strict FPGA gate PASS"],
+  "corrections": [
+    "Windows doctor is under doctor-0e2787f/reports/doctor.json, not summary.json.",
+    "bit-short.log is under fpga/nscscc-team/run_vivado, not the staging root.",
+    "Vivado bit-short.log contains 155 warning lines in addition to the 46 post-route DRC violations; no waiver makes the strict gate pass."
+  ],
+  "claim_limit": "No phantom result was found, but all functional/FPGA claims must preserve the documented failure and diagnostic scope."
+}

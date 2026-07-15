@@ -1,0 +1,313 @@
+{
+  "schema_version": 1,
+  "waivers": [
+    {
+      "id": "golden-mul-result-carry-width",
+      "rule": "WIDTHEXPAND",
+      "file": "a158aa8ab4d49cece1a0fe488d7ac7dc02bd8cf6:rtl/mul.v",
+      "line": 195,
+      "source_sha256": "251d2bba3e659c294c9a004bbb2b542435fcfa0b0c1582cc1a7a3edca765a4c0",
+      "scope": "golden_mul_simulation_compile",
+      "reason": "Golden adds 1-bit SecStageCarry[15] to a 64-bit sum; Verilog zero-extends it. This waiver only compiles the locked golden oracle and never applies to candidate RTL.",
+      "owner": "verification",
+      "expires_when": "golden mul oracle is retired after a release-gate-equivalent Spinal replacement"
+    },
+    {
+      "id": "golden-div-count-index-width",
+      "rule": "WIDTHTRUNC",
+      "file": "a158aa8ab4d49cece1a0fe488d7ac7dc02bd8cf6:rtl/div.v",
+      "line": 82,
+      "source_sha256": "7e499f4c43c92154d1d4e21be2f269ac140b4f2b2d944677c71f6f4213b66dc6",
+      "scope": "golden_div_simulation_compile",
+      "reason": "Golden indexes a 33-bit dividend magnitude with an 8-bit counter; the active iteration range is 32 through 0. This waiver applies only to the locked golden oracle.",
+      "owner": "verification",
+      "expires_when": "golden div oracle is retired after a release-gate-equivalent Spinal replacement"
+    },
+    {
+      "id": "golden-div-quotient-extension-bit-unused",
+      "rule": "UNUSEDSIGNAL",
+      "file": "a158aa8ab4d49cece1a0fe488d7ac7dc02bd8cf6:rtl/div.v",
+      "line": 85,
+      "source_sha256": "7e499f4c43c92154d1d4e21be2f269ac140b4f2b2d944677c71f6f4213b66dc6",
+      "scope": "golden_div_simulation_compile",
+      "reason": "Golden intentionally truncates TmpS from 33 to 32 output bits. This waiver applies only to the locked golden oracle.",
+      "owner": "verification",
+      "expires_when": "golden div oracle is retired after a release-gate-equivalent Spinal replacement"
+    },
+    {
+      "id": "golden-div-remainder-extension-bit-unused",
+      "rule": "UNUSEDSIGNAL",
+      "file": "a158aa8ab4d49cece1a0fe488d7ac7dc02bd8cf6:rtl/div.v",
+      "line": 85,
+      "source_sha256": "7e499f4c43c92154d1d4e21be2f269ac140b4f2b2d944677c71f6f4213b66dc6",
+      "scope": "golden_div_simulation_compile",
+      "reason": "Golden intentionally truncates TmpR from 33 to 32 output bits. This waiver applies only to the locked golden oracle.",
+      "owner": "verification",
+      "expires_when": "golden div oracle is retired after a release-gate-equivalent Spinal replacement"
+    },
+    {
+      "id": "csr-legacy-unused-tlbehi-input-bits",
+      "rule": "UNUSEDSIGNAL",
+      "file": "generated csr.v",
+      "line": 58,
+      "source_sha256": "fe93577ac086c395fb043d2bdd8dc712811ad1042fef5797c3fed14eabd0095e",
+      "scope": "candidate_csr_static_lint",
+      "reason": "The exact legacy TLBEHI read port includes reserved bits which a158aa8 intentionally does not consume; changing its width would break the csr port contract.",
+      "owner": "privileged",
+      "expires_when": "the locked csr interface changes or the legacy TLB fields consume these reserved bits"
+    },
+    {
+      "id": "csr-legacy-unused-tlbelo0-input-bits",
+      "rule": "UNUSEDSIGNAL",
+      "file": "generated csr.v",
+      "line": 59,
+      "source_sha256": "fe93577ac086c395fb043d2bdd8dc712811ad1042fef5797c3fed14eabd0095e",
+      "scope": "candidate_csr_static_lint",
+      "reason": "The exact legacy TLBELO0 read port includes reserved bits which a158aa8 intentionally does not consume; changing its width would break the csr port contract.",
+      "owner": "privileged",
+      "expires_when": "the locked csr interface changes or the legacy TLB fields consume these reserved bits"
+    },
+    {
+      "id": "csr-legacy-unused-tlbelo1-input-bits",
+      "rule": "UNUSEDSIGNAL",
+      "file": "generated csr.v",
+      "line": 60,
+      "source_sha256": "fe93577ac086c395fb043d2bdd8dc712811ad1042fef5797c3fed14eabd0095e",
+      "scope": "candidate_csr_static_lint",
+      "reason": "The exact legacy TLBELO1 read port includes reserved bits which a158aa8 intentionally does not consume; changing its width would break the csr port contract.",
+      "owner": "privileged",
+      "expires_when": "the locked csr interface changes or the legacy TLB fields consume these reserved bits"
+    },
+    {
+      "id": "csr-legacy-unused-tlbidx-input-bits",
+      "rule": "UNUSEDSIGNAL",
+      "file": "generated csr.v",
+      "line": 61,
+      "source_sha256": "fe93577ac086c395fb043d2bdd8dc712811ad1042fef5797c3fed14eabd0095e",
+      "scope": "candidate_csr_static_lint",
+      "reason": "The exact legacy TLBIDX read port includes reserved bits which a158aa8 intentionally does not consume; changing its width would break the csr port contract.",
+      "owner": "privileged",
+      "expires_when": "the locked csr interface changes or the legacy TLB fields consume these reserved bits"
+    },
+    {
+      "id": "csr-legacy-unused-brk-state",
+      "rule": "UNUSEDSIGNAL",
+      "file": "generated csr.v",
+      "line": 124,
+      "source_sha256": "fe93577ac086c395fb043d2bdd8dc712811ad1042fef5797c3fed14eabd0095e",
+      "scope": "candidate_csr_static_lint",
+      "reason": "BRK is a write-only chipscope software hook in the active golden RTL and therefore has no architectural output.",
+      "owner": "privileged",
+      "expires_when": "BRK gains an approved observable contract or is removed from the active golden behavior"
+    },
+    {
+      "id": "csr-legacy-disable-cache-upper-bits",
+      "rule": "UNUSEDSIGNAL",
+      "file": "generated csr.v",
+      "line": 125,
+      "source_sha256": "fe93577ac086c395fb043d2bdd8dc712811ad1042fef5797c3fed14eabd0095e",
+      "scope": "candidate_csr_static_lint",
+      "reason": "The legacy CSR stores all 32 written bits but exposes only bit zero as disable_cache_out.",
+      "owner": "privileged",
+      "expires_when": "the disable-cache CSR receives a defined readback or wider output contract"
+    },
+    {
+      "id": "csr-legacy-interrupt-port-name",
+      "rule": "SYMRSVDWORD",
+      "file": "generated csr.v",
+      "line": 18,
+      "source_sha256": "fe93577ac086c395fb043d2bdd8dc712811ad1042fef5797c3fed14eabd0095e",
+      "scope": "candidate_csr_static_lint",
+      "reason": "interrupt is the exact active Verilog port name; renaming it would break the replacement contract.",
+      "owner": "privileged",
+      "expires_when": "the locked csr port contract permits renaming interrupt"
+    },
+    {
+      "id": "csr-locked-tlbnum-compat-parameter",
+      "rule": "UNUSEDPARAM",
+      "file": "generated csr.v",
+      "line": 7,
+      "source_sha256": "fe93577ac086c395fb043d2bdd8dc712811ad1042fef5797c3fed14eabd0095e",
+      "scope": "candidate_csr_static_lint",
+      "reason": "The active mycpu_top passes TLBNUM positionally; the locked replacement supports TLBNUM=32 and retains the parameter solely for source compatibility.",
+      "owner": "privileged",
+      "expires_when": "mycpu_top no longer parameterizes csr or the CSR implementation supports a variable TLB entry count"
+    },
+    {
+      "id": "exe-stage-one-file-component-names",
+      "rule": "DECLFILENAME",
+      "file": "generated:exe_stage.v",
+      "line": 1,
+      "source_sha256": "839d5932db50baac933205c26765549344147a58ab056a886a374c0d694351aa",
+      "scope": "candidate_exe_stage_lint_only",
+      "reason": "The reproducible one-file generator emits exact top exe_stage together with typed ExecuteStage and OpenLa500Alu modules; module names intentionally differ from the package filename.",
+      "owner": "execute",
+      "expires_when": "the generator and overlay support a manifest-verified multi-file component package"
+    },
+    {
+      "id": "addr-trans-single-file-child-module-name",
+      "rule": "DECLFILENAME",
+      "file": "generated addr_trans.v:268",
+      "line": 268,
+      "source_sha256": "c7920aa144dfafb60ce89cca9f8267c185909437cf86124d187dd49ba0a532f1",
+      "scope": "candidate_addr_trans_static_lint",
+      "reason": "单文件 replacement 必须同时携带 addr_trans 顶层和 Spinal 内嵌的 openla500_tlb_entry_impl；拆分文件会破坏官方 overlay 的单文件依赖合同。",
+      "owner": "privileged",
+      "expires_when": "official overlay permits a separate committed TLB dependency file"
+    },
+    {
+      "id": "addr-trans-legacy-unused-tlbehi-reserved",
+      "rule": "UNUSEDSIGNAL",
+      "file": "generated addr_trans.v:42",
+      "line": 42,
+      "source_sha256": "c7920aa144dfafb60ce89cca9f8267c185909437cf86124d187dd49ba0a532f1",
+      "scope": "candidate_addr_trans_static_lint",
+      "reason": "精确保留 TLBEHI 32-bit 端口，活动逻辑只消费 VPPN[31:13]。",
+      "owner": "privileged",
+      "expires_when": "legacy addr_trans port contract changes"
+    },
+    {
+      "id": "addr-trans-legacy-unused-tlbelo-reserved",
+      "rule": "UNUSEDSIGNAL",
+      "file": "generated addr_trans.v:43-44",
+      "line": 43,
+      "source_sha256": "c7920aa144dfafb60ce89cca9f8267c185909437cf86124d187dd49ba0a532f1",
+      "scope": "candidate_addr_trans_static_lint",
+      "reason": "精确保留 TLBELO0/TLBELO1 端口，reserved bits 不进入活动字段。",
+      "owner": "privileged",
+      "expires_when": "legacy addr_trans port contract changes"
+    },
+    {
+      "id": "addr-trans-legacy-unused-tlbidx-reserved",
+      "rule": "UNUSEDSIGNAL",
+      "file": "generated addr_trans.v:45",
+      "line": 45,
+      "source_sha256": "c7920aa144dfafb60ce89cca9f8267c185909437cf86124d187dd49ba0a532f1",
+      "scope": "candidate_addr_trans_static_lint",
+      "reason": "精确保留 TLBIDX 端口，活动逻辑只消费 index/PS/E 字段。",
+      "owner": "privileged",
+      "expires_when": "legacy addr_trans port contract changes"
+    },
+    {
+      "id": "addr-trans-legacy-unused-dmw-reserved",
+      "rule": "UNUSEDSIGNAL",
+      "file": "generated addr_trans.v:56-57",
+      "line": 56,
+      "source_sha256": "c7920aa144dfafb60ce89cca9f8267c185909437cf86124d187dd49ba0a532f1",
+      "scope": "candidate_addr_trans_static_lint",
+      "reason": "精确保留 DMW CSR 32-bit 端口，实际物理 tag 只消费窗口域字段。",
+      "owner": "privileged",
+      "expires_when": "DMW contract changes"
+    },
+    {
+      "id": "addr-trans-physical-low-offset",
+      "rule": "UNUSEDSIGNAL",
+      "file": "generated addr_trans.v:116-117",
+      "line": 116,
+      "source_sha256": "c7920aa144dfafb60ce89cca9f8267c185909437cf86124d187dd49ba0a532f1",
+      "scope": "candidate_addr_trans_static_lint",
+      "reason": "物理地址寄存器低 12 位由 index/offset 独立端口表达，保持 exact golden 组合合同。",
+      "owner": "privileged",
+      "expires_when": "addr_trans exposes a full physical address contract"
+    },
+    {
+      "id": "wb-stage-difftest-unused-exception-bit",
+      "rule": "UNUSEDSIGNAL",
+      "file": "generated wb_stage.v:payload_exceptionCode[10]",
+      "line": 508,
+      "source_sha256": "a7899e91ba02dec7b2c4cd798969ae012c0c2bee5efe83bda224896f406373bc",
+      "scope": "candidate_wb_stage_difftest_static_lint",
+      "reason": "The locked exception vector reserves bit 10; the writeback contract consumes the same exception bits as the golden RTL and must retain the 16-bit payload.",
+      "owner": "pipeline",
+      "expires_when": "the locked wb_stage exception payload width or bit-10 semantics change"
+    },
+    {
+      "id": "wb-stage-difftest-unused-physical-offset",
+      "rule": "UNUSEDSIGNAL",
+      "file": "generated wb_stage.v:payload_physicalAddress[3:0]",
+      "line": 530,
+      "source_sha256": "a7899e91ba02dec7b2c4cd798969ae012c0c2bee5efe83bda224896f406373bc",
+      "scope": "candidate_wb_stage_difftest_static_lint",
+      "reason": "LL/SC reservation exports a line address and therefore intentionally does not consume the low four physical-address bits; the full input remains in the locked payload contract.",
+      "owner": "pipeline",
+      "expires_when": "the locked wb_stage reservation address contract changes"
+    },
+    {
+      "id": "wb-stage-normal-profile-elided-observation",
+      "rule": "UNUSEDSIGNAL",
+      "file": "generated wb_stage.v:normal profile payload observation fields",
+      "line": 457,
+      "source_sha256": "4f37e07bbbba77e8af966ab8d9016aec1010863ad0c5fc6caa35c71f36624887",
+      "scope": "candidate_wb_stage_normal_static_lint",
+      "reason": "The ordinary profile deliberately omits DIFFTEST outputs; the exact unused set is checked by wb_stage_gate.py rather than globally disabling UNUSEDSIGNAL.",
+      "owner": "pipeline",
+      "expires_when": "ordinary wb_stage exposes the observation contract"
+    },
+    {
+      "id": "wb-stage-one-file-component-name-normal",
+      "rule": "DECLFILENAME",
+      "file": "generated wb_stage.v",
+      "line": 1,
+      "source_sha256": "4f37e07bbbba77e8af966ab8d9016aec1010863ad0c5fc6caa35c71f36624887",
+      "scope": "candidate_wb_stage_normal_static_lint",
+      "reason": "One reproducible SpinalHDL file contains the public wb_stage and typed WritebackStage modules; the filename intentionally follows the public module.",
+      "owner": "pipeline",
+      "expires_when": "the generated component package is split into filename-matching modules"
+    },
+    {
+      "id": "wb-stage-one-file-component-name-difftest",
+      "rule": "DECLFILENAME",
+      "file": "generated wb_stage.v",
+      "line": 1,
+      "source_sha256": "a7899e91ba02dec7b2c4cd798969ae012c0c2bee5efe83bda224896f406373bc",
+      "scope": "candidate_wb_stage_difftest_static_lint",
+      "reason": "One reproducible SpinalHDL file contains the public wb_stage and typed WritebackStage modules; the filename intentionally follows the public module.",
+      "owner": "pipeline",
+      "expires_when": "the generated component package is split into filename-matching modules"
+    },
+    {
+      "id": "mem-stage-legacy-dmw0-reserved-bits",
+      "rule": "UNUSEDSIGNAL",
+      "file": "generated mem_stage.v:csr_dmw0[28:6,2:1]",
+      "line": 36,
+      "source_sha256": "37d0cba5ca2f8e901f77aaa26e56360e9205c4732f49ecd9c3189499f03e9bb1",
+      "scope": "candidate_mem_stage_static_lint",
+      "reason": "The locked 32-bit DMW0 compatibility port contains reserved fields; MEM consumes only PLV0, PLV3, MAT and VSEG exactly as the golden RTL.",
+      "owner": "pipeline",
+      "expires_when": "the legacy mem_stage DMW port contract changes or the reserved fields gain active semantics"
+    },
+    {
+      "id": "mem-stage-legacy-dmw1-reserved-bits",
+      "rule": "UNUSEDSIGNAL",
+      "file": "generated mem_stage.v:csr_dmw1[28:6,2:1]",
+      "line": 37,
+      "source_sha256": "37d0cba5ca2f8e901f77aaa26e56360e9205c4732f49ecd9c3189499f03e9bb1",
+      "scope": "candidate_mem_stage_static_lint",
+      "reason": "The locked 32-bit DMW1 compatibility port contains reserved fields; MEM consumes only PLV0, PLV3, MAT and VSEG exactly as the golden RTL.",
+      "owner": "pipeline",
+      "expires_when": "the legacy mem_stage DMW port contract changes or the reserved fields gain active semantics"
+    },
+    {
+      "id": "mem-stage-preload-payload-compat",
+      "rule": "UNUSEDSIGNAL",
+      "file": "generated mem_stage.v:payload_preload",
+      "line": 581,
+      "source_sha256": "37d0cba5ca2f8e901f77aaa26e56360e9205c4732f49ecd9c3189499f03e9bb1",
+      "scope": "candidate_mem_stage_static_lint",
+      "reason": "The 425-bit legacy payload carries PRELD through EX, while the locked golden MEM stage latches but does not consume that field.",
+      "owner": "pipeline",
+      "expires_when": "PRELD gains a MEM-stage behavior or the legacy payload field is retired"
+    },
+    {
+      "id": "mem-stage-one-file-component-name",
+      "rule": "DECLFILENAME",
+      "file": "generated mem_stage.v",
+      "line": 1,
+      "source_sha256": "37d0cba5ca2f8e901f77aaa26e56360e9205c4732f49ecd9c3189499f03e9bb1",
+      "scope": "candidate_mem_stage_static_lint",
+      "reason": "One reproducible SpinalHDL file contains the public mem_stage and typed MemoryStage modules; the filename follows the public replacement module.",
+      "owner": "pipeline",
+      "expires_when": "the generated component package is split into filename-matching modules"
+    }
+  ]
+}

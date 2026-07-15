@@ -1,0 +1,16 @@
+{"argv":["git","status","--short","--branch"],"cwd":"nscscc-cpu/.work/worktrees/20260713-0729-exe-stage-spinal","exit_code":0,"elapsed_seconds":0.2,"evidence":"preflight recorded in iteration.md"}
+{"argv":["make","scala-check"],"cwd":"nscscc-cpu/.work/worktrees/20260713-0729-exe-stage-spinal","exit_code":0,"elapsed_seconds":56.8,"evidence":"evidence/scala.json"}
+{"argv":["make","generate","TARGET=exe_stage","EXE_STAGE_PROFILE=lacc_off"],"cwd":"nscscc-cpu/.work/worktrees/20260713-0729-exe-stage-spinal","exit_code":0,"elapsed_seconds":44.8,"evidence":"evidence/generate-off.json"}
+{"argv":["make","generate","TARGET=exe_stage","EXE_STAGE_PROFILE=lacc_on"],"cwd":"nscscc-cpu/.work/worktrees/20260713-0729-exe-stage-spinal","exit_code":0,"elapsed_seconds":39.9,"evidence":"evidence/generate-on.json"}
+{"argv":["python3","tools/exe_stage_ports.py","--profile","lacc_off"],"cwd":"nscscc-cpu/.work/worktrees/20260713-0729-exe-stage-spinal","exit_code":0,"elapsed_seconds":2.0,"evidence":"evidence/port-off.json"}
+{"argv":["python3","tools/exe_stage_ports.py","--profile","lacc_on"],"cwd":"nscscc-cpu/.work/worktrees/20260713-0729-exe-stage-spinal","exit_code":0,"elapsed_seconds":2.0,"evidence":"evidence/port-on.json"}
+{"argv":["verilator","--lint-only","-Wall","--top-module","exe_stage","lacc_off"],"cwd":"nscscc-cpu/.work/worktrees/20260713-0729-exe-stage-spinal","exit_code":0,"elapsed_seconds":3.0,"evidence":"evidence/diff-off.json"}
+{"argv":["verilator","--lint-only","-Wall","--top-module","exe_stage","lacc_on"],"cwd":"nscscc-cpu/.work/worktrees/20260713-0729-exe-stage-spinal","exit_code":0,"elapsed_seconds":3.0,"evidence":"evidence/diff-on.json"}
+{"argv":["yosys","-q","hierarchy","proc","check-assert","lacc_off"],"cwd":"nscscc-cpu/.work/worktrees/20260713-0729-exe-stage-spinal","exit_code":0,"elapsed_seconds":2.0,"evidence":"evidence/yosys.json"}
+{"argv":["yosys","-q","hierarchy","proc","check-assert","lacc_on"],"cwd":"nscscc-cpu/.work/worktrees/20260713-0729-exe-stage-spinal","exit_code":0,"elapsed_seconds":2.0,"evidence":"evidence/yosys.json"}
+{"argv":["python3","tools/exe_stage_diff.py","--profile","lacc_off"],"cwd":"nscscc-cpu/.work/worktrees/20260713-0729-exe-stage-spinal","exit_code":0,"elapsed_seconds":8.0,"evidence":"evidence/diff-off.json"}
+{"argv":["python3","tools/exe_stage_diff.py","--profile","lacc_on"],"cwd":"nscscc-cpu/.work/worktrees/20260713-0729-exe-stage-spinal","exit_code":0,"elapsed_seconds":8.0,"evidence":"evidence/diff-on.json"}
+{"argv":["python3","tools/exe_stage_diff.py","--profile","lacc_off","--negative-control"],"cwd":"nscscc-cpu/.work/worktrees/20260713-0729-exe-stage-spinal","exit_code":0,"elapsed_seconds":6.0,"evidence":"evidence/negative-off.json"}
+{"argv":["python3","tools/exe_stage_diff.py","--profile","lacc_on","--negative-control"],"cwd":"nscscc-cpu/.work/worktrees/20260713-0729-exe-stage-spinal","exit_code":0,"elapsed_seconds":6.0,"evidence":"evidence/negative-on.json"}
+{"argv":["make","doctor","VIVADO_HOME=D:/Xilinx/Vivado/2023.2"],"cwd":"nscscc-cpu/.work/worktrees/20260713-0729-exe-stage-spinal","exit_code":0,"elapsed_seconds":15.2,"evidence":"evidence/doctor.json"}
+{"argv":["python3","-m","unittest","discover","-s","tests","-p","test_*.py"],"cwd":"nscscc-cpu/.work/worktrees/20260713-0729-exe-stage-spinal","exit_code":0,"elapsed_seconds":11.2,"evidence":"evidence/automation.json"}

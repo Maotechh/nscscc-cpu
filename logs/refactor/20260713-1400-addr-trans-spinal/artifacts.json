@@ -1,0 +1,9 @@
+{
+  "schema_version": 1,
+  "artifacts": [
+    {"path":"/tmp/nscscc-addr-trans-final-gates/scala-check/summary.json","sha256":"a688afb3af3a2a1fd3cc01f68d349da537f5d15f7d8c3b3fe5e6df00a3b7e275","retention":"local"},
+    {"path":"/tmp/nscscc-addr-trans-final-gates/addr-generate/summary.json","sha256":"0ceabcc548b67d1005f25df102b1de8421d3a4c2d019b615da6ce2562973216f","retention":"local"},
+    {"path":"/tmp/nscscc-addr-trans-final-gates/tlb-generate/summary.json","sha256":"474e2ad386aaa865c57547117312b2ad0a99980a8d4c53f841a173245732695c","retention":"local"},
+    {"path":"/tmp/addrtrans-make-gates/tlb/unit/summary.json","sha256":"5c13b5979250a59ed62d9025854a5df776e5b9f885378b569d636cf5f86f3ee8","retention":"local"}
+  ]
+}

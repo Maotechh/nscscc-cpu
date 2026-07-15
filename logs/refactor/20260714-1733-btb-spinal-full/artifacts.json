@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "iteration_id": "20260714-1733-btb-spinal-full",
+  "artifacts": [
+    {"path":"evidence/rtl-smoke.json","size":176926,"sha256":"7e6c8f4b37b43dd679694f0731fb661ba8d4f9e0d3d939c40e1fa74d7025e88a","kind":"machine_readable_summary"},
+    {"path":"evidence/generate-final.json","size":104074,"sha256":"eacb7e5f9232f3cda501e3d9b45c30385d2543d6b223eea88a89fbdc3640e72f","kind":"machine_readable_summary"},
+    {"path":"evidence/publish-check.json","size":1754,"sha256":"cc585ae83e3cb6b4e7b2e3fe678b53acfa6a8d751064a3fb3372bb18536ec60c","kind":"machine_readable_summary"}
+  ],
+  "external_artifacts": [
+    {"path":"/tmp/predictor-chiplab-work/20260714-1733-btb-spinal-full/sims/verilator/run_prog/log/compile.log","size":271411,"sha256":"28b11c49a7a3b49e05047a9ca74abe96187a993f637629f199dce091db75c98a","kind":"raw_compile_log","retention":"until explicit cleanup"},
+    {"path":"/tmp/predictor-chiplab-work/20260714-1733-btb-spinal-full/sims/verilator/run_prog/log/func/func_lab19_log/simu_trace.txt","size":13925520,"sha256":"80420ff3a497ae7a31cff4543a2fa1648a24253d69184b89268179184648c6fb","kind":"raw_simulation_trace","retention":"until explicit cleanup"}
+  ]
+}

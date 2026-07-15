@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "iteration_id": "20260712-1651-mul-spinal",
+  "date": "2026-07-12",
+  "auditor": "/root/mul_experiment_audit",
+  "review_target_sha": "f6c55e6dcb42761c283febf99460214452628fd0",
+  "overall_verdict": "warn",
+  "integrity_status": "warn",
+  "pending_external_recheck": true,
+  "completion_error": "Agent usage limit was reached while rechecking the post-audit log fixes.",
+  "checks": {
+    "gt_provenance": {
+      "status": "pass",
+      "details": "golden is the locked a158aa8 Git blob; candidate unit uses an independent integer model and explicitly does not claim golden formal equivalence"
+    },
+    "score_normalization": {
+      "status": "pass",
+      "details": "no normalized score is used; reports contain exact counts, hashes and first mismatch"
+    },
+    "result_existence": {
+      "status": "warn",
+      "details": "auditor verified the f6c55e6 raw artifacts and numbers, but found the then-current tracked logs still indexed pre-commit evidence; files were corrected afterward and independent final recheck was interrupted by usage limit"
+    },
+    "dead_code": {
+      "status": "pass",
+      "details": "the candidate snapshot driver, negative controls and official wrapper all produced referenced result files"
+    },
+    "scope": {
+      "status": "warn",
+      "details": "leaf evidence is strong, but official integration scope is one func_lab19 run and it fails; broad CPU claims are prohibited"
+    },
+    "eval_type": [
+      "locked_git_golden",
+      "independent_mathematical_model",
+      "2-state_formal",
+      "official_simulation_only",
+      "leaf_synthesis_diagnostic"
+    ]
+  },
+  "claims": [
+    {"id":"C1","impact":"supported_with_qualifiers"},
+    {"id":"C2","impact":"supported_with_strict_single_failure_qualifier"},
+    {"id":"C3","impact":"unsupported"}
+  ],
+  "required_follow_up": "A fresh independent auditor must recheck summary.json, artifacts.json and the tracked evidence hashes before any ready/status promotion."
+}

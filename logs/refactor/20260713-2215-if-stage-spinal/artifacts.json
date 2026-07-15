@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "iteration_id": "20260713-2215-if-stage-spinal",
+  "artifacts": [
+    {"id":"candidate-rtl","path":"reference/component-replacements/if_stage.v","sha256":"4d86248239becafcbbe605a4c80f059c3cacc8f2ae7d34af50b6b68fe1713b1a","size":24687,"retention":"git"},
+    {"id":"replacement-spec","path":"reference/component-replacements/if-stage.json","sha256":"c102c9fc7cf3cc74c118c1a2fa8d551131db73579e6e82791818976cd4aee1cb","size":344,"retention":"git"}
+  ],
+  "external_locators": [
+    {"path":"/tmp/if-gen-final2/summary.json","sha256":"67f719f46420f31582ba016c343173c3bf66a93bdc6d7b522859a9d7f7bf60c6","size":90186},
+    {"path":"/tmp/if-gate-tracked/summary.json","sha256":"c7f963215833b43331d280bdef9461f476369b148762e249fc73916c4394097e","size":14633},
+    {"path":"/tmp/if-scala-final3/scala-check/summary.json","sha256":"ac293e2724eaab8ab4a7f062382274b5eb1199c363f603be1118e8022314c616","size":93369}
+  ]
+}

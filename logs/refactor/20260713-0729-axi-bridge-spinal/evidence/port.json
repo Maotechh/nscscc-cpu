@@ -1,0 +1,14 @@
+{
+  "gate": "axi-bridge-port",
+  "generated_at": "2026-07-13T07:50:46+08:00",
+  "module": "axi_bridge",
+  "ports": {
+    "actual": 65,
+    "expected": 65,
+    "matched": true
+  },
+  "rtl_sha256": "4c307033b1d79da6cc257d314d92ef69830ed87cddc24eb7269ff278927e70a0",
+  "rtl_size": 10819,
+  "schema_version": 1,
+  "status": "pass"
+}

@@ -1,0 +1,132 @@
+{
+  "arithmetic": {
+    "divide_by_zero": {
+      "remainder": "dividend_bits",
+      "signed_negative_quotient": "0x00000001",
+      "signed_nonnegative_quotient": "0xffffffff",
+      "unsigned_quotient": "0xffffffff"
+    },
+    "output_width": 32,
+    "quotient": "truncate_toward_zero",
+    "remainder_sign": "dividend",
+    "signed_overflow": "wrap_32bit"
+  },
+  "contract": {
+    "path": "/mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260713-0302-div-spinal/reference/component-contracts/div.json",
+    "sha256": "ab5887bdf903cb3a3b2d68929291425ce3e7d4dc680135e20ee1048d01dc1af3"
+  },
+  "diff": {
+    "cycle_exact": true,
+    "independent_model": true,
+    "runner": "verilator_cycle"
+  },
+  "evaluator_sha256": "5728d0495d22337d3b8efb61ab1175daf04f51123ca7b3ecfc5916a8ed4a0027",
+  "gate": "div-contract",
+  "generated_at": "2026-07-13T03:27:59+08:00",
+  "golden": {
+    "actual_git_blob_sha1": "225827c7d69addd280cb671c17e067a406a9171f",
+    "actual_sha256": "7e499f4c43c92154d1d4e21be2f269ac140b4f2b2d944677c71f6f4213b66dc6",
+    "actual_size": 2642,
+    "commit": "a158aa8ab4d49cece1a0fe488d7ac7dc02bd8cf6",
+    "expected_git_blob_sha1": "225827c7d69addd280cb671c17e067a406a9171f",
+    "expected_sha256": "7e499f4c43c92154d1d4e21be2f269ac140b4f2b2d944677c71f6f4213b66dc6",
+    "expected_size": 2642,
+    "object_type": "blob",
+    "path": "rtl/div.v",
+    "verified": true
+  },
+  "manifest": {
+    "path": "/mnt/d/schoolworks/CS110/longxin/nscscc-cpu/.work/worktrees/20260713-0302-div-spinal/reference/manifest.lock",
+    "sha256": "743dd7e58d77e456cfe664d80c2e6614ab426f72bfecd9088ff18d702afa2f20",
+    "team_golden_candidate": "a158aa8ab4d49cece1a0fe488d7ac7dc02bd8cf6"
+  },
+  "module": "div",
+  "ports": {
+    "complete": {
+      "direction": "output",
+      "width": 1
+    },
+    "div": {
+      "direction": "input",
+      "width": 1
+    },
+    "div_clk": {
+      "direction": "input",
+      "width": 1
+    },
+    "div_signed": {
+      "direction": "input",
+      "width": 1
+    },
+    "r": {
+      "direction": "output",
+      "width": 32
+    },
+    "reset": {
+      "direction": "input",
+      "width": 1
+    },
+    "s": {
+      "direction": "output",
+      "width": 32
+    },
+    "x": {
+      "direction": "input",
+      "width": 32
+    },
+    "y": {
+      "direction": "input",
+      "width": 32
+    }
+  },
+  "protocol": {
+    "abort": {
+      "behavior": "synchronous_rearm_no_valid_result",
+      "triggers": [
+        "reset_active_edge",
+        "request_low_before_result_capture"
+      ]
+    },
+    "active_edges_to_complete": 33,
+    "clock": "div_clk",
+    "complete": {
+      "active_level": 1,
+      "assert_after_consecutive_request_edges": 33,
+      "pulse_edges": 1,
+      "signal": "complete"
+    },
+    "edge": "posedge",
+    "operands_stable": "from_accept_through_result_capture",
+    "rearm": {
+      "held_high_cleanup_edges": 2,
+      "low_edges_before_restart": 1
+    },
+    "request": {
+      "accept": "first_active_edge_from_idle",
+      "active_level": 1,
+      "hold_through": "result_capture_edge",
+      "mode": "level",
+      "signal": "div"
+    },
+    "reset": {
+      "active_level": 1,
+      "behavior": "synchronous_clear_idle",
+      "signal": "reset"
+    },
+    "result": {
+      "capture_edge": "first_posedge_after_complete",
+      "complete_level_during_valid_window": 0,
+      "consecutive_request_edges_to_capture": 34,
+      "valid_window_edges": 1
+    },
+    "unknown_policy": "ignore_results_before_capture_edge"
+  },
+  "repository_head": "9e78538c0dec08fa9fcace49e068b8bc9d4d5af1",
+  "schema_version": 1,
+  "status": "pass",
+  "stimulus": {
+    "random_transactions": 4096,
+    "seed": "0x158aa8"
+  },
+  "target": "div"
+}

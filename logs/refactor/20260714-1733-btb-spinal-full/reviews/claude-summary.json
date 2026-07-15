@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "iteration_id": "20260714-1733-btb-spinal-full",
+  "status": "unavailable",
+  "job_id": "526788a2475c47a4b377d215e5ab3443",
+  "provider": null,
+  "model": null,
+  "reviewed_head_sha": null,
+  "raw_sha256": "40076957e1960b6c38742f0c77c6a175ee1fb6dcc92926ee94c5e4aec00ec948",
+  "provenance": {
+    "source": "claude-review-mcp",
+    "raw_path": "reviews/claude-raw.md",
+    "raw_sha256": "40076957e1960b6c38742f0c77c6a175ee1fb6dcc92926ee94c5e4aec00ec948",
+    "job_id": "526788a2475c47a4b377d215e5ab3443",
+    "provider": null,
+    "model": null,
+    "reviewed_head_sha": null
+  },
+  "error": "Required provider environment variable is not set: GEEKPIE_CLAUDE_API_KEY",
+  "open_blocking_count": 1,
+  "fresh_against_head": false,
+  "allow_ready": false,
+  "allow_status_promotion": false
+}

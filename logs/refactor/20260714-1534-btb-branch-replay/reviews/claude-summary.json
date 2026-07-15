@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "iteration_id": "20260714-1534-btb-branch-replay",
+  "status": "unavailable",
+  "job_id": "fab302c66b9c458d9a80184c37b865e8",
+  "provider": null,
+  "model": null,
+  "reviewed_head_sha": "75523504912c1b390dc1d1e3cddb5c3a0cc43a27",
+  "raw_sha256": "8eee200c97428c0e612d4c284706f5c1c83fbe8d2e65546fc0df6b0c8d1678b7",
+  "provenance": {
+    "source": "claude-review-mcp",
+    "raw_path": "reviews/claude-raw.md",
+    "raw_sha256": "8eee200c97428c0e612d4c284706f5c1c83fbe8d2e65546fc0df6b0c8d1678b7",
+    "job_id": "fab302c66b9c458d9a80184c37b865e8",
+    "provider": null,
+    "model": null,
+    "reviewed_head_sha": "75523504912c1b390dc1d1e3cddb5c3a0cc43a27"
+  },
+  "error": "Required provider environment variable is not set: GEEKPIE_CLAUDE_API_KEY",
+  "open_blocking_count": 1,
+  "fresh_against_head": false,
+  "allow_ready": false,
+  "allow_status_promotion": false
+}

@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "iteration_id": "20260713-2227-mem-active-overlay",
+  "artifacts": [
+    {"path":"evidence/scala-summary.json","sha256":"2078139db23d46f6b75a66f6f9107e66194d60d70cc3e512c76378fb79874825","size":273,"source_sha256":"9463cd9d154e38ce70e6381a6e4e08328817aeb378f114acc220ce60084e8f1a","retention":"git","gate_eligible":true},
+    {"path":"evidence/chiplab-doctor-summary.json","sha256":"b7d9427823b2bb5c13a0c91b0cad03ee274253d45e832f051f46b580cdbe3593","size":309,"source_sha256":"1b5bf5d7756592f007ad87b098f1e9b985daacb15e0cb80838f4de41e2ff6287","retention":"git","gate_eligible":true},
+    {"path":"evidence/vivado-doctor-summary.json","sha256":"50eeeceb6d261f330b02168d585eeb4cce318d3d028f5f2502f8b48fa4edd99b","size":249,"source_sha256":"d347a10107103b2a9de39abfdc42428965a9c1d3fd14f4fb6dfaea2636f4f820","retention":"git","gate_eligible":true},
+    {"path":"evidence/reachability.json","sha256":"d0898a6ec2b670e7f5a3fc318dbf285467f5590b02162b1e927eb37bcdb42ab8","size":890,"source_sha256":"0c84e03b015818ee9f787f3487c1a4eb89756f2baa37b56ba0e496a5dbc19d38","retention":"git","gate_eligible":true},
+    {"path":"evidence/chiplab-overlay.json","sha256":"0a1b13a65c0b66a7e689f92012fde14969532b9da6cb1fad4b255ac7cf0e67d1","size":857,"manifest_sha256":"f8af573be849ef077c9fc367c0a92c14fd2aaa8cdbf57fcf84f1f2fb436166ba","retention":"git","gate_eligible":false},
+    {"path":"evidence/rtl-smoke.json","sha256":"1c27fdeca67571d0662fb921229bb806eb05c939fdbf96376b5e08411d34c316","size":1169,"trace_sha256":"8efa7942ab6d4702129dc0c7eb0676c6cfcd87361ee8ecf99411567c3db38acb","retention":"git","gate_eligible":false},
+    {"path":"reviews/independent-read-only.json","sha256":"2e8562a2708b4f49672da94413148e69b89d544b82bb73ba3ac443130b5607a7","size":707,"retention":"git","gate_eligible":false}
+  ]
+}
