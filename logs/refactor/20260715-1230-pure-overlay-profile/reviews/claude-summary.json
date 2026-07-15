@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "iteration_id": "20260715-1230-pure-overlay-profile",
+  "status": "unavailable",
+  "job_id": "unavailable-20260715-pure-overlay-profile",
+  "raw_sha256": "5e7b5129e83983b04062827ba80ed105ab32457f7bf83134f0559adb1442cc08",
+  "provider": "claude-review-mcp",
+  "model": null,
+  "reviewed_head_sha": null,
+  "provenance": {"source": "claude-review-mcp", "raw_path": "reviews/claude-raw.md", "raw_sha256": "5e7b5129e83983b04062827ba80ed105ab32457f7bf83134f0559adb1442cc08", "job_id": "unavailable-20260715-pure-overlay-profile", "provider": "claude-review-mcp", "model": null, "reviewed_head_sha": null},
+  "open_blocking_count": 1,
+  "fresh_against_head": false,
+  "allow_ready": false,
+  "allow_status_promotion": false,
+  "error": "Required provider environment variable is not set: GEEKPIE_CLAUDE_API_KEY",
+  "reviewer": "claude",
+  "claims": [
+    {"claim": "pure overlay workload functional observation passes", "decision": "accepted"},
+    {"claim": "strict smoke gate passes", "decision": "open"},
+    {"claim": "complete refactor", "decision": "open"}
+  ]
+}

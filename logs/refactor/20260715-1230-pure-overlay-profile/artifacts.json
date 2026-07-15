@@ -1,6 +1,15 @@
 {
   "schema_version": 1,
   "iteration_id": "20260715-1230-pure-overlay-profile",
-  "artifacts": [],
-  "external_artifacts": []
+  "artifacts": [
+    {"path": "evidence/chiplab-doctor.json", "sha256": "6a3920ba094a0f646a5994e6510ca4454c7050fd723d671d8c82f49411c5a74b", "size": 16175},
+    {"path": "evidence/chiplab-overlay.json", "sha256": "ba76bdd659762d95676e85ee27568908a4f9364a1e76c397ba580c60a4f4bddd", "size": 4458},
+    {"path": "evidence/chiplab-overlay-manifest.json", "sha256": "f96edfeba6cfdf282a9fac866a74847bf823b33f3f6da8438986f08933d34b29", "size": 13912},
+    {"path": "evidence/candidate-closure.json", "sha256": "afed149eec2eb4271e8a35e6e4820d904f7f8ad26cec19a4d2a7805f3faaaeb1", "size": 4259},
+    {"path": "evidence/rtl-smoke.json", "sha256": "a1e58c6ab13a7ae8eeefdb0e2fa11a1b545eeae39ff047ca03094a2f0dfa2c8c", "size": 127841}
+  ],
+  "external_artifacts": [
+    {"path": "/home/nscscc-pure-work/20260715-1230-pure-overlay-profile/sims/verilator/run_prog/log/func/func_lab19_log/simu_trace.txt", "sha256": "911597f5360579a65f2a9f6c9ec863ac0b9a957a485b62273a1d55a04195ea6a", "size": 13924720, "retention": "external-temp"},
+    {"path": "/home/nscscc-pure-work/20260715-1230-pure-overlay-profile/sims/verilator/run_prog/log/compile.log", "sha256": "72e96eb5911eb8b0b5aa6688d2702f93d13fa379661969c971fd7eb6a0b98e7e", "size": 186772, "retention": "external-temp"}
+  ]
 }

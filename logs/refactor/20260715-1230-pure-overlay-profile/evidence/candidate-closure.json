@@ -1,0 +1,195 @@
+{
+  "allowed_external_instance_types": [
+    "ChiplabDiffTestBlackBox"
+  ],
+  "gate": "candidate-closure",
+  "instance_types": [
+    "ChiplabDiffTestAdapter",
+    "ChiplabDiffTestBlackBox",
+    "DecodeStage",
+    "DifftestCSRRegState",
+    "DifftestExcpEvent",
+    "DifftestGRegState",
+    "DifftestInstrCommit",
+    "DifftestLoadEvent",
+    "DifftestStoreEvent",
+    "DifftestTrapEvent",
+    "ExecuteStage",
+    "FetchStage",
+    "MemoryStage",
+    "OpenLa500AddrTrans",
+    "OpenLa500Alu",
+    "OpenLa500AxiBridge",
+    "OpenLa500Csr",
+    "OpenLa500DCache",
+    "OpenLa500Div",
+    "OpenLa500ICache",
+    "OpenLa500Mul",
+    "OpenLa500PerfCounter",
+    "OpenLa500Predictor",
+    "SpinalCoreBackend",
+    "WritebackStage",
+    "openla500_tlb_entry_impl"
+  ],
+  "legacy_definitions": [],
+  "legacy_instances": [],
+  "legacy_module_names": [
+    "addr_trans",
+    "alu",
+    "axi_bridge",
+    "btb",
+    "csr",
+    "dcache",
+    "div",
+    "exe_stage",
+    "icache",
+    "id_stage",
+    "if_stage",
+    "lacc_core",
+    "lacc_demo",
+    "mem_stage",
+    "mul",
+    "perf_counter",
+    "regfile",
+    "tlb_entry",
+    "tools",
+    "wb_stage"
+  ],
+  "module_definitions": [
+    "ChiplabDiffTestAdapter",
+    "ChiplabDiffTestBlackBox",
+    "DecodeStage",
+    "ExecuteStage",
+    "FetchStage",
+    "MemoryStage",
+    "OpenLa500AddrTrans",
+    "OpenLa500Alu",
+    "OpenLa500AxiBridge",
+    "OpenLa500Csr",
+    "OpenLa500DCache",
+    "OpenLa500Div",
+    "OpenLa500ICache",
+    "OpenLa500Mul",
+    "OpenLa500PerfCounter",
+    "OpenLa500Predictor",
+    "SpinalCoreBackend",
+    "WritebackStage",
+    "core_top",
+    "openla500_tlb_entry_impl"
+  ],
+  "pure_overlay": {
+    "blocking_files": [],
+    "entries": [
+      {
+        "module_definitions": [],
+        "path": "addr_trans.v",
+        "present": false
+      },
+      {
+        "module_definitions": [],
+        "path": "alu.v",
+        "present": false
+      },
+      {
+        "module_definitions": [],
+        "path": "axi_bridge.v",
+        "present": false
+      },
+      {
+        "module_definitions": [],
+        "path": "btb.v",
+        "present": false
+      },
+      {
+        "module_definitions": [],
+        "path": "csr.v",
+        "present": false
+      },
+      {
+        "module_definitions": [],
+        "path": "dcache.v",
+        "present": false
+      },
+      {
+        "module_definitions": [],
+        "path": "div.v",
+        "present": false
+      },
+      {
+        "module_definitions": [],
+        "path": "exe_stage.v",
+        "present": false
+      },
+      {
+        "module_definitions": [],
+        "path": "icache.v",
+        "present": false
+      },
+      {
+        "module_definitions": [],
+        "path": "id_stage.v",
+        "present": false
+      },
+      {
+        "module_definitions": [],
+        "path": "if_stage.v",
+        "present": false
+      },
+      {
+        "module_definitions": [],
+        "path": "lacc_core.v",
+        "present": false
+      },
+      {
+        "module_definitions": [],
+        "path": "lacc_demo.v",
+        "present": false
+      },
+      {
+        "module_definitions": [],
+        "path": "mem_stage.v",
+        "present": false
+      },
+      {
+        "module_definitions": [],
+        "path": "mul.v",
+        "present": false
+      },
+      {
+        "module_definitions": [],
+        "path": "perf_counter.v",
+        "present": false
+      },
+      {
+        "module_definitions": [],
+        "path": "regfile.v",
+        "present": false
+      },
+      {
+        "module_definitions": [],
+        "path": "tlb_entry.v",
+        "present": false
+      },
+      {
+        "module_definitions": [],
+        "path": "tools.v",
+        "present": false
+      },
+      {
+        "module_definitions": [],
+        "path": "wb_stage.v",
+        "present": false
+      }
+    ],
+    "root": "/home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/myCPU",
+    "status": "pass"
+  },
+  "pure_overlay_status": "pass",
+  "root_module": "core_top",
+  "root_module_count": 1,
+  "rtl": "/home/nscscc-pure-work/20260715-1230-pure-overlay-profile/IP/myCPU/mycpu_top.v",
+  "rtl_sha256": "ded57a4a2b494e5342481a2d87e5b286ebb703bedde8e79df3fe299894dc4cad",
+  "schema_version": 1,
+  "status": "pass",
+  "unresolved_instance_types": []
+}

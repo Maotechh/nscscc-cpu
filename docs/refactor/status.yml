@@ -1,8 +1,8 @@
 schema_version: 1
-updated_at: "2026-07-15T12:32:00+08:00"
+updated_at: "2026-07-15T12:45:00+08:00"
 active_iteration: "20260715-1230-pure-overlay-profile"
 active_branch: "refactor/20260714-1650-consolidated-spinal"
-source_head: "df25f38153373150c757fa1503ea433a55414aee"
+source_head: "01c9b21a6288a0fd06562aa049607124fd01f532"
 
 boundaries:
   refactor_branch_convergence:
@@ -421,12 +421,15 @@ boundaries:
     evidence:
       - logs/refactor/20260715-1210-core-publish-closure/iteration.md
       - logs/refactor/20260715-1210-core-publish-closure/evidence/candidate-closure.json
+      - logs/refactor/20260715-1230-pure-overlay-profile/evidence/chiplab-overlay-manifest.json
+      - logs/refactor/20260715-1230-pure-overlay-profile/evidence/candidate-closure.json
+      - logs/refactor/20260715-1230-pure-overlay-profile/evidence/rtl-smoke.json
     active_pr: null
     blocked_by:
-      - pure_overlay_file_set_not_enabled
       - strict_warning_policy_unapproved
+      - diagnostic_profile_not_gate_eligible
       - claude_bridge_missing_GEEKPIE_CLAUDE_API_KEY
-    last_iteration: "20260715-1210-core-publish-closure"
+    last_iteration: "20260715-1230-pure-overlay-profile"
 
   core_contracts:
     owner: architecture

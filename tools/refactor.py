@@ -2292,6 +2292,7 @@ def _command_chiplab_overlay_locked(args: argparse.Namespace, run_id: str) -> in
         "work_dir": str(work),
         "file_count": len(overlay_entries),
         "dut_source": args.dut_source,
+        "pure_spinal": pure_spinal,
         "provenance_mode": overlay_manifest["provenance_mode"],
         "gate_kind": overlay_manifest["gate_kind"],
         "candidate_locked": overlay_manifest["candidate_locked"],
