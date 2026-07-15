@@ -4,7 +4,7 @@
   "status": "draft",
   "branch": "refactor/20260715-2010-release-closure",
   "base_sha": "56d74f4b92d85e6403689cbbe4f7b4b460e8f63a",
-  "head_sha": "088d8d4cc9038488a03c27dcbf3a0751b1f76ad9",
+  "head_sha": "63d590af5728bb5219f5b4053038eee729aecaf6",
   "review_target_sha": "9a29409242bf29436bf553e584b87018fb3f6fa6",
   "selected_boundary": "pure_spinal_release_closure",
   "gates": {
