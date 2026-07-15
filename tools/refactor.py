@@ -786,6 +786,112 @@ def referenced_verilog_macros(text: str) -> set[str]:
     return macros
 
 
+def validate_generated_lint_annotations(text: str, source: str) -> None:
+    """Allow only the package gate's narrow, balanced core_top annotations."""
+
+    marker = re.compile(
+        r"/\*\s*verilator\s+lint_(?:off|on|save)\b[^*]*\*/", re.IGNORECASE
+    )
+    markers = marker.findall(text)
+    if not markers:
+        return
+    if source != "rtl/mycpu_top.v":
+        raise RefactorError(f"replacement Verilog contains an inline lint waiver: {source}")
+
+    lines = text.splitlines()
+    exact = re.compile(
+        r"^\s*/\* verilator lint_(off|on) (DECLFILENAME|UNUSEDSIGNAL) \*/\s*$"
+    )
+    parsed = [exact.fullmatch(line) for line in lines]
+    if sum(match is not None for match in parsed) != len(markers):
+        raise RefactorError(
+            f"generated core_top contains an unapproved inline lint annotation: {source}"
+        )
+
+    counts: dict[tuple[str, str], int] = {}
+    for match in parsed:
+        if match is not None:
+            key = (match.group(1), match.group(2))
+            counts[key] = counts.get(key, 0) + 1
+    expected = {
+        ("off", "DECLFILENAME"): 21,
+        ("on", "DECLFILENAME"): 21,
+        ("off", "UNUSEDSIGNAL"): 37,
+        ("on", "UNUSEDSIGNAL"): 37,
+    }
+    if counts != expected:
+        raise RefactorError(
+            f"generated core_top lint annotation inventory differs: {source}"
+        )
+
+    declaration = re.compile(r"^\s*(?:input|output|inout|wire|reg)\b.*(?:,|;)\s*$")
+    normal_unused = 0
+    special_off = 0
+    special_on = 0
+    for index, match in enumerate(parsed):
+        if match is None:
+            continue
+        action, rule = match.groups()
+        if rule == "DECLFILENAME":
+            if action == "off":
+                valid = index + 1 < len(lines) and re.match(
+                    r"^\s*module\s+[A-Za-z_][A-Za-z0-9_$]*\b", lines[index + 1]
+                )
+            else:
+                valid = index > 0 and re.match(r"^\s*endmodule\b", lines[index - 1])
+            if not valid:
+                raise RefactorError(
+                    f"generated core_top DECLFILENAME annotation is not module-scoped: {source}"
+                )
+            continue
+
+        if action == "off" and index + 2 < len(lines):
+            if declaration.match(lines[index + 1]) and parsed[index + 2] is not None:
+                closing = parsed[index + 2]
+                if closing.groups() == ("on", "UNUSEDSIGNAL"):
+                    normal_unused += 1
+                    continue
+            if (
+                index > 0
+                and index + 3 < len(lines)
+                and lines[index - 1].strip() == "`ifndef DIFFTEST_EN"
+                and lines[index + 1].strip() == "`endif"
+                and parsed[index + 2] is not None
+                and parsed[index + 2].groups() == ("off", "DECLFILENAME")
+                and re.match(r"^\s*module\s+ChiplabDiffTestBlackBox\b", lines[index + 3])
+            ):
+                special_off += 1
+                continue
+            raise RefactorError(
+                f"generated core_top UNUSEDSIGNAL annotation is not declaration-scoped: {source}"
+            )
+        if action == "on":
+            if index >= 2 and parsed[index - 2] is not None:
+                opening = parsed[index - 2]
+                if opening.groups() == ("off", "UNUSEDSIGNAL") and declaration.match(
+                    lines[index - 1]
+                ):
+                    continue
+            if (
+                index > 1
+                and index + 1 < len(lines)
+                and lines[index - 1].strip() == "`ifndef DIFFTEST_EN"
+                and lines[index + 1].strip() == "`endif"
+                and parsed[index - 2] is not None
+                and parsed[index - 2].groups() == ("on", "DECLFILENAME")
+            ):
+                special_on += 1
+                continue
+            raise RefactorError(
+                f"generated core_top UNUSEDSIGNAL annotation is unbalanced: {source}"
+            )
+
+    if normal_unused != 36 or special_off != 1 or special_on != 1:
+        raise RefactorError(
+            f"generated core_top lint annotation scopes differ: {source}"
+        )
+
+
 def validate_replacement_verilog(
     payload: bytes,
     source: str,
@@ -798,8 +904,7 @@ def validate_replacement_verilog(
         raise RefactorError(f"replacement Verilog is not UTF-8: {source}") from error
     if "\x00" in text:
         raise RefactorError(f"replacement Verilog contains a NUL byte: {source}")
-    if re.search(r"verilator\s+lint_(?:off|save)\b", text, re.IGNORECASE):
-        raise RefactorError(f"replacement Verilog contains an inline lint waiver: {source}")
+    validate_generated_lint_annotations(text, source)
     executable_code = mask_verilog_comments_and_strings(text, mask_strings=True)
     if re.search(r"`\s*(?:define|undef)\b|``", executable_code, re.IGNORECASE):
         raise RefactorError(

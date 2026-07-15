@@ -1502,6 +1502,22 @@ class ComponentReplacementValidationTests(unittest.TestCase):
             with self.subTest(payload=payload), self.assertRaises(refactor.RefactorError):
                 refactor.validate_replacement_verilog(payload, "icache.v")
 
+    def test_published_spinal_top_exact_lint_annotations_are_allowed(self) -> None:
+        payload = (Path(__file__).resolve().parents[1] / "rtl/mycpu_top.v").read_bytes()
+        refactor.validate_replacement_verilog(
+            payload, "rtl/mycpu_top.v", base_payload=payload
+        )
+
+        drifted = payload.replace(
+            b"/* verilator lint_off DECLFILENAME */",
+            b"/* verilator lint_off WIDTH */",
+            1,
+        )
+        with self.assertRaisesRegex(refactor.RefactorError, "unapproved inline"):
+            refactor.validate_replacement_verilog(
+                drifted, "rtl/mycpu_top.v", base_payload=payload
+            )
+
     def test_replacement_rejects_minimal_forged_pass_oracle(self) -> None:
         payload = (
             b'module icache; initial begin $display("HIT GOOD TRAP"); '
