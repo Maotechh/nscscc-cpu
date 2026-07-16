@@ -232,7 +232,7 @@ class OpenLa500LaccDCacheIntegrationSpec extends AnyFunSuite {
           }
 
         def waitForRefillRequest(
-            expectedLine: BigInt,
+            expectedAddress: BigInt,
             pending: Option[(BigInt, Boolean)]
         ): Unit = {
           var observed = false
@@ -250,7 +250,7 @@ class OpenLa500LaccDCacheIntegrationSpec extends AnyFunSuite {
             if (dut.io.rdReq.toBoolean) {
               observed = true
               assert(
-                dut.io.rdAddr.toBigInt == expectedLine,
+                dut.io.rdAddr.toBigInt == expectedAddress,
                 f"unexpected refill line 0x${dut.io.rdAddr.toBigInt}%08x"
               )
             }
@@ -258,28 +258,29 @@ class OpenLa500LaccDCacheIntegrationSpec extends AnyFunSuite {
             cycles += 1
           }
           dut.io.rdReady #= false
-          assert(observed, s"DCache did not issue refill request for 0x$expectedLine%08x")
+          assert(observed, s"DCache did not issue refill request for 0x$expectedAddress%08x")
         }
 
         def sendRefill(
             lineData: Seq[Int],
-            targetWord: Int,
+            startWord: Int,
             pendingBeforeResponse: Option[(BigInt, Boolean)],
             pendingAfterResponse: Option[(BigInt, Boolean)]
         ): Unit = {
           require(lineData.size == 4)
-          lineData.zipWithIndex.foreach { case (data, word) =>
+          for (beat <- lineData.indices) {
+            val word = (startWord + beat) & 3
+            val data = lineData(word)
             dut.io.retValid #= true
-            dut.io.retLast #= word == lineData.size - 1
+            dut.io.retLast #= beat == lineData.size - 1
             dut.io.retData #= data
             sleep(1)
-            val pending =
-              if (word <= targetWord) pendingBeforeResponse else pendingAfterResponse
+            val pending = if (beat == 0) pendingBeforeResponse else pendingAfterResponse
             checkPendingRequest(pending)
             val dataOk = dut.io.dcacheDataOk.toBoolean
             assert(
-              dataOk == (word == targetWord),
-              s"DCache data_ok mismatch on refill word $word (target $targetWord)"
+              dataOk == (beat == 0),
+              s"DCache data_ok mismatch on wrapped refill beat $beat (word $word)"
             )
             if (dataOk) {
               readResponses += 1
@@ -307,16 +308,17 @@ class OpenLa500LaccDCacheIntegrationSpec extends AnyFunSuite {
         configure(count = 1, destination = BigInt("1008", 16))
         startLmadd(source1 = BigInt("100c", 16), source2 = BigInt("1010", 16))
 
-        // First source is the last word of line 0x1000, so data_ok must wait for beat 3.
+        // The first source is the last word of line 0x1000.  Its WRAP refill starts at 0x100c,
+        // returns word 3 immediately, then fills words 0, 1, and 2.
         assertRequest(BigInt("100c", 16), expectedRead = true)
         acceptRequest()
         waitForRefillRequest(
-          expectedLine = BigInt("1000", 16),
+          expectedAddress = BigInt("100c", 16),
           pending = Some(BigInt("1010", 16) -> true)
         )
         sendRefill(
           Seq(10, 11, 12, 13),
-          targetWord = 3,
+          startWord = 3,
           pendingBeforeResponse = Some(BigInt("1010", 16) -> true),
           pendingAfterResponse = Some(BigInt("1010", 16) -> true)
         )
@@ -325,10 +327,10 @@ class OpenLa500LaccDCacheIntegrationSpec extends AnyFunSuite {
         // refill reaches idle, and its target word is returned on the first refill beat.
         assertRequest(BigInt("1010", 16), expectedRead = true)
         acceptRequest()
-        waitForRefillRequest(expectedLine = BigInt("1010", 16), pending = None)
+        waitForRefillRequest(expectedAddress = BigInt("1010", 16), pending = None)
         sendRefill(
           Seq(20, 21, 22, 23),
-          targetWord = 0,
+          startWord = 0,
           pendingBeforeResponse = None,
           pendingAfterResponse = Some(BigInt("1008", 16) -> false)
         )

@@ -2,12 +2,12 @@ package openla500.memory
 
 import spinal.core._
 
-/** Cycle-compatible implementation of `a158aa8:rtl/icache.v`.
+/** Critical-word-first implementation of the active openLA500 I-cache boundary.
   *
   * Inputs are the exact legacy request/refill contract. A request spends one cycle in lookup; cache
-  * hits may accept the next request in that cycle, while misses serialize one AXI-side read. The
-  * two-way tag and four-bank data memories are synchronous-read, unreset memories. Lookup, refill,
-  * backpressure, cancellation and the historically ineffective CACOP path are preserved.
+  * hits may accept the next request in that cycle, while misses serialize one AXI-side read. A
+  * cached miss starts a four-beat wrapping burst at the requested word, so the blocked fetch can
+  * resume on the first refill beat while the remaining banks are filled in wrapped order.
   */
 final class OpenLa500ICache extends Component {
   val io = new Bundle {
@@ -228,7 +228,7 @@ final class OpenLa500ICache extends Component {
       is(MainReplace) {
         when(io.rd_rdy) {
           mainState := MainRefill
-          missRetNum := 0
+          missRetNum := requestOffset(3 downto 2).asUInt
         }
       }
       is(MainRefill) {
@@ -279,7 +279,7 @@ final class OpenLa500ICache extends Component {
   io.rd_addr := Mux(
     logic.requestUncache,
     logic.requestTag ## logic.requestIndex ## logic.requestOffset,
-    logic.requestTag ## logic.requestIndex ## B"4'b0000"
+    logic.requestTag ## logic.requestIndex ## logic.requestOffset(3 downto 2) ## B"2'b00"
   )
   io.wr_req := logic.legacyWrReq
   io.wr_type := B"3'b000"

@@ -5540,11 +5540,11 @@ module OpenLa500DCache (
   wire       [31:0]   _zz_logic_dataOutputs_1_3_6;
   wire       [1:0]    logic_cacopChosenWay;
   reg        [1:0]    logic_invalidWay;
-  wire                when_OpenLa500DCache_l186;
   wire                when_OpenLa500DCache_l187;
+  wire                when_OpenLa500DCache_l188;
   wire       [1:0]    logic_randomWay;
   reg        [1:0]    logic_replacementWay;
-  wire                when_OpenLa500DCache_l191;
+  wire                when_OpenLa500DCache_l192;
   wire       [1:0]    logic_dirtyAtIndex;
   wire       [1:0]    logic_effectiveDirty;
   wire                logic_replacementDirty;
@@ -5561,25 +5561,25 @@ module OpenLa500DCache (
   wire                logic_refillMatch;
   wire                logic_dataOk;
   reg        [19:0]   logic_replaceTag;
-  wire                when_OpenLa500DCache_l226;
   wire                when_OpenLa500DCache_l227;
+  wire                when_OpenLa500DCache_l228;
   reg        [127:0]  logic_replaceData;
-  wire                when_OpenLa500DCache_l230;
-  wire                when_OpenLa500DCache_l235;
-  wire                when_OpenLa500DCache_l255;
-  wire                when_OpenLa500DCache_l258;
-  wire                when_OpenLa500DCache_l267;
-  wire                when_OpenLa500DCache_l263;
-  wire                when_OpenLa500DCache_l286;
-  wire                when_OpenLa500DCache_l296;
+  wire                when_OpenLa500DCache_l231;
+  wire                when_OpenLa500DCache_l236;
+  wire                when_OpenLa500DCache_l256;
+  wire                when_OpenLa500DCache_l259;
+  wire                when_OpenLa500DCache_l268;
+  wire                when_OpenLa500DCache_l264;
+  wire                when_OpenLa500DCache_l290;
   wire                when_OpenLa500DCache_l300;
-  wire                when_OpenLa500DCache_l301;
+  wire                when_OpenLa500DCache_l304;
+  wire                when_OpenLa500DCache_l305;
   wire       [255:0]  _zz_11;
-  wire                when_OpenLa500DCache_l302;
+  wire                when_OpenLa500DCache_l306;
   wire       [255:0]  _zz_12;
   wire       [255:0]  _zz_13;
   wire       [1:0]    _zz_logic_dirtyMem_0;
-  wire                when_OpenLa500DCache_l307;
+  wire                when_OpenLa500DCache_l311;
   reg [7:0] logic_dataMem_0_0_symbol0 [0:255];
   reg [7:0] logic_dataMem_0_0_symbol1 [0:255];
   reg [7:0] logic_dataMem_0_0_symbol2 [0:255];
@@ -6535,21 +6535,21 @@ module OpenLa500DCache (
   assign logic_cacopChosenWay = (logic_requestOffset[0] ? 2'b10 : 2'b01);
   always @(*) begin
     logic_invalidWay = 2'b00;
-    if(when_OpenLa500DCache_l186) begin
+    if(when_OpenLa500DCache_l187) begin
       logic_invalidWay = 2'b01;
     end else begin
-      if(when_OpenLa500DCache_l187) begin
+      if(when_OpenLa500DCache_l188) begin
         logic_invalidWay = 2'b10;
       end
     end
   end
 
-  assign when_OpenLa500DCache_l186 = (! logic_tagOutputs_0[0]);
-  assign when_OpenLa500DCache_l187 = (! logic_tagOutputs_1[0]);
+  assign when_OpenLa500DCache_l187 = (! logic_tagOutputs_0[0]);
+  assign when_OpenLa500DCache_l188 = (! logic_tagOutputs_1[0]);
   assign logic_randomWay = (logic_lfsr[6] ? 2'b10 : 2'b01);
   always @(*) begin
     logic_replacementWay = ((|logic_invalidWay) ? logic_invalidWay : logic_randomWay);
-    if(when_OpenLa500DCache_l191) begin
+    if(when_OpenLa500DCache_l192) begin
       logic_replacementWay = logic_cacopChosenWay;
     end else begin
       if(logic_mode2) begin
@@ -6558,7 +6558,7 @@ module OpenLa500DCache (
     end
   end
 
-  assign when_OpenLa500DCache_l191 = (logic_mode0 || logic_mode1);
+  assign when_OpenLa500DCache_l192 = (logic_mode0 || logic_mode1);
   assign logic_dirtyAtIndex = _zz_logic_dirtyAtIndex;
   assign logic_effectiveDirty = (logic_dirtyAtIndex | ((logic_writeBufferState && (logic_writeBufferIndex == logic_requestIndex)) ? logic_writeBufferWay : 2'b00));
   assign logic_replacementDirty = (|(logic_replacementWay & logic_effectiveDirty));
@@ -6580,51 +6580,51 @@ module OpenLa500DCache (
   assign logic_dataOk = (((logic_isLookup && ((logic_cacheHit || logic_requestOp) || logic_cancelReq)) || (((logic_isRefill && (! logic_requestOp)) && ret_valid) && (logic_refillMatch || logic_requestUncache))) && (! (logic_requestPreld || logic_requestCacop)));
   always @(*) begin
     logic_replaceTag = 20'h0;
-    if(when_OpenLa500DCache_l226) begin
+    if(when_OpenLa500DCache_l227) begin
       logic_replaceTag = logic_tagOutputs_0[20 : 1];
     end else begin
-      if(when_OpenLa500DCache_l227) begin
+      if(when_OpenLa500DCache_l228) begin
         logic_replaceTag = logic_tagOutputs_1[20 : 1];
       end
     end
   end
 
-  assign when_OpenLa500DCache_l226 = logic_missReplaceWay[0];
-  assign when_OpenLa500DCache_l227 = logic_missReplaceWay[1];
+  assign when_OpenLa500DCache_l227 = logic_missReplaceWay[0];
+  assign when_OpenLa500DCache_l228 = logic_missReplaceWay[1];
   always @(*) begin
     logic_replaceData = 128'h0;
-    if(when_OpenLa500DCache_l230) begin
+    if(when_OpenLa500DCache_l231) begin
       logic_replaceData = {{{logic_dataOutputs_0_3,logic_dataOutputs_0_2},logic_dataOutputs_0_1},logic_dataOutputs_0_0};
     end else begin
-      if(when_OpenLa500DCache_l235) begin
+      if(when_OpenLa500DCache_l236) begin
         logic_replaceData = {{{logic_dataOutputs_1_3,logic_dataOutputs_1_2},logic_dataOutputs_1_1},logic_dataOutputs_1_0};
       end
     end
   end
 
-  assign when_OpenLa500DCache_l230 = logic_missReplaceWay[0];
-  assign when_OpenLa500DCache_l235 = logic_missReplaceWay[1];
-  assign when_OpenLa500DCache_l255 = (logic_requestValid && logic_idleToLookup);
-  assign when_OpenLa500DCache_l258 = (logic_requestValid && logic_lookupToLookup);
-  assign when_OpenLa500DCache_l267 = (logic_uncacheWrite || (((logic_replacementDirty && logic_replacementValid) && ((! logic_uncacheRequest) || logic_cacopMode2Hit)) && (! logic_mode0)));
-  assign when_OpenLa500DCache_l263 = (! logic_cacheHit);
-  assign when_OpenLa500DCache_l286 = ((ret_valid && ret_last) || (! logic_rdReqBuffer));
-  assign when_OpenLa500DCache_l296 = ((logic_isRefill && ret_valid) && ret_last);
-  assign when_OpenLa500DCache_l300 = ((logic_isRefill && ((ret_valid && ret_last) || (! logic_rdReqBuffer))) && (! (logic_requestUncache || logic_mode0)));
-  assign when_OpenLa500DCache_l301 = logic_missReplaceWay[0];
+  assign when_OpenLa500DCache_l231 = logic_missReplaceWay[0];
+  assign when_OpenLa500DCache_l236 = logic_missReplaceWay[1];
+  assign when_OpenLa500DCache_l256 = (logic_requestValid && logic_idleToLookup);
+  assign when_OpenLa500DCache_l259 = (logic_requestValid && logic_lookupToLookup);
+  assign when_OpenLa500DCache_l268 = (logic_uncacheWrite || (((logic_replacementDirty && logic_replacementValid) && ((! logic_uncacheRequest) || logic_cacopMode2Hit)) && (! logic_mode0)));
+  assign when_OpenLa500DCache_l264 = (! logic_cacheHit);
+  assign when_OpenLa500DCache_l290 = ((ret_valid && ret_last) || (! logic_rdReqBuffer));
+  assign when_OpenLa500DCache_l300 = ((logic_isRefill && ret_valid) && ret_last);
+  assign when_OpenLa500DCache_l304 = ((logic_isRefill && ((ret_valid && ret_last) || (! logic_rdReqBuffer))) && (! (logic_requestUncache || logic_mode0)));
+  assign when_OpenLa500DCache_l305 = logic_missReplaceWay[0];
   assign _zz_11 = ({255'd0,1'b1} <<< logic_requestIndex);
-  assign when_OpenLa500DCache_l302 = logic_missReplaceWay[1];
+  assign when_OpenLa500DCache_l306 = logic_missReplaceWay[1];
   assign _zz_12 = ({255'd0,1'b1} <<< logic_requestIndex);
   assign _zz_13 = ({255'd0,1'b1} <<< logic_writeBufferIndex);
   assign _zz_logic_dirtyMem_0 = (_zz__zz_logic_dirtyMem_0 | logic_writeBufferWay);
-  assign when_OpenLa500DCache_l307 = (((logic_isLookup && logic_cacheHit) && logic_requestOp) && (! logic_cancelReq));
+  assign when_OpenLa500DCache_l311 = (((logic_isLookup && logic_cacheHit) && logic_requestOp) && (! logic_cancelReq));
   assign addr_ok = logic_addrOk;
   assign data_ok = logic_dataOk;
   assign rdata = (logic_isLookup ? logic_loadResult : (logic_isRefill ? ret_data : 32'h0));
   assign dcache_empty = logic_isIdle;
   assign rd_req = logic_rdReq;
   assign rd_type = (logic_requestUncache ? logic_requestSize : 3'b100);
-  assign rd_addr = (logic_requestUncache ? {{logic_requestTag,logic_requestIndex},logic_requestOffset} : {{logic_requestTag,logic_requestIndex},4'b0000});
+  assign rd_addr = (logic_requestUncache ? {{logic_requestTag,logic_requestIndex},logic_requestOffset} : {{{logic_requestTag,logic_requestIndex},logic_requestOffset[3 : 2]},2'b00});
   assign wr_req = logic_legacyWrReq;
   assign wr_type = (logic_uncacheWrBuffer ? logic_requestSize : 3'b100);
   assign wr_addr = (logic_uncacheWrBuffer ? {{logic_requestTag,logic_requestIndex},logic_requestOffset} : {{logic_replaceTag,logic_requestIndex},4'b0000});
@@ -6656,7 +6656,7 @@ module OpenLa500DCache (
       logic_writeBufferWord <= 2'b00;
     end else begin
       if((logic_mainState == logic_MainIdle)) begin
-          if(when_OpenLa500DCache_l255) begin
+          if(when_OpenLa500DCache_l256) begin
             logic_mainState <= logic_MainLookup;
             logic_requestOp <= op;
             logic_requestPreld <= preld_en;
@@ -6669,7 +6669,7 @@ module OpenLa500DCache (
             logic_requestCacop <= dcacop_op_en;
           end
       end else if((logic_mainState == logic_MainLookup)) begin
-          if(when_OpenLa500DCache_l258) begin
+          if(when_OpenLa500DCache_l259) begin
             logic_mainState <= logic_MainLookup;
             logic_requestOp <= op;
             logic_requestPreld <= preld_en;
@@ -6684,8 +6684,8 @@ module OpenLa500DCache (
             if(logic_cancelReq) begin
               logic_mainState <= logic_MainIdle;
             end else begin
-              if(when_OpenLa500DCache_l263) begin
-                if(when_OpenLa500DCache_l267) begin
+              if(when_OpenLa500DCache_l264) begin
+                if(when_OpenLa500DCache_l268) begin
                   logic_mainState <= logic_MainMiss;
                 end else begin
                   logic_mainState <= logic_MainReplace;
@@ -6708,7 +6708,7 @@ module OpenLa500DCache (
           end
           logic_legacyWrReq <= 1'b0;
       end else if((logic_mainState == logic_MainRefill)) begin
-          if(when_OpenLa500DCache_l286) begin
+          if(when_OpenLa500DCache_l290) begin
             logic_mainState <= logic_MainIdle;
           end
       end else begin
@@ -6717,11 +6717,11 @@ module OpenLa500DCache (
       if(logic_rdReq) begin
         logic_rdReqBuffer <= 1'b1;
       end else begin
-        if(when_OpenLa500DCache_l296) begin
+        if(when_OpenLa500DCache_l300) begin
           logic_rdReqBuffer <= 1'b0;
         end
       end
-      if(when_OpenLa500DCache_l307) begin
+      if(when_OpenLa500DCache_l311) begin
         logic_writeBufferState <= 1'b1;
         logic_writeBufferIndex <= logic_requestIndex;
         logic_writeBufferWstrb <= logic_requestWstrb;
@@ -6745,9 +6745,9 @@ module OpenLa500DCache (
   always @(posedge clk) begin
     if((logic_mainState == logic_MainIdle)) begin
     end else if((logic_mainState == logic_MainLookup)) begin
-        if(!when_OpenLa500DCache_l258) begin
+        if(!when_OpenLa500DCache_l259) begin
           if(!logic_cancelReq) begin
-            if(when_OpenLa500DCache_l263) begin
+            if(when_OpenLa500DCache_l264) begin
               logic_requestTag <= tag;
               logic_uncacheWrBuffer <= logic_uncacheWrite;
               logic_cacopMode2HitWrBuffer <= logic_cacopMode2Hit;
@@ -6757,18 +6757,18 @@ module OpenLa500DCache (
     end else if((logic_mainState == logic_MainMiss)) begin
     end else if((logic_mainState == logic_MainReplace)) begin
         if(rd_rdy) begin
-          logic_missRetNum <= 2'b00;
+          logic_missRetNum <= logic_requestOffset[3 : 2];
         end
     end else if((logic_mainState == logic_MainRefill)) begin
-        if(!when_OpenLa500DCache_l286) begin
+        if(!when_OpenLa500DCache_l290) begin
           if(ret_valid) begin
             logic_missRetNum <= (logic_missRetNum + 2'b01);
           end
         end
     end else begin
     end
-    if(when_OpenLa500DCache_l300) begin
-      if(when_OpenLa500DCache_l301) begin
+    if(when_OpenLa500DCache_l304) begin
+      if(when_OpenLa500DCache_l305) begin
         if(_zz_11[0]) begin
           logic_dirtyMem_0[0] <= logic_requestOp;
         end
@@ -7538,7 +7538,7 @@ module OpenLa500DCache (
           logic_dirtyMem_255[0] <= logic_requestOp;
         end
       end
-      if(when_OpenLa500DCache_l302) begin
+      if(when_OpenLa500DCache_l306) begin
         if(_zz_12[0]) begin
           logic_dirtyMem_0[1] <= logic_requestOp;
         end
@@ -9854,7 +9854,7 @@ module OpenLa500ICache (
   assign icache_unbusy = logic_isIdle;
   assign rd_req = logic_rdReq;
   assign rd_type = (logic_requestUncache ? 3'b010 : 3'b100);
-  assign rd_addr = (logic_requestUncache ? {{logic_requestTag,logic_requestIndex},logic_requestOffset} : {{logic_requestTag,logic_requestIndex},4'b0000});
+  assign rd_addr = (logic_requestUncache ? {{logic_requestTag,logic_requestIndex},logic_requestOffset} : {{{logic_requestTag,logic_requestIndex},logic_requestOffset[3 : 2]},2'b00});
   assign wr_req = logic_legacyWrReq;
   assign wr_type = 3'b000;
   assign wr_addr = 32'h0;
@@ -9943,7 +9943,7 @@ module OpenLa500ICache (
     end else if((logic_mainState == logic_MainLookup)) begin
     end else if((logic_mainState == logic_MainReplace)) begin
         if(rd_rdy) begin
-          logic_missRetNum <= 2'b00;
+          logic_missRetNum <= logic_requestOffset[3 : 2];
         end
     end else if((logic_mainState == logic_MainRefill)) begin
         if(!when_OpenLa500ICache_l235) begin
@@ -13930,6 +13930,7 @@ module OpenLa500AxiBridge (
   reg        [31:0]   logic_araddr;
   reg        [7:0]    logic_arlen;
   reg        [2:0]    logic_arsize;
+  reg        [1:0]    logic_arburst;
   reg                 logic_arvalid;
   reg                 logic_rready;
   reg        [31:0]   logic_awaddr;
@@ -13945,17 +13946,17 @@ module OpenLa500AxiBridge (
   reg        [2:0]    logic_writeBufferCount;
   wire                logic_writeBusy;
   wire                logic_completingWrite;
-  wire                when_OpenLa500AxiBridge_l151;
-  wire                when_OpenLa500AxiBridge_l153;
+  wire                when_OpenLa500AxiBridge_l154;
+  wire                when_OpenLa500AxiBridge_l156;
   wire                _zz_logic_arlen;
-  wire                when_OpenLa500AxiBridge_l157;
+  wire                when_OpenLa500AxiBridge_l160;
   wire                _zz_logic_arlen_1;
-  wire                when_OpenLa500AxiBridge_l166;
-  wire                when_OpenLa500AxiBridge_l167;
-  wire                when_OpenLa500AxiBridge_l171;
-  wire                when_OpenLa500AxiBridge_l188;
-  wire                when_OpenLa500AxiBridge_l211;
-  wire                when_OpenLa500AxiBridge_l222;
+  wire                when_OpenLa500AxiBridge_l169;
+  wire                when_OpenLa500AxiBridge_l170;
+  wire                when_OpenLa500AxiBridge_l174;
+  wire                when_OpenLa500AxiBridge_l191;
+  wire                when_OpenLa500AxiBridge_l214;
+  wire                when_OpenLa500AxiBridge_l225;
   wire                readCanReceive;
 
   assign logic_WriteEmpty = 3'b000;
@@ -13964,23 +13965,23 @@ module OpenLa500AxiBridge (
   assign logic_WriteWaitResponse = 3'b110;
   assign logic_writeBusy = (logic_writeState != logic_WriteEmpty);
   assign logic_completingWrite = (bvalid && logic_bready);
-  assign when_OpenLa500AxiBridge_l151 = (! logic_readRequestBusy);
-  assign when_OpenLa500AxiBridge_l153 = ((! logic_writeBusy) || logic_completingWrite);
+  assign when_OpenLa500AxiBridge_l154 = (! logic_readRequestBusy);
+  assign when_OpenLa500AxiBridge_l156 = ((! logic_writeBusy) || logic_completingWrite);
   assign _zz_logic_arlen = (data_rd_type == 3'b100);
-  assign when_OpenLa500AxiBridge_l157 = ((! logic_writeBusy) || logic_completingWrite);
+  assign when_OpenLa500AxiBridge_l160 = ((! logic_writeBusy) || logic_completingWrite);
   assign _zz_logic_arlen_1 = (inst_rd_type == 3'b100);
-  assign when_OpenLa500AxiBridge_l166 = (! logic_readResponseBusy);
-  assign when_OpenLa500AxiBridge_l167 = (rvalid && logic_rready);
-  assign when_OpenLa500AxiBridge_l171 = (rlast && rvalid);
-  assign when_OpenLa500AxiBridge_l188 = (data_wr_type == 3'b100);
-  assign when_OpenLa500AxiBridge_l211 = (logic_writeBufferCount == 3'b001);
-  assign when_OpenLa500AxiBridge_l222 = (bvalid && logic_bready);
+  assign when_OpenLa500AxiBridge_l169 = (! logic_readResponseBusy);
+  assign when_OpenLa500AxiBridge_l170 = (rvalid && logic_rready);
+  assign when_OpenLa500AxiBridge_l174 = (rlast && rvalid);
+  assign when_OpenLa500AxiBridge_l191 = (data_wr_type == 3'b100);
+  assign when_OpenLa500AxiBridge_l214 = (logic_writeBufferCount == 3'b001);
+  assign when_OpenLa500AxiBridge_l225 = (bvalid && logic_bready);
   assign readCanReceive = ((! logic_readRequestBusy) && (! (logic_writeBusy && (! (bvalid && logic_bready)))));
   assign arid = logic_arid;
   assign araddr = logic_araddr;
   assign arlen = logic_arlen;
   assign arsize = logic_arsize;
-  assign arburst = 2'b01;
+  assign arburst = logic_arburst;
   assign arlock = 2'b00;
   assign arcache = 4'b0000;
   assign arprot = 3'b000;
@@ -14027,15 +14028,15 @@ module OpenLa500AxiBridge (
       logic_writeBufferCount <= 3'b000;
     end else begin
       logic_rready <= logic_rready;
-      if(when_OpenLa500AxiBridge_l151) begin
+      if(when_OpenLa500AxiBridge_l154) begin
         if(data_rd_req) begin
-          if(when_OpenLa500AxiBridge_l153) begin
+          if(when_OpenLa500AxiBridge_l156) begin
             logic_readRequestBusy <= 1'b1;
             logic_arvalid <= 1'b1;
           end
         end else begin
           if(inst_rd_req) begin
-            if(when_OpenLa500AxiBridge_l157) begin
+            if(when_OpenLa500AxiBridge_l160) begin
               logic_readRequestBusy <= 1'b1;
               logic_arvalid <= 1'b1;
             end
@@ -14047,12 +14048,12 @@ module OpenLa500AxiBridge (
           logic_arvalid <= 1'b0;
         end
       end
-      if(when_OpenLa500AxiBridge_l166) begin
-        if(when_OpenLa500AxiBridge_l167) begin
+      if(when_OpenLa500AxiBridge_l169) begin
+        if(when_OpenLa500AxiBridge_l170) begin
           logic_readResponseBusy <= 1'b1;
         end
       end else begin
-        if(when_OpenLa500AxiBridge_l171) begin
+        if(when_OpenLa500AxiBridge_l174) begin
           logic_readResponseBusy <= 1'b0;
         end
       end
@@ -14061,7 +14062,7 @@ module OpenLa500AxiBridge (
             logic_writeState <= logic_WriteDataWait;
             logic_awvalid <= 1'b1;
             logic_writeBufferData <= {32'h0,data_wr_data[127 : 32]};
-            if(when_OpenLa500AxiBridge_l188) begin
+            if(when_OpenLa500AxiBridge_l191) begin
               logic_writeBufferCount <= 3'b011;
             end else begin
               logic_writeBufferCount <= 3'b000;
@@ -14082,7 +14083,7 @@ module OpenLa500AxiBridge (
               logic_wlast <= 1'b0;
               logic_bready <= 1'b1;
             end else begin
-              if(when_OpenLa500AxiBridge_l211) begin
+              if(when_OpenLa500AxiBridge_l214) begin
                 logic_wlast <= 1'b1;
               end
               logic_wvalid <= 1'b1;
@@ -14091,7 +14092,7 @@ module OpenLa500AxiBridge (
             end
           end
       end else if((logic_writeState == logic_WriteWaitResponse)) begin
-          if(when_OpenLa500AxiBridge_l222) begin
+          if(when_OpenLa500AxiBridge_l225) begin
             logic_writeState <= logic_WriteEmpty;
             logic_bready <= 1'b0;
           end
@@ -14102,21 +14103,23 @@ module OpenLa500AxiBridge (
   end
 
   always @(posedge clk) begin
-    if(when_OpenLa500AxiBridge_l151) begin
+    if(when_OpenLa500AxiBridge_l154) begin
       if(data_rd_req) begin
-        if(when_OpenLa500AxiBridge_l153) begin
+        if(when_OpenLa500AxiBridge_l156) begin
           logic_arid <= 4'b0001;
           logic_araddr <= data_rd_addr;
           logic_arsize <= (_zz_logic_arlen ? 3'b010 : data_rd_type);
           logic_arlen <= (_zz_logic_arlen ? 8'h03 : 8'h0);
+          logic_arburst <= (_zz_logic_arlen ? 2'b10 : 2'b01);
         end
       end else begin
         if(inst_rd_req) begin
-          if(when_OpenLa500AxiBridge_l157) begin
+          if(when_OpenLa500AxiBridge_l160) begin
             logic_arid <= 4'b0000;
             logic_araddr <= inst_rd_addr;
             logic_arsize <= (_zz_logic_arlen_1 ? 3'b010 : inst_rd_type);
             logic_arlen <= (_zz_logic_arlen_1 ? 8'h03 : 8'h0);
+            logic_arburst <= (_zz_logic_arlen_1 ? 2'b10 : 2'b01);
           end
         end
       end
@@ -14124,8 +14127,8 @@ module OpenLa500AxiBridge (
     if((logic_writeState == logic_WriteEmpty)) begin
         if(data_wr_req) begin
           logic_awaddr <= data_wr_addr;
-          logic_awsize <= (when_OpenLa500AxiBridge_l188 ? 3'b010 : data_wr_type);
-          logic_awlen <= (when_OpenLa500AxiBridge_l188 ? 8'h03 : 8'h0);
+          logic_awsize <= (when_OpenLa500AxiBridge_l191 ? 3'b010 : data_wr_type);
+          logic_awlen <= (when_OpenLa500AxiBridge_l191 ? 8'h03 : 8'h0);
           logic_wdata <= data_wr_data[31 : 0];
           logic_wstrb <= data_wr_wstrb;
         end

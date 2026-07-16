@@ -4,13 +4,14 @@ import openla500.compat.Axi3Compat
 import spinal.core._
 import spinal.lib._
 
-/** Cycle-compatible implementation of `a158aa8:rtl/axi_bridge.v`.
+/** AXI3 bridge for the active openLA500 cache and uncached boundaries.
   *
   * The legacy bridge accepts at most one AR and one write transaction at a time. Data reads have
   * priority over instruction reads, reads wait for an outstanding B response, and R is never
-  * backpressured. Writes deliberately serialize AW, W, and B; a cache-line request emits four
-  * 32-bit W beats while scalar writes emit one. All state belongs to the explicit `clk`,
-  * active-high synchronous-reset domain.
+  * backpressured. Cache-line reads use a four-beat WRAP burst so the caches can request their
+  * critical word first; scalar reads and all writes retain INCR behavior. Writes deliberately
+  * serialize AW, W, and B; a cache-line request emits four 32-bit W beats while scalar writes emit
+  * one. All state belongs to the explicit `clk`, active-high synchronous-reset domain.
   */
 final class OpenLa500AxiBridge extends Component {
   val io = new Bundle {
@@ -116,6 +117,7 @@ final class OpenLa500AxiBridge extends Component {
     val araddr = Reg(Bits(32 bits))
     val arlen = Reg(Bits(8 bits))
     val arsize = Reg(Bits(3 bits))
+    val arburst = Reg(Bits(2 bits))
     val arvalid = Reg(Bool()) init (False)
 
     val rready = Reg(Bool()) init (True)
@@ -145,6 +147,7 @@ final class OpenLa500AxiBridge extends Component {
       araddr := address
       arsize := Mux(cacheLine, B"3'b010", requestType)
       arlen := Mux(cacheLine, B"8'h03", B"8'h00")
+      arburst := Mux(cacheLine, B"2'b10", B"2'b01")
       arvalid := True
     }
 
@@ -237,7 +240,7 @@ final class OpenLa500AxiBridge extends Component {
   io.araddr := logic.araddr
   io.arlen := logic.arlen
   io.arsize := logic.arsize
-  io.arburst := B"2'b01"
+  io.arburst := logic.arburst
   io.arlock := B"2'b00"
   io.arcache := B"4'b0000"
   io.arprot := B"3'b000"

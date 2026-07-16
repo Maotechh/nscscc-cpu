@@ -2,11 +2,12 @@ package openla500.memory
 
 import spinal.core._
 
-/** Cycle-oriented replacement for the active a158aa8 dcache boundary.
+/** Critical-word-first implementation of the active openLA500 D-cache boundary.
   *
   * The external contract intentionally remains the legacy 35-port interface. The request,
   * write-back and refill state machines retain the old ordering: lookup, optional dirty write-back,
-  * refill, and delayed hit-store write buffer.
+  * refill, and delayed hit-store write buffer. Cached refills start at the requested word and wrap
+  * across the four banks, allowing a blocked load to complete on the first return beat.
   */
 final class OpenLa500DCache extends Component {
   val io = new Bundle {
@@ -279,7 +280,10 @@ final class OpenLa500DCache extends Component {
         when(io.wr_rdy) { mainState := MainReplace; legacyWrReq := True }
       }
       is(MainReplace) {
-        when(io.rd_rdy) { mainState := MainRefill; missRetNum := 0 }
+        when(io.rd_rdy) {
+          mainState := MainRefill
+          missRetNum := requestOffset(3 downto 2).asUInt
+        }
         legacyWrReq := False
       }
       is(MainRefill) {
@@ -333,7 +337,7 @@ final class OpenLa500DCache extends Component {
     io.rd_addr := Mux(
       requestUncache,
       requestTag ## requestIndex ## requestOffset,
-      requestTag ## requestIndex ## B"4'b0000"
+      requestTag ## requestIndex ## requestOffset(3 downto 2) ## B"2'b00"
     )
     io.wr_req := legacyWrReq
     io.wr_type := Mux(uncacheWrBuffer, requestSize, B"3'b100")
