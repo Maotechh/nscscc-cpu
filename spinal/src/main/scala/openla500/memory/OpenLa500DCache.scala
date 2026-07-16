@@ -2,11 +2,12 @@ package openla500.memory
 
 import spinal.core._
 
-/** Cycle-oriented replacement for the active a158aa8 dcache boundary.
+/** Pseudo-LRU implementation of the active openLA500 D-cache boundary.
   *
   * The external contract intentionally remains the legacy 35-port interface. The request,
   * write-back and refill state machines retain the old ordering: lookup, optional dirty write-back,
-  * refill, and delayed hit-store write buffer.
+  * refill, and delayed hit-store write buffer. Each set keeps one most-recently-used bit so a full
+  * set evicts the other way instead of a global random way.
   */
 final class OpenLa500DCache extends Component {
   val io = new Bundle {
@@ -78,7 +79,6 @@ final class OpenLa500DCache extends Component {
     val missReplaceWay = Reg(Bits(2 bits)) init (0)
     val missRetNum = Reg(UInt(2 bits))
     val rdReqBuffer = Reg(Bool()) init (False)
-    val lfsr = Reg(Bits(8 bits)) init (B"8'b00000001")
     val legacyWrReq = Reg(Bool()) init (False)
 
     val writeBufferState = Reg(Bool()) init (False)
@@ -94,6 +94,7 @@ final class OpenLa500DCache extends Component {
     val dataMem = Array.fill(2, 4)(Mem(Bits(32 bits), 256))
     val tagMem = Array.fill(2)(Mem(Bits(21 bits), 256))
     val dirtyMem = Vec.fill(256)(Reg(Bits(2 bits)))
+    val mostRecentlyUsedWay = Vec(Reg(Bool()), 256)
 
     val isIdle = mainState === MainIdle
     val isLookup = mainState === MainLookup
@@ -176,6 +177,31 @@ final class OpenLa500DCache extends Component {
     // CACOP follows the locked passing d22c13c state path: it must not be
     // treated as a normal lookup hit, even when the indexed line is valid.
     cacheHit := realHit.orR && !(io.uncache_en || mode0 || mode1 || mode2)
+    val lookupWriteConflict =
+      writeBufferFull &&
+        (writeBufferWord === io.offset(3 downto 2).asUInt || io.dcacop_op_en)
+    val consecutiveStoreLoadConflict =
+      requestOp && !io.op &&
+        (requestOffset(3 downto 2) === io.offset(3 downto 2) || io.dcacop_op_en)
+    val lookupToLookup = !lookupWriteConflict && !consecutiveStoreLoadConflict && cacheHit
+    val addrOk = (isIdle && idleToLookup) || (isLookup && lookupToLookup)
+    val replacementStateReadAddress = Mux(addrOk, io.index, requestIndex).asUInt
+    val normalHitTouch = isLookup && cacheHit && !cancelReq
+    val refillTouch =
+      isRefill && io.ret_valid && io.ret_last && !(requestUncache || requestCacop)
+    val replacementStateWriteEnable = normalHitTouch || refillTouch
+    val replacementStateWriteData = Mux(normalHitTouch, realHit(1), missReplaceWay(1))
+    val replacementState = Reg(Bool())
+    when(replacementStateWriteEnable) {
+      mostRecentlyUsedWay(requestIndex.asUInt) := replacementStateWriteData
+    }
+    when(addrOk) {
+      replacementState := Mux(
+        replacementStateWriteEnable && requestIndex.asUInt === replacementStateReadAddress,
+        replacementStateWriteData,
+        mostRecentlyUsedWay(replacementStateReadAddress)
+      )
+    }
     loadResult :=
       (Mux(realHit(0), dataOutputs(0)(requestOffset(3 downto 2).asUInt), B(0, 32 bits)) |
         Mux(realHit(1), dataOutputs(1)(requestOffset(3 downto 2).asUInt), B(0, 32 bits)))
@@ -185,9 +211,13 @@ final class OpenLa500DCache extends Component {
     invalidWay := B"2'b00"
     when(!tagOutputs(0)(0)) { invalidWay := B"2'b01" }
       .elsewhen(!tagOutputs(1)(0)) { invalidWay := B"2'b10" }
-    val randomWay = Mux(lfsr(6), B"2'b10", B"2'b01")
+    val fullSetReplacement = Mux(
+      replacementState,
+      B"2'b01",
+      B"2'b10"
+    )
     val replacementWay = Bits(2 bits)
-    replacementWay := Mux(invalidWay.orR, invalidWay, randomWay)
+    replacementWay := Mux(invalidWay.orR, invalidWay, fullSetReplacement)
     when(mode0 || mode1) { replacementWay := cacopChosenWay }
       .elsewhen(mode2) { replacementWay := realHit }
 
@@ -202,15 +232,6 @@ final class OpenLa500DCache extends Component {
     validWays(0) := tagOutputs(0)(0)
     validWays(1) := tagOutputs(1)(0)
     val replacementValid = (replacementWay & validWays).orR
-    val lookupWriteConflict =
-      writeBufferFull &&
-        (writeBufferWord === io.offset(3 downto 2).asUInt || io.dcacop_op_en)
-    val consecutiveStoreLoadConflict =
-      requestOp && !io.op &&
-        (requestOffset(3 downto 2) === io.offset(3 downto 2) || io.dcacop_op_en)
-    val lookupToLookup = !lookupWriteConflict && !consecutiveStoreLoadConflict && cacheHit
-    val addrOk = (isIdle && idleToLookup) || (isLookup && lookupToLookup)
-
     val uncacheRequest = io.uncache_en && !requestCacop
     val cacopMode2Hit = mode2 && realHit.orR
     val uncacheWrite = uncacheRequest && requestOp && !mode1 && !cacopMode2Hit
@@ -314,15 +335,6 @@ final class OpenLa500DCache extends Component {
     }.otherwise {
       writeBufferState := False
     }
-
-    lfsr(0) := lfsr(7)
-    lfsr(1) := lfsr(0)
-    lfsr(2) := lfsr(1)
-    lfsr(3) := lfsr(2)
-    lfsr(4) := lfsr(3) ^ lfsr(7)
-    lfsr(5) := lfsr(4) ^ lfsr(7)
-    lfsr(6) := lfsr(5) ^ lfsr(7)
-    lfsr(7) := lfsr(6)
 
     io.addr_ok := addrOk
     io.data_ok := dataOk

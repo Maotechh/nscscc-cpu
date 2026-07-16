@@ -2,12 +2,12 @@ package openla500.memory
 
 import spinal.core._
 
-/** Cycle-compatible implementation of `a158aa8:rtl/icache.v`.
+/** Pseudo-LRU implementation of the active openLA500 I-cache boundary.
   *
   * Inputs are the exact legacy request/refill contract. A request spends one cycle in lookup; cache
   * hits may accept the next request in that cycle, while misses serialize one AXI-side read. The
-  * two-way tag and four-bank data memories are synchronous-read, unreset memories. Lookup, refill,
-  * backpressure, cancellation and the historically ineffective CACOP path are preserved.
+  * two-way tag and four-bank data memories are synchronous-read, unreset memories. Each set keeps
+  * one most-recently-used bit so a full set evicts the other way instead of a global random way.
   */
 final class OpenLa500ICache extends Component {
   val io = new Bundle {
@@ -79,11 +79,11 @@ final class OpenLa500ICache extends Component {
     val missRetNum = Reg(UInt(2 bits))
     val lookupWayHitBuffer = Reg(Bits(2 bits)) init (0)
     val rdReqBuffer = Reg(Bool()) init (False)
-    val lfsr = Reg(Bits(8 bits)) init (B"8'b00000001")
     val legacyWrReq = Reg(Bool()) init (False)
 
     val dataMem = Array.fill(2, 4)(Mem(Bits(32 bits), 256))
     val tagMem = Array.fill(2)(Mem(Bits(21 bits), 256))
+    val mostRecentlyUsedWay = Vec(Reg(Bool()), 256)
 
     val isIdle = mainState === MainIdle
     val isLookup = mainState === MainLookup
@@ -111,6 +111,23 @@ final class OpenLa500ICache extends Component {
     // treated as a normal lookup hit, even when the indexed line is valid.
     val cacheHit = wayHit.orR && !(io.uncache_en || mode0 || mode1 || mode2)
     val addrOk = (isIdle || (isLookup && cacheHit)) && !io.icacop_op_en
+    val replacementStateReadAddress = Mux(addrOk, realIndex, requestIndex).asUInt
+    val normalHitTouch = isLookup && cacheHit && !requestCacop
+    val refillTouch =
+      isRefill && io.ret_valid && io.ret_last && !(requestUncache || requestCacop)
+    val replacementStateWriteEnable = normalHitTouch || refillTouch
+    val replacementStateWriteData = Mux(normalHitTouch, wayHit(1), missReplaceWay(1))
+    val replacementState = Reg(Bool())
+    when(replacementStateWriteEnable) {
+      mostRecentlyUsedWay(requestIndex.asUInt) := replacementStateWriteData
+    }
+    when(addrOk) {
+      replacementState := Mux(
+        replacementStateWriteEnable && requestIndex.asUInt === replacementStateReadAddress,
+        replacementStateWriteData,
+        mostRecentlyUsedWay(replacementStateReadAddress)
+      )
+    }
 
     val wayWords = Vec(Bits(32 bits), 2)
     for (way <- 0 until 2) {
@@ -128,8 +145,12 @@ final class OpenLa500ICache extends Component {
       invalidWay := B"2'b10"
     }
     val hasInvalidWay = invalidWay.orR
-    val randomWay = Mux(lfsr(6), B"2'b10", B"2'b01")
-    val randomReplacement = Mux(hasInvalidWay, invalidWay, randomWay)
+    val fullSetReplacement = Mux(
+      replacementState,
+      B"2'b01",
+      B"2'b10"
+    )
+    val normalReplacement = Mux(hasInvalidWay, invalidWay, fullSetReplacement)
     val cacopChosenWay = Mux(requestOffset(0), B"2'b10", B"2'b01")
     val replaceWay = Bits(2 bits)
     replaceWay := B"2'b00"
@@ -138,7 +159,7 @@ final class OpenLa500ICache extends Component {
     }.elsewhen(mode2) {
       replaceWay := wayHit
     }.elsewhen(!requestCacop) {
-      replaceWay := randomReplacement
+      replaceWay := normalReplacement
     }
 
     val rdReq = isReplace && !(mode0 || mode1 || mode2)
@@ -252,15 +273,6 @@ final class OpenLa500ICache extends Component {
     }.elsewhen(isRefill && io.ret_valid && io.ret_last) {
       rdReqBuffer := False
     }
-
-    lfsr(0) := lfsr(7)
-    lfsr(1) := lfsr(0)
-    lfsr(2) := lfsr(1)
-    lfsr(3) := lfsr(2)
-    lfsr(4) := lfsr(3) ^ lfsr(7)
-    lfsr(5) := lfsr(4) ^ lfsr(7)
-    lfsr(6) := lfsr(5) ^ lfsr(7)
-    lfsr(7) := lfsr(6)
 
     // Golden only assigns this register in reset; the other write outputs are undriven.
     legacyWrReq := legacyWrReq
