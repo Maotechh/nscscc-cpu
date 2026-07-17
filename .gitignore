@@ -32,3 +32,5 @@ __pycache__/
 /build/
 /logs/refactor/**/raw/
 /logs/refactor/**/waveforms/
+
+jsfa.pdf
