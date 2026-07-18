@@ -73,19 +73,25 @@ final class CoreTopCompat(config: CoreTopCompatConfig = CoreTopCompatConfig()) e
 
   noIoPrefix()
 
-  // The golden wrapper registers ~aresetn once before presenting a synchronous active-high reset
-  // to the core. The capture register intentionally has no reset or initialization of its own.
+  // Keep the backend reset until the board controller has asserted external reset at least once.
+  // This prevents the FPGA from running against stale DDR contents between configuration and the
+  // JTAG download. The registered ~aresetn path remains cycle-compatible after that first pulse.
   val resetCaptureDomain = ClockDomain(
     clock = io.aclk,
-    config = ClockDomainConfig(clockEdge = RISING)
+    config = ClockDomainConfig(clockEdge = RISING, resetKind = BOOT)
   )
   val resetCapture = new ClockingArea(resetCaptureDomain) {
-    val delayedActiveHigh = RegNext(!io.aresetn)
+    val externalResetSeen = Reg(Bool()) init (False)
+    when(!io.aresetn) {
+      externalResetSeen := True
+    }
+    val delayedActiveHigh = RegNext(!io.aresetn) init (True)
+    val backendActiveHigh = delayedActiveHigh || !externalResetSeen
   }
 
   val coreClockDomain = ClockDomain(
     clock = io.aclk,
-    reset = resetCapture.delayedActiveHigh,
+    reset = resetCapture.backendActiveHigh,
     config = ClockDomainConfig(
       clockEdge = RISING,
       resetKind = SYNC,

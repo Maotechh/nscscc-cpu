@@ -92,6 +92,21 @@ class CoreTopContractTests(unittest.TestCase):
         self.assertEqual(("output", 4), projection["debug0_wb_rf_wen"])
         self.assertEqual([{"name": "TLBNUM", "default": 32}], value["parameters"])
 
+    def test_published_top_holds_reset_until_external_reset_is_observed(self) -> None:
+        rtl = (REPOSITORY_ROOT / "rtl" / "mycpu_top.v").read_text(encoding="utf-8")
+        self.assertIn("resetCapture_externalResetSeen = 1'b0;", rtl)
+        self.assertIn("resetCapture_delayedActiveHigh = 1'b1;", rtl)
+        self.assertIn(
+            "resetCapture_backendActiveHigh = "
+            "(resetCapture_delayedActiveHigh || (! resetCapture_externalResetSeen));",
+            rtl,
+        )
+        self.assertIn("resetCapture_externalResetSeen <= 1'b1;", rtl)
+        self.assertIn(
+            "resetCapture_delayedActiveHigh <= ((! aresetn) || (TLBNUM != 32));",
+            rtl,
+        )
+
     def test_locked_team_git_object_is_verified(self) -> None:
         value = contract()
         revision = core_top_gate.parse_lock(MANIFEST_PATH)["team_golden_candidate"]
