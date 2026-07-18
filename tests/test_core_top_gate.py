@@ -107,6 +107,33 @@ class CoreTopContractTests(unittest.TestCase):
             rtl,
         )
 
+    def test_core_top_compat_does_not_embed_verilog(self) -> None:
+        source = (
+            REPOSITORY_ROOT
+            / "spinal"
+            / "src"
+            / "main"
+            / "scala"
+            / "openla500"
+            / "compat"
+            / "CoreTopCompat.scala"
+        ).read_text(encoding="utf-8")
+        self.assertNotIn("setInlineVerilog", source)
+
+    def test_replacement_specs_bind_the_published_rtl(self) -> None:
+        rtl = REPOSITORY_ROOT / core_top_gate.PUBLISHED_SOURCE
+        expected = {
+            "target": core_top_gate.PUBLISHED_TARGET,
+            "source": core_top_gate.PUBLISHED_SOURCE,
+            "base_sha256": contract()["sources"]["team_golden"]["raw_sha256"],
+            "replacement_sha256": core_top_gate.sha256_file(rtl),
+        }
+        specs = REPOSITORY_ROOT / "reference" / "component-replacements"
+        for name in ("core-top.json", "active-reachable.json"):
+            with self.subTest(spec=name):
+                value = core_top_gate.load_json_strict(specs / name)
+                self.assertEqual([expected], value["replacements"])
+
     def test_locked_team_git_object_is_verified(self) -> None:
         value = contract()
         revision = core_top_gate.parse_lock(MANIFEST_PATH)["team_golden_candidate"]
