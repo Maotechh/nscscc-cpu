@@ -1,0 +1,226 @@
+package openla500.pipeline
+
+import java.nio.file.Paths
+import org.scalatest.funsuite.AnyFunSuite
+import spinal.core._
+import spinal.core.sim._
+
+private final class LateResultForwardingSimTop extends Component {
+  val io = new Bundle {
+    val fetchValid = in Bool ()
+    val fetchBits = in Bits (FetchPayload.LegacyWidth bits)
+    val registerWrite = in(DecodeRegisterWrite())
+    val producerValid = in Bool ()
+    val producerDestination = in UInt (5 bits)
+    val producerLateResultAllowed = in Bool ()
+    val memoryResultValid = in Bool ()
+    val memoryResultStalled = in Bool ()
+    val memoryResult = in Bits (32 bits)
+    val executeReady = in Bool ()
+    val decodeValid = out Bool ()
+    val decodeLateJ = out Bool ()
+    val executeValid = out Bool ()
+    val executeResult = out Bits (32 bits)
+    val keepAlive = out Bits (4096 bits)
+  }
+
+  val decode = new DecodeStage(lateResultForwardingEnabled = true)
+  val execute = new ExecuteStage
+
+  decode.io.input.valid := io.fetchValid
+  decode.io.input.payload := FetchPayload.unpackLegacy(io.fetchBits)
+  decode.io.output >> execute.io.input
+
+  decode.io.executeForward.dependencyNeedsStall := io.producerValid
+  decode.io.executeForward.writeEnabled := io.producerValid
+  decode.io.executeForward.destination := io.producerDestination
+  decode.io.executeForward.data := 0
+  decode.io.executeLateResultAllowed := io.producerLateResultAllowed
+  decode.io.memoryForward.dependencyNeedsStall := False
+  decode.io.memoryForward.writeEnabled := False
+  decode.io.memoryForward.destination := 0
+  decode.io.memoryForward.data := 0
+  decode.io.flush.assignDontCare()
+  decode.io.flush.exception := False
+  decode.io.flush.ertn := False
+  decode.io.flush.refetch := False
+  decode.io.flush.instructionCacheOperation := False
+  decode.io.flush.idle := False
+  decode.io.executeTlbStall := False
+  decode.io.memoryTlbStall := False
+  decode.io.writebackTlbStall := False
+  decode.io.interruptPending := False
+  decode.io.csrReadData := 0
+  decode.io.csrPrivilege := 0
+  decode.io.timer := 0
+  decode.io.timerId := 0
+  decode.io.reservationValid := False
+  decode.io.executeOccupied := io.producerValid
+  decode.io.memoryOccupied := io.memoryResultValid
+  decode.io.writebackOccupied := False
+  decode.io.writeBufferEmpty := True
+  decode.io.dataCacheEmpty := True
+  decode.io.registerWrite := io.registerWrite
+  decode.io.debugReadSelect := False
+  decode.io.debugReadAddress := 0
+
+  execute.io.output.ready := io.executeReady
+  execute.io.lateForwardJ := decode.io.lateForwardJ
+  execute.io.lateForwardKOrD := decode.io.lateForwardKOrD
+  execute.io.lateForwardDestination := decode.io.lateForwardDestination
+  execute.io.memoryForward.valid := io.memoryResultValid
+  execute.io.memoryForward.dependencyNeedsStall := io.memoryResultStalled
+  execute.io.memoryForward.writeEnabled := io.memoryResultValid
+  execute.io.memoryForward.destination := io.producerDestination
+  execute.io.memoryForward.result := io.memoryResult
+  execute.io.divideComplete := False
+  execute.io.flush.assignDontCare()
+  execute.io.flush.exception := False
+  execute.io.flush.ertn := False
+  execute.io.flush.refetch := False
+  execute.io.flush.instructionCacheOperation := False
+  execute.io.flush.idle := False
+  execute.io.memoryFlush := False
+  execute.io.memoryWritesTlbEntryHigh := False
+  execute.io.instructionCacheUnbusy := True
+  execute.io.memoryAddressAccepted := False
+  execute.io.csrVirtualPageNumber := 0
+
+  io.decodeValid := decode.io.output.valid
+  io.decodeLateJ := decode.io.lateForwardJ
+  io.executeValid := execute.io.output.valid
+  io.executeResult := execute.io.output.payload.executeResult
+  io.keepAlive := (
+    decode.io.input.ready.asBits ##
+      decode.io.output.valid.asBits ##
+      decode.io.output.payload.asBits ##
+      decode.io.csrReadAddress.asBits ##
+      decode.io.debugLegacyValue ##
+      decode.io.branchRepair.asBits ##
+      decode.io.btb.asBits ##
+      decode.io.lateForwardJ.asBits ##
+      decode.io.lateForwardKOrD.asBits ##
+      decode.io.lateForwardDestination.asBits ##
+      execute.io.output.ready.asBits ##
+      execute.io.output.valid.asBits ##
+      execute.io.output.payload.asBits ##
+      execute.io.forward.asBits ##
+      execute.io.mulDiv.asBits ##
+      execute.io.memory.asBits ##
+      execute.io.cache.asBits ##
+      execute.io.tlbInstructionStall.asBits ##
+      execute.io.dataFetch.asBits
+  ).resize(4096)
+}
+
+class LateResultForwardingSpec extends AnyFunSuite {
+  test("non-branch EX dependency advances and waits in EX only until the MEM result is valid") {
+    val workspaceRoot =
+      sys.env.getOrElse("SPINAL_SIM_WORKSPACE", "target/sim-workspace-late-forward")
+    val workspace = Paths.get(workspaceRoot, "late-result-forwarding").toString
+
+    SimConfig
+      .withConfig(SpinalConfig(oneFilePerComponent = true, removePruned = false))
+      .withVerilator
+      .addSimulatorFlag("-Wall")
+      .addSimulatorFlag("-Wwarn-WIDTH")
+      .addSimulatorFlag("-Wwarn-UNOPTFLAT")
+      .addSimulatorFlag("-Wwarn-CMPCONST")
+      .addSimulatorFlag("-Wwarn-UNSIGNED")
+      .addSimulatorFlag("-Wno-UNUSEDSIGNAL")
+      .disableCache
+      .workspacePath(workspace)
+      .compile(new LateResultForwardingSimTop)
+      .doSim("late-result-forwarding", 0x158aa8) { dut =>
+        dut.clockDomain.forkStimulus(period = 10)
+        dut.io.fetchValid #= false
+        dut.io.fetchBits #= 0
+        dut.io.registerWrite.valid #= false
+        dut.io.registerWrite.destination #= 0
+        dut.io.registerWrite.data #= 0
+        dut.io.producerValid #= false
+        dut.io.producerDestination #= 1
+        dut.io.producerLateResultAllowed #= false
+        dut.io.memoryResultValid #= false
+        dut.io.memoryResultStalled #= true
+        dut.io.memoryResult #= 0
+        dut.io.executeReady #= false
+
+        dut.clockDomain.assertReset()
+        dut.clockDomain.waitSampling(2)
+        dut.clockDomain.deassertReset()
+        dut.clockDomain.waitSampling()
+
+        dut.io.registerWrite.valid #= true
+        dut.io.registerWrite.destination #= 1
+        dut.io.registerWrite.data #= 1
+        dut.clockDomain.waitSampling()
+        dut.io.registerWrite.destination #= 2
+        dut.io.registerWrite.data #= 7
+        dut.clockDomain.waitSampling()
+        dut.io.registerWrite.valid #= false
+
+        // mul.w r3, r1, r2 keeps the legacy bubble because the shared multiplier samples raw
+        // operands. This avoids feeding MEM results combinationally back through the shared unit.
+        val multiply = BigInt("001c0823", 16)
+        dut.io.fetchBits #= BigInt("1c000ffc", 16) | (multiply << 32)
+        dut.io.fetchValid #= true
+        dut.io.producerValid #= true
+        dut.io.producerLateResultAllowed #= true
+        dut.clockDomain.waitSampling()
+        dut.io.fetchValid #= false
+        sleep(1)
+        assert(!dut.io.decodeValid.toBoolean)
+        assert(!dut.io.decodeLateJ.toBoolean)
+        dut.io.producerValid #= false
+        dut.io.executeReady #= true
+        dut.clockDomain.waitSampling(2)
+        dut.io.executeReady #= false
+
+        // add.w r3, r1, r2. r1 is produced by the instruction currently leaving EX.
+        val add = BigInt("00100823", 16)
+        dut.io.fetchBits #= BigInt("1c001000", 16) | (add << 32)
+        dut.io.fetchValid #= true
+        dut.io.producerValid #= true
+        dut.io.producerLateResultAllowed #= false
+        dut.clockDomain.waitSampling()
+        dut.io.fetchValid #= false
+        sleep(1)
+
+        // A producer that will take an exception must retain the legacy decode stall so no younger
+        // side effect can escape before the exception flush arrives.
+        assert(!dut.io.decodeValid.toBoolean)
+        assert(!dut.io.decodeLateJ.toBoolean)
+        dut.io.producerLateResultAllowed #= true
+        sleep(1)
+
+        assert(dut.io.decodeValid.toBoolean)
+        assert(dut.io.decodeLateJ.toBoolean)
+
+        // The dependent add enters EX without a decode bubble, then waits safely while a load miss
+        // (or any other delayed producer) has no valid MEM result.
+        dut.clockDomain.waitSampling()
+        dut.io.producerValid #= false
+        sleep(1)
+        assert(!dut.io.executeValid.toBoolean)
+
+        // MEM supplies r1=11 for one cycle while the downstream stage is backpressured.
+        dut.io.memoryResultValid #= true
+        dut.io.memoryResultStalled #= false
+        dut.io.memoryResult #= 11
+        sleep(1)
+        assert(dut.io.executeValid.toBoolean)
+        assert(dut.io.executeResult.toBigInt == 18)
+
+        // The result is retained in EX: after the MEM pulse disappears, the add still completes.
+        dut.clockDomain.waitSampling()
+        dut.io.memoryResultValid #= false
+        dut.io.memoryResultStalled #= true
+        dut.io.memoryResult #= 0
+        dut.io.executeReady #= true
+        sleep(1)
+        assert(dut.io.executeValid.toBoolean)
+        assert(dut.io.executeResult.toBigInt == 18)
+      }
+  }
+}

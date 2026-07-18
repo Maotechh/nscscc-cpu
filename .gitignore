@@ -33,5 +33,10 @@ __pycache__/
 /logs/refactor/**/raw/
 /logs/refactor/**/waveforms/
 
+# Local performance/DSE evidence. Commit only the condensed iteration notes.
+/dse_results/
+/logs/dev/evidence/
+/.pytest_cache/
+
 jsfa.pdf
 AGENTS.md

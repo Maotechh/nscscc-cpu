@@ -83,6 +83,10 @@ final class ExecuteStage(config: CoreConfig = CoreConfig.Locked) extends Compone
     val input = slave(Stream(DecodePayload(config)))
     val output = master(Stream(ExecutePayload()))
     val forward = out(ExecuteForward())
+    val lateForwardJ = in Bool ()
+    val lateForwardKOrD = in Bool ()
+    val lateForwardDestination = in UInt (5 bits)
+    val memoryForward = in(MemoryForward())
     val mulDiv = out(ExecuteMulDivRequest())
     val divideComplete = in Bool ()
     val flush = in(ExecuteFlush())
@@ -101,14 +105,29 @@ final class ExecuteStage(config: CoreConfig = CoreConfig.Locked) extends Compone
 
   val occupied = RegInit(False)
   val payload = Reg(DecodePayload(config))
+  val lateForwardJ = Reg(Bool())
+  val lateForwardKOrD = Reg(Bool())
+  val lateForwardDestination = Reg(UInt(5 bits))
+
+  val lateForwardRequested = lateForwardJ || lateForwardKOrD
+  val lateForwardMatch =
+    io.memoryForward.valid && io.memoryForward.writeEnabled &&
+      !io.memoryForward.dependencyNeedsStall &&
+      io.memoryForward.destination === lateForwardDestination
+  val lateForwardReady =
+    !lateForwardRequested || lateForwardMatch
+  val effectiveRegisterDataJ =
+    Mux(lateForwardJ, io.memoryForward.result, payload.registerDataJ)
+  val effectiveRegisterDataKOrD =
+    Mux(lateForwardKOrD, io.memoryForward.result, payload.registerDataKOrD)
 
   val alu = new OpenLa500Alu
   alu.io.alu_op := payload.aluOperation
-  alu.io.alu_src1 := Mux(payload.source1IsPc, payload.pc.asBits, payload.registerDataJ)
+  alu.io.alu_src1 := Mux(payload.source1IsPc, payload.pc.asBits, effectiveRegisterDataJ)
   alu.io.alu_src2 := Mux(
     payload.source2IsImmediate,
     payload.immediate,
-    Mux(payload.source2IsFour, B(4, 32 bits), payload.registerDataKOrD)
+    Mux(payload.source2IsFour, B(4, 32 bits), effectiveRegisterDataKOrD)
   )
 
   val laccRequest = Bool()
@@ -119,7 +138,7 @@ final class ExecuteStage(config: CoreConfig = CoreConfig.Locked) extends Compone
   val laccDataWriteData = Bits(32 bits)
   val laccDataSize = Bits(2 bits)
   if (config.laccEnabled) {
-    laccRequest := payload.laccRequest && occupied
+    laccRequest := payload.laccRequest && occupied && lateForwardReady
     laccResponseValid := io.laccInput.responseValid
     laccDataValid := io.laccInput.dataValid
     laccDataRead := io.laccInput.dataRead
@@ -153,12 +172,14 @@ final class ExecuteStage(config: CoreConfig = CoreConfig.Locked) extends Compone
   val hasException = payload.hasException || alignmentException
   val exceptionCode = alignmentException.asBits ## payload.exceptionCode
 
-  val divideEnable = (payload.mulDivOperation(2) || payload.mulDivOperation(3)) && occupied
+  val divideEnable =
+    (payload.mulDivOperation(2) || payload.mulDivOperation(3)) && occupied && lateForwardReady
   val multiplyEnable = payload.mulDivOperation(0) || payload.mulDivOperation(1)
   val divideStall = divideEnable && !io.divideComplete
 
   val sideEffectEnable =
-    occupied && !hasException && io.output.ready && !io.flush.any && !io.memoryFlush
+    occupied && lateForwardReady && !hasException && io.output.ready && !io.flush.any &&
+      !io.memoryFlush
   val cacheOperation = payload.destination
   val instructionCacheOperation = payload.cacheOperation && cacheOperation(2 downto 0) === 0
   val dataCacheOperation = payload.cacheOperation && cacheOperation(2 downto 0) === 1
@@ -173,9 +194,9 @@ final class ExecuteStage(config: CoreConfig = CoreConfig.Locked) extends Compone
   val waitsForAddress = accessMemory || dataCacheOperation || preloadInstruction
   val addressReady = sideEffectEnable && io.memoryAddressAccepted
   val readyGo =
-    (!divideStall && !laccStall &&
+    (lateForwardReady && !divideStall && !laccStall &&
       ((addressReady || !waitsForAddress) && !tlbSearchStall && !instructionCacheStall)) ||
-      hasException
+      payload.hasException || (alignmentException && lateForwardReady)
 
   io.input.ready := !occupied || (readyGo && io.output.ready)
   io.output.valid := occupied && readyGo
@@ -187,6 +208,18 @@ final class ExecuteStage(config: CoreConfig = CoreConfig.Locked) extends Compone
   }
   when(io.input.valid && io.input.ready) {
     payload := io.input.payload
+    lateForwardJ := io.lateForwardJ
+    lateForwardKOrD := io.lateForwardKOrD
+    lateForwardDestination := io.lateForwardDestination
+  }.elsewhen(occupied && lateForwardMatch) {
+    when(lateForwardJ) {
+      payload.registerDataJ := io.memoryForward.result
+    }
+    when(lateForwardKOrD) {
+      payload.registerDataKOrD := io.memoryForward.result
+    }
+    lateForwardJ := False
+    lateForwardKOrD := False
   }
 
   val byteMask = (B(1, 4 bits) |<< addressLow.asUInt).resize(4)
@@ -204,17 +237,17 @@ final class ExecuteStage(config: CoreConfig = CoreConfig.Locked) extends Compone
   val byteContent = Bits(32 bits)
   for (lane <- 0 until 4) {
     byteContent(lane * 8 + 7 downto lane * 8) :=
-      Mux(byteMask(lane), payload.registerDataKOrD(7 downto 0), B(0, 8 bits))
+      Mux(byteMask(lane), effectiveRegisterDataKOrD(7 downto 0), B(0, 8 bits))
   }
   val halfContent = Bits(32 bits)
   halfContent(15 downto 0) :=
-    Mux(halfMask(0), payload.registerDataKOrD(15 downto 0), B(0, 16 bits))
+    Mux(halfMask(0), effectiveRegisterDataKOrD(15 downto 0), B(0, 16 bits))
   halfContent(31 downto 16) :=
-    Mux(halfMask(3), payload.registerDataKOrD(15 downto 0), B(0, 16 bits))
+    Mux(halfMask(3), effectiveRegisterDataKOrD(15 downto 0), B(0, 16 bits))
   val storeData =
     Mux(payload.memorySize(0), byteContent, B(0, 32 bits)) |
       Mux(payload.memorySize(1), halfContent, B(0, 32 bits)) |
-      Mux(!payload.memorySize.orR, payload.registerDataKOrD, B(0, 32 bits))
+      Mux(!payload.memorySize.orR, effectiveRegisterDataKOrD, B(0, 32 bits))
 
   val laccByteMask = (B(1, 4 bits) |<< laccDataAddress(1 downto 0)).resize(4)
   val laccHalfMask = Bits(4 bits)
@@ -281,8 +314,8 @@ final class ExecuteStage(config: CoreConfig = CoreConfig.Locked) extends Compone
   }
 
   val csrMaskResult =
-    (payload.registerDataJ & payload.registerDataKOrD) |
-      (~payload.registerDataJ & payload.csrReadData)
+    (effectiveRegisterDataJ & effectiveRegisterDataKOrD) |
+      (~effectiveRegisterDataJ & payload.csrReadData)
 
   io.output.payload.pc := payload.pc
   io.output.payload.executeResult := executeResult
@@ -293,7 +326,8 @@ final class ExecuteStage(config: CoreConfig = CoreConfig.Locked) extends Compone
   io.output.payload.memorySize := payload.memorySize
   io.output.payload.hasException := hasException
   io.output.payload.isErtn := payload.isErtn
-  io.output.payload.csrResult := Mux(payload.csrMask, csrMaskResult, payload.registerDataKOrD)
+  io.output.payload.csrResult :=
+    Mux(payload.csrMask, csrMaskResult, effectiveRegisterDataKOrD)
   io.output.payload.csrAddress := payload.csrAddress
   io.output.payload.csrWrite := payload.csrWrite
   io.output.payload.exceptionCode := exceptionCode
@@ -306,8 +340,8 @@ final class ExecuteStage(config: CoreConfig = CoreConfig.Locked) extends Compone
   io.output.payload.refetch := payload.refetch
   io.output.payload.tlbRead := payload.tlbRead
   io.output.payload.invalidateTlb := payload.invalidateTlb
-  io.output.payload.invalidateTlbAsid := payload.registerDataJ(9 downto 0)
-  io.output.payload.invalidateTlbVpn := payload.registerDataKOrD(31 downto 13)
+  io.output.payload.invalidateTlbAsid := effectiveRegisterDataJ(9 downto 0)
+  io.output.payload.invalidateTlbVpn := effectiveRegisterDataKOrD(31 downto 13)
   io.output.payload.memorySignExtend := payload.memorySignExtend
   io.output.payload.instructionCacheOperation := io.cache.instructionOperationEnable
   io.output.payload.isBranch := payload.isBranch

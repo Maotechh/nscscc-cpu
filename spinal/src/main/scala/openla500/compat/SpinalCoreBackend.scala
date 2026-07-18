@@ -43,7 +43,13 @@ private[compat] final class SpinalCoreBackend(
   val reset = !io.aresetn
 
   val fetch = new FetchStage(config)
-  val decode = new DecodeStage(config)
+  // Full-core-only late forwarding removes the fixed load/mul-use bubble. Legacy leaf generators
+  // keep their cycle-locked behavior by using DecodeStage's default `false` profile.
+  val decode = new DecodeStage(
+    config,
+    lateResultForwardingEnabled = true,
+    memoryBranchForwardingEnabled = true
+  )
   val execute = new ExecuteStage(config)
   val memory = new MemoryStage
   val writeback = new WritebackStage(emitCommit = true, exposeObservation = false)
@@ -126,10 +132,15 @@ private[compat] final class SpinalCoreBackend(
   decode.io.executeForward.dependencyNeedsStall := execute.io.forward.dependencyNeedsStall
   decode.io.executeForward.destination := execute.io.forward.destination
   decode.io.executeForward.data := execute.io.forward.result
+  decode.io.executeLateResultAllowed := !execute.io.output.payload.hasException
   decode.io.memoryForward.writeEnabled := memory.io.forward.writeEnabled
   decode.io.memoryForward.dependencyNeedsStall := memory.io.forward.dependencyNeedsStall
   decode.io.memoryForward.destination := memory.io.forward.destination
   decode.io.memoryForward.data := memory.io.forward.result
+  execute.io.lateForwardJ := decode.io.lateForwardJ
+  execute.io.lateForwardKOrD := decode.io.lateForwardKOrD
+  execute.io.lateForwardDestination := decode.io.lateForwardDestination
+  execute.io.memoryForward := memory.io.forward
   decode.io.executeTlbStall := execute.io.tlbInstructionStall
   decode.io.memoryTlbStall := memory.io.tlbInstructionStall
   decode.io.writebackTlbStall := writeback.io.tlb.instructionStall

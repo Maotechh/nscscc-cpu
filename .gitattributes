@@ -1,1 +1,14 @@
 tests/fixtures/component-overlay/alu.v whitespace=-trailing-space
+
+# Byte-locked toolchain metadata must survive Windows checkouts unchanged.
+reference/scala-dependencies.lock.json text eol=lf
+reference/manifest.lock text eol=lf
+reference/core-top.ports.json text eol=lf
+reference/component-replacements/core-top.json text eol=lf
+rtl/mycpu_top.v text eol=lf
+
+# scalafmt is byte-sensitive; keep the SpinalHDL build reproducible on Windows.
+*.scala text eol=lf
+*.sbt text eol=lf
+spinal/.scalafmt.conf text eol=lf
+spinal/project/build.properties text eol=lf

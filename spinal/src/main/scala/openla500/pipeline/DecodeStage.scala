@@ -49,15 +49,20 @@ final case class DecodeBtbUpdate() extends Bundle {
   *
   * Input/output use Stream contracts. The stage owns the decode payload register, GPR storage, and
   * branch-slot cancellation state. Global flush wins over input acceptance; backpressure keeps the
-  * registered fetch payload stable. The implementation intentionally preserves the golden MS
-  * forwarding quirk: branch comparison uses the register-file value while the outgoing operand uses
-  * the forwarded value and decode stalls.
+  * registered fetch payload stable. The legacy profile intentionally preserves the golden MS
+  * forwarding quirk. The complete core may additionally mark non-branch EX dependencies for late
+  * MEM-to-EX forwarding and consume completed MEM results in Decode branch comparisons.
   */
-final class DecodeStage(config: CoreConfig = CoreConfig.Locked) extends Component {
+final class DecodeStage(
+    config: CoreConfig = CoreConfig.Locked,
+    lateResultForwardingEnabled: Boolean = false,
+    memoryBranchForwardingEnabled: Boolean = false
+) extends Component {
   val io = new Bundle {
     val input = slave Stream (FetchPayload())
     val output = master Stream (DecodePayload(config))
     val executeForward = in(DecodeForward())
+    val executeLateResultAllowed = in Bool ()
     val memoryForward = in(DecodeForward())
     val flush = in(DecodeFlush())
     val executeTlbStall = in Bool ()
@@ -79,6 +84,9 @@ final class DecodeStage(config: CoreConfig = CoreConfig.Locked) extends Componen
     val debugReadSelect = in Bool ()
     val debugReadAddress = in UInt (5 bits)
     val debugLegacyValue = out Bits (32 bits)
+    val lateForwardJ = out Bool ()
+    val lateForwardKOrD = out Bool ()
+    val lateForwardDestination = out UInt (5 bits)
     val branchRepair = out(RedirectRequest())
     val btb = out(DecodeBtbUpdate())
     val registers = config.diffTestEnabled generate out(Vec(Bits(32 bits), 32))
@@ -468,18 +476,62 @@ final class DecodeStage(config: CoreConfig = CoreConfig.Locked) extends Componen
     io.executeForward.data,
     Mux(memoryKHit, io.memoryForward.data, registerDataKOrD)
   )
-  val branchValueJ = Mux(executeJHit, io.executeForward.data, registerDataJ)
-  val branchValueKOrD = Mux(executeKHit, io.executeForward.data, registerDataKOrD)
+  // 分支在 Decode 级完成比较。若最新生产者仍在 EX，必须优先使用 EX；否则可直接使用
+  // 已完成的 MEM 结果，避免为了等待同一结果写回寄存器堆而额外空转一拍。
+  val branchValueJ =
+    if (memoryBranchForwardingEnabled)
+      Mux(
+        executeJHit,
+        io.executeForward.data,
+        Mux(memoryJHit, io.memoryForward.data, registerDataJ)
+      )
+    else Mux(executeJHit, io.executeForward.data, registerDataJ)
+  val branchValueKOrD =
+    if (memoryBranchForwardingEnabled)
+      Mux(
+        executeKHit,
+        io.executeForward.data,
+        Mux(memoryKHit, io.memoryForward.data, registerDataKOrD)
+      )
+    else Mux(executeKHit, io.executeForward.data, registerDataKOrD)
+  // The shared multiplier/divider and optional accelerator consume the registered operands
+  // directly. Keeping their consumers on the proven decode-stall path also prevents a
+  // MEM-result -> EX-operand -> shared-unit-result -> MEM-result combinational loop.
+  val rawOperandConsumer = mulDivOperation.orR || laccRequest
+  val canLateForwardJ =
+    if (lateResultForwardingEnabled)
+      executeJHit && io.executeForward.dependencyNeedsStall && !branchNeedsRegisterData &&
+      !rawOperandConsumer && io.executeLateResultAllowed
+    else False
+  val canLateForwardKOrD =
+    if (lateResultForwardingEnabled)
+      executeKHit && io.executeForward.dependencyNeedsStall && !branchNeedsRegisterData &&
+      !rawOperandConsumer && io.executeLateResultAllowed
+    else False
   val stallJ = Mux(
     executeJHit,
-    io.executeForward.dependencyNeedsStall,
-    Mux(memoryJHit, io.memoryForward.dependencyNeedsStall || branchNeedsRegisterData, False)
+    io.executeForward.dependencyNeedsStall && !canLateForwardJ,
+    Mux(
+      memoryJHit,
+      io.memoryForward.dependencyNeedsStall ||
+        (if (memoryBranchForwardingEnabled) False else branchNeedsRegisterData),
+      False
+    )
   )
   val stallK = Mux(
     executeKHit,
-    io.executeForward.dependencyNeedsStall,
-    Mux(memoryKHit, io.memoryForward.dependencyNeedsStall || branchNeedsRegisterData, False)
+    io.executeForward.dependencyNeedsStall && !canLateForwardKOrD,
+    Mux(
+      memoryKHit,
+      io.memoryForward.dependencyNeedsStall ||
+        (if (memoryBranchForwardingEnabled) False else branchNeedsRegisterData),
+      False
+    )
   )
+
+  io.lateForwardJ := canLateForwardJ
+  io.lateForwardKOrD := canLateForwardKOrD
+  io.lateForwardDestination := io.executeForward.destination
 
   val equalOperands = branchValueJ === branchValueKOrD
   val lessUnsigned = branchValueJ.asUInt < branchValueKOrD.asUInt
@@ -728,7 +780,10 @@ final class DecodeStage(config: CoreConfig = CoreConfig.Locked) extends Componen
 
   io.csrReadAddress := Mux(instCpuCfg, valueJ(13 downto 0).asUInt + U(0x00b0, 14 bits), csrIndex)
   io.debugLegacyValue := readAddressJ.asBits.resize(32)
-  io.branchRepair.active := btbRepair
+  // A repair is architecturally observable by Fetch, so it must not escape while this Decode
+  // payload is held by EX backpressure. Forwarded branch operands may still change during the
+  // hold; redirect only on the same cycle that the branch actually leaves Decode.
+  io.branchRepair.active := btbRepair && io.output.ready
   io.branchRepair.target := btbRepairTarget
   io.btb.enable := occupied && readyGo && io.output.ready && !fetch.hasException
   io.btb.popReturnStack := instJirl

@@ -78,6 +78,14 @@ final class LegacyExecuteStage(config: CoreConfig = CoreConfig.Locked) extends C
 
   stage.io.input.valid := io.ds_to_es_valid
   stage.io.input.payload := DecodePayload.unpackLegacy(io.ds_to_es_bus, config)
+  stage.io.lateForwardJ := False
+  stage.io.lateForwardKOrD := False
+  stage.io.lateForwardDestination := 0
+  stage.io.memoryForward.valid := False
+  stage.io.memoryForward.dependencyNeedsStall := False
+  stage.io.memoryForward.writeEnabled := False
+  stage.io.memoryForward.destination := 0
+  stage.io.memoryForward.result := 0
   stage.io.output.ready := io.ms_allowin
   io.es_allowin := stage.io.input.ready
   io.es_to_ms_valid := stage.io.output.valid
