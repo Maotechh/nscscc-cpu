@@ -91,7 +91,10 @@ final class OooBackend(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommi
   accepted := routingRequest & allLanes
   when(!acceptAll || io.flush) { accepted := B(0, config.renameWidth bits) }
   io.renameReady := router.io.inputReady
-  when(!rob.io.allocateReady || !freeList.io.allocateReady || io.flush) {
+  when(
+    !rob.io.allocateReady || !freeList.io.allocateReady ||
+      !lsqAllocator.io.allocateReady || io.flush
+  ) {
     io.renameReady := B(0, config.renameWidth bits)
   }
 

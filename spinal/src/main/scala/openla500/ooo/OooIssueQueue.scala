@@ -66,12 +66,19 @@ final class OooIssueQueue(
   }
 
   val issueIndex = selectLowest(readyMap)
+  val issueIndexWide = UInt(count.getWidth bits)
+  issueIndexWide := issueIndex.resize(count.getWidth)
   val issueSlot = order(issueIndex)
   io.issueValid := readyMap.orR
   io.issue := payloadSlots(issueSlot)
   val issueFire = io.issueValid && io.issueReady
 
-  io.enqueueReady := !io.flush && count < config.issueQueueEntriesPerPort
+  // Register the backpressure boundary. Reserve one slot because the ready
+  // value describes the previous cycle's count; one enqueue per cycle per IQ
+  // cannot overrun the remaining slot.
+  val enqueueReadyReg = Reg(Bool()) init (True)
+  enqueueReadyReg := count < U(config.issueQueueEntriesPerPort - 1, count.getWidth bits)
+  io.enqueueReady := !io.flush && enqueueReadyReg
   val enqueueFire = io.enqueueValid && io.enqueueReady
   io.occupancy := count
   val enqueueSlot = selectLowest(~slotValid.asBits)
@@ -141,7 +148,12 @@ final class OooIssueQueue(
 
     when(issueFire) {
       for (entry <- 0 until config.issueQueueEntriesPerPort - 1) {
-        when(U(entry + 1, count.getWidth bits) < count) { order(entry) := order(entry + 1) }
+        when(
+          U(entry, count.getWidth bits) >= issueIndexWide &&
+            U(entry + 1, count.getWidth bits) < count
+        ) {
+          order(entry) := order(entry + 1)
+        }
       }
       when(enqueueFire) {
         val destination = (count - U(1, count.getWidth bits)).resized

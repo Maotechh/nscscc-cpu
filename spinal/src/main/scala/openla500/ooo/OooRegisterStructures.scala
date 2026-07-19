@@ -109,6 +109,12 @@ final class OooRegisterMap(config: OooCoreConfig = OooCoreConfig.FourIssueThreeC
         io.renamePsrc2(lane) := io.renamePdst(older)
         io.renameSource2Ready(lane) := False
       }
+      when(
+        io.renameValid(older) && io.renameDestination(older) =/= 0 &&
+          io.renameDestination(older) === io.renameDestination(lane)
+      ) {
+        io.renameOldPdst(lane) := io.renamePdst(older)
+      }
     }
   }
 

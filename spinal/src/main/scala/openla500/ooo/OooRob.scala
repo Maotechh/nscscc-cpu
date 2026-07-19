@@ -164,15 +164,18 @@ final class OooRob(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommit) e
         entries(index).result := source.data
         entries(index).sideEffectData := source.sideEffectData
         entries(index).exception := source.exception
-        entries(index).branchMispredict := source.branchMispredict
-        entries(index).branchTarget := source.branchTarget
+        when(source.branchResolved) {
+          entries(index).branchMispredict := source.branchMispredict
+          entries(index).branchTarget := source.branchTarget
+        }
       }
     }
   }
 
   when(io.flush) {
-    allocatePointer := U(0, config.robPointerWidth bits)
-    commitPointer := U(0, config.robPointerWidth bits)
+    // Keep the next-free pointer across a flush so delayed completions from
+    // the discarded window cannot alias the first entry of the new window.
+    commitPointer := allocatePointer
     occupancy := U(0, occupancy.getWidth bits)
     for (entry <- entries) {
       entry.valid := False
@@ -189,7 +192,7 @@ final class OooRob(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommit) e
       }
     }
     commitPointer := commitPointer + committedCount
-    occupancy := occupancy + Mux(io.allocateReady, requested, 0) - committedCount
+    occupancy := occupancy + Mux(io.allocateAccept, requested, 0) - committedCount
   }
 
   io.empty := occupancy === 0

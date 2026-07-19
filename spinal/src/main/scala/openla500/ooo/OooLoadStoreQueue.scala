@@ -31,8 +31,8 @@ final case class OooLoadQueueEntry(config: OooCoreConfig) extends Bundle {
 final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommit)
     extends Component {
   private def isOlder(older: UInt, younger: UInt): Bool = {
-    val distance = (younger - older).resized
-    distance =/= 0 && !distance.msb
+    val distance = (younger - older).resize(config.robPointerWidth)
+    (distance =/= U(0, config.robPointerWidth bits)) && !distance.msb
   }
 
   private def formatLoad(word: Bits, address: UInt, size: Bits, signExtend: Bool): Bits = {
@@ -181,54 +181,66 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
   val aguFire = io.aguValid && io.aguReady
   val aguCompletionFire = aguFire && aguProducesCompletion
 
-  io.completionValid := responseAccepted || forwardFire || aguCompletionFire
-  clearCompletion(io.completion)
+  val generatedCompletionValid = responseAccepted || forwardFire || aguCompletionFire
+  val generatedCompletion = OooCompletion(config)
+  clearCompletion(generatedCompletion)
   when(responseAccepted) {
-    io.completion.robPointer := headLoad.robPointer
-    io.completion.pdst := headLoad.pdst
-    io.completion.writesPdst := headLoad.writesPdst
-    io.completion.data := formatLoad(
+    generatedCompletion.robPointer := headLoad.robPointer
+    generatedCompletion.pdst := headLoad.pdst
+    generatedCompletion.writesPdst := headLoad.writesPdst
+    generatedCompletion.data := formatLoad(
       io.dataResponse.data,
       headLoad.virtualAddress,
       headLoad.size,
       headLoad.signExtend
     )
     when(io.dataResponse.error) {
-      io.completion.exception.valid := True
-      io.completion.exception.ecode := U(8, 6 bits)
-      io.completion.exception.badVAddrValid := True
-      io.completion.exception.badVAddr := headLoad.virtualAddress
+      generatedCompletion.exception.valid := True
+      generatedCompletion.exception.ecode := U(8, 6 bits)
+      generatedCompletion.exception.badVAddrValid := True
+      generatedCompletion.exception.badVAddr := headLoad.virtualAddress
     }
   }.elsewhen(forwardFire) {
-    io.completion.robPointer := headLoad.robPointer
-    io.completion.pdst := headLoad.pdst
-    io.completion.writesPdst := headLoad.writesPdst
-    io.completion.data := formatLoad(
+    generatedCompletion.robPointer := headLoad.robPointer
+    generatedCompletion.pdst := headLoad.pdst
+    generatedCompletion.writesPdst := headLoad.writesPdst
+    generatedCompletion.data := formatLoad(
       stores(forwardingId).writeData,
       headLoad.virtualAddress,
       headLoad.size,
       headLoad.signExtend
     )
   }.elsewhen(aguCompletionFire) {
-    io.completion.robPointer := io.agu.uop.robPointer
-    io.completion.pdst := io.agu.uop.pdst
-    io.completion.writesPdst := io.agu.uop.decoded.writesGpr
-    io.completion.data := Mux(
+    generatedCompletion.robPointer := io.agu.uop.robPointer
+    generatedCompletion.pdst := io.agu.uop.pdst
+    generatedCompletion.writesPdst := io.agu.uop.decoded.writesGpr
+    generatedCompletion.data := Mux(
       io.agu.uop.decoded.isSc,
       B(1, config.xlen bits),
       B(0, config.xlen bits)
     )
-    io.completion.sideEffectData := io.agu.writeData
-    io.completion.exception := io.agu.uop.decoded.exception
+    generatedCompletion.sideEffectData := io.agu.writeData
+    generatedCompletion.exception := io.agu.uop.decoded.exception
     when(aguMisaligned) {
-      io.completion.exception.valid := True
-      io.completion.exception.ecode := U(9, 6 bits)
-      io.completion.exception.esubcode := U(0, 9 bits)
-      io.completion.exception.badVAddrValid := True
-      io.completion.exception.badVAddr := io.agu.virtualAddress
-      io.completion.exception.tlbRefill := False
+      generatedCompletion.exception.valid := True
+      generatedCompletion.exception.ecode := U(9, 6 bits)
+      generatedCompletion.exception.esubcode := U(0, 9 bits)
+      generatedCompletion.exception.badVAddrValid := True
+      generatedCompletion.exception.badVAddr := io.agu.virtualAddress
+      generatedCompletion.exception.tlbRefill := False
     }
   }
+
+  val completionValid = RegInit(False)
+  val completion = Reg(OooCompletion(config))
+  when(io.flush) {
+    completionValid := False
+  }.otherwise {
+    completionValid := generatedCompletionValid
+    when(generatedCompletionValid) { completion := generatedCompletion }
+  }
+  io.completionValid := completionValid
+  io.completion := completion
 
   io.releaseLoadValid := B(0, config.commitWidth bits)
   io.releaseStoreValid := B(0, config.commitWidth bits)
