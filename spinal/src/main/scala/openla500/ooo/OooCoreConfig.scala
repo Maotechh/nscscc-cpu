@@ -50,6 +50,7 @@ final case class OooCoreConfig(
     writebackWidth: Int = 5,
     physicalRegs: Int = 64,
     robEntries: Int = 32,
+    dispatchQueueEntries: Int = 8,
     issueQueueEntriesPerPort: Int = 8,
     loadQueueEntries: Int = 8,
     storeQueueEntries: Int = 8,
@@ -84,6 +85,11 @@ final case class OooCoreConfig(
   require(isPowerOfTwo(physicalRegs), "the physical register count must be a power of two")
   require(isPowerOfTwo(robEntries), "the ROB size must be a power of two")
   require(robEntries >= renameWidth * 4, "the ROB is too small for the configured width")
+  require(isPowerOfTwo(dispatchQueueEntries), "the dispatch queue size must be a power of two")
+  require(
+    dispatchQueueEntries >= dispatchWidth * 2,
+    "the dispatch queue must absorb at least two allocation groups"
+  )
   require(isPowerOfTwo(issueQueueEntriesPerPort), "issue queue size must be a power of two")
   require(isPowerOfTwo(loadQueueEntries), "load queue size must be a power of two")
   require(isPowerOfTwo(storeQueueEntries), "store queue size must be a power of two")

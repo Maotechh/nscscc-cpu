@@ -67,6 +67,7 @@ final class OooRegisterMap(config: OooCoreConfig = OooCoreConfig.FourIssueThreeC
     val commitPreviousPdst = out Vec (UInt(config.physicalRegIndexWidth bits), config.commitWidth)
 
     val architecturalMappings = out Vec (UInt(config.physicalRegIndexWidth bits), config.archRegs)
+    val physicalReady = out Bits (config.physicalRegs bits)
     val flush = in Bool ()
   }
 
@@ -82,6 +83,7 @@ final class OooRegisterMap(config: OooCoreConfig = OooCoreConfig.FourIssueThreeC
   for (arch <- 0 until config.archRegs) {
     io.architecturalMappings(arch) := architectural(arch)
   }
+  io.physicalReady := ready.asBits
 
   for (lane <- 0 until config.renameWidth) {
     io.renamePsrc1(lane) := speculative(io.renameSource1(lane))
@@ -178,6 +180,30 @@ final class OooRegisterMap(config: OooCoreConfig = OooCoreConfig.FourIssueThreeC
 
 final class OooFreeList(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommit)
     extends Component {
+  private val selectionGroupWidth = 8
+  private val selectionGroupCount = config.physicalRegs / selectionGroupWidth
+  require(config.physicalRegs % selectionGroupWidth == 0)
+
+  private def selectLowest(mask: Bits): Bits = {
+    val groupValid = Bits(selectionGroupCount bits)
+    val localFirst = Vec(Bits(selectionGroupWidth bits), selectionGroupCount)
+    for (group <- 0 until selectionGroupCount) {
+      val high = (group + 1) * selectionGroupWidth - 1
+      val low = group * selectionGroupWidth
+      val groupMask = mask(high downto low)
+      groupValid(group) := groupMask.orR
+      localFirst(group) := OHMasking.first(groupMask)
+    }
+    val selectedGroup = OHMasking.first(groupValid)
+    val selected = Bits(config.physicalRegs bits)
+    for (group <- 0 until selectionGroupCount) {
+      val high = (group + 1) * selectionGroupWidth - 1
+      val low = group * selectionGroupWidth
+      selected(high downto low) := localFirst(group).andMask(selectedGroup(group))
+    }
+    selected
+  }
+
   val io = new Bundle {
     val allocateValid = in Bits (config.renameWidth bits)
     val allocatePdst = out Vec (UInt(config.physicalRegIndexWidth bits), config.renameWidth)
@@ -197,7 +223,7 @@ final class OooFreeList(config: OooCoreConfig = OooCoreConfig.FourIssueThreeComm
   val remaining = Vec(Bits(config.physicalRegs bits), config.renameWidth + 1)
   remaining(0) := freeBits.asBits
   for (lane <- 0 until config.renameWidth) {
-    val selected = OHMasking.first(remaining(lane))
+    val selected = selectLowest(remaining(lane))
     io.allocatePdst(lane) := OHToUInt(selected)
     remaining(lane + 1) := remaining(lane) &
       ~Mux(io.allocateValid(lane), selected, B(0, config.physicalRegs bits))

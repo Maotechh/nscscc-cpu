@@ -32,6 +32,7 @@ class OooCoreSpec extends AnyFunSuite {
     assert(config.commitWidth == 3)
     assert(config.physicalRegs == 64)
     assert(config.robEntries == 32)
+    assert(config.dispatchQueueEntries == 8)
     assert(config.mshrEntries == 4)
     assert(config.instructionCache.capacityBytes == 8192)
     assert(config.dataCache.capacityBytes == 8192)
@@ -49,6 +50,7 @@ class OooCoreSpec extends AnyFunSuite {
       () => OooCoreConfig(commitWidth = 4),
       () => OooCoreConfig(physicalRegs = 48),
       () => OooCoreConfig(robEntries = 8),
+      () => OooCoreConfig(dispatchQueueEntries = 4),
       () => OooCoreConfig(instructionCache = OooCacheGeometry(2, 64, 32)),
       () => OooCoreConfig(executionPorts = OooCoreConfig.DefaultExecutionPorts.dropRight(1))
     )
