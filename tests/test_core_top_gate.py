@@ -92,6 +92,48 @@ class CoreTopContractTests(unittest.TestCase):
         self.assertEqual(("output", 4), projection["debug0_wb_rf_wen"])
         self.assertEqual([{"name": "TLBNUM", "default": 32}], value["parameters"])
 
+    def test_published_top_holds_reset_until_external_reset_is_observed(self) -> None:
+        rtl = (REPOSITORY_ROOT / "rtl" / "mycpu_top.v").read_text(encoding="utf-8")
+        self.assertIn("resetCapture_externalResetSeen = 1'b0;", rtl)
+        self.assertIn("resetCapture_delayedActiveHigh = 1'b1;", rtl)
+        self.assertIn(
+            "resetCapture_backendActiveHigh = "
+            "(resetCapture_delayedActiveHigh || (! resetCapture_externalResetSeen));",
+            rtl,
+        )
+        self.assertIn("resetCapture_externalResetSeen <= 1'b1;", rtl)
+        self.assertIn(
+            "resetCapture_delayedActiveHigh <= ((! aresetn) || (TLBNUM != 32));",
+            rtl,
+        )
+
+    def test_core_top_compat_does_not_embed_verilog(self) -> None:
+        source = (
+            REPOSITORY_ROOT
+            / "spinal"
+            / "src"
+            / "main"
+            / "scala"
+            / "openla500"
+            / "compat"
+            / "CoreTopCompat.scala"
+        ).read_text(encoding="utf-8")
+        self.assertNotIn("setInlineVerilog", source)
+
+    def test_replacement_specs_bind_the_published_rtl(self) -> None:
+        rtl = REPOSITORY_ROOT / core_top_gate.PUBLISHED_SOURCE
+        expected = {
+            "target": core_top_gate.PUBLISHED_TARGET,
+            "source": core_top_gate.PUBLISHED_SOURCE,
+            "base_sha256": contract()["sources"]["team_golden"]["raw_sha256"],
+            "replacement_sha256": core_top_gate.sha256_file(rtl),
+        }
+        specs = REPOSITORY_ROOT / "reference" / "component-replacements"
+        for name in ("core-top.json", "active-reachable.json"):
+            with self.subTest(spec=name):
+                value = core_top_gate.load_json_strict(specs / name)
+                self.assertEqual([expected], value["replacements"])
+
     def test_locked_team_git_object_is_verified(self) -> None:
         value = contract()
         revision = core_top_gate.parse_lock(MANIFEST_PATH)["team_golden_candidate"]

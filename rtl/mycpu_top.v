@@ -91,7 +91,10 @@ module core_top #(
   wire       [4:0]    backendArea_core_debug0_wb_rf_wnum;
   wire       [31:0]   backendArea_core_debug0_wb_rf_wdata;
   wire       [31:0]   backendArea_core_debug0_wb_inst;
+  reg                 resetCapture_externalResetSeen;
+  wire                when_CoreTopCompat_l85;
   reg                 resetCapture_delayedActiveHigh;
+  wire                resetCapture_backendActiveHigh;
 
   SpinalCoreBackend backendArea_core (
     .aclk                           (aclk                                         ), //i
@@ -144,9 +147,16 @@ module core_top #(
     .debug0_wb_rf_wdata             (backendArea_core_debug0_wb_rf_wdata[31:0]    ), //o
     .debug0_wb_inst                 (backendArea_core_debug0_wb_inst[31:0]        ), //o
     .aclk_1                         (aclk                                         ), //i
-    .resetCapture_delayedActiveHigh (resetCapture_delayedActiveHigh               )  //i
+    .resetCapture_backendActiveHigh (resetCapture_backendActiveHigh               )  //i
   );
-  assign backendArea_core_aresetn = (! resetCapture_delayedActiveHigh);
+  initial begin
+    resetCapture_externalResetSeen = 1'b0;
+    resetCapture_delayedActiveHigh = 1'b1;
+  end
+
+  assign when_CoreTopCompat_l85 = (! aresetn);
+  assign resetCapture_backendActiveHigh = (resetCapture_delayedActiveHigh || (! resetCapture_externalResetSeen));
+  assign backendArea_core_aresetn = (! resetCapture_backendActiveHigh);
   assign arid = backendArea_core_axi_ar_payload_id;
   assign araddr = backendArea_core_axi_ar_payload_address;
   assign arlen = backendArea_core_axi_ar_payload_len;
@@ -180,6 +190,9 @@ module core_top #(
   assign debug0_wb_rf_wdata = backendArea_core_debug0_wb_rf_wdata;
   assign debug0_wb_inst = backendArea_core_debug0_wb_inst;
   always @(posedge aclk) begin
+    if(when_CoreTopCompat_l85) begin
+      resetCapture_externalResetSeen <= 1'b1;
+    end
     resetCapture_delayedActiveHigh <= ((! aresetn) || (TLBNUM != 32));
   end
 
@@ -239,7 +252,7 @@ module SpinalCoreBackend (
   output wire [31:0]   debug0_wb_rf_wdata,
   output wire [31:0]   debug0_wb_inst,
   input  wire          aclk_1,
-  input  wire          resetCapture_delayedActiveHigh
+  input  wire          resetCapture_backendActiveHigh
 );
 
   wire       [31:0]   fetch_io_exceptionEntry;
@@ -807,7 +820,7 @@ module SpinalCoreBackend (
     .io_fetchPc                                 (fetch_io_fetchPc[31:0]                          ), //o
     .io_fetchEnable                             (fetch_io_fetchEnable                            ), //o
     .aclk                                       (aclk_1                                          ), //i
-    .resetCapture_delayedActiveHigh             (resetCapture_delayedActiveHigh                  )  //i
+    .resetCapture_backendActiveHigh             (resetCapture_backendActiveHigh                  )  //i
   );
   DecodeStage decode (
     .io_input_valid                         (fetch_io_downstream_valid                       ), //i
@@ -953,7 +966,7 @@ module SpinalCoreBackend (
     .io_registers_30                        (decode_io_registers_30[31:0]                    ), //o
     .io_registers_31                        (decode_io_registers_31[31:0]                    ), //o
     .aclk                                   (aclk_1                                          ), //i
-    .resetCapture_delayedActiveHigh         (resetCapture_delayedActiveHigh                  )  //i
+    .resetCapture_backendActiveHigh         (resetCapture_backendActiveHigh                  )  //i
   );
   ExecuteStage execute (
     .io_input_valid                              (decode_io_output_valid                              ), //i
@@ -1090,7 +1103,7 @@ module SpinalCoreBackend (
     .io_tlbInstructionStall                      (execute_io_tlbInstructionStall                      ), //o
     .io_dataFetch                                (execute_io_dataFetch                                ), //o
     .aclk                                        (aclk_1                                              ), //i
-    .resetCapture_delayedActiveHigh              (resetCapture_delayedActiveHigh                      )  //i
+    .resetCapture_backendActiveHigh              (resetCapture_backendActiveHigh                      )  //i
   );
   MemoryStage memory (
     .io_input_valid                              (execute_io_output_valid                             ), //i
@@ -1234,7 +1247,7 @@ module SpinalCoreBackend (
     .io_forward_destination                      (memory_io_forward_destination[4:0]                  ), //o
     .io_forward_result                           (memory_io_forward_result[31:0]                      ), //o
     .aclk                                        (aclk_1                                              ), //i
-    .resetCapture_delayedActiveHigh              (resetCapture_delayedActiveHigh                      )  //i
+    .resetCapture_backendActiveHigh              (resetCapture_backendActiveHigh                      )  //i
   );
   WritebackStage writeback (
     .io_input_valid                             (memory_io_output_valid                                ), //i
@@ -1366,7 +1379,7 @@ module SpinalCoreBackend (
     .io_commit_payload_tlbFill_valid            (writeback_io_commit_payload_tlbFill_valid             ), //o
     .io_commit_payload_tlbFill_index            (writeback_io_commit_payload_tlbFill_index[4:0]        ), //o
     .aclk                                       (aclk_1                                                ), //i
-    .resetCapture_delayedActiveHigh             (resetCapture_delayedActiveHigh                        )  //i
+    .resetCapture_backendActiveHigh             (resetCapture_backendActiveHigh                        )  //i
   );
   OpenLa500Csr csr (
     .clk                (aclk                                ), //i
@@ -1693,7 +1706,7 @@ module SpinalCoreBackend (
     .io_update_payload_pc              (decode_io_btb_pc[31:0]                          ), //i
     .io_update_payload_legacyIndex     (decode_io_btb_index[4:0]                        ), //i
     .aclk                              (aclk_1                                          ), //i
-    .resetCapture_delayedActiveHigh    (resetCapture_delayedActiveHigh                  )  //i
+    .resetCapture_backendActiveHigh    (resetCapture_backendActiveHigh                  )  //i
   );
   ChiplabDiffTestAdapter chiplabDiffTestAdapter_1 (
     .io_clock                                  (aclk                                                  ), //i
@@ -1790,7 +1803,7 @@ module SpinalCoreBackend (
     .io_archState_dmw0                         (csr_csr_dmw0_diff[31:0]                               ), //i
     .io_archState_dmw1                         (csr_csr_dmw1_diff[31:0]                               ), //i
     .aclk                                      (aclk_1                                                ), //i
-    .resetCapture_delayedActiveHigh            (resetCapture_delayedActiveHigh                        )  //i
+    .resetCapture_backendActiveHigh            (resetCapture_backendActiveHigh                        )  //i
   );
   assign reset = (! aresetn);
   assign writeback_io_tlbFillIndex = csr_rand_index;
@@ -1959,7 +1972,7 @@ module ChiplabDiffTestAdapter (
   input  wire [31:0]   io_archState_dmw0,
   input  wire [31:0]   io_archState_dmw1,
   input  wire          aclk,
-  input  wire          resetCapture_delayedActiveHigh
+  input  wire          resetCapture_backendActiveHigh
 );
 
   wire       [504:0]  wrapper_commitContract;
@@ -2190,7 +2203,7 @@ module ChiplabDiffTestAdapter (
   assign gprWords_31 = {32'h0,io_archState_gpr_31};
   assign wrapper_gprState = {{{{{{{{{{{{{{{{_zz_gprState,gprWords_15},gprWords_14},gprWords_13},gprWords_12},gprWords_11},gprWords_10},gprWords_9},gprWords_8},gprWords_7},gprWords_6},gprWords_5},gprWords_4},gprWords_3},gprWords_2},gprWords_1},gprWords_0};
   always @(posedge aclk) begin
-    if(resetCapture_delayedActiveHigh) begin
+    if(resetCapture_backendActiveHigh) begin
       registeredValid <= 1'b0;
       cycleCount <= 64'h0;
       instructionCount <= 64'h0;
@@ -2262,7 +2275,7 @@ module OpenLa500Predictor (
   input  wire [31:0]   io_update_payload_pc,
   input  wire [4:0]    io_update_payload_legacyIndex,
   input  wire          aclk,
-  input  wire          resetCapture_delayedActiveHigh
+  input  wire          resetCapture_backendActiveHigh
 );
 
   reg        [31:0]   _zz_returnTarget;
@@ -3677,7 +3690,7 @@ module OpenLa500Predictor (
   assign _zz_returnStack_0 = (io_update_payload_pc + 32'h00000004);
   assign when_OpenLa500Predictor_l191 = (io_update_payload_popReturnStack && (! returnStackEmpty));
   always @(posedge aclk) begin
-    if(resetCapture_delayedActiveHigh) begin
+    if(resetCapture_backendActiveHigh) begin
       branchValid_0 <= 1'b0;
       branchValid_1 <= 1'b0;
       branchValid_2 <= 1'b0;
@@ -11129,7 +11142,7 @@ module WritebackStage (
   output wire          io_commit_payload_tlbFill_valid,
   output wire [4:0]    io_commit_payload_tlbFill_index,
   input  wire          aclk,
-  input  wire          resetCapture_delayedActiveHigh
+  input  wire          resetCapture_backendActiveHigh
 );
 
   reg                 valid;
@@ -11631,7 +11644,7 @@ module WritebackStage (
   assign when_WritebackStage_l291 = ((((io_flush_exception || io_flush_ertn) || io_flush_refetch) || io_flush_instructionCacheOperation) || io_flush_idle);
   assign io_input_fire = (io_input_valid && io_input_ready);
   always @(posedge aclk) begin
-    if(resetCapture_delayedActiveHigh) begin
+    if(resetCapture_backendActiveHigh) begin
       valid <= 1'b0;
     end else begin
       if(when_WritebackStage_l291) begin
@@ -11839,7 +11852,7 @@ module MemoryStage (
   output wire [4:0]    io_forward_destination,
   output wire [31:0]   io_forward_result,
   input  wire          aclk,
-  input  wire          resetCapture_delayedActiveHigh
+  input  wire          resetCapture_backendActiveHigh
 );
 
   wire       [31:0]   _zz_extendedByte;
@@ -12063,7 +12076,7 @@ module MemoryStage (
   assign io_input_fire = (io_input_valid && io_input_ready);
   assign when_MemoryStage_l226 = ((((io_flush_exception || io_flush_ertn) || io_flush_refetch) || io_flush_instructionCacheOperation) || io_flush_idle);
   always @(posedge aclk) begin
-    if(resetCapture_delayedActiveHigh) begin
+    if(resetCapture_backendActiveHigh) begin
       valid <= 1'b0;
       dataBuffer <= 32'h0;
       dataBufferEnable <= 1'b0;
@@ -12277,7 +12290,7 @@ module ExecuteStage (
   output wire          io_tlbInstructionStall,
   output wire          io_dataFetch,
   input  wire          aclk,
-  input  wire          resetCapture_delayedActiveHigh
+  input  wire          resetCapture_backendActiveHigh
 );
 
   wire       [31:0]   alu_alu_src1;
@@ -12527,7 +12540,7 @@ module ExecuteStage (
   assign io_output_payload_csrRstatEvent = payload_csrRstatEvent;
   assign io_output_payload_csrData = payload_csrReadData;
   always @(posedge aclk) begin
-    if(resetCapture_delayedActiveHigh) begin
+    if(resetCapture_backendActiveHigh) begin
       occupied <= 1'b0;
     end else begin
       if(when_ExecuteStage_l204) begin
@@ -12753,7 +12766,7 @@ module DecodeStage (
   output wire [31:0]   io_registers_30,
   output wire [31:0]   io_registers_31,
   input  wire          aclk,
-  input  wire          resetCapture_delayedActiveHigh
+  input  wire          resetCapture_backendActiveHigh
 );
 
   wire                _zz_aluOperation;
@@ -13417,7 +13430,7 @@ module DecodeStage (
   assign io_registers_30 = registerFile_30;
   assign io_registers_31 = registerFile_31;
   always @(posedge aclk) begin
-    if(resetCapture_delayedActiveHigh) begin
+    if(resetCapture_backendActiveHigh) begin
       occupied <= 1'b0;
       branchSlotCancel <= 1'b0;
     end else begin
@@ -13621,7 +13634,7 @@ module FetchStage (
   output wire [31:0]   io_fetchPc,
   output wire          io_fetchEnable,
   input  wire          aclk,
-  input  wire          resetCapture_delayedActiveHigh
+  input  wire          resetCapture_backendActiveHigh
 );
 
   wire       [31:0]   _zz_instructionFlushPc;
@@ -13774,7 +13787,7 @@ module FetchStage (
   assign when_FetchStage_l219 = (io_instructionDataValid && (! io_downstream_ready));
   assign when_FetchStage_l229 = (prefetchReady && (fsAllow || flushDirty));
   always @(posedge aclk) begin
-    if(resetCapture_delayedActiveHigh) begin
+    if(resetCapture_backendActiveHigh) begin
       fsValid <= 1'b0;
       fsPc <= 32'h1bfffffc;
       fsException <= 1'b0;
