@@ -34,3 +34,5 @@ __pycache__/
 /logs/refactor/**/waveforms/
 
 jsfa.pdf
+
+.vscode/
