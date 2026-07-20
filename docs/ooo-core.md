@@ -1,12 +1,12 @@
 # 4 发射 / 3 提交乱序核交接说明
 
-本文是当前 `dev-OoOE` 分支的单一架构和验证入口。代码由 Scala/SpinalHDL 生成，`rtl/mycpu_top.v` 是发布产物，不是手写 Verilog 的第二份实现。
+本文是当前 `dev-OoOE` 分支的单一架构和验证入口。代码由 Scala/SpinalHDL 生成，权威发布产物是 `build/core_top/package/rtl/mycpu_top.v`；被 Git 忽略的 `rtl/mycpu_top.v` 只是给 Chiplab、Vivado 和门禁使用的同内容镜像，不是手写 Verilog 的第二份实现。
 
 ## 状态与基线
 
 当前官方顶层已经实例化 `openla500.core.OooCoreSystem(OooCoreConfig.FourIssueThreeCommit)`。旧 `SpinalCoreBackend` 和 `openla500.pipeline` 不再参与生成；保留下来的少量 `OpenLa500*` leaf 模块仅供仍被 OoO 核复用的 ALU、乘除法、CSR、TLB 或独立合同测试使用。
 
-本次目录重组后的验证基线（2026-07-21，生成 RTL SHA-256 `7cff5454609dc333c10bc6313c5ec97f45630d86a0048e6798d7dc301db06dff`）如下：
+当前验证基线（2026-07-21，生成 RTL SHA-256 `72766abf6aaa5765c56ab93d1e4a55cda8ddc9c69f3f775885f84c3622ae0b06`）如下：
 
 | 检查 | 结果 |
 | --- | --- |
@@ -19,11 +19,11 @@
 | 官方仿真计数 | 126,136 committed instructions，776,232 clocks，IPC 0.162498 |
 | Vivado 2023.2 synthesis | 0 errors，0 critical synthesis warnings，DCP/report 生成成功 |
 
-Vivado 独立 DRC 报告仍有无约束顶层 I/O 的 NSTD-1/UCIO-1 critical warning；这是未提供板级 XDC 的 standalone 综合，不是 RTL elaboration 或 synthesis error。100 MHz（10 ns）时序尚未闭合：WNS `-4.428 ns`，TNS `-30393.850 ns`，关键路径约 `13.893 ns`。上一份 100 MHz 基线 WNS 为 `-5.205 ns`，本版本改善 `0.777 ns`，但不能把它描述为已经通过 100 MHz timing。
+Vivado 独立 DRC 报告仍有无约束顶层 I/O 的 NSTD-1/UCIO-1 critical warning；这是未提供板级 XDC 的 standalone 综合，不是 RTL elaboration 或 synthesis error。100 MHz（10 ns）时序尚未闭合：WNS `-4.368 ns`，TNS `-33865.806 ns`，最差数据路径 `14.023 ns`。相对上一提交的 WNS `-4.428 ns` 改善 `0.060 ns`，但 TNS 退化，不能把它描述为已经通过 100 MHz timing。
 
 完整顶层 lint 的 726 条审计项由 725 条 `UNUSEDSIGNAL` 和 1 条固定宽度 `CMPCONST` 构成。大部分来自统一 uop/commit/cache/translation Bundle 在具体路径中只消费部分字段，以及官方 debug/兼容端口必须保留；其中也包含可继续精简的真实死字段。`reference/core-top-lint-waivers.json` 同时锁定 RTL SHA-256、warning 数量、类别和签名哈希，先运行无抑制审计，再只对完全匹配的签名执行 clean closure。它不是未来功能承诺，也不是允许新增 warning 的全局开关。
 
-综合资源（`xc7a200tfbg676-2`，flatten hierarchy rebuilt）：73,905 LUT、34,504 FF、42 RAMB36、12 RAMB18、4 DSP。综合后的主要关键路径来自 LSQ 的 load ROB pointer 到 ROB side-effect data；后续时序优化应优先在该路径增加有语义的寄存器边界，不要用 false path 掩盖。
+综合资源（`xc7a200tfbg676-2`，flatten hierarchy rebuilt）：71,539 LUT、34,524 FF、42 RAMB36、12 RAMB18、4 DSP。ROB completion 改为每个 entry 本地比较后，LUT 相对上一提交减少 2,366（约 3.2%）；最差路径仍从 LSQ 的 load ROB pointer 到 ROB exception 字段使能，后续优化应优先缩短该真实数据/控制路径，不要用 false path 掩盖。
 
 ## 源码布局
 
@@ -129,7 +129,7 @@ L1I/translation -> OooFrontend(fetch4) -> OooDecodeRenameBuffer
 推荐从仓库根目录运行：
 
 ```bash
-# WSL/Linux，生成原始 RTL、打包官方顶层并同步检查
+# WSL/Linux，生成原始 RTL、打包官方顶层并创建忽略的 rtl/ 镜像
 make generate-core
 make port-check
 make lint
@@ -162,13 +162,13 @@ openla500.memory.GenerateOooSharedCacheHierarchy
 export CHIPLAB_HOME=/home/ubuntu/nscscc-validation/ooo-manual-20260720
 cp rtl/mycpu_top.v "$CHIPLAB_HOME/IP/myCPU/mycpu_top.v"
 cd "$CHIPLAB_HOME/sims/verilator/run_prog"
-make -j8 verilator
+./configure.sh --run func/func_lab19 --disable-clk-time --dump-fst
 make -j8 testbench
-./configure.sh --run func/func_lab19 --disable-trace-comp --disable-clk-time --dump-fst
+rm -rf tmp
 make simulation_run_prog
 ```
 
-`--disable-trace-comp` 只关闭旧文本 golden trace 比对，NEMU DPI DiffTest 仍然启用；如果要检查文本 trace，必须先按 chiplab 流程生成 `golden_trace.txt`，不能把缺文件误判为 CPU 失败。
+必须在 `make testbench` 之前运行 `configure.sh`，否则编译参数仍是上一次配置。当前基线保留默认 `TRACE_COMP=y` 以获得正常结束条件；验证目录没有 `golden_trace.txt` 时复制会报警，但 NEMU DPI DiffTest 仍然执行，最终以 DiffTest、syscall 和 end PC 三项共同判断。不要使用会让当前测试失去结束条件的 `--disable-trace-comp --disable-simu-trace` 组合。
 
 Vivado standalone 综合（PowerShell）：
 
@@ -180,7 +180,7 @@ Vivado standalone 综合（PowerShell）：
 
 ## 交接时的约束
 
-1. 只修改 `spinal/src/main/scala` 中的源代码；`rtl/mycpu_top.v` 必须由 `make generate-core` 产生，并通过 replacement spec 的 SHA-256 检查。
+1. 只修改 `spinal/src/main/scala` 中的源代码；`build/core_top/package/rtl/mycpu_top.v` 和忽略的 `rtl/mycpu_top.v` 镜像必须由 `make generate-core` 产生，并通过 replacement spec 的 SHA-256 检查，不能加入 Git 或手工编辑。
 2. 新的 OoO 模块按上述功能目录放置；测试 package 必须与主 package 一致。不要重新引入 `openla500.ooo` 或 `openla500.pipeline` flat namespace。
 3. 任何宽度/队列/line geometry 改动都必须同时更新 `OooCoreConfig` 的 require、对应 directed test、官方仿真和 Vivado 资源/时序记录；不能只改生成参数。
 4. 先验证功能，再看时序。当前最紧路径是 LSQ -> ROB，不能用综合约束屏蔽；实现级 FPGA 性能必须以三次真实远程烧录的最低结果决定。

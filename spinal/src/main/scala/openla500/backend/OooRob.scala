@@ -154,23 +154,36 @@ final class OooRob(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommit) e
     }
   }
 
-  for (lane <- 0 until config.writebackWidth) {
-    io.completionAccepted(lane) := False
-    when(io.completionValid(lane)) {
-      val source = io.completion(lane)
-      val index = source.robPointer(config.robIndexWidth - 1 downto 0)
-      when(entries(index).valid && entries(index).pointer === source.robPointer) {
-        io.completionAccepted(lane) := True
-        entries(index).complete := True
-        entries(index).result := source.data
-        entries(index).sideEffectData := source.sideEffectData
-        entries(index).exception := source.exception
-        when(source.branchResolved) {
-          entries(index).branchMispredict := source.branchMispredict
-          entries(index).branchTarget := source.branchTarget
+  // Decode completion writes at the ROB entry instead of using a dynamic
+  // Vec index.  The latter creates a wide write decoder followed by a
+  // priority mux for every Bundle field; in the complete core it placed the
+  // registered LSQ pointer on a long path into ROB side-effect storage.
+  // Each entry now performs a local pointer/valid match and selects the
+  // highest-numbered matching writeback lane, preserving the old priority
+  // when malformed input presents the same pointer twice.
+  val completionHits = Vec(Bits(config.writebackWidth bits), config.robEntries)
+  for (entryIndex <- 0 until config.robEntries) {
+    completionHits(entryIndex) := B(0, config.writebackWidth bits)
+    for (lane <- 0 until config.writebackWidth) {
+      completionHits(entryIndex)(lane) := io.completionValid(lane) &&
+        entries(entryIndex).valid &&
+        entries(entryIndex).pointer === io.completion(lane).robPointer
+    }
+    for (lane <- 0 until config.writebackWidth) {
+      when(completionHits(entryIndex)(lane)) {
+        entries(entryIndex).complete := True
+        entries(entryIndex).result := io.completion(lane).data
+        entries(entryIndex).sideEffectData := io.completion(lane).sideEffectData
+        entries(entryIndex).exception := io.completion(lane).exception
+        when(io.completion(lane).branchResolved) {
+          entries(entryIndex).branchMispredict := io.completion(lane).branchMispredict
+          entries(entryIndex).branchTarget := io.completion(lane).branchTarget
         }
       }
     }
+  }
+  for (lane <- 0 until config.writebackWidth) {
+    io.completionAccepted(lane) := completionHits.map(_(lane)).orR
   }
 
   when(io.flush) {

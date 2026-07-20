@@ -1,5 +1,11 @@
 # Component replacement overlay 行为合同
 
+> 状态说明：该合同保留用于历史的、已提交 Git blob 形式的 leaf replacement。
+> 当前 OoO `mycpu_top.v` 是完全可再生且不追踪的构建产物，不能满足下文规则 4，
+> 因而不得使用本 overlay 流程发布。当前顶层使用 `make generate-core`、
+> `make publish-check`，再将生成镜像复制到 Chiplab；不要为迁就生成物而放宽
+> overlay 的 Git provenance 校验。
+
 ## 目标
 
 以 `reference/manifest.lock` 锁定的 `a158aa8` 22-file RTL 为不可漂移 base，只替换结构化 spec 明确列出的一个或多个 component 文件，为 golden recovery 和后续逐模块 Spinal 迁移提供可执行的 chiplab diagnostic DUT。

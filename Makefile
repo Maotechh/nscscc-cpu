@@ -15,7 +15,7 @@ CORE_TOP_SYNTH_DIR ?= $(OUT_DIR)/vivado/core_top
 
 .PHONY: all scala test python-test generate-raw package-core generate-core generate port-check lint yosys-check publish-check vivado-synth clean
 
-all: scala test python-test generate-core
+all: scala test generate-core python-test
 
 scala:
 	cd spinal && $(SBT) -batch 'Compile / compile' 'Test / compile'
@@ -34,6 +34,9 @@ generate-raw:
 package-core: generate-raw
 	rm -rf "$(CORE_TOP_PACKAGE_DIR)"
 	$(PYTHON) -I tools/core_top_gate.py package --repo-root . --manifest reference/manifest.lock --ports reference/core-top.ports.json --rtl "$(CORE_TOP_RAW_RTL)" --out-dir "$(CORE_TOP_PACKAGE_DIR)"
+	rm -rf rtl
+	mkdir -p rtl
+	cp "$(CORE_TOP_RTL)" rtl/mycpu_top.v
 
 generate-core: package-core
 

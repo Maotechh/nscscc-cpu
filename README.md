@@ -18,7 +18,7 @@ make yosys-check
 make publish-check
 ```
 
-`make generate-core` 先生成原始 Spinal RTL，再通过 `tools/core_top_gate.py package` 加入官方锁定的 `TLBNUM=32` 顶层合同。可提交的唯一 CPU RTL 是 `rtl/mycpu_top.v`，禁止手工修改生成文件。
+`make generate-core` 先生成原始 Spinal RTL，再通过 `tools/core_top_gate.py package` 加入官方锁定的 `TLBNUM=32` 顶层合同。权威生成物位于 `build/core_top/package/rtl/mycpu_top.v`；命令同时生成被 Git 忽略的 `rtl/mycpu_top.v` 镜像，供 Chiplab、Vivado 和现有门禁消费。两者都禁止手工修改，仓库只追踪 Scala/SpinalHDL 源码和生成哈希台账。
 
 Vivado 2023.2 在 Windows PowerShell 中运行：
 
