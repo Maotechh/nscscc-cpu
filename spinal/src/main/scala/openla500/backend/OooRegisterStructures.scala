@@ -194,28 +194,23 @@ final class OooRegisterMap(config: OooCoreConfig = OooCoreConfig.FourIssueThreeC
 
 final class OooFreeList(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommit)
     extends Component {
-  private val selectionGroupWidth = 8
-  private val selectionGroupCount = config.physicalRegs / selectionGroupWidth
-  require(config.physicalRegs % selectionGroupWidth == 0)
+  // Keep the free physical registers in the same circular queue shape as the
+  // ysyx rename stage.  A bitmap needs a priority encoder for every allocation
+  // lane and then converts the one-hot result back to an index.  The queue only
+  // performs a bounded indexed read and advances one pointer per accepted uop.
+  private val queueCapacity = config.physicalRegs - 1
+  private val pointerWidth = log2Up(queueCapacity)
+  private val countWidth = log2Up(queueCapacity + 1)
 
-  private def selectLowest(mask: Bits): Bits = {
-    val groupValid = Bits(selectionGroupCount bits)
-    val localFirst = Vec(Bits(selectionGroupWidth bits), selectionGroupCount)
-    for (group <- 0 until selectionGroupCount) {
-      val high = (group + 1) * selectionGroupWidth - 1
-      val low = group * selectionGroupWidth
-      val groupMask = mask(high downto low)
-      groupValid(group) := groupMask.orR
-      localFirst(group) := OHMasking.first(groupMask)
-    }
-    val selectedGroup = OHMasking.first(groupValid)
-    val selected = Bits(config.physicalRegs bits)
-    for (group <- 0 until selectionGroupCount) {
-      val high = (group + 1) * selectionGroupWidth - 1
-      val low = group * selectionGroupWidth
-      selected(high downto low) := localFirst(group).andMask(selectedGroup(group))
-    }
-    selected
+  require(queueCapacity > 0)
+
+  private def advance(pointer: UInt, amount: UInt): UInt = {
+    val extendedWidth = pointerWidth + 1
+    val extended = pointer.resize(extendedWidth) + amount.resize(extendedWidth)
+    val capacity = U(queueCapacity, extendedWidth bits)
+    val normalized = UInt(pointerWidth bits)
+    normalized := Mux(extended >= capacity, extended - capacity, extended).resized
+    normalized
   }
 
   val io = new Bundle {
@@ -225,59 +220,58 @@ final class OooFreeList(config: OooCoreConfig = OooCoreConfig.FourIssueThreeComm
     val allocateAccept = in Bool ()
     val commitFreeValid = in Bits (config.commitWidth bits)
     val commitFreePdst = in Vec (UInt(config.physicalRegIndexWidth bits), config.commitWidth)
-    val architecturalMappings = in Vec (UInt(config.physicalRegIndexWidth bits), config.archRegs)
     val flush = in Bool ()
-    val freeCount = out UInt (log2Up(config.physicalRegs + 1) bits)
   }
 
-  val freeBits = Vec((0 until config.physicalRegs).map { phys =>
-    Reg(Bool()) init (if (phys == 0) False else True)
+  val freeEntries = Vec((0 until queueCapacity).map { index =>
+    Reg(UInt(config.physicalRegIndexWidth bits)) init U(index + 1, config.physicalRegIndexWidth bits)
   })
+  val headPtr = Reg(UInt(pointerWidth bits)) init U(0, pointerWidth bits)
+  val architecturalHeadPtr = Reg(UInt(pointerWidth bits)) init U(0, pointerWidth bits)
+  val tailPtr = Reg(UInt(pointerWidth bits)) init U(0, pointerWidth bits)
+  val freeCount = Reg(UInt(countWidth bits)) init U(queueCapacity, countWidth bits)
+  val architecturalFreeCount = Reg(UInt(countWidth bits)) init U(queueCapacity, countWidth bits)
 
-  val remaining = Vec(Bits(config.physicalRegs bits), config.renameWidth + 1)
-  remaining(0) := freeBits.asBits
+  val allocateOffset = Vec(UInt(pointerWidth bits), config.renameWidth)
   for (lane <- 0 until config.renameWidth) {
-    val selected = selectLowest(remaining(lane))
-    io.allocatePdst(lane) := OHToUInt(selected)
-    remaining(lane + 1) := remaining(lane) &
-      ~Mux(io.allocateValid(lane), selected, B(0, config.physicalRegs bits))
+    allocateOffset(lane) := (if (lane == 0) U(0) else CountOne(
+      io.allocateValid(lane - 1 downto 0)
+    )).resized
+    io.allocatePdst(lane) := freeEntries(advance(headPtr, allocateOffset(lane)))
   }
 
-  val freeNow = CountOne(freeBits.asBits)
   val requested = CountOne(io.allocateValid)
-  io.allocateReady := !io.flush && freeNow >= requested
-  io.freeCount := freeNow
+  io.allocateReady := !io.flush && freeCount >= requested
+
+  val acceptedCount = Mux(io.allocateAccept, requested, U(0, requested.getWidth bits))
+  val releaseValid = Bits(config.commitWidth bits)
+  for (lane <- 0 until config.commitWidth) {
+    releaseValid(lane) := !io.flush && io.commitFreeValid(lane) &&
+      io.commitFreePdst(lane) =/= 0
+  }
+  val releaseCount = CountOne(releaseValid)
+  val confirmedCount = CountOne(io.commitFreeValid)
+
+  for (lane <- 0 until config.commitWidth) {
+    val releaseOffset = (if (lane == 0) U(0) else CountOne(
+      releaseValid(lane - 1 downto 0)
+    )).resized
+    when(releaseValid(lane)) {
+      freeEntries(advance(tailPtr, releaseOffset)) := io.commitFreePdst(lane)
+    }
+  }
 
   when(io.flush) {
-    for (phys <- 0 until config.physicalRegs) {
-      if (phys == 0) {
-        freeBits(phys) := False
-      } else {
-        val architecturallyMapped = io.architecturalMappings
-          .map(_ === U(phys, config.physicalRegIndexWidth bits))
-          .reduce(_ || _)
-        freeBits(phys) := !architecturallyMapped
-      }
-    }
+    headPtr := architecturalHeadPtr
+    freeCount := architecturalFreeCount
   }.otherwise {
-    for (phys <- 1 until config.physicalRegs) {
-      val allocated = (0 until config.renameWidth)
-        .map { lane =>
-          io.allocateAccept && io.allocateValid(lane) &&
-          io.allocatePdst(lane) === U(phys, config.physicalRegIndexWidth bits)
-        }
-        .reduce(_ || _)
-      val released = (0 until config.commitWidth)
-        .map { lane =>
-          io.commitFreeValid(lane) &&
-          io.commitFreePdst(lane) === U(phys, config.physicalRegIndexWidth bits)
-        }
-        .reduce(_ || _)
-      when(allocated) {
-        freeBits(phys) := False
-      }.elsewhen(released) {
-        freeBits(phys) := True
-      }
-    }
+    headPtr := advance(headPtr, acceptedCount)
+    freeCount := freeCount - acceptedCount + releaseCount
+  }
+
+  when(!io.flush) {
+    architecturalHeadPtr := advance(architecturalHeadPtr, confirmedCount)
+    architecturalFreeCount := architecturalFreeCount - confirmedCount + releaseCount
+    tailPtr := advance(tailPtr, releaseCount)
   }
 }

@@ -49,6 +49,33 @@ private final class OooRegisterMapProbe(config: OooCoreConfig) extends Component
 }
 
 class OooRegisterStructuresSpec extends AnyFunSuite {
+  private def clearFreeListInputs(dut: OooFreeList, config: OooCoreConfig): Unit = {
+    dut.io.allocateValid #= 0
+    dut.io.allocateAccept #= false
+    dut.io.commitFreeValid #= 0
+    dut.io.flush #= false
+    for (lane <- 0 until config.commitWidth) {
+      dut.io.commitFreePdst(lane) #= 0
+    }
+  }
+
+  private def freeListSample(dut: OooFreeList): Unit = {
+    dut.clockDomain.waitSampling()
+    sleep(1)
+  }
+
+  private def checkAllocation(
+      dut: OooFreeList,
+      expected: Seq[Int],
+      ready: Boolean = true
+  ): Unit = {
+    sleep(1)
+    assert(dut.io.allocateReady.toBoolean == ready)
+    for ((pdst, lane) <- expected.zipWithIndex) {
+      assert(dut.io.allocatePdst(lane).toBigInt == pdst)
+    }
+  }
+
   private def clearInputs(dut: OooRegisterMapProbe, config: OooCoreConfig): Unit = {
     dut.io.renameValid #= 0
     dut.io.writebackValid #= 0
@@ -145,6 +172,104 @@ class OooRegisterStructuresSpec extends AnyFunSuite {
         dut.io.flush #= true
         sample(dut)
         assert(dut.io.renamePsrc1(0).toBigInt == 13)
+      }
+  }
+
+  test("free list flush restores the committed allocation head") {
+    val config = OooCoreConfig.FourIssueThreeCommit
+    SimConfig.withVerilator
+      .workspacePath("target/sim-workspace-ooo-free-list")
+      .compile(new OooFreeList(config))
+      .doSim("ooo-free-list-flush-head", 0x4651) { dut =>
+        dut.clockDomain.forkStimulus(period = 10)
+        clearFreeListInputs(dut, config)
+        dut.clockDomain.assertReset()
+        dut.clockDomain.waitSampling(2)
+        dut.clockDomain.deassertReset()
+        freeListSample(dut)
+
+        dut.io.allocateValid #= 7
+        dut.io.allocateAccept #= true
+        checkAllocation(dut, Seq(1, 2, 3))
+        freeListSample(dut)
+
+        dut.io.allocateValid #= 0
+        dut.io.allocateAccept #= false
+        dut.io.commitFreeValid #= 7
+        freeListSample(dut)
+
+        dut.io.commitFreeValid #= 0
+        dut.io.allocateValid #= 7
+        dut.io.allocateAccept #= true
+        checkAllocation(dut, Seq(4, 5, 6))
+        freeListSample(dut)
+
+        dut.io.allocateValid #= 0
+        dut.io.allocateAccept #= false
+        dut.io.flush #= true
+        freeListSample(dut)
+
+        dut.io.flush #= false
+        dut.io.allocateValid #= 7
+        checkAllocation(dut, Seq(4, 5, 6))
+      }
+  }
+
+  test("free list recycles committed registers across pointer wrap") {
+    val config = OooCoreConfig.FourIssueThreeCommit
+    SimConfig.withVerilator
+      .workspacePath("target/sim-workspace-ooo-free-list")
+      .compile(new OooFreeList(config))
+      .doSim("ooo-free-list-wrap-recycle", 0x4652) { dut =>
+        dut.clockDomain.forkStimulus(period = 10)
+        clearFreeListInputs(dut, config)
+        dut.clockDomain.assertReset()
+        dut.clockDomain.waitSampling(2)
+        dut.clockDomain.deassertReset()
+        freeListSample(dut)
+
+        dut.io.allocateValid #= 7
+        dut.io.allocateAccept #= true
+        checkAllocation(dut, Seq(1, 2, 3))
+        freeListSample(dut)
+
+        dut.io.allocateValid #= 0
+        dut.io.allocateAccept #= false
+        dut.io.commitFreeValid #= 7
+        freeListSample(dut)
+
+        dut.io.commitFreeValid #= 0
+        dut.io.allocateValid #= 7
+        dut.io.allocateAccept #= true
+        checkAllocation(dut, Seq(4, 5, 6))
+        freeListSample(dut)
+
+        dut.io.allocateValid #= 0
+        dut.io.allocateAccept #= false
+        dut.io.commitFreeValid #= 7
+        for (lane <- 0 until config.commitWidth) {
+          dut.io.commitFreePdst(lane) #= lane + 1
+        }
+        freeListSample(dut)
+
+        dut.io.commitFreeValid #= 0
+        for (lane <- 0 until config.commitWidth) {
+          dut.io.commitFreePdst(lane) #= 0
+        }
+        dut.io.allocateValid #= 7
+        dut.io.allocateAccept #= true
+        for (_ <- 0 until 19) {
+          freeListSample(dut)
+        }
+
+        dut.io.allocateAccept #= false
+        checkAllocation(dut, Seq(1, 2, 3))
+        dut.io.allocateAccept #= true
+        freeListSample(dut)
+
+        dut.io.allocateAccept #= false
+        dut.io.allocateValid #= 1
+        checkAllocation(dut, Seq(4), ready = false)
       }
   }
 }

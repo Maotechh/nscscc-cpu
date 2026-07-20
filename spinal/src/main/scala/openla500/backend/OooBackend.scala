@@ -216,7 +216,7 @@ final class OooBackend(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommi
   io.recovery := rob.io.recovery
   for (lane <- 0 until config.commitWidth) {
     val commitsDestination = rob.io.commitValid(lane) && rob.io.commit(lane).retired &&
-      rob.io.commit(lane).writesGpr
+      rob.io.commit(lane).writesGpr && rob.io.commit(lane).rd =/= 0
     registerMap.io.commitValid(lane) := commitsDestination
     freeList.io.commitFreeValid(lane) := commitsDestination
     registerMap.io.commitArch(lane) := rob.io.commit(lane).rd
@@ -226,7 +226,6 @@ final class OooBackend(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommi
 
   registerMap.io.flush := io.flush
   dispatchQueue.io.flush := io.flush
-  freeList.io.architecturalMappings := registerMap.io.architecturalMappings
   freeList.io.flush := io.flush
   prf.io.flush := io.flush
   rob.io.flush := io.flush
