@@ -42,18 +42,6 @@ final class OooBackend(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommi
   val router = new OooDispatchRouter(config)
   val issueQueues = (0 until config.executionWidth).map(index => new OooIssueQueue(config, index))
 
-  val wakeupCompletionValid = RegInit(B(0, config.writebackWidth bits))
-  val wakeupCompletion = Vec.fill(config.writebackWidth)(Reg(OooCompletion(config)))
-  when(io.flush) {
-    wakeupCompletionValid := B(0, config.writebackWidth bits)
-  }.otherwise {
-    for (write <- 0 until config.writebackWidth) {
-      wakeupCompletionValid(write) := io.completionValid(write) &&
-        rob.io.completionAccepted(write) && io.completion(write).writesPdst
-      wakeupCompletion(write) := io.completion(write)
-    }
-  }
-
   val issueAddressValid = RegInit(B(0, config.executionWidth bits))
   val issueAddressUop = Vec.fill(config.executionWidth)(Reg(OooRenamedUop(config)))
   val issueOperandValid = RegInit(B(0, config.executionWidth bits))
@@ -191,21 +179,21 @@ final class OooBackend(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommi
     io.issue(port) := issueOperandUop(port)
     io.issueSource1(port) := issueOperandSource1(port)
     io.issueSource2(port) := issueOperandSource2(port)
-    issueQueues(port).io.wakeupValid := wakeupCompletionValid
+    issueQueues(port).io.wakeupValid := rob.io.completionWakeupValid
     for (write <- 0 until config.writebackWidth) {
-      issueQueues(port).io.wakeupPdst(write) := wakeupCompletion(write).pdst
+      issueQueues(port).io.wakeupPdst(write) := rob.io.completionWakeupPdst(write)
     }
   }
 
   rob.io.completionValid := io.completionValid
   rob.io.completion := io.completion
   for (write <- 0 until config.writebackWidth) {
-    prf.io.writeValid(write) := wakeupCompletionValid(write) && wakeupCompletion(write).writesPdst
-    prf.io.write(write).pdst := wakeupCompletion(write).pdst
-    prf.io.write(write).data := wakeupCompletion(write).data
+    prf.io.writeValid(write) := rob.io.completionWakeupValid(write)
+    prf.io.write(write).pdst := rob.io.completionWakeupPdst(write)
+    prf.io.write(write).data := rob.io.completionWakeupData(write)
     registerMap.io.writebackValid(write) :=
-      wakeupCompletionValid(write) && wakeupCompletion(write).writesPdst
-    registerMap.io.writebackPdst(write) := wakeupCompletion(write).pdst
+      rob.io.completionWakeupValid(write)
+    registerMap.io.writebackPdst(write) := rob.io.completionWakeupPdst(write)
   }
   prf.io.debugReadAddress := registerMap.io.architecturalMappings(io.debugReadAddress)
   io.debugReadData := prf.io.debugReadData

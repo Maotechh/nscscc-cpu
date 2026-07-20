@@ -35,7 +35,9 @@ final class OooRob(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommit) e
 
     val completionValid = in Bits (config.writebackWidth bits)
     val completion = in Vec (OooCompletion(config), config.writebackWidth)
-    val completionAccepted = out Bits (config.writebackWidth bits)
+    val completionWakeupValid = out Bits (config.writebackWidth bits)
+    val completionWakeupPdst = out Vec (UInt(config.physicalRegIndexWidth bits), config.writebackWidth)
+    val completionWakeupData = out Vec (Bits(config.xlen bits), config.writebackWidth)
 
     val commitValid = out Bits (config.commitWidth bits)
     val commit = out Vec (OooCommitRecord(config), config.commitWidth)
@@ -172,13 +174,18 @@ final class OooRob(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommit) e
     Reg(Bits(config.robEntries bits)) init B(0, config.robEntries bits)
   )
   val stagedResult = Vec.fill(config.writebackWidth)(Reg(Bits(config.xlen bits)))
+  val stagedPdst = Vec.fill(config.writebackWidth)(Reg(UInt(config.physicalRegIndexWidth bits)))
+  val stagedWritesPdst = Vec.fill(config.writebackWidth)(Reg(Bool()))
   val stagedSideEffectData = Vec.fill(config.writebackWidth)(Reg(Bits(config.xlen bits)))
   val stagedException = Vec.fill(config.writebackWidth)(Reg(OooExceptionMeta()))
   val stagedBranchResolved = Vec.fill(config.writebackWidth)(Reg(Bool()))
   val stagedBranchMispredict = Vec.fill(config.writebackWidth)(Reg(Bool()))
   val stagedBranchTarget = Vec.fill(config.writebackWidth)(Reg(UInt(config.xlen bits)))
   for (lane <- 0 until config.writebackWidth) {
-    io.completionAccepted(lane) := completionHits.map(_(lane)).orR
+    io.completionWakeupValid(lane) := !io.flush && stagedCompletionHits(lane).orR &&
+      stagedWritesPdst(lane)
+    io.completionWakeupPdst(lane) := stagedPdst(lane)
+    io.completionWakeupData(lane) := stagedResult(lane)
     val laneHits = Bits(config.robEntries bits)
     for (entryIndex <- 0 until config.robEntries) {
       laneHits(entryIndex) := completionHits(entryIndex)(lane)
@@ -189,6 +196,8 @@ final class OooRob(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommit) e
       stagedCompletionHits(lane) := laneHits
       when(io.completionValid(lane)) {
         stagedResult(lane) := io.completion(lane).data
+        stagedPdst(lane) := io.completion(lane).pdst
+        stagedWritesPdst(lane) := io.completion(lane).writesPdst
         stagedSideEffectData(lane) := io.completion(lane).sideEffectData
         stagedException(lane) := io.completion(lane).exception
         stagedBranchResolved(lane) := io.completion(lane).branchResolved
