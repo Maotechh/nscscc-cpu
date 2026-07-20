@@ -154,36 +154,63 @@ final class OooRob(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommit) e
     }
   }
 
-  // Decode completion writes at the ROB entry instead of using a dynamic
-  // Vec index.  The latter creates a wide write decoder followed by a
-  // priority mux for every Bundle field; in the complete core it placed the
-  // registered LSQ pointer on a long path into ROB side-effect storage.
-  // Each entry now performs a local pointer/valid match and selects the
-  // highest-numbered matching writeback lane, preserving the old priority
-  // when malformed input presents the same pointer twice.
+  // Resolve stale tags in the arrival cycle so rename wakeup keeps its current
+  // latency, then register the accepted one-hot destinations and payloads at
+  // the ROB boundary.  Entry writes no longer combine execution payload muxes,
+  // pointer compares, and the wide ROB CE network in one cycle.
   val completionHits = Vec(Bits(config.writebackWidth bits), config.robEntries)
   for (entryIndex <- 0 until config.robEntries) {
     completionHits(entryIndex) := B(0, config.writebackWidth bits)
     for (lane <- 0 until config.writebackWidth) {
-      completionHits(entryIndex)(lane) := io.completionValid(lane) &&
-        entries(entryIndex).valid &&
+      completionHits(entryIndex)(lane) := !io.flush && io.completionValid(lane) &&
+        entries(entryIndex).valid && !entries(entryIndex).complete &&
         entries(entryIndex).pointer === io.completion(lane).robPointer
     }
-    for (lane <- 0 until config.writebackWidth) {
-      when(completionHits(entryIndex)(lane)) {
-        entries(entryIndex).complete := True
-        entries(entryIndex).result := io.completion(lane).data
-        entries(entryIndex).sideEffectData := io.completion(lane).sideEffectData
-        entries(entryIndex).exception := io.completion(lane).exception
-        when(io.completion(lane).branchResolved) {
-          entries(entryIndex).branchMispredict := io.completion(lane).branchMispredict
-          entries(entryIndex).branchTarget := io.completion(lane).branchTarget
-        }
+  }
+
+  val stagedCompletionHits = Vec.fill(config.writebackWidth)(
+    Reg(Bits(config.robEntries bits)) init B(0, config.robEntries bits)
+  )
+  val stagedResult = Vec.fill(config.writebackWidth)(Reg(Bits(config.xlen bits)))
+  val stagedSideEffectData = Vec.fill(config.writebackWidth)(Reg(Bits(config.xlen bits)))
+  val stagedException = Vec.fill(config.writebackWidth)(Reg(OooExceptionMeta()))
+  val stagedBranchResolved = Vec.fill(config.writebackWidth)(Reg(Bool()))
+  val stagedBranchMispredict = Vec.fill(config.writebackWidth)(Reg(Bool()))
+  val stagedBranchTarget = Vec.fill(config.writebackWidth)(Reg(UInt(config.xlen bits)))
+  for (lane <- 0 until config.writebackWidth) {
+    io.completionAccepted(lane) := completionHits.map(_(lane)).orR
+    val laneHits = Bits(config.robEntries bits)
+    for (entryIndex <- 0 until config.robEntries) {
+      laneHits(entryIndex) := completionHits(entryIndex)(lane)
+    }
+    when(io.flush) {
+      stagedCompletionHits(lane) := B(0, config.robEntries bits)
+    }.otherwise {
+      stagedCompletionHits(lane) := laneHits
+      when(io.completionValid(lane)) {
+        stagedResult(lane) := io.completion(lane).data
+        stagedSideEffectData(lane) := io.completion(lane).sideEffectData
+        stagedException(lane) := io.completion(lane).exception
+        stagedBranchResolved(lane) := io.completion(lane).branchResolved
+        stagedBranchMispredict(lane) := io.completion(lane).branchMispredict
+        stagedBranchTarget(lane) := io.completion(lane).branchTarget
       }
     }
   }
-  for (lane <- 0 until config.writebackWidth) {
-    io.completionAccepted(lane) := completionHits.map(_(lane)).orR
+
+  for (entryIndex <- 0 until config.robEntries) {
+    for (lane <- 0 until config.writebackWidth) {
+      when(stagedCompletionHits(lane)(entryIndex)) {
+        entries(entryIndex).complete := True
+        entries(entryIndex).result := stagedResult(lane)
+        entries(entryIndex).sideEffectData := stagedSideEffectData(lane)
+        entries(entryIndex).exception := stagedException(lane)
+        when(stagedBranchResolved(lane)) {
+          entries(entryIndex).branchMispredict := stagedBranchMispredict(lane)
+          entries(entryIndex).branchTarget := stagedBranchTarget(lane)
+        }
+      }
+    }
   }
 
   when(io.flush) {

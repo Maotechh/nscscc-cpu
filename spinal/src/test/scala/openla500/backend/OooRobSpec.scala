@@ -165,6 +165,8 @@ class OooRobSpec extends AnyFunSuite {
         sleep(1)
         assert(dut.io.completionAccepted.toBigInt == 1)
         sample()
+        assert(dut.io.commitValid.toBigInt == 0)
+        sample()
         assert((dut.io.commitValid.toBigInt & 1) == 1)
 
         dut.io.completionValid #= 0
@@ -216,6 +218,8 @@ class OooRobSpec extends AnyFunSuite {
         dut.io.completionValid #= 3
         sleep(1)
         assert(dut.io.completionAccepted.toBigInt == 3)
+        assert(dut.io.commitValid.toBigInt == 0)
+        sample()
         assert(dut.io.commitValid.toBigInt == 0)
         sample()
         assert(dut.io.commitValid.toBigInt == 7)
