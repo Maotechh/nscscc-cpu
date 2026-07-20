@@ -85,8 +85,18 @@
       "alu_and_mul_div_result_selection",
       "load_alignment_and_sign_extension",
       "load_response_buffer_under_writeback_backpressure",
+      "accepted_address_snapshot_under_backpressure",
       "tlb_exception_and_address_translation",
       "dmw_uncached_and_sc_cancel"
+    ],
+    "golden_corrections": [
+      {
+        "output": "ms_to_ws_bus",
+        "bits": "367:356",
+        "source": "{data_index_diff,data_offset_diff}",
+        "sample": "posedge clk when es_to_ms_valid && ms_allowin",
+        "hold": "until the next accepted input"
+      }
     ]
   },
   "lint_allowlist": [

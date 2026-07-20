@@ -43,3 +43,20 @@ Golden 是待复测 candidate，不是体系结构规范。差分只证明固定
 ## 完成范围
 
 本边界通过要求：exact 65-port、locked Scala 生成、Verilator/Yosys 静态检查、directed + 固定 seed 随机逐拍 differential。单模块 overlay 的 `func_lab19` 只用于判断是否比已知 baseline 更早分岔；不得据此声明整机、58/81、random DiffTest、性能、Linux 或 FPGA PASS。
+
+## 活动核心的非阻塞脏行写回
+
+独立 `axi_bridge` 叶级生成器默认关闭读写重叠，继续作为 `a158aa8` 逐拍差分 oracle。活动
+`SpinalCoreBackend` 显式开启 cache-line writeback/read overlap：当已经接受的写请求类型为
+`3'b100` 时，AW/W/B 尚未结束不再阻塞新的 I-cache 或 D-cache AR 请求。AXI3 的读、写地址、
+写数据和写响应通道仍各自遵守原握手，读返回继续用 `RID[0]` 路由到 I/D cache。
+
+该优化只适用于 D-cache 脏 victim 的内部 16-byte 写回。byte/half/word scalar write（包括
+uncached/MMIO store）在 B 响应前必须继续阻塞所有读，以维持原有设备访问和 store-load
+顺序。`write_buffer_empty` 也必须等完整 W burst 和 B 响应结束后才为真；DBAR、CACOP、异常
+刷新和性能程序末尾的 cache flush 不能把尚未落地的写回视为空。
+
+定向验证必须同时覆盖：默认 profile 在 line writeback 期间阻塞读；活动 profile 在 AW、四拍
+W 和等待 B 的阶段均可接受 AR；活动 profile 的 scalar write 仍阻塞读；reset 清除写事务类型和
+busy 状态。完整核心还必须通过 DiffTest、连续 perf20 和真实 FPGA 重复测试，叶级 AXI 测试
+不能证明缓存一致性或体系结构内存顺序。

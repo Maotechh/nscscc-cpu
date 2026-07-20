@@ -63,7 +63,7 @@ object GenerateOpenLa500DCache {
       SpinalConfig(targetDirectory = outputDirectory.toString, oneFilePerComponent = false)
     config.withTimescale = false
     config.generateVerilog {
-      val dut = new OpenLa500DCache
+      val dut = new OpenLa500DCache(goldenCacopBypass = true)
       dut.setDefinitionName("dcache")
       dut
     }

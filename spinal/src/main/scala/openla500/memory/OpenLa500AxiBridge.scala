@@ -12,7 +12,9 @@ import spinal.lib._
   * 32-bit W beats while scalar writes emit one. All state belongs to the explicit `clk`,
   * active-high synchronous-reset domain.
   */
-final class OpenLa500AxiBridge extends Component {
+final class OpenLa500AxiBridge(
+    allowCacheLineReadOverlap: Boolean = false
+) extends Component {
   val io = new Bundle {
     val clk = in Bool ()
     val reset = in Bool ()
@@ -131,9 +133,15 @@ final class OpenLa500AxiBridge extends Component {
     val bready = Reg(Bool()) init (False)
     val writeBufferData = Reg(Bits(128 bits)) init (0)
     val writeBufferCount = Reg(UInt(3 bits)) init (0)
+    val writeIsCacheLine = Reg(Bool()) init (False)
 
     val writeBusy = writeState =/= WriteEmpty
     val completingWrite = io.bvalid && bready
+    // Dirty-line eviction is an internal cache operation.  It may overlap an unrelated
+    // read-address transaction, while scalar/uncached writes retain the strict legacy ordering.
+    val cacheLineWriteMayOverlapRead =
+      if (allowCacheLineReadOverlap) writeIsCacheLine else False
+    val writeBlocksRead = writeBusy && !cacheLineWriteMayOverlapRead && !completingWrite
 
     // Golden assigns rready only in the synchronous reset branch and then holds it forever.
     rready := rready
@@ -150,11 +158,11 @@ final class OpenLa500AxiBridge extends Component {
 
     when(!readRequestBusy) {
       when(io.data_rd_req) {
-        when(!writeBusy || completingWrite) {
+        when(!writeBlocksRead) {
           captureRead(B"4'h1", io.data_rd_addr, io.data_rd_type)
         }
       }.elsewhen(io.inst_rd_req) {
-        when(!writeBusy || completingWrite) {
+        when(!writeBlocksRead) {
           captureRead(B"4'h0", io.inst_rd_addr, io.inst_rd_type)
         }
       }
@@ -178,6 +186,7 @@ final class OpenLa500AxiBridge extends Component {
         when(io.data_wr_req) {
           val cacheLine = io.data_wr_type === B"3'b100"
           writeState := WriteDataWait
+          writeIsCacheLine := cacheLine
           awaddr := io.data_wr_addr
           awsize := Mux(cacheLine, B"3'b010", io.data_wr_type)
           awlen := Mux(cacheLine, B"8'h03", B"8'h00")
@@ -221,6 +230,7 @@ final class OpenLa500AxiBridge extends Component {
       is(WriteWaitResponse) {
         when(io.bvalid && bready) {
           writeState := WriteEmpty
+          writeIsCacheLine := False
           bready := False
         }
       }
@@ -231,7 +241,7 @@ final class OpenLa500AxiBridge extends Component {
   }
 
   private val readCanReceive =
-    !logic.readRequestBusy && !(logic.writeBusy && !(io.bvalid && logic.bready))
+    !logic.readRequestBusy && !logic.writeBlocksRead
 
   io.arid := logic.arid
   io.araddr := logic.araddr
@@ -281,7 +291,9 @@ final class OpenLa500AxiBridge extends Component {
   * a child preserves its verified arbitration, burst, and reset behavior while allowing the active
   * backend to depend on typed contracts.
   */
-final class OpenLa500TypedAxiBridge extends Component {
+final class OpenLa500TypedAxiBridge(
+    allowCacheLineReadOverlap: Boolean = false
+) extends Component {
   val io = new Bundle {
     val clk = in Bool ()
     val reset = in Bool ()
@@ -293,7 +305,7 @@ final class OpenLa500TypedAxiBridge extends Component {
 
   noIoPrefix()
 
-  private val legacy = new OpenLa500AxiBridge
+  private val legacy = new OpenLa500AxiBridge(allowCacheLineReadOverlap)
   legacy.io.clk := io.clk
   legacy.io.reset := io.reset
 

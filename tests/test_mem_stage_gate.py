@@ -30,6 +30,10 @@ class MemoryStageGateTests(unittest.TestCase):
         self.assertEqual(mem_stage_gate.expected_ports(), contract["ports"])
         self.assertEqual(8192, contract["differential"]["minimum_cycles"])
         self.assertTrue(contract["differential"]["compare_all_outputs_every_phase"])
+        self.assertEqual(
+            [mem_stage_gate.ADDRESS_SNAPSHOT_ORACLE],
+            contract["differential"]["golden_corrections"],
+        )
         self.assertEqual(3, len(contract["lint_allowlist"]))
         waivers = mem_stage_gate.load_central_waivers(root)
         self.assertTrue(mem_stage_gate.CENTRAL_WAIVER_IDS.issubset(waivers))
@@ -62,6 +66,12 @@ class MemoryStageGateTests(unittest.TestCase):
         self.assertIn("idle_flush=(i==4)", source)
         self.assertIn("MEM_MISMATCH cycle=%0d phase=%0d", source)
         self.assertIn("MEM_OUTPUT_MISMATCH output=ms_to_ws_bus", source)
+        self.assertIn(
+            "{g_ms_to_ws_bus[492:368],accepted_data_index,accepted_data_offset,g_ms_to_ws_bus[355:0]}",
+            source,
+        )
+        self.assertIn("if (es_to_ms_valid && g_ms_allowin)", source)
+        self.assertIn("Hold the low physical address from the accepted request", source)
         self.assertIn("negative_control & c_ms_to_ws_valid", source)
         self.assertIn("for (i=0; i<8192", source)
 

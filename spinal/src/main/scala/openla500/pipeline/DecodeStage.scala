@@ -1,6 +1,7 @@
 package openla500.pipeline
 
 import openla500.config.CoreConfig
+import openla500.predict.PredictorDirectionMetadata
 import spinal.core._
 import spinal.lib._
 
@@ -43,6 +44,41 @@ final case class DecodeBtbUpdate() extends Bundle {
   val actualTarget = UInt(32 bits)
   val pc = UInt(32 bits)
   val index = UInt(5 bits)
+  val direction = PredictorDirectionMetadata()
+}
+
+/** Prediction metadata captured with a register-dependent branch that resolves in EX.
+  *
+  * This is a full-core sideband rather than a field in the historical 350-bit DS-to-ES bus, so the
+  * generated legacy stage interface and its locked payload layout remain unchanged.
+  */
+final case class DelayedBranchPrediction() extends Bundle {
+  val valid = Bool()
+  val btbEnabled = Bool()
+  val btbTaken = Bool()
+  val btbIndex = UInt(5 bits)
+  val btbTarget = UInt(32 bits)
+  val direction = PredictorDirectionMetadata()
+}
+
+/** Predictor update produced by an EX-resolved register-dependent branch.
+  *
+  * These instructions are all predictable branches, so unlike Decode they can never request a BTB
+  * deletion. Keeping that impossible field out of the interface also makes its contract clear.
+  */
+final case class DelayedBranchBtbUpdate() extends Bundle {
+  val enable = Bool()
+  val popReturnStack = Bool()
+  val pushReturnStack = Bool()
+  val addEntry = Bool()
+  val predictionError = Bool()
+  val predictionRight = Bool()
+  val targetError = Bool()
+  val actualTaken = Bool()
+  val actualTarget = UInt(32 bits)
+  val pc = UInt(32 bits)
+  val index = UInt(5 bits)
+  val direction = PredictorDirectionMetadata()
 }
 
 /** Active openLA500 decode stage.
@@ -56,10 +92,12 @@ final case class DecodeBtbUpdate() extends Bundle {
 final class DecodeStage(
     config: CoreConfig = CoreConfig.Locked,
     lateResultForwardingEnabled: Boolean = false,
-    memoryBranchForwardingEnabled: Boolean = false
+    memoryBranchForwardingEnabled: Boolean = false,
+    delayedBranchResolutionEnabled: Boolean = false
 ) extends Component {
   val io = new Bundle {
     val input = slave Stream (FetchPayload())
+    val directionPrediction = in(PredictorDirectionMetadata())
     val output = master Stream (DecodePayload(config))
     val executeForward = in(DecodeForward())
     val executeLateResultAllowed = in Bool ()
@@ -89,6 +127,8 @@ final class DecodeStage(
     val lateForwardDestination = out UInt (5 bits)
     val branchRepair = out(RedirectRequest())
     val btb = out(DecodeBtbUpdate())
+    val delayedBranch = delayedBranchResolutionEnabled generate out(DelayedBranchPrediction())
+    val delayedBranchSlotCancel = delayedBranchResolutionEnabled generate in(Bool())
     val registers = config.diffTestEnabled generate out(Vec(Bits(32 bits), 32))
   }
 
@@ -97,6 +137,7 @@ final class DecodeStage(
 
   val occupied = RegInit(False)
   val fetch = Reg(FetchPayload())
+  val directionPrediction = Reg(PredictorDirectionMetadata())
   val branchSlotCancel = RegInit(False)
 
   val registerFile = Vec.fill(32)(Reg(Bits(32 bits)))
@@ -498,15 +539,24 @@ final class DecodeStage(
   // directly. Keeping their consumers on the proven decode-stall path also prevents a
   // MEM-result -> EX-operand -> shared-unit-result -> MEM-result combinational loop.
   val rawOperandConsumer = mulDivOperation.orR || laccRequest
+  val lateForwardConsumerAllowed =
+    if (delayedBranchResolutionEnabled) !rawOperandConsumer
+    else !branchNeedsRegisterData && !rawOperandConsumer
   val canLateForwardJ =
     if (lateResultForwardingEnabled)
-      executeJHit && io.executeForward.dependencyNeedsStall && !branchNeedsRegisterData &&
-      !rawOperandConsumer && io.executeLateResultAllowed
+      executeJHit && io.executeForward.dependencyNeedsStall && lateForwardConsumerAllowed &&
+      io.executeLateResultAllowed
     else False
   val canLateForwardKOrD =
     if (lateResultForwardingEnabled)
-      executeKHit && io.executeForward.dependencyNeedsStall && !branchNeedsRegisterData &&
-      !rawOperandConsumer && io.executeLateResultAllowed
+      executeKHit && io.executeForward.dependencyNeedsStall && lateForwardConsumerAllowed &&
+      io.executeLateResultAllowed
+    else False
+  // Only a branch waiting for the current EX producer is moved. Completed MEM results still
+  // resolve directly in Decode, while unresolved independent MEM dependencies retain their stall.
+  val resolveBranchInExecute =
+    if (delayedBranchResolutionEnabled)
+      branchNeedsRegisterData && (canLateForwardJ || canLateForwardKOrD)
     else False
   val stallJ = Mux(
     executeJHit,
@@ -668,11 +718,15 @@ final class DecodeStage(
   val tlbStall = any(io.executeTlbStall, io.memoryTlbStall, io.writebackTlbStall)
   val readyGo = !(stallJ || stallK || tlbStall || barrierStall) || hasException
 
-  val btbAddEntry = predictableBranch && !fetch.btbEnabled && branchTaken
-  val btbDeleteEntry = !predictableBranch && fetch.btbEnabled
-  val btbPredictionError = predictableBranch && fetch.btbEnabled && (fetch.btbTaken ^ branchTaken)
+  val btbAddEntry =
+    predictableBranch && !fetch.btbEnabled && branchTaken && !resolveBranchInExecute
+  val btbDeleteEntry = !predictableBranch && fetch.btbEnabled && !resolveBranchInExecute
+  val btbPredictionError =
+    predictableBranch && fetch.btbEnabled && (fetch.btbTaken ^ branchTaken) &&
+      !resolveBranchInExecute
   val btbTargetError =
-    predictableBranch && fetch.btbEnabled && fetch.btbTaken && branchTaken && fetch.btbTarget =/= branchTarget
+    predictableBranch && fetch.btbEnabled && fetch.btbTaken && branchTaken &&
+      fetch.btbTarget =/= branchTarget && !resolveBranchInExecute
   val btbRepair = any(
     btbAddEntry,
     btbDeleteEntry,
@@ -681,7 +735,10 @@ final class DecodeStage(
   ) && occupied && readyGo && !fetch.hasException
   val btbRepairTarget = Mux(branchTaken, branchTarget, fetch.pc + 4)
 
-  io.input.ready := !occupied || (readyGo && io.output.ready)
+  // A global/late-branch flush discards both the held Decode payload and any younger Fetch payload
+  // presented in the same cycle. Advertising ready here lets Fetch retire that stale slot while
+  // its branch-repair request starts the target fetch.
+  io.input.ready := io.flush.active || !occupied || (readyGo && io.output.ready)
   io.output.valid := occupied && readyGo
   when(io.flush.active) {
     occupied := False
@@ -694,10 +751,14 @@ final class DecodeStage(
   }
   when(io.input.valid && io.input.ready) {
     fetch := io.input.payload
+    directionPrediction := io.directionPrediction
   }
 
   when(io.flush.active) {
-    branchSlotCancel := False
+    branchSlotCancel :=
+      (if (delayedBranchResolutionEnabled)
+         io.delayedBranchSlotCancel && !(io.input.valid && io.input.ready)
+       else False)
   } elsewhen (btbRepair && io.output.ready && !io.input.valid) {
     branchSlotCancel := True
   } elsewhen (branchSlotCancel && io.input.valid) {
@@ -785,7 +846,8 @@ final class DecodeStage(
   // hold; redirect only on the same cycle that the branch actually leaves Decode.
   io.branchRepair.active := btbRepair && io.output.ready
   io.branchRepair.target := btbRepairTarget
-  io.btb.enable := occupied && readyGo && io.output.ready && !fetch.hasException
+  io.btb.enable :=
+    occupied && readyGo && io.output.ready && !fetch.hasException && !resolveBranchInExecute
   io.btb.popReturnStack := instJirl
   io.btb.pushReturnStack := instBl
   io.btb.addEntry := btbAddEntry
@@ -797,6 +859,17 @@ final class DecodeStage(
   io.btb.actualTarget := branchTarget
   io.btb.pc := fetch.pc
   io.btb.index := fetch.btbIndex
+  io.btb.direction := directionPrediction
+
+  if (delayedBranchResolutionEnabled) {
+    io.delayedBranch.valid :=
+      occupied && readyGo && resolveBranchInExecute && !hasException
+    io.delayedBranch.btbEnabled := fetch.btbEnabled
+    io.delayedBranch.btbTaken := fetch.btbTaken
+    io.delayedBranch.btbIndex := fetch.btbIndex
+    io.delayedBranch.btbTarget := fetch.btbTarget
+    io.delayedBranch.direction := directionPrediction
+  }
 
   if (config.diffTestEnabled) {
     for (index <- 0 until 32) io.registers(index) := registerFile(index)

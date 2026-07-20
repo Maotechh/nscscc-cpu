@@ -222,8 +222,8 @@ final class MemoryStage extends Component {
   when(io.input.fire) {
     valid := True
     payload := io.input.payload
+    dataIndex := io.dataIndexDiff
+    dataOffset := io.dataOffsetDiff
   }
   when(io.flush.any) { valid := False }
-  dataIndex := io.dataIndexDiff
-  dataOffset := io.dataOffsetDiff
 }

@@ -48,22 +48,41 @@ private[compat] final class SpinalCoreBackend(
   val decode = new DecodeStage(
     config,
     lateResultForwardingEnabled = true,
-    memoryBranchForwardingEnabled = true
+    memoryBranchForwardingEnabled = true,
+    delayedBranchResolutionEnabled = true
   )
-  val execute = new ExecuteStage(config)
+  val execute = new ExecuteStage(config, delayedBranchResolutionEnabled = true)
   val memory = new MemoryStage
   val writeback = new WritebackStage(emitCommit = true, exposeObservation = false)
 
   fetch.io.downstream >> decode.io.input
-  decode.io.output >> execute.io.input
+  decode.io.directionPrediction := fetch.io.directionPrediction
+  // An EX-resolved misprediction is older than the instruction currently in Decode. Mask that
+  // younger transfer in the repair cycle; Decode is cleared below while the resolving branch is
+  // still allowed to advance to MEM.
+  val executeBranchRepair = execute.io.branchRepair.active
+  execute.io.input.valid := decode.io.output.valid && !executeBranchRepair
+  execute.io.input.payload := decode.io.output.payload
+  decode.io.output.ready := execute.io.input.ready && !executeBranchRepair
+  execute.io.delayedBranch := decode.io.delayedBranch
+  decode.io.delayedBranchSlotCancel := executeBranchRepair
   execute.io.output >> memory.io.input
   memory.io.output >> writeback.io.input
 
   val csr = new OpenLa500Csr(diffTestEnabled = config.diffTestEnabled, tlbNum = config.tlbEntries)
   val addressTranslation = new OpenLa500AddrTrans
-  val instructionCache = new OpenLa500ICache
-  val dataCache = new OpenLa500DCache
-  val axiBridge = new OpenLa500TypedAxiBridge
+  val instructionCache = new OpenLa500ICache(
+    setCount = config.instructionCache.sets,
+    scrubOnReset = true
+  )
+  val dataCache = new OpenLa500DCache(
+    setCount = config.dataCache.sets,
+    scrubOnReset = true
+  )
+  // Cache-line eviction is write-back traffic, so let the AXI read channel make progress while
+  // the four write beats and B response drain. Scalar and uncached stores remain serialized inside
+  // the bridge to preserve the architectural ordering contract.
+  val axiBridge = new OpenLa500TypedAxiBridge(allowCacheLineReadOverlap = true)
   val divider = new OpenLa500Div
   val multiplier = new OpenLa500Mul
   val performanceCounter = new OpenLa500PerfCounter
@@ -107,7 +126,7 @@ private[compat] final class SpinalCoreBackend(
 
   decode.io.flush.exception := writeback.io.flush.exception
   decode.io.flush.ertn := writeback.io.flush.ertn
-  decode.io.flush.refetch := writeback.io.flush.refetch
+  decode.io.flush.refetch := writeback.io.flush.refetch || executeBranchRepair
   decode.io.flush.instructionCacheOperation := writeback.io.flush.instructionCacheOperation
   decode.io.flush.idle := writeback.io.flush.idle
   execute.io.flush.exception := writeback.io.flush.exception
@@ -148,28 +167,58 @@ private[compat] final class SpinalCoreBackend(
   decode.io.memoryOccupied := memory.io.forward.valid
   decode.io.writebackOccupied := writeback.io.stageValid
 
-  fetch.io.branchRepair := decode.io.branchRepair.active
-  fetch.io.branchTarget := decode.io.branchRepair.target
+  fetch.io.branchRepair := executeBranchRepair || decode.io.branchRepair.active
+  fetch.io.branchTarget :=
+    Mux(executeBranchRepair, execute.io.branchRepair.target, decode.io.branchRepair.target)
 
-  val predictor = new OpenLa500Predictor(config)
+  val predictor = new OpenLa500Predictor(config, localHistoryEnabled = true)
   predictor.io.lookup.valid := fetch.io.fetchEnable
   predictor.io.lookup.payload.pc := fetch.io.fetchPc
   fetch.io.btbEnabled := predictor.io.prediction.valid
   fetch.io.btbTaken := predictor.io.prediction.payload.taken
   fetch.io.btbIndex := predictor.io.prediction.payload.legacyIndex
   fetch.io.btbTarget := predictor.io.prediction.payload.target
+  fetch.io.btbDirection := predictor.io.prediction.payload.direction
 
-  predictor.io.update.valid := decode.io.btb.enable
-  predictor.io.update.payload.popReturnStack := decode.io.btb.popReturnStack
-  predictor.io.update.payload.pushReturnStack := decode.io.btb.pushReturnStack
-  predictor.io.update.payload.addEntry := decode.io.btb.addEntry
-  predictor.io.update.payload.predictionError := decode.io.btb.predictionError
-  predictor.io.update.payload.predictionRight := decode.io.btb.predictionRight
-  predictor.io.update.payload.targetError := decode.io.btb.targetError
-  predictor.io.update.payload.actualTaken := decode.io.btb.actualTaken
-  predictor.io.update.payload.actualTarget := decode.io.btb.actualTarget
-  predictor.io.update.payload.pc := decode.io.btb.pc
-  predictor.io.update.payload.legacyIndex := decode.io.btb.index
+  // The older EX branch wins the single predictor-update port. A simultaneous Decode update can
+  // only belong to the next (correctly predicted) instruction; redirects remain independently
+  // arbitrated above, so dropping this rare younger training event cannot affect correctness.
+  val predictorUpdateFromExecute = execute.io.btb.enable
+  predictor.io.update.valid := predictorUpdateFromExecute || decode.io.btb.enable
+  predictor.io.update.payload.popReturnStack := Mux(
+    predictorUpdateFromExecute,
+    execute.io.btb.popReturnStack,
+    decode.io.btb.popReturnStack
+  )
+  predictor.io.update.payload.pushReturnStack := Mux(
+    predictorUpdateFromExecute,
+    execute.io.btb.pushReturnStack,
+    decode.io.btb.pushReturnStack
+  )
+  predictor.io.update.payload.addEntry :=
+    Mux(predictorUpdateFromExecute, execute.io.btb.addEntry, decode.io.btb.addEntry)
+  predictor.io.update.payload.predictionError := Mux(
+    predictorUpdateFromExecute,
+    execute.io.btb.predictionError,
+    decode.io.btb.predictionError
+  )
+  predictor.io.update.payload.predictionRight := Mux(
+    predictorUpdateFromExecute,
+    execute.io.btb.predictionRight,
+    decode.io.btb.predictionRight
+  )
+  predictor.io.update.payload.targetError :=
+    Mux(predictorUpdateFromExecute, execute.io.btb.targetError, decode.io.btb.targetError)
+  predictor.io.update.payload.actualTaken :=
+    Mux(predictorUpdateFromExecute, execute.io.btb.actualTaken, decode.io.btb.actualTaken)
+  predictor.io.update.payload.actualTarget :=
+    Mux(predictorUpdateFromExecute, execute.io.btb.actualTarget, decode.io.btb.actualTarget)
+  predictor.io.update.payload.pc :=
+    Mux(predictorUpdateFromExecute, execute.io.btb.pc, decode.io.btb.pc)
+  predictor.io.update.payload.legacyIndex :=
+    Mux(predictorUpdateFromExecute, execute.io.btb.index, decode.io.btb.index)
+  predictor.io.update.payload.direction :=
+    Mux(predictorUpdateFromExecute, execute.io.btb.direction, decode.io.btb.direction)
 
   // CSR and precise exception/state-update wiring.
   csr.io.rd_addr := decode.io.csrReadAddress.asBits
@@ -329,6 +378,7 @@ private[compat] final class SpinalCoreBackend(
   instructionCache.io.op := False
   instructionCache.io.index := addressTranslation.io.inst_index
   instructionCache.io.tag := addressTranslation.io.inst_tag
+  instructionCache.io.speculativeColor := fetch.io.instructionAddress(13 downto 12).asBits
   instructionCache.io.offset := addressTranslation.io.inst_offset
   instructionCache.io.wstrb := 0
   instructionCache.io.wdata := 0
@@ -351,6 +401,7 @@ private[compat] final class SpinalCoreBackend(
   dataCache.io.size := execute.io.memory.size
   dataCache.io.index := addressTranslation.io.data_index
   dataCache.io.tag := addressTranslation.io.data_tag
+  dataCache.io.speculativeColor := execute.io.memory.virtualAddress(13 downto 12).asBits
   dataCache.io.offset := addressTranslation.io.data_offset
   dataCache.io.wstrb := execute.io.memory.byteMask
   dataCache.io.wdata := execute.io.memory.writeData

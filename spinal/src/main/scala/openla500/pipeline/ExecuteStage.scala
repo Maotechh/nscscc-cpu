@@ -78,7 +78,10 @@ final case class ExecuteLaccOutput() extends Bundle {
   * handshake through ExecuteMulDivRequest. A global flush clears occupancy synchronously;
   * `memoryFlush` suppresses a new memory side effect without clearing this stage register.
   */
-final class ExecuteStage(config: CoreConfig = CoreConfig.Locked) extends Component {
+final class ExecuteStage(
+    config: CoreConfig = CoreConfig.Locked,
+    delayedBranchResolutionEnabled: Boolean = false
+) extends Component {
   val io = new Bundle {
     val input = slave(Stream(DecodePayload(config)))
     val output = master(Stream(ExecutePayload()))
@@ -99,6 +102,9 @@ final class ExecuteStage(config: CoreConfig = CoreConfig.Locked) extends Compone
     val cache = out(ExecuteCacheControl())
     val tlbInstructionStall = out Bool ()
     val dataFetch = out Bool ()
+    val delayedBranch = delayedBranchResolutionEnabled generate in(DelayedBranchPrediction())
+    val branchRepair = delayedBranchResolutionEnabled generate out(RedirectRequest())
+    val btb = delayedBranchResolutionEnabled generate out(DelayedBranchBtbUpdate())
     val laccInput = config.laccEnabled generate in(ExecuteLaccInput())
     val laccOutput = config.laccEnabled generate out(ExecuteLaccOutput())
   }
@@ -108,6 +114,8 @@ final class ExecuteStage(config: CoreConfig = CoreConfig.Locked) extends Compone
   val lateForwardJ = Reg(Bool())
   val lateForwardKOrD = Reg(Bool())
   val lateForwardDestination = Reg(UInt(5 bits))
+  val delayedBranch =
+    delayedBranchResolutionEnabled generate Reg(DelayedBranchPrediction())
 
   val lateForwardRequested = lateForwardJ || lateForwardKOrD
   val lateForwardMatch =
@@ -120,6 +128,7 @@ final class ExecuteStage(config: CoreConfig = CoreConfig.Locked) extends Compone
     Mux(lateForwardJ, io.memoryForward.result, payload.registerDataJ)
   val effectiveRegisterDataKOrD =
     Mux(lateForwardKOrD, io.memoryForward.result, payload.registerDataKOrD)
+  val delayedBranchPredictionError = Bool()
 
   val alu = new OpenLa500Alu
   alu.io.alu_op := payload.aluOperation
@@ -198,6 +207,58 @@ final class ExecuteStage(config: CoreConfig = CoreConfig.Locked) extends Compone
       ((addressReady || !waitsForAddress) && !tlbSearchStall && !instructionCacheStall)) ||
       payload.hasException || (alignmentException && lateForwardReady)
 
+  if (delayedBranchResolutionEnabled) {
+    val opcode = payload.instruction(31 downto 26).asUInt
+    val isJirl = opcode === U(0x13, 6 bits)
+    val isBeq = opcode === U(0x16, 6 bits)
+    val isBne = opcode === U(0x17, 6 bits)
+    val isBlt = opcode === U(0x18, 6 bits)
+    val isBge = opcode === U(0x19, 6 bits)
+    val isBltu = opcode === U(0x1a, 6 bits)
+    val isBgeu = opcode === U(0x1b, 6 bits)
+    val operandsEqual = effectiveRegisterDataJ === effectiveRegisterDataKOrD
+    val lessSigned = effectiveRegisterDataJ.asSInt < effectiveRegisterDataKOrD.asSInt
+    val lessUnsigned = effectiveRegisterDataJ.asUInt < effectiveRegisterDataKOrD.asUInt
+    val branchTaken =
+      isJirl || (isBeq && operandsEqual) || (isBne && !operandsEqual) ||
+        (isBlt && lessSigned) || (isBge && !lessSigned) ||
+        (isBltu && lessUnsigned) || (isBgeu && !lessUnsigned)
+    val branchTarget = Mux(
+      isJirl,
+      effectiveRegisterDataJ.asUInt + payload.immediate.asUInt,
+      payload.pc + payload.immediate.asUInt
+    )
+    val addEntry = !delayedBranch.btbEnabled && branchTaken
+    val predictionError =
+      delayedBranch.btbEnabled && (delayedBranch.btbTaken ^ branchTaken)
+    val targetError =
+      delayedBranch.btbEnabled && delayedBranch.btbTaken && branchTaken &&
+        delayedBranch.btbTarget =/= branchTarget
+    val repair = addEntry || predictionError || targetError
+    val resolutionFire =
+      io.output.fire && delayedBranch.valid && !payload.hasException && !io.flush.any &&
+        !io.memoryFlush
+
+    delayedBranchPredictionError := repair
+    io.branchRepair.active := resolutionFire && repair
+    io.branchRepair.target := Mux(branchTaken, branchTarget, payload.pc + 4)
+    io.btb.enable := resolutionFire
+    io.btb.popReturnStack := isJirl
+    io.btb.pushReturnStack := False
+    io.btb.addEntry := addEntry
+    io.btb.predictionError := predictionError
+    io.btb.predictionRight :=
+      delayedBranch.btbEnabled && !(delayedBranch.btbTaken ^ branchTaken)
+    io.btb.targetError := targetError
+    io.btb.actualTaken := branchTaken
+    io.btb.actualTarget := branchTarget
+    io.btb.pc := payload.pc
+    io.btb.index := delayedBranch.btbIndex
+    io.btb.direction := delayedBranch.direction
+  } else {
+    delayedBranchPredictionError := False
+  }
+
   io.input.ready := !occupied || (readyGo && io.output.ready)
   io.output.valid := occupied && readyGo
 
@@ -211,6 +272,9 @@ final class ExecuteStage(config: CoreConfig = CoreConfig.Locked) extends Compone
     lateForwardJ := io.lateForwardJ
     lateForwardKOrD := io.lateForwardKOrD
     lateForwardDestination := io.lateForwardDestination
+    if (delayedBranchResolutionEnabled) {
+      delayedBranch := io.delayedBranch
+    }
   }.elsewhen(occupied && lateForwardMatch) {
     when(lateForwardJ) {
       payload.registerDataJ := io.memoryForward.result
@@ -347,7 +411,12 @@ final class ExecuteStage(config: CoreConfig = CoreConfig.Locked) extends Compone
   io.output.payload.isBranch := payload.isBranch
   io.output.payload.instructionCacheMiss := payload.instructionCacheMiss
   io.output.payload.isPredictableBranch := payload.isPredictableBranch
-  io.output.payload.predictionError := payload.predictionError
+  if (delayedBranchResolutionEnabled) {
+    io.output.payload.predictionError :=
+      Mux(delayedBranch.valid, delayedBranchPredictionError, payload.predictionError)
+  } else {
+    io.output.payload.predictionError := payload.predictionError
+  }
   io.output.payload.preload := preloadInstruction
   io.output.payload.cacheOperation := payload.cacheOperation
   io.output.payload.idle := payload.idle

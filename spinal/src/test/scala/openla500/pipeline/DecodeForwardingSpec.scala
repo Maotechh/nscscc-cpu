@@ -37,6 +37,9 @@ private final class DecodeForwardingSimTop extends Component {
   )
   decode.io.input.valid := io.fetchValid
   decode.io.input.payload := FetchPayload.unpackLegacy(io.fetchBits)
+  decode.io.directionPrediction.phtIndex := 0
+  decode.io.directionPrediction.baseTaken := False
+  decode.io.directionPrediction.localTaken := False
   io.fetchReady := decode.io.input.ready
   decode.io.output.ready := io.decodeReady
 

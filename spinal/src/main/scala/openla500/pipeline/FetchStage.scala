@@ -1,6 +1,7 @@
 package openla500.pipeline
 
 import openla500.config.CoreConfig
+import openla500.predict.PredictorDirectionMetadata
 import spinal.core._
 import spinal.lib._
 
@@ -47,6 +48,8 @@ final class FetchStage(config: CoreConfig = CoreConfig.Locked) extends Component
     val btbTaken = in Bool ()
     val btbEnabled = in Bool ()
     val btbIndex = in UInt (5 bits)
+    val btbDirection = in(PredictorDirectionMetadata())
+    val directionPrediction = out(PredictorDirectionMetadata())
 
     val addressTranslation = out Bool ()
     val dmw0Enabled = out Bool ()
@@ -68,6 +71,7 @@ final class FetchStage(config: CoreConfig = CoreConfig.Locked) extends Component
   val instructionBufferValid = Reg(Bool()) init (False)
   val idleLock = Reg(Bool()) init (False)
   val btbLock = Reg(Bits(38 bits))
+  val btbDirectionLock = Reg(PredictorDirectionMetadata())
   val btbLockValid = Reg(Bool()) init (False)
   val flushRequestPc = Reg(UInt(32 bits))
   val flushRequestPending = Reg(Bool()) init (False)
@@ -87,6 +91,11 @@ final class FetchStage(config: CoreConfig = CoreConfig.Locked) extends Component
   val btbIndexLocked = Mux(btbLockValid, btbLock(36 downto 32).asUInt, U(0, 5 bits)) | io.btbIndex
   val btbTakenLocked = (btbLockValid && btbLock(37)) || io.btbTaken
   val btbEnabledLocked = btbLockValid || io.btbEnabled
+  val btbDirectionLocked = PredictorDirectionMetadata()
+  btbDirectionLocked := io.btbDirection
+  when(btbLockValid) {
+    btbDirectionLocked := btbDirectionLock
+  }
   val fetchBtbTarget = (io.btbTaken && io.btbEnabled) || (btbLockValid && btbLock(37))
   val sequencePc = fsPc + 4
   val architecturalExceptionEntry = Mux(io.exceptionTlbRefill, io.tlbRefillEntry, io.exceptionEntry)
@@ -146,6 +155,7 @@ final class FetchStage(config: CoreConfig = CoreConfig.Locked) extends Component
   io.downstream.payload.btbTaken := btbTakenLocked
   io.downstream.payload.btbIndex := btbIndexLocked
   io.downstream.payload.btbTarget := btbTargetLocked
+  io.directionPrediction := btbDirectionLocked
 
   io.instructionRequest := instructionRequest
   io.instructionAddress := nextPc
@@ -212,6 +222,7 @@ final class FetchStage(config: CoreConfig = CoreConfig.Locked) extends Component
   }.elsewhen(io.btbEnabled && !prefetchReady) {
     btbLockValid := True
     btbLock := io.btbTaken.asBits ## io.btbIndex.asBits ## io.btbTarget.asBits
+    btbDirectionLock := io.btbDirection
   }
 
   when((fsReady && io.downstream.ready) || flush) {

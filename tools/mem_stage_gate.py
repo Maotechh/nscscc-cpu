@@ -88,9 +88,18 @@ DIRECTED_SCENARIOS = [
     "alu_and_mul_div_result_selection",
     "load_alignment_and_sign_extension",
     "load_response_buffer_under_writeback_backpressure",
+    "accepted_address_snapshot_under_backpressure",
     "tlb_exception_and_address_translation",
     "dmw_uncached_and_sc_cancel",
 ]
+
+ADDRESS_SNAPSHOT_ORACLE = {
+    "output": "ms_to_ws_bus",
+    "bits": "367:356",
+    "source": "{data_index_diff,data_offset_diff}",
+    "sample": "posedge clk when es_to_ms_valid && ms_allowin",
+    "hold": "until the next accepted input",
+}
 
 LINT_ALLOWLIST = {
     ("UNUSEDSIGNAL", "csr_dmw0", "[28:6,2:1]"),
@@ -238,6 +247,7 @@ def load_contract(repo: Path, path: Path) -> tuple[dict[str, object], bytes, byt
         "compare_all_outputs_every_phase": True,
         "negative_control_required": True,
         "directed_scenarios": DIRECTED_SCENARIOS,
+        "golden_corrections": [ADDRESS_SNAPSHOT_ORACLE],
     }:
         raise GateError("mem_stage differential contract mismatch")
     expected_lint = [
@@ -505,7 +515,11 @@ def testbench(cycles: int, seed: int) -> str:
     for module, prefix in (("mem_stage_golden", "g"), ("mem_stage_candidate", "c")):
         connections = input_connections + [f".{name}({prefix}_{name})" for name in OUTPUTS]
         lines.append(f"  {module} dut_{prefix} (" + ",".join(connections) + ");")
-    golden_vector = ",".join(f"g_{name}" for name in OUTPUTS)
+    golden_values = {
+        name: "g_ms_to_ws_bus_expected" if name == "ms_to_ws_bus" else f"g_{name}"
+        for name in OUTPUTS
+    }
+    golden_vector = ",".join(golden_values.values())
     candidate_values = {
         name: (
             "(c_ms_to_ws_valid ^ (negative_control & c_ms_to_ws_valid))"
@@ -519,11 +533,20 @@ def testbench(cycles: int, seed: int) -> str:
         [
             "  integer cycle; integer i; integer j; integer phase;",
             "  reg [31:0] lfsr; reg [1023:0] random_bus; reg negative_control;",
+            "  reg [7:0] accepted_data_index; reg [3:0] accepted_data_offset;",
+            "  wire [492:0] g_ms_to_ws_bus_expected;",
+            "  assign g_ms_to_ws_bus_expected = {g_ms_to_ws_bus[492:368],accepted_data_index,accepted_data_offset,g_ms_to_ws_bus[355:0]};",
+            "  always @(posedge clk) begin",
+            "    if (es_to_ms_valid && g_ms_allowin) begin",
+            "      accepted_data_index <= data_index_diff;",
+            "      accepted_data_offset <= data_offset_diff;",
+            "    end",
+            "  end",
             "  task check; begin",
             f"    if ({{{golden_vector}}} !== {{{candidate_vector}}}) begin",
             '      $display("MEM_MISMATCH cycle=%0d phase=%0d g_valid=%b c_valid=%b g_allow=%b c_allow=%b g_pc=%h c_pc=%h", cycle, phase, g_ms_to_ws_valid, c_ms_to_ws_valid, g_ms_allowin, c_ms_allowin, g_ms_to_ws_bus[31:0], c_ms_to_ws_bus[31:0]);',
             *[
-                f'      if (g_{name} !== {candidate_values[name]}) $display("MEM_OUTPUT_MISMATCH output={name} g=%h c=%h", g_{name}, {candidate_values[name]});'
+                f'      if ({golden_values[name]} !== {candidate_values[name]}) $display("MEM_OUTPUT_MISMATCH output={name} g=%h c=%h", {golden_values[name]}, {candidate_values[name]});'
                 for name in OUTPUTS
             ],
             "      $fatal(1);",
@@ -552,7 +575,7 @@ def testbench(cycles: int, seed: int) -> str:
             "    excp_flush=0; ertn_flush=0; refetch_flush=0; icacop_flush=0; idle_flush=0; data_data_ok=0; dcache_miss=0; data_rdata=0;",
             "    csr_pg=0; csr_da=1; csr_dmw0=0; csr_dmw1=0; csr_plv=0; csr_datm=1; disable_cache=0; lladdr=0;",
             "    data_index_diff=0; data_tag_diff=0; data_offset_diff=0; data_tlb_found=1; data_tlb_index=0; data_tlb_v=1; data_tlb_d=1; data_tlb_mat=1; data_tlb_plv=0; data_tlb_ppn=0;",
-            f"    cycle=0; phase=0; lfsr=32'h{seed & 0xFFFFFFFF:08x}; random_bus=0;",
+            f"    cycle=0; phase=0; lfsr=32'h{seed & 0xFFFFFFFF:08x}; random_bus=0; accepted_data_index=0; accepted_data_offset=0;",
             '    negative_control=$test$plusargs("negative-control");',
             "    reset=1; step; step; reset=0; step;",
             "    // ALU pass-through, then every mul/div result selector.",
@@ -562,6 +585,9 @@ def testbench(cycles: int, seed: int) -> str:
             "    for (i=0; i<8; i=i+1) begin es_to_ms_bus=0; es_to_ms_bus[70]=1; es_to_ms_bus[76:75]=(i[1:0]==0)?2'b00:((i[1:0]==1)?2'b01:2'b10); es_to_ms_bus[174]=i[2]; es_to_ms_bus[33:32]=i[1:0]; es_to_ms_bus[31:0]=32'h1c003000+i; data_rdata=32'h80ff7f01; data_data_ok=1; es_to_ms_valid=1; step; clear_controls; step; end",
             "    // Capture a returning load while WB is stalled, then perturb live rdata.",
             "    ws_allowin=0; es_to_ms_bus=0; es_to_ms_bus[70]=1; es_to_ms_bus[76:75]=2'b00; es_to_ms_bus[31:0]=32'h1c004000; es_to_ms_valid=1; step; es_to_ms_valid=0; data_data_ok=1; data_rdata=32'hdeadbeef; step; data_data_ok=0; data_rdata=32'h01234567; step; ws_allowin=1; step;",
+            "    // Hold the low physical address from the accepted request, not the next live EX address.",
+            "    ws_allowin=0; es_to_ms_bus=0; es_to_ms_bus[31:0]=32'h1c004100; data_index_diff=8'hff; data_offset_diff=4'hc; es_to_ms_valid=1; step;",
+            "    es_to_ms_valid=0; data_index_diff=8'h00; data_offset_diff=4'h0; step; ws_allowin=1; step;",
             "    // Paging/TLB exception, DMW uncached, then SC address mismatch.",
             "    csr_da=0; csr_pg=1; data_tlb_found=0; data_tlb_v=0; es_to_ms_bus=0; es_to_ms_bus[70]=1; es_to_ms_bus[214:183]=32'h81234004; es_to_ms_valid=1; step; clear_controls; step;",
             "    data_tlb_found=1; data_tlb_v=1; csr_dmw0=32'h80000001; csr_datm=1; es_to_ms_bus=0; es_to_ms_bus[70]=1; es_to_ms_bus[214:183]=32'h81234004; es_to_ms_valid=1; data_data_ok=1; step; clear_controls; step;",
@@ -672,6 +698,7 @@ def command_diff(args: argparse.Namespace) -> int:
             "compared_outputs": list(OUTPUTS),
             "comparison_phases_per_cycle": 3,
             "directed_scenarios": DIRECTED_SCENARIOS,
+            "golden_corrections": [ADDRESS_SNAPSHOT_ORACLE],
             "simulation_compile_waivers": [
                 "DECLFILENAME: combined golden/candidate one-file modules",
                 "UNUSEDSIGNAL: golden oracle and testbench scaffolding only; candidate standalone lint is a separate required gate",

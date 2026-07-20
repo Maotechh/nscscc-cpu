@@ -8,15 +8,50 @@ import spinal.core._
   * write-back and refill state machines retain the old ordering: lookup, optional dirty write-back,
   * refill, and delayed hit-store write buffer.
   */
-final class OpenLa500DCache extends Component {
+final class OpenLa500DCache(
+    setCount: Int = 256,
+    scrubOnReset: Boolean = false,
+    goldenCacopBypass: Boolean = false
+) extends Component {
+  private val ExternalIndexWidth = 8
+  private val ExternalTagWidth = 20
+  private val WayCount = 2
+  private val WordsPerLine = 4
+  private val LineOffsetWidth = 4
+  private val SetIndexWidth = log2Up(setCount)
+  private val ExtraIndexWidth = SetIndexWidth - ExternalIndexWidth
+  private val StoredTagWidth = ExternalTagWidth - ExtraIndexWidth
+
+  require(setCount == 256 || setCount == 1024, "D-cache supports 256 or 1024 sets")
+  require(ExtraIndexWidth >= 0, "D-cache cannot use fewer than 256 sets")
+  require(
+    !goldenCacopBypass || (setCount == 256 && !scrubOnReset),
+    "golden CACOP bypass is restricted to the standalone 256-set oracle profile"
+  )
+
+  private def physicalSet(tag: Bits, index: Bits): UInt =
+    if (ExtraIndexWidth == 0) index.asUInt
+    else (tag(ExtraIndexWidth - 1 downto 0) ## index).asUInt
+
+  private def storedTag(tag: Bits): Bits =
+    if (ExtraIndexWidth == 0) tag
+    else tag(ExternalTagWidth - 1 downto ExtraIndexWidth)
+
+  private def requestAddress(tag: Bits, set: UInt, offset: Bits): Bits =
+    tag ## set(ExternalIndexWidth - 1 downto 0).asBits ## offset
+
+  private def replacementLineAddress(tag: Bits, set: UInt): Bits =
+    tag ## set.asBits ## B(0, LineOffsetWidth bits)
+
   val io = new Bundle {
     val clk = in Bool ()
     val reset = in Bool ()
     val valid = in Bool ()
     val op = in Bool ()
     val size = in Bits (3 bits)
-    val index = in Bits (8 bits)
-    val tag = in Bits (20 bits)
+    val index = in Bits (ExternalIndexWidth bits)
+    val tag = in Bits (ExternalTagWidth bits)
+    val speculativeColor = (ExtraIndexWidth > 0) generate in(Bits(ExtraIndexWidth bits))
     val offset = in Bits (4 bits)
     val wstrb = in Bits (4 bits)
     val wdata = in Bits (32 bits)
@@ -66,14 +101,20 @@ final class OpenLa500DCache extends Component {
     val requestOp = Reg(Bool()) init (False)
     val requestPreld = Reg(Bool()) init (False)
     val requestSize = Reg(Bits(3 bits)) init (0)
-    val requestIndex = Reg(Bits(8 bits)) init (0)
-    val requestTag = Reg(Bits(20 bits))
+    val requestSet = Reg(UInt(SetIndexWidth bits)) init (0)
+    val requestTag = Reg(Bits(ExternalTagWidth bits))
     val requestOffset = Reg(Bits(4 bits)) init (0)
     val requestWstrb = Reg(Bits(4 bits)) init (0)
     val requestWdata = Reg(Bits(32 bits)) init (0)
     val requestUncache = Reg(Bool()) init (False)
     val requestCacop = Reg(Bool()) init (False)
     val requestCacopMode = Reg(Bits(2 bits)) init (0)
+    val setReplayPending =
+      if (ExtraIndexWidth > 0) Some(Reg(Bool()) init (False))
+      else None
+
+    def clearSetReplay(): Unit = setReplayPending.foreach(_ := False)
+    def markSetReplay(): Unit = setReplayPending.foreach(_ := True)
 
     val missReplaceWay = Reg(Bits(2 bits)) init (0)
     val missRetNum = Reg(UInt(2 bits))
@@ -82,7 +123,7 @@ final class OpenLa500DCache extends Component {
     val legacyWrReq = Reg(Bool()) init (False)
 
     val writeBufferState = Reg(Bool()) init (False)
-    val writeBufferIndex = Reg(Bits(8 bits)) init (0)
+    val writeBufferSet = Reg(UInt(SetIndexWidth bits)) init (0)
     val writeBufferWstrb = Reg(Bits(4 bits)) init (0)
     val writeBufferWdata = Reg(Bits(32 bits)) init (0)
     val writeBufferWay = Reg(Bits(2 bits)) init (0)
@@ -91,9 +132,26 @@ final class OpenLa500DCache extends Component {
     val uncacheWrBuffer = Reg(Bool())
     val cacopMode2HitWrBuffer = Reg(Bool())
 
-    val dataMem = Array.fill(2, 4)(Mem(Bits(32 bits), 256))
-    val tagMem = Array.fill(2)(Mem(Bits(21 bits), 256))
-    val dirtyMem = Vec.fill(256)(Reg(Bits(2 bits)))
+    val dataMem = Array.fill(WayCount, WordsPerLine)(Mem(Bits(32 bits), setCount))
+    val tagMem = Array.fill(WayCount)(Mem(Bits(StoredTagWidth + 1 bits), setCount))
+    val dirtyMem = Vec.fill(setCount)(Reg(Bits(2 bits)))
+
+    // 活动核心必须先逐组清除 tag-valid/dirty，再开放请求；叶级 golden profile 不生成 scrub 状态。
+    val scrubActive: Bool =
+      if (scrubOnReset) Reg(Bool()) init (True)
+      else False
+    val scrubIndex: UInt =
+      if (scrubOnReset) Reg(UInt(SetIndexWidth bits)) init (0)
+      else U(0, SetIndexWidth bits)
+    if (scrubOnReset) {
+      when(scrubActive) {
+        when(scrubIndex === U(setCount - 1, SetIndexWidth bits)) {
+          scrubActive := False
+        } otherwise {
+          scrubIndex := scrubIndex + 1
+        }
+      }
+    }
 
     val isIdle = mainState === MainIdle
     val isLookup = mainState === MainLookup
@@ -125,43 +183,70 @@ final class OpenLa500DCache extends Component {
       io.ret_data
     )
 
-    val tagOutputs = Vec(Bits(21 bits), 2)
-    val dataOutputs = Array.fill(2)(Vec(Bits(32 bits), 4))
-    val realHit = Bits(2 bits)
+    // data_index 和虚拟页号属于当前 EX 请求，而物理 data_tag 要到下一拍才由地址翻译给出。
+    // 先用虚拟页颜色预测 set；若翻译后的物理颜色不一致，只重放 SRAM 读，不产生副作用。
+    val speculativeSet =
+      if (ExtraIndexWidth == 0) physicalSet(io.tag, io.index)
+      else (io.speculativeColor ## io.index).asUInt
+    val translatedSet = physicalSet(
+      io.tag,
+      requestSet(ExternalIndexWidth - 1 downto 0).asBits
+    )
+    val effectiveLookupTag = Bits(ExternalTagWidth bits)
+    effectiveLookupTag := io.tag
+    if (ExtraIndexWidth > 0) {
+      when(setReplayPending.get) {
+        effectiveLookupTag := requestTag
+      }
+    }
+    val physicalColorMismatch =
+      if (ExtraIndexWidth > 0) {
+        isLookup && !setReplayPending.get &&
+        requestSet(SetIndexWidth - 1 downto ExternalIndexWidth).asBits =/=
+          io.tag(ExtraIndexWidth - 1 downto 0) &&
+          !(io.uncache_en && !requestCacop)
+      } else False
+    val replaySet = Mux(physicalColorMismatch, translatedSet, requestSet)
+    val pipelineReadSet = Mux(io.addr_ok, speculativeSet, replaySet)
+    val tagReadWriteSet = Mux(scrubActive, scrubIndex, pipelineReadSet)
+    val invalidateTag = mode0 || mode1 || cacopMode2HitWrBuffer
+    val zeroTag = B(0, StoredTagWidth + 1 bits)
+    val normalTagWriteData = Mux(invalidateTag, zeroTag, storedTag(requestTag) ## True)
+    val tagWriteData = Mux(scrubActive, zeroTag, normalTagWriteData)
+    val tagEnabled = scrubActive || !requestUncache || isIdle || isLookup
+    val dataEnabled = !scrubActive && (!(requestUncache || mode0) || isIdle || isLookup)
+
+    val tagOutputs = Vec(Bits(StoredTagWidth + 1 bits), WayCount)
+    val dataOutputs = Array.fill(WayCount)(Vec(Bits(32 bits), WordsPerLine))
+    val realHit = Bits(WayCount bits)
     val cacheHit = Bool()
     val loadResult = Bits(32 bits)
 
-    for (way <- 0 until 2) {
-      val tagAddress = Mux(io.addr_ok, io.index, requestIndex).asUInt
-      val tagWriteNow = isRefill && missReplaceWay(way) &&
+    // tag SRAM 的写优先级为 scrub > 失效/CACOP > refill；data SRAM 不参与 scrub。
+    for (way <- 0 until WayCount) {
+      val normalTagWrite = isRefill && missReplaceWay(way) &&
         ((io.ret_valid && io.ret_last) || mode0 || mode1 || cacopMode2HitWrBuffer)
-      val tagEnabled = !requestUncache || isIdle || isLookup
-      val tagWriteData = Mux(
-        mode0 || mode1 || cacopMode2HitWrBuffer,
-        B(0, 21 bits),
-        requestTag ## True
-      )
+      val tagWriteNow = scrubActive || normalTagWrite
       tagOutputs(way) := tagMem(way).readWriteSync(
-        address = tagAddress,
+        address = tagReadWriteSet,
         data = tagWriteData,
         enable = tagEnabled,
         write = tagWriteNow,
         duringWrite = dontRead
       )
-      realHit(way) := tagOutputs(way)(0) && tagOutputs(way)(20 downto 1) === io.tag
-      for (bank <- 0 until 4) {
-        val dataAddress = Mux(io.addr_ok, io.index, requestIndex).asUInt
+      realHit(way) :=
+        tagOutputs(way)(0) &&
+          tagOutputs(way)(StoredTagWidth downto 1) === storedTag(effectiveLookupTag)
+      for (bank <- 0 until WordsPerLine) {
         val hitStoreNow =
           writeBufferFull && writeBufferWay(way) &&
             writeBufferWord === U(bank, 2 bits)
         val refillWriteNow =
           isRefill && missReplaceWay(way) && io.ret_valid && missRetNum === U(bank, 2 bits)
-        val dataEnabled = !(requestUncache || mode0) || isIdle || isLookup
         val writeNow = hitStoreNow || refillWriteNow
-        // Golden ORs the hit-store byte mask with a full refill mask.  When both
-        // target this bank, hit-store data wins but all four bytes are written.
+        // hit-store 与 refill 同拍命中同一 bank 时沿用 golden 优先级：store 数据优先，但写满四字节。
         val writeMask = Mux(refillWriteNow, B"4'b1111", writeBufferWstrb)
-        val writeAddress = Mux(hitStoreNow, writeBufferIndex.asUInt, dataAddress)
+        val writeAddress = Mux(hitStoreNow, writeBufferSet, pipelineReadSet)
         val writeData = Mux(hitStoreNow, writeBufferWdata, refillData)
         dataOutputs(way)(bank) := dataMem(way)(bank).readWriteSync(
           address = writeAddress,
@@ -173,27 +258,31 @@ final class OpenLa500DCache extends Component {
         )
       }
     }
-    // CACOP follows the locked passing d22c13c state path: it must not be
-    // treated as a normal lookup hit, even when the indexed line is valid.
-    cacheHit := realHit.orR && !(io.uncache_en || mode0 || mode1 || mode2)
+    // 叶级 oracle 保留 a158aa8 的 CACOP 即时完成语义；活动核心沿用已通过板测的 d22c13c 路径。
+    val cacopBlocksHit = if (goldenCacopBypass) False else mode0 || mode1 || mode2
+    cacheHit :=
+      realHit.orR && !io.uncache_en && !physicalColorMismatch && !cacopBlocksHit
     loadResult :=
       (Mux(realHit(0), dataOutputs(0)(requestOffset(3 downto 2).asUInt), B(0, 32 bits)) |
         Mux(realHit(1), dataOutputs(1)(requestOffset(3 downto 2).asUInt), B(0, 32 bits)))
 
     val cacopChosenWay = Mux(requestOffset(0), B"2'b10", B"2'b01")
-    val invalidWay = Bits(2 bits)
-    invalidWay := B"2'b00"
-    when(!tagOutputs(0)(0)) { invalidWay := B"2'b01" }
-      .elsewhen(!tagOutputs(1)(0)) { invalidWay := B"2'b10" }
+    val invalidWay = Mux(
+      !tagOutputs(0)(0),
+      B"2'b01",
+      Mux(!tagOutputs(1)(0), B"2'b10", B"2'b00")
+    )
     val randomWay = Mux(lfsr(6), B"2'b10", B"2'b01")
-    val replacementWay = Bits(2 bits)
-    replacementWay := Mux(invalidWay.orR, invalidWay, randomWay)
-    when(mode0 || mode1) { replacementWay := cacopChosenWay }
-      .elsewhen(mode2) { replacementWay := realHit }
+    val normalReplacementWay = Mux(invalidWay.orR, invalidWay, randomWay)
+    val replacementWay = Mux(
+      mode0 || mode1,
+      cacopChosenWay,
+      Mux(mode2, realHit, normalReplacementWay)
+    )
 
-    val dirtyAtIndex = dirtyMem(requestIndex.asUInt)
+    val dirtyAtIndex = dirtyMem(requestSet)
     val effectiveDirty = dirtyAtIndex | Mux(
-      writeBufferFull && writeBufferIndex === requestIndex,
+      writeBufferFull && writeBufferSet === requestSet,
       writeBufferWay,
       B(0, 2 bits)
     )
@@ -209,50 +298,62 @@ final class OpenLa500DCache extends Component {
       requestOp && !io.op &&
         (requestOffset(3 downto 2) === io.offset(3 downto 2) || io.dcacop_op_en)
     val lookupToLookup = !lookupWriteConflict && !consecutiveStoreLoadConflict && cacheHit
-    val addrOk = (isIdle && idleToLookup) || (isLookup && lookupToLookup)
+    val addrOk = !scrubActive && ((isIdle && idleToLookup) || (isLookup && lookupToLookup))
 
     val uncacheRequest = io.uncache_en && !requestCacop
     val cacopMode2Hit = mode2 && realHit.orR
     val uncacheWrite = uncacheRequest && requestOp && !mode1 && !cacopMode2Hit
     val rdReq = isReplace && !(uncacheWrBuffer || mode0 || mode1 || mode2)
     val refillMatch = missRetNum === requestOffset(3 downto 2).asUInt
+    val cacopCompletesLookup = if (goldenCacopBypass) requestCacop else False
+    val cacopBlocksResponse = if (goldenCacopBypass) False else requestCacop
+    val lookupCompletes = isLookup && (cacheHit || requestOp || cancelReq || cacopCompletesLookup)
+    val refillCompletes =
+      isRefill && !requestOp && io.ret_valid && (refillMatch || requestUncache)
     val dataOk =
-      (isLookup && (cacheHit || requestOp || cancelReq) ||
-        isRefill && !requestOp && io.ret_valid && (refillMatch || requestUncache)) &&
-        !(requestPreld || requestCacop)
+      (lookupCompletes || refillCompletes) &&
+        !(requestPreld || cacopBlocksResponse || physicalColorMismatch)
 
-    val replaceTag = Bits(20 bits)
-    replaceTag := 0
-    when(missReplaceWay(0)) { replaceTag := tagOutputs(0)(20 downto 1) }
-      .elsewhen(missReplaceWay(1)) { replaceTag := tagOutputs(1)(20 downto 1) }
-    val replaceData = Bits(128 bits)
-    replaceData := B(0, 128 bits)
-    when(missReplaceWay(0)) {
-      replaceData := dataOutputs(0)(3) ## dataOutputs(0)(2) ## dataOutputs(0)(1) ## dataOutputs(0)(
-        0
+    val replaceTag = Mux(
+      missReplaceWay(0),
+      tagOutputs(0)(StoredTagWidth downto 1),
+      Mux(
+        missReplaceWay(1),
+        tagOutputs(1)(StoredTagWidth downto 1),
+        B(0, StoredTagWidth bits)
       )
-    }
-      .elsewhen(missReplaceWay(1)) {
-        replaceData := dataOutputs(1)(3) ## dataOutputs(1)(2) ## dataOutputs(1)(1) ## dataOutputs(
-          1
-        )(0)
-      }
+    )
+    val way0Line =
+      dataOutputs(0)(3) ## dataOutputs(0)(2) ## dataOutputs(0)(1) ## dataOutputs(0)(0)
+    val way1Line =
+      dataOutputs(1)(3) ## dataOutputs(1)(2) ## dataOutputs(1)(1) ## dataOutputs(1)(0)
+    val replaceData = Mux(
+      missReplaceWay(0),
+      way0Line,
+      Mux(missReplaceWay(1), way1Line, B(0, 128 bits))
+    )
 
     def captureRequest(): Unit = {
       requestOp := io.op
       requestPreld := io.preld_en
       requestSize := io.size
-      requestIndex := io.index
+      requestSet := speculativeSet
       requestOffset := io.offset
       requestWstrb := io.wstrb
       requestWdata := io.wdata
       requestCacopMode := io.cacop_op_mode
       requestCacop := io.dcacop_op_en
+      clearSetReplay()
     }
+
+    val bypassCacop = if (goldenCacopBypass) requestCacop else False
 
     switch(mainState) {
       is(MainIdle) {
-        when(requestValid && idleToLookup) { mainState := MainLookup; captureRequest() }
+        when(!scrubActive && requestValid && idleToLookup) {
+          mainState := MainLookup
+          captureRequest()
+        }
       }
       is(MainLookup) {
         when(requestValid && lookupToLookup) {
@@ -260,19 +361,29 @@ final class OpenLa500DCache extends Component {
           captureRequest()
         }.elsewhen(cancelReq) {
           mainState := MainIdle
+          clearSetReplay()
+        }.elsewhen(physicalColorMismatch) {
+          requestSet := translatedSet
+          requestTag := io.tag
+          markSetReplay()
+        }.elsewhen(bypassCacop) {
+          mainState := MainIdle
+          clearSetReplay()
         }.elsewhen(!cacheHit) {
           when(
             uncacheWrite ||
               (replacementDirty && replacementValid && (!uncacheRequest || cacopMode2Hit) && !mode0)
           ) { mainState := MainMiss }
             .otherwise { mainState := MainReplace }
-          requestTag := io.tag
+          requestTag := effectiveLookupTag
           requestUncache := uncacheRequest
           uncacheWrBuffer := uncacheWrite
           missReplaceWay := replacementWay
           cacopMode2HitWrBuffer := cacopMode2Hit
+          clearSetReplay()
         }.otherwise {
           mainState := MainIdle
+          clearSetReplay()
         }
       }
       is(MainMiss) {
@@ -295,18 +406,21 @@ final class OpenLa500DCache extends Component {
     when(rdReq) { rdReqBuffer := True }
       .elsewhen(isRefill && io.ret_valid && io.ret_last) { rdReqBuffer := False }
 
-    when(
+    when(scrubActive) {
+      dirtyMem(scrubIndex) := B(0, 2 bits)
+    }.elsewhen(
       isRefill && ((io.ret_valid && io.ret_last) || !rdReqBuffer) && !(requestUncache || mode0)
     ) {
-      when(missReplaceWay(0)) { dirtyMem(requestIndex.asUInt)(0) := requestOp }
-      when(missReplaceWay(1)) { dirtyMem(requestIndex.asUInt)(1) := requestOp }
+      for (way <- 0 until WayCount) {
+        when(missReplaceWay(way)) { dirtyMem(requestSet)(way) := requestOp }
+      }
     }.elsewhen(writeBufferFull) {
-      dirtyMem(writeBufferIndex.asUInt) := dirtyMem(writeBufferIndex.asUInt) | writeBufferWay
+      dirtyMem(writeBufferSet) := dirtyMem(writeBufferSet) | writeBufferWay
     }
 
     when(isLookup && cacheHit && requestOp && !cancelReq) {
       writeBufferState := True
-      writeBufferIndex := requestIndex
+      writeBufferSet := requestSet
       writeBufferWstrb := requestWstrb
       writeBufferWdata := requestWdata
       writeBufferWord := requestOffset(3 downto 2).asUInt
@@ -315,32 +429,37 @@ final class OpenLa500DCache extends Component {
       writeBufferState := False
     }
 
-    lfsr(0) := lfsr(7)
-    lfsr(1) := lfsr(0)
-    lfsr(2) := lfsr(1)
-    lfsr(3) := lfsr(2)
-    lfsr(4) := lfsr(3) ^ lfsr(7)
-    lfsr(5) := lfsr(4) ^ lfsr(7)
-    lfsr(6) := lfsr(5) ^ lfsr(7)
-    lfsr(7) := lfsr(6)
+    when(!scrubActive) {
+      lfsr(0) := lfsr(7)
+      lfsr(1) := lfsr(0)
+      lfsr(2) := lfsr(1)
+      lfsr(3) := lfsr(2)
+      lfsr(4) := lfsr(3) ^ lfsr(7)
+      lfsr(5) := lfsr(4) ^ lfsr(7)
+      lfsr(6) := lfsr(5) ^ lfsr(7)
+      lfsr(7) := lfsr(6)
+    }
 
     io.addr_ok := addrOk
     io.data_ok := dataOk
     io.rdata := Mux(isLookup, loadResult, Mux(isRefill, io.ret_data, B(0, 32 bits)))
-    io.dcache_empty := isIdle
+    io.dcache_empty := isIdle && !scrubActive
     io.rd_req := rdReq
     io.rd_type := Mux(requestUncache, requestSize, B"3'b100")
+    val requestByteAddress = requestAddress(requestTag, requestSet, requestOffset)
+    val requestLineAddress =
+      requestAddress(requestTag, requestSet, B(0, LineOffsetWidth bits))
     io.rd_addr := Mux(
       requestUncache,
-      requestTag ## requestIndex ## requestOffset,
-      requestTag ## requestIndex ## B"4'b0000"
+      requestByteAddress,
+      requestLineAddress
     )
     io.wr_req := legacyWrReq
     io.wr_type := Mux(uncacheWrBuffer, requestSize, B"3'b100")
     io.wr_addr := Mux(
       uncacheWrBuffer,
-      requestTag ## requestIndex ## requestOffset,
-      replaceTag ## requestIndex ## B"4'b0000"
+      requestByteAddress,
+      replacementLineAddress(replaceTag, requestSet)
     )
     io.wr_wstrb := Mux(uncacheWrBuffer, requestWstrb, B"4'hf")
     io.wr_data := Mux(uncacheWrBuffer, B(0, 96 bits) ## requestWdata, replaceData)

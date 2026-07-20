@@ -75,6 +75,9 @@ final class LegacyDecodeStage(config: CoreConfig = CoreConfig.Locked) extends Co
 
   stage.io.input.valid := io.fs_to_ds_valid
   stage.io.input.payload := FetchPayload.unpackLegacy(io.fs_to_ds_bus)
+  stage.io.directionPrediction.phtIndex := 0
+  stage.io.directionPrediction.baseTaken := False
+  stage.io.directionPrediction.localTaken := False
   io.ds_allowin := stage.io.input.ready
   stage.io.output.ready := io.es_allowin
   io.ds_to_es_valid := stage.io.output.valid

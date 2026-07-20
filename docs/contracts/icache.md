@@ -46,3 +46,25 @@ I-cache 没有 PRELD 端口；PRELD 属于活动 D-cache 边界，本迭代不�
 逐拍比较所有有定义输出：`addr_ok/data_ok/rdata/icache_unbusy/rd_req/rd_type/rd_addr/cache_miss`，以及 reset 后的 write 兼容输出。轨迹覆盖同步 SRAM 预取、连续 hit、两路冲突、miss/refill、AR backpressure、返回间隙、uncache、TLB cancel、CACOP 三种 mode、随机 reset 和连续请求。
 
 测试必须包含会被 oracle 检出的负控。单模块 mixed overlay 的 `func_lab19` 仅用于判断是否早于已知 baseline 分歧，不得外推为 58/81、随机 DiffTest、性能、Linux 或 FPGA PASS。
+
+## 活动 32 KiB profile
+
+独立 `icache` 叶级生成器默认仍使用 2 way x 256 set x 16 byte（8 KiB），保留上述 golden
+差分边界。活动 `SpinalCoreBackend` 使用 2 way x 1024 set x 16 byte（32 KiB），但保持原 34-port
+外部接口：`index[7:0]` 与物理 `tag[1:0]` 组成 10-bit set index，tag SRAM 只保存
+`tag[19:2]`。refill 地址必须由完整物理 tag、外部 index 和零 line offset 重建。
+
+活动 profile 保留 VIPT 的单拍命中路径。请求接受拍以当前虚拟地址 `vaddr[13:12]` 预测同步
+SRAM set，lookup 拍以地址翻译返回的物理 `tag[1:0]` 核验。颜色一致时不增加延迟；颜色不一致
+时不得产生 `addr_ok`、`data_ok`、替换或 refill 副作用，而要保存完整物理 tag 并对正确 set 重读
+一拍。物理 tag 始终是体系结构权威，虚拟色只能作为性能提示。定向测试必须预置一个错误颜色
+的可命中旧行，证明旧指令不会逸出，并证明两个仅物理颜色不同的 line 可同时保留。
+
+同步 reset 释放后，活动 I-cache 与 D-cache 并行逐 set 清除全部 tag-valid；scrub 期间
+`addr_ok=false`、`icache_unbusy=false`，不得接受取指或 CACOP。数据 SRAM 不清零，因为恢复
+请求前所有 tag-valid 已失效。CACOP 必须用其独立物理地址发起同步 tag probe，不能沿用前一条
+取指的 set；尤其 mode 2 命中失效要有跨 set 定向测试。
+
+32 KiB profile 的正确性证据不能从 8 KiB 叶级差分外推。采纳前必须同时通过错误颜色 replay、
+reset scrub、跨 set CACOP、完整核心 DiffTest、连续 perf20、Vivado 时序/DRC 和真实 FPGA 重复
+测试。

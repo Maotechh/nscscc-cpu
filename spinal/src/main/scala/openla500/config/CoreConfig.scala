@@ -8,13 +8,16 @@ package openla500.config
   */
 final case class CacheGeometry(ways: Int = 2, sets: Int = 256, lineBytes: Int = 16) {
   require(ways == 2, "only the locked two-way cache geometry is supported")
-  require(sets == 256, "only the locked 256-set cache geometry is supported")
+  require(
+    sets == 256 || sets == 1024,
+    "only the legacy 256-set and active 1024-set cache geometries are supported"
+  )
   require(lineBytes == 16, "only the locked 16-byte cache line is supported")
 
   val capacityBytes: Int = ways * sets * lineBytes
-  val indexWidth: Int = 8
+  val indexWidth: Int = Integer.numberOfTrailingZeros(sets)
   val offsetWidth: Int = 4
-  val tagWidth: Int = 20
+  val tagWidth: Int = 32 - indexWidth - offsetWidth
 }
 
 final case class IsaFeatures(
@@ -56,8 +59,8 @@ final case class CoreConfig(
     btbEntries: Int = 32,
     rasEntries: Int = 16,
     returnStackDepth: Int = 8,
-    instructionCache: CacheGeometry = CacheGeometry(),
-    dataCache: CacheGeometry = CacheGeometry(),
+    instructionCache: CacheGeometry = CacheGeometry(sets = 1024),
+    dataCache: CacheGeometry = CacheGeometry(sets = 1024),
     laccEnabled: Boolean = false,
     laccOpWidth: Int = 2,
     diffTestEnabled: Boolean = false,
@@ -75,8 +78,8 @@ final case class CoreConfig(
   require(btbEntries == 32, "only the official 32-entry BTB is supported")
   require(rasEntries == 16, "only the official 16-entry return-site matcher is supported")
   require(returnStackDepth == 8, "only the golden eight-entry return stack is supported")
-  require(instructionCache == CacheGeometry(), "unsupported instruction-cache geometry")
-  require(dataCache == CacheGeometry(), "unsupported data-cache geometry")
+  require(instructionCache == CacheGeometry(sets = 1024), "unsupported instruction-cache geometry")
+  require(dataCache == CacheGeometry(sets = 1024), "unsupported data-cache geometry")
   require(laccOpWidth == 2, "the locked LACC command is two bits wide")
   require(debugEnabled, "the official debug boundary is mandatory in the locked configuration")
   require(isa == IsaFeatures(), "unsupported active ISA feature configuration")

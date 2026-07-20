@@ -17,18 +17,35 @@ private final class LateResultForwardingSimTop extends Component {
     val memoryResultStalled = in Bool ()
     val memoryResult = in Bits (32 bits)
     val executeReady = in Bool ()
+    val decodeFlush = in Bool ()
+    val decodeInputReady = out Bool ()
     val decodeValid = out Bool ()
     val decodeLateJ = out Bool ()
     val executeValid = out Bool ()
     val executeResult = out Bits (32 bits)
+    val executePredictionError = out Bool ()
+    val executeBranchRepair = out Bool ()
+    val executeBranchTarget = out UInt (32 bits)
+    val executeBtbEnable = out Bool ()
+    val executeBtbAddEntry = out Bool ()
+    val executeBtbActualTaken = out Bool ()
+    val executeBtbPhtIndex = out UInt (8 bits)
+    val executeBtbBaseTaken = out Bool ()
+    val executeBtbLocalTaken = out Bool ()
     val keepAlive = out Bits (4096 bits)
   }
 
-  val decode = new DecodeStage(lateResultForwardingEnabled = true)
-  val execute = new ExecuteStage
+  val decode = new DecodeStage(
+    lateResultForwardingEnabled = true,
+    delayedBranchResolutionEnabled = true
+  )
+  val execute = new ExecuteStage(delayedBranchResolutionEnabled = true)
 
   decode.io.input.valid := io.fetchValid
   decode.io.input.payload := FetchPayload.unpackLegacy(io.fetchBits)
+  decode.io.directionPrediction.phtIndex := 0xa5
+  decode.io.directionPrediction.baseTaken := False
+  decode.io.directionPrediction.localTaken := True
   decode.io.output >> execute.io.input
 
   decode.io.executeForward.dependencyNeedsStall := io.producerValid
@@ -43,9 +60,10 @@ private final class LateResultForwardingSimTop extends Component {
   decode.io.flush.assignDontCare()
   decode.io.flush.exception := False
   decode.io.flush.ertn := False
-  decode.io.flush.refetch := False
+  decode.io.flush.refetch := io.decodeFlush
   decode.io.flush.instructionCacheOperation := False
   decode.io.flush.idle := False
+  decode.io.delayedBranchSlotCancel := io.decodeFlush
   decode.io.executeTlbStall := False
   decode.io.memoryTlbStall := False
   decode.io.writebackTlbStall := False
@@ -68,6 +86,7 @@ private final class LateResultForwardingSimTop extends Component {
   execute.io.lateForwardJ := decode.io.lateForwardJ
   execute.io.lateForwardKOrD := decode.io.lateForwardKOrD
   execute.io.lateForwardDestination := decode.io.lateForwardDestination
+  execute.io.delayedBranch := decode.io.delayedBranch
   execute.io.memoryForward.valid := io.memoryResultValid
   execute.io.memoryForward.dependencyNeedsStall := io.memoryResultStalled
   execute.io.memoryForward.writeEnabled := io.memoryResultValid
@@ -86,10 +105,20 @@ private final class LateResultForwardingSimTop extends Component {
   execute.io.memoryAddressAccepted := False
   execute.io.csrVirtualPageNumber := 0
 
+  io.decodeInputReady := decode.io.input.ready
   io.decodeValid := decode.io.output.valid
   io.decodeLateJ := decode.io.lateForwardJ
   io.executeValid := execute.io.output.valid
   io.executeResult := execute.io.output.payload.executeResult
+  io.executePredictionError := execute.io.output.payload.predictionError
+  io.executeBranchRepair := execute.io.branchRepair.active
+  io.executeBranchTarget := execute.io.branchRepair.target
+  io.executeBtbEnable := execute.io.btb.enable
+  io.executeBtbAddEntry := execute.io.btb.addEntry
+  io.executeBtbActualTaken := execute.io.btb.actualTaken
+  io.executeBtbPhtIndex := execute.io.btb.direction.phtIndex
+  io.executeBtbBaseTaken := execute.io.btb.direction.baseTaken
+  io.executeBtbLocalTaken := execute.io.btb.direction.localTaken
   io.keepAlive := (
     decode.io.input.ready.asBits ##
       decode.io.output.valid.asBits ##
@@ -109,7 +138,9 @@ private final class LateResultForwardingSimTop extends Component {
       execute.io.memory.asBits ##
       execute.io.cache.asBits ##
       execute.io.tlbInstructionStall.asBits ##
-      execute.io.dataFetch.asBits
+      execute.io.dataFetch.asBits ##
+      execute.io.branchRepair.asBits ##
+      execute.io.btb.asBits
   ).resize(4096)
 }
 
@@ -145,6 +176,7 @@ class LateResultForwardingSpec extends AnyFunSuite {
         dut.io.memoryResultStalled #= true
         dut.io.memoryResult #= 0
         dut.io.executeReady #= false
+        dut.io.decodeFlush #= false
 
         dut.clockDomain.assertReset()
         dut.clockDomain.waitSampling(2)
@@ -221,6 +253,163 @@ class LateResultForwardingSpec extends AnyFunSuite {
         sleep(1)
         assert(dut.io.executeValid.toBoolean)
         assert(dut.io.executeResult.toBigInt == 18)
+      }
+  }
+
+  test("EX-dependent branch advances immediately and repairs only when its MEM operand commits") {
+    val workspaceRoot =
+      sys.env.getOrElse("SPINAL_SIM_WORKSPACE", "target/sim-workspace-late-forward")
+    val workspace = Paths.get(workspaceRoot, "delayed-branch-resolution").toString
+
+    SimConfig
+      .withConfig(SpinalConfig(oneFilePerComponent = true, removePruned = false))
+      .withVerilator
+      .addSimulatorFlag("-Wall")
+      .addSimulatorFlag("-Wwarn-WIDTH")
+      .addSimulatorFlag("-Wwarn-UNOPTFLAT")
+      .addSimulatorFlag("-Wwarn-CMPCONST")
+      .addSimulatorFlag("-Wwarn-UNSIGNED")
+      .addSimulatorFlag("-Wno-UNUSEDSIGNAL")
+      .disableCache
+      .workspacePath(workspace)
+      .compile(new LateResultForwardingSimTop)
+      .doSim("delayed-branch-resolution", 0x158aa8) { dut =>
+        dut.clockDomain.forkStimulus(period = 10)
+        dut.io.fetchValid #= false
+        dut.io.fetchBits #= 0
+        dut.io.registerWrite.valid #= false
+        dut.io.registerWrite.destination #= 0
+        dut.io.registerWrite.data #= 0
+        dut.io.producerValid #= false
+        dut.io.producerDestination #= 1
+        dut.io.producerLateResultAllowed #= true
+        dut.io.memoryResultValid #= false
+        dut.io.memoryResultStalled #= true
+        dut.io.memoryResult #= 0
+        dut.io.executeReady #= false
+        dut.io.decodeFlush #= false
+
+        dut.clockDomain.assertReset()
+        dut.clockDomain.waitSampling(2)
+        dut.clockDomain.deassertReset()
+        dut.clockDomain.waitSampling()
+
+        dut.io.registerWrite.valid #= true
+        dut.io.registerWrite.destination #= 2
+        dut.io.registerWrite.data #= 7
+        dut.clockDomain.waitSampling()
+        dut.io.registerWrite.valid #= false
+
+        // beq r1, r2, +8. r1 belongs to the load/mul/div producer currently leaving EX.
+        val pc = BigInt("1c001000", 16)
+        val instruction =
+          (BigInt(0x16) << 26) | (BigInt(2) << 10) | (BigInt(1) << 5) | BigInt(2)
+        dut.io.fetchBits #= pc | (instruction << 32)
+        dut.io.fetchValid #= true
+        dut.io.producerValid #= true
+        dut.clockDomain.waitSampling()
+        dut.io.fetchValid #= false
+        sleep(1)
+
+        // Decode no longer inserts the fixed EX-dependency bubble; the branch carries a late-J
+        // marker into Execute instead.
+        assert(dut.io.decodeValid.toBoolean)
+        assert(dut.io.decodeLateJ.toBoolean)
+        dut.clockDomain.waitSampling()
+        dut.io.producerValid #= false
+        sleep(1)
+        assert(!dut.io.executeValid.toBoolean)
+        assert(!dut.io.executeBranchRepair.toBoolean)
+
+        // The final producer result makes the branch taken. Backpressure must hold both redirect
+        // and predictor update until the branch itself can leave Execute.
+        dut.io.memoryResultValid #= true
+        dut.io.memoryResultStalled #= false
+        dut.io.memoryResult #= 7
+        sleep(1)
+        assert(dut.io.executeValid.toBoolean)
+        assert(!dut.io.executeBranchRepair.toBoolean)
+        assert(!dut.io.executeBtbEnable.toBoolean)
+
+        dut.io.executeReady #= true
+        sleep(1)
+        assert(dut.io.executeBranchRepair.toBoolean)
+        assert(dut.io.executeBranchTarget.toBigInt == pc + 8)
+        assert(dut.io.executeBtbEnable.toBoolean)
+        assert(dut.io.executeBtbAddEntry.toBoolean)
+        assert(dut.io.executeBtbActualTaken.toBoolean)
+        assert(dut.io.executeBtbPhtIndex.toInt == 0xa5)
+        assert(!dut.io.executeBtbBaseTaken.toBoolean)
+        assert(dut.io.executeBtbLocalTaken.toBoolean)
+        assert(dut.io.executePredictionError.toBoolean)
+        dut.clockDomain.waitSampling()
+      }
+  }
+
+  test("late branch flush consumes the stale Fetch slot even while Decode is backpressured") {
+    val workspaceRoot =
+      sys.env.getOrElse("SPINAL_SIM_WORKSPACE", "target/sim-workspace-late-forward")
+    val workspace = Paths.get(workspaceRoot, "late-branch-flush").toString
+
+    SimConfig
+      .withConfig(SpinalConfig(oneFilePerComponent = true, removePruned = false))
+      .withVerilator
+      .addSimulatorFlag("-Wall")
+      .addSimulatorFlag("-Wwarn-WIDTH")
+      .addSimulatorFlag("-Wwarn-UNOPTFLAT")
+      .addSimulatorFlag("-Wwarn-CMPCONST")
+      .addSimulatorFlag("-Wwarn-UNSIGNED")
+      .addSimulatorFlag("-Wno-UNUSEDSIGNAL")
+      .disableCache
+      .workspacePath(workspace)
+      .compile(new LateResultForwardingSimTop)
+      .doSim("late-branch-flush", 0x158aa8) { dut =>
+        dut.clockDomain.forkStimulus(period = 10)
+        dut.io.fetchValid #= false
+        dut.io.fetchBits #= 0
+        dut.io.registerWrite.valid #= false
+        dut.io.registerWrite.destination #= 0
+        dut.io.registerWrite.data #= 0
+        dut.io.producerValid #= false
+        dut.io.producerDestination #= 1
+        dut.io.producerLateResultAllowed #= true
+        dut.io.memoryResultValid #= false
+        dut.io.memoryResultStalled #= false
+        dut.io.memoryResult #= 0
+        dut.io.executeReady #= false
+        dut.io.decodeFlush #= false
+
+        dut.clockDomain.assertReset()
+        dut.clockDomain.waitSampling(2)
+        dut.clockDomain.deassertReset()
+        dut.clockDomain.waitSampling()
+
+        // Hold one instruction in Decode and a younger wrong-path slot at its Fetch input.
+        val add = BigInt("00100823", 16)
+        dut.io.fetchBits #= BigInt("1c001000", 16) | (add << 32)
+        dut.io.fetchValid #= true
+        dut.clockDomain.waitSampling()
+        dut.io.fetchBits #= BigInt("1c001004", 16) | (add << 32)
+        dut.clockDomain.waitSampling()
+        dut.io.fetchValid #= false
+        sleep(1)
+        assert(dut.io.decodeValid.toBoolean)
+        assert(!dut.io.decodeInputReady.toBoolean)
+
+        // The stale Fetch response is not ready in the repair cycle, so Decode must remember that
+        // the next arriving slot is still on the discarded path.
+        dut.io.decodeFlush #= true
+        sleep(1)
+        assert(dut.io.decodeInputReady.toBoolean)
+        dut.clockDomain.waitSampling()
+        dut.io.decodeFlush #= false
+
+        dut.io.fetchBits #= BigInt("1c001008", 16) | (add << 32)
+        dut.io.fetchValid #= true
+        dut.clockDomain.waitSampling()
+        dut.io.fetchValid #= false
+        sleep(1)
+        assert(!dut.io.decodeValid.toBoolean)
       }
   }
 }

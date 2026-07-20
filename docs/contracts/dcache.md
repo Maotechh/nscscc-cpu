@@ -50,3 +50,28 @@ Golden 是待复测的行为候选，不是天然正确的体系结构规范。�
 逐拍比较 `addr_ok/data_ok/dcache_empty/rd_req/wr_req/cache_miss`；`rdata` 只在 `data_ok` 有效时比较，read/write channel payload 只在对应 `rd_req/wr_req` 有效时比较。无效周期的 payload 不属于协议行为，不能作为 mismatch oracle。轨迹必须覆盖 hit load/store、write-buffer forwarding/conflict、clean/dirty miss、writeback backpressure、refill gap、uncached read/write、cancel、三种 CACOP、PRELD、随机 reset 和连续请求，并包含能被 oracle 检出的事务级负控。
 
 本叶子通过不得外推为 MEM stage、完整 memory subsystem、官方 func、random DiffTest、性能、Linux 或 FPGA PASS。
+
+## 活动 32 KiB profile
+
+独立 `dcache` 叶级生成器默认仍使用上述 2 way x 256 set 行为，以保留锁定 golden 的差分
+oracle。生成器为此还单独启用 `a158aa8` 的 CACOP 即时完成语义；该开关只允许用于
+256-set、无 reset scrub 的叶级 oracle，活动核心不得启用。活动 `SpinalCoreBackend` 继续使用
+已通过功能恢复的 `d22c13c` CACOP 状态路径，并采用 2 way x 1024 set x 16 byte（32 KiB）
+profile，但不改变
+35-port 外部边界：`index[7:0]` 与 `tag[1:0]` 共同组成 10-bit 物理 set index，tag SRAM 只保存
+`tag[19:2]`。writeback 必须按保存的 tag、完整 set index 和零 line offset 重建原 32-bit 地址。
+
+该边界保留原有 VIPT 时序：请求接受拍有当前虚拟 `index` 和虚拟页颜色 `vaddr[13:12]`，
+物理 `tag` 来自同拍 `data_fetch` 捕获并在下一拍完成的地址翻译。活动 profile 在接受拍用当前
+虚拟页颜色预测 SRAM set；lookup 拍必须用新翻译的 `tag[1:0]` 校验。颜色不一致时不得产生
+`addr_ok`/`data_ok`、hit-store 或 miss/refill 副作用，而应捕获完整物理 tag、用正确 set 重读一次
+同步 SRAM，随后才完成 hit/miss 判定。颜色命中保持原 lookup 延迟，跨物理颜色访问增加一拍；
+uncached 请求不依赖 cache set，因此不需要重读。定向测试必须包含 stored tag 与虚拟 index
+相同、仅物理颜色不同的两条 line，并强制虚拟颜色预测错误，证明错误颜色不能形成假命中、
+副作用或互相覆盖。虚拟颜色只是性能提示，体系结构正确性始终由下一拍物理颜色校验保证。
+
+活动 profile 在同步 reset 释放后串行清除 1024 个 set 的 tag-valid 和 dirty，每拍一个 set；
+scrub 期间 `addr_ok=false`、`dcache_empty=false`，状态机不得接受 CPU、CACOP 或 PRELD 请求。
+数据 SRAM 不必清零，因为 tag-valid 在恢复接收请求前已全部失效。该 profile 有意修复 golden 中
+reset 保留 cache 历史的跨程序污染风险，因此不得声称与 golden 的中途 reset 逐拍等价；必须以
+定向 scrub 测试、完整核心功能测试、连续 perf20 和真实 FPGA 重复烧录独立验证。

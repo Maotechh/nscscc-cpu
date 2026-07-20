@@ -8,10 +8,17 @@ final case class PredictorLookupRequest() extends Bundle {
   val pc = UInt(32 bits)
 }
 
+final case class PredictorDirectionMetadata() extends Bundle {
+  val phtIndex = UInt(8 bits)
+  val baseTaken = Bool()
+  val localTaken = Bool()
+}
+
 final case class PredictorPrediction() extends Bundle {
   val taken = Bool()
   val target = UInt(32 bits)
   val legacyIndex = UInt(5 bits)
+  val direction = PredictorDirectionMetadata()
 }
 
 final case class PredictorUpdate() extends Bundle {
@@ -25,6 +32,7 @@ final case class PredictorUpdate() extends Bundle {
   val actualTarget = UInt(32 bits)
   val pc = UInt(32 bits)
   val legacyIndex = UInt(5 bits)
+  val direction = PredictorDirectionMetadata()
 }
 
 /** Active official 32-entry branch predictor.
@@ -34,8 +42,13 @@ final case class PredictorUpdate() extends Bundle {
   * stack. A reset invalidates all observable state; payload storage behind invalid bits need not be
   * reset.
   */
-final class OpenLa500Predictor(config: CoreConfig = CoreConfig.Locked) extends Component {
+final class OpenLa500Predictor(
+    config: CoreConfig = CoreConfig.Locked,
+    localHistoryEnabled: Boolean = false
+) extends Component {
   private val BtbIndexWidth = log2Up(config.btbEntries)
+  private val LocalHistoryWidth = 8
+  private val PatternTableEntries = 1 << LocalHistoryWidth
   private val ReturnSiteIndexWidth = log2Up(config.rasEntries)
   private val ReturnStackDepth = config.returnStackDepth
   private val ReturnStackIndexWidth = log2Up(ReturnStackDepth)
@@ -69,6 +82,14 @@ final class OpenLa500Predictor(config: CoreConfig = CoreConfig.Locked) extends C
   val branchPc = Vec.fill(config.btbEntries)(Reg(UInt(32 bits)))
   val branchTarget = Vec.fill(config.btbEntries)(Reg(UInt(32 bits)))
   val branchCounter = Vec.fill(config.btbEntries)(Reg(UInt(2 bits)))
+  val localHistory =
+    localHistoryEnabled generate Vec.fill(config.btbEntries)(
+      Reg(UInt(LocalHistoryWidth bits)) init (0)
+    )
+  val patternCounter =
+    localHistoryEnabled generate Vec.fill(PatternTableEntries)(Reg(UInt(2 bits)) init (2))
+  val localChooser =
+    localHistoryEnabled generate Vec.fill(config.btbEntries)(Reg(UInt(2 bits)) init (1))
 
   val returnSiteValid = Vec.fill(config.rasEntries)(Reg(Bool()) init (False))
   val returnSitePc = Vec.fill(config.rasEntries)(Reg(UInt(32 bits)))
@@ -100,6 +121,36 @@ final class OpenLa500Predictor(config: CoreConfig = CoreConfig.Locked) extends C
   }
   val branchLookupHit = branchLookupMatches.orR
   val branchLookupIndex = selectLowest(branchLookupMatches, BtbIndexWidth)
+  val baseBranchTaken = branchLookupTaken(branchLookupIndex)
+  val selectedBranchTaken = Bool()
+
+  io.prediction.payload.direction.phtIndex := 0
+  io.prediction.payload.direction.baseTaken := False
+  io.prediction.payload.direction.localTaken := False
+  if (localHistoryEnabled) {
+    val patternTaken = Bits(PatternTableEntries bits)
+    for (index <- 0 until PatternTableEntries) {
+      patternTaken(index) := patternCounter(index)(1)
+    }
+    val chooserSelectsLocal = Bits(config.btbEntries bits)
+    for (index <- 0 until config.btbEntries) {
+      chooserSelectsLocal(index) := localChooser(index)(1)
+    }
+    val lookupPhtIndex = localHistory(branchLookupIndex) ^ lookupPc(9 downto 2)
+    val localBranchTaken = patternTaken(lookupPhtIndex)
+    selectedBranchTaken := Mux(
+      chooserSelectsLocal(branchLookupIndex),
+      localBranchTaken,
+      baseBranchTaken
+    )
+    when(branchLookupHit) {
+      io.prediction.payload.direction.phtIndex := lookupPhtIndex
+      io.prediction.payload.direction.baseTaken := baseBranchTaken
+      io.prediction.payload.direction.localTaken := localBranchTaken
+    }
+  } else {
+    selectedBranchTaken := baseBranchTaken
+  }
 
   val returnLookupMatches = Bits(config.rasEntries bits)
   for (index <- 0 until config.rasEntries) {
@@ -116,7 +167,7 @@ final class OpenLa500Predictor(config: CoreConfig = CoreConfig.Locked) extends C
 
   io.prediction.valid := returnLookupHit || branchLookupHit
   io.prediction.payload.taken :=
-    returnLookupHit || (branchLookupHit && branchLookupTaken(branchLookupIndex))
+    returnLookupHit || (branchLookupHit && selectedBranchTaken)
   io.prediction.payload.target := 0
   io.prediction.payload.legacyIndex := 0
   when(branchLookupHit) {
@@ -162,6 +213,10 @@ final class OpenLa500Predictor(config: CoreConfig = CoreConfig.Locked) extends C
         branchPc(branchReplacementIndex) := io.update.payload.pc
         branchTarget(branchReplacementIndex) := io.update.payload.actualTarget
         branchCounter(branchReplacementIndex) := 2
+        if (localHistoryEnabled) {
+          localHistory(branchReplacementIndex) := io.update.payload.actualTaken.asUInt.resized
+          localChooser(branchReplacementIndex) := U(1, 2 bits)
+        }
       }.elsewhen(io.update.payload.targetError) {
         branchTarget(io.update.payload.legacyIndex) := io.update.payload.actualTarget
         branchCounter(io.update.payload.legacyIndex) := 2
@@ -182,6 +237,50 @@ final class OpenLa500Predictor(config: CoreConfig = CoreConfig.Locked) extends C
       when(io.update.payload.addEntry) {
         returnSiteValid(returnReplacementIndex) := True
         returnSitePc(returnReplacementIndex) := io.update.payload.pc
+      }
+    }
+
+    if (localHistoryEnabled) {
+      val historyTail = Vec(UInt((LocalHistoryWidth - 1) bits), config.btbEntries)
+      for (index <- 0 until config.btbEntries) {
+        historyTail(index) := localHistory(index)(LocalHistoryWidth - 2 downto 0)
+      }
+      val trainDirection =
+        !io.update.payload.popReturnStack && !io.update.payload.addEntry &&
+          (io.update.payload.predictionError || io.update.payload.predictionRight)
+      when(trainDirection) {
+        val updatePhtIndex = io.update.payload.direction.phtIndex
+        val updatePhtCounter = patternCounter(updatePhtIndex)
+        when(io.update.payload.actualTaken) {
+          when(updatePhtCounter =/= 3) {
+            patternCounter(updatePhtIndex) := updatePhtCounter + 1
+          }
+        } otherwise {
+          when(updatePhtCounter =/= 0) {
+            patternCounter(updatePhtIndex) := updatePhtCounter - 1
+          }
+        }
+
+        when(
+          io.update.payload.direction.baseTaken =/=
+            io.update.payload.direction.localTaken
+        ) {
+          when(io.update.payload.direction.localTaken === io.update.payload.actualTaken) {
+            when(localChooser(io.update.payload.legacyIndex) =/= 3) {
+              localChooser(io.update.payload.legacyIndex) :=
+                localChooser(io.update.payload.legacyIndex) + 1
+            }
+          } otherwise {
+            when(localChooser(io.update.payload.legacyIndex) =/= 0) {
+              localChooser(io.update.payload.legacyIndex) :=
+                localChooser(io.update.payload.legacyIndex) - 1
+            }
+          }
+        }
+
+        localHistory(io.update.payload.legacyIndex) :=
+          (historyTail(io.update.payload.legacyIndex) ##
+            io.update.payload.actualTaken.asBits).asUInt
       }
     }
 

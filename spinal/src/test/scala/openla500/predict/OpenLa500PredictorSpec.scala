@@ -24,6 +24,7 @@ class OpenLa500PredictorSpec extends AnyFunSuite {
       .addSimulatorFlag("-Wwarn-UNOPTFLAT")
       .addSimulatorFlag("-Wwarn-CMPCONST")
       .addSimulatorFlag("-Wwarn-UNSIGNED")
+      .addSimulatorFlag("-Wno-UNUSEDSIGNAL")
       .disableCache
       .workspacePath(workspace)
       .compile(new OpenLa500Predictor(CoreConfig.Locked))
@@ -44,6 +45,9 @@ class OpenLa500PredictorSpec extends AnyFunSuite {
           dut.io.update.payload.actualTarget #= 0
           dut.io.update.payload.pc #= 0
           dut.io.update.payload.legacyIndex #= 0
+          dut.io.update.payload.direction.phtIndex #= 0
+          dut.io.update.payload.direction.baseTaken #= false
+          dut.io.update.payload.direction.localTaken #= false
         }
 
         def resetState(): Unit = {
@@ -65,7 +69,10 @@ class OpenLa500PredictorSpec extends AnyFunSuite {
             right: Boolean = false,
             targetError: Boolean = false,
             actualTaken: Boolean = false,
-            legacyIndex: Int = 0
+            legacyIndex: Int = 0,
+            phtIndex: Int = 0,
+            baseTaken: Boolean = false,
+            localTaken: Boolean = false
         ): Unit = {
           dut.io.update.payload.pc #= pc & WordMask
           dut.io.update.payload.actualTarget #= target & WordMask
@@ -77,6 +84,9 @@ class OpenLa500PredictorSpec extends AnyFunSuite {
           dut.io.update.payload.targetError #= targetError
           dut.io.update.payload.actualTaken #= actualTaken
           dut.io.update.payload.legacyIndex #= legacyIndex
+          dut.io.update.payload.direction.phtIndex #= phtIndex
+          dut.io.update.payload.direction.baseTaken #= baseTaken
+          dut.io.update.payload.direction.localTaken #= localTaken
           dut.io.update.valid #= true
           dut.clockDomain.waitSampling()
           dut.io.update.valid #= false
@@ -232,6 +242,143 @@ class OpenLa500PredictorSpec extends AnyFunSuite {
         update(collisionPc, pop = true, add = true)
         update(returnTargetSource, push = true)
         expectHit(collisionPc, returnTargetSource + 4)
+      }
+  }
+
+  test("local-history tournament learns a repeating direction pattern with exact update metadata") {
+    val workspaceRoot =
+      sys.env.getOrElse("SPINAL_SIM_WORKSPACE", "target/sim-workspace-contracts")
+    val workspace = Paths.get(workspaceRoot, "predictor-local-history").toString
+
+    SimConfig
+      .withConfig(SpinalConfig(oneFilePerComponent = true))
+      .withVerilator
+      .addSimulatorFlag("-Wall")
+      .addSimulatorFlag("-Wwarn-WIDTH")
+      .addSimulatorFlag("-Wwarn-UNOPTFLAT")
+      .addSimulatorFlag("-Wwarn-CMPCONST")
+      .addSimulatorFlag("-Wwarn-UNSIGNED")
+      .addSimulatorFlag("-Wno-UNUSEDSIGNAL")
+      .disableCache
+      .workspacePath(workspace)
+      .compile(new OpenLa500Predictor(CoreConfig.Locked, localHistoryEnabled = true))
+      .doSim("predictor-local-history-directed", 0x158aa8) { dut =>
+        dut.clockDomain.forkStimulus(period = 10)
+
+        def clearInputs(): Unit = {
+          dut.io.lookup.valid #= false
+          dut.io.lookup.payload.pc #= 0
+          dut.io.update.valid #= false
+          dut.io.update.payload.popReturnStack #= false
+          dut.io.update.payload.pushReturnStack #= false
+          dut.io.update.payload.addEntry #= false
+          dut.io.update.payload.predictionError #= false
+          dut.io.update.payload.predictionRight #= false
+          dut.io.update.payload.targetError #= false
+          dut.io.update.payload.actualTaken #= false
+          dut.io.update.payload.actualTarget #= 0
+          dut.io.update.payload.pc #= 0
+          dut.io.update.payload.legacyIndex #= 0
+          dut.io.update.payload.direction.phtIndex #= 0
+          dut.io.update.payload.direction.baseTaken #= false
+          dut.io.update.payload.direction.localTaken #= false
+        }
+
+        final case class Prediction(
+            taken: Boolean,
+            target: BigInt,
+            legacyIndex: Int,
+            phtIndex: Int,
+            baseTaken: Boolean,
+            localTaken: Boolean
+        )
+
+        def lookup(pc: BigInt): Prediction = {
+          dut.io.lookup.payload.pc #= pc & WordMask
+          dut.io.lookup.valid #= true
+          dut.clockDomain.waitSampling()
+          dut.io.lookup.valid #= false
+          sleep(1)
+          assert(dut.io.prediction.valid.toBoolean)
+          val prediction = Prediction(
+            dut.io.prediction.payload.taken.toBoolean,
+            dut.io.prediction.payload.target.toBigInt,
+            dut.io.prediction.payload.legacyIndex.toInt,
+            dut.io.prediction.payload.direction.phtIndex.toInt,
+            dut.io.prediction.payload.direction.baseTaken.toBoolean,
+            dut.io.prediction.payload.direction.localTaken.toBoolean
+          )
+          dut.clockDomain.waitSampling()
+          sleep(1)
+          assert(!dut.io.prediction.valid.toBoolean)
+          prediction
+        }
+
+        def train(pc: BigInt, prediction: Prediction, actualTaken: Boolean): Unit = {
+          dut.io.update.payload.pc #= pc & WordMask
+          dut.io.update.payload.actualTarget #= BigInt("1c301000", 16)
+          dut.io.update.payload.actualTaken #= actualTaken
+          dut.io.update.payload.legacyIndex #= prediction.legacyIndex
+          dut.io.update.payload.predictionError #= prediction.taken != actualTaken
+          dut.io.update.payload.predictionRight #= prediction.taken == actualTaken
+          dut.io.update.payload.direction.phtIndex #= prediction.phtIndex
+          dut.io.update.payload.direction.baseTaken #= prediction.baseTaken
+          dut.io.update.payload.direction.localTaken #= prediction.localTaken
+          dut.io.update.valid #= true
+          dut.clockDomain.waitSampling()
+          clearInputs()
+          sleep(1)
+        }
+
+        clearInputs()
+        dut.clockDomain.assertReset()
+        dut.clockDomain.waitSampling(2)
+        dut.clockDomain.deassertReset()
+        dut.clockDomain.waitSampling()
+
+        val pc = BigInt("1c300120", 16)
+        val target = BigInt("1c301000", 16)
+        dut.io.update.payload.pc #= pc
+        dut.io.update.payload.actualTarget #= target
+        dut.io.update.payload.actualTaken #= true
+        dut.io.update.payload.addEntry #= true
+        dut.io.update.valid #= true
+        dut.clockDomain.waitSampling()
+        clearInputs()
+
+        var history = 1
+        var correctAfterWarmup = 0
+        for (iteration <- 0 until 28) {
+          val actualTaken = (iteration & 1) == 1
+          val prediction = lookup(pc)
+          val expectedIndex = history ^ ((pc >> 2) & 0xff).toInt
+          assert(prediction.target == target)
+          assert(prediction.legacyIndex == 0)
+          assert(prediction.phtIndex == expectedIndex)
+          if (iteration >= 16 && prediction.taken == actualTaken) correctAfterWarmup += 1
+          train(pc, prediction, actualTaken)
+          history = ((history << 1) | (if (actualTaken) 1 else 0)) & 0xff
+        }
+        assert(correctAfterWarmup >= 11, s"local predictor only got $correctAfterWarmup/12 correct")
+
+        // Target repair shares the update cycle with direction training and must preserve both the
+        // learned direction state and the exact prediction-time PHT index contract.
+        val prediction = lookup(pc)
+        val correctedTarget = BigInt("1c302000", 16)
+        dut.io.update.payload.pc #= pc
+        dut.io.update.payload.actualTarget #= correctedTarget
+        dut.io.update.payload.actualTaken #= prediction.taken
+        dut.io.update.payload.legacyIndex #= prediction.legacyIndex
+        dut.io.update.payload.predictionRight #= true
+        dut.io.update.payload.targetError #= true
+        dut.io.update.payload.direction.phtIndex #= prediction.phtIndex
+        dut.io.update.payload.direction.baseTaken #= prediction.baseTaken
+        dut.io.update.payload.direction.localTaken #= prediction.localTaken
+        dut.io.update.valid #= true
+        dut.clockDomain.waitSampling()
+        clearInputs()
+        val repaired = lookup(pc)
+        assert(repaired.target == correctedTarget)
       }
   }
 }
