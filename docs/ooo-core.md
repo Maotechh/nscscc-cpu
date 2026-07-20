@@ -6,7 +6,7 @@
 
 当前官方顶层已经实例化 `openla500.core.OooCoreSystem(OooCoreConfig.FourIssueThreeCommit)`。旧 `SpinalCoreBackend` 和 `openla500.pipeline` 不再参与生成；保留下来的少量 `OpenLa500*` leaf 模块仅供仍被 OoO 核复用的 ALU、乘除法、CSR、TLB 或独立合同测试使用。
 
-当前验证基线（2026-07-21，生成 RTL SHA-256 `a8967e8fdeaee20dfacce57ed1a89ecb408a416454aeb1ac1ad4604e9fbcca4e`）如下：
+当前验证基线（2026-07-21，生成 RTL SHA-256 `0a79277e8c3ef80c2f9d65c21e176df5d43802e5e88eb9fed3581dd0b09dae17`）如下：
 
 | 检查 | 结果 |
 | --- | --- |
@@ -19,11 +19,11 @@
 | 官方仿真计数 | 126,136 committed instructions，776,232 clocks，IPC 0.162498 |
 | Vivado 2023.2 synthesis | 0 errors，0 critical synthesis warnings，DCP/report 生成成功 |
 
-Vivado 独立 DRC 报告仍有无约束顶层 I/O 的 NSTD-1/UCIO-1 critical warning；这是未提供板级 XDC 的 standalone 综合，不是 RTL elaboration 或 synthesis error。100 MHz（10 ns）时序尚未闭合：WNS `-3.484 ns`，TNS `-1132.243 ns`，最差数据路径 `13.139 ns`。相对上一提交的 WNS `-4.368 ns` 改善 `0.884 ns`，失败端点从 12,138 降至 3,054，但不能把它描述为已经通过 100 MHz timing。
+Vivado 独立 DRC 报告仍有无约束顶层 I/O 的 NSTD-1/UCIO-1 critical warning；这是未提供板级 XDC 的 standalone 综合，不是 RTL elaboration 或 synthesis error。100 MHz（10 ns）时序尚未闭合：WNS `-1.202 ns`，TNS `-906.053 ns`，最差数据路径 `11.051 ns`。相对上一提交的 WNS `-3.484 ns` 改善 `2.282 ns`，TNS 改善 `226.190 ns`，失败端点从 3,054 降至 2,644，但不能把它描述为已经通过 100 MHz timing。当前最差路径已从串行化字段控制移到 FreeList `freeBits[15]` 到 RegisterMap `ready[10]` 的真实就绪传播。
 
 完整顶层 lint 的 728 条审计项由 727 条 `UNUSEDSIGNAL` 和 1 条固定宽度 `CMPCONST` 构成。大部分来自统一 uop/commit/cache/translation Bundle 在具体路径中只消费部分字段，以及官方 debug/兼容端口必须保留；其中也包含可继续精简的真实死字段。`reference/core-top-lint-waivers.json` 同时锁定 RTL SHA-256、warning 数量、类别和签名哈希，先运行无抑制审计，再只对完全匹配的签名执行 clean closure。它不是未来功能承诺，也不是允许新增 warning 的全局开关。
 
-综合资源（`xc7a200tfbg676-2`，flatten hierarchy rebuilt）：71,071 LUT、34,529 FF、42 RAMB36、12 RAMB18、4 DSP。ROB completion 的每 entry 本地比较和 LSQ 的环形调度寄存级使 LUT 相对上一提交减少 468（约 0.65%）；最差路径已转移到 ROB serializing 字段到 CSR TLBIDX 控制，后续优化应优先缩短该真实控制路径，不要用 false path 掩盖。
+综合资源（`xc7a200tfbg676-2`，flatten hierarchy rebuilt）：71,071 LUT、34,620 FF、42 RAMB36、12 RAMB18、4 DSP。相对上一提交 LUT 不变、FF 增加 91；本轮在现有重定向时序不变的前提下，将 CSR、TLB、缓存维护和保留指令的状态副作用 payload 在提交边界寄存，避免它们直接穿过长的 ROB 控制路径。后续时序优化应优先缩短 FreeList 到 RegisterMap 的真实就绪传播，不要用 false path 掩盖。
 
 ## 源码布局
 
@@ -100,7 +100,7 @@ L1I/translation -> OooFrontend(fetch4) -> OooDecodeRenameBuffer
 
 ### `OooCoreSystem` / 官方 top
 
-`OooCoreSystem` 在同一 `aclk`/同步高有效 `reset` 域内实例化 CSR、32-entry TLB 地址翻译、IDLE 控制器和 `OooAxiLineBridge`，并维护 commit 时更新的 32 个架构 GPR 镜像。
+`OooCoreSystem` 在同一 `aclk`/同步高有效 `reset` 域内实例化 CSR、32-entry TLB 地址翻译、IDLE 控制器和 `OooAxiLineBridge`，并维护 commit 时更新的 32 个架构 GPR 镜像。CSR、ERTN、TLB、cache maintenance 和 LL/SC reservation 的状态变更 payload 在提交边界寄存一拍，并在现有 privileged redirect/flush 到达的时钟沿应用；redirect 产生时序没有额外增加一拍。这一边界只切断组合控制路径，不改变精确异常或指令可见顺序。
 
 官方 `core_top` 仍严格保持 49 个端口和历史 AXI3/WID 方向：
 

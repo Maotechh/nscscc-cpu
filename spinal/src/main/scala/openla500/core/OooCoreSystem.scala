@@ -51,6 +51,33 @@ final class OooCoreSystem(
     val axiBridge = new OooAxiLineBridge(config)
     val idleController = new OooIdleController(config)
 
+    // Serializing commits already generate a registered redirect in the core.
+    // Keep that redirect timing, but register the state-changing payloads at
+    // this boundary.  CSR/TLB/cache state therefore updates on the flush edge
+    // instead of carrying the ROB commit decode cone into a wide CE network.
+    val committedCsrWriteValid = RegNext(core.io.csrWriteValid) init (False)
+    val committedCsrWriteAddress = RegNext(core.io.csrWriteAddress) init (U(0, 14 bits))
+    val committedCsrWriteData = RegNext(core.io.csrWriteData) init (B(0, config.xlen bits))
+    val committedCsrWriteMask = RegNext(core.io.csrWriteMask) init (False)
+    val committedErtnValid = RegNext(core.io.ertnValid) init (False)
+    val committedTlbSearchValid = RegNext(core.io.tlbSearchValid) init (False)
+    val committedTlbReadValid = RegNext(core.io.tlbReadValid) init (False)
+    val committedTlbWriteValid = RegNext(core.io.tlbWriteValid) init (False)
+    val committedTlbFillValid = RegNext(core.io.tlbFillValid) init (False)
+    val committedTlbInvalidateValid = RegNext(core.io.tlbInvalidateValid) init (False)
+    val committedTlbInvalidateAsid = RegNext(core.io.tlbInvalidateAsid) init (B(0, 10 bits))
+    val committedTlbInvalidateVpn = RegNext(core.io.tlbInvalidateVpn) init (B(0, 19 bits))
+    val committedTlbInvalidateOperation = RegNext(core.io.tlbInvalidateOperation) init (B(0, 5 bits))
+    val committedReservationBitSet = RegNext(core.io.reservationBitSet) init (False)
+    val committedReservationBitValue = RegNext(core.io.reservationBitValue) init (False)
+    val committedReservationAddressSet = RegNext(core.io.reservationAddressSet) init (False)
+    val committedReservationLineAddress = RegNext(core.io.reservationLineAddressUpdate) init (B(0, 28 bits))
+    val committedCacheInvalidateValid = RegNext(core.io.cacheInvalidateValid) init (False)
+    val committedDataCacheInvalidateValid = RegNext(core.io.dataCacheInvalidateValid) init (False)
+    val committedDataCacheWritebackInvalidateValid =
+      RegNext(core.io.dataCacheWritebackInvalidateValid) init (False)
+    val committedLevel2CacheInvalidateValid = RegNext(core.io.level2CacheInvalidateValid) init (False)
+
     csr.io.clk := io.aclk
     csr.io.reset := io.reset
     addressTranslation.io.clk := io.aclk
@@ -76,9 +103,9 @@ final class OooCoreSystem(
   core.io.interruptPending := csr.io.has_int
   core.io.debugReadAddress := io.registerNumber.asUInt
   csr.io.rd_addr := core.io.systemReadAddress.asBits
-  csr.io.csr_wr_en := core.io.csrWriteValid
-  csr.io.wr_addr := core.io.csrWriteAddress.asBits
-  csr.io.wr_data := core.io.csrWriteData
+  csr.io.csr_wr_en := committedCsrWriteValid
+  csr.io.wr_addr := committedCsrWriteAddress.asBits
+  csr.io.wr_data := committedCsrWriteData
   csr.io.interrupt := io.intrpt
 
   csr.io.excp_flush := core.io.exceptionValid
@@ -122,14 +149,14 @@ final class OooCoreSystem(
   )
   core.io.exceptionEntryTarget := csr.io.eentry_out.asUInt
   core.io.tlbRefillTarget := csr.io.tlbrentry_out.asUInt
-  // ERTN is architecturally effective at retirement.  The redirect remains
-  // registered, but delaying the CSR restore to that later cycle exposes the
-  // pre-ERTN CRMD/PRMD state at the retirement boundary.
-  csr.io.ertn_flush := core.io.ertnValid
-  core.io.cacheInvalidate := core.io.cacheInvalidateValid
-  core.io.dataCacheInvalidate := core.io.dataCacheInvalidateValid
-  core.io.dataCacheWritebackInvalidate := core.io.dataCacheWritebackInvalidateValid
-  core.io.level2CacheInvalidate := core.io.level2CacheInvalidateValid
+  // Align the ERTN CSR restore with the registered redirect/flush edge.  The
+  // retirement cycle still observes the pre-ERTN mode; redirected fetch sees
+  // the restored CRMD/PRMD state.
+  csr.io.ertn_flush := committedErtnValid
+  core.io.cacheInvalidate := committedCacheInvalidateValid
+  core.io.dataCacheInvalidate := committedDataCacheInvalidateValid
+  core.io.dataCacheWritebackInvalidate := committedDataCacheWritebackInvalidateValid
+  core.io.level2CacheInvalidate := committedLevel2CacheInvalidateValid
 
   addressTranslation.io.instructionRequest.valid := core.io.instructionTranslationRequest.valid
   addressTranslation.io.instructionRequest.payload :=
@@ -172,34 +199,34 @@ final class OooCoreSystem(
   addressTranslation.io.instructionMat := translationInstructionMat
   addressTranslation.io.dataMat := translationDataMat
   addressTranslation.io.disableCache := translationDisableCache
-  addressTranslation.io.tlbFillValid := core.io.tlbFillValid
-  addressTranslation.io.tlbWriteValid := core.io.tlbWriteValid
+  addressTranslation.io.tlbFillValid := committedTlbFillValid
+  addressTranslation.io.tlbWriteValid := committedTlbWriteValid
   addressTranslation.io.tlbRandomIndex := csr.io.rand_index.asUInt
   addressTranslation.io.csrTlbEntryHigh := csr.io.tlbehi_out
   addressTranslation.io.csrTlbEntryLow0 := csr.io.tlbelo0_out
   addressTranslation.io.csrTlbEntryLow1 := csr.io.tlbelo1_out
   addressTranslation.io.csrTlbIndex := csr.io.tlbidx_out
   addressTranslation.io.csrExceptionCode := csr.io.ecode_out
-  addressTranslation.io.tlbInvalidateValid := core.io.tlbInvalidateValid
-  addressTranslation.io.tlbInvalidateAsid := core.io.tlbInvalidateAsid
-  addressTranslation.io.tlbInvalidateVpn := core.io.tlbInvalidateVpn
-  addressTranslation.io.tlbInvalidateOperation := core.io.tlbInvalidateOperation
-  addressTranslation.io.tlbSearchValid := core.io.tlbSearchValid
+  addressTranslation.io.tlbInvalidateValid := committedTlbInvalidateValid
+  addressTranslation.io.tlbInvalidateAsid := committedTlbInvalidateAsid
+  addressTranslation.io.tlbInvalidateVpn := committedTlbInvalidateVpn
+  addressTranslation.io.tlbInvalidateOperation := committedTlbInvalidateOperation
+  addressTranslation.io.tlbSearchValid := committedTlbSearchValid
   addressTranslation.io.tlbSearchVppn := csr.io.vppn_out
 
   csr.io.tlbsrch_en := addressTranslation.io.tlbSearchResponseValid
   csr.io.tlbsrch_found := addressTranslation.io.tlbSearchFound
   csr.io.tlbsrch_index := addressTranslation.io.tlbSearchIndex
-  csr.io.tlbrd_en := core.io.tlbReadValid
+  csr.io.tlbrd_en := committedTlbReadValid
   csr.io.tlbehi_in := addressTranslation.io.tlbReadEntryHigh
   csr.io.tlbelo0_in := addressTranslation.io.tlbReadEntryLow0
   csr.io.tlbelo1_in := addressTranslation.io.tlbReadEntryLow1
   csr.io.tlbidx_in := addressTranslation.io.tlbReadIndex
   csr.io.asid_in := addressTranslation.io.tlbReadAsid
-  csr.io.llbit_in := core.io.reservationBitValue
-  csr.io.llbit_set_in := core.io.reservationBitSet
-  csr.io.lladdr_in := core.io.reservationLineAddressUpdate
-  csr.io.lladdr_set_in := core.io.reservationAddressSet
+  csr.io.llbit_in := committedReservationBitValue
+  csr.io.llbit_set_in := committedReservationBitSet
+  csr.io.lladdr_in := committedReservationLineAddress
+  csr.io.lladdr_set_in := committedReservationAddressSet
 
   axiBridge.io.memoryReadValid := core.io.memoryReadValid
   axiBridge.io.memoryRead := core.io.memoryRead
