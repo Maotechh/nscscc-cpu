@@ -1,0 +1,553 @@
+package openla500.backend
+
+import openla500.core._
+import openla500.execute.OooAguRequest
+import openla500.memory._
+import openla500.privileged._
+import spinal.core._
+import spinal.lib._
+
+final case class OooStoreQueueEntry(config: OooCoreConfig) extends Bundle {
+  val valid = Bool()
+  val addressReady = Bool()
+  val committed = Bool()
+  val robPointer = UInt(config.robPointerWidth bits)
+  val virtualAddress = UInt(config.xlen bits)
+  val physicalAddress = UInt(config.xlen bits)
+  val translationDone = Bool()
+  val uncached = Bool()
+  val pdst = UInt(config.physicalRegIndexWidth bits)
+  val writesPdst = Bool()
+  val isSc = Bool()
+  val scSuccess = Bool()
+  val size = Bits(3 bits)
+  val byteMask = Bits(4 bits)
+  val writeData = Bits(config.xlen bits)
+}
+
+final case class OooLoadQueueEntry(config: OooCoreConfig) extends Bundle {
+  val valid = Bool()
+  val addressReady = Bool()
+  val requestSent = Bool()
+  val completed = Bool()
+  val robPointer = UInt(config.robPointerWidth bits)
+  val pdst = UInt(config.physicalRegIndexWidth bits)
+  val writesPdst = Bool()
+  val virtualAddress = UInt(config.xlen bits)
+  val physicalAddress = UInt(config.xlen bits)
+  val translationDone = Bool()
+  val uncached = Bool()
+  val size = Bits(3 bits)
+  val byteMask = Bits(4 bits)
+  val signExtend = Bool()
+  val isLl = Bool()
+}
+
+final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommit)
+    extends Component {
+  private def isOlder(older: UInt, younger: UInt): Bool = {
+    val distance = (younger - older).resize(config.robPointerWidth)
+    (distance =/= U(0, config.robPointerWidth bits)) && !distance.msb
+  }
+
+  private def formatLoad(word: Bits, address: UInt, size: Bits, signExtend: Bool): Bits = {
+    val shift = (address(1 downto 0) ## U(0, 3 bits)).asUInt
+    val shifted = word |>> shift
+    val byteUpper = Bits(24 bits)
+    val halfUpper = Bits(16 bits)
+    byteUpper := B(0, 24 bits)
+    halfUpper := B(0, 16 bits)
+    when(signExtend && shifted(7)) { byteUpper := B((BigInt(1) << 24) - 1, 24 bits) }
+    when(signExtend && shifted(15)) { halfUpper := B((BigInt(1) << 16) - 1, 16 bits) }
+    val result = Bits(config.xlen bits)
+    result := shifted(config.xlen - 1 downto 0)
+    when(size === B(0, 3 bits)) {
+      result := byteUpper ## shifted(7 downto 0)
+    }.elsewhen(size === B(1, 3 bits)) {
+      result := halfUpper ## shifted(15 downto 0)
+    }
+    result
+  }
+
+  private def clearCompletion(completion: OooCompletion): Unit = {
+    completion.robPointer := U(0, config.robPointerWidth bits)
+    completion.pdst := U(0, config.physicalRegIndexWidth bits)
+    completion.writesPdst := False
+    completion.data := B(0, config.xlen bits)
+    completion.sideEffectData := B(0, config.xlen bits)
+    completion.exception.valid := False
+    completion.exception.ecode := U(0, 6 bits)
+    completion.exception.esubcode := U(0, 9 bits)
+    completion.exception.badVAddrValid := False
+    completion.exception.badVAddr := U(0, config.xlen bits)
+    completion.exception.tlbRefill := False
+    completion.branchResolved := False
+    completion.branchTaken := False
+    completion.branchTarget := U(0, config.xlen bits)
+    completion.branchMispredict := False
+  }
+
+  val io = new Bundle {
+    val allocateValid = in Bits (config.renameWidth bits)
+    val allocate = in Vec (OooLsqAllocate(config), config.renameWidth)
+    val aguValid = in Bool ()
+    val agu = in(OooAguRequest(config))
+    val aguReady = out Bool ()
+    val commitValid = in Bits (config.commitWidth bits)
+    val commit = in Vec (OooCommitRecord(config), config.commitWidth)
+    val translationRequest = master(Stream(OooTranslationRequest(config)))
+    val translationResponse = slave(Stream(OooTranslationResponse(config)))
+    val reservationValid = in Bool ()
+    val reservationLineAddress = in Bits (28 bits)
+    val dataRequestValid = out Bool ()
+    val dataRequest = out(OooCacheRequest(config))
+    val dataRequestReady = in Bool ()
+    val dataResponseValid = in Bool ()
+    val dataResponse = in(OooCacheResponse(config))
+    val completionValid = out Bool ()
+    val completion = out(OooCompletion(config))
+    val releaseLoadValid = out Bits (config.commitWidth bits)
+    val releaseStoreValid = out Bits (config.commitWidth bits)
+    val storeDrainBusy = out Bool ()
+    val orderingRobPointer = in UInt (config.robPointerWidth bits)
+    val olderStorePending = out Bool ()
+    val flush = in Bool ()
+  }
+
+  val stores = Vec.fill(config.storeQueueEntries)(Reg(OooStoreQueueEntry(config)))
+  val loads = Vec.fill(config.loadQueueEntries)(Reg(OooLoadQueueEntry(config)))
+  for (entry <- stores) {
+    entry.valid.init(False)
+    entry.addressReady.init(False)
+    entry.committed.init(False)
+    entry.translationDone.init(False)
+  }
+  for (entry <- loads) {
+    entry.valid.init(False)
+    entry.addressReady.init(False)
+    entry.requestSent.init(False)
+    entry.completed.init(False)
+    entry.translationDone.init(False)
+  }
+  val storeHead = Reg(UInt(config.storeQueueIndexWidth bits)) init (0)
+  val drainAfterFlush = RegInit(False)
+  val committedStorePresent = stores
+    .map(entry => entry.valid && entry.committed)
+    .reduce(_ || _)
+  io.storeDrainBusy := drainAfterFlush
+  io.olderStorePending := stores
+    .map(entry => entry.valid && isOlder(entry.robPointer, io.orderingRobPointer))
+    .reduce(_ || _)
+
+  // Completed loads remain allocated until commit, so a circular slot pointer
+  // can be overtaken when committed slots are reused. Select the oldest pending
+  // load by ROB age instead; this keeps scheduling order independent of the
+  // physical slot chosen by the allocator.
+  val pendingLoads = Bits(config.loadQueueEntries bits)
+  val oldestLoads = Bits(config.loadQueueEntries bits)
+  for (entry <- 0 until config.loadQueueEntries) {
+    pendingLoads(entry) := loads(entry).valid && !loads(entry).completed
+  }
+  for (entry <- 0 until config.loadQueueEntries) {
+    val olderPending = Bits(config.loadQueueEntries bits)
+    for (other <- 0 until config.loadQueueEntries) {
+      olderPending(other) := pendingLoads(other) &&
+        isOlder(loads(other).robPointer, loads(entry).robPointer)
+    }
+    oldestLoads(entry) := pendingLoads(entry) && !olderPending.orR
+  }
+  val loadHead = OHToUInt(OHMasking.first(oldestLoads))
+
+  val headStore = stores(storeHead)
+  val headLoad = loads(loadHead)
+  val loadHeadReady = headLoad.valid && headLoad.addressReady &&
+    !headLoad.requestSent && !headLoad.completed
+
+  val unknownOlderStore = Bits(config.storeQueueEntries bits)
+  val partialOverlapStore = Bits(config.storeQueueEntries bits)
+  val forwardingStore = Bits(config.storeQueueEntries bits)
+  for (entry <- 0 until config.storeQueueEntries) {
+    val store = stores(entry)
+    val older = store.valid && isOlder(store.robPointer, headLoad.robPointer)
+    val sameWord = store.virtualAddress(config.xlen - 1 downto 2) ===
+      headLoad.virtualAddress(config.xlen - 1 downto 2)
+    val overlap = (store.byteMask & headLoad.byteMask).orR
+    val covers = (store.byteMask & headLoad.byteMask) === headLoad.byteMask
+    unknownOlderStore(entry) := older && !store.addressReady
+    partialOverlapStore(entry) := older && store.addressReady && sameWord && overlap && !covers
+    forwardingStore(entry) := older && store.addressReady && sameWord && covers
+  }
+
+  val forwardingCount = CountOne(forwardingStore)
+  val forwardingId = OHToUInt(OHMasking.first(forwardingStore))
+  val loadOrderClear = !unknownOlderStore.orR && !partialOverlapStore.orR
+  val forwardCandidate = loadHeadReady && !headLoad.isLl && loadOrderClear &&
+    forwardingCount === 1
+  val cacheLoadBase = loadHeadReady && loadOrderClear && forwardingCount === 0
+  val cacheLoadCandidate = cacheLoadBase && headLoad.translationDone
+  val storeRequest = headStore.valid && headStore.addressReady && headStore.translationDone &&
+    headStore.committed && (!headStore.isSc || headStore.scSuccess)
+  val failedScRelease = headStore.valid && headStore.addressReady &&
+    headStore.translationDone && headStore.committed && headStore.isSc && !headStore.scSuccess
+
+  val translationActive = RegInit(False)
+  // A redirect can invalidate the LSQ owner after a translation request has
+  // fired, while the translator still owes one response. Keep consuming that
+  // response as a cancelled transaction so the shared translator cannot be
+  // left permanently backpressured.
+  val translationCancelPending = RegInit(False)
+  val translationOwnerStore = RegInit(False)
+  val translationOwnerRobPointer = Reg(UInt(config.robPointerWidth bits))
+  val translationOwnerLoadIndex = Reg(UInt(config.loadQueueIndexWidth bits))
+  val translationOwnerStoreIndex = Reg(UInt(config.storeQueueIndexWidth bits))
+  val storeNeedsTranslation = headStore.valid && headStore.addressReady &&
+    !headStore.translationDone
+  val loadNeedsTranslation = cacheLoadBase && !headLoad.translationDone
+  val selectStoreTranslation = storeNeedsTranslation
+  io.translationRequest.valid := !io.flush && !translationActive && !translationCancelPending &&
+    (storeNeedsTranslation || loadNeedsTranslation)
+  io.translationRequest.virtualAddress := Mux(
+    selectStoreTranslation,
+    headStore.virtualAddress,
+    headLoad.virtualAddress
+  )
+  io.translationRequest.isWrite := selectStoreTranslation
+  val translationRequestFire = io.translationRequest.valid && io.translationRequest.ready
+  when(translationRequestFire) {
+    translationActive := True
+    translationOwnerStore := selectStoreTranslation
+    translationOwnerRobPointer := Mux(
+      selectStoreTranslation,
+      headStore.robPointer,
+      headLoad.robPointer
+    )
+    translationOwnerLoadIndex := loadHead
+    translationOwnerStoreIndex := storeHead
+  }
+
+  val requestCandidate = OooCacheRequest(config)
+  requestCandidate.virtualAddress := headLoad.virtualAddress
+  requestCandidate.physicalAddress := headLoad.physicalAddress
+  requestCandidate.isWrite := False
+  requestCandidate.size := headLoad.size
+  requestCandidate.byteMask := headLoad.byteMask
+  requestCandidate.writeData := B(0, config.xlen bits)
+  requestCandidate.uncached := headLoad.uncached
+  requestCandidate.robPointer := headLoad.robPointer
+  requestCandidate.pdst := headLoad.pdst
+  when(storeRequest) {
+    requestCandidate.virtualAddress := headStore.virtualAddress
+    requestCandidate.physicalAddress := headStore.physicalAddress
+    requestCandidate.isWrite := True
+    requestCandidate.size := headStore.size
+    requestCandidate.byteMask := headStore.byteMask
+    requestCandidate.writeData := headStore.writeData
+    requestCandidate.uncached := headStore.uncached
+    requestCandidate.robPointer := headStore.robPointer
+    requestCandidate.pdst := U(0, config.physicalRegIndexWidth bits)
+  }
+
+  // Cut the oldest-load/store-ordering cone before cache and AXI backpressure.  A buffered
+  // committed store remains represented in the SQ until the hierarchy accepts it, so CACOP
+  // ordering and recovery still observe that store as pending.
+  val requestBufferValid = RegInit(False)
+  val requestBuffer = Reg(OooCacheRequest(config))
+  val requestBufferLoadIndex = Reg(UInt(config.loadQueueIndexWidth bits))
+  val requestBufferStoreIndex = Reg(UInt(config.storeQueueIndexWidth bits))
+  val requestCapture = !io.flush && !requestBufferValid &&
+    (storeRequest || cacheLoadCandidate)
+  io.dataRequestValid := requestBufferValid && !io.flush
+  io.dataRequest := requestBuffer
+  val dataRequestFire = io.dataRequestValid && io.dataRequestReady
+  val storeRequestFire = dataRequestFire && requestBuffer.isWrite
+  val loadRequestFire = dataRequestFire && !requestBuffer.isWrite
+
+  val responseAccepted = io.dataResponseValid && headLoad.valid && headLoad.requestSent &&
+    !headLoad.completed && io.dataResponse.robPointer === headLoad.robPointer
+  val forwardFire = !io.dataResponseValid && forwardCandidate
+
+  val aguMisaligned = (io.agu.size === B(2, 3 bits) && io.agu.virtualAddress(1 downto 0) =/= 0) ||
+    (io.agu.size === B(1, 3 bits) && io.agu.virtualAddress(0))
+  val aguTargetAvailable = Mux(
+    io.agu.isWrite,
+    stores(io.agu.uop.storeQueueIndex).valid &&
+      stores(io.agu.uop.storeQueueIndex).robPointer === io.agu.uop.robPointer &&
+      !stores(io.agu.uop.storeQueueIndex).addressReady,
+    loads(io.agu.uop.loadQueueIndex).valid &&
+      loads(io.agu.uop.loadQueueIndex).robPointer === io.agu.uop.robPointer &&
+      !loads(io.agu.uop.loadQueueIndex).addressReady
+  )
+  val translationResponseCandidate = io.translationResponse.valid && translationActive
+  val translationProducesCompletion = translationOwnerStore ||
+    io.translationResponse.exception.valid
+  val baseCompletionBusy = io.dataResponseValid || forwardCandidate
+  io.translationResponse.ready := translationCancelPending ||
+    (translationActive && (!translationProducesCompletion || !baseCompletionBusy))
+  val translationResponseFire = io.translationResponse.valid && io.translationResponse.ready
+  val translationCompletionFire = translationResponseFire && !io.flush &&
+    translationActive && translationProducesCompletion
+  val translationCompletionCandidate = translationResponseCandidate && translationProducesCompletion
+  val aguProducesCompletion = aguMisaligned
+  val completionPortAvailable = !baseCompletionBusy && !translationCompletionCandidate
+  io.aguReady := !io.flush && aguTargetAvailable &&
+    (!aguProducesCompletion || completionPortAvailable)
+  val aguFire = io.aguValid && io.aguReady
+  val aguCompletionFire = aguFire && aguProducesCompletion
+
+  val generatedCompletionValid = responseAccepted || forwardFire ||
+    translationCompletionFire || aguCompletionFire
+  val generatedCompletion = OooCompletion(config)
+  clearCompletion(generatedCompletion)
+  val translatedScSuccess = !io.translationResponse.exception.valid &&
+    !io.translationResponse.uncached && io.reservationValid &&
+    io.reservationLineAddress === io.translationResponse.physicalAddress(31 downto 4).asBits
+  when(responseAccepted) {
+    generatedCompletion.robPointer := headLoad.robPointer
+    generatedCompletion.pdst := headLoad.pdst
+    generatedCompletion.writesPdst := headLoad.writesPdst
+    generatedCompletion.data := formatLoad(
+      io.dataResponse.data,
+      headLoad.virtualAddress,
+      headLoad.size,
+      headLoad.signExtend
+    )
+    when(headLoad.isLl) {
+      generatedCompletion.sideEffectData :=
+        headLoad.physicalAddress(31 downto 1).asBits ## headLoad.uncached.asBits
+    }
+    when(io.dataResponse.error) {
+      generatedCompletion.exception.valid := True
+      generatedCompletion.exception.ecode := U(8, 6 bits)
+      generatedCompletion.exception.badVAddrValid := True
+      generatedCompletion.exception.badVAddr := headLoad.virtualAddress
+    }
+  }.elsewhen(forwardFire) {
+    generatedCompletion.robPointer := headLoad.robPointer
+    generatedCompletion.pdst := headLoad.pdst
+    generatedCompletion.writesPdst := headLoad.writesPdst
+    generatedCompletion.data := formatLoad(
+      stores(forwardingId).writeData,
+      headLoad.virtualAddress,
+      headLoad.size,
+      headLoad.signExtend
+    )
+  }.elsewhen(translationCompletionFire) {
+    val store = stores(translationOwnerStoreIndex)
+    val load = loads(translationOwnerLoadIndex)
+    generatedCompletion.robPointer := translationOwnerRobPointer
+    generatedCompletion.pdst := Mux(
+      translationOwnerStore,
+      store.pdst,
+      load.pdst
+    )
+    generatedCompletion.writesPdst := Mux(
+      translationOwnerStore,
+      store.writesPdst,
+      load.writesPdst
+    )
+    generatedCompletion.data := Mux(
+      translationOwnerStore && store.isSc,
+      translatedScSuccess.asBits.resize(config.xlen),
+      B(0, config.xlen bits)
+    )
+    generatedCompletion.sideEffectData := Mux(
+      translationOwnerStore,
+      store.writeData,
+      B(0, config.xlen bits)
+    )
+    generatedCompletion.exception := io.translationResponse.exception
+  }.elsewhen(aguCompletionFire) {
+    generatedCompletion.robPointer := io.agu.uop.robPointer
+    generatedCompletion.pdst := io.agu.uop.pdst
+    generatedCompletion.writesPdst := io.agu.uop.decoded.writesGpr
+    generatedCompletion.data := Mux(
+      io.agu.uop.decoded.isSc,
+      B(1, config.xlen bits),
+      B(0, config.xlen bits)
+    )
+    generatedCompletion.sideEffectData := io.agu.writeData
+    generatedCompletion.exception := io.agu.uop.decoded.exception
+    when(aguMisaligned) {
+      generatedCompletion.exception.valid := True
+      generatedCompletion.exception.ecode := U(9, 6 bits)
+      generatedCompletion.exception.esubcode := U(0, 9 bits)
+      generatedCompletion.exception.badVAddrValid := True
+      generatedCompletion.exception.badVAddr := io.agu.virtualAddress
+      generatedCompletion.exception.tlbRefill := False
+    }
+  }
+
+  val completionValid = RegInit(False)
+  val completion = Reg(OooCompletion(config))
+  when(io.flush) {
+    when(requestBufferValid && !requestBuffer.isWrite) {
+      requestBufferValid := False
+    }
+    completionValid := False
+  }.otherwise {
+    when(requestCapture) {
+      requestBufferValid := True
+      requestBuffer := requestCandidate
+      requestBufferLoadIndex := loadHead
+      requestBufferStoreIndex := storeHead
+    }
+    when(dataRequestFire) {
+      requestBufferValid := False
+    }
+    completionValid := generatedCompletionValid
+    when(generatedCompletionValid) { completion := generatedCompletion }
+  }
+  io.completionValid := completionValid
+  io.completion := completion
+
+  io.releaseLoadValid := B(0, config.commitWidth bits)
+  io.releaseStoreValid := B(0, config.commitWidth bits)
+  for (lane <- 0 until config.commitWidth) {
+    val loadCommitMatch = io.commitValid(lane) && io.commit(lane).isLoad &&
+      loads(io.commit(lane).loadQueueIndex).valid &&
+      loads(io.commit(lane).loadQueueIndex).robPointer === io.commit(lane).robPointer
+    io.releaseLoadValid(lane) := !io.flush && loadCommitMatch
+  }
+  io.releaseStoreValid(0) := !io.flush && (storeRequestFire || failedScRelease)
+
+  when(io.flush) {
+    // Preserve a cancellation token until the translator's outstanding
+    // response is consumed. A response consumed on the flush edge itself does
+    // not need a token.
+    translationCancelPending :=
+      (translationActive || translationCancelPending) && !translationResponseFire
+    translationActive := False
+    // Retired stores are architectural state.  Preserve the committed prefix
+    // across recovery and drain it before admitting the new speculative epoch.
+    drainAfterFlush := committedStorePresent
+    when(!committedStorePresent) {
+      storeHead := 0
+    }
+    for (entry <- stores) {
+      when(!entry.committed) {
+        entry.valid := False
+        entry.addressReady := False
+        entry.committed := False
+        entry.translationDone := False
+      }
+    }
+    for (entry <- loads) {
+      entry.valid := False
+      entry.addressReady := False
+      entry.requestSent := False
+      entry.completed := False
+      entry.translationDone := False
+    }
+  }.otherwise {
+    when(translationCancelPending && translationResponseFire) {
+      translationCancelPending := False
+    }
+    when(drainAfterFlush && !committedStorePresent) {
+      drainAfterFlush := False
+      storeHead := 0
+    }
+    for (lane <- 0 until config.renameWidth) {
+      when(io.allocateValid(lane) && io.allocate(lane).isStore) {
+        val index = io.allocate(lane).storeQueueIndex
+        stores(index).valid := True
+        stores(index).addressReady := False
+        stores(index).committed := False
+        stores(index).translationDone := False
+        stores(index).scSuccess := False
+        stores(index).robPointer := io.allocate(lane).robPointer
+      }
+      when(io.allocateValid(lane) && io.allocate(lane).isLoad) {
+        val index = io.allocate(lane).loadQueueIndex
+        loads(index).valid := True
+        loads(index).addressReady := False
+        loads(index).requestSent := False
+        loads(index).completed := False
+        loads(index).translationDone := False
+        loads(index).robPointer := io.allocate(lane).robPointer
+      }
+    }
+
+    when(aguFire && io.agu.isWrite) {
+      val index = io.agu.uop.storeQueueIndex
+      stores(index).virtualAddress := io.agu.virtualAddress
+      stores(index).pdst := io.agu.uop.pdst
+      stores(index).writesPdst := io.agu.uop.decoded.writesGpr
+      stores(index).isSc := io.agu.uop.decoded.isSc
+      stores(index).size := io.agu.size
+      stores(index).byteMask := io.agu.byteMask
+      stores(index).writeData := io.agu.writeData
+      stores(index).addressReady := !aguMisaligned
+      stores(index).translationDone := False
+    }
+    when(aguFire && !io.agu.isWrite) {
+      val index = io.agu.uop.loadQueueIndex
+      loads(index).pdst := io.agu.uop.pdst
+      loads(index).writesPdst := io.agu.uop.decoded.writesGpr
+      loads(index).virtualAddress := io.agu.virtualAddress
+      loads(index).size := io.agu.size
+      loads(index).byteMask := io.agu.byteMask
+      loads(index).signExtend := io.agu.uop.decoded.memorySignExtend
+      loads(index).isLl := io.agu.uop.decoded.isLl
+      loads(index).addressReady := !aguMisaligned
+      loads(index).completed := aguMisaligned
+      loads(index).translationDone := False
+    }
+
+    when(translationResponseFire && translationActive) {
+      translationActive := False
+      when(translationOwnerStore) {
+        val entry = stores(translationOwnerStoreIndex)
+        when(entry.valid && entry.robPointer === translationOwnerRobPointer) {
+          entry.physicalAddress := io.translationResponse.physicalAddress
+          entry.uncached := io.translationResponse.uncached
+          entry.translationDone := True
+          when(entry.isSc) { entry.scSuccess := translatedScSuccess }
+        }
+      }.otherwise {
+        val entry = loads(translationOwnerLoadIndex)
+        when(entry.valid && entry.robPointer === translationOwnerRobPointer) {
+          entry.physicalAddress := io.translationResponse.physicalAddress
+          entry.uncached := io.translationResponse.uncached
+          entry.translationDone := True
+          when(io.translationResponse.exception.valid) { entry.completed := True }
+        }
+      }
+    }
+
+    for (lane <- 0 until config.commitWidth) {
+      when(io.releaseLoadValid(lane)) {
+        loads(io.commit(lane).loadQueueIndex).valid := False
+      }
+      when(
+        io.commitValid(lane) && io.commit(lane).isStore &&
+          !io.commit(lane).exception.valid &&
+          stores(io.commit(lane).storeQueueIndex).valid &&
+          stores(io.commit(lane).storeQueueIndex).robPointer === io.commit(lane).robPointer
+      ) {
+        stores(io.commit(lane).storeQueueIndex).committed := True
+      }
+    }
+
+    when(loadRequestFire) {
+      val entry = loads(requestBufferLoadIndex)
+      when(entry.valid && entry.robPointer === requestBuffer.robPointer) {
+        entry.requestSent := True
+      }
+    }
+    when(responseAccepted || forwardFire) {
+      loads(loadHead).completed := True
+    }
+    when(storeRequestFire || failedScRelease) {
+      val releaseIndex = Mux(
+        storeRequestFire,
+        requestBufferStoreIndex,
+        storeHead
+      )
+      stores(releaseIndex).valid := False
+      stores(releaseIndex).addressReady := False
+      stores(releaseIndex).committed := False
+      stores(releaseIndex).translationDone := False
+      storeHead := storeHead + 1
+    }
+  }
+}

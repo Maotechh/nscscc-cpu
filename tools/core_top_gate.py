@@ -1014,7 +1014,7 @@ def lint_waiver_metadata(path: Path, profile: str, rtl_sha256: str) -> dict[str,
         or re.fullmatch(r"[0-9a-f]{64}", signature_hash) is None
     ):
         raise CoreTopGateError("lint waiver warning signature hash is invalid")
-    if categories != ["DECLFILENAME", "UNUSEDPARAM", "UNUSEDSIGNAL"]:
+    if categories != ["CMPCONST", "UNUSEDSIGNAL"]:
         raise CoreTopGateError("lint waiver approved categories differ from the reviewed set")
     if not isinstance(document.get("reason"), str) or not document["reason"].strip():
         raise CoreTopGateError("lint waiver reason must be non-empty")

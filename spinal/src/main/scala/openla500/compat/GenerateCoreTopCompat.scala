@@ -37,7 +37,7 @@ private object CoreTopCompatGeneratorSupport {
       prospectiveRealPath(parent).resolve(path.getFileName).normalize()
     }
 
-  def generate(args: Array[String], laccEnabled: Boolean): Unit = {
+  def generate(args: Array[String]): Unit = {
     val outputDirectory = Paths.get(outputArgument(args)).toAbsolutePath.normalize()
     val workingDirectory = Paths.get("").toAbsolutePath.normalize()
     val classDirectory = Paths
@@ -70,7 +70,7 @@ private object CoreTopCompatGeneratorSupport {
     )
     spinalConfig.withTimescale = false
     spinalConfig.generateVerilog {
-      val dut = new CoreTopCompat(CoreTopCompatConfig(laccEnabled = laccEnabled))
+      val dut = new CoreTopCompat(CoreTopCompatConfig())
       dut.setDefinitionName("core_top")
       dut
     }
@@ -79,10 +79,5 @@ private object CoreTopCompatGeneratorSupport {
 
 object GenerateCoreTopCompat {
   def main(args: Array[String]): Unit =
-    CoreTopCompatGeneratorSupport.generate(args, laccEnabled = false)
-}
-
-object GenerateCoreTopCompatWithLacc {
-  def main(args: Array[String]): Unit =
-    CoreTopCompatGeneratorSupport.generate(args, laccEnabled = true)
+    CoreTopCompatGeneratorSupport.generate(args)
 }

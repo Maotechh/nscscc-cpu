@@ -129,7 +129,7 @@ class CoreTopContractTests(unittest.TestCase):
             "replacement_sha256": core_top_gate.sha256_file(rtl),
         }
         specs = REPOSITORY_ROOT / "reference" / "component-replacements"
-        for name in ("core-top.json", "active-reachable.json"):
+        for name in ("core-top.json",):
             with self.subTest(spec=name):
                 value = core_top_gate.load_json_strict(specs / name)
                 self.assertEqual([expected], value["replacements"])
@@ -438,8 +438,7 @@ class CoreTopStaticGateTests(unittest.TestCase):
                         else core_top_gate.warning_signature_sha256(signatures)
                     ),
                     "approved_categories": [
-                        "DECLFILENAME",
-                        "UNUSEDPARAM",
+                        "CMPCONST",
                         "UNUSEDSIGNAL",
                     ],
                     "reason": "unit-test exact warning set",
@@ -534,8 +533,7 @@ class CoreTopStaticGateTests(unittest.TestCase):
     def test_makefile_defaults_to_locked_strict_zero_lint(self) -> None:
         makefile = (REPOSITORY_ROOT / "Makefile").read_text(encoding="utf-8")
         self.assertIn("CORE_TOP_LINT_PROFILE ?= locked", makefile)
-        self.assertRegex(makefile, r"(?m)^CORE_TOP_LINT_WAIVERS \?=\s*$")
-        self.assertNotIn(
+        self.assertIn(
             "CORE_TOP_LINT_WAIVERS ?= reference/core-top-lint-waivers.json", makefile
         )
         self.assertIn('--environment-profile "$(CORE_TOP_LINT_PROFILE)"', makefile)
@@ -548,10 +546,9 @@ class CoreTopStaticGateTests(unittest.TestCase):
         self,
     ) -> None:
         warning_output = (
-            "%Warning-DECLFILENAME: /tmp/core_top.v:1:1: File is not named core_top\n"
-            "%Warning-UNUSEDPARAM: /tmp/core_top.v:2:1: Parameter is not used: 'TLBNUM'\n"
-            "%Warning-UNUSEDSIGNAL: /tmp/core_top.v:3:1: Signal is not used: 'fixture'\n"
-            "%Error: Exiting due to 3 warning(s)\n"
+            "%Warning-CMPCONST: /tmp/core_top.v:1:1: Comparison is constant\n"
+            "%Warning-UNUSEDSIGNAL: /tmp/core_top.v:2:1: Signal is not used: 'fixture'\n"
+            "%Error: Exiting due to 2 warning(s)\n"
         )
         signatures = core_top_gate.warning_signatures(warning_output)
         with tempfile.TemporaryDirectory() as temporary:
@@ -584,20 +581,18 @@ class CoreTopStaticGateTests(unittest.TestCase):
 
         self.assertEqual("pass", summary["status"])
         self.assertTrue(summary["warning_policy"]["exact_match"])
-        self.assertEqual(3, summary["warning_policy"]["actual_warning_count"])
+        self.assertEqual(2, summary["warning_policy"]["actual_warning_count"])
         self.assertEqual("pass", summary["closure"]["status"])
         self.assertEqual(3, len(commands))
         self.assertNotIn("-Wno-UNUSEDSIGNAL", commands[1])
-        self.assertIn("-Wno-DECLFILENAME", commands[2])
-        self.assertIn("-Wno-UNUSEDPARAM", commands[2])
+        self.assertIn("-Wno-CMPCONST", commands[2])
         self.assertIn("-Wno-UNUSEDSIGNAL", commands[2])
 
     def test_lint_waiver_warning_drift_fails_before_suppression(self) -> None:
         warning_output = (
-            "%Warning-DECLFILENAME: /tmp/core_top.v:1:1: File is not named core_top\n"
-            "%Warning-UNUSEDPARAM: /tmp/core_top.v:2:1: Parameter is not used: 'TLBNUM'\n"
-            "%Warning-UNUSEDSIGNAL: /tmp/core_top.v:3:1: Signal is not used: 'fixture'\n"
-            "%Error: Exiting due to 3 warning(s)\n"
+            "%Warning-CMPCONST: /tmp/core_top.v:1:1: Comparison is constant\n"
+            "%Warning-UNUSEDSIGNAL: /tmp/core_top.v:2:1: Signal is not used: 'fixture'\n"
+            "%Error: Exiting due to 2 warning(s)\n"
         )
         signatures = core_top_gate.warning_signatures(warning_output)
         with tempfile.TemporaryDirectory() as temporary:

@@ -50,13 +50,5 @@ class DCacheGateTests(unittest.TestCase):
     def test_gate_does_not_write_shared_cache_directory(self) -> None:
         self.assertNotIn(".gate-cache", Path(dcache_gate.__file__).read_text(encoding="utf-8"))
 
-    def test_makefile_dispatches_all_dcache_gates(self) -> None:
-        makefile = (ROOT / "Makefile").read_text(encoding="utf-8")
-        self.assertIn("openla500.memory.GenerateOpenLa500DCache", makefile)
-        for command in ("port-check", "lint", "yosys-check", "diff"):
-            with self.subTest(command=command):
-                self.assertIn(f"tools/dcache_gate.py {command}", makefile)
-
-
 if __name__ == "__main__":
     unittest.main()

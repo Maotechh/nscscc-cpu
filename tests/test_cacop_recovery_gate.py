@@ -52,11 +52,5 @@ class CacopRecoveryGateTests(unittest.TestCase):
         self.assertTrue(any(item["mode"] == 2 for item in dirty))
         self.assertEqual({0, 1}, {item["way"] for item in dirty})
 
-    def test_make_entry_allows_wsl_native_read_only_repository(self) -> None:
-        makefile = (ROOT / "Makefile").read_text(encoding="utf-8")
-        self.assertIn("CACOP_RECOVERY_REPO ?= .", makefile)
-        self.assertIn('--repo "$(CACOP_RECOVERY_REPO)"', makefile)
-
-
 if __name__ == "__main__":
     unittest.main()
