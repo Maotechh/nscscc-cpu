@@ -6,24 +6,24 @@
 
 当前官方顶层已经实例化 `openla500.core.OooCoreSystem(OooCoreConfig.FourIssueThreeCommit)`。旧 `SpinalCoreBackend` 和 `openla500.pipeline` 不再参与生成；保留下来的少量 `OpenLa500*` leaf 模块仅供仍被 OoO 核复用的 ALU、乘除法、CSR、TLB 或独立合同测试使用。
 
-当前验证基线（2026-07-21，生成 RTL SHA-256 `72766abf6aaa5765c56ab93d1e4a55cda8ddc9c69f3f775885f84c3622ae0b06`）如下：
+当前验证基线（2026-07-21，生成 RTL SHA-256 `a8967e8fdeaee20dfacce57ed1a89ecb408a416454aeb1ac1ad4604e9fbcca4e`）如下：
 
 | 检查 | 结果 |
 | --- | --- |
 | Scala/Spinal/Verilator | 35 suites，81 tests，81 passed，0 failed，0 aborted |
 | Python repository gates | 362 tests，362 passed，0 failed/error |
 | core_top package/port contract | pass，49 ports，17 inputs，32 outputs，`TLBNUM=32` |
-| Verilator complete-top lint | pass，726 条精确签名审计后 closure 为 0 warning/error |
+| Verilator complete-top lint | pass，728 条精确签名审计后 closure 为 0 warning/error |
 | Yosys 结构检查 | pass，Yosys 0.33，无 warning/skip |
 | chiplab `func/func_lab19` + NEMU DiffTest | pass，syscall 结束并到达 end PC |
 | 官方仿真计数 | 126,136 committed instructions，776,232 clocks，IPC 0.162498 |
 | Vivado 2023.2 synthesis | 0 errors，0 critical synthesis warnings，DCP/report 生成成功 |
 
-Vivado 独立 DRC 报告仍有无约束顶层 I/O 的 NSTD-1/UCIO-1 critical warning；这是未提供板级 XDC 的 standalone 综合，不是 RTL elaboration 或 synthesis error。100 MHz（10 ns）时序尚未闭合：WNS `-4.368 ns`，TNS `-33865.806 ns`，最差数据路径 `14.023 ns`。相对上一提交的 WNS `-4.428 ns` 改善 `0.060 ns`，但 TNS 退化，不能把它描述为已经通过 100 MHz timing。
+Vivado 独立 DRC 报告仍有无约束顶层 I/O 的 NSTD-1/UCIO-1 critical warning；这是未提供板级 XDC 的 standalone 综合，不是 RTL elaboration 或 synthesis error。100 MHz（10 ns）时序尚未闭合：WNS `-3.484 ns`，TNS `-1132.243 ns`，最差数据路径 `13.139 ns`。相对上一提交的 WNS `-4.368 ns` 改善 `0.884 ns`，失败端点从 12,138 降至 3,054，但不能把它描述为已经通过 100 MHz timing。
 
-完整顶层 lint 的 726 条审计项由 725 条 `UNUSEDSIGNAL` 和 1 条固定宽度 `CMPCONST` 构成。大部分来自统一 uop/commit/cache/translation Bundle 在具体路径中只消费部分字段，以及官方 debug/兼容端口必须保留；其中也包含可继续精简的真实死字段。`reference/core-top-lint-waivers.json` 同时锁定 RTL SHA-256、warning 数量、类别和签名哈希，先运行无抑制审计，再只对完全匹配的签名执行 clean closure。它不是未来功能承诺，也不是允许新增 warning 的全局开关。
+完整顶层 lint 的 728 条审计项由 727 条 `UNUSEDSIGNAL` 和 1 条固定宽度 `CMPCONST` 构成。大部分来自统一 uop/commit/cache/translation Bundle 在具体路径中只消费部分字段，以及官方 debug/兼容端口必须保留；其中也包含可继续精简的真实死字段。`reference/core-top-lint-waivers.json` 同时锁定 RTL SHA-256、warning 数量、类别和签名哈希，先运行无抑制审计，再只对完全匹配的签名执行 clean closure。它不是未来功能承诺，也不是允许新增 warning 的全局开关。
 
-综合资源（`xc7a200tfbg676-2`，flatten hierarchy rebuilt）：71,539 LUT、34,524 FF、42 RAMB36、12 RAMB18、4 DSP。ROB completion 改为每个 entry 本地比较后，LUT 相对上一提交减少 2,366（约 3.2%）；最差路径仍从 LSQ 的 load ROB pointer 到 ROB exception 字段使能，后续优化应优先缩短该真实数据/控制路径，不要用 false path 掩盖。
+综合资源（`xc7a200tfbg676-2`，flatten hierarchy rebuilt）：71,071 LUT、34,529 FF、42 RAMB36、12 RAMB18、4 DSP。ROB completion 的每 entry 本地比较和 LSQ 的环形调度寄存级使 LUT 相对上一提交减少 468（约 0.65%）；最差路径已转移到 ROB serializing 字段到 CSR TLBIDX 控制，后续优化应优先缩短该真实控制路径，不要用 false path 掩盖。
 
 ## 源码布局
 
@@ -78,6 +78,7 @@ L1I/translation -> OooFrontend(fetch4) -> OooDecodeRenameBuffer
 * IQ 按执行端口能力选择 ready uop；serial/CSR/TLB/CACOP/IDLE 等操作必须等 ROB head，不能因为执行端空闲而越过更老指令。
 * 分支在执行端比较实际 taken/target。错误预测 completion 生成 `OooRecoveryRequest`，目标 PC 和异常元数据一起保存，避免把普通 serial stall 当作 branch recovery。
 * load 必须保留 ROB/LDQ 顺序、size/sign-extension 和目标 pdst。LSQ 的 cache request 输出有一拍寄存缓冲，flush 时丢弃未发出的 speculative load；store 保持在 SQ，只有 ordered commit 后才允许对 cache/uncached 总线产生写副作用。
+* LSQ 用退休同步的 `loadBase` 旋转 pending bitmap，并在其后寄存调度槽位；首次分配组只用 ROB age 初始化 base。这样既支持物理槽位绕回，又把选择网络与 ROB completion 写使能隔开，调度延迟增加一拍但稳态仍每拍可推进一个 LSU 请求。
 * ROB 以 program order 提交最多三条。异常、ERTN、CSR、TLB、cache operation 和 barrier 都在 head 处理；外部 `OooCoreSystem` 在该边界接管 eentry/tlbrentry/ERA 和 CSR 更新，保证 precise exception。
 * Chiplab 多提交适配按 lane 输出 instruction/load/store 事件，但异常、CSR 和架构状态是单一全局流。DPI 适配不是提交逻辑的旁路，不能用 debug 端口替代内部 commit。
 

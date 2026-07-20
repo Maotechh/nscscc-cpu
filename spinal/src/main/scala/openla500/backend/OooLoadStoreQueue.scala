@@ -114,6 +114,9 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
     val flush = in Bool ()
   }
 
+  val loadReleaseValid = Bits(config.commitWidth bits)
+  val storeReleaseValid = Bits(config.commitWidth bits)
+
   val stores = Vec.fill(config.storeQueueEntries)(Reg(OooStoreQueueEntry(config)))
   val loads = Vec.fill(config.loadQueueEntries)(Reg(OooLoadQueueEntry(config)))
   for (entry <- stores) {
@@ -130,6 +133,11 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
     entry.translationDone.init(False)
   }
   val storeHead = Reg(UInt(config.storeQueueIndexWidth bits)) init (0)
+  // The allocator releases load slots in retirement order.  Keeping the
+  // oldest live slot explicitly lets the scheduler rotate a small pending
+  // bitmap instead of comparing every load ROB pointer against every other
+  // load on every cycle.
+  val loadBase = Reg(UInt(config.loadQueueIndexWidth bits)) init (0)
   val drainAfterFlush = RegInit(False)
   val committedStorePresent = stores
     .map(entry => entry.valid && entry.committed)
@@ -139,28 +147,72 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
     .map(entry => entry.valid && isOlder(entry.robPointer, io.orderingRobPointer))
     .reduce(_ || _)
 
-  // Completed loads remain allocated until commit, so a circular slot pointer
-  // can be overtaken when committed slots are reused. Select the oldest pending
-  // load by ROB age instead; this keeps scheduling order independent of the
-  // physical slot chosen by the allocator.
+  // Completed loads remain allocated until commit.  The allocator therefore
+  // advances the base only on commit, and a rotated priority select preserves
+  // program order across physical slot wrap-around.
   val pendingLoads = Bits(config.loadQueueEntries bits)
-  val oldestLoads = Bits(config.loadQueueEntries bits)
   for (entry <- 0 until config.loadQueueEntries) {
     pendingLoads(entry) := loads(entry).valid && !loads(entry).completed
   }
-  for (entry <- 0 until config.loadQueueEntries) {
-    val olderPending = Bits(config.loadQueueEntries bits)
-    for (other <- 0 until config.loadQueueEntries) {
-      olderPending(other) := pendingLoads(other) &&
-        isOlder(loads(other).robPointer, loads(entry).robPointer)
+  val rotatedPending = ((pendingLoads ## pendingLoads) |>> loadBase)
+    .resize(config.loadQueueEntries)
+  val loadHeadOffset = OHToUInt(OHMasking.first(rotatedPending))
+  val selectedLoadHead = (loadBase + loadHeadOffset).resized
+  val selectedLoadValid = pendingLoads.orR
+  // Match the registered uop boundary used by the reference LoadQueue.  The
+  // selected index is state: translation, forwarding, and cache request
+  // ownership all consume this registered value, so synthesis cannot fold the
+  // full queue select into a later ROB write enable.
+  val scheduledLoadValid = RegInit(False)
+  val loadHead = Reg(UInt(config.loadQueueIndexWidth bits)) init (0)
+  when(io.flush) {
+    scheduledLoadValid := False
+  }.otherwise {
+    scheduledLoadValid := selectedLoadValid
+    when(selectedLoadValid) {
+      loadHead := selectedLoadHead
     }
-    oldestLoads(entry) := pendingLoads(entry) && !olderPending.orR
   }
-  val loadHead = OHToUInt(OHMasking.first(oldestLoads))
+
+  // A direct LSQ probe can present a recycled slot without the allocator's
+  // preceding history.  Initialize the base from the first allocation group
+  // once, then keep it purely pointer-driven during normal execution.  The
+  // age comparisons here terminate at the loadBase register and are not in
+  // the completion-to-ROB path.
+  val allocationLoads = Bits(config.renameWidth bits)
+  for (lane <- 0 until config.renameWidth) {
+    allocationLoads(lane) := io.allocateValid(lane) && io.allocate(lane).isLoad
+  }
+  val initialOldest = Bits(config.renameWidth bits)
+  for (lane <- 0 until config.renameWidth) {
+    val olderCandidate = Bits(config.renameWidth bits)
+    olderCandidate := B(0, config.renameWidth bits)
+    for (other <- 0 until config.renameWidth if other != lane) {
+      olderCandidate(other) := allocationLoads(other) &&
+        isOlder(io.allocate(other).robPointer, io.allocate(lane).robPointer)
+    }
+    initialOldest(lane) := allocationLoads(lane) && !olderCandidate.orR
+  }
+  val initialLoadSelect = Mux(
+    initialOldest.orR,
+    OHMasking.first(initialOldest),
+    OHMasking.first(allocationLoads)
+  )
+  val initialLoadIndex = OHToUInt(initialLoadSelect)
+  val liveLoads = loads.map(_.valid).reduce(_ || _)
+  when(io.flush) {
+    loadBase := U(0, config.loadQueueIndexWidth bits)
+  }.otherwise {
+    when(!liveLoads && allocationLoads.orR) {
+      loadBase := io.allocate(initialLoadIndex).loadQueueIndex
+    }.elsewhen(loadReleaseValid.orR) {
+      loadBase := (loadBase + CountOne(loadReleaseValid)).resized
+    }
+  }
 
   val headStore = stores(storeHead)
   val headLoad = loads(loadHead)
-  val loadHeadReady = headLoad.valid && headLoad.addressReady &&
+  val loadHeadReady = scheduledLoadValid && headLoad.valid && headLoad.addressReady &&
     !headLoad.requestSent && !headLoad.completed
 
   val unknownOlderStore = Bits(config.storeQueueEntries bits)
@@ -400,15 +452,17 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
   io.completionValid := completionValid
   io.completion := completion
 
-  io.releaseLoadValid := B(0, config.commitWidth bits)
-  io.releaseStoreValid := B(0, config.commitWidth bits)
+  loadReleaseValid := B(0, config.commitWidth bits)
+  storeReleaseValid := B(0, config.commitWidth bits)
   for (lane <- 0 until config.commitWidth) {
     val loadCommitMatch = io.commitValid(lane) && io.commit(lane).isLoad &&
       loads(io.commit(lane).loadQueueIndex).valid &&
       loads(io.commit(lane).loadQueueIndex).robPointer === io.commit(lane).robPointer
-    io.releaseLoadValid(lane) := !io.flush && loadCommitMatch
+    loadReleaseValid(lane) := !io.flush && loadCommitMatch
   }
-  io.releaseStoreValid(0) := !io.flush && (storeRequestFire || failedScRelease)
+  storeReleaseValid(0) := !io.flush && (storeRequestFire || failedScRelease)
+  io.releaseLoadValid := loadReleaseValid
+  io.releaseStoreValid := storeReleaseValid
 
   when(io.flush) {
     // Preserve a cancellation token until the translator's outstanding

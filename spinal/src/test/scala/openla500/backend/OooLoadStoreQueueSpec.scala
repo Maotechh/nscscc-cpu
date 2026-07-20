@@ -184,7 +184,7 @@ class OooLoadStoreQueueSpec extends AnyFunSuite {
     dut.io.agu.uop.decoded.writesGpr #= true
   }
 
-  test("recycled load slots are scheduled by ROB age rather than slot number") {
+  test("recycled load slots initialize and advance the circular scheduling base") {
     SimConfig.withVerilator
       .workspacePath("target/sim-workspace-ooo-lsq")
       .compile(new OooLoadStoreQueueProbe(config))
@@ -223,6 +223,33 @@ class OooLoadStoreQueueSpec extends AnyFunSuite {
         assert(dut.io.dataRequestValid.toBoolean)
         assert(dut.io.dataRequest.robPointer.toBigInt == 18)
         assert(dut.io.dataRequest.virtualAddress.toBigInt == 0x180)
+
+        dut.io.dataRequestReady #= true
+        sample(dut)
+        dut.io.dataRequestReady #= false
+        dut.io.dataResponseValid #= true
+        dut.io.dataResponse.robPointer #= 18
+        dut.io.dataResponse.data #= BigInt("18181818", 16)
+        sample(dut)
+        dut.io.dataResponseValid #= false
+        assert(dut.io.completionValid.toBoolean)
+        assert(dut.io.completion.robPointer.toBigInt == 18)
+
+        dut.io.commitValid #= 1
+        dut.io.commit(0).robPointer #= 18
+        dut.io.commit(0).isLoad #= true
+        dut.io.commit(0).loadQueueIndex #= 4
+        sample(dut)
+        dut.io.commitValid #= 0
+
+        requestWait = 0
+        while (!dut.io.dataRequestValid.toBoolean && requestWait < 12) {
+          sample(dut)
+          requestWait += 1
+        }
+        assert(dut.io.dataRequestValid.toBoolean)
+        assert(dut.io.dataRequest.robPointer.toBigInt == 34)
+        assert(dut.io.dataRequest.virtualAddress.toBigInt == 0x340)
       }
   }
 
