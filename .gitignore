@@ -12,6 +12,7 @@ obj/
 *.str
 
 # Vivado generated
+/.Xil/
 xilinx_ip/*/gen/
 *.dcp
 *.xci

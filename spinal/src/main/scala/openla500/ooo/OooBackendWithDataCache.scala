@@ -2,7 +2,7 @@ package openla500.ooo
 
 import spinal.core._
 
-/** OoO execution backend connected to the 64-byte L1D/L2 hierarchy. */
+/** OoO execution backend connected to the shared 64-byte L1I/L1D/L2 hierarchy. */
 final class OooBackendWithDataCache(
     config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommit
 ) extends Component {
@@ -10,6 +10,13 @@ final class OooBackendWithDataCache(
     val renameValid = in Bits (config.renameWidth bits)
     val rename = in Vec (OooDecodedUop(config), config.renameWidth)
     val renameReady = out Bits (config.renameWidth bits)
+
+    val instructionRequestValid = in Bool ()
+    val instructionRequest = in(OooInstructionCacheRequest(config))
+    val instructionRequestReady = out Bool ()
+    val instructionResponseValid = out Bool ()
+    val instructionResponse = out(OooInstructionCacheResponse(config))
+    val instructionKill = in Bool ()
 
     val memoryReadValid = out Bool ()
     val memoryRead = out(OooLineReadRequest(config))
@@ -54,27 +61,34 @@ final class OooBackendWithDataCache(
   }
 
   val backend = new OooBackendWithExecution(config)
-  val dataCache = new OooDataCacheHierarchy(config)
+  val cacheHierarchy = new OooSharedCacheHierarchy(config)
 
   backend.io.renameValid := io.renameValid
   backend.io.rename := io.rename
   io.renameReady := backend.io.renameReady
 
-  dataCache.io.requestValid := backend.io.dataRequestValid
-  dataCache.io.request := backend.io.dataRequest
-  backend.io.dataRequestReady := dataCache.io.requestReady
-  backend.io.dataResponseValid := dataCache.io.responseValid
-  backend.io.dataResponse := dataCache.io.response
+  cacheHierarchy.io.instructionRequestValid := io.instructionRequestValid
+  cacheHierarchy.io.instructionRequest := io.instructionRequest
+  cacheHierarchy.io.instructionKill := io.instructionKill
+  io.instructionRequestReady := cacheHierarchy.io.instructionRequestReady
+  io.instructionResponseValid := cacheHierarchy.io.instructionResponseValid
+  io.instructionResponse := cacheHierarchy.io.instructionResponse
 
-  io.memoryReadValid := dataCache.io.memoryReadValid
-  io.memoryRead := dataCache.io.memoryRead
-  dataCache.io.memoryReadReady := io.memoryReadReady
-  dataCache.io.memoryReadBeatValid := io.memoryReadBeatValid
-  dataCache.io.memoryReadBeat := io.memoryReadBeat
-  io.memoryReadBeatReady := dataCache.io.memoryReadBeatReady
-  io.memoryWriteValid := dataCache.io.memoryWriteValid
-  io.memoryWrite := dataCache.io.memoryWrite
-  dataCache.io.memoryWriteReady := io.memoryWriteReady
+  cacheHierarchy.io.dataRequestValid := backend.io.dataRequestValid
+  cacheHierarchy.io.dataRequest := backend.io.dataRequest
+  backend.io.dataRequestReady := cacheHierarchy.io.dataRequestReady
+  backend.io.dataResponseValid := cacheHierarchy.io.dataResponseValid
+  backend.io.dataResponse := cacheHierarchy.io.dataResponse
+
+  io.memoryReadValid := cacheHierarchy.io.memoryReadValid
+  io.memoryRead := cacheHierarchy.io.memoryRead
+  cacheHierarchy.io.memoryReadReady := io.memoryReadReady
+  cacheHierarchy.io.memoryReadBeatValid := io.memoryReadBeatValid
+  cacheHierarchy.io.memoryReadBeat := io.memoryReadBeat
+  io.memoryReadBeatReady := cacheHierarchy.io.memoryReadBeatReady
+  io.memoryWriteValid := cacheHierarchy.io.memoryWriteValid
+  io.memoryWrite := cacheHierarchy.io.memoryWrite
+  cacheHierarchy.io.memoryWriteReady := io.memoryWriteReady
 
   backend.io.systemReadData := io.systemReadData
   backend.io.timer := io.timer
@@ -103,7 +117,7 @@ final class OooBackendWithDataCache(
   io.exceptionPc := backend.io.exceptionPc
   io.exception := backend.io.exception
 
-  dataCache.io.invalidate := io.cacheInvalidate
-  io.cacheInvalidateBusy := dataCache.io.invalidateBusy
+  cacheHierarchy.io.invalidate := io.cacheInvalidate
+  io.cacheInvalidateBusy := cacheHierarchy.io.invalidateBusy
   backend.io.flush := io.flush
 }

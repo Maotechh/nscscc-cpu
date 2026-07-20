@@ -75,6 +75,8 @@ final class OooL1DataCache(config: OooCoreConfig = OooCoreConfig.FourIssueThreeC
 
   val cacheArray = new OooCacheArray(geometry)
   val state = RegInit(OooL1DataCacheState.idle)
+  val invalidateSeen = RegInit(False)
+  val invalidatePending = RegInit(False)
   val request = Reg(OooCacheRequest(config))
   val victimWay = Reg(UInt(wayWidth bits))
   val victimAddress = Reg(UInt(config.xlen bits))
@@ -99,6 +101,14 @@ final class OooL1DataCache(config: OooCoreConfig = OooCoreConfig.FourIssueThreeC
   io.responseValid := responseValid
   io.response := response
 
+  val newInvalidate = io.invalidate && !invalidateSeen
+  when(io.invalidate) { invalidateSeen := True }.otherwise { invalidateSeen := False }
+  val invalidateRequest = invalidatePending || newInvalidate
+  val startInvalidate = invalidateRequest && state === OooL1DataCacheState.idle &&
+    !cacheArray.io.invalidateBusy
+  when(newInvalidate) { invalidatePending := True }
+  when(startInvalidate) { invalidatePending := False }
+
   cacheArray.io.lookupValid := False
   cacheArray.io.lookupAddress := io.request.physicalAddress
   cacheArray.io.writeValid := False
@@ -107,10 +117,10 @@ final class OooL1DataCache(config: OooCoreConfig = OooCoreConfig.FourIssueThreeC
   cacheArray.io.writeTag := tagOf(request.physicalAddress)
   cacheArray.io.writeData := installedLine
   cacheArray.io.writeDirty := request.isWrite
-  cacheArray.io.invalidate := io.invalidate && state === OooL1DataCacheState.idle
+  cacheArray.io.invalidate := startInvalidate
 
   io.requestReady := state === OooL1DataCacheState.idle && cacheArray.io.lookupReady &&
-    !io.invalidate && !io.request.uncached
+    !invalidateRequest && !io.request.uncached
   val requestFire = io.requestValid && io.requestReady
   when(requestFire) {
     request := io.request
@@ -195,6 +205,5 @@ final class OooL1DataCache(config: OooCoreConfig = OooCoreConfig.FourIssueThreeC
     state := OooL1DataCacheState.idle
   }
 
-  io.invalidateBusy := cacheArray.io.invalidateBusy ||
-    (io.invalidate && state =/= OooL1DataCacheState.idle)
+  io.invalidateBusy := cacheArray.io.invalidateBusy || invalidateRequest
 }

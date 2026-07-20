@@ -4,6 +4,10 @@ The OoO memory path now contains a two-way 8-KiB L1 data cache and a two-way
 64-KiB L2 cache. Both levels use 64-byte lines and connect through eight 64-bit
 refill beats, matching the line geometry used by the `la32r-linux` ysyx design.
 
+This document records the first data-only integration stage. The active backend
+wrapper now uses the L1I/L1D shared hierarchy described in
+`docs/ooo-shared-cache-hierarchy.md`.
+
 ## Structure
 
 - `OooL1DataCache`: blocking, write-back, write-allocate L1D controller.
@@ -53,7 +57,7 @@ This is not yet the final competition memory system. The following work remains:
 
 1. Replace the one-miss blocking controller with the existing four-entry MSHR
    contract and support merged misses.
-2. Add L1I and arbitration between L1I/L1D and the shared L2.
+2. Widen the shared L2 from one transaction to the existing four-entry MSHR contract.
 3. Connect address translation, uncached accesses, CACOP, LL/SC, and bus errors.
 4. Bridge the line interface to the SoC AXI3 master and validate burst ordering.
 5. Integrate frontend, CSR/TLB, official top-level IO, and full functional tests.

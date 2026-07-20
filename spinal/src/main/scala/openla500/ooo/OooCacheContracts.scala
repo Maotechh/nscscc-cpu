@@ -31,6 +31,23 @@ final case class OooCacheResponse(config: OooCoreConfig) extends Bundle {
   val error = Bool()
 }
 
+/** One aligned frontend fetch group.
+  *
+  * The cache selects the 16-byte group containing `physicalAddress`. The frontend keeps the
+  * original virtual address to mask instructions preceding an unaligned branch target.
+  */
+final case class OooInstructionCacheRequest(config: OooCoreConfig) extends Bundle {
+  val virtualAddress = UInt(config.xlen bits)
+  val physicalAddress = UInt(config.xlen bits)
+}
+
+final case class OooInstructionCacheResponse(config: OooCoreConfig) extends Bundle {
+  val virtualAddress = UInt(config.xlen bits)
+  val physicalAddress = UInt(config.xlen bits)
+  val instructions = Vec(Bits(32 bits), config.fetchWidth)
+  val error = Bool()
+}
+
 final case class OooLineReadRequest(config: OooCoreConfig) extends Bundle {
   val lineAddress = UInt(config.xlen bits)
   val mshrId = UInt(log2Up(config.mshrEntries) bits)

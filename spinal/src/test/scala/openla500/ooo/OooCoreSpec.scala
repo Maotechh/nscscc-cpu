@@ -149,4 +149,17 @@ class OooCoreSpec extends AnyFunSuite {
     assert(rtl.contains("lookupAddress"))
     assert(rtl.contains("writeData"))
   }
+
+  test("four-slot L1I and L1D share one 64-byte L2 transaction boundary") {
+    val rtl = elaborate("ooo_shared_cache_hierarchy") {
+      val hierarchy = new OooSharedCacheHierarchy(OooCoreConfig.FourIssueThreeCommit)
+      hierarchy.setDefinitionName("ooo_shared_cache_hierarchy")
+      hierarchy
+    }
+    assert(rtl.contains("module ooo_shared_cache_hierarchy"))
+    assert(rtl.contains("module OooL1InstructionCache"))
+    assert(rtl.contains("module OooL1DataCache"))
+    assert(rtl.contains("module OooL2Cache"))
+    assert(rtl.contains("instructionKill"))
+  }
 }

@@ -61,6 +61,8 @@ final class OooL2Cache(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommi
 
   val cacheArray = new OooCacheArray(geometry)
   val state = RegInit(OooL2CacheState.idle)
+  val invalidateSeen = RegInit(False)
+  val invalidatePending = RegInit(False)
   val pendingAddress = Reg(UInt(config.xlen bits))
   val pendingMshrId = Reg(UInt(log2Up(config.mshrEntries) bits))
   val pendingIsWrite = RegInit(False)
@@ -83,6 +85,14 @@ final class OooL2Cache(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommi
       beat * OooCacheContract.BeatBits) := refillBeats(beat)
   }
 
+  val newInvalidate = io.invalidate && !invalidateSeen
+  when(io.invalidate) { invalidateSeen := True }.otherwise { invalidateSeen := False }
+  val invalidateRequest = invalidatePending || newInvalidate
+  val startInvalidate = invalidateRequest && state === OooL2CacheState.idle &&
+    !cacheArray.io.invalidateBusy
+  when(newInvalidate) { invalidatePending := True }
+  when(startInvalidate) { invalidatePending := False }
+
   cacheArray.io.lookupValid := False
   cacheArray.io.lookupAddress := pendingAddress
   cacheArray.io.writeValid := False
@@ -91,12 +101,12 @@ final class OooL2Cache(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommi
   cacheArray.io.writeTag := tagOf(pendingAddress)
   cacheArray.io.writeData := refillLine
   cacheArray.io.writeDirty := False
-  cacheArray.io.invalidate := io.invalidate && state === OooL2CacheState.idle
+  cacheArray.io.invalidate := startInvalidate
 
   io.readReady := state === OooL2CacheState.idle && cacheArray.io.lookupReady &&
-    !io.invalidate
+    !invalidateRequest
   io.writeReady := state === OooL2CacheState.idle && cacheArray.io.lookupReady &&
-    !io.invalidate && !io.readValid && io.write.byteMask.andR
+    !invalidateRequest && !io.readValid && io.write.byteMask.andR
   val readFire = io.readValid && io.readReady
   val writeFire = io.writeValid && io.writeReady
   when(readFire) {
@@ -218,6 +228,5 @@ final class OooL2Cache(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommi
     }
   }
 
-  io.invalidateBusy := cacheArray.io.invalidateBusy ||
-    (io.invalidate && state =/= OooL2CacheState.idle)
+  io.invalidateBusy := cacheArray.io.invalidateBusy || invalidateRequest
 }
