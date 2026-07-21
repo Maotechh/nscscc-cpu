@@ -151,7 +151,29 @@ final class OooAddressTranslationUnit(
       )
       instructionContext.privilege := io.csrPrivilege
       instructionContext.disableCache := io.disableCache
-      instructionSearchPending := True
+      instructionSearchPending := instructionTranslate
+      when(!instructionTranslate) {
+        val misaligned = io.instructionRequest.virtualAddress(1 downto 0) =/= 0
+        val memoryAttribute = Mux(
+          instructionDmw0,
+          io.csrDmw0(5 downto 4),
+          Mux(instructionDmw1, io.csrDmw1(5 downto 4), io.instructionMat)
+        )
+        instructionResponseValid := True
+        instructionResponse.virtualAddress := io.instructionRequest.virtualAddress
+        instructionResponse.physicalAddress := bypassPhysicalAddress(
+          io.instructionRequest.virtualAddress,
+          instructionDmw0,
+          instructionDmw1
+        )
+        instructionResponse.uncached := io.disableCache || memoryAttribute === 0
+        instructionResponse.exception.valid := misaligned
+        instructionResponse.exception.ecode := Mux(misaligned, U(8, 6 bits), U(0, 6 bits))
+        instructionResponse.exception.esubcode := 0
+        instructionResponse.exception.badVAddrValid := misaligned
+        instructionResponse.exception.badVAddr := io.instructionRequest.virtualAddress
+        instructionResponse.exception.tlbRefill := False
+      }
     }
     when(io.instructionResponse.valid && io.instructionResponse.ready) {
       instructionResponseValid := False
@@ -162,7 +184,7 @@ final class OooAddressTranslationUnit(
       io.instructionRequest.virtualAddress,
       instructionContext.virtualAddress
     )
-    translator.io.inst_fetch := instructionRequestFire
+    translator.io.inst_fetch := instructionRequestFire && instructionTranslate
     translator.io.inst_vaddr := instructionDriveAddress.asBits
     translator.io.inst_addr_trans_en := Mux(
       instructionRequestFire,

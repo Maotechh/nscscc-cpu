@@ -101,7 +101,7 @@ class OooAddressTranslationUnitSpec extends AnyFunSuite {
         dut.domain.deassertReset()
         sample(dut)
 
-        translateInstruction(dut, 0x1c001234)
+        assert(translateInstruction(dut, 0x1c001234) == 0)
         assert(dut.io.instructionResponse.physicalAddress.toBigInt == 0x1c001234)
         assert(!dut.io.instructionResponse.uncached.toBoolean)
         assert(!dut.io.instructionResponse.exception.valid.toBoolean)
@@ -119,7 +119,7 @@ class OooAddressTranslationUnitSpec extends AnyFunSuite {
         dut.io.csrDa #= false
         dut.io.csrPg #= true
         dut.io.csrDmw0 #= dmw0
-        translateInstruction(dut, 0x80001234L)
+        assert(translateInstruction(dut, 0x80001234L) == 0)
         assert(dut.io.instructionResponse.physicalAddress.toBigInt == 0x20001234)
         assert(!dut.io.instructionResponse.exception.valid.toBoolean)
         sample(dut)
