@@ -9,6 +9,28 @@ import scala.language.reflectiveCalls
 class OooL2CacheSpec extends AnyFunSuite {
   private val config = OooCoreConfig.FourIssueThreeCommit
 
+  private def clearInputs(dut: OooL2Cache): Unit = {
+    dut.io.readValid #= false
+    dut.io.read.lineAddress #= 0
+    dut.io.read.mshrId #= 0
+    dut.io.readBeatReady #= true
+    dut.io.writeValid #= false
+    dut.io.write.lineAddress #= 0
+    dut.io.write.data #= 0
+    dut.io.write.byteMask #= 0
+    dut.io.write.mshrId #= 0
+    dut.io.memoryReadReady #= false
+    dut.io.memoryReadBeatValid #= false
+    dut.io.memoryReadBeat.mshrId #= 0
+    dut.io.memoryReadBeat.beat #= 0
+    dut.io.memoryReadBeat.data #= 0
+    dut.io.memoryReadBeat.last #= false
+    dut.io.memoryReadBeat.error #= false
+    dut.io.memoryWriteReady #= false
+    dut.io.invalidate #= false
+    dut.io.writebackInvalidate #= false
+  }
+
   test("an L1D writeback is written through and retained as a clean L2 hit") {
     SimConfig.withVerilator
       .workspacePath("target/sim-workspace-ooo-l2-cache")
@@ -16,25 +38,7 @@ class OooL2CacheSpec extends AnyFunSuite {
       .doSim("ooo-l2-write-through", 0x4c61) { dut =>
         dut.clockDomain.forkStimulus(period = 10)
 
-        dut.io.readValid #= false
-        dut.io.read.lineAddress #= 0
-        dut.io.read.mshrId #= 0
-        dut.io.readBeatReady #= true
-        dut.io.writeValid #= false
-        dut.io.write.lineAddress #= 0
-        dut.io.write.data #= 0
-        dut.io.write.byteMask #= 0
-        dut.io.write.mshrId #= 0
-        dut.io.memoryReadReady #= false
-        dut.io.memoryReadBeatValid #= false
-        dut.io.memoryReadBeat.mshrId #= 0
-        dut.io.memoryReadBeat.beat #= 0
-        dut.io.memoryReadBeat.data #= 0
-        dut.io.memoryReadBeat.last #= false
-        dut.io.memoryReadBeat.error #= false
-        dut.io.memoryWriteReady #= false
-        dut.io.invalidate #= false
-        dut.io.writebackInvalidate #= false
+        clearInputs(dut)
 
         dut.clockDomain.assertReset()
         dut.clockDomain.waitSampling(2)
@@ -67,8 +71,10 @@ class OooL2CacheSpec extends AnyFunSuite {
         assert(dut.io.memoryWriteValid.toBoolean)
         assert(dut.io.memoryWrite.lineAddress.toBigInt == address)
         assert(dut.io.memoryWrite.data.toBigInt == line)
-        assert(dut.io.memoryWrite.byteMask.toBigInt ==
-          (BigInt(1) << OooCacheContract.LineBytes) - 1)
+        assert(
+          dut.io.memoryWrite.byteMask.toBigInt ==
+            (BigInt(1) << OooCacheContract.LineBytes) - 1
+        )
 
         dut.io.memoryWriteReady #= true
         dut.clockDomain.waitSampling()
@@ -92,8 +98,81 @@ class OooL2CacheSpec extends AnyFunSuite {
           assert(dut.io.readBeat.mshrId.toBigInt == 3)
           assert(dut.io.readBeat.beat.toBigInt == expectedBeat)
           assert(dut.io.readBeat.data.toBigInt == beats(expectedBeat))
-          assert(dut.io.readBeat.last.toBoolean ==
-            (expectedBeat == OooCacheContract.BeatsPerLine - 1))
+          assert(
+            dut.io.readBeat.last.toBoolean ==
+              (expectedBeat == OooCacheContract.BeatsPerLine - 1)
+          )
+          dut.clockDomain.waitSampling()
+        }
+      }
+  }
+
+  test("a memory refill streams beats to the requesting L1 before the L2 install") {
+    SimConfig.withVerilator
+      .workspacePath("target/sim-workspace-ooo-l2-streaming-refill")
+      .compile(new OooL2Cache(config))
+      .doSim("ooo-l2-streaming-refill", 0x4c62) { dut =>
+        dut.clockDomain.forkStimulus(period = 10)
+        clearInputs(dut)
+
+        dut.clockDomain.assertReset()
+        dut.clockDomain.waitSampling(2)
+        dut.clockDomain.deassertReset()
+        dut.clockDomain.waitSampling(config.level2Cache.sets + 4)
+
+        val address = BigInt("1c123400", 16)
+        dut.io.readValid #= true
+        dut.io.read.lineAddress #= address
+        dut.io.read.mshrId #= 2
+        while (!dut.io.readReady.toBoolean) { dut.clockDomain.waitSampling() }
+        dut.clockDomain.waitSampling()
+        dut.io.readValid #= false
+
+        while (!dut.io.memoryReadValid.toBoolean) { dut.clockDomain.waitSampling() }
+        assert(dut.io.memoryRead.lineAddress.toBigInt == address)
+        dut.io.memoryReadReady #= true
+        dut.clockDomain.waitSampling()
+        dut.io.memoryReadReady #= false
+
+        val beats = (0 until OooCacheContract.BeatsPerLine).map { beat =>
+          BigInt("abcd000000000000", 16) + beat
+        }
+        for (beat <- beats.indices) {
+          dut.io.memoryReadBeatValid #= true
+          dut.io.memoryReadBeat.mshrId #= 0
+          dut.io.memoryReadBeat.beat #= beat
+          dut.io.memoryReadBeat.data #= beats(beat)
+          dut.io.memoryReadBeat.last #= beat == beats.size - 1
+          sleep(1)
+          assert(dut.io.memoryReadBeatReady.toBoolean)
+          assert(dut.io.readBeatValid.toBoolean)
+          assert(dut.io.readBeat.mshrId.toBigInt == 2)
+          assert(dut.io.readBeat.beat.toBigInt == beat)
+          assert(dut.io.readBeat.data.toBigInt == beats(beat))
+          assert(dut.io.readBeat.last.toBoolean == (beat == beats.size - 1))
+          dut.clockDomain.waitSampling()
+        }
+        dut.io.memoryReadBeatValid #= false
+
+        dut.clockDomain.waitSampling(2)
+        assert(dut.io.readReady.toBoolean)
+
+        dut.io.readValid #= true
+        dut.io.read.lineAddress #= address
+        dut.io.read.mshrId #= 3
+        dut.clockDomain.waitSampling()
+        dut.io.readValid #= false
+        for (beat <- beats.indices) {
+          var waitCycles = 0
+          while (!dut.io.readBeatValid.toBoolean && waitCycles < 8) {
+            assert(!dut.io.memoryReadValid.toBoolean)
+            dut.clockDomain.waitSampling()
+            waitCycles += 1
+          }
+          assert(dut.io.readBeatValid.toBoolean)
+          assert(dut.io.readBeat.mshrId.toBigInt == 3)
+          assert(dut.io.readBeat.beat.toBigInt == beat)
+          assert(dut.io.readBeat.data.toBigInt == beats(beat))
           dut.clockDomain.waitSampling()
         }
       }

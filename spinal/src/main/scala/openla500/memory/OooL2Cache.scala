@@ -5,15 +5,14 @@ import spinal.core._
 import spinal.lib._
 
 object OooL2CacheState extends SpinalEnum {
-  val idle, lookup, writeback, writeThrough, refillRequest, refillData, installRead,
-    installWrite, returnData, maintenanceLookup, maintenanceWriteback,
-    maintenanceInvalidate = newElement()
+  val idle, lookup, writeback, writeThrough, refillRequest, refillData, installRead, installWrite,
+      returnData, maintenanceLookup, maintenanceWriteback, maintenanceInvalidate = newElement()
 }
 
 /** Blocking 64-KiB L2 controller used to establish the complete 64-byte line hierarchy.
   *
-  * Requests carry their L1 MSHR id through hit and refill paths. The downstream memory side uses
-  * id zero until arbitration is widened for concurrent L1I/L1D misses.
+  * Requests carry their L1 MSHR id through hit and refill paths. The downstream memory side uses id
+  * zero until arbitration is widened for concurrent L1I/L1D misses.
   */
 final class OooL2Cache(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommit)
     extends Component {
@@ -88,8 +87,10 @@ final class OooL2Cache(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommi
 
   val refillLine = Bits(OooCacheContract.LineBits bits)
   for (beat <- 0 until OooCacheContract.BeatsPerLine) {
-    refillLine(beat * OooCacheContract.BeatBits + OooCacheContract.BeatBits - 1 downto
-      beat * OooCacheContract.BeatBits) := refillBeats(beat)
+    refillLine(
+      beat * OooCacheContract.BeatBits + OooCacheContract.BeatBits - 1 downto
+        beat * OooCacheContract.BeatBits
+    ) := refillBeats(beat)
   }
 
   val newInvalidate = io.invalidate && !invalidateSeen
@@ -164,22 +165,37 @@ final class OooL2Cache(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommi
     pendingWriteData,
     victimData
   )
-  io.memoryWrite.byteMask := B((BigInt(1) << OooCacheContract.LineBytes) - 1,
-    OooCacheContract.LineBytes bits)
+  io.memoryWrite.byteMask := B(
+    (BigInt(1) << OooCacheContract.LineBytes) - 1,
+    OooCacheContract.LineBytes bits
+  )
   io.memoryWrite.mshrId := 0
   io.memoryReadValid := state === OooL2CacheState.refillRequest
   io.memoryRead.lineAddress := pendingAddress
   io.memoryRead.mshrId := 0
+  val streamingRefillBeat = state === OooL2CacheState.refillData &&
+    io.memoryReadBeatValid && io.memoryReadBeat.mshrId === 0
   io.memoryReadBeatReady := state === OooL2CacheState.refillData &&
-    io.memoryReadBeat.mshrId === 0
+    io.memoryReadBeat.mshrId === 0 && io.readBeatReady
 
-  io.readBeatValid := state === OooL2CacheState.returnData
+  // A demand refill already carries the complete L1 response. Forward each accepted memory beat
+  // immediately while retaining a copy for the L2 install, instead of replaying all eight beats
+  // after the line has arrived.
+  io.readBeatValid := state === OooL2CacheState.returnData || streamingRefillBeat
   io.readBeat.mshrId := pendingMshrId
-  io.readBeat.beat := returnBeat
+  io.readBeat.beat := Mux(streamingRefillBeat, io.memoryReadBeat.beat, returnBeat)
   val returnShift = (returnBeat ## U(0, 6 bits)).asUInt
-  io.readBeat.data := (returnLine |>> returnShift)(OooCacheContract.BeatBits - 1 downto 0)
-  io.readBeat.last := returnBeat === OooCacheContract.BeatsPerLine - 1
-  io.readBeat.error := returnError
+  io.readBeat.data := Mux(
+    streamingRefillBeat,
+    io.memoryReadBeat.data,
+    (returnLine |>> returnShift)(OooCacheContract.BeatBits - 1 downto 0)
+  )
+  io.readBeat.last := Mux(
+    streamingRefillBeat,
+    io.memoryReadBeat.last,
+    returnBeat === OooCacheContract.BeatsPerLine - 1
+  )
+  io.readBeat.error := Mux(streamingRefillBeat, io.memoryReadBeat.error, returnError)
 
   when(state === OooL2CacheState.lookup && cacheArray.io.responseValid) {
     when(cacheArray.io.hit) {
@@ -244,10 +260,7 @@ final class OooL2Cache(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommi
     cacheArray.io.writeData := refillLine
     cacheArray.io.writeEntryValid := True
     cacheArray.io.writeDirty := False
-    returnLine := refillLine
-    returnError := refillError
-    returnBeat := 0
-    state := OooL2CacheState.returnData
+    state := OooL2CacheState.idle
   }
 
   when(state === OooL2CacheState.installWrite) {
@@ -259,7 +272,8 @@ final class OooL2Cache(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommi
     state := OooL2CacheState.idle
   }
 
-  val returnFire = io.readBeatValid && io.readBeatReady
+  val returnFire = state === OooL2CacheState.returnData &&
+    io.readBeatValid && io.readBeatReady
   when(returnFire) {
     when(io.readBeat.last) {
       state := OooL2CacheState.idle
@@ -268,8 +282,10 @@ final class OooL2Cache(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommi
     }
   }
 
-  when(state === OooL2CacheState.maintenanceLookup &&
-    cacheArray.io.maintenanceResponseValid) {
+  when(
+    state === OooL2CacheState.maintenanceLookup &&
+      cacheArray.io.maintenanceResponseValid
+  ) {
     when(cacheArray.io.maintenanceEntryValid && cacheArray.io.maintenanceEntryDirty) {
       victimAddress := cacheArray.io.maintenanceEntryAddress
       victimData := cacheArray.io.maintenanceEntryData
