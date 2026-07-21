@@ -5,10 +5,11 @@ import spinal.lib._
 
 /** Multi-retirement boundary for chiplab's indexed DPI commit arrays.
   *
-  * Commit records are delayed by one cycle so the DPI callbacks observe the architectural state
-  * produced by those records at the same active clock edge.  Only one copy of the global
-  * exception, CSR, and GPR state callbacks is emitted; instruction/load/store callbacks retain
-  * their retirement-lane index.
+  * Commit records pass through a fixed three-cycle observation pipeline.  GPR and ordinary CSR
+  * state is sampled after the first cycle; CSR/TLB/ERTN operations whose architectural effects
+  * are staged for an extra cycle use the live CSR view at the third observation edge. Only one
+  * copy of the global exception, CSR, and GPR callbacks is emitted; instruction/load/store
+  * callbacks retain their retirement-lane index.
   */
 final class ChiplabMultiCommitDiffTestAdapter(commitWidth: Int) extends Component {
   require(commitWidth > 0 && commitWidth <= 6, "chiplab exposes six indexed commit slots")
@@ -17,14 +18,39 @@ final class ChiplabMultiCommitDiffTestAdapter(commitWidth: Int) extends Componen
     val clock = in Bool ()
     val commitValid = in Bits (commitWidth bits)
     val commit = in Vec (CommitEvent(), commitWidth)
+    val stateDelayed = in Bits (commitWidth bits)
     val archState = in(ArchState())
   }
 
   val registeredValid = RegNext(io.commitValid) init (B(0, commitWidth bits))
+  val registeredStateDelayed = RegNext(io.stateDelayed) init (B(0, commitWidth bits))
   val registeredCommit = Vec.fill(commitWidth)(Reg(CommitEvent()))
   for (lane <- 0 until commitWidth) {
     registeredCommit(lane) := io.commit(lane)
   }
+
+  // Keep every commit batch in the same fixed-latency stream. Selectively delaying only a
+  // serializing event can collide with and overwrite the first batch after its refetch.
+  val delayedValid = RegNext(registeredValid) init (B(0, commitWidth bits))
+  val delayedStateDelayed = RegNext(registeredStateDelayed) init (B(0, commitWidth bits))
+  val delayedCommit = Vec.fill(commitWidth)(Reg(CommitEvent()))
+  for (lane <- 0 until commitWidth) {
+    delayedCommit(lane) := registeredCommit(lane)
+  }
+  val observedValid = RegNext(delayedValid) init (B(0, commitWidth bits))
+  val observedStateDelayed = RegNext(delayedStateDelayed) init (B(0, commitWidth bits))
+  val observedCommit = Vec.fill(commitWidth)(Reg(CommitEvent()))
+  for (lane <- 0 until commitWidth) {
+    observedCommit(lane) := delayedCommit(lane)
+  }
+  val registeredArchState = Reg(ArchState())
+  registeredArchState := io.archState
+  val sampledArchState = Reg(ArchState())
+  sampledArchState := registeredArchState
+
+  val visibleValid = observedValid
+  val visibleCommit = observedCommit
+  val useLiveCsrState = (visibleValid & observedStateDelayed).orR
 
   val rawRetired = Bits(commitWidth bits)
   for (lane <- 0 until commitWidth) {
@@ -37,12 +63,12 @@ final class ChiplabMultiCommitDiffTestAdapter(commitWidth: Int) extends Componen
 
   val globalEvent = CommitEvent()
   val globalEventValid = Bool()
-  globalEvent := registeredCommit(0)
+  globalEvent := visibleCommit(0)
   globalEventValid := False
   for (lane <- (0 until commitWidth).reverse) {
-    when(registeredValid(lane) &&
-      (registeredCommit(lane).exception.valid || registeredCommit(lane).ertn)) {
-      globalEvent := registeredCommit(lane)
+    when(visibleValid(lane) &&
+      (visibleCommit(lane).exception.valid || visibleCommit(lane).ertn)) {
+      globalEvent := visibleCommit(lane)
       globalEventValid := True
     }
   }
@@ -52,15 +78,15 @@ final class ChiplabMultiCommitDiffTestAdapter(commitWidth: Int) extends Componen
   private val wrapper = new ChiplabMultiCommitDiffTestBlackBox(commitWidth)
   wrapper.io.clock := io.clock
   for (lane <- 0 until commitWidth) {
-    val commit = registeredCommit(lane)
-    wrapper.io.instrValid(lane) := registeredValid(lane) && commit.retired
+    val commit = visibleCommit(lane)
+    wrapper.io.instrValid(lane) := visibleValid(lane) && commit.retired
     wrapper.io.pc(lane * 64 + 63 downto lane * 64) := zeroExtend32(commit.pc.asBits)
     wrapper.io.instruction(lane * 32 + 31 downto lane * 32) := commit.instruction
-    wrapper.io.isTlbFill(lane) := registeredValid(lane) && commit.tlbFill.valid
+    wrapper.io.isTlbFill(lane) := visibleValid(lane) && commit.tlbFill.valid
     wrapper.io.tlbFillIndex(lane * 5 + 4 downto lane * 5) := commit.tlbFill.index.asBits
     wrapper.io.isCounterInstruction(lane) := commit.isCounterInstruction
     wrapper.io.timer(lane * 64 + 63 downto lane * 64) := commit.timer.asBits
-    wrapper.io.gprWriteValid(lane) := registeredValid(lane) && commit.gprWrite.valid
+    wrapper.io.gprWriteValid(lane) := visibleValid(lane) && commit.gprWrite.valid
     wrapper.io.gprWriteIndex(lane * 8 + 7 downto lane * 8) :=
       B(0, 3 bits) ## commit.gprWrite.index.asBits
     wrapper.io.gprWriteData(lane * 64 + 63 downto lane * 64) :=
@@ -68,7 +94,7 @@ final class ChiplabMultiCommitDiffTestAdapter(commitWidth: Int) extends Componen
     wrapper.io.csrRstat(lane) := commit.csrRstat
     wrapper.io.csrReadData(lane * 32 + 31 downto lane * 32) := commit.csrReadData
     wrapper.io.storeValid(lane * 8 + 7 downto lane * 8) := Mux(
-      registeredValid(lane),
+      visibleValid(lane),
       commit.store.instructionMask,
       B(0, 8 bits)
     )
@@ -78,7 +104,7 @@ final class ChiplabMultiCommitDiffTestAdapter(commitWidth: Int) extends Componen
       zeroExtend32(commit.store.vAddr.asBits)
     wrapper.io.storeData(lane * 64 + 63 downto lane * 64) := zeroExtend32(commit.store.data)
     wrapper.io.loadValid(lane * 8 + 7 downto lane * 8) := Mux(
-      registeredValid(lane),
+      visibleValid(lane),
       commit.load.instructionMask,
       B(0, 8 bits)
     )
@@ -90,47 +116,50 @@ final class ChiplabMultiCommitDiffTestAdapter(commitWidth: Int) extends Componen
 
   wrapper.io.exceptionValid := globalEventValid && globalEvent.exception.valid
   wrapper.io.ertn := globalEventValid && globalEvent.ertn
-  wrapper.io.interruptNumber := B(0, 21 bits) ## io.archState.estat(12 downto 2)
+  wrapper.io.interruptNumber := B(0, 21 bits) ## sampledArchState.estat(12 downto 2)
   wrapper.io.exceptionCause := B(0, 26 bits) ## globalEvent.exception.ecode.asBits
   wrapper.io.exceptionPc := zeroExtend32(globalEvent.pc.asBits)
   wrapper.io.exceptionInstruction := globalEvent.instruction
   wrapper.io.trapValid := False
-  wrapper.io.trapCode := io.archState.gpr(10)(2 downto 0)
+  wrapper.io.trapCode := sampledArchState.gpr(10)(2 downto 0)
   wrapper.io.trapPc := zeroExtend32(globalEvent.pc.asBits)
   wrapper.io.cycleCount := cycleCount.asBits
   wrapper.io.instructionCount := instructionCount.asBits
 
   private val csrWords = Seq(
-    io.archState.crmd,
-    io.archState.prmd,
-    io.archState.euen,
-    io.archState.ecfg,
-    io.archState.estat,
-    io.archState.era,
-    io.archState.badv,
-    io.archState.eentry,
-    io.archState.tlbidx,
-    io.archState.tlbehi,
-    io.archState.tlbelo0,
-    io.archState.tlbelo1,
-    io.archState.asid,
-    io.archState.pgdl,
-    io.archState.pgdh,
-    io.archState.save0,
-    io.archState.save1,
-    io.archState.save2,
-    io.archState.save3,
-    io.archState.tid,
-    io.archState.tcfg,
-    io.archState.tval,
-    io.archState.ticlr,
-    io.archState.llbctl,
-    io.archState.tlbrentry,
-    io.archState.dmw0,
-    io.archState.dmw1
+    (io.archState.crmd, sampledArchState.crmd),
+    (io.archState.prmd, sampledArchState.prmd),
+    (io.archState.euen, sampledArchState.euen),
+    (io.archState.ecfg, sampledArchState.ecfg),
+    (io.archState.estat, sampledArchState.estat),
+    (io.archState.era, sampledArchState.era),
+    (io.archState.badv, sampledArchState.badv),
+    (io.archState.eentry, sampledArchState.eentry),
+    (io.archState.tlbidx, sampledArchState.tlbidx),
+    (io.archState.tlbehi, sampledArchState.tlbehi),
+    (io.archState.tlbelo0, sampledArchState.tlbelo0),
+    (io.archState.tlbelo1, sampledArchState.tlbelo1),
+    (io.archState.asid, sampledArchState.asid),
+    (io.archState.pgdl, sampledArchState.pgdl),
+    (io.archState.pgdh, sampledArchState.pgdh),
+    (io.archState.save0, sampledArchState.save0),
+    (io.archState.save1, sampledArchState.save1),
+    (io.archState.save2, sampledArchState.save2),
+    (io.archState.save3, sampledArchState.save3),
+    (io.archState.tid, sampledArchState.tid),
+    (io.archState.tcfg, sampledArchState.tcfg),
+    (io.archState.tval, sampledArchState.tval),
+    (io.archState.ticlr, sampledArchState.ticlr),
+    (io.archState.llbctl, sampledArchState.llbctl),
+    (io.archState.tlbrentry, sampledArchState.tlbrentry),
+    (io.archState.dmw0, sampledArchState.dmw0),
+    (io.archState.dmw1, sampledArchState.dmw1)
   )
-  wrapper.io.csrState := csrWords.map(zeroExtend32).reverse.reduce(_ ## _)
-  wrapper.io.gprState := io.archState.gpr.map(zeroExtend32).reverse.reduce(_ ## _)
+  wrapper.io.csrState := csrWords
+    .map { case (live, sampled) => zeroExtend32(Mux(useLiveCsrState, live, sampled)) }
+    .reverse
+    .reduce(_ ## _)
+  wrapper.io.gprState := sampledArchState.gpr.map(zeroExtend32).reverse.reduce(_ ## _)
 }
 
 /** Conditional Verilog shell around the simulator-owned indexed commit and global state modules. */

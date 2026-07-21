@@ -21,6 +21,38 @@ final case class OooFrontendSlot(config: OooCoreConfig) extends Bundle {
   */
 final class OooFrontend(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommit)
     extends Component {
+  private def opcode(instruction: Bits): UInt = instruction(31 downto 26).asUInt
+
+  private def isDirectUnconditionalBranch(instruction: Bits): Bool = {
+    val op = opcode(instruction)
+    op === U(0x14, 6 bits) || op === U(0x15, 6 bits)
+  }
+
+  private def isConditionalBranch(instruction: Bits): Bool = {
+    val op = opcode(instruction)
+    op >= U(0x16, 6 bits) && op <= U(0x1b, 6 bits)
+  }
+
+  // BTFNT is deliberately stateless: it removes the common loop back-edge penalty without
+  // adding a predictor table or a new recovery protocol to this first OoO frontend.
+  private def staticallyPredictedTaken(instruction: Bits): Bool =
+    isDirectUnconditionalBranch(instruction) ||
+      (isConditionalBranch(instruction) && instruction(25))
+
+  private def staticDirectTarget(pc: UInt, instruction: Bits): UInt = {
+    val directOffset =
+      (instruction(9 downto 0) ## instruction(25 downto 10) ## B(0, 2 bits))
+        .asSInt
+        .resize(config.xlen)
+        .asUInt
+    val conditionalOffset =
+      (instruction(25 downto 10) ## B(0, 2 bits))
+        .asSInt
+        .resize(config.xlen)
+        .asUInt
+    pc + Mux(isDirectUnconditionalBranch(instruction), directOffset, conditionalOffset)
+  }
+
   private val pointerWidth = log2Up(config.instructionBufferEntries)
   private val countWidth = log2Up(config.instructionBufferEntries + 1)
   private val enqueueCountWidth = log2Up(config.fetchWidth + 1)
@@ -101,11 +133,27 @@ final class OooFrontend(config: OooCoreConfig = OooCoreConfig.FourIssueThreeComm
   val groupBase = outstandingPc &
     U(((BigInt(1) << config.xlen) - 1) ^ (fetchGroupBytes - 1), config.xlen bits)
   val firstSlot = outstandingPc(fetchGroupOffsetWidth - 1 downto 2)
-  val responseSlotValid = Bits(config.fetchWidth bits)
+  val responseSlotValid = Vec(Bool(), config.fetchWidth)
+  val responsePredictionTaken = Vec(Bool(), config.fetchWidth)
+  val earlierResponsePredictionTaken = Vec(Bool(), config.fetchWidth + 1)
+  val responsePredictionTarget = Vec(UInt(config.xlen bits), config.fetchWidth)
   val responsePrefix = Vec(UInt(enqueueCountWidth bits), config.fetchWidth + 1)
+  earlierResponsePredictionTaken(0) := False
   responsePrefix(0) := 0
   for (lane <- 0 until config.fetchWidth) {
-    responseSlotValid(lane) := responseFire && U(lane, config.fetchSlotWidth bits) >= firstSlot
+    val lanePc = groupBase + U(lane * 4, config.xlen bits)
+    val lanePredictionTaken = staticallyPredictedTaken(io.cacheResponse.instructions(lane))
+    responseSlotValid(lane) := responseFire &&
+      U(lane, config.fetchSlotWidth bits) >= firstSlot &&
+      !earlierResponsePredictionTaken(lane)
+    responsePredictionTaken(lane) := responseSlotValid(lane) &&
+      !io.cacheResponse.error && lanePredictionTaken
+    earlierResponsePredictionTaken(lane + 1) :=
+      earlierResponsePredictionTaken(lane) || responsePredictionTaken(lane)
+    responsePredictionTarget(lane) := staticDirectTarget(
+      lanePc,
+      io.cacheResponse.instructions(lane)
+    )
     responsePrefix(lane + 1) := responsePrefix(lane) + responseSlotValid(lane).asUInt
   }
   val enqueueCount = responsePrefix(config.fetchWidth)
@@ -140,7 +188,14 @@ final class OooFrontend(config: OooCoreConfig = OooCoreConfig.FourIssueThreeComm
   wideDecode.io.instruction := decodeInstruction
   wideDecode.io.predictedTaken := 0
   for (lane <- 0 until config.fetchWidth) {
-    wideDecode.io.predictedTarget(lane) := decodePc(lane) + 4
+    val decodePredictionTaken = decodeInputValid(lane) && !decodeException(lane).valid &&
+      staticallyPredictedTaken(decodeInstruction(lane))
+    wideDecode.io.predictedTaken(lane) := decodePredictionTaken
+    wideDecode.io.predictedTarget(lane) := Mux(
+      decodePredictionTaken,
+      staticDirectTarget(decodePc(lane), decodeInstruction(lane)),
+      decodePc(lane) + 4
+    )
     wideDecode.io.predictorMetadata(lane) := 0
     wideDecode.io.fetchException(lane) := decodeException(lane)
   }
@@ -193,6 +248,17 @@ final class OooFrontend(config: OooCoreConfig = OooCoreConfig.FourIssueThreeComm
     when(responseFire) {
       cacheOutstanding := False
       nextFetchPc := groupBase + fetchGroupBytes
+      when(earlierResponsePredictionTaken(config.fetchWidth)) {
+        when(responsePredictionTaken(0)) {
+          nextFetchPc := responsePredictionTarget(0)
+        }.otherwise {
+          for (lane <- 1 until config.fetchWidth) {
+            when(responsePredictionTaken(lane)) {
+              nextFetchPc := responsePredictionTarget(lane)
+            }
+          }
+        }
+      }
       for (lane <- 0 until config.fetchWidth) {
         when(responseSlotValid(lane)) {
           val destination = (tail + responsePrefix(lane)).resized

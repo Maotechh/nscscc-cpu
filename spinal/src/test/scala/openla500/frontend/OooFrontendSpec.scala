@@ -87,6 +87,20 @@ class OooFrontendSpec extends AnyFunSuite {
     dut.io.cacheResponseValid #= false
   }
 
+  private def encodeDirectBranch(opcode: Int, byteOffset: Int): BigInt = {
+    require((byteOffset & 3) == 0)
+    val encoded = (byteOffset >> 2) & ((1 << 26) - 1)
+    val high10 = (encoded >> 16) & 0x3ff
+    val low16 = encoded & 0xffff
+    (BigInt(opcode) << 26) | (BigInt(low16) << 10) | high10
+  }
+
+  private def encodeConditionalBranch(opcode: Int, byteOffset: Int): BigInt = {
+    require((byteOffset & 3) == 0)
+    val encoded = (byteOffset >> 2) & 0xffff
+    (BigInt(opcode) << 26) | (BigInt(encoded) << 10)
+  }
+
   private def expectDecode(dut: OooFrontend, pcs: Seq[BigInt], rds: Seq[Int]): Unit = {
     assert(dut.io.decodeValid.toBigInt == ((BigInt(1) << pcs.size) - 1))
     pcs.indices.foreach { lane =>
@@ -290,6 +304,81 @@ class OooFrontendSpec extends AnyFunSuite {
         returnGroup(dut, redirectPc, firstRd = 9)
         assert(dut.io.occupancy.toBigInt == 2)
         expectDecode(dut, Seq(redirectPc, redirectPc + 4), Seq(11, 12))
+      }
+  }
+
+  test("static branch prediction truncates the response and redirects fetch") {
+    SimConfig.withVerilator
+      .workspacePath("target/sim-workspace-ooo-frontend")
+      .compile(new OooFrontend(config))
+      .doSim("ooo-frontend-static-branch-prediction", 0x4c67) { dut =>
+        dut.clockDomain.forkStimulus(period = 10)
+        clearInputs(dut)
+        dut.clockDomain.assertReset()
+        dut.clockDomain.waitSampling(2)
+        dut.clockDomain.deassertReset()
+        sample(dut)
+
+        val base = config.resetVector
+        acceptFetch(dut, base)
+        dut.io.cacheResponseValid #= true
+        dut.io.cacheResponse.virtualAddress #= base
+        dut.io.cacheResponse.physicalAddress #= base
+        dut.io.cacheResponse.instructions(0) #= (BigInt("00100000", 16) | 1)
+        dut.io.cacheResponse.instructions(1) #= encodeDirectBranch(0x14, 0x40)
+        dut.io.cacheResponse.instructions(2) #= (BigInt("00100000", 16) | 3)
+        dut.io.cacheResponse.instructions(3) #= (BigInt("00100000", 16) | 4)
+        dut.io.cacheResponse.error #= false
+        sample(dut)
+        dut.io.cacheResponseValid #= false
+
+        assert(dut.io.occupancy.toBigInt == 2)
+        assert(dut.io.fetchPc.toBigInt == base + 4 + 0x40)
+        assert(dut.io.decodeValid.toBigInt == 3)
+        assert(dut.io.decoded(0).pc.toBigInt == base)
+        assert(!dut.io.decoded(0).predictedTaken.toBoolean)
+        assert(dut.io.decoded(1).pc.toBigInt == base + 4)
+        assert(dut.io.decoded(1).predictedTaken.toBoolean)
+        assert(dut.io.decoded(1).predictedTarget.toBigInt == base + 4 + 0x40)
+
+        dut.io.decodeReady #= 3
+        sample(dut)
+        dut.io.decodeReady #= 0
+        assert(dut.io.occupancy.toBigInt == 0)
+
+        acceptFetch(dut, base + 4 + 0x40)
+        dut.io.cacheResponseValid #= true
+        dut.io.cacheResponse.virtualAddress #= base + 4 + 0x40
+        dut.io.cacheResponse.physicalAddress #= base + 4 + 0x40
+        for (lane <- 0 until config.fetchWidth) {
+          dut.io.cacheResponse.instructions(lane) #= (BigInt("00100000", 16) | (9 + lane))
+        }
+        dut.io.cacheResponse.error #= false
+        sample(dut)
+        dut.io.cacheResponseValid #= false
+        assert(dut.io.occupancy.toBigInt == 3)
+
+        // A negative conditional immediate is predicted taken by BTFNT.
+        dut.io.decodeReady #= 0
+        dut.io.redirectTarget #= base + 0x100
+        dut.io.redirectValid #= true
+        sample(dut)
+        dut.io.redirectValid #= false
+        acceptFetch(dut, base + 0x100)
+        dut.io.cacheResponseValid #= true
+        dut.io.cacheResponse.virtualAddress #= base + 0x100
+        dut.io.cacheResponse.physicalAddress #= base + 0x100
+        dut.io.cacheResponse.instructions(0) #= encodeConditionalBranch(0x16, -4)
+        dut.io.cacheResponse.instructions(1) #= (BigInt("00100000", 16) | 21)
+        dut.io.cacheResponse.instructions(2) #= (BigInt("00100000", 16) | 22)
+        dut.io.cacheResponse.instructions(3) #= (BigInt("00100000", 16) | 23)
+        dut.io.cacheResponse.error #= false
+        sample(dut)
+        dut.io.cacheResponseValid #= false
+        assert(dut.io.occupancy.toBigInt == 1)
+        assert(dut.io.fetchPc.toBigInt == base + 0x100 - 4)
+        assert(dut.io.decoded(0).predictedTaken.toBoolean)
+        assert(dut.io.decoded(0).predictedTarget.toBigInt == base + 0x100 - 4)
       }
   }
 }

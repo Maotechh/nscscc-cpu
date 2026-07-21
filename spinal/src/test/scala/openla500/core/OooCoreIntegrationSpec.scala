@@ -127,7 +127,7 @@ class OooCoreIntegrationSpec extends AnyFunSuite {
     dut.io.memoryReadBeatValid #= false
   }
 
-  test("self-fetching core executes a 64-byte instruction line and retires three-wide") {
+  test("self-fetching core retires three-wide and predicts a direct self branch") {
     SimConfig.withVerilator
       .workspacePath("target/sim-workspace-ooo-core-integration")
       .compile(new OooCore(config))
@@ -171,7 +171,6 @@ class OooCoreIntegrationSpec extends AnyFunSuite {
 
         val committed = mutable.LinkedHashMap.empty[BigInt, BigInt]
         var maximumCommitWidth = 0
-        var branchRecoverySeen = false
         var cycles = 0
         while (committed.size < 12 && cycles < 160) {
           sample(dut)
@@ -187,9 +186,7 @@ class OooCoreIntegrationSpec extends AnyFunSuite {
             }
           }
           if (dut.io.recoveryValid.toBoolean) {
-            assert(dut.io.recovery.cause.toBigInt == 1)
-            assert(dut.io.recovery.target.toBigInt == config.resetVector + 12 * 4)
-            branchRecoverySeen = true
+            fail(s"direct branch prediction unexpectedly recovered at cycle $cycles")
           }
           cycles += 1
         }
@@ -198,39 +195,22 @@ class OooCoreIntegrationSpec extends AnyFunSuite {
         assert(committed.values.toSeq == (1 to 12).map(BigInt(_)))
         assert(maximumCommitWidth == config.commitWidth)
 
-        var recoveryWait = 0
-        while (!branchRecoverySeen && recoveryWait < 40) {
+        val branchPc = config.resetVector + 12 * 4
+        var branchCommits = 0
+        var branchWait = 0
+        while (branchCommits < 2 && branchWait < 80) {
           sample(dut)
-          if (dut.io.recoveryValid.toBoolean) {
-            assert(dut.io.recovery.cause.toBigInt == 1)
-            assert(dut.io.recovery.target.toBigInt == config.resetVector + 12 * 4)
-            branchRecoverySeen = true
+          assert(!dut.io.recoveryValid.toBoolean)
+          val mask = dut.io.commitValid.toBigInt
+          for (lane <- 0 until config.commitWidth if (mask & (BigInt(1) << lane)) != 0) {
+            if (dut.io.commit(lane).pc.toBigInt == branchPc) {
+              assert(dut.io.commit(lane).instruction.toBigInt == branchToSelf)
+              branchCommits += 1
+            }
           }
-          recoveryWait += 1
+          branchWait += 1
         }
-        assert(branchRecoverySeen)
-
-        // The registered recovery pulse redirects one cycle later. Seeing the same self-branch
-        // recover again proves that the frontend consumed that redirect instead of falling through.
-        sample(dut)
-        refillInstructionLine(
-          dut,
-          config.resetVector + OooCacheContract.LineBytes,
-          IndexedSeq.fill(16)(branchToSelf),
-          waitForInitialization = false
-        )
-        var repeatedRecoverySeen = false
-        var repeatedRecoveryWait = 0
-        while (!repeatedRecoverySeen && repeatedRecoveryWait < 60) {
-          sample(dut)
-          if (dut.io.recoveryValid.toBoolean) {
-            assert(dut.io.recovery.cause.toBigInt == 1)
-            assert(dut.io.recovery.target.toBigInt == config.resetVector + 12 * 4)
-            repeatedRecoverySeen = true
-          }
-          repeatedRecoveryWait += 1
-        }
-        assert(repeatedRecoverySeen)
+        assert(branchCommits >= 2)
       }
   }
 

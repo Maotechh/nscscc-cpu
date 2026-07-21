@@ -6,24 +6,26 @@
 
 当前官方顶层已经实例化 `openla500.core.OooCoreSystem(OooCoreConfig.FourIssueThreeCommit)`。旧 `SpinalCoreBackend` 和 `openla500.pipeline` 不再参与生成；保留下来的少量 `OpenLa500*` leaf 模块仅供仍被 OoO 核复用的 ALU、乘除法、CSR、TLB 或独立合同测试使用。
 
-当前验证基线（2026-07-21，生成 RTL SHA-256 `239872bf2a4768e534b2b700b47be640aca55422f094e20f80474626c57e7701`）如下：
+当前验证基线（2026-07-21，生成 RTL SHA-256 `3b41c55bb6fa52895da85728a259e43aa42f335aa5718978402e6dbe251ef7b2`）如下：
 
 | 检查 | 结果 |
 | --- | --- |
-| Scala/Spinal/Verilator | 35 suites，84 tests，84 passed，0 failed，0 aborted |
+| Scala/Spinal/Verilator | 35 suites，85 tests，85 passed，0 failed，0 aborted |
 | Python repository gates | 362 tests，362 passed，0 failed/error |
 | core_top package/port contract | pass，49 ports，17 inputs，32 outputs，`TLBNUM=32` |
-| Verilator complete-top lint | pass，668 条精确签名审计后 closure 为 0 warning/error |
+| Verilator complete-top lint | pass，665 条精确签名审计后 closure 为 0 warning/error |
 | Yosys 结构检查 | pass，Yosys 0.33，无 warning/skip |
 | chiplab `func/func_lab19` + NEMU DiffTest | pass，syscall 结束并到达 end PC |
-| 官方仿真计数 | 126,136 committed instructions，776,232 clocks，IPC 0.162498 |
+| 官方仿真计数 | 131,198 committed instructions，744,827 clocks，IPC 0.176146 |
 | Vivado 2023.2 synthesis | 0 errors，0 critical synthesis warnings，DCP/report 生成成功 |
 
-Vivado 独立 DRC 报告仍有无约束顶层 I/O 的 NSTD-1/UCIO-1 critical warning；这是未提供板级 XDC 的 standalone 综合，不是 RTL elaboration 或 synthesis error。在 standalone 100 MHz（10 ns）时钟约束下，所有时序约束已经满足：WNS `+0.419 ns`，TNS `0 ns`，失败端点为 0，最差数据路径 `9.460 ns`。相对上一提交的 WNS `-0.290 ns` 改善 `0.709 ns`，并消除了最后 1 个失败端点。当前最差路径是 backend `issueOperandUop_2.mulDivSigned` 到 multiplier `result[29]`，不再经过 LSQ/ROB completion acceptance 网络。
+Vivado 独立 DRC 报告仍有无约束顶层 I/O 的 NSTD-1/UCIO-1 critical warning；这是未提供板级 XDC 的 standalone 综合，不是 RTL elaboration 或 synthesis error。在 standalone 100 MHz（10 ns）时钟约束下，所有时序约束已经满足：WNS `+0.419 ns`，TNS `0 ns`，失败端点为 0。当前最差路径仍是 backend issue operand 到 multiplier result。
 
-完整顶层 lint 的 668 条审计项由 667 条 `UNUSEDSIGNAL` 和 1 条固定宽度 `CMPCONST` 构成。大部分来自统一 uop/commit/cache/translation Bundle 在具体路径中只消费部分字段，以及官方 debug/兼容端口必须保留；本轮复用 ROB accepted stage 后删除了后端五份完整 `OooCompletion` 寄存记录和无消费者的即时 accepted 端口，共减少 70 条 warning。剩余项不是待实现功能，也没有隐藏的新消费者。`reference/core-top-lint-waivers.json` 同时锁定 RTL SHA-256、warning 数量、类别和签名哈希，先运行无抑制审计，再只对完全匹配的签名执行 clean closure。它不是未来功能承诺，也不是允许新增 warning 的全局开关。
+完整顶层 lint 有 665 条审计项，类别只有 `UNUSEDSIGNAL` 和 1 条固定宽度 `CMPCONST`。大部分来自统一 uop/commit/cache/translation Bundle 在具体路径中只消费部分字段、综合时关闭的 DiffTest 状态输入，以及官方 debug/兼容端口必须保留。它们不是“以后会用”的功能预留；能在 Scala 结构层安全删除的字段应继续删除，但跨模块固定 Bundle 中的未消费字段由生成器保留更清晰。`reference/core-top-lint-waivers.json` 同时锁定 RTL SHA-256、warning 数量、类别和签名哈希，先运行无抑制审计，再只对完全匹配的签名执行 clean closure。它不是允许新增 warning 的全局开关。
 
-综合资源（`xc7a200tfbg676-2`，flatten hierarchy rebuilt）：69,560 LUT、35,607 FF、42 RAMB36、12 RAMB18、4 DSP。相对上一提交 LUT 减少 6、FF 减少 255；ROB accepted stage 直接向 IQ、PRF 和 ready-map 提供 `valid/pdst/data`，删除了后端重复的五份完整 completion 寄存器。后续若继续提高频率，应优化乘法输入/结果路径；当前 100 MHz 已真实闭合，不需要也不允许用 false path 掩盖。
+综合资源（`xc7a200tfbg676-2`，flatten hierarchy rebuilt）：70,774 LUT、37,288 FF、42 RAMB36、12 RAMB18、4 DSP。后续若继续提高频率，应优化乘法输入/结果路径；当前 100 MHz 已真实闭合，不需要也不允许用 false path 掩盖。
+
+旧文档中的 776,232 周期记录复用了早于 RTL 的 `obj_dir/Vsimu_top__ALL.a`，没有重新执行 Verilator 编译，因此不能作为真实性能证据。本轮固定流程中显式执行 `make -j8 verilator`。在完全相同的 DiffTest、TLBFILL 修复和 seed `5570815` 下，关闭静态预测的公平基线为 126,157 instructions / 783,358 clocks / IPC 0.161046；启用候选后为 131,198 instructions / 744,827 clocks / IPC 0.176146，周期减少 38,531（4.92%）。两次都由 NEMU DiffTest、`END by Syscall` 和 end PC 共同判定通过。
 
 ## 源码布局
 
@@ -73,7 +75,7 @@ L1I/translation -> OooFrontend(fetch4) -> OooDecodeRenameBuffer
                                                              -> CSR/TLB/AXI/cache side effects
 ```
 
-* 前端以 64B cache line 为填充单位，每个请求向解码侧提供四条 32-bit 指令；分支恢复由 `OooCore` 捕获 completion 后统一 flush frontend、rename buffer、IQ、ROB younger entries 和 LSQ。
+* 前端以 64B cache line 为填充单位，每个请求向解码侧提供四条 32-bit 指令；静态预解码对 `B/BL` 直接预测跳转，并对向后条件分支采用 BTFNT，响应组在第一条预测跳转处截断并重定向。分支恢复由 `OooCore` 捕获 completion 后统一 flush frontend、rename buffer、IQ、ROB younger entries 和 LSQ。
 * rename 同时分配 physical destination、ROB pointer、LDQ/STQ index。RAT 是投机映射，commit 时更新 architectural mapping 并释放旧 physical register；FreeList 使用 ysyx 风格的 `head/architecturalHead/tail` 环形队列，flush 只回退 speculative head 和 free count，commit 不会在 flush 边界写入回收槽位。
 * IQ 按执行端口能力选择 ready uop；serial/CSR/TLB/CACOP/IDLE 等操作必须等 ROB head，不能因为执行端空闲而越过更老指令。
 * 分支在执行端比较实际 taken/target。错误预测 completion 生成 `OooRecoveryRequest`，目标 PC 和异常元数据一起保存，避免把普通 serial stall 当作 branch recovery。
@@ -101,7 +103,7 @@ L1I/translation -> OooFrontend(fetch4) -> OooDecodeRenameBuffer
 
 ### `OooCoreSystem` / 官方 top
 
-`OooCoreSystem` 在同一 `aclk`/同步高有效 `reset` 域内实例化 CSR、32-entry TLB 地址翻译、IDLE 控制器和 `OooAxiLineBridge`，并维护 commit 时更新的 32 个架构 GPR 镜像。CSR、ERTN、TLB、cache maintenance 和 LL/SC reservation 的状态变更 payload 在提交边界寄存一拍，并在现有 privileged redirect/flush 到达的时钟沿应用；redirect 产生时序没有额外增加一拍。这一边界只切断组合控制路径，不改变精确异常或指令可见顺序。
+`OooCoreSystem` 在同一 `aclk`/同步高有效 `reset` 域内实例化 CSR、32-entry TLB 地址翻译、IDLE 控制器和 `OooAxiLineBridge`，并维护 commit 时更新的 32 个架构 GPR 镜像。CSR、ERTN、TLB、cache maintenance 和 LL/SC reservation 的状态变更 payload 在提交边界寄存一拍，并在现有 privileged redirect/flush 到达的时钟沿应用；TLBFILL 的随机替换索引与有效脉冲同拍捕获，避免副作用延迟时使用下一拍的计时器低位。redirect 产生时序没有额外增加一拍。这一边界只切断组合控制路径，不改变精确异常或指令可见顺序。
 
 官方 `core_top` 仍严格保持 49 个端口和历史 AXI3/WID 方向：
 
@@ -165,12 +167,13 @@ export CHIPLAB_HOME=/home/ubuntu/nscscc-validation/ooo-manual-20260720
 cp rtl/mycpu_top.v "$CHIPLAB_HOME/IP/myCPU/mycpu_top.v"
 cd "$CHIPLAB_HOME/sims/verilator/run_prog"
 ./configure.sh --run func/func_lab19 --disable-clk-time --dump-fst
+make -j8 verilator
 make -j8 testbench
 rm -rf tmp
-make simulation_run_prog
+CHIPLAB_HOME=/home/ubuntu/nscscc-validation/ooo-manual-20260720 make simulation_run_prog
 ```
 
-必须在 `make testbench` 之前运行 `configure.sh`，否则编译参数仍是上一次配置。当前基线保留默认 `TRACE_COMP=y` 以获得正常结束条件；验证目录没有 `golden_trace.txt` 时复制会报警，但 NEMU DPI DiffTest 仍然执行，最终以 DiffTest、syscall 和 end PC 三项共同判断。不要使用会让当前测试失去结束条件的 `--disable-trace-comp --disable-simu-trace` 组合。
+必须在 `make verilator` 和 `make testbench` 之前运行 `configure.sh`，否则编译参数仍是上一次配置；不能省略 `make verilator`，否则可能复用旧的 `obj_dir/Vsimu_top__ALL.a`。当前基线保留默认 `TRACE_COMP=y` 以获得正常结束条件；验证目录没有 `golden_trace.txt` 时复制会报警，但 NEMU DPI DiffTest 仍然执行，最终以 DiffTest、syscall 和 end PC 三项共同判断。不要使用会让当前测试失去结束条件的 `--disable-trace-comp --disable-simu-trace` 组合。
 
 Vivado standalone 综合（PowerShell）：
 
@@ -187,4 +190,4 @@ Vivado standalone 综合（PowerShell）：
 3. 任何宽度/队列/line geometry 改动都必须同时更新 `OooCoreConfig` 的 require、对应 directed test、官方仿真和 Vivado 资源/时序记录；不能只改生成参数。
 4. 先验证功能，再看时序。当前最紧路径是 issue operand -> multiplier result，100 MHz WNS 为正；不能用综合约束屏蔽真实路径，实现级 FPGA 性能仍必须以三次真实远程烧录的最低结果决定。
 5. 官方 `func_lab19` 通过不等于 full random、Linux、FPGA 或比赛性能全部通过。每轮性能结论要记录实际 workload、时钟、seed、commit 和报告哈希。
-6. 当前基线已通过功能、端口、Yosys、synthesis 和 standalone 100 MHz timing；下一轮性能或时序修改必须重新跑 Scala 84 项、官方 DiffTest 和 Vivado，而不是只比较 RTL 文本。
+6. 当前基线已通过功能、端口、Yosys、synthesis 和 standalone 100 MHz timing；下一轮性能或时序修改必须重新跑 Scala 85 项、官方 DiffTest 和 Vivado，而不是只比较 RTL 文本。

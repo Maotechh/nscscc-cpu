@@ -14,6 +14,7 @@ private final class ChiplabMultiCommitDiffTestAdapterProbe extends Component {
   val adapter = new ChiplabMultiCommitDiffTestAdapter(commitWidth = 3)
   adapter.io.clock := io.clock
   adapter.io.commitValid := 0
+  adapter.io.stateDelayed := 0
   adapter.io.commit.assignDontCare()
   adapter.io.archState.assignDontCare()
 }

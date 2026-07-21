@@ -64,6 +64,7 @@ final class OooCoreSystem(
     val committedTlbReadValid = RegNext(core.io.tlbReadValid) init (False)
     val committedTlbWriteValid = RegNext(core.io.tlbWriteValid) init (False)
     val committedTlbFillValid = RegNext(core.io.tlbFillValid) init (False)
+    val committedTlbRandomIndex = RegNext(csr.io.rand_index.asUInt) init (U(0, 5 bits))
     val committedTlbInvalidateValid = RegNext(core.io.tlbInvalidateValid) init (False)
     val committedTlbInvalidateAsid = RegNext(core.io.tlbInvalidateAsid) init (B(0, 10 bits))
     val committedTlbInvalidateVpn = RegNext(core.io.tlbInvalidateVpn) init (B(0, 19 bits))
@@ -201,7 +202,7 @@ final class OooCoreSystem(
   addressTranslation.io.disableCache := translationDisableCache
   addressTranslation.io.tlbFillValid := committedTlbFillValid
   addressTranslation.io.tlbWriteValid := committedTlbWriteValid
-  addressTranslation.io.tlbRandomIndex := csr.io.rand_index.asUInt
+  addressTranslation.io.tlbRandomIndex := committedTlbRandomIndex
   addressTranslation.io.csrTlbEntryHigh := csr.io.tlbehi_out
   addressTranslation.io.csrTlbEntryLow0 := csr.io.tlbelo0_out
   addressTranslation.io.csrTlbEntryLow1 := csr.io.tlbelo1_out
@@ -332,6 +333,7 @@ final class OooCoreSystem(
   diffTest.io.clock := io.aclk
   diffTest.io.commitValid := core.io.commitValid
   diffTest.io.commit := diffCommit
+  diffTest.io.stateDelayed := core.io.commit.map(_.serializing).asBits()
   val diffArchState = ArchState()
   for (index <- 0 until config.archRegs) {
     diffArchState.gpr(index) := architecturalGpr(index)
