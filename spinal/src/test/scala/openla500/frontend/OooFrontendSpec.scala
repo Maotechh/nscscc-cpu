@@ -128,6 +128,8 @@ class OooFrontendSpec extends AnyFunSuite {
 
         val resetPc = config.resetVector
         acceptFetch(dut, resetPc)
+        assert(dut.io.translationRequest.valid.toBoolean)
+        assert(dut.io.translationRequest.virtualAddress.toBigInt == resetPc + config.fetchWidth * 4)
         returnGroup(dut, resetPc, firstRd = 1)
         assert(dut.io.occupancy.toBigInt == 4)
         expectDecode(dut, Seq(resetPc, resetPc + 4, resetPc + 8), Seq(1, 2, 3))
@@ -225,6 +227,101 @@ class OooFrontendSpec extends AnyFunSuite {
       }
   }
 
+  test("a pretranslated group waits for four free instruction-buffer slots") {
+    SimConfig.withVerilator
+      .workspacePath("target/sim-workspace-ooo-frontend")
+      .compile(new OooFrontend(config))
+      .doSim("ooo-frontend-pretranslation-capacity", 0x4c64) { dut =>
+        dut.clockDomain.forkStimulus(period = 10)
+        clearInputs(dut)
+        dut.clockDomain.assertReset()
+        dut.clockDomain.waitSampling(2)
+        dut.clockDomain.deassertReset()
+        sample(dut)
+
+        val base = config.resetVector
+        acceptFetch(dut, base)
+        returnGroup(dut, base, firstRd = 1)
+        assert(dut.io.occupancy.toBigInt == 4)
+
+        acceptFetch(dut, base + 16)
+        assert(dut.io.translationRequest.valid.toBoolean)
+        assert(dut.io.translationRequest.virtualAddress.toBigInt == base + 32)
+
+        dut.io.translationRequest.ready #= true
+        sample(dut)
+        dut.io.translationRequest.ready #= false
+        dut.io.translationResponse.valid #= true
+        dut.io.translationResponse.virtualAddress #= base + 32
+        dut.io.translationResponse.physicalAddress #= base + 32
+        sleep(1)
+        assert(dut.io.translationResponse.ready.toBoolean)
+        sample(dut)
+        dut.io.translationResponse.valid #= false
+
+        returnGroup(dut, base + 16, firstRd = 5)
+        assert(dut.io.occupancy.toBigInt == 8)
+        assert(!dut.io.cacheRequestValid.toBoolean)
+
+        dut.io.decodeReady #= 7
+        sample(dut)
+        assert(dut.io.occupancy.toBigInt == 5)
+        assert(!dut.io.cacheRequestValid.toBoolean)
+        sample(dut)
+        dut.io.decodeReady #= 0
+        assert(dut.io.occupancy.toBigInt == 2)
+        sleep(1)
+        assert(dut.io.cacheRequestValid.toBoolean)
+        assert(dut.io.cacheRequest.virtualAddress.toBigInt == base + 32)
+      }
+  }
+
+  test("a buffered translation exception waits for an instruction-buffer slot") {
+    SimConfig.withVerilator
+      .workspacePath("target/sim-workspace-ooo-frontend")
+      .compile(new OooFrontend(config))
+      .doSim("ooo-frontend-pretranslation-exception-capacity", 0x4c65) { dut =>
+        dut.clockDomain.forkStimulus(period = 10)
+        clearInputs(dut)
+        dut.clockDomain.assertReset()
+        dut.clockDomain.waitSampling(2)
+        dut.clockDomain.deassertReset()
+        sample(dut)
+
+        val base = config.resetVector
+        acceptFetch(dut, base)
+        returnGroup(dut, base, firstRd = 1)
+        assert(dut.io.occupancy.toBigInt == 4)
+
+        acceptFetch(dut, base + 16)
+        dut.io.translationRequest.ready #= true
+        sample(dut)
+        dut.io.translationRequest.ready #= false
+        dut.io.translationResponse.valid #= true
+        dut.io.translationResponse.virtualAddress #= base + 32
+        dut.io.translationResponse.physicalAddress #= 0
+        dut.io.translationResponse.exception.valid #= true
+        dut.io.translationResponse.exception.ecode #= 3
+        sleep(1)
+        assert(dut.io.translationResponse.ready.toBoolean)
+        sample(dut)
+        dut.io.translationResponse.valid #= false
+        dut.io.translationResponse.exception.valid #= false
+
+        returnGroup(dut, base + 16, firstRd = 5)
+        assert(dut.io.occupancy.toBigInt == 8)
+        sample(dut)
+        assert(dut.io.occupancy.toBigInt == 8)
+
+        dut.io.decodeReady #= 7
+        sample(dut)
+        dut.io.decodeReady #= 0
+        assert(dut.io.occupancy.toBigInt == 5)
+        sample(dut)
+        assert(dut.io.occupancy.toBigInt == 6)
+      }
+  }
+
   test("a stale translation response is drained and the original PC is retried") {
     SimConfig.withVerilator
       .workspacePath("target/sim-workspace-ooo-frontend")
@@ -284,6 +381,8 @@ class OooFrontendSpec extends AnyFunSuite {
 
         val oldPc = config.resetVector
         val redirectPc = config.resetVector + 0x108
+        val nextGroup = (redirectPc & ~BigInt(config.fetchWidth * 4 - 1)) +
+          config.fetchWidth * 4
         acceptFetch(dut, oldPc)
 
         dut.io.redirectTarget #= redirectPc
@@ -293,6 +392,8 @@ class OooFrontendSpec extends AnyFunSuite {
         assert(dut.io.occupancy.toBigInt == 0)
 
         acceptFetch(dut, redirectPc)
+        assert(dut.io.translationRequest.valid.toBoolean)
+        assert(dut.io.translationRequest.virtualAddress.toBigInt == nextGroup)
 
         dut.io.cacheResponseValid #= true
         dut.io.cacheResponse.virtualAddress #= oldPc
@@ -303,7 +404,7 @@ class OooFrontendSpec extends AnyFunSuite {
         sample(dut)
         dut.io.cacheResponseValid #= false
         assert(dut.io.occupancy.toBigInt == 0)
-        assert(dut.io.fetchPc.toBigInt == redirectPc)
+        assert(dut.io.fetchPc.toBigInt == nextGroup)
 
         returnGroup(dut, redirectPc, firstRd = 9)
         assert(dut.io.occupancy.toBigInt == 2)

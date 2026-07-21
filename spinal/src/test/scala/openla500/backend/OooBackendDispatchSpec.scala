@@ -16,6 +16,7 @@ private final class OooBackendDispatchProbe(config: OooCoreConfig) extends Compo
     val renameReady = out Bits (config.renameWidth bits)
     val issueValid = out Bits (config.executionWidth bits)
     val issuePc = out Vec (UInt(config.xlen bits), config.executionWidth)
+    val issuePdst = out Vec (UInt(config.physicalRegIndexWidth bits), config.executionWidth)
     val issueRobPointer = out Vec (UInt(config.robPointerWidth bits), config.executionWidth)
     val issueSource1 = out Vec (Bits(config.xlen bits), config.executionWidth)
     val issueSource2 = out Vec (Bits(config.xlen bits), config.executionWidth)
@@ -83,6 +84,7 @@ private final class OooBackendDispatchProbe(config: OooCoreConfig) extends Compo
   io.issueValid := backend.io.issueValid
   for (port <- 0 until config.executionWidth) {
     io.issuePc(port) := backend.io.issue(port).decoded.pc
+    io.issuePdst(port) := backend.io.issue(port).pdst
     io.issueRobPointer(port) := backend.io.issue(port).robPointer
     io.issueSource1(port) := backend.io.issueSource1(port)
     io.issueSource2(port) := backend.io.issueSource2(port)
@@ -217,6 +219,48 @@ class OooBackendDispatchSpec extends AnyFunSuite {
           }
         }
         assert(!dependentIssued)
+      }
+  }
+
+  test("an r0 write cannot borrow the next allocated physical destination") {
+    SimConfig.withVerilator
+      .workspacePath("target/sim-workspace-ooo-backend-dispatch")
+      .compile(new OooBackendDispatchProbe(config))
+      .doSim("ooo-backend-r0-has-no-physical-destination", 0x4c44) { dut =>
+        dut.clockDomain.forkStimulus(period = 10)
+        clearControl(dut)
+        dut.io.issueReady #= 0xf
+        dut.clockDomain.assertReset()
+        dut.clockDomain.waitSampling(2)
+        dut.clockDomain.deassertReset()
+        dut.clockDomain.waitSampling()
+
+        val basePc = BigInt("1c000000", 16)
+        // add.w r0,r0,r0 must not claim p1; addi.w r13,r0,1 owns p1.
+        dut.io.inputValid #= 3
+        dut.io.pc(0) #= basePc
+        dut.io.instruction(0) #= BigInt("00100000", 16)
+        dut.io.pc(1) #= basePc + 4
+        dut.io.instruction(1) #= BigInt("0280040d", 16)
+        dut.clockDomain.waitSampling()
+        dut.io.inputValid #= 0
+
+        val observedPdst = scala.collection.mutable.Map.empty[BigInt, BigInt]
+        var cycles = 0
+        while (observedPdst.size < 2 && cycles < 12) {
+          dut.clockDomain.waitSampling()
+          sleep(1)
+          val issueMask = dut.io.issueValid.toBigInt
+          for (port <- 0 until config.executionWidth) {
+            if ((issueMask & (BigInt(1) << port)) != 0) {
+              observedPdst(dut.io.issuePc(port).toBigInt) = dut.io.issuePdst(port).toBigInt
+            }
+          }
+          cycles += 1
+        }
+
+        assert(observedPdst(basePc) == 0)
+        assert(observedPdst(basePc + 4) == 1)
       }
   }
 }

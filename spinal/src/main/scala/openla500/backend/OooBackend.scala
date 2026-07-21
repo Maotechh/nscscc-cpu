@@ -52,8 +52,14 @@ final class OooBackend(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommi
   val renamedInput = Vec(OooRenamedUop(config), config.renameWidth)
   val dispatchInput = Vec(OooRenamedUop(config), config.renameWidth)
   for (lane <- 0 until config.renameWidth) {
+    val writesPhysicalDestination =
+      io.rename(lane).writesGpr && io.rename(lane).rd =/= 0
     renamedInput(lane).decoded := io.rename(lane)
-    renamedInput(lane).pdst := freeList.io.allocatePdst(lane)
+    renamedInput(lane).pdst := Mux(
+      writesPhysicalDestination,
+      freeList.io.allocatePdst(lane),
+      U(0, config.physicalRegIndexWidth bits)
+    )
     renamedInput(lane).oldPdst := registerMap.io.renameOldPdst(lane)
     renamedInput(lane).psrc1 := registerMap.io.renamePsrc1(lane)
     renamedInput(lane).psrc2 := registerMap.io.renamePsrc2(lane)

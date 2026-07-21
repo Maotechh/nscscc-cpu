@@ -104,8 +104,11 @@ final class OooFrontend(config: OooCoreConfig = OooCoreConfig.FourIssueThreeComm
   val translatedRequestValid = RegInit(False)
   val translatedPhysicalAddress = Reg(UInt(config.xlen bits))
   val translatedUncached = Reg(Bool())
+  val translatedExceptionValid = RegInit(False)
+  val translatedException = Reg(OooExceptionMeta())
   val cacheOutstanding = RegInit(False)
-  val outstandingPc = Reg(UInt(config.xlen bits)) init (U(config.resetVector, config.xlen bits))
+  val translationPc = Reg(UInt(config.xlen bits)) init (U(config.resetVector, config.xlen bits))
+  val cachePc = Reg(UInt(config.xlen bits)) init (U(config.resetVector, config.xlen bits))
   // A compact recovery-trained table handles JIRL and branches that disagree with BTFNT.
   // It is intentionally updated only by a precise ROB recovery, so squashed speculation cannot
   // corrupt the architectural prediction history.
@@ -124,26 +127,28 @@ final class OooFrontend(config: OooCoreConfig = OooCoreConfig.FourIssueThreeComm
 
   val freeSlots = U(config.instructionBufferEntries, countWidth bits) - count
   io.translationRequest.valid := !translationOutstanding && !translationDropPending &&
-    !translatedRequestValid && !cacheOutstanding && !io.redirectValid &&
+    !translatedRequestValid && !translatedExceptionValid && !io.redirectValid &&
     freeSlots >= config.fetchWidth
   io.translationRequest.virtualAddress := nextFetchPc
   io.translationRequest.isWrite := False
   val translationRequestFire = io.translationRequest.valid && io.translationRequest.ready
-  io.translationResponse.ready := !translatedRequestValid &&
+  io.translationResponse.ready := !translatedRequestValid && !translatedExceptionValid &&
     (translationOutstanding || translationDropPending)
   val translationResponseFire = io.translationResponse.valid && io.translationResponse.ready
   // A delayed response must belong to the request currently held by the frontend.  This
   // protects the virtual-PC tag from being paired with a physical address from a stale request
   // after a redirect or a translator response race.
   val translationResponseMatches =
-    io.translationResponse.virtualAddress === outstandingPc
-  val translationResponseUseful = translationResponseFire && translationOutstanding &&
-    !io.redirectValid && translationResponseMatches
-  val translationExceptionFire = translationResponseUseful &&
-    io.translationResponse.exception.valid
+    io.translationResponse.virtualAddress === translationPc
+  val translationExceptionFire = translationResponseFire && translationOutstanding &&
+    !io.redirectValid && translationResponseMatches && io.translationResponse.exception.valid
 
-  io.cacheRequestValid := translatedRequestValid && !io.redirectValid
-  io.cacheRequest.virtualAddress := outstandingPc
+  // Translation may run while an older cache response is pending, but no buffer capacity is
+  // reserved until the translated request reaches L1I.  Recheck space here so a fast prefetch
+  // cannot overwrite four live instruction-buffer entries after the older response fills them.
+  io.cacheRequestValid := translatedRequestValid && !cacheOutstanding && !io.redirectValid &&
+    freeSlots >= config.fetchWidth
+  io.cacheRequest.virtualAddress := translationPc
   io.cacheRequest.physicalAddress := translatedPhysicalAddress
   io.cacheRequest.uncached := translatedUncached
   val requestFire = io.cacheRequestValid && io.cacheRequestReady
@@ -151,12 +156,12 @@ final class OooFrontend(config: OooCoreConfig = OooCoreConfig.FourIssueThreeComm
 
   // Cached requests can be killed at the L1 boundary, but an already accepted uncached AXI burst
   // still completes.  Do not let that stale response satisfy a newer request after redirect.
-  val cacheResponseMatches = io.cacheResponse.virtualAddress === outstandingPc
+  val cacheResponseMatches = io.cacheResponse.virtualAddress === cachePc
   val responseFire = io.cacheResponseValid && cacheOutstanding && !io.redirectValid &&
     cacheResponseMatches
-  val groupBase = outstandingPc &
+  val groupBase = cachePc &
     U(((BigInt(1) << config.xlen) - 1) ^ (fetchGroupBytes - 1), config.xlen bits)
-  val firstSlot = outstandingPc(fetchGroupOffsetWidth - 1 downto 2)
+  val firstSlot = cachePc(fetchGroupOffsetWidth - 1 downto 2)
   val responseSlotValid = Vec(Bool(), config.fetchWidth)
   val responsePredictionTaken = Vec(Bool(), config.fetchWidth)
   val earlierResponsePredictionTaken = Vec(Bool(), config.fetchWidth + 1)
@@ -256,11 +261,12 @@ final class OooFrontend(config: OooCoreConfig = OooCoreConfig.FourIssueThreeComm
     translationDropPending :=
       (translationOutstanding || translationDropPending) && !translationResponseFire
     translatedRequestValid := False
+    translatedExceptionValid := False
     cacheOutstanding := False
   }.otherwise {
     when(translationRequestFire) {
       translationOutstanding := True
-      outstandingPc := nextFetchPc
+      translationPc := nextFetchPc
     }
     when(translationResponseFire) {
       when(translationDropPending) {
@@ -271,12 +277,25 @@ final class OooFrontend(config: OooCoreConfig = OooCoreConfig.FourIssueThreeComm
           translatedRequestValid := True
           translatedPhysicalAddress := io.translationResponse.physicalAddress
           translatedUncached := io.translationResponse.uncached
+        }.elsewhen(translationResponseMatches) {
+          // Preserve the original immediate exception path when no older cache request exists.
+          // A speculative next-group fault waits behind the older instruction group.
+          when(cacheOutstanding) {
+            translatedExceptionValid := True
+            translatedException := io.translationResponse.exception
+          }
         }
       }
     }
     when(requestFire) {
       translatedRequestValid := False
       cacheOutstanding := True
+      cachePc := translationPc
+      // Predict the next group as sequential while this request is in the cache.  A response-time
+      // branch prediction below either confirms it or cancels the speculative translation.
+      nextFetchPc := (translationPc &
+        U(((BigInt(1) << config.xlen) - 1) ^ (fetchGroupBytes - 1), config.xlen bits)) +
+        fetchGroupBytes
     }
     when(responseFire) {
       cacheOutstanding := False
@@ -291,6 +310,13 @@ final class OooFrontend(config: OooCoreConfig = OooCoreConfig.FourIssueThreeComm
             }
           }
         }
+        // A sequential translation issued during the cache wait is stale when this group predicts
+        // a branch.  A response arriving now is consumed; a later response is drained explicitly.
+        translatedRequestValid := False
+        translatedExceptionValid := False
+        translationOutstanding := False
+        translationDropPending :=
+          (translationOutstanding || translationDropPending) && !translationResponseFire
       }
       for (lane <- 0 until config.fetchWidth) {
         when(responseSlotValid(lane)) {
@@ -309,20 +335,28 @@ final class OooFrontend(config: OooCoreConfig = OooCoreConfig.FourIssueThreeComm
       }
       tail := tail + enqueueCount
     }
-    when(translationExceptionFire) {
-      entries(tail).pc := outstandingPc
+    val translationExceptionCommit = !cacheOutstanding && !translatedRequestValid &&
+      !io.redirectValid && freeSlots =/= 0 &&
+      (translatedExceptionValid || translationExceptionFire)
+    when(translationExceptionCommit) {
+      entries(tail).pc := translationPc
       entries(tail).instruction := B(0, 32 bits)
-      entries(tail).exception := io.translationResponse.exception
+      entries(tail).exception := Mux(
+        translationExceptionFire,
+        io.translationResponse.exception,
+        translatedException
+      )
       entries(tail).predictedTaken := False
-      entries(tail).predictedTarget := outstandingPc + 4
+      entries(tail).predictedTarget := translationPc + 4
       tail := tail + 1
-      nextFetchPc := outstandingPc + 4
+      nextFetchPc := translationPc + 4
+      translatedExceptionValid := False
     }
     head := head + dequeueCount
     val acceptedCount = Mux(
       responseFire,
       enqueueCount,
-      Mux(translationExceptionFire, U(1, enqueueCountWidth bits), U(0, enqueueCountWidth bits))
+      Mux(translationExceptionCommit, U(1, enqueueCountWidth bits), U(0, enqueueCountWidth bits))
     )
     count := count + acceptedCount - dequeueCount
   }
