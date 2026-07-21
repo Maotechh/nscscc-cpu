@@ -37,6 +37,10 @@ class OooFrontendSpec extends AnyFunSuite {
     dut.io.decodeReady #= 0
     dut.io.redirectValid #= false
     dut.io.redirectTarget #= 0
+    dut.io.predictorUpdateValid #= false
+    dut.io.predictorUpdatePc #= 0
+    dut.io.predictorUpdateTaken #= false
+    dut.io.predictorUpdateTarget #= 0
     dut.io.privilege #= 0
     dut.io.interruptPending #= false
   }
@@ -379,6 +383,36 @@ class OooFrontendSpec extends AnyFunSuite {
         assert(dut.io.fetchPc.toBigInt == base + 0x100 - 4)
         assert(dut.io.decoded(0).predictedTaken.toBoolean)
         assert(dut.io.decoded(0).predictedTarget.toBigInt == base + 0x100 - 4)
+
+        // A precise mispredict update overrides forward-not-taken on the next visit.
+        val learnedPc = base + 0x200
+        val learnedTarget = base + 0x280
+        dut.io.predictorUpdatePc #= learnedPc
+        dut.io.predictorUpdateTaken #= true
+        dut.io.predictorUpdateTarget #= learnedTarget
+        dut.io.predictorUpdateValid #= true
+        sample(dut)
+        dut.io.predictorUpdateValid #= false
+
+        dut.io.redirectTarget #= learnedPc
+        dut.io.redirectValid #= true
+        sample(dut)
+        dut.io.redirectValid #= false
+        acceptFetch(dut, learnedPc)
+        dut.io.cacheResponseValid #= true
+        dut.io.cacheResponse.virtualAddress #= learnedPc
+        dut.io.cacheResponse.physicalAddress #= learnedPc
+        dut.io.cacheResponse.instructions(0) #= encodeConditionalBranch(0x16, 0x10)
+        dut.io.cacheResponse.instructions(1) #= (BigInt("00100000", 16) | 25)
+        dut.io.cacheResponse.instructions(2) #= (BigInt("00100000", 16) | 26)
+        dut.io.cacheResponse.instructions(3) #= (BigInt("00100000", 16) | 27)
+        dut.io.cacheResponse.error #= false
+        sample(dut)
+        dut.io.cacheResponseValid #= false
+        assert(dut.io.occupancy.toBigInt == 1)
+        assert(dut.io.fetchPc.toBigInt == learnedTarget)
+        assert(dut.io.decoded(0).predictedTaken.toBoolean)
+        assert(dut.io.decoded(0).predictedTarget.toBigInt == learnedTarget)
       }
   }
 }

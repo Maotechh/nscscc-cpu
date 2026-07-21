@@ -13,6 +13,7 @@ final case class OooRobEntry(config: OooCoreConfig) extends Bundle {
   val sideEffectData = Bits(config.xlen bits)
   val exception = OooExceptionMeta()
   val branchMispredict = Bool()
+  val branchTaken = Bool()
   val branchTarget = UInt(config.xlen bits)
 }
 
@@ -84,6 +85,7 @@ final class OooRob(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommit) e
       entries(destination(config.robIndexWidth - 1 downto 0)).exception :=
         io.allocate(lane).uop.decoded.exception
       entries(destination(config.robIndexWidth - 1 downto 0)).branchMispredict := False
+      entries(destination(config.robIndexWidth - 1 downto 0)).branchTaken := False
       entries(destination(config.robIndexWidth - 1 downto 0)).branchTarget := U(0, config.xlen bits)
     }
   }
@@ -137,6 +139,8 @@ final class OooRob(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommit) e
   io.recoveryValid := recoveryMask.orR
   io.recovery.cause := OooRecoveryCause.none
   io.recovery.robPointer := U(0, config.robPointerWidth bits)
+  io.recovery.pc := U(0, config.xlen bits)
+  io.recovery.taken := False
   io.recovery.target := U(0, config.xlen bits)
   io.recovery.exception.valid := False
   io.recovery.exception.ecode := U(0, 6 bits)
@@ -147,6 +151,8 @@ final class OooRob(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommit) e
   when(recoveryMask.orR) {
     val recoveryIndex = selectLowest(recoveryMask, log2Up(config.commitWidth))
     io.recovery.robPointer := candidates(recoveryIndex).pointer
+    io.recovery.pc := candidates(recoveryIndex).uop.decoded.pc
+    io.recovery.taken := candidates(recoveryIndex).branchTaken
     io.recovery.target := candidates(recoveryIndex).branchTarget
     io.recovery.exception := candidates(recoveryIndex).exception
     when(candidates(recoveryIndex).exception.valid) {
@@ -179,6 +185,7 @@ final class OooRob(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommit) e
   val stagedSideEffectData = Vec.fill(config.writebackWidth)(Reg(Bits(config.xlen bits)))
   val stagedException = Vec.fill(config.writebackWidth)(Reg(OooExceptionMeta()))
   val stagedBranchResolved = Vec.fill(config.writebackWidth)(Reg(Bool()))
+  val stagedBranchTaken = Vec.fill(config.writebackWidth)(Reg(Bool()))
   val stagedBranchMispredict = Vec.fill(config.writebackWidth)(Reg(Bool()))
   val stagedBranchTarget = Vec.fill(config.writebackWidth)(Reg(UInt(config.xlen bits)))
   for (lane <- 0 until config.writebackWidth) {
@@ -201,6 +208,7 @@ final class OooRob(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommit) e
         stagedSideEffectData(lane) := io.completion(lane).sideEffectData
         stagedException(lane) := io.completion(lane).exception
         stagedBranchResolved(lane) := io.completion(lane).branchResolved
+        stagedBranchTaken(lane) := io.completion(lane).branchTaken
         stagedBranchMispredict(lane) := io.completion(lane).branchMispredict
         stagedBranchTarget(lane) := io.completion(lane).branchTarget
       }
@@ -215,6 +223,7 @@ final class OooRob(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommit) e
         entries(entryIndex).sideEffectData := stagedSideEffectData(lane)
         entries(entryIndex).exception := stagedException(lane)
         when(stagedBranchResolved(lane)) {
+          entries(entryIndex).branchTaken := stagedBranchTaken(lane)
           entries(entryIndex).branchMispredict := stagedBranchMispredict(lane)
           entries(entryIndex).branchTarget := stagedBranchTarget(lane)
         }

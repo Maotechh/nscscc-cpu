@@ -169,6 +169,11 @@ final class OooCore(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommit)
 
   frontend.io.redirectValid := internalRedirectValid
   frontend.io.redirectTarget := internalRedirectTarget
+  frontend.io.predictorUpdateValid := backend.io.recoveryValid &&
+    backend.io.recovery.cause === OooRecoveryCause.branchMispredict
+  frontend.io.predictorUpdatePc := backend.io.recovery.pc
+  frontend.io.predictorUpdateTaken := backend.io.recovery.taken
+  frontend.io.predictorUpdateTarget := backend.io.recovery.target
   frontend.io.privilege := io.privilege
   frontend.io.interruptPending := io.interruptPending
   decodeRenameBuffer.io.flush := internalRedirectValid

@@ -148,6 +148,8 @@ final case class OooCompletion(config: OooCoreConfig) extends Bundle {
 final case class OooRecoveryRequest(config: OooCoreConfig) extends Bundle {
   val cause = UInt(OooRecoveryCause.Width bits)
   val robPointer = UInt(config.robPointerWidth bits)
+  val pc = UInt(config.xlen bits)
+  val taken = Bool()
   val target = UInt(config.xlen bits)
   val exception = OooExceptionMeta()
 }

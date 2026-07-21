@@ -11,6 +11,8 @@ final case class OooFrontendSlot(config: OooCoreConfig) extends Bundle {
   val pc = UInt(config.xlen bits)
   val instruction = Bits(32 bits)
   val exception = OooExceptionMeta()
+  val predictedTaken = Bool()
+  val predictedTarget = UInt(config.xlen bits)
 }
 
 /** Four-slot fetch frontend with an eight-entry fetch-to-decode buffer.
@@ -58,6 +60,9 @@ final class OooFrontend(config: OooCoreConfig = OooCoreConfig.FourIssueThreeComm
   private val enqueueCountWidth = log2Up(config.fetchWidth + 1)
   private val fetchGroupBytes = config.fetchWidth * 4
   private val fetchGroupOffsetWidth = log2Up(fetchGroupBytes)
+  private val predictorEntries = 32
+  private val predictorIndexWidth = log2Up(predictorEntries)
+  private val predictorTagWidth = config.xlen - predictorIndexWidth - 2
 
   require(fetchGroupBytes == 16)
 
@@ -78,6 +83,10 @@ final class OooFrontend(config: OooCoreConfig = OooCoreConfig.FourIssueThreeComm
 
     val redirectValid = in Bool ()
     val redirectTarget = in UInt (config.xlen bits)
+    val predictorUpdateValid = in Bool ()
+    val predictorUpdatePc = in UInt (config.xlen bits)
+    val predictorUpdateTaken = in Bool ()
+    val predictorUpdateTarget = in UInt (config.xlen bits)
     val privilege = in Bits (2 bits)
     val interruptPending = in Bool ()
 
@@ -97,6 +106,21 @@ final class OooFrontend(config: OooCoreConfig = OooCoreConfig.FourIssueThreeComm
   val translatedUncached = Reg(Bool())
   val cacheOutstanding = RegInit(False)
   val outstandingPc = Reg(UInt(config.xlen bits)) init (U(config.resetVector, config.xlen bits))
+  // A compact recovery-trained table handles JIRL and branches that disagree with BTFNT.
+  // It is intentionally updated only by a precise ROB recovery, so squashed speculation cannot
+  // corrupt the architectural prediction history.
+  val predictorValid = Vec.fill(predictorEntries)(RegInit(False))
+  val predictorTaken = Vec.fill(predictorEntries)(Reg(Bool()) init (False))
+  val predictorTag = Vec.fill(predictorEntries)(Reg(Bits(predictorTagWidth bits)) init (0))
+  val predictorTarget = Vec.fill(predictorEntries)(Reg(UInt(config.xlen bits)) init (0))
+  when(io.predictorUpdateValid) {
+    val updateIndex = io.predictorUpdatePc(predictorIndexWidth + 1 downto 2)
+    predictorValid(updateIndex) := True
+    predictorTaken(updateIndex) := io.predictorUpdateTaken
+    predictorTag(updateIndex) :=
+      io.predictorUpdatePc(config.xlen - 1 downto predictorIndexWidth + 2).asBits
+    predictorTarget(updateIndex) := io.predictorUpdateTarget
+  }
 
   val freeSlots = U(config.instructionBufferEntries, countWidth bits) - count
   io.translationRequest.valid := !translationOutstanding && !translationDropPending &&
@@ -142,7 +166,14 @@ final class OooFrontend(config: OooCoreConfig = OooCoreConfig.FourIssueThreeComm
   responsePrefix(0) := 0
   for (lane <- 0 until config.fetchWidth) {
     val lanePc = groupBase + U(lane * 4, config.xlen bits)
-    val lanePredictionTaken = staticallyPredictedTaken(io.cacheResponse.instructions(lane))
+    val laneIndex = lanePc(predictorIndexWidth + 1 downto 2)
+    val laneTag = lanePc(config.xlen - 1 downto predictorIndexWidth + 2).asBits
+    val dynamicPredictionHit = predictorValid(laneIndex) && predictorTag(laneIndex) === laneTag
+    val lanePredictionTaken = Mux(
+      dynamicPredictionHit,
+      predictorTaken(laneIndex),
+      staticallyPredictedTaken(io.cacheResponse.instructions(lane))
+    )
     responseSlotValid(lane) := responseFire &&
       U(lane, config.fetchSlotWidth bits) >= firstSlot &&
       !earlierResponsePredictionTaken(lane)
@@ -150,9 +181,10 @@ final class OooFrontend(config: OooCoreConfig = OooCoreConfig.FourIssueThreeComm
       !io.cacheResponse.error && lanePredictionTaken
     earlierResponsePredictionTaken(lane + 1) :=
       earlierResponsePredictionTaken(lane) || responsePredictionTaken(lane)
-    responsePredictionTarget(lane) := staticDirectTarget(
-      lanePc,
-      io.cacheResponse.instructions(lane)
+    responsePredictionTarget(lane) := Mux(
+      dynamicPredictionHit,
+      predictorTarget(laneIndex),
+      staticDirectTarget(lanePc, io.cacheResponse.instructions(lane))
     )
     responsePrefix(lane + 1) := responsePrefix(lane) + responseSlotValid(lane).asUInt
   }
@@ -188,12 +220,13 @@ final class OooFrontend(config: OooCoreConfig = OooCoreConfig.FourIssueThreeComm
   wideDecode.io.instruction := decodeInstruction
   wideDecode.io.predictedTaken := 0
   for (lane <- 0 until config.fetchWidth) {
+    val decodeSource = (head + U(lane, pointerWidth bits)).resized
     val decodePredictionTaken = decodeInputValid(lane) && !decodeException(lane).valid &&
-      staticallyPredictedTaken(decodeInstruction(lane))
+      entries(decodeSource).predictedTaken
     wideDecode.io.predictedTaken(lane) := decodePredictionTaken
     wideDecode.io.predictedTarget(lane) := Mux(
       decodePredictionTaken,
-      staticDirectTarget(decodePc(lane), decodeInstruction(lane)),
+      entries(decodeSource).predictedTarget,
       decodePc(lane) + 4
     )
     wideDecode.io.predictorMetadata(lane) := 0
@@ -270,6 +303,8 @@ final class OooFrontend(config: OooCoreConfig = OooCoreConfig.FourIssueThreeComm
           entries(destination).exception.badVAddrValid := io.cacheResponse.error
           entries(destination).exception.badVAddr := groupBase + lane * 4
           entries(destination).exception.tlbRefill := False
+          entries(destination).predictedTaken := responsePredictionTaken(lane)
+          entries(destination).predictedTarget := responsePredictionTarget(lane)
         }
       }
       tail := tail + enqueueCount
@@ -278,6 +313,8 @@ final class OooFrontend(config: OooCoreConfig = OooCoreConfig.FourIssueThreeComm
       entries(tail).pc := outstandingPc
       entries(tail).instruction := B(0, 32 bits)
       entries(tail).exception := io.translationResponse.exception
+      entries(tail).predictedTaken := False
+      entries(tail).predictedTarget := outstandingPc + 4
       tail := tail + 1
       nextFetchPc := outstandingPc + 4
     }

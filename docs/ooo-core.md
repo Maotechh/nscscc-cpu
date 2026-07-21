@@ -6,7 +6,7 @@
 
 当前官方顶层已经实例化 `openla500.core.OooCoreSystem(OooCoreConfig.FourIssueThreeCommit)`。旧 `SpinalCoreBackend` 和 `openla500.pipeline` 不再参与生成；保留下来的少量 `OpenLa500*` leaf 模块仅供仍被 OoO 核复用的 ALU、乘除法、CSR、TLB 或独立合同测试使用。
 
-当前验证基线（2026-07-21，生成 RTL SHA-256 `3b41c55bb6fa52895da85728a259e43aa42f335aa5718978402e6dbe251ef7b2`）如下：
+当前验证基线（2026-07-21，生成 RTL SHA-256 `270152e4dd38aa9c1598b232b2e115eea5245088fa417f41c9b9b74fb444aba3`）如下：
 
 | 检查 | 结果 |
 | --- | --- |
@@ -16,16 +16,16 @@
 | Verilator complete-top lint | pass，665 条精确签名审计后 closure 为 0 warning/error |
 | Yosys 结构检查 | pass，Yosys 0.33，无 warning/skip |
 | chiplab `func/func_lab19` + NEMU DiffTest | pass，syscall 结束并到达 end PC |
-| 官方仿真计数 | 131,198 committed instructions，744,827 clocks，IPC 0.176146 |
+| 官方仿真计数 | 131,226 committed instructions，743,893 clocks，IPC 0.176404 |
 | Vivado 2023.2 synthesis | 0 errors，0 critical synthesis warnings，DCP/report 生成成功 |
 
 Vivado 独立 DRC 报告仍有无约束顶层 I/O 的 NSTD-1/UCIO-1 critical warning；这是未提供板级 XDC 的 standalone 综合，不是 RTL elaboration 或 synthesis error。在 standalone 100 MHz（10 ns）时钟约束下，所有时序约束已经满足：WNS `+0.419 ns`，TNS `0 ns`，失败端点为 0。当前最差路径仍是 backend issue operand 到 multiplier result。
 
 完整顶层 lint 有 665 条审计项，类别只有 `UNUSEDSIGNAL` 和 1 条固定宽度 `CMPCONST`。大部分来自统一 uop/commit/cache/translation Bundle 在具体路径中只消费部分字段、综合时关闭的 DiffTest 状态输入，以及官方 debug/兼容端口必须保留。它们不是“以后会用”的功能预留；能在 Scala 结构层安全删除的字段应继续删除，但跨模块固定 Bundle 中的未消费字段由生成器保留更清晰。`reference/core-top-lint-waivers.json` 同时锁定 RTL SHA-256、warning 数量、类别和签名哈希，先运行无抑制审计，再只对完全匹配的签名执行 clean closure。它不是允许新增 warning 的全局开关。
 
-综合资源（`xc7a200tfbg676-2`，flatten hierarchy rebuilt）：70,774 LUT、37,288 FF、42 RAMB36、12 RAMB18、4 DSP。后续若继续提高频率，应优化乘法输入/结果路径；当前 100 MHz 已真实闭合，不需要也不允许用 false path 掩盖。
+综合资源（`xc7a200tfbg676-2`，flatten hierarchy rebuilt）：71,687 LUT、39,563 FF、42 RAMB36、12 RAMB18、4 DSP。后续若继续提高频率，应优化乘法输入/结果路径；当前 100 MHz 已真实闭合，不需要也不允许用 false path 掩盖。
 
-旧文档中的 776,232 周期记录复用了早于 RTL 的 `obj_dir/Vsimu_top__ALL.a`，没有重新执行 Verilator 编译，因此不能作为真实性能证据。本轮固定流程中显式执行 `make -j8 verilator`。在完全相同的 DiffTest、TLBFILL 修复和 seed `5570815` 下，关闭静态预测的公平基线为 126,157 instructions / 783,358 clocks / IPC 0.161046；启用候选后为 131,198 instructions / 744,827 clocks / IPC 0.176146，周期减少 38,531（4.92%）。两次都由 NEMU DiffTest、`END by Syscall` 和 end PC 共同判定通过。
+旧文档中的 776,232 周期记录复用了早于 RTL 的 `obj_dir/Vsimu_top__ALL.a`，没有重新执行 Verilator 编译，因此不能作为真实性能证据。本轮固定流程中显式执行 `make -j8 verilator`。在完全相同的 DiffTest、TLBFILL 修复和 seed `5570815` 下，关闭静态预测的公平基线为 126,157 instructions / 783,358 clocks / IPC 0.161046；启用静态预测为 131,198 instructions / 744,827 clocks / IPC 0.176146；再加入恢复训练表后为 131,226 instructions / 743,893 clocks / IPC 0.176404。最终相对公平基线减少 39,465 周期（5.04%），相对上一提交减少 934 周期（0.13%）。各次都由 NEMU DiffTest、`END by Syscall` 和 end PC 共同判定通过。
 
 ## 源码布局
 
@@ -75,7 +75,7 @@ L1I/translation -> OooFrontend(fetch4) -> OooDecodeRenameBuffer
                                                              -> CSR/TLB/AXI/cache side effects
 ```
 
-* 前端以 64B cache line 为填充单位，每个请求向解码侧提供四条 32-bit 指令；静态预解码对 `B/BL` 直接预测跳转，并对向后条件分支采用 BTFNT，响应组在第一条预测跳转处截断并重定向。分支恢复由 `OooCore` 捕获 completion 后统一 flush frontend、rename buffer、IQ、ROB younger entries 和 LSQ。
+* 前端以 64B cache line 为填充单位，每个请求向解码侧提供四条 32-bit 指令；静态预解码对 `B/BL` 直接预测跳转，并对向后条件分支采用 BTFNT。32-entry 带 tag 的恢复训练表只学习 ROB 已确认的方向/目标错误，用于覆盖反静态模式和 JIRL；预测结果随 fetch slot 入队，decode 不会因表更新而重算出不同结果。响应组在第一条预测跳转处截断并重定向。分支恢复由 `OooCore` 捕获 completion 后统一 flush frontend、rename buffer、IQ、ROB younger entries 和 LSQ。
 * rename 同时分配 physical destination、ROB pointer、LDQ/STQ index。RAT 是投机映射，commit 时更新 architectural mapping 并释放旧 physical register；FreeList 使用 ysyx 风格的 `head/architecturalHead/tail` 环形队列，flush 只回退 speculative head 和 free count，commit 不会在 flush 边界写入回收槽位。
 * IQ 按执行端口能力选择 ready uop；serial/CSR/TLB/CACOP/IDLE 等操作必须等 ROB head，不能因为执行端空闲而越过更老指令。
 * 分支在执行端比较实际 taken/target。错误预测 completion 生成 `OooRecoveryRequest`，目标 PC 和异常元数据一起保存，避免把普通 serial stall 当作 branch recovery。
