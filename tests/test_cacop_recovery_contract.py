@@ -22,7 +22,8 @@ def test_icache_cacop_uses_passing_d22_state_path() -> None:
 
 def test_dcache_cacop_uses_passing_d22_state_path() -> None:
     _assert_recovery_contract(DCACHE, cache_name="dcache")
-    assert "!(requestPreld || requestCacop)" in DCACHE
+    assert "val cacopBlocksResponse = if (goldenCacopBypass) False else requestCacop" in DCACHE
+    assert "!(requestPreld || cacopBlocksResponse || physicalColorMismatch)" in DCACHE
 
 
 def test_core_top_rtl_header_does_not_embed_self_invalidating_git_head() -> None:

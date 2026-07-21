@@ -18,8 +18,11 @@ private final class LateResultForwardingSimTop extends Component {
     val memoryResult = in Bits (32 bits)
     val executeReady = in Bool ()
     val decodeFlush = in Bool ()
+    val redirectTargetAccepted = in Bool ()
     val decodeInputReady = out Bool ()
     val decodeValid = out Bool ()
+    val decodeBranchRepair = out Bool ()
+    val decodeBranchTarget = out UInt (32 bits)
     val decodeLateJ = out Bool ()
     val executeValid = out Bool ()
     val executeResult = out Bits (32 bits)
@@ -64,6 +67,7 @@ private final class LateResultForwardingSimTop extends Component {
   decode.io.flush.instructionCacheOperation := False
   decode.io.flush.idle := False
   decode.io.delayedBranchSlotCancel := io.decodeFlush
+  decode.io.redirectTargetAccepted := io.redirectTargetAccepted
   decode.io.executeTlbStall := False
   decode.io.memoryTlbStall := False
   decode.io.writebackTlbStall := False
@@ -107,6 +111,8 @@ private final class LateResultForwardingSimTop extends Component {
 
   io.decodeInputReady := decode.io.input.ready
   io.decodeValid := decode.io.output.valid
+  io.decodeBranchRepair := decode.io.branchRepair.active
+  io.decodeBranchTarget := decode.io.branchRepair.target
   io.decodeLateJ := decode.io.lateForwardJ
   io.executeValid := execute.io.output.valid
   io.executeResult := execute.io.output.payload.executeResult
@@ -177,6 +183,7 @@ class LateResultForwardingSpec extends AnyFunSuite {
         dut.io.memoryResult #= 0
         dut.io.executeReady #= false
         dut.io.decodeFlush #= false
+        dut.io.redirectTargetAccepted #= false
 
         dut.clockDomain.assertReset()
         dut.clockDomain.waitSampling(2)
@@ -288,6 +295,7 @@ class LateResultForwardingSpec extends AnyFunSuite {
         dut.io.memoryResult #= 0
         dut.io.executeReady #= false
         dut.io.decodeFlush #= false
+        dut.io.redirectTargetAccepted #= false
 
         dut.clockDomain.assertReset()
         dut.clockDomain.waitSampling(2)
@@ -378,6 +386,7 @@ class LateResultForwardingSpec extends AnyFunSuite {
         dut.io.memoryResult #= 0
         dut.io.executeReady #= false
         dut.io.decodeFlush #= false
+        dut.io.redirectTargetAccepted #= false
 
         dut.clockDomain.assertReset()
         dut.clockDomain.waitSampling(2)
@@ -410,6 +419,132 @@ class LateResultForwardingSpec extends AnyFunSuite {
         dut.io.fetchValid #= false
         sleep(1)
         assert(!dut.io.decodeValid.toBoolean)
+      }
+  }
+
+  test("accepted late-branch target is not discarded as a stale Fetch slot") {
+    val workspaceRoot =
+      sys.env.getOrElse("SPINAL_SIM_WORKSPACE", "target/sim-workspace-late-forward")
+    val workspace = Paths.get(workspaceRoot, "accepted-late-branch-target").toString
+
+    SimConfig
+      .withConfig(SpinalConfig(oneFilePerComponent = true, removePruned = false))
+      .withVerilator
+      .addSimulatorFlag("-Wall")
+      .addSimulatorFlag("-Wwarn-WIDTH")
+      .addSimulatorFlag("-Wwarn-UNOPTFLAT")
+      .addSimulatorFlag("-Wwarn-CMPCONST")
+      .addSimulatorFlag("-Wwarn-UNSIGNED")
+      .addSimulatorFlag("-Wno-UNUSEDSIGNAL")
+      .disableCache
+      .workspacePath(workspace)
+      .compile(new LateResultForwardingSimTop)
+      .doSim("accepted-late-branch-target", 0x158aa8) { dut =>
+        dut.clockDomain.forkStimulus(period = 10)
+        dut.io.fetchValid #= false
+        dut.io.fetchBits #= 0
+        dut.io.registerWrite.valid #= false
+        dut.io.registerWrite.destination #= 0
+        dut.io.registerWrite.data #= 0
+        dut.io.producerValid #= false
+        dut.io.producerDestination #= 1
+        dut.io.producerLateResultAllowed #= true
+        dut.io.memoryResultValid #= false
+        dut.io.memoryResultStalled #= false
+        dut.io.memoryResult #= 0
+        dut.io.executeReady #= false
+        dut.io.decodeFlush #= false
+        dut.io.redirectTargetAccepted #= false
+
+        dut.clockDomain.assertReset()
+        dut.clockDomain.waitSampling(2)
+        dut.clockDomain.deassertReset()
+        dut.clockDomain.waitSampling()
+
+        val add = BigInt("00100823", 16)
+        dut.io.fetchBits #= BigInt("1c001000", 16) | (add << 32)
+        dut.io.fetchValid #= true
+        dut.clockDomain.waitSampling()
+        dut.io.fetchValid #= false
+        sleep(1)
+        assert(dut.io.decodeValid.toBoolean)
+
+        // The redirect target request was accepted in the repair cycle. No old-path response can
+        // remain ahead of it, so the next slot is the target and must survive Decode cancellation.
+        dut.io.decodeFlush #= true
+        dut.io.redirectTargetAccepted #= true
+        dut.clockDomain.waitSampling()
+        dut.io.decodeFlush #= false
+        dut.io.redirectTargetAccepted #= false
+
+        dut.io.fetchBits #= BigInt("1c002000", 16) | (add << 32)
+        dut.io.fetchValid #= true
+        dut.clockDomain.waitSampling()
+        dut.io.fetchValid #= false
+        sleep(1)
+        assert(dut.io.decodeValid.toBoolean)
+      }
+  }
+
+  test("accepted Decode BL repair target is not discarded") {
+    val workspaceRoot =
+      sys.env.getOrElse("SPINAL_SIM_WORKSPACE", "target/sim-workspace-late-forward")
+    val workspace = Paths.get(workspaceRoot, "accepted-decode-repair-target").toString
+
+    SimConfig
+      .withConfig(SpinalConfig(oneFilePerComponent = true, removePruned = false))
+      .withVerilator
+      .addSimulatorFlag("-Wall")
+      .addSimulatorFlag("-Wwarn-WIDTH")
+      .addSimulatorFlag("-Wwarn-UNOPTFLAT")
+      .addSimulatorFlag("-Wwarn-CMPCONST")
+      .addSimulatorFlag("-Wwarn-UNSIGNED")
+      .addSimulatorFlag("-Wno-UNUSEDSIGNAL")
+      .disableCache
+      .workspacePath(workspace)
+      .compile(new LateResultForwardingSimTop)
+      .doSim("accepted-decode-repair-target", 0x158aa8) { dut =>
+        dut.clockDomain.forkStimulus(period = 10)
+        dut.io.fetchValid #= false
+        dut.io.fetchBits #= 0
+        dut.io.registerWrite.valid #= false
+        dut.io.registerWrite.destination #= 0
+        dut.io.registerWrite.data #= 0
+        dut.io.producerValid #= false
+        dut.io.producerDestination #= 1
+        dut.io.producerLateResultAllowed #= true
+        dut.io.memoryResultValid #= false
+        dut.io.memoryResultStalled #= false
+        dut.io.memoryResult #= 0
+        dut.io.executeReady #= false
+        dut.io.decodeFlush #= false
+        dut.io.redirectTargetAccepted #= false
+
+        dut.clockDomain.assertReset()
+        dut.clockDomain.waitSampling(2)
+        dut.clockDomain.deassertReset()
+        dut.clockDomain.waitSampling()
+
+        val pc = BigInt("1c001000", 16)
+        val bl = (BigInt(0x15) << 26) | (BigInt(2) << 10)
+        dut.io.fetchBits #= pc | (bl << 32)
+        dut.io.fetchValid #= true
+        dut.clockDomain.waitSampling()
+        dut.io.fetchValid #= false
+        dut.io.redirectTargetAccepted #= true
+        sleep(1)
+        assert(dut.io.decodeBranchRepair.toBoolean)
+        assert(dut.io.decodeBranchTarget.toBigInt == pc + 8)
+        dut.clockDomain.waitSampling()
+        dut.io.redirectTargetAccepted #= false
+
+        val add = BigInt("00100823", 16)
+        dut.io.fetchBits #= (pc + 8) | (add << 32)
+        dut.io.fetchValid #= true
+        dut.clockDomain.waitSampling()
+        dut.io.fetchValid #= false
+        sleep(1)
+        assert(dut.io.decodeValid.toBoolean)
       }
   }
 }

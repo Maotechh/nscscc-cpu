@@ -43,6 +43,11 @@ class ChiplabDiffTestAdapterSpec extends AnyFunSuite {
         "DifftestGRegState"
       )
       officialModules.foreach(name => assert(rtl.contains(s"$name u_difftest_")))
+      (0 until CommitGroup.Width).foreach { lane =>
+        assert(rtl.contains(s"u_difftest_instr_commit_$lane"))
+        assert(rtl.contains(s"u_difftest_store_$lane"))
+        assert(rtl.contains(s"u_difftest_load_$lane"))
+      }
       assert(rtl.contains("`ifdef DIFFTEST_EN"))
       assert(rtl.contains("`ifndef DIFFTEST_EN"))
       assert(
@@ -55,27 +60,26 @@ class ChiplabDiffTestAdapterSpec extends AnyFunSuite {
           .sliding("verilator lint_on UNUSEDSIGNAL".length)
           .count(_ == "verilator lint_on UNUSEDSIGNAL") == 1
       )
-      assert(rtl.contains(".valid(instrValid)"))
-      assert(rtl.contains(".skip(1'b0 & ^commitContract)"))
-      assert(rtl.contains(".TLBFILL_index(tlbFillIndex)"))
+      assert(rtl.contains(".valid(instrValid[0])"))
+      assert(rtl.contains(".index(8'd1)"))
+      assert(rtl.contains(".index(8'd2)"))
+      assert(rtl.contains(".skip(1'b0 & ^commitContract[504:0])"))
+      assert(rtl.contains(".TLBFILL_index(tlbFillIndex[4:0])"))
+      assert(rtl.contains(".valid(storeValid[15:8])"))
+      assert(rtl.contains(".valid(loadValid[23:16])"))
       assert(rtl.contains(".euen(64'b0 & csrState[191:128])"))
       assert(rtl.contains(".gpr_0(64'b0 & gprState[63:0])"))
       assert(rtl.contains("input  wire [2047:0] gprState"))
       assert(!rtl.contains("registeredArchState"))
       assert(rtl.contains("registeredCommit"))
       Seq(
-        "assign wrapper_pc = {32'h0,registeredCommit_pc};",
-        "assign wrapper_gprWriteIndex = {3'b000,registeredCommit_gprWrite_index};",
-        "assign wrapper_gprWriteData = {32'h0,registeredCommit_gprWrite_data};",
         "assign wrapper_interruptNumber = {21'h0,io_archState_estat[12 : 2]};",
-        "assign wrapper_exceptionCause = {26'h0,registeredCommit_exception_ecode};",
-        "assign wrapper_exceptionPc = {32'h0,registeredCommit_pc};",
-        "assign wrapper_storePhysicalAddress = {32'h0,registeredCommit_store_pAddr};",
-        "assign wrapper_storeVirtualAddress = {32'h0,registeredCommit_store_vAddr};",
-        "assign wrapper_storeData = {32'h0,registeredCommit_store_data};",
-        "assign wrapper_loadPhysicalAddress = {32'h0,registeredCommit_load_pAddr};",
-        "assign wrapper_loadVirtualAddress = {32'h0,registeredCommit_load_vAddr};"
+        "assign wrapper_exceptionCause = {26'h0,selectedControl_exceptionCode};",
+        "assign wrapper_exceptionPc = {32'h0,selectedControl_pc};",
+        "assign wrapper_trapPc = {32'h0,registeredCommit_events_0_pc};"
       ).foreach(expected => assert(rtl.contains(expected)))
+      assert(!rtl.contains("selectedControl_gprWrite"))
+      assert(!rtl.contains("selectedControl_store"))
     } finally {
       Files.walk(outputDirectory).iterator().asScala.toSeq.reverse.foreach(Files.delete)
     }

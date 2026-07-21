@@ -140,6 +140,10 @@ final class FetchStage(config: CoreConfig = CoreConfig.Locked) extends Component
   val prefetchReady =
     (instructionRequest || prefetchAlignmentException) && io.instructionAddressAccepted
   val toFsValid = prefetchReady
+  // A coincident sequential request can already be the authoritative redirect target. Remembering
+  // that target in branchWaitTarget would issue it twice and duplicate its first instruction.
+  val branchTargetAccepted =
+    io.branchRepair && instructionRequest && io.instructionAddressAccepted && nextPc === io.branchTarget
 
   io.downstream.valid := fsValid && fsReady
   io.downstream.payload.pc := fsPc
@@ -198,7 +202,7 @@ final class FetchStage(config: CoreConfig = CoreConfig.Locked) extends Component
         branchRequestPc := io.branchTarget
       }.elsewhen(
         (io.branchRepair && !io.instructionAddressAccepted && fsValid) ||
-          (io.branchRepair && io.instructionAddressAccepted && !fsValid)
+          (io.branchRepair && io.instructionAddressAccepted && !fsValid && !branchTargetAccepted)
       ) {
         branchRequestState := branchWaitTarget
         branchRequestPc := io.branchTarget

@@ -3,7 +3,13 @@ package openla500.compat
 import openla500.config.CoreConfig
 import openla500.execute.{OpenLa500Div, OpenLa500LaccCore, OpenLa500Mul}
 import openla500.memory.{OpenLa500DCache, OpenLa500ICache, OpenLa500TypedAxiBridge}
-import openla500.observe.{ArchState, ChiplabDiffTestAdapter, CommitEvent, OpenLa500PerfCounter}
+import openla500.observe.{
+  ArchState,
+  ChiplabDiffTestAdapter,
+  CommitEvent,
+  CommitGroup,
+  OpenLa500PerfCounter
+}
 import openla500.pipeline._
 import openla500.predict.OpenLa500Predictor
 import openla500.privileged.{OpenLa500AddrTrans, OpenLa500Csr}
@@ -43,29 +49,51 @@ private[compat] final class SpinalCoreBackend(
   val reset = !io.aresetn
 
   val fetch = new FetchStage(config)
+  val fetchBuffer = new FetchInstructionBuffer(depth = 8, exposePreview = false)
   // Full-core-only late forwarding removes the fixed load/mul-use bubble. Legacy leaf generators
   // keep their cycle-locked behavior by using DecodeStage's default `false` profile.
   val decode = new DecodeStage(
     config,
     lateResultForwardingEnabled = true,
     memoryBranchForwardingEnabled = true,
-    delayedBranchResolutionEnabled = true
+    delayedBranchResolutionEnabled = true,
+    frontendOwnsRedirectCancellation = true
   )
   val execute = new ExecuteStage(config, delayedBranchResolutionEnabled = true)
   val memory = new MemoryStage
   val writeback = new WritebackStage(emitCommit = true, exposeObservation = false)
 
-  fetch.io.downstream >> decode.io.input
-  decode.io.directionPrediction := fetch.io.directionPrediction
+  // Redirect age is WB global flush > EX branch repair > Decode branch repair. In particular, a
+  // younger branch decision must not arm frontend stale-response recovery on the same cycle as an
+  // older CSR refetch, exception, ERTN, cache operation, or idle flush.
+  val writebackFlushActive =
+    writeback.io.flush.exception || writeback.io.flush.ertn || writeback.io.flush.refetch ||
+      writeback.io.flush.instructionCacheOperation || writeback.io.flush.idle
+  val selectedBranchRepair = PipelineCtrlPriority.selectBranchRepair(
+    writebackFlushActive,
+    execute.io.branchRepair,
+    decode.io.branchRepair
+  )
+
+  fetchBuffer.io.push.valid := fetch.io.downstream.valid
+  fetch.io.downstream.ready := fetchBuffer.io.push.ready
+  fetchBuffer.io.push.payload.slotValid := B"4'b0001"
+  for (lane <- 0 until FetchPacket.Width) {
+    fetchBuffer.io.push.payload.slots(lane).fetch := fetch.io.downstream.payload
+    fetchBuffer.io.push.payload.slots(lane).direction := fetch.io.directionPrediction
+  }
+  decode.io.input.valid := fetchBuffer.io.pop.valid
+  decode.io.input.payload := fetchBuffer.io.pop.payload.fetch
+  fetchBuffer.io.pop.ready := decode.io.input.ready
+  decode.io.directionPrediction := fetchBuffer.io.pop.payload.direction
   // An EX-resolved misprediction is older than the instruction currently in Decode. Mask that
   // younger transfer in the repair cycle; Decode is cleared below while the resolving branch is
   // still allowed to advance to MEM.
-  val executeBranchRepair = execute.io.branchRepair.active
+  val executeBranchRepair = execute.io.branchRepair.active && !writebackFlushActive
   execute.io.input.valid := decode.io.output.valid && !executeBranchRepair
   execute.io.input.payload := decode.io.output.payload
   decode.io.output.ready := execute.io.input.ready && !executeBranchRepair
   execute.io.delayedBranch := decode.io.delayedBranch
-  decode.io.delayedBranchSlotCancel := executeBranchRepair
   execute.io.output >> memory.io.input
   memory.io.output >> writeback.io.input
 
@@ -146,6 +174,13 @@ private[compat] final class SpinalCoreBackend(
   fetch.io.instructionCacheFlush := writeback.io.flush.instructionCacheOperation
   fetch.io.idleFlush := writeback.io.flush.idle
   fetch.io.writebackPc := writeback.io.debug.pc
+  val branchRepairActive = selectedBranchRepair.active
+  val branchRepairTarget = selectedBranchRepair.target
+  val redirectTargetAccepted =
+    branchRepairActive && fetch.io.fetchEnable && fetch.io.fetchPc === branchRepairTarget
+  fetchBuffer.io.flush := branchRepairActive || writebackFlushActive
+  fetchBuffer.io.redirect := branchRepairActive
+  fetchBuffer.io.redirectTargetAccepted := redirectTargetAccepted
 
   decode.io.executeForward.writeEnabled := execute.io.forward.writeEnabled
   decode.io.executeForward.dependencyNeedsStall := execute.io.forward.dependencyNeedsStall
@@ -167,9 +202,8 @@ private[compat] final class SpinalCoreBackend(
   decode.io.memoryOccupied := memory.io.forward.valid
   decode.io.writebackOccupied := writeback.io.stageValid
 
-  fetch.io.branchRepair := executeBranchRepair || decode.io.branchRepair.active
-  fetch.io.branchTarget :=
-    Mux(executeBranchRepair, execute.io.branchRepair.target, decode.io.branchRepair.target)
+  fetch.io.branchRepair := branchRepairActive
+  fetch.io.branchTarget := branchRepairTarget
 
   val predictor = new OpenLa500Predictor(config, localHistoryEnabled = true)
   predictor.io.lookup.valid := fetch.io.fetchEnable
@@ -183,8 +217,9 @@ private[compat] final class SpinalCoreBackend(
   // The older EX branch wins the single predictor-update port. A simultaneous Decode update can
   // only belong to the next (correctly predicted) instruction; redirects remain independently
   // arbitrated above, so dropping this rare younger training event cannot affect correctness.
-  val predictorUpdateFromExecute = execute.io.btb.enable
-  predictor.io.update.valid := predictorUpdateFromExecute || decode.io.btb.enable
+  val predictorUpdateFromExecute = execute.io.btb.enable && !writebackFlushActive
+  val predictorUpdateFromDecode = decode.io.btb.enable && !writebackFlushActive
+  predictor.io.update.valid := predictorUpdateFromExecute || predictorUpdateFromDecode
   predictor.io.update.payload.popReturnStack := Mux(
     predictorUpdateFromExecute,
     execute.io.btb.popReturnStack,
@@ -331,8 +366,13 @@ private[compat] final class SpinalCoreBackend(
   csr.io.asid_in := addressTranslation.io.asid_out
 
   if (config.diffTestEnabled) {
-    val architecturalCommit = Flow(CommitEvent())
-    architecturalCommit := writeback.io.commit
+    val architecturalCommit = Flow(CommitGroup())
+    architecturalCommit.valid := writeback.io.commit.valid
+    architecturalCommit.payload.valid := B"3'b001"
+    architecturalCommit.payload.events(0) := writeback.io.commit.payload
+    for (lane <- 1 until CommitGroup.Width) {
+      architecturalCommit.payload.events(lane).assignFromBits(B(0, CommitGroup.EventWidth bits))
+    }
 
     val architecturalState = ArchState()
     for (index <- 0 until 32) {

@@ -255,13 +255,12 @@ module SpinalCoreBackend (
   input  wire          resetCapture_backendActiveHigh
 );
 
-  wire                fetch_io_branchRepair;
-  wire       [31:0]   fetch_io_branchTarget;
   wire       [31:0]   fetch_io_exceptionEntry;
   wire       [31:0]   fetch_io_exceptionEra;
   wire       [31:0]   fetch_io_tlbRefillEntry;
   wire       [1:0]    fetch_io_currentPlv;
   wire       [1:0]    fetch_io_tlbPlv;
+  wire                fetchBuffer_io_flush;
   wire                decode_io_output_ready;
   wire                decode_io_executeLateResultAllowed;
   wire                decode_io_flush_refetch;
@@ -310,6 +309,70 @@ module SpinalCoreBackend (
   wire       [7:0]    predictor_io_update_payload_direction_phtIndex;
   wire                predictor_io_update_payload_direction_baseTaken;
   wire                predictor_io_update_payload_direction_localTaken;
+  wire       [31:0]   chiplabDiffTestAdapter_1_io_commit_payload_events_1_pc;
+  wire       [31:0]   chiplabDiffTestAdapter_1_io_commit_payload_events_1_instruction;
+  wire                chiplabDiffTestAdapter_1_io_commit_payload_events_1_retired;
+  wire                chiplabDiffTestAdapter_1_io_commit_payload_events_1_ertn;
+  wire                chiplabDiffTestAdapter_1_io_commit_payload_events_1_isCounterInstruction;
+  wire                chiplabDiffTestAdapter_1_io_commit_payload_events_1_csrRstat;
+  wire       [31:0]   chiplabDiffTestAdapter_1_io_commit_payload_events_1_csrReadData;
+  wire                chiplabDiffTestAdapter_1_io_commit_payload_events_1_gprWrite_valid;
+  wire       [4:0]    chiplabDiffTestAdapter_1_io_commit_payload_events_1_gprWrite_index;
+  wire       [31:0]   chiplabDiffTestAdapter_1_io_commit_payload_events_1_gprWrite_data;
+  wire                chiplabDiffTestAdapter_1_io_commit_payload_events_1_csrWrite_valid;
+  wire       [13:0]   chiplabDiffTestAdapter_1_io_commit_payload_events_1_csrWrite_address;
+  wire       [31:0]   chiplabDiffTestAdapter_1_io_commit_payload_events_1_csrWrite_data;
+  wire                chiplabDiffTestAdapter_1_io_commit_payload_events_1_exception_valid;
+  wire       [5:0]    chiplabDiffTestAdapter_1_io_commit_payload_events_1_exception_ecode;
+  wire       [8:0]    chiplabDiffTestAdapter_1_io_commit_payload_events_1_exception_esubcode;
+  wire                chiplabDiffTestAdapter_1_io_commit_payload_events_1_exception_badVAddrValid;
+  wire       [31:0]   chiplabDiffTestAdapter_1_io_commit_payload_events_1_exception_badVAddr;
+  wire                chiplabDiffTestAdapter_1_io_commit_payload_events_1_exception_tlbRefill;
+  wire                chiplabDiffTestAdapter_1_io_commit_payload_events_1_exception_tlbException;
+  wire       [18:0]   chiplabDiffTestAdapter_1_io_commit_payload_events_1_exception_tlbVppn;
+  wire       [63:0]   chiplabDiffTestAdapter_1_io_commit_payload_events_1_timer;
+  wire       [7:0]    chiplabDiffTestAdapter_1_io_commit_payload_events_1_load_instructionMask;
+  wire       [31:0]   chiplabDiffTestAdapter_1_io_commit_payload_events_1_load_pAddr;
+  wire       [31:0]   chiplabDiffTestAdapter_1_io_commit_payload_events_1_load_vAddr;
+  wire       [7:0]    chiplabDiffTestAdapter_1_io_commit_payload_events_1_store_instructionMask;
+  wire       [31:0]   chiplabDiffTestAdapter_1_io_commit_payload_events_1_store_pAddr;
+  wire       [31:0]   chiplabDiffTestAdapter_1_io_commit_payload_events_1_store_vAddr;
+  wire       [31:0]   chiplabDiffTestAdapter_1_io_commit_payload_events_1_store_data;
+  wire       [3:0]    chiplabDiffTestAdapter_1_io_commit_payload_events_1_store_byteMask;
+  wire                chiplabDiffTestAdapter_1_io_commit_payload_events_1_tlbFill_valid;
+  wire       [4:0]    chiplabDiffTestAdapter_1_io_commit_payload_events_1_tlbFill_index;
+  wire       [31:0]   chiplabDiffTestAdapter_1_io_commit_payload_events_2_pc;
+  wire       [31:0]   chiplabDiffTestAdapter_1_io_commit_payload_events_2_instruction;
+  wire                chiplabDiffTestAdapter_1_io_commit_payload_events_2_retired;
+  wire                chiplabDiffTestAdapter_1_io_commit_payload_events_2_ertn;
+  wire                chiplabDiffTestAdapter_1_io_commit_payload_events_2_isCounterInstruction;
+  wire                chiplabDiffTestAdapter_1_io_commit_payload_events_2_csrRstat;
+  wire       [31:0]   chiplabDiffTestAdapter_1_io_commit_payload_events_2_csrReadData;
+  wire                chiplabDiffTestAdapter_1_io_commit_payload_events_2_gprWrite_valid;
+  wire       [4:0]    chiplabDiffTestAdapter_1_io_commit_payload_events_2_gprWrite_index;
+  wire       [31:0]   chiplabDiffTestAdapter_1_io_commit_payload_events_2_gprWrite_data;
+  wire                chiplabDiffTestAdapter_1_io_commit_payload_events_2_csrWrite_valid;
+  wire       [13:0]   chiplabDiffTestAdapter_1_io_commit_payload_events_2_csrWrite_address;
+  wire       [31:0]   chiplabDiffTestAdapter_1_io_commit_payload_events_2_csrWrite_data;
+  wire                chiplabDiffTestAdapter_1_io_commit_payload_events_2_exception_valid;
+  wire       [5:0]    chiplabDiffTestAdapter_1_io_commit_payload_events_2_exception_ecode;
+  wire       [8:0]    chiplabDiffTestAdapter_1_io_commit_payload_events_2_exception_esubcode;
+  wire                chiplabDiffTestAdapter_1_io_commit_payload_events_2_exception_badVAddrValid;
+  wire       [31:0]   chiplabDiffTestAdapter_1_io_commit_payload_events_2_exception_badVAddr;
+  wire                chiplabDiffTestAdapter_1_io_commit_payload_events_2_exception_tlbRefill;
+  wire                chiplabDiffTestAdapter_1_io_commit_payload_events_2_exception_tlbException;
+  wire       [18:0]   chiplabDiffTestAdapter_1_io_commit_payload_events_2_exception_tlbVppn;
+  wire       [63:0]   chiplabDiffTestAdapter_1_io_commit_payload_events_2_timer;
+  wire       [7:0]    chiplabDiffTestAdapter_1_io_commit_payload_events_2_load_instructionMask;
+  wire       [31:0]   chiplabDiffTestAdapter_1_io_commit_payload_events_2_load_pAddr;
+  wire       [31:0]   chiplabDiffTestAdapter_1_io_commit_payload_events_2_load_vAddr;
+  wire       [7:0]    chiplabDiffTestAdapter_1_io_commit_payload_events_2_store_instructionMask;
+  wire       [31:0]   chiplabDiffTestAdapter_1_io_commit_payload_events_2_store_pAddr;
+  wire       [31:0]   chiplabDiffTestAdapter_1_io_commit_payload_events_2_store_vAddr;
+  wire       [31:0]   chiplabDiffTestAdapter_1_io_commit_payload_events_2_store_data;
+  wire       [3:0]    chiplabDiffTestAdapter_1_io_commit_payload_events_2_store_byteMask;
+  wire                chiplabDiffTestAdapter_1_io_commit_payload_events_2_tlbFill_valid;
+  wire       [4:0]    chiplabDiffTestAdapter_1_io_commit_payload_events_2_tlbFill_index;
   wire                fetch_io_downstream_valid;
   wire       [31:0]   fetch_io_downstream_payload_pc;
   wire       [31:0]   fetch_io_downstream_payload_instruction;
@@ -332,6 +395,20 @@ module SpinalCoreBackend (
   wire                fetch_io_dmw1Enabled;
   wire       [31:0]   fetch_io_fetchPc;
   wire                fetch_io_fetchEnable;
+  wire                fetchBuffer_io_push_ready;
+  wire                fetchBuffer_io_pop_valid;
+  wire       [31:0]   fetchBuffer_io_pop_payload_fetch_pc;
+  wire       [31:0]   fetchBuffer_io_pop_payload_fetch_instruction;
+  wire       [3:0]    fetchBuffer_io_pop_payload_fetch_exceptionCode;
+  wire                fetchBuffer_io_pop_payload_fetch_hasException;
+  wire                fetchBuffer_io_pop_payload_fetch_instructionCacheMiss;
+  wire                fetchBuffer_io_pop_payload_fetch_btbEnabled;
+  wire                fetchBuffer_io_pop_payload_fetch_btbTaken;
+  wire       [4:0]    fetchBuffer_io_pop_payload_fetch_btbIndex;
+  wire       [31:0]   fetchBuffer_io_pop_payload_fetch_btbTarget;
+  wire       [7:0]    fetchBuffer_io_pop_payload_direction_phtIndex;
+  wire                fetchBuffer_io_pop_payload_direction_baseTaken;
+  wire                fetchBuffer_io_pop_payload_direction_localTaken;
   wire                decode_io_input_ready;
   wire                decode_io_output_valid;
   wire       [31:0]   decode_io_output_payload_pc;
@@ -819,10 +896,31 @@ module SpinalCoreBackend (
   wire                predictor_io_prediction_payload_direction_baseTaken;
   wire                predictor_io_prediction_payload_direction_localTaken;
   wire                reset;
+  wire                writebackFlushActive;
+  wire                selectedBranchRepair_active;
+  wire       [31:0]   selectedBranchRepair_target;
+  wire                executeBranchRepair;
+  wire                redirectTargetAccepted;
+  wire                predictorUpdateFromExecute;
+  wire                predictorUpdateFromDecode;
+  wire       [504:0]  _zz_io_commit_payload_events_1_pc;
+  wire       [37:0]   _zz_io_commit_payload_events_1_gprWrite_valid;
+  wire       [46:0]   _zz_io_commit_payload_events_1_csrWrite_valid;
+  wire       [69:0]   _zz_io_commit_payload_events_1_exception_valid;
+  wire       [71:0]   _zz_io_commit_payload_events_1_load_instructionMask;
+  wire       [107:0]  _zz_io_commit_payload_events_1_store_instructionMask;
+  wire       [5:0]    _zz_io_commit_payload_events_1_tlbFill_valid;
+  wire       [504:0]  _zz_io_commit_payload_events_2_pc;
+  wire       [37:0]   _zz_io_commit_payload_events_2_gprWrite_valid;
+  wire       [46:0]   _zz_io_commit_payload_events_2_csrWrite_valid;
+  wire       [69:0]   _zz_io_commit_payload_events_2_exception_valid;
+  wire       [71:0]   _zz_io_commit_payload_events_2_load_instructionMask;
+  wire       [107:0]  _zz_io_commit_payload_events_2_store_instructionMask;
+  wire       [5:0]    _zz_io_commit_payload_events_2_tlbFill_valid;
 
   FetchStage fetch (
     .io_downstream_valid                        (fetch_io_downstream_valid                              ), //o
-    .io_downstream_ready                        (decode_io_input_ready                                  ), //i
+    .io_downstream_ready                        (fetchBuffer_io_push_ready                              ), //i
     .io_downstream_payload_pc                   (fetch_io_downstream_payload_pc[31:0]                   ), //o
     .io_downstream_payload_instruction          (fetch_io_downstream_payload_instruction[31:0]          ), //o
     .io_downstream_payload_exceptionCode        (fetch_io_downstream_payload_exceptionCode[3:0]         ), //o
@@ -832,8 +930,8 @@ module SpinalCoreBackend (
     .io_downstream_payload_btbTaken             (fetch_io_downstream_payload_btbTaken                   ), //o
     .io_downstream_payload_btbIndex             (fetch_io_downstream_payload_btbIndex[4:0]              ), //o
     .io_downstream_payload_btbTarget            (fetch_io_downstream_payload_btbTarget[31:0]            ), //o
-    .io_branchRepair                            (fetch_io_branchRepair                                  ), //i
-    .io_branchTarget                            (fetch_io_branchTarget[31:0]                            ), //i
+    .io_branchRepair                            (selectedBranchRepair_active                            ), //i
+    .io_branchTarget                            (selectedBranchRepair_target[31:0]                      ), //i
     .io_exceptionFlush                          (writeback_io_flush_exception                           ), //i
     .io_ertnFlush                               (writeback_io_flush_ertn                                ), //i
     .io_refetchFlush                            (writeback_io_flush_refetch                             ), //i
@@ -882,166 +980,237 @@ module SpinalCoreBackend (
     .aclk                                       (aclk_1                                                 ), //i
     .resetCapture_backendActiveHigh             (resetCapture_backendActiveHigh                         )  //i
   );
+  FetchInstructionBuffer fetchBuffer (
+    .io_flush                                           (fetchBuffer_io_flush                                 ), //i
+    .io_redirect                                        (selectedBranchRepair_active                          ), //i
+    .io_redirectTargetAccepted                          (redirectTargetAccepted                               ), //i
+    .io_push_valid                                      (fetch_io_downstream_valid                            ), //i
+    .io_push_ready                                      (fetchBuffer_io_push_ready                            ), //o
+    .io_push_payload_slotValid                          (4'b0001                                              ), //i
+    .io_push_payload_slots_0_fetch_pc                   (fetch_io_downstream_payload_pc[31:0]                 ), //i
+    .io_push_payload_slots_0_fetch_instruction          (fetch_io_downstream_payload_instruction[31:0]        ), //i
+    .io_push_payload_slots_0_fetch_exceptionCode        (fetch_io_downstream_payload_exceptionCode[3:0]       ), //i
+    .io_push_payload_slots_0_fetch_hasException         (fetch_io_downstream_payload_hasException             ), //i
+    .io_push_payload_slots_0_fetch_instructionCacheMiss (fetch_io_downstream_payload_instructionCacheMiss     ), //i
+    .io_push_payload_slots_0_fetch_btbEnabled           (fetch_io_downstream_payload_btbEnabled               ), //i
+    .io_push_payload_slots_0_fetch_btbTaken             (fetch_io_downstream_payload_btbTaken                 ), //i
+    .io_push_payload_slots_0_fetch_btbIndex             (fetch_io_downstream_payload_btbIndex[4:0]            ), //i
+    .io_push_payload_slots_0_fetch_btbTarget            (fetch_io_downstream_payload_btbTarget[31:0]          ), //i
+    .io_push_payload_slots_0_direction_phtIndex         (fetch_io_directionPrediction_phtIndex[7:0]           ), //i
+    .io_push_payload_slots_0_direction_baseTaken        (fetch_io_directionPrediction_baseTaken               ), //i
+    .io_push_payload_slots_0_direction_localTaken       (fetch_io_directionPrediction_localTaken              ), //i
+    .io_push_payload_slots_1_fetch_pc                   (fetch_io_downstream_payload_pc[31:0]                 ), //i
+    .io_push_payload_slots_1_fetch_instruction          (fetch_io_downstream_payload_instruction[31:0]        ), //i
+    .io_push_payload_slots_1_fetch_exceptionCode        (fetch_io_downstream_payload_exceptionCode[3:0]       ), //i
+    .io_push_payload_slots_1_fetch_hasException         (fetch_io_downstream_payload_hasException             ), //i
+    .io_push_payload_slots_1_fetch_instructionCacheMiss (fetch_io_downstream_payload_instructionCacheMiss     ), //i
+    .io_push_payload_slots_1_fetch_btbEnabled           (fetch_io_downstream_payload_btbEnabled               ), //i
+    .io_push_payload_slots_1_fetch_btbTaken             (fetch_io_downstream_payload_btbTaken                 ), //i
+    .io_push_payload_slots_1_fetch_btbIndex             (fetch_io_downstream_payload_btbIndex[4:0]            ), //i
+    .io_push_payload_slots_1_fetch_btbTarget            (fetch_io_downstream_payload_btbTarget[31:0]          ), //i
+    .io_push_payload_slots_1_direction_phtIndex         (fetch_io_directionPrediction_phtIndex[7:0]           ), //i
+    .io_push_payload_slots_1_direction_baseTaken        (fetch_io_directionPrediction_baseTaken               ), //i
+    .io_push_payload_slots_1_direction_localTaken       (fetch_io_directionPrediction_localTaken              ), //i
+    .io_push_payload_slots_2_fetch_pc                   (fetch_io_downstream_payload_pc[31:0]                 ), //i
+    .io_push_payload_slots_2_fetch_instruction          (fetch_io_downstream_payload_instruction[31:0]        ), //i
+    .io_push_payload_slots_2_fetch_exceptionCode        (fetch_io_downstream_payload_exceptionCode[3:0]       ), //i
+    .io_push_payload_slots_2_fetch_hasException         (fetch_io_downstream_payload_hasException             ), //i
+    .io_push_payload_slots_2_fetch_instructionCacheMiss (fetch_io_downstream_payload_instructionCacheMiss     ), //i
+    .io_push_payload_slots_2_fetch_btbEnabled           (fetch_io_downstream_payload_btbEnabled               ), //i
+    .io_push_payload_slots_2_fetch_btbTaken             (fetch_io_downstream_payload_btbTaken                 ), //i
+    .io_push_payload_slots_2_fetch_btbIndex             (fetch_io_downstream_payload_btbIndex[4:0]            ), //i
+    .io_push_payload_slots_2_fetch_btbTarget            (fetch_io_downstream_payload_btbTarget[31:0]          ), //i
+    .io_push_payload_slots_2_direction_phtIndex         (fetch_io_directionPrediction_phtIndex[7:0]           ), //i
+    .io_push_payload_slots_2_direction_baseTaken        (fetch_io_directionPrediction_baseTaken               ), //i
+    .io_push_payload_slots_2_direction_localTaken       (fetch_io_directionPrediction_localTaken              ), //i
+    .io_push_payload_slots_3_fetch_pc                   (fetch_io_downstream_payload_pc[31:0]                 ), //i
+    .io_push_payload_slots_3_fetch_instruction          (fetch_io_downstream_payload_instruction[31:0]        ), //i
+    .io_push_payload_slots_3_fetch_exceptionCode        (fetch_io_downstream_payload_exceptionCode[3:0]       ), //i
+    .io_push_payload_slots_3_fetch_hasException         (fetch_io_downstream_payload_hasException             ), //i
+    .io_push_payload_slots_3_fetch_instructionCacheMiss (fetch_io_downstream_payload_instructionCacheMiss     ), //i
+    .io_push_payload_slots_3_fetch_btbEnabled           (fetch_io_downstream_payload_btbEnabled               ), //i
+    .io_push_payload_slots_3_fetch_btbTaken             (fetch_io_downstream_payload_btbTaken                 ), //i
+    .io_push_payload_slots_3_fetch_btbIndex             (fetch_io_downstream_payload_btbIndex[4:0]            ), //i
+    .io_push_payload_slots_3_fetch_btbTarget            (fetch_io_downstream_payload_btbTarget[31:0]          ), //i
+    .io_push_payload_slots_3_direction_phtIndex         (fetch_io_directionPrediction_phtIndex[7:0]           ), //i
+    .io_push_payload_slots_3_direction_baseTaken        (fetch_io_directionPrediction_baseTaken               ), //i
+    .io_push_payload_slots_3_direction_localTaken       (fetch_io_directionPrediction_localTaken              ), //i
+    .io_pop_valid                                       (fetchBuffer_io_pop_valid                             ), //o
+    .io_pop_ready                                       (decode_io_input_ready                                ), //i
+    .io_pop_payload_fetch_pc                            (fetchBuffer_io_pop_payload_fetch_pc[31:0]            ), //o
+    .io_pop_payload_fetch_instruction                   (fetchBuffer_io_pop_payload_fetch_instruction[31:0]   ), //o
+    .io_pop_payload_fetch_exceptionCode                 (fetchBuffer_io_pop_payload_fetch_exceptionCode[3:0]  ), //o
+    .io_pop_payload_fetch_hasException                  (fetchBuffer_io_pop_payload_fetch_hasException        ), //o
+    .io_pop_payload_fetch_instructionCacheMiss          (fetchBuffer_io_pop_payload_fetch_instructionCacheMiss), //o
+    .io_pop_payload_fetch_btbEnabled                    (fetchBuffer_io_pop_payload_fetch_btbEnabled          ), //o
+    .io_pop_payload_fetch_btbTaken                      (fetchBuffer_io_pop_payload_fetch_btbTaken            ), //o
+    .io_pop_payload_fetch_btbIndex                      (fetchBuffer_io_pop_payload_fetch_btbIndex[4:0]       ), //o
+    .io_pop_payload_fetch_btbTarget                     (fetchBuffer_io_pop_payload_fetch_btbTarget[31:0]     ), //o
+    .io_pop_payload_direction_phtIndex                  (fetchBuffer_io_pop_payload_direction_phtIndex[7:0]   ), //o
+    .io_pop_payload_direction_baseTaken                 (fetchBuffer_io_pop_payload_direction_baseTaken       ), //o
+    .io_pop_payload_direction_localTaken                (fetchBuffer_io_pop_payload_direction_localTaken      ), //o
+    .aclk                                               (aclk_1                                               ), //i
+    .resetCapture_backendActiveHigh                     (resetCapture_backendActiveHigh                       )  //i
+  );
   DecodeStage decode (
-    .io_input_valid                         (fetch_io_downstream_valid                       ), //i
-    .io_input_ready                         (decode_io_input_ready                           ), //o
-    .io_input_payload_pc                    (fetch_io_downstream_payload_pc[31:0]            ), //i
-    .io_input_payload_instruction           (fetch_io_downstream_payload_instruction[31:0]   ), //i
-    .io_input_payload_exceptionCode         (fetch_io_downstream_payload_exceptionCode[3:0]  ), //i
-    .io_input_payload_hasException          (fetch_io_downstream_payload_hasException        ), //i
-    .io_input_payload_instructionCacheMiss  (fetch_io_downstream_payload_instructionCacheMiss), //i
-    .io_input_payload_btbEnabled            (fetch_io_downstream_payload_btbEnabled          ), //i
-    .io_input_payload_btbTaken              (fetch_io_downstream_payload_btbTaken            ), //i
-    .io_input_payload_btbIndex              (fetch_io_downstream_payload_btbIndex[4:0]       ), //i
-    .io_input_payload_btbTarget             (fetch_io_downstream_payload_btbTarget[31:0]     ), //i
-    .io_directionPrediction_phtIndex        (fetch_io_directionPrediction_phtIndex[7:0]      ), //i
-    .io_directionPrediction_baseTaken       (fetch_io_directionPrediction_baseTaken          ), //i
-    .io_directionPrediction_localTaken      (fetch_io_directionPrediction_localTaken         ), //i
-    .io_output_valid                        (decode_io_output_valid                          ), //o
-    .io_output_ready                        (decode_io_output_ready                          ), //i
-    .io_output_payload_pc                   (decode_io_output_payload_pc[31:0]               ), //o
-    .io_output_payload_registerDataKOrD     (decode_io_output_payload_registerDataKOrD[31:0] ), //o
-    .io_output_payload_registerDataJ        (decode_io_output_payload_registerDataJ[31:0]    ), //o
-    .io_output_payload_immediate            (decode_io_output_payload_immediate[31:0]        ), //o
-    .io_output_payload_destination          (decode_io_output_payload_destination[4:0]       ), //o
-    .io_output_payload_isStore              (decode_io_output_payload_isStore                ), //o
-    .io_output_payload_gprWrite             (decode_io_output_payload_gprWrite               ), //o
-    .io_output_payload_source2IsFour        (decode_io_output_payload_source2IsFour          ), //o
-    .io_output_payload_source2IsImmediate   (decode_io_output_payload_source2IsImmediate     ), //o
-    .io_output_payload_source1IsPc          (decode_io_output_payload_source1IsPc            ), //o
-    .io_output_payload_isLoad               (decode_io_output_payload_isLoad                 ), //o
-    .io_output_payload_aluOperation         (decode_io_output_payload_aluOperation[13:0]     ), //o
-    .io_output_payload_mulDivSigned         (decode_io_output_payload_mulDivSigned           ), //o
-    .io_output_payload_mulDivOperation      (decode_io_output_payload_mulDivOperation[3:0]   ), //o
-    .io_output_payload_memorySize           (decode_io_output_payload_memorySize[1:0]        ), //o
-    .io_output_payload_hasException         (decode_io_output_payload_hasException           ), //o
-    .io_output_payload_isErtn               (decode_io_output_payload_isErtn                 ), //o
-    .io_output_payload_csrReadData          (decode_io_output_payload_csrReadData[31:0]      ), //o
-    .io_output_payload_resultFromCsr        (decode_io_output_payload_resultFromCsr          ), //o
-    .io_output_payload_csrAddress           (decode_io_output_payload_csrAddress[13:0]       ), //o
-    .io_output_payload_csrWrite             (decode_io_output_payload_csrWrite               ), //o
-    .io_output_payload_csrMask              (decode_io_output_payload_csrMask                ), //o
-    .io_output_payload_exceptionCode        (decode_io_output_payload_exceptionCode[8:0]     ), //o
-    .io_output_payload_isLl                 (decode_io_output_payload_isLl                   ), //o
-    .io_output_payload_isSc                 (decode_io_output_payload_isSc                   ), //o
-    .io_output_payload_tlbSearch            (decode_io_output_payload_tlbSearch              ), //o
-    .io_output_payload_tlbWrite             (decode_io_output_payload_tlbWrite               ), //o
-    .io_output_payload_tlbFill              (decode_io_output_payload_tlbFill                ), //o
-    .io_output_payload_refetch              (decode_io_output_payload_refetch                ), //o
-    .io_output_payload_tlbRead              (decode_io_output_payload_tlbRead                ), //o
-    .io_output_payload_invalidateTlb        (decode_io_output_payload_invalidateTlb          ), //o
-    .io_output_payload_memorySignExtend     (decode_io_output_payload_memorySignExtend       ), //o
-    .io_output_payload_cacheOperation       (decode_io_output_payload_cacheOperation         ), //o
-    .io_output_payload_preload              (decode_io_output_payload_preload                ), //o
-    .io_output_payload_isBranch             (decode_io_output_payload_isBranch               ), //o
-    .io_output_payload_instructionCacheMiss (decode_io_output_payload_instructionCacheMiss   ), //o
-    .io_output_payload_isPredictableBranch  (decode_io_output_payload_isPredictableBranch    ), //o
-    .io_output_payload_predictionError      (decode_io_output_payload_predictionError        ), //o
-    .io_output_payload_idle                 (decode_io_output_payload_idle                   ), //o
-    .io_output_payload_instruction          (decode_io_output_payload_instruction[31:0]      ), //o
-    .io_output_payload_timer                (decode_io_output_payload_timer[63:0]            ), //o
-    .io_output_payload_isCounterInstruction (decode_io_output_payload_isCounterInstruction   ), //o
-    .io_output_payload_loadEvent            (decode_io_output_payload_loadEvent[7:0]         ), //o
-    .io_output_payload_storeEvent           (decode_io_output_payload_storeEvent[7:0]        ), //o
-    .io_output_payload_csrRstatEvent        (decode_io_output_payload_csrRstatEvent          ), //o
-    .io_executeForward_dependencyNeedsStall (execute_io_forward_dependencyNeedsStall         ), //i
-    .io_executeForward_writeEnabled         (execute_io_forward_writeEnabled                 ), //i
-    .io_executeForward_destination          (execute_io_forward_destination[4:0]             ), //i
-    .io_executeForward_data                 (execute_io_forward_result[31:0]                 ), //i
-    .io_executeLateResultAllowed            (decode_io_executeLateResultAllowed              ), //i
-    .io_memoryForward_dependencyNeedsStall  (memory_io_forward_dependencyNeedsStall          ), //i
-    .io_memoryForward_writeEnabled          (memory_io_forward_writeEnabled                  ), //i
-    .io_memoryForward_destination           (memory_io_forward_destination[4:0]              ), //i
-    .io_memoryForward_data                  (memory_io_forward_result[31:0]                  ), //i
-    .io_flush_exception                     (writeback_io_flush_exception                    ), //i
-    .io_flush_ertn                          (writeback_io_flush_ertn                         ), //i
-    .io_flush_refetch                       (decode_io_flush_refetch                         ), //i
-    .io_flush_instructionCacheOperation     (writeback_io_flush_instructionCacheOperation    ), //i
-    .io_flush_idle                          (writeback_io_flush_idle                         ), //i
-    .io_executeTlbStall                     (execute_io_tlbInstructionStall                  ), //i
-    .io_memoryTlbStall                      (memory_io_tlbInstructionStall                   ), //i
-    .io_writebackTlbStall                   (writeback_io_tlb_instructionStall               ), //i
-    .io_interruptPending                    (csr_has_int                                     ), //i
-    .io_csrReadAddress                      (decode_io_csrReadAddress[13:0]                  ), //o
-    .io_csrReadData                         (csr_rd_data[31:0]                               ), //i
-    .io_csrPrivilege                        (csr_plv_out[1:0]                                ), //i
-    .io_timer                               (csr_timer_64_out[63:0]                          ), //i
-    .io_timerId                             (csr_tid_out[31:0]                               ), //i
-    .io_reservationValid                    (csr_llbit_out                                   ), //i
-    .io_executeOccupied                     (execute_io_forward_valid                        ), //i
-    .io_memoryOccupied                      (memory_io_forward_valid                         ), //i
-    .io_writebackOccupied                   (writeback_io_stageValid                         ), //i
-    .io_writeBufferEmpty                    (axiBridge_writeBufferEmpty                      ), //i
-    .io_dataCacheEmpty                      (dataCache_dcache_empty                          ), //i
-    .io_registerWrite_valid                 (writeback_io_registerWrite_valid                ), //i
-    .io_registerWrite_destination           (writeback_io_registerWrite_index[4:0]           ), //i
-    .io_registerWrite_data                  (writeback_io_registerWrite_data[31:0]           ), //i
-    .io_debugReadSelect                     (infor_flag                                      ), //i
-    .io_debugReadAddress                    (decode_io_debugReadAddress[4:0]                 ), //i
-    .io_debugLegacyValue                    (decode_io_debugLegacyValue[31:0]                ), //o
-    .io_lateForwardJ                        (decode_io_lateForwardJ                          ), //o
-    .io_lateForwardKOrD                     (decode_io_lateForwardKOrD                       ), //o
-    .io_lateForwardDestination              (decode_io_lateForwardDestination[4:0]           ), //o
-    .io_branchRepair_active                 (decode_io_branchRepair_active                   ), //o
-    .io_branchRepair_target                 (decode_io_branchRepair_target[31:0]             ), //o
-    .io_btb_enable                          (decode_io_btb_enable                            ), //o
-    .io_btb_popReturnStack                  (decode_io_btb_popReturnStack                    ), //o
-    .io_btb_pushReturnStack                 (decode_io_btb_pushReturnStack                   ), //o
-    .io_btb_addEntry                        (decode_io_btb_addEntry                          ), //o
-    .io_btb_deleteEntry                     (decode_io_btb_deleteEntry                       ), //o
-    .io_btb_predictionError                 (decode_io_btb_predictionError                   ), //o
-    .io_btb_predictionRight                 (decode_io_btb_predictionRight                   ), //o
-    .io_btb_targetError                     (decode_io_btb_targetError                       ), //o
-    .io_btb_actualTaken                     (decode_io_btb_actualTaken                       ), //o
-    .io_btb_actualTarget                    (decode_io_btb_actualTarget[31:0]                ), //o
-    .io_btb_pc                              (decode_io_btb_pc[31:0]                          ), //o
-    .io_btb_index                           (decode_io_btb_index[4:0]                        ), //o
-    .io_btb_direction_phtIndex              (decode_io_btb_direction_phtIndex[7:0]           ), //o
-    .io_btb_direction_baseTaken             (decode_io_btb_direction_baseTaken               ), //o
-    .io_btb_direction_localTaken            (decode_io_btb_direction_localTaken              ), //o
-    .io_delayedBranch_valid                 (decode_io_delayedBranch_valid                   ), //o
-    .io_delayedBranch_btbEnabled            (decode_io_delayedBranch_btbEnabled              ), //o
-    .io_delayedBranch_btbTaken              (decode_io_delayedBranch_btbTaken                ), //o
-    .io_delayedBranch_btbIndex              (decode_io_delayedBranch_btbIndex[4:0]           ), //o
-    .io_delayedBranch_btbTarget             (decode_io_delayedBranch_btbTarget[31:0]         ), //o
-    .io_delayedBranch_direction_phtIndex    (decode_io_delayedBranch_direction_phtIndex[7:0] ), //o
-    .io_delayedBranch_direction_baseTaken   (decode_io_delayedBranch_direction_baseTaken     ), //o
-    .io_delayedBranch_direction_localTaken  (decode_io_delayedBranch_direction_localTaken    ), //o
-    .io_delayedBranchSlotCancel             (execute_io_branchRepair_active                  ), //i
-    .io_registers_0                         (decode_io_registers_0[31:0]                     ), //o
-    .io_registers_1                         (decode_io_registers_1[31:0]                     ), //o
-    .io_registers_2                         (decode_io_registers_2[31:0]                     ), //o
-    .io_registers_3                         (decode_io_registers_3[31:0]                     ), //o
-    .io_registers_4                         (decode_io_registers_4[31:0]                     ), //o
-    .io_registers_5                         (decode_io_registers_5[31:0]                     ), //o
-    .io_registers_6                         (decode_io_registers_6[31:0]                     ), //o
-    .io_registers_7                         (decode_io_registers_7[31:0]                     ), //o
-    .io_registers_8                         (decode_io_registers_8[31:0]                     ), //o
-    .io_registers_9                         (decode_io_registers_9[31:0]                     ), //o
-    .io_registers_10                        (decode_io_registers_10[31:0]                    ), //o
-    .io_registers_11                        (decode_io_registers_11[31:0]                    ), //o
-    .io_registers_12                        (decode_io_registers_12[31:0]                    ), //o
-    .io_registers_13                        (decode_io_registers_13[31:0]                    ), //o
-    .io_registers_14                        (decode_io_registers_14[31:0]                    ), //o
-    .io_registers_15                        (decode_io_registers_15[31:0]                    ), //o
-    .io_registers_16                        (decode_io_registers_16[31:0]                    ), //o
-    .io_registers_17                        (decode_io_registers_17[31:0]                    ), //o
-    .io_registers_18                        (decode_io_registers_18[31:0]                    ), //o
-    .io_registers_19                        (decode_io_registers_19[31:0]                    ), //o
-    .io_registers_20                        (decode_io_registers_20[31:0]                    ), //o
-    .io_registers_21                        (decode_io_registers_21[31:0]                    ), //o
-    .io_registers_22                        (decode_io_registers_22[31:0]                    ), //o
-    .io_registers_23                        (decode_io_registers_23[31:0]                    ), //o
-    .io_registers_24                        (decode_io_registers_24[31:0]                    ), //o
-    .io_registers_25                        (decode_io_registers_25[31:0]                    ), //o
-    .io_registers_26                        (decode_io_registers_26[31:0]                    ), //o
-    .io_registers_27                        (decode_io_registers_27[31:0]                    ), //o
-    .io_registers_28                        (decode_io_registers_28[31:0]                    ), //o
-    .io_registers_29                        (decode_io_registers_29[31:0]                    ), //o
-    .io_registers_30                        (decode_io_registers_30[31:0]                    ), //o
-    .io_registers_31                        (decode_io_registers_31[31:0]                    ), //o
-    .aclk                                   (aclk_1                                          ), //i
-    .resetCapture_backendActiveHigh         (resetCapture_backendActiveHigh                  )  //i
+    .io_input_valid                         (fetchBuffer_io_pop_valid                             ), //i
+    .io_input_ready                         (decode_io_input_ready                                ), //o
+    .io_input_payload_pc                    (fetchBuffer_io_pop_payload_fetch_pc[31:0]            ), //i
+    .io_input_payload_instruction           (fetchBuffer_io_pop_payload_fetch_instruction[31:0]   ), //i
+    .io_input_payload_exceptionCode         (fetchBuffer_io_pop_payload_fetch_exceptionCode[3:0]  ), //i
+    .io_input_payload_hasException          (fetchBuffer_io_pop_payload_fetch_hasException        ), //i
+    .io_input_payload_instructionCacheMiss  (fetchBuffer_io_pop_payload_fetch_instructionCacheMiss), //i
+    .io_input_payload_btbEnabled            (fetchBuffer_io_pop_payload_fetch_btbEnabled          ), //i
+    .io_input_payload_btbTaken              (fetchBuffer_io_pop_payload_fetch_btbTaken            ), //i
+    .io_input_payload_btbIndex              (fetchBuffer_io_pop_payload_fetch_btbIndex[4:0]       ), //i
+    .io_input_payload_btbTarget             (fetchBuffer_io_pop_payload_fetch_btbTarget[31:0]     ), //i
+    .io_directionPrediction_phtIndex        (fetchBuffer_io_pop_payload_direction_phtIndex[7:0]   ), //i
+    .io_directionPrediction_baseTaken       (fetchBuffer_io_pop_payload_direction_baseTaken       ), //i
+    .io_directionPrediction_localTaken      (fetchBuffer_io_pop_payload_direction_localTaken      ), //i
+    .io_output_valid                        (decode_io_output_valid                               ), //o
+    .io_output_ready                        (decode_io_output_ready                               ), //i
+    .io_output_payload_pc                   (decode_io_output_payload_pc[31:0]                    ), //o
+    .io_output_payload_registerDataKOrD     (decode_io_output_payload_registerDataKOrD[31:0]      ), //o
+    .io_output_payload_registerDataJ        (decode_io_output_payload_registerDataJ[31:0]         ), //o
+    .io_output_payload_immediate            (decode_io_output_payload_immediate[31:0]             ), //o
+    .io_output_payload_destination          (decode_io_output_payload_destination[4:0]            ), //o
+    .io_output_payload_isStore              (decode_io_output_payload_isStore                     ), //o
+    .io_output_payload_gprWrite             (decode_io_output_payload_gprWrite                    ), //o
+    .io_output_payload_source2IsFour        (decode_io_output_payload_source2IsFour               ), //o
+    .io_output_payload_source2IsImmediate   (decode_io_output_payload_source2IsImmediate          ), //o
+    .io_output_payload_source1IsPc          (decode_io_output_payload_source1IsPc                 ), //o
+    .io_output_payload_isLoad               (decode_io_output_payload_isLoad                      ), //o
+    .io_output_payload_aluOperation         (decode_io_output_payload_aluOperation[13:0]          ), //o
+    .io_output_payload_mulDivSigned         (decode_io_output_payload_mulDivSigned                ), //o
+    .io_output_payload_mulDivOperation      (decode_io_output_payload_mulDivOperation[3:0]        ), //o
+    .io_output_payload_memorySize           (decode_io_output_payload_memorySize[1:0]             ), //o
+    .io_output_payload_hasException         (decode_io_output_payload_hasException                ), //o
+    .io_output_payload_isErtn               (decode_io_output_payload_isErtn                      ), //o
+    .io_output_payload_csrReadData          (decode_io_output_payload_csrReadData[31:0]           ), //o
+    .io_output_payload_resultFromCsr        (decode_io_output_payload_resultFromCsr               ), //o
+    .io_output_payload_csrAddress           (decode_io_output_payload_csrAddress[13:0]            ), //o
+    .io_output_payload_csrWrite             (decode_io_output_payload_csrWrite                    ), //o
+    .io_output_payload_csrMask              (decode_io_output_payload_csrMask                     ), //o
+    .io_output_payload_exceptionCode        (decode_io_output_payload_exceptionCode[8:0]          ), //o
+    .io_output_payload_isLl                 (decode_io_output_payload_isLl                        ), //o
+    .io_output_payload_isSc                 (decode_io_output_payload_isSc                        ), //o
+    .io_output_payload_tlbSearch            (decode_io_output_payload_tlbSearch                   ), //o
+    .io_output_payload_tlbWrite             (decode_io_output_payload_tlbWrite                    ), //o
+    .io_output_payload_tlbFill              (decode_io_output_payload_tlbFill                     ), //o
+    .io_output_payload_refetch              (decode_io_output_payload_refetch                     ), //o
+    .io_output_payload_tlbRead              (decode_io_output_payload_tlbRead                     ), //o
+    .io_output_payload_invalidateTlb        (decode_io_output_payload_invalidateTlb               ), //o
+    .io_output_payload_memorySignExtend     (decode_io_output_payload_memorySignExtend            ), //o
+    .io_output_payload_cacheOperation       (decode_io_output_payload_cacheOperation              ), //o
+    .io_output_payload_preload              (decode_io_output_payload_preload                     ), //o
+    .io_output_payload_isBranch             (decode_io_output_payload_isBranch                    ), //o
+    .io_output_payload_instructionCacheMiss (decode_io_output_payload_instructionCacheMiss        ), //o
+    .io_output_payload_isPredictableBranch  (decode_io_output_payload_isPredictableBranch         ), //o
+    .io_output_payload_predictionError      (decode_io_output_payload_predictionError             ), //o
+    .io_output_payload_idle                 (decode_io_output_payload_idle                        ), //o
+    .io_output_payload_instruction          (decode_io_output_payload_instruction[31:0]           ), //o
+    .io_output_payload_timer                (decode_io_output_payload_timer[63:0]                 ), //o
+    .io_output_payload_isCounterInstruction (decode_io_output_payload_isCounterInstruction        ), //o
+    .io_output_payload_loadEvent            (decode_io_output_payload_loadEvent[7:0]              ), //o
+    .io_output_payload_storeEvent           (decode_io_output_payload_storeEvent[7:0]             ), //o
+    .io_output_payload_csrRstatEvent        (decode_io_output_payload_csrRstatEvent               ), //o
+    .io_executeForward_dependencyNeedsStall (execute_io_forward_dependencyNeedsStall              ), //i
+    .io_executeForward_writeEnabled         (execute_io_forward_writeEnabled                      ), //i
+    .io_executeForward_destination          (execute_io_forward_destination[4:0]                  ), //i
+    .io_executeForward_data                 (execute_io_forward_result[31:0]                      ), //i
+    .io_executeLateResultAllowed            (decode_io_executeLateResultAllowed                   ), //i
+    .io_memoryForward_dependencyNeedsStall  (memory_io_forward_dependencyNeedsStall               ), //i
+    .io_memoryForward_writeEnabled          (memory_io_forward_writeEnabled                       ), //i
+    .io_memoryForward_destination           (memory_io_forward_destination[4:0]                   ), //i
+    .io_memoryForward_data                  (memory_io_forward_result[31:0]                       ), //i
+    .io_flush_exception                     (writeback_io_flush_exception                         ), //i
+    .io_flush_ertn                          (writeback_io_flush_ertn                              ), //i
+    .io_flush_refetch                       (decode_io_flush_refetch                              ), //i
+    .io_flush_instructionCacheOperation     (writeback_io_flush_instructionCacheOperation         ), //i
+    .io_flush_idle                          (writeback_io_flush_idle                              ), //i
+    .io_executeTlbStall                     (execute_io_tlbInstructionStall                       ), //i
+    .io_memoryTlbStall                      (memory_io_tlbInstructionStall                        ), //i
+    .io_writebackTlbStall                   (writeback_io_tlb_instructionStall                    ), //i
+    .io_interruptPending                    (csr_has_int                                          ), //i
+    .io_csrReadAddress                      (decode_io_csrReadAddress[13:0]                       ), //o
+    .io_csrReadData                         (csr_rd_data[31:0]                                    ), //i
+    .io_csrPrivilege                        (csr_plv_out[1:0]                                     ), //i
+    .io_timer                               (csr_timer_64_out[63:0]                               ), //i
+    .io_timerId                             (csr_tid_out[31:0]                                    ), //i
+    .io_reservationValid                    (csr_llbit_out                                        ), //i
+    .io_executeOccupied                     (execute_io_forward_valid                             ), //i
+    .io_memoryOccupied                      (memory_io_forward_valid                              ), //i
+    .io_writebackOccupied                   (writeback_io_stageValid                              ), //i
+    .io_writeBufferEmpty                    (axiBridge_writeBufferEmpty                           ), //i
+    .io_dataCacheEmpty                      (dataCache_dcache_empty                               ), //i
+    .io_registerWrite_valid                 (writeback_io_registerWrite_valid                     ), //i
+    .io_registerWrite_destination           (writeback_io_registerWrite_index[4:0]                ), //i
+    .io_registerWrite_data                  (writeback_io_registerWrite_data[31:0]                ), //i
+    .io_debugReadSelect                     (infor_flag                                           ), //i
+    .io_debugReadAddress                    (decode_io_debugReadAddress[4:0]                      ), //i
+    .io_debugLegacyValue                    (decode_io_debugLegacyValue[31:0]                     ), //o
+    .io_lateForwardJ                        (decode_io_lateForwardJ                               ), //o
+    .io_lateForwardKOrD                     (decode_io_lateForwardKOrD                            ), //o
+    .io_lateForwardDestination              (decode_io_lateForwardDestination[4:0]                ), //o
+    .io_branchRepair_active                 (decode_io_branchRepair_active                        ), //o
+    .io_branchRepair_target                 (decode_io_branchRepair_target[31:0]                  ), //o
+    .io_btb_enable                          (decode_io_btb_enable                                 ), //o
+    .io_btb_popReturnStack                  (decode_io_btb_popReturnStack                         ), //o
+    .io_btb_pushReturnStack                 (decode_io_btb_pushReturnStack                        ), //o
+    .io_btb_addEntry                        (decode_io_btb_addEntry                               ), //o
+    .io_btb_deleteEntry                     (decode_io_btb_deleteEntry                            ), //o
+    .io_btb_predictionError                 (decode_io_btb_predictionError                        ), //o
+    .io_btb_predictionRight                 (decode_io_btb_predictionRight                        ), //o
+    .io_btb_targetError                     (decode_io_btb_targetError                            ), //o
+    .io_btb_actualTaken                     (decode_io_btb_actualTaken                            ), //o
+    .io_btb_actualTarget                    (decode_io_btb_actualTarget[31:0]                     ), //o
+    .io_btb_pc                              (decode_io_btb_pc[31:0]                               ), //o
+    .io_btb_index                           (decode_io_btb_index[4:0]                             ), //o
+    .io_btb_direction_phtIndex              (decode_io_btb_direction_phtIndex[7:0]                ), //o
+    .io_btb_direction_baseTaken             (decode_io_btb_direction_baseTaken                    ), //o
+    .io_btb_direction_localTaken            (decode_io_btb_direction_localTaken                   ), //o
+    .io_delayedBranch_valid                 (decode_io_delayedBranch_valid                        ), //o
+    .io_delayedBranch_btbEnabled            (decode_io_delayedBranch_btbEnabled                   ), //o
+    .io_delayedBranch_btbTaken              (decode_io_delayedBranch_btbTaken                     ), //o
+    .io_delayedBranch_btbIndex              (decode_io_delayedBranch_btbIndex[4:0]                ), //o
+    .io_delayedBranch_btbTarget             (decode_io_delayedBranch_btbTarget[31:0]              ), //o
+    .io_delayedBranch_direction_phtIndex    (decode_io_delayedBranch_direction_phtIndex[7:0]      ), //o
+    .io_delayedBranch_direction_baseTaken   (decode_io_delayedBranch_direction_baseTaken          ), //o
+    .io_delayedBranch_direction_localTaken  (decode_io_delayedBranch_direction_localTaken         ), //o
+    .io_registers_0                         (decode_io_registers_0[31:0]                          ), //o
+    .io_registers_1                         (decode_io_registers_1[31:0]                          ), //o
+    .io_registers_2                         (decode_io_registers_2[31:0]                          ), //o
+    .io_registers_3                         (decode_io_registers_3[31:0]                          ), //o
+    .io_registers_4                         (decode_io_registers_4[31:0]                          ), //o
+    .io_registers_5                         (decode_io_registers_5[31:0]                          ), //o
+    .io_registers_6                         (decode_io_registers_6[31:0]                          ), //o
+    .io_registers_7                         (decode_io_registers_7[31:0]                          ), //o
+    .io_registers_8                         (decode_io_registers_8[31:0]                          ), //o
+    .io_registers_9                         (decode_io_registers_9[31:0]                          ), //o
+    .io_registers_10                        (decode_io_registers_10[31:0]                         ), //o
+    .io_registers_11                        (decode_io_registers_11[31:0]                         ), //o
+    .io_registers_12                        (decode_io_registers_12[31:0]                         ), //o
+    .io_registers_13                        (decode_io_registers_13[31:0]                         ), //o
+    .io_registers_14                        (decode_io_registers_14[31:0]                         ), //o
+    .io_registers_15                        (decode_io_registers_15[31:0]                         ), //o
+    .io_registers_16                        (decode_io_registers_16[31:0]                         ), //o
+    .io_registers_17                        (decode_io_registers_17[31:0]                         ), //o
+    .io_registers_18                        (decode_io_registers_18[31:0]                         ), //o
+    .io_registers_19                        (decode_io_registers_19[31:0]                         ), //o
+    .io_registers_20                        (decode_io_registers_20[31:0]                         ), //o
+    .io_registers_21                        (decode_io_registers_21[31:0]                         ), //o
+    .io_registers_22                        (decode_io_registers_22[31:0]                         ), //o
+    .io_registers_23                        (decode_io_registers_23[31:0]                         ), //o
+    .io_registers_24                        (decode_io_registers_24[31:0]                         ), //o
+    .io_registers_25                        (decode_io_registers_25[31:0]                         ), //o
+    .io_registers_26                        (decode_io_registers_26[31:0]                         ), //o
+    .io_registers_27                        (decode_io_registers_27[31:0]                         ), //o
+    .io_registers_28                        (decode_io_registers_28[31:0]                         ), //o
+    .io_registers_29                        (decode_io_registers_29[31:0]                         ), //o
+    .io_registers_30                        (decode_io_registers_30[31:0]                         ), //o
+    .io_registers_31                        (decode_io_registers_31[31:0]                         ), //o
+    .aclk                                   (aclk_1                                               ), //i
+    .resetCapture_backendActiveHigh         (resetCapture_backendActiveHigh                       )  //i
   );
   ExecuteStage execute (
     .io_input_valid                              (execute_io_input_valid                              ), //i
@@ -1816,124 +1985,195 @@ module SpinalCoreBackend (
     .resetCapture_backendActiveHigh             (resetCapture_backendActiveHigh                         )  //i
   );
   ChiplabDiffTestAdapter chiplabDiffTestAdapter_1 (
-    .io_clock                                  (aclk                                                  ), //i
-    .io_commit_valid                           (writeback_io_commit_valid                             ), //i
-    .io_commit_payload_pc                      (writeback_io_commit_payload_pc[31:0]                  ), //i
-    .io_commit_payload_instruction             (writeback_io_commit_payload_instruction[31:0]         ), //i
-    .io_commit_payload_retired                 (writeback_io_commit_payload_retired                   ), //i
-    .io_commit_payload_ertn                    (writeback_io_commit_payload_ertn                      ), //i
-    .io_commit_payload_isCounterInstruction    (writeback_io_commit_payload_isCounterInstruction      ), //i
-    .io_commit_payload_csrRstat                (writeback_io_commit_payload_csrRstat                  ), //i
-    .io_commit_payload_csrReadData             (writeback_io_commit_payload_csrReadData[31:0]         ), //i
-    .io_commit_payload_gprWrite_valid          (writeback_io_commit_payload_gprWrite_valid            ), //i
-    .io_commit_payload_gprWrite_index          (writeback_io_commit_payload_gprWrite_index[4:0]       ), //i
-    .io_commit_payload_gprWrite_data           (writeback_io_commit_payload_gprWrite_data[31:0]       ), //i
-    .io_commit_payload_csrWrite_valid          (writeback_io_commit_payload_csrWrite_valid            ), //i
-    .io_commit_payload_csrWrite_address        (writeback_io_commit_payload_csrWrite_address[13:0]    ), //i
-    .io_commit_payload_csrWrite_data           (writeback_io_commit_payload_csrWrite_data[31:0]       ), //i
-    .io_commit_payload_exception_valid         (writeback_io_commit_payload_exception_valid           ), //i
-    .io_commit_payload_exception_ecode         (writeback_io_commit_payload_exception_ecode[5:0]      ), //i
-    .io_commit_payload_exception_esubcode      (writeback_io_commit_payload_exception_esubcode[8:0]   ), //i
-    .io_commit_payload_exception_badVAddrValid (writeback_io_commit_payload_exception_badVAddrValid   ), //i
-    .io_commit_payload_exception_badVAddr      (writeback_io_commit_payload_exception_badVAddr[31:0]  ), //i
-    .io_commit_payload_exception_tlbRefill     (writeback_io_commit_payload_exception_tlbRefill       ), //i
-    .io_commit_payload_exception_tlbException  (writeback_io_commit_payload_exception_tlbException    ), //i
-    .io_commit_payload_exception_tlbVppn       (writeback_io_commit_payload_exception_tlbVppn[18:0]   ), //i
-    .io_commit_payload_timer                   (writeback_io_commit_payload_timer[63:0]               ), //i
-    .io_commit_payload_load_instructionMask    (writeback_io_commit_payload_load_instructionMask[7:0] ), //i
-    .io_commit_payload_load_pAddr              (writeback_io_commit_payload_load_pAddr[31:0]          ), //i
-    .io_commit_payload_load_vAddr              (writeback_io_commit_payload_load_vAddr[31:0]          ), //i
-    .io_commit_payload_store_instructionMask   (writeback_io_commit_payload_store_instructionMask[7:0]), //i
-    .io_commit_payload_store_pAddr             (writeback_io_commit_payload_store_pAddr[31:0]         ), //i
-    .io_commit_payload_store_vAddr             (writeback_io_commit_payload_store_vAddr[31:0]         ), //i
-    .io_commit_payload_store_data              (writeback_io_commit_payload_store_data[31:0]          ), //i
-    .io_commit_payload_store_byteMask          (writeback_io_commit_payload_store_byteMask[3:0]       ), //i
-    .io_commit_payload_tlbFill_valid           (writeback_io_commit_payload_tlbFill_valid             ), //i
-    .io_commit_payload_tlbFill_index           (writeback_io_commit_payload_tlbFill_index[4:0]        ), //i
-    .io_archState_gpr_0                        (32'h0                                                 ), //i
-    .io_archState_gpr_1                        (decode_io_registers_1[31:0]                           ), //i
-    .io_archState_gpr_2                        (decode_io_registers_2[31:0]                           ), //i
-    .io_archState_gpr_3                        (decode_io_registers_3[31:0]                           ), //i
-    .io_archState_gpr_4                        (decode_io_registers_4[31:0]                           ), //i
-    .io_archState_gpr_5                        (decode_io_registers_5[31:0]                           ), //i
-    .io_archState_gpr_6                        (decode_io_registers_6[31:0]                           ), //i
-    .io_archState_gpr_7                        (decode_io_registers_7[31:0]                           ), //i
-    .io_archState_gpr_8                        (decode_io_registers_8[31:0]                           ), //i
-    .io_archState_gpr_9                        (decode_io_registers_9[31:0]                           ), //i
-    .io_archState_gpr_10                       (decode_io_registers_10[31:0]                          ), //i
-    .io_archState_gpr_11                       (decode_io_registers_11[31:0]                          ), //i
-    .io_archState_gpr_12                       (decode_io_registers_12[31:0]                          ), //i
-    .io_archState_gpr_13                       (decode_io_registers_13[31:0]                          ), //i
-    .io_archState_gpr_14                       (decode_io_registers_14[31:0]                          ), //i
-    .io_archState_gpr_15                       (decode_io_registers_15[31:0]                          ), //i
-    .io_archState_gpr_16                       (decode_io_registers_16[31:0]                          ), //i
-    .io_archState_gpr_17                       (decode_io_registers_17[31:0]                          ), //i
-    .io_archState_gpr_18                       (decode_io_registers_18[31:0]                          ), //i
-    .io_archState_gpr_19                       (decode_io_registers_19[31:0]                          ), //i
-    .io_archState_gpr_20                       (decode_io_registers_20[31:0]                          ), //i
-    .io_archState_gpr_21                       (decode_io_registers_21[31:0]                          ), //i
-    .io_archState_gpr_22                       (decode_io_registers_22[31:0]                          ), //i
-    .io_archState_gpr_23                       (decode_io_registers_23[31:0]                          ), //i
-    .io_archState_gpr_24                       (decode_io_registers_24[31:0]                          ), //i
-    .io_archState_gpr_25                       (decode_io_registers_25[31:0]                          ), //i
-    .io_archState_gpr_26                       (decode_io_registers_26[31:0]                          ), //i
-    .io_archState_gpr_27                       (decode_io_registers_27[31:0]                          ), //i
-    .io_archState_gpr_28                       (decode_io_registers_28[31:0]                          ), //i
-    .io_archState_gpr_29                       (decode_io_registers_29[31:0]                          ), //i
-    .io_archState_gpr_30                       (decode_io_registers_30[31:0]                          ), //i
-    .io_archState_gpr_31                       (decode_io_registers_31[31:0]                          ), //i
-    .io_archState_crmd                         (csr_csr_crmd_diff[31:0]                               ), //i
-    .io_archState_prmd                         (csr_csr_prmd_diff[31:0]                               ), //i
-    .io_archState_euen                         (32'h0                                                 ), //i
-    .io_archState_ecfg                         (csr_csr_ectl_diff[31:0]                               ), //i
-    .io_archState_estat                        (csr_csr_estat_diff[31:0]                              ), //i
-    .io_archState_era                          (csr_csr_era_diff[31:0]                                ), //i
-    .io_archState_badv                         (csr_csr_badv_diff[31:0]                               ), //i
-    .io_archState_eentry                       (csr_csr_eentry_diff[31:0]                             ), //i
-    .io_archState_tlbidx                       (csr_csr_tlbidx_diff[31:0]                             ), //i
-    .io_archState_tlbehi                       (csr_csr_tlbehi_diff[31:0]                             ), //i
-    .io_archState_tlbelo0                      (csr_csr_tlbelo0_diff[31:0]                            ), //i
-    .io_archState_tlbelo1                      (csr_csr_tlbelo1_diff[31:0]                            ), //i
-    .io_archState_asid                         (csr_csr_asid_diff[31:0]                               ), //i
-    .io_archState_pgdl                         (csr_csr_pgdl_diff[31:0]                               ), //i
-    .io_archState_pgdh                         (csr_csr_pgdh_diff[31:0]                               ), //i
-    .io_archState_save0                        (csr_csr_save0_diff[31:0]                              ), //i
-    .io_archState_save1                        (csr_csr_save1_diff[31:0]                              ), //i
-    .io_archState_save2                        (csr_csr_save2_diff[31:0]                              ), //i
-    .io_archState_save3                        (csr_csr_save3_diff[31:0]                              ), //i
-    .io_archState_tid                          (csr_csr_tid_diff[31:0]                                ), //i
-    .io_archState_tcfg                         (csr_csr_tcfg_diff[31:0]                               ), //i
-    .io_archState_tval                         (csr_csr_tval_diff[31:0]                               ), //i
-    .io_archState_ticlr                        (csr_csr_ticlr_diff[31:0]                              ), //i
-    .io_archState_llbctl                       (csr_csr_llbctl_diff[31:0]                             ), //i
-    .io_archState_tlbrentry                    (csr_csr_tlbrentry_diff[31:0]                          ), //i
-    .io_archState_dmw0                         (csr_csr_dmw0_diff[31:0]                               ), //i
-    .io_archState_dmw1                         (csr_csr_dmw1_diff[31:0]                               ), //i
-    .aclk                                      (aclk_1                                                ), //i
-    .resetCapture_backendActiveHigh            (resetCapture_backendActiveHigh                        )  //i
+    .io_clock                                           (aclk                                                                          ), //i
+    .io_commit_valid                                    (writeback_io_commit_valid                                                     ), //i
+    .io_commit_payload_valid                            (3'b001                                                                        ), //i
+    .io_commit_payload_events_0_pc                      (writeback_io_commit_payload_pc[31:0]                                          ), //i
+    .io_commit_payload_events_0_instruction             (writeback_io_commit_payload_instruction[31:0]                                 ), //i
+    .io_commit_payload_events_0_retired                 (writeback_io_commit_payload_retired                                           ), //i
+    .io_commit_payload_events_0_ertn                    (writeback_io_commit_payload_ertn                                              ), //i
+    .io_commit_payload_events_0_isCounterInstruction    (writeback_io_commit_payload_isCounterInstruction                              ), //i
+    .io_commit_payload_events_0_csrRstat                (writeback_io_commit_payload_csrRstat                                          ), //i
+    .io_commit_payload_events_0_csrReadData             (writeback_io_commit_payload_csrReadData[31:0]                                 ), //i
+    .io_commit_payload_events_0_gprWrite_valid          (writeback_io_commit_payload_gprWrite_valid                                    ), //i
+    .io_commit_payload_events_0_gprWrite_index          (writeback_io_commit_payload_gprWrite_index[4:0]                               ), //i
+    .io_commit_payload_events_0_gprWrite_data           (writeback_io_commit_payload_gprWrite_data[31:0]                               ), //i
+    .io_commit_payload_events_0_csrWrite_valid          (writeback_io_commit_payload_csrWrite_valid                                    ), //i
+    .io_commit_payload_events_0_csrWrite_address        (writeback_io_commit_payload_csrWrite_address[13:0]                            ), //i
+    .io_commit_payload_events_0_csrWrite_data           (writeback_io_commit_payload_csrWrite_data[31:0]                               ), //i
+    .io_commit_payload_events_0_exception_valid         (writeback_io_commit_payload_exception_valid                                   ), //i
+    .io_commit_payload_events_0_exception_ecode         (writeback_io_commit_payload_exception_ecode[5:0]                              ), //i
+    .io_commit_payload_events_0_exception_esubcode      (writeback_io_commit_payload_exception_esubcode[8:0]                           ), //i
+    .io_commit_payload_events_0_exception_badVAddrValid (writeback_io_commit_payload_exception_badVAddrValid                           ), //i
+    .io_commit_payload_events_0_exception_badVAddr      (writeback_io_commit_payload_exception_badVAddr[31:0]                          ), //i
+    .io_commit_payload_events_0_exception_tlbRefill     (writeback_io_commit_payload_exception_tlbRefill                               ), //i
+    .io_commit_payload_events_0_exception_tlbException  (writeback_io_commit_payload_exception_tlbException                            ), //i
+    .io_commit_payload_events_0_exception_tlbVppn       (writeback_io_commit_payload_exception_tlbVppn[18:0]                           ), //i
+    .io_commit_payload_events_0_timer                   (writeback_io_commit_payload_timer[63:0]                                       ), //i
+    .io_commit_payload_events_0_load_instructionMask    (writeback_io_commit_payload_load_instructionMask[7:0]                         ), //i
+    .io_commit_payload_events_0_load_pAddr              (writeback_io_commit_payload_load_pAddr[31:0]                                  ), //i
+    .io_commit_payload_events_0_load_vAddr              (writeback_io_commit_payload_load_vAddr[31:0]                                  ), //i
+    .io_commit_payload_events_0_store_instructionMask   (writeback_io_commit_payload_store_instructionMask[7:0]                        ), //i
+    .io_commit_payload_events_0_store_pAddr             (writeback_io_commit_payload_store_pAddr[31:0]                                 ), //i
+    .io_commit_payload_events_0_store_vAddr             (writeback_io_commit_payload_store_vAddr[31:0]                                 ), //i
+    .io_commit_payload_events_0_store_data              (writeback_io_commit_payload_store_data[31:0]                                  ), //i
+    .io_commit_payload_events_0_store_byteMask          (writeback_io_commit_payload_store_byteMask[3:0]                               ), //i
+    .io_commit_payload_events_0_tlbFill_valid           (writeback_io_commit_payload_tlbFill_valid                                     ), //i
+    .io_commit_payload_events_0_tlbFill_index           (writeback_io_commit_payload_tlbFill_index[4:0]                                ), //i
+    .io_commit_payload_events_1_pc                      (chiplabDiffTestAdapter_1_io_commit_payload_events_1_pc[31:0]                  ), //i
+    .io_commit_payload_events_1_instruction             (chiplabDiffTestAdapter_1_io_commit_payload_events_1_instruction[31:0]         ), //i
+    .io_commit_payload_events_1_retired                 (chiplabDiffTestAdapter_1_io_commit_payload_events_1_retired                   ), //i
+    .io_commit_payload_events_1_ertn                    (chiplabDiffTestAdapter_1_io_commit_payload_events_1_ertn                      ), //i
+    .io_commit_payload_events_1_isCounterInstruction    (chiplabDiffTestAdapter_1_io_commit_payload_events_1_isCounterInstruction      ), //i
+    .io_commit_payload_events_1_csrRstat                (chiplabDiffTestAdapter_1_io_commit_payload_events_1_csrRstat                  ), //i
+    .io_commit_payload_events_1_csrReadData             (chiplabDiffTestAdapter_1_io_commit_payload_events_1_csrReadData[31:0]         ), //i
+    .io_commit_payload_events_1_gprWrite_valid          (chiplabDiffTestAdapter_1_io_commit_payload_events_1_gprWrite_valid            ), //i
+    .io_commit_payload_events_1_gprWrite_index          (chiplabDiffTestAdapter_1_io_commit_payload_events_1_gprWrite_index[4:0]       ), //i
+    .io_commit_payload_events_1_gprWrite_data           (chiplabDiffTestAdapter_1_io_commit_payload_events_1_gprWrite_data[31:0]       ), //i
+    .io_commit_payload_events_1_csrWrite_valid          (chiplabDiffTestAdapter_1_io_commit_payload_events_1_csrWrite_valid            ), //i
+    .io_commit_payload_events_1_csrWrite_address        (chiplabDiffTestAdapter_1_io_commit_payload_events_1_csrWrite_address[13:0]    ), //i
+    .io_commit_payload_events_1_csrWrite_data           (chiplabDiffTestAdapter_1_io_commit_payload_events_1_csrWrite_data[31:0]       ), //i
+    .io_commit_payload_events_1_exception_valid         (chiplabDiffTestAdapter_1_io_commit_payload_events_1_exception_valid           ), //i
+    .io_commit_payload_events_1_exception_ecode         (chiplabDiffTestAdapter_1_io_commit_payload_events_1_exception_ecode[5:0]      ), //i
+    .io_commit_payload_events_1_exception_esubcode      (chiplabDiffTestAdapter_1_io_commit_payload_events_1_exception_esubcode[8:0]   ), //i
+    .io_commit_payload_events_1_exception_badVAddrValid (chiplabDiffTestAdapter_1_io_commit_payload_events_1_exception_badVAddrValid   ), //i
+    .io_commit_payload_events_1_exception_badVAddr      (chiplabDiffTestAdapter_1_io_commit_payload_events_1_exception_badVAddr[31:0]  ), //i
+    .io_commit_payload_events_1_exception_tlbRefill     (chiplabDiffTestAdapter_1_io_commit_payload_events_1_exception_tlbRefill       ), //i
+    .io_commit_payload_events_1_exception_tlbException  (chiplabDiffTestAdapter_1_io_commit_payload_events_1_exception_tlbException    ), //i
+    .io_commit_payload_events_1_exception_tlbVppn       (chiplabDiffTestAdapter_1_io_commit_payload_events_1_exception_tlbVppn[18:0]   ), //i
+    .io_commit_payload_events_1_timer                   (chiplabDiffTestAdapter_1_io_commit_payload_events_1_timer[63:0]               ), //i
+    .io_commit_payload_events_1_load_instructionMask    (chiplabDiffTestAdapter_1_io_commit_payload_events_1_load_instructionMask[7:0] ), //i
+    .io_commit_payload_events_1_load_pAddr              (chiplabDiffTestAdapter_1_io_commit_payload_events_1_load_pAddr[31:0]          ), //i
+    .io_commit_payload_events_1_load_vAddr              (chiplabDiffTestAdapter_1_io_commit_payload_events_1_load_vAddr[31:0]          ), //i
+    .io_commit_payload_events_1_store_instructionMask   (chiplabDiffTestAdapter_1_io_commit_payload_events_1_store_instructionMask[7:0]), //i
+    .io_commit_payload_events_1_store_pAddr             (chiplabDiffTestAdapter_1_io_commit_payload_events_1_store_pAddr[31:0]         ), //i
+    .io_commit_payload_events_1_store_vAddr             (chiplabDiffTestAdapter_1_io_commit_payload_events_1_store_vAddr[31:0]         ), //i
+    .io_commit_payload_events_1_store_data              (chiplabDiffTestAdapter_1_io_commit_payload_events_1_store_data[31:0]          ), //i
+    .io_commit_payload_events_1_store_byteMask          (chiplabDiffTestAdapter_1_io_commit_payload_events_1_store_byteMask[3:0]       ), //i
+    .io_commit_payload_events_1_tlbFill_valid           (chiplabDiffTestAdapter_1_io_commit_payload_events_1_tlbFill_valid             ), //i
+    .io_commit_payload_events_1_tlbFill_index           (chiplabDiffTestAdapter_1_io_commit_payload_events_1_tlbFill_index[4:0]        ), //i
+    .io_commit_payload_events_2_pc                      (chiplabDiffTestAdapter_1_io_commit_payload_events_2_pc[31:0]                  ), //i
+    .io_commit_payload_events_2_instruction             (chiplabDiffTestAdapter_1_io_commit_payload_events_2_instruction[31:0]         ), //i
+    .io_commit_payload_events_2_retired                 (chiplabDiffTestAdapter_1_io_commit_payload_events_2_retired                   ), //i
+    .io_commit_payload_events_2_ertn                    (chiplabDiffTestAdapter_1_io_commit_payload_events_2_ertn                      ), //i
+    .io_commit_payload_events_2_isCounterInstruction    (chiplabDiffTestAdapter_1_io_commit_payload_events_2_isCounterInstruction      ), //i
+    .io_commit_payload_events_2_csrRstat                (chiplabDiffTestAdapter_1_io_commit_payload_events_2_csrRstat                  ), //i
+    .io_commit_payload_events_2_csrReadData             (chiplabDiffTestAdapter_1_io_commit_payload_events_2_csrReadData[31:0]         ), //i
+    .io_commit_payload_events_2_gprWrite_valid          (chiplabDiffTestAdapter_1_io_commit_payload_events_2_gprWrite_valid            ), //i
+    .io_commit_payload_events_2_gprWrite_index          (chiplabDiffTestAdapter_1_io_commit_payload_events_2_gprWrite_index[4:0]       ), //i
+    .io_commit_payload_events_2_gprWrite_data           (chiplabDiffTestAdapter_1_io_commit_payload_events_2_gprWrite_data[31:0]       ), //i
+    .io_commit_payload_events_2_csrWrite_valid          (chiplabDiffTestAdapter_1_io_commit_payload_events_2_csrWrite_valid            ), //i
+    .io_commit_payload_events_2_csrWrite_address        (chiplabDiffTestAdapter_1_io_commit_payload_events_2_csrWrite_address[13:0]    ), //i
+    .io_commit_payload_events_2_csrWrite_data           (chiplabDiffTestAdapter_1_io_commit_payload_events_2_csrWrite_data[31:0]       ), //i
+    .io_commit_payload_events_2_exception_valid         (chiplabDiffTestAdapter_1_io_commit_payload_events_2_exception_valid           ), //i
+    .io_commit_payload_events_2_exception_ecode         (chiplabDiffTestAdapter_1_io_commit_payload_events_2_exception_ecode[5:0]      ), //i
+    .io_commit_payload_events_2_exception_esubcode      (chiplabDiffTestAdapter_1_io_commit_payload_events_2_exception_esubcode[8:0]   ), //i
+    .io_commit_payload_events_2_exception_badVAddrValid (chiplabDiffTestAdapter_1_io_commit_payload_events_2_exception_badVAddrValid   ), //i
+    .io_commit_payload_events_2_exception_badVAddr      (chiplabDiffTestAdapter_1_io_commit_payload_events_2_exception_badVAddr[31:0]  ), //i
+    .io_commit_payload_events_2_exception_tlbRefill     (chiplabDiffTestAdapter_1_io_commit_payload_events_2_exception_tlbRefill       ), //i
+    .io_commit_payload_events_2_exception_tlbException  (chiplabDiffTestAdapter_1_io_commit_payload_events_2_exception_tlbException    ), //i
+    .io_commit_payload_events_2_exception_tlbVppn       (chiplabDiffTestAdapter_1_io_commit_payload_events_2_exception_tlbVppn[18:0]   ), //i
+    .io_commit_payload_events_2_timer                   (chiplabDiffTestAdapter_1_io_commit_payload_events_2_timer[63:0]               ), //i
+    .io_commit_payload_events_2_load_instructionMask    (chiplabDiffTestAdapter_1_io_commit_payload_events_2_load_instructionMask[7:0] ), //i
+    .io_commit_payload_events_2_load_pAddr              (chiplabDiffTestAdapter_1_io_commit_payload_events_2_load_pAddr[31:0]          ), //i
+    .io_commit_payload_events_2_load_vAddr              (chiplabDiffTestAdapter_1_io_commit_payload_events_2_load_vAddr[31:0]          ), //i
+    .io_commit_payload_events_2_store_instructionMask   (chiplabDiffTestAdapter_1_io_commit_payload_events_2_store_instructionMask[7:0]), //i
+    .io_commit_payload_events_2_store_pAddr             (chiplabDiffTestAdapter_1_io_commit_payload_events_2_store_pAddr[31:0]         ), //i
+    .io_commit_payload_events_2_store_vAddr             (chiplabDiffTestAdapter_1_io_commit_payload_events_2_store_vAddr[31:0]         ), //i
+    .io_commit_payload_events_2_store_data              (chiplabDiffTestAdapter_1_io_commit_payload_events_2_store_data[31:0]          ), //i
+    .io_commit_payload_events_2_store_byteMask          (chiplabDiffTestAdapter_1_io_commit_payload_events_2_store_byteMask[3:0]       ), //i
+    .io_commit_payload_events_2_tlbFill_valid           (chiplabDiffTestAdapter_1_io_commit_payload_events_2_tlbFill_valid             ), //i
+    .io_commit_payload_events_2_tlbFill_index           (chiplabDiffTestAdapter_1_io_commit_payload_events_2_tlbFill_index[4:0]        ), //i
+    .io_archState_gpr_0                                 (32'h0                                                                         ), //i
+    .io_archState_gpr_1                                 (decode_io_registers_1[31:0]                                                   ), //i
+    .io_archState_gpr_2                                 (decode_io_registers_2[31:0]                                                   ), //i
+    .io_archState_gpr_3                                 (decode_io_registers_3[31:0]                                                   ), //i
+    .io_archState_gpr_4                                 (decode_io_registers_4[31:0]                                                   ), //i
+    .io_archState_gpr_5                                 (decode_io_registers_5[31:0]                                                   ), //i
+    .io_archState_gpr_6                                 (decode_io_registers_6[31:0]                                                   ), //i
+    .io_archState_gpr_7                                 (decode_io_registers_7[31:0]                                                   ), //i
+    .io_archState_gpr_8                                 (decode_io_registers_8[31:0]                                                   ), //i
+    .io_archState_gpr_9                                 (decode_io_registers_9[31:0]                                                   ), //i
+    .io_archState_gpr_10                                (decode_io_registers_10[31:0]                                                  ), //i
+    .io_archState_gpr_11                                (decode_io_registers_11[31:0]                                                  ), //i
+    .io_archState_gpr_12                                (decode_io_registers_12[31:0]                                                  ), //i
+    .io_archState_gpr_13                                (decode_io_registers_13[31:0]                                                  ), //i
+    .io_archState_gpr_14                                (decode_io_registers_14[31:0]                                                  ), //i
+    .io_archState_gpr_15                                (decode_io_registers_15[31:0]                                                  ), //i
+    .io_archState_gpr_16                                (decode_io_registers_16[31:0]                                                  ), //i
+    .io_archState_gpr_17                                (decode_io_registers_17[31:0]                                                  ), //i
+    .io_archState_gpr_18                                (decode_io_registers_18[31:0]                                                  ), //i
+    .io_archState_gpr_19                                (decode_io_registers_19[31:0]                                                  ), //i
+    .io_archState_gpr_20                                (decode_io_registers_20[31:0]                                                  ), //i
+    .io_archState_gpr_21                                (decode_io_registers_21[31:0]                                                  ), //i
+    .io_archState_gpr_22                                (decode_io_registers_22[31:0]                                                  ), //i
+    .io_archState_gpr_23                                (decode_io_registers_23[31:0]                                                  ), //i
+    .io_archState_gpr_24                                (decode_io_registers_24[31:0]                                                  ), //i
+    .io_archState_gpr_25                                (decode_io_registers_25[31:0]                                                  ), //i
+    .io_archState_gpr_26                                (decode_io_registers_26[31:0]                                                  ), //i
+    .io_archState_gpr_27                                (decode_io_registers_27[31:0]                                                  ), //i
+    .io_archState_gpr_28                                (decode_io_registers_28[31:0]                                                  ), //i
+    .io_archState_gpr_29                                (decode_io_registers_29[31:0]                                                  ), //i
+    .io_archState_gpr_30                                (decode_io_registers_30[31:0]                                                  ), //i
+    .io_archState_gpr_31                                (decode_io_registers_31[31:0]                                                  ), //i
+    .io_archState_crmd                                  (csr_csr_crmd_diff[31:0]                                                       ), //i
+    .io_archState_prmd                                  (csr_csr_prmd_diff[31:0]                                                       ), //i
+    .io_archState_euen                                  (32'h0                                                                         ), //i
+    .io_archState_ecfg                                  (csr_csr_ectl_diff[31:0]                                                       ), //i
+    .io_archState_estat                                 (csr_csr_estat_diff[31:0]                                                      ), //i
+    .io_archState_era                                   (csr_csr_era_diff[31:0]                                                        ), //i
+    .io_archState_badv                                  (csr_csr_badv_diff[31:0]                                                       ), //i
+    .io_archState_eentry                                (csr_csr_eentry_diff[31:0]                                                     ), //i
+    .io_archState_tlbidx                                (csr_csr_tlbidx_diff[31:0]                                                     ), //i
+    .io_archState_tlbehi                                (csr_csr_tlbehi_diff[31:0]                                                     ), //i
+    .io_archState_tlbelo0                               (csr_csr_tlbelo0_diff[31:0]                                                    ), //i
+    .io_archState_tlbelo1                               (csr_csr_tlbelo1_diff[31:0]                                                    ), //i
+    .io_archState_asid                                  (csr_csr_asid_diff[31:0]                                                       ), //i
+    .io_archState_pgdl                                  (csr_csr_pgdl_diff[31:0]                                                       ), //i
+    .io_archState_pgdh                                  (csr_csr_pgdh_diff[31:0]                                                       ), //i
+    .io_archState_save0                                 (csr_csr_save0_diff[31:0]                                                      ), //i
+    .io_archState_save1                                 (csr_csr_save1_diff[31:0]                                                      ), //i
+    .io_archState_save2                                 (csr_csr_save2_diff[31:0]                                                      ), //i
+    .io_archState_save3                                 (csr_csr_save3_diff[31:0]                                                      ), //i
+    .io_archState_tid                                   (csr_csr_tid_diff[31:0]                                                        ), //i
+    .io_archState_tcfg                                  (csr_csr_tcfg_diff[31:0]                                                       ), //i
+    .io_archState_tval                                  (csr_csr_tval_diff[31:0]                                                       ), //i
+    .io_archState_ticlr                                 (csr_csr_ticlr_diff[31:0]                                                      ), //i
+    .io_archState_llbctl                                (csr_csr_llbctl_diff[31:0]                                                     ), //i
+    .io_archState_tlbrentry                             (csr_csr_tlbrentry_diff[31:0]                                                  ), //i
+    .io_archState_dmw0                                  (csr_csr_dmw0_diff[31:0]                                                       ), //i
+    .io_archState_dmw1                                  (csr_csr_dmw1_diff[31:0]                                                       ), //i
+    .aclk                                               (aclk_1                                                                        ), //i
+    .resetCapture_backendActiveHigh                     (resetCapture_backendActiveHigh                                                )  //i
   );
   assign reset = (! aresetn);
-  assign execute_io_input_valid = (decode_io_output_valid && (! execute_io_branchRepair_active));
-  assign decode_io_output_ready = (execute_io_input_ready && (! execute_io_branchRepair_active));
+  assign writebackFlushActive = ((((writeback_io_flush_exception || writeback_io_flush_ertn) || writeback_io_flush_refetch) || writeback_io_flush_instructionCacheOperation) || writeback_io_flush_idle);
+  assign selectedBranchRepair_active = ((! writebackFlushActive) && (execute_io_branchRepair_active || decode_io_branchRepair_active));
+  assign selectedBranchRepair_target = (execute_io_branchRepair_active ? execute_io_branchRepair_target : decode_io_branchRepair_target);
+  assign executeBranchRepair = (execute_io_branchRepair_active && (! writebackFlushActive));
+  assign execute_io_input_valid = (decode_io_output_valid && (! executeBranchRepair));
+  assign decode_io_output_ready = (execute_io_input_ready && (! executeBranchRepair));
   assign writeback_io_tlbFillIndex = csr_rand_index;
-  assign decode_io_flush_refetch = (writeback_io_flush_refetch || execute_io_branchRepair_active);
+  assign decode_io_flush_refetch = (writeback_io_flush_refetch || executeBranchRepair);
+  assign redirectTargetAccepted = ((selectedBranchRepair_active && fetch_io_fetchEnable) && (fetch_io_fetchPc == selectedBranchRepair_target));
+  assign fetchBuffer_io_flush = (selectedBranchRepair_active || writebackFlushActive);
   assign decode_io_executeLateResultAllowed = (! execute_io_output_payload_hasException);
-  assign fetch_io_branchRepair = (execute_io_branchRepair_active || decode_io_branchRepair_active);
-  assign fetch_io_branchTarget = (execute_io_branchRepair_active ? execute_io_branchRepair_target : decode_io_branchRepair_target);
-  assign predictor_io_update_valid = (execute_io_btb_enable || decode_io_btb_enable);
-  assign predictor_io_update_payload_popReturnStack = (execute_io_btb_enable ? execute_io_btb_popReturnStack : decode_io_btb_popReturnStack);
-  assign predictor_io_update_payload_pushReturnStack = (execute_io_btb_enable ? execute_io_btb_pushReturnStack : decode_io_btb_pushReturnStack);
-  assign predictor_io_update_payload_addEntry = (execute_io_btb_enable ? execute_io_btb_addEntry : decode_io_btb_addEntry);
-  assign predictor_io_update_payload_predictionError = (execute_io_btb_enable ? execute_io_btb_predictionError : decode_io_btb_predictionError);
-  assign predictor_io_update_payload_predictionRight = (execute_io_btb_enable ? execute_io_btb_predictionRight : decode_io_btb_predictionRight);
-  assign predictor_io_update_payload_targetError = (execute_io_btb_enable ? execute_io_btb_targetError : decode_io_btb_targetError);
-  assign predictor_io_update_payload_actualTaken = (execute_io_btb_enable ? execute_io_btb_actualTaken : decode_io_btb_actualTaken);
-  assign predictor_io_update_payload_actualTarget = (execute_io_btb_enable ? execute_io_btb_actualTarget : decode_io_btb_actualTarget);
-  assign predictor_io_update_payload_pc = (execute_io_btb_enable ? execute_io_btb_pc : decode_io_btb_pc);
-  assign predictor_io_update_payload_legacyIndex = (execute_io_btb_enable ? execute_io_btb_index : decode_io_btb_index);
-  assign predictor_io_update_payload_direction_phtIndex = (execute_io_btb_enable ? execute_io_btb_direction_phtIndex : decode_io_btb_direction_phtIndex);
-  assign predictor_io_update_payload_direction_baseTaken = (execute_io_btb_enable ? execute_io_btb_direction_baseTaken : decode_io_btb_direction_baseTaken);
-  assign predictor_io_update_payload_direction_localTaken = (execute_io_btb_enable ? execute_io_btb_direction_localTaken : decode_io_btb_direction_localTaken);
+  assign predictorUpdateFromExecute = (execute_io_btb_enable && (! writebackFlushActive));
+  assign predictorUpdateFromDecode = (decode_io_btb_enable && (! writebackFlushActive));
+  assign predictor_io_update_valid = (predictorUpdateFromExecute || predictorUpdateFromDecode);
+  assign predictor_io_update_payload_popReturnStack = (predictorUpdateFromExecute ? execute_io_btb_popReturnStack : decode_io_btb_popReturnStack);
+  assign predictor_io_update_payload_pushReturnStack = (predictorUpdateFromExecute ? execute_io_btb_pushReturnStack : decode_io_btb_pushReturnStack);
+  assign predictor_io_update_payload_addEntry = (predictorUpdateFromExecute ? execute_io_btb_addEntry : decode_io_btb_addEntry);
+  assign predictor_io_update_payload_predictionError = (predictorUpdateFromExecute ? execute_io_btb_predictionError : decode_io_btb_predictionError);
+  assign predictor_io_update_payload_predictionRight = (predictorUpdateFromExecute ? execute_io_btb_predictionRight : decode_io_btb_predictionRight);
+  assign predictor_io_update_payload_targetError = (predictorUpdateFromExecute ? execute_io_btb_targetError : decode_io_btb_targetError);
+  assign predictor_io_update_payload_actualTaken = (predictorUpdateFromExecute ? execute_io_btb_actualTaken : decode_io_btb_actualTaken);
+  assign predictor_io_update_payload_actualTarget = (predictorUpdateFromExecute ? execute_io_btb_actualTarget : decode_io_btb_actualTarget);
+  assign predictor_io_update_payload_pc = (predictorUpdateFromExecute ? execute_io_btb_pc : decode_io_btb_pc);
+  assign predictor_io_update_payload_legacyIndex = (predictorUpdateFromExecute ? execute_io_btb_index : decode_io_btb_index);
+  assign predictor_io_update_payload_direction_phtIndex = (predictorUpdateFromExecute ? execute_io_btb_direction_phtIndex : decode_io_btb_direction_phtIndex);
+  assign predictor_io_update_payload_direction_baseTaken = (predictorUpdateFromExecute ? execute_io_btb_direction_baseTaken : decode_io_btb_direction_baseTaken);
+  assign predictor_io_update_payload_direction_localTaken = (predictorUpdateFromExecute ? execute_io_btb_direction_localTaken : decode_io_btb_direction_localTaken);
   assign csr_rd_addr = decode_io_csrReadAddress;
   assign csr_wr_addr = writeback_io_csrWrite_address;
   assign csr_era_in = writeback_io_debug_pc;
@@ -1961,6 +2201,84 @@ module SpinalCoreBackend (
   assign addressTranslation_data_vaddr = execute_io_memory_virtualAddress;
   assign memory_io_dataTlbIndex = addressTranslation_data_tlb_index;
   assign addressTranslation_rand_index = csr_rand_index;
+  assign _zz_io_commit_payload_events_1_pc = 505'h0;
+  assign _zz_io_commit_payload_events_1_gprWrite_valid = _zz_io_commit_payload_events_1_pc[137 : 100];
+  assign _zz_io_commit_payload_events_1_csrWrite_valid = _zz_io_commit_payload_events_1_pc[184 : 138];
+  assign _zz_io_commit_payload_events_1_exception_valid = _zz_io_commit_payload_events_1_pc[254 : 185];
+  assign _zz_io_commit_payload_events_1_load_instructionMask = _zz_io_commit_payload_events_1_pc[390 : 319];
+  assign _zz_io_commit_payload_events_1_store_instructionMask = _zz_io_commit_payload_events_1_pc[498 : 391];
+  assign _zz_io_commit_payload_events_1_tlbFill_valid = _zz_io_commit_payload_events_1_pc[504 : 499];
+  assign _zz_io_commit_payload_events_2_pc = 505'h0;
+  assign _zz_io_commit_payload_events_2_gprWrite_valid = _zz_io_commit_payload_events_2_pc[137 : 100];
+  assign _zz_io_commit_payload_events_2_csrWrite_valid = _zz_io_commit_payload_events_2_pc[184 : 138];
+  assign _zz_io_commit_payload_events_2_exception_valid = _zz_io_commit_payload_events_2_pc[254 : 185];
+  assign _zz_io_commit_payload_events_2_load_instructionMask = _zz_io_commit_payload_events_2_pc[390 : 319];
+  assign _zz_io_commit_payload_events_2_store_instructionMask = _zz_io_commit_payload_events_2_pc[498 : 391];
+  assign _zz_io_commit_payload_events_2_tlbFill_valid = _zz_io_commit_payload_events_2_pc[504 : 499];
+  assign chiplabDiffTestAdapter_1_io_commit_payload_events_1_pc = _zz_io_commit_payload_events_1_pc[31 : 0];
+  assign chiplabDiffTestAdapter_1_io_commit_payload_events_1_instruction = _zz_io_commit_payload_events_1_pc[63 : 32];
+  assign chiplabDiffTestAdapter_1_io_commit_payload_events_1_retired = _zz_io_commit_payload_events_1_pc[64];
+  assign chiplabDiffTestAdapter_1_io_commit_payload_events_1_ertn = _zz_io_commit_payload_events_1_pc[65];
+  assign chiplabDiffTestAdapter_1_io_commit_payload_events_1_isCounterInstruction = _zz_io_commit_payload_events_1_pc[66];
+  assign chiplabDiffTestAdapter_1_io_commit_payload_events_1_csrRstat = _zz_io_commit_payload_events_1_pc[67];
+  assign chiplabDiffTestAdapter_1_io_commit_payload_events_1_csrReadData = _zz_io_commit_payload_events_1_pc[99 : 68];
+  assign chiplabDiffTestAdapter_1_io_commit_payload_events_1_gprWrite_valid = _zz_io_commit_payload_events_1_gprWrite_valid[0];
+  assign chiplabDiffTestAdapter_1_io_commit_payload_events_1_gprWrite_index = _zz_io_commit_payload_events_1_gprWrite_valid[5 : 1];
+  assign chiplabDiffTestAdapter_1_io_commit_payload_events_1_gprWrite_data = _zz_io_commit_payload_events_1_gprWrite_valid[37 : 6];
+  assign chiplabDiffTestAdapter_1_io_commit_payload_events_1_csrWrite_valid = _zz_io_commit_payload_events_1_csrWrite_valid[0];
+  assign chiplabDiffTestAdapter_1_io_commit_payload_events_1_csrWrite_address = _zz_io_commit_payload_events_1_csrWrite_valid[14 : 1];
+  assign chiplabDiffTestAdapter_1_io_commit_payload_events_1_csrWrite_data = _zz_io_commit_payload_events_1_csrWrite_valid[46 : 15];
+  assign chiplabDiffTestAdapter_1_io_commit_payload_events_1_exception_valid = _zz_io_commit_payload_events_1_exception_valid[0];
+  assign chiplabDiffTestAdapter_1_io_commit_payload_events_1_exception_ecode = _zz_io_commit_payload_events_1_exception_valid[6 : 1];
+  assign chiplabDiffTestAdapter_1_io_commit_payload_events_1_exception_esubcode = _zz_io_commit_payload_events_1_exception_valid[15 : 7];
+  assign chiplabDiffTestAdapter_1_io_commit_payload_events_1_exception_badVAddrValid = _zz_io_commit_payload_events_1_exception_valid[16];
+  assign chiplabDiffTestAdapter_1_io_commit_payload_events_1_exception_badVAddr = _zz_io_commit_payload_events_1_exception_valid[48 : 17];
+  assign chiplabDiffTestAdapter_1_io_commit_payload_events_1_exception_tlbRefill = _zz_io_commit_payload_events_1_exception_valid[49];
+  assign chiplabDiffTestAdapter_1_io_commit_payload_events_1_exception_tlbException = _zz_io_commit_payload_events_1_exception_valid[50];
+  assign chiplabDiffTestAdapter_1_io_commit_payload_events_1_exception_tlbVppn = _zz_io_commit_payload_events_1_exception_valid[69 : 51];
+  assign chiplabDiffTestAdapter_1_io_commit_payload_events_1_timer = _zz_io_commit_payload_events_1_pc[318 : 255];
+  assign chiplabDiffTestAdapter_1_io_commit_payload_events_1_load_instructionMask = _zz_io_commit_payload_events_1_load_instructionMask[7 : 0];
+  assign chiplabDiffTestAdapter_1_io_commit_payload_events_1_load_pAddr = _zz_io_commit_payload_events_1_load_instructionMask[39 : 8];
+  assign chiplabDiffTestAdapter_1_io_commit_payload_events_1_load_vAddr = _zz_io_commit_payload_events_1_load_instructionMask[71 : 40];
+  assign chiplabDiffTestAdapter_1_io_commit_payload_events_1_store_instructionMask = _zz_io_commit_payload_events_1_store_instructionMask[7 : 0];
+  assign chiplabDiffTestAdapter_1_io_commit_payload_events_1_store_pAddr = _zz_io_commit_payload_events_1_store_instructionMask[39 : 8];
+  assign chiplabDiffTestAdapter_1_io_commit_payload_events_1_store_vAddr = _zz_io_commit_payload_events_1_store_instructionMask[71 : 40];
+  assign chiplabDiffTestAdapter_1_io_commit_payload_events_1_store_data = _zz_io_commit_payload_events_1_store_instructionMask[103 : 72];
+  assign chiplabDiffTestAdapter_1_io_commit_payload_events_1_store_byteMask = _zz_io_commit_payload_events_1_store_instructionMask[107 : 104];
+  assign chiplabDiffTestAdapter_1_io_commit_payload_events_1_tlbFill_valid = _zz_io_commit_payload_events_1_tlbFill_valid[0];
+  assign chiplabDiffTestAdapter_1_io_commit_payload_events_1_tlbFill_index = _zz_io_commit_payload_events_1_tlbFill_valid[5 : 1];
+  assign chiplabDiffTestAdapter_1_io_commit_payload_events_2_pc = _zz_io_commit_payload_events_2_pc[31 : 0];
+  assign chiplabDiffTestAdapter_1_io_commit_payload_events_2_instruction = _zz_io_commit_payload_events_2_pc[63 : 32];
+  assign chiplabDiffTestAdapter_1_io_commit_payload_events_2_retired = _zz_io_commit_payload_events_2_pc[64];
+  assign chiplabDiffTestAdapter_1_io_commit_payload_events_2_ertn = _zz_io_commit_payload_events_2_pc[65];
+  assign chiplabDiffTestAdapter_1_io_commit_payload_events_2_isCounterInstruction = _zz_io_commit_payload_events_2_pc[66];
+  assign chiplabDiffTestAdapter_1_io_commit_payload_events_2_csrRstat = _zz_io_commit_payload_events_2_pc[67];
+  assign chiplabDiffTestAdapter_1_io_commit_payload_events_2_csrReadData = _zz_io_commit_payload_events_2_pc[99 : 68];
+  assign chiplabDiffTestAdapter_1_io_commit_payload_events_2_gprWrite_valid = _zz_io_commit_payload_events_2_gprWrite_valid[0];
+  assign chiplabDiffTestAdapter_1_io_commit_payload_events_2_gprWrite_index = _zz_io_commit_payload_events_2_gprWrite_valid[5 : 1];
+  assign chiplabDiffTestAdapter_1_io_commit_payload_events_2_gprWrite_data = _zz_io_commit_payload_events_2_gprWrite_valid[37 : 6];
+  assign chiplabDiffTestAdapter_1_io_commit_payload_events_2_csrWrite_valid = _zz_io_commit_payload_events_2_csrWrite_valid[0];
+  assign chiplabDiffTestAdapter_1_io_commit_payload_events_2_csrWrite_address = _zz_io_commit_payload_events_2_csrWrite_valid[14 : 1];
+  assign chiplabDiffTestAdapter_1_io_commit_payload_events_2_csrWrite_data = _zz_io_commit_payload_events_2_csrWrite_valid[46 : 15];
+  assign chiplabDiffTestAdapter_1_io_commit_payload_events_2_exception_valid = _zz_io_commit_payload_events_2_exception_valid[0];
+  assign chiplabDiffTestAdapter_1_io_commit_payload_events_2_exception_ecode = _zz_io_commit_payload_events_2_exception_valid[6 : 1];
+  assign chiplabDiffTestAdapter_1_io_commit_payload_events_2_exception_esubcode = _zz_io_commit_payload_events_2_exception_valid[15 : 7];
+  assign chiplabDiffTestAdapter_1_io_commit_payload_events_2_exception_badVAddrValid = _zz_io_commit_payload_events_2_exception_valid[16];
+  assign chiplabDiffTestAdapter_1_io_commit_payload_events_2_exception_badVAddr = _zz_io_commit_payload_events_2_exception_valid[48 : 17];
+  assign chiplabDiffTestAdapter_1_io_commit_payload_events_2_exception_tlbRefill = _zz_io_commit_payload_events_2_exception_valid[49];
+  assign chiplabDiffTestAdapter_1_io_commit_payload_events_2_exception_tlbException = _zz_io_commit_payload_events_2_exception_valid[50];
+  assign chiplabDiffTestAdapter_1_io_commit_payload_events_2_exception_tlbVppn = _zz_io_commit_payload_events_2_exception_valid[69 : 51];
+  assign chiplabDiffTestAdapter_1_io_commit_payload_events_2_timer = _zz_io_commit_payload_events_2_pc[318 : 255];
+  assign chiplabDiffTestAdapter_1_io_commit_payload_events_2_load_instructionMask = _zz_io_commit_payload_events_2_load_instructionMask[7 : 0];
+  assign chiplabDiffTestAdapter_1_io_commit_payload_events_2_load_pAddr = _zz_io_commit_payload_events_2_load_instructionMask[39 : 8];
+  assign chiplabDiffTestAdapter_1_io_commit_payload_events_2_load_vAddr = _zz_io_commit_payload_events_2_load_instructionMask[71 : 40];
+  assign chiplabDiffTestAdapter_1_io_commit_payload_events_2_store_instructionMask = _zz_io_commit_payload_events_2_store_instructionMask[7 : 0];
+  assign chiplabDiffTestAdapter_1_io_commit_payload_events_2_store_pAddr = _zz_io_commit_payload_events_2_store_instructionMask[39 : 8];
+  assign chiplabDiffTestAdapter_1_io_commit_payload_events_2_store_vAddr = _zz_io_commit_payload_events_2_store_instructionMask[71 : 40];
+  assign chiplabDiffTestAdapter_1_io_commit_payload_events_2_store_data = _zz_io_commit_payload_events_2_store_instructionMask[103 : 72];
+  assign chiplabDiffTestAdapter_1_io_commit_payload_events_2_store_byteMask = _zz_io_commit_payload_events_2_store_instructionMask[107 : 104];
+  assign chiplabDiffTestAdapter_1_io_commit_payload_events_2_tlbFill_valid = _zz_io_commit_payload_events_2_tlbFill_valid[0];
+  assign chiplabDiffTestAdapter_1_io_commit_payload_events_2_tlbFill_index = _zz_io_commit_payload_events_2_tlbFill_valid[5 : 1];
   assign instructionCache_speculativeColor = fetch_io_instructionAddress[13 : 12];
   assign dataCache_speculativeColor = execute_io_memory_virtualAddress[13 : 12];
   assign axiBridge_inst_read_payload_address = instructionCache_rd_addr;
@@ -2008,38 +2326,103 @@ endmodule
 module ChiplabDiffTestAdapter (
   input  wire          io_clock,
   input  wire          io_commit_valid,
-  input  wire [31:0]   io_commit_payload_pc,
-  input  wire [31:0]   io_commit_payload_instruction,
-  input  wire          io_commit_payload_retired,
-  input  wire          io_commit_payload_ertn,
-  input  wire          io_commit_payload_isCounterInstruction,
-  input  wire          io_commit_payload_csrRstat,
-  input  wire [31:0]   io_commit_payload_csrReadData,
-  input  wire          io_commit_payload_gprWrite_valid,
-  input  wire [4:0]    io_commit_payload_gprWrite_index,
-  input  wire [31:0]   io_commit_payload_gprWrite_data,
-  input  wire          io_commit_payload_csrWrite_valid,
-  input  wire [13:0]   io_commit_payload_csrWrite_address,
-  input  wire [31:0]   io_commit_payload_csrWrite_data,
-  input  wire          io_commit_payload_exception_valid,
-  input  wire [5:0]    io_commit_payload_exception_ecode,
-  input  wire [8:0]    io_commit_payload_exception_esubcode,
-  input  wire          io_commit_payload_exception_badVAddrValid,
-  input  wire [31:0]   io_commit_payload_exception_badVAddr,
-  input  wire          io_commit_payload_exception_tlbRefill,
-  input  wire          io_commit_payload_exception_tlbException,
-  input  wire [18:0]   io_commit_payload_exception_tlbVppn,
-  input  wire [63:0]   io_commit_payload_timer,
-  input  wire [7:0]    io_commit_payload_load_instructionMask,
-  input  wire [31:0]   io_commit_payload_load_pAddr,
-  input  wire [31:0]   io_commit_payload_load_vAddr,
-  input  wire [7:0]    io_commit_payload_store_instructionMask,
-  input  wire [31:0]   io_commit_payload_store_pAddr,
-  input  wire [31:0]   io_commit_payload_store_vAddr,
-  input  wire [31:0]   io_commit_payload_store_data,
-  input  wire [3:0]    io_commit_payload_store_byteMask,
-  input  wire          io_commit_payload_tlbFill_valid,
-  input  wire [4:0]    io_commit_payload_tlbFill_index,
+  input  wire [2:0]    io_commit_payload_valid,
+  input  wire [31:0]   io_commit_payload_events_0_pc,
+  input  wire [31:0]   io_commit_payload_events_0_instruction,
+  input  wire          io_commit_payload_events_0_retired,
+  input  wire          io_commit_payload_events_0_ertn,
+  input  wire          io_commit_payload_events_0_isCounterInstruction,
+  input  wire          io_commit_payload_events_0_csrRstat,
+  input  wire [31:0]   io_commit_payload_events_0_csrReadData,
+  input  wire          io_commit_payload_events_0_gprWrite_valid,
+  input  wire [4:0]    io_commit_payload_events_0_gprWrite_index,
+  input  wire [31:0]   io_commit_payload_events_0_gprWrite_data,
+  input  wire          io_commit_payload_events_0_csrWrite_valid,
+  input  wire [13:0]   io_commit_payload_events_0_csrWrite_address,
+  input  wire [31:0]   io_commit_payload_events_0_csrWrite_data,
+  input  wire          io_commit_payload_events_0_exception_valid,
+  input  wire [5:0]    io_commit_payload_events_0_exception_ecode,
+  input  wire [8:0]    io_commit_payload_events_0_exception_esubcode,
+  input  wire          io_commit_payload_events_0_exception_badVAddrValid,
+  input  wire [31:0]   io_commit_payload_events_0_exception_badVAddr,
+  input  wire          io_commit_payload_events_0_exception_tlbRefill,
+  input  wire          io_commit_payload_events_0_exception_tlbException,
+  input  wire [18:0]   io_commit_payload_events_0_exception_tlbVppn,
+  input  wire [63:0]   io_commit_payload_events_0_timer,
+  input  wire [7:0]    io_commit_payload_events_0_load_instructionMask,
+  input  wire [31:0]   io_commit_payload_events_0_load_pAddr,
+  input  wire [31:0]   io_commit_payload_events_0_load_vAddr,
+  input  wire [7:0]    io_commit_payload_events_0_store_instructionMask,
+  input  wire [31:0]   io_commit_payload_events_0_store_pAddr,
+  input  wire [31:0]   io_commit_payload_events_0_store_vAddr,
+  input  wire [31:0]   io_commit_payload_events_0_store_data,
+  input  wire [3:0]    io_commit_payload_events_0_store_byteMask,
+  input  wire          io_commit_payload_events_0_tlbFill_valid,
+  input  wire [4:0]    io_commit_payload_events_0_tlbFill_index,
+  input  wire [31:0]   io_commit_payload_events_1_pc,
+  input  wire [31:0]   io_commit_payload_events_1_instruction,
+  input  wire          io_commit_payload_events_1_retired,
+  input  wire          io_commit_payload_events_1_ertn,
+  input  wire          io_commit_payload_events_1_isCounterInstruction,
+  input  wire          io_commit_payload_events_1_csrRstat,
+  input  wire [31:0]   io_commit_payload_events_1_csrReadData,
+  input  wire          io_commit_payload_events_1_gprWrite_valid,
+  input  wire [4:0]    io_commit_payload_events_1_gprWrite_index,
+  input  wire [31:0]   io_commit_payload_events_1_gprWrite_data,
+  input  wire          io_commit_payload_events_1_csrWrite_valid,
+  input  wire [13:0]   io_commit_payload_events_1_csrWrite_address,
+  input  wire [31:0]   io_commit_payload_events_1_csrWrite_data,
+  input  wire          io_commit_payload_events_1_exception_valid,
+  input  wire [5:0]    io_commit_payload_events_1_exception_ecode,
+  input  wire [8:0]    io_commit_payload_events_1_exception_esubcode,
+  input  wire          io_commit_payload_events_1_exception_badVAddrValid,
+  input  wire [31:0]   io_commit_payload_events_1_exception_badVAddr,
+  input  wire          io_commit_payload_events_1_exception_tlbRefill,
+  input  wire          io_commit_payload_events_1_exception_tlbException,
+  input  wire [18:0]   io_commit_payload_events_1_exception_tlbVppn,
+  input  wire [63:0]   io_commit_payload_events_1_timer,
+  input  wire [7:0]    io_commit_payload_events_1_load_instructionMask,
+  input  wire [31:0]   io_commit_payload_events_1_load_pAddr,
+  input  wire [31:0]   io_commit_payload_events_1_load_vAddr,
+  input  wire [7:0]    io_commit_payload_events_1_store_instructionMask,
+  input  wire [31:0]   io_commit_payload_events_1_store_pAddr,
+  input  wire [31:0]   io_commit_payload_events_1_store_vAddr,
+  input  wire [31:0]   io_commit_payload_events_1_store_data,
+  input  wire [3:0]    io_commit_payload_events_1_store_byteMask,
+  input  wire          io_commit_payload_events_1_tlbFill_valid,
+  input  wire [4:0]    io_commit_payload_events_1_tlbFill_index,
+  input  wire [31:0]   io_commit_payload_events_2_pc,
+  input  wire [31:0]   io_commit_payload_events_2_instruction,
+  input  wire          io_commit_payload_events_2_retired,
+  input  wire          io_commit_payload_events_2_ertn,
+  input  wire          io_commit_payload_events_2_isCounterInstruction,
+  input  wire          io_commit_payload_events_2_csrRstat,
+  input  wire [31:0]   io_commit_payload_events_2_csrReadData,
+  input  wire          io_commit_payload_events_2_gprWrite_valid,
+  input  wire [4:0]    io_commit_payload_events_2_gprWrite_index,
+  input  wire [31:0]   io_commit_payload_events_2_gprWrite_data,
+  input  wire          io_commit_payload_events_2_csrWrite_valid,
+  input  wire [13:0]   io_commit_payload_events_2_csrWrite_address,
+  input  wire [31:0]   io_commit_payload_events_2_csrWrite_data,
+  input  wire          io_commit_payload_events_2_exception_valid,
+  input  wire [5:0]    io_commit_payload_events_2_exception_ecode,
+  input  wire [8:0]    io_commit_payload_events_2_exception_esubcode,
+  input  wire          io_commit_payload_events_2_exception_badVAddrValid,
+  input  wire [31:0]   io_commit_payload_events_2_exception_badVAddr,
+  input  wire          io_commit_payload_events_2_exception_tlbRefill,
+  input  wire          io_commit_payload_events_2_exception_tlbException,
+  input  wire [18:0]   io_commit_payload_events_2_exception_tlbVppn,
+  input  wire [63:0]   io_commit_payload_events_2_timer,
+  input  wire [7:0]    io_commit_payload_events_2_load_instructionMask,
+  input  wire [31:0]   io_commit_payload_events_2_load_pAddr,
+  input  wire [31:0]   io_commit_payload_events_2_load_vAddr,
+  input  wire [7:0]    io_commit_payload_events_2_store_instructionMask,
+  input  wire [31:0]   io_commit_payload_events_2_store_pAddr,
+  input  wire [31:0]   io_commit_payload_events_2_store_vAddr,
+  input  wire [31:0]   io_commit_payload_events_2_store_data,
+  input  wire [3:0]    io_commit_payload_events_2_store_byteMask,
+  input  wire          io_commit_payload_events_2_tlbFill_valid,
+  input  wire [4:0]    io_commit_payload_events_2_tlbFill_index,
   input  wire [31:0]   io_archState_gpr_0,
   input  wire [31:0]   io_archState_gpr_1,
   input  wire [31:0]   io_archState_gpr_2,
@@ -2103,32 +2486,138 @@ module ChiplabDiffTestAdapter (
   input  wire          resetCapture_backendActiveHigh
 );
 
-  wire       [504:0]  wrapper_commitContract;
-  wire                wrapper_instrValid;
-  wire       [63:0]   wrapper_pc;
-  wire                wrapper_isTlbFill;
-  wire       [4:0]    wrapper_tlbFillIndex;
-  wire       [63:0]   wrapper_timer;
-  wire                wrapper_gprWriteValid;
-  wire       [7:0]    wrapper_gprWriteIndex;
-  wire       [63:0]   wrapper_gprWriteData;
+  reg        [1514:0] wrapper_commitContract;
+  reg        [2:0]    wrapper_instrValid;
+  reg        [191:0]  wrapper_pc;
+  reg        [95:0]   wrapper_instruction;
+  reg        [2:0]    wrapper_isTlbFill;
+  reg        [14:0]   wrapper_tlbFillIndex;
+  reg        [2:0]    wrapper_isCounterInstruction;
+  reg        [191:0]  wrapper_timer;
+  reg        [2:0]    wrapper_gprWriteValid;
+  reg        [23:0]   wrapper_gprWriteIndex;
+  reg        [191:0]  wrapper_gprWriteData;
+  reg        [2:0]    wrapper_csrRstat;
+  reg        [95:0]   wrapper_csrReadData;
   wire                wrapper_exceptionValid;
   wire                wrapper_ertn;
   wire       [31:0]   wrapper_interruptNumber;
   wire       [31:0]   wrapper_exceptionCause;
   wire       [63:0]   wrapper_exceptionPc;
   wire       [2:0]    wrapper_trapCode;
+  wire       [63:0]   wrapper_trapPc;
   wire       [63:0]   wrapper_cycleCount;
   wire       [63:0]   wrapper_instructionCount;
-  wire       [7:0]    wrapper_storeValid;
-  wire       [63:0]   wrapper_storePhysicalAddress;
-  wire       [63:0]   wrapper_storeVirtualAddress;
-  wire       [63:0]   wrapper_storeData;
-  wire       [7:0]    wrapper_loadValid;
-  wire       [63:0]   wrapper_loadPhysicalAddress;
-  wire       [63:0]   wrapper_loadVirtualAddress;
+  reg        [23:0]   wrapper_storeValid;
+  reg        [191:0]  wrapper_storePhysicalAddress;
+  reg        [191:0]  wrapper_storeVirtualAddress;
+  reg        [191:0]  wrapper_storeData;
+  reg        [23:0]   wrapper_loadValid;
+  reg        [191:0]  wrapper_loadPhysicalAddress;
+  reg        [191:0]  wrapper_loadVirtualAddress;
   wire       [1727:0] wrapper_csrState;
   wire       [2047:0] wrapper_gprState;
+  wire                ordered_io_output_valid;
+  wire       [2:0]    ordered_io_output_payload_valid;
+  wire       [31:0]   ordered_io_output_payload_events_0_pc;
+  wire       [31:0]   ordered_io_output_payload_events_0_instruction;
+  wire                ordered_io_output_payload_events_0_retired;
+  wire                ordered_io_output_payload_events_0_ertn;
+  wire                ordered_io_output_payload_events_0_isCounterInstruction;
+  wire                ordered_io_output_payload_events_0_csrRstat;
+  wire       [31:0]   ordered_io_output_payload_events_0_csrReadData;
+  wire                ordered_io_output_payload_events_0_gprWrite_valid;
+  wire       [4:0]    ordered_io_output_payload_events_0_gprWrite_index;
+  wire       [31:0]   ordered_io_output_payload_events_0_gprWrite_data;
+  wire                ordered_io_output_payload_events_0_csrWrite_valid;
+  wire       [13:0]   ordered_io_output_payload_events_0_csrWrite_address;
+  wire       [31:0]   ordered_io_output_payload_events_0_csrWrite_data;
+  wire                ordered_io_output_payload_events_0_exception_valid;
+  wire       [5:0]    ordered_io_output_payload_events_0_exception_ecode;
+  wire       [8:0]    ordered_io_output_payload_events_0_exception_esubcode;
+  wire                ordered_io_output_payload_events_0_exception_badVAddrValid;
+  wire       [31:0]   ordered_io_output_payload_events_0_exception_badVAddr;
+  wire                ordered_io_output_payload_events_0_exception_tlbRefill;
+  wire                ordered_io_output_payload_events_0_exception_tlbException;
+  wire       [18:0]   ordered_io_output_payload_events_0_exception_tlbVppn;
+  wire       [63:0]   ordered_io_output_payload_events_0_timer;
+  wire       [7:0]    ordered_io_output_payload_events_0_load_instructionMask;
+  wire       [31:0]   ordered_io_output_payload_events_0_load_pAddr;
+  wire       [31:0]   ordered_io_output_payload_events_0_load_vAddr;
+  wire       [7:0]    ordered_io_output_payload_events_0_store_instructionMask;
+  wire       [31:0]   ordered_io_output_payload_events_0_store_pAddr;
+  wire       [31:0]   ordered_io_output_payload_events_0_store_vAddr;
+  wire       [31:0]   ordered_io_output_payload_events_0_store_data;
+  wire       [3:0]    ordered_io_output_payload_events_0_store_byteMask;
+  wire                ordered_io_output_payload_events_0_tlbFill_valid;
+  wire       [4:0]    ordered_io_output_payload_events_0_tlbFill_index;
+  wire       [31:0]   ordered_io_output_payload_events_1_pc;
+  wire       [31:0]   ordered_io_output_payload_events_1_instruction;
+  wire                ordered_io_output_payload_events_1_retired;
+  wire                ordered_io_output_payload_events_1_ertn;
+  wire                ordered_io_output_payload_events_1_isCounterInstruction;
+  wire                ordered_io_output_payload_events_1_csrRstat;
+  wire       [31:0]   ordered_io_output_payload_events_1_csrReadData;
+  wire                ordered_io_output_payload_events_1_gprWrite_valid;
+  wire       [4:0]    ordered_io_output_payload_events_1_gprWrite_index;
+  wire       [31:0]   ordered_io_output_payload_events_1_gprWrite_data;
+  wire                ordered_io_output_payload_events_1_csrWrite_valid;
+  wire       [13:0]   ordered_io_output_payload_events_1_csrWrite_address;
+  wire       [31:0]   ordered_io_output_payload_events_1_csrWrite_data;
+  wire                ordered_io_output_payload_events_1_exception_valid;
+  wire       [5:0]    ordered_io_output_payload_events_1_exception_ecode;
+  wire       [8:0]    ordered_io_output_payload_events_1_exception_esubcode;
+  wire                ordered_io_output_payload_events_1_exception_badVAddrValid;
+  wire       [31:0]   ordered_io_output_payload_events_1_exception_badVAddr;
+  wire                ordered_io_output_payload_events_1_exception_tlbRefill;
+  wire                ordered_io_output_payload_events_1_exception_tlbException;
+  wire       [18:0]   ordered_io_output_payload_events_1_exception_tlbVppn;
+  wire       [63:0]   ordered_io_output_payload_events_1_timer;
+  wire       [7:0]    ordered_io_output_payload_events_1_load_instructionMask;
+  wire       [31:0]   ordered_io_output_payload_events_1_load_pAddr;
+  wire       [31:0]   ordered_io_output_payload_events_1_load_vAddr;
+  wire       [7:0]    ordered_io_output_payload_events_1_store_instructionMask;
+  wire       [31:0]   ordered_io_output_payload_events_1_store_pAddr;
+  wire       [31:0]   ordered_io_output_payload_events_1_store_vAddr;
+  wire       [31:0]   ordered_io_output_payload_events_1_store_data;
+  wire       [3:0]    ordered_io_output_payload_events_1_store_byteMask;
+  wire                ordered_io_output_payload_events_1_tlbFill_valid;
+  wire       [4:0]    ordered_io_output_payload_events_1_tlbFill_index;
+  wire       [31:0]   ordered_io_output_payload_events_2_pc;
+  wire       [31:0]   ordered_io_output_payload_events_2_instruction;
+  wire                ordered_io_output_payload_events_2_retired;
+  wire                ordered_io_output_payload_events_2_ertn;
+  wire                ordered_io_output_payload_events_2_isCounterInstruction;
+  wire                ordered_io_output_payload_events_2_csrRstat;
+  wire       [31:0]   ordered_io_output_payload_events_2_csrReadData;
+  wire                ordered_io_output_payload_events_2_gprWrite_valid;
+  wire       [4:0]    ordered_io_output_payload_events_2_gprWrite_index;
+  wire       [31:0]   ordered_io_output_payload_events_2_gprWrite_data;
+  wire                ordered_io_output_payload_events_2_csrWrite_valid;
+  wire       [13:0]   ordered_io_output_payload_events_2_csrWrite_address;
+  wire       [31:0]   ordered_io_output_payload_events_2_csrWrite_data;
+  wire                ordered_io_output_payload_events_2_exception_valid;
+  wire       [5:0]    ordered_io_output_payload_events_2_exception_ecode;
+  wire       [8:0]    ordered_io_output_payload_events_2_exception_esubcode;
+  wire                ordered_io_output_payload_events_2_exception_badVAddrValid;
+  wire       [31:0]   ordered_io_output_payload_events_2_exception_badVAddr;
+  wire                ordered_io_output_payload_events_2_exception_tlbRefill;
+  wire                ordered_io_output_payload_events_2_exception_tlbException;
+  wire       [18:0]   ordered_io_output_payload_events_2_exception_tlbVppn;
+  wire       [63:0]   ordered_io_output_payload_events_2_timer;
+  wire       [7:0]    ordered_io_output_payload_events_2_load_instructionMask;
+  wire       [31:0]   ordered_io_output_payload_events_2_load_pAddr;
+  wire       [31:0]   ordered_io_output_payload_events_2_load_vAddr;
+  wire       [7:0]    ordered_io_output_payload_events_2_store_instructionMask;
+  wire       [31:0]   ordered_io_output_payload_events_2_store_pAddr;
+  wire       [31:0]   ordered_io_output_payload_events_2_store_vAddr;
+  wire       [31:0]   ordered_io_output_payload_events_2_store_data;
+  wire       [3:0]    ordered_io_output_payload_events_2_store_byteMask;
+  wire                ordered_io_output_payload_events_2_tlbFill_valid;
+  wire       [4:0]    ordered_io_output_payload_events_2_tlbFill_index;
+  wire       [63:0]   _zz_instructionCount;
+  reg        [1:0]    _zz_instructionCount_1;
+  wire       [2:0]    _zz_instructionCount_2;
   wire       [31:0]   _zz_commitContract;
   wire       [18:0]   _zz_commitContract_1;
   wire       [50:0]   _zz_commitContract_2;
@@ -2138,6 +2627,24 @@ module ChiplabDiffTestAdapter (
   wire       [137:0]  _zz_commitContract_6;
   wire       [0:0]    _zz_commitContract_7;
   wire       [65:0]   _zz_commitContract_8;
+  wire       [31:0]   _zz_commitContract_9;
+  wire       [18:0]   _zz_commitContract_10;
+  wire       [50:0]   _zz_commitContract_11;
+  wire       [0:0]    _zz_commitContract_12;
+  wire       [15:0]   _zz_commitContract_13;
+  wire       [46:0]   _zz_commitContract_14;
+  wire       [137:0]  _zz_commitContract_15;
+  wire       [0:0]    _zz_commitContract_16;
+  wire       [65:0]   _zz_commitContract_17;
+  wire       [31:0]   _zz_commitContract_18;
+  wire       [18:0]   _zz_commitContract_19;
+  wire       [50:0]   _zz_commitContract_20;
+  wire       [0:0]    _zz_commitContract_21;
+  wire       [15:0]   _zz_commitContract_22;
+  wire       [46:0]   _zz_commitContract_23;
+  wire       [137:0]  _zz_commitContract_24;
+  wire       [0:0]    _zz_commitContract_25;
+  wire       [65:0]   _zz_commitContract_26;
   wire       [1151:0] _zz_csrState;
   wire       [639:0]  _zz_csrState_1;
   wire       [127:0]  _zz_csrState_2;
@@ -2149,41 +2656,120 @@ module ChiplabDiffTestAdapter (
   wire       [31:0]   _zz_csrState_8;
   wire       [1023:0] _zz_gprState;
   reg                 registeredValid;
-  reg        [31:0]   registeredCommit_pc;
-  reg        [31:0]   registeredCommit_instruction;
-  reg                 registeredCommit_retired;
-  reg                 registeredCommit_ertn;
-  reg                 registeredCommit_isCounterInstruction;
-  reg                 registeredCommit_csrRstat;
-  reg        [31:0]   registeredCommit_csrReadData;
-  reg                 registeredCommit_gprWrite_valid;
-  reg        [4:0]    registeredCommit_gprWrite_index;
-  reg        [31:0]   registeredCommit_gprWrite_data;
-  reg                 registeredCommit_csrWrite_valid;
-  reg        [13:0]   registeredCommit_csrWrite_address;
-  reg        [31:0]   registeredCommit_csrWrite_data;
-  reg                 registeredCommit_exception_valid;
-  reg        [5:0]    registeredCommit_exception_ecode;
-  reg        [8:0]    registeredCommit_exception_esubcode;
-  reg                 registeredCommit_exception_badVAddrValid;
-  reg        [31:0]   registeredCommit_exception_badVAddr;
-  reg                 registeredCommit_exception_tlbRefill;
-  reg                 registeredCommit_exception_tlbException;
-  reg        [18:0]   registeredCommit_exception_tlbVppn;
-  reg        [63:0]   registeredCommit_timer;
-  reg        [7:0]    registeredCommit_load_instructionMask;
-  reg        [31:0]   registeredCommit_load_pAddr;
-  reg        [31:0]   registeredCommit_load_vAddr;
-  reg        [7:0]    registeredCommit_store_instructionMask;
-  reg        [31:0]   registeredCommit_store_pAddr;
-  reg        [31:0]   registeredCommit_store_vAddr;
-  reg        [31:0]   registeredCommit_store_data;
-  reg        [3:0]    registeredCommit_store_byteMask;
-  reg                 registeredCommit_tlbFill_valid;
-  reg        [4:0]    registeredCommit_tlbFill_index;
-  wire                rawRetired;
+  reg        [2:0]    registeredCommit_valid;
+  reg        [31:0]   registeredCommit_events_0_pc;
+  reg        [31:0]   registeredCommit_events_0_instruction;
+  reg                 registeredCommit_events_0_retired;
+  reg                 registeredCommit_events_0_ertn;
+  reg                 registeredCommit_events_0_isCounterInstruction;
+  reg                 registeredCommit_events_0_csrRstat;
+  reg        [31:0]   registeredCommit_events_0_csrReadData;
+  reg                 registeredCommit_events_0_gprWrite_valid;
+  reg        [4:0]    registeredCommit_events_0_gprWrite_index;
+  reg        [31:0]   registeredCommit_events_0_gprWrite_data;
+  reg                 registeredCommit_events_0_csrWrite_valid;
+  reg        [13:0]   registeredCommit_events_0_csrWrite_address;
+  reg        [31:0]   registeredCommit_events_0_csrWrite_data;
+  reg                 registeredCommit_events_0_exception_valid;
+  reg        [5:0]    registeredCommit_events_0_exception_ecode;
+  reg        [8:0]    registeredCommit_events_0_exception_esubcode;
+  reg                 registeredCommit_events_0_exception_badVAddrValid;
+  reg        [31:0]   registeredCommit_events_0_exception_badVAddr;
+  reg                 registeredCommit_events_0_exception_tlbRefill;
+  reg                 registeredCommit_events_0_exception_tlbException;
+  reg        [18:0]   registeredCommit_events_0_exception_tlbVppn;
+  reg        [63:0]   registeredCommit_events_0_timer;
+  reg        [7:0]    registeredCommit_events_0_load_instructionMask;
+  reg        [31:0]   registeredCommit_events_0_load_pAddr;
+  reg        [31:0]   registeredCommit_events_0_load_vAddr;
+  reg        [7:0]    registeredCommit_events_0_store_instructionMask;
+  reg        [31:0]   registeredCommit_events_0_store_pAddr;
+  reg        [31:0]   registeredCommit_events_0_store_vAddr;
+  reg        [31:0]   registeredCommit_events_0_store_data;
+  reg        [3:0]    registeredCommit_events_0_store_byteMask;
+  reg                 registeredCommit_events_0_tlbFill_valid;
+  reg        [4:0]    registeredCommit_events_0_tlbFill_index;
+  reg        [31:0]   registeredCommit_events_1_pc;
+  reg        [31:0]   registeredCommit_events_1_instruction;
+  reg                 registeredCommit_events_1_retired;
+  reg                 registeredCommit_events_1_ertn;
+  reg                 registeredCommit_events_1_isCounterInstruction;
+  reg                 registeredCommit_events_1_csrRstat;
+  reg        [31:0]   registeredCommit_events_1_csrReadData;
+  reg                 registeredCommit_events_1_gprWrite_valid;
+  reg        [4:0]    registeredCommit_events_1_gprWrite_index;
+  reg        [31:0]   registeredCommit_events_1_gprWrite_data;
+  reg                 registeredCommit_events_1_csrWrite_valid;
+  reg        [13:0]   registeredCommit_events_1_csrWrite_address;
+  reg        [31:0]   registeredCommit_events_1_csrWrite_data;
+  reg                 registeredCommit_events_1_exception_valid;
+  reg        [5:0]    registeredCommit_events_1_exception_ecode;
+  reg        [8:0]    registeredCommit_events_1_exception_esubcode;
+  reg                 registeredCommit_events_1_exception_badVAddrValid;
+  reg        [31:0]   registeredCommit_events_1_exception_badVAddr;
+  reg                 registeredCommit_events_1_exception_tlbRefill;
+  reg                 registeredCommit_events_1_exception_tlbException;
+  reg        [18:0]   registeredCommit_events_1_exception_tlbVppn;
+  reg        [63:0]   registeredCommit_events_1_timer;
+  reg        [7:0]    registeredCommit_events_1_load_instructionMask;
+  reg        [31:0]   registeredCommit_events_1_load_pAddr;
+  reg        [31:0]   registeredCommit_events_1_load_vAddr;
+  reg        [7:0]    registeredCommit_events_1_store_instructionMask;
+  reg        [31:0]   registeredCommit_events_1_store_pAddr;
+  reg        [31:0]   registeredCommit_events_1_store_vAddr;
+  reg        [31:0]   registeredCommit_events_1_store_data;
+  reg        [3:0]    registeredCommit_events_1_store_byteMask;
+  reg                 registeredCommit_events_1_tlbFill_valid;
+  reg        [4:0]    registeredCommit_events_1_tlbFill_index;
+  reg        [31:0]   registeredCommit_events_2_pc;
+  reg        [31:0]   registeredCommit_events_2_instruction;
+  reg                 registeredCommit_events_2_retired;
+  reg                 registeredCommit_events_2_ertn;
+  reg                 registeredCommit_events_2_isCounterInstruction;
+  reg                 registeredCommit_events_2_csrRstat;
+  reg        [31:0]   registeredCommit_events_2_csrReadData;
+  reg                 registeredCommit_events_2_gprWrite_valid;
+  reg        [4:0]    registeredCommit_events_2_gprWrite_index;
+  reg        [31:0]   registeredCommit_events_2_gprWrite_data;
+  reg                 registeredCommit_events_2_csrWrite_valid;
+  reg        [13:0]   registeredCommit_events_2_csrWrite_address;
+  reg        [31:0]   registeredCommit_events_2_csrWrite_data;
+  reg                 registeredCommit_events_2_exception_valid;
+  reg        [5:0]    registeredCommit_events_2_exception_ecode;
+  reg        [8:0]    registeredCommit_events_2_exception_esubcode;
+  reg                 registeredCommit_events_2_exception_badVAddrValid;
+  reg        [31:0]   registeredCommit_events_2_exception_badVAddr;
+  reg                 registeredCommit_events_2_exception_tlbRefill;
+  reg                 registeredCommit_events_2_exception_tlbException;
+  reg        [18:0]   registeredCommit_events_2_exception_tlbVppn;
+  reg        [63:0]   registeredCommit_events_2_timer;
+  reg        [7:0]    registeredCommit_events_2_load_instructionMask;
+  reg        [31:0]   registeredCommit_events_2_load_pAddr;
+  reg        [31:0]   registeredCommit_events_2_load_vAddr;
+  reg        [7:0]    registeredCommit_events_2_store_instructionMask;
+  reg        [31:0]   registeredCommit_events_2_store_pAddr;
+  reg        [31:0]   registeredCommit_events_2_store_vAddr;
+  reg        [31:0]   registeredCommit_events_2_store_data;
+  reg        [3:0]    registeredCommit_events_2_store_byteMask;
+  reg                 registeredCommit_events_2_tlbFill_valid;
+  reg        [4:0]    registeredCommit_events_2_tlbFill_index;
+  reg        [2:0]    rawRetired;
   reg        [63:0]   cycleCount;
   reg        [63:0]   instructionCount;
+  reg        [2:0]    controlValid;
+  wire                _zz_controlValid;
+  wire                _zz_controlValid_1;
+  wire                _zz_controlValid_2;
+  reg        [31:0]   selectedControl_pc;
+  reg        [31:0]   selectedControl_instruction;
+  reg                 selectedControl_ertn;
+  reg                 selectedControl_exceptionValid;
+  reg        [5:0]    selectedControl_exceptionCode;
+  wire                olderControlSelected;
+  wire                when_ChiplabDiffTestAdapter_l109;
+  wire                _zz_when_ChiplabDiffTestAdapter_l109;
+  wire                when_ChiplabDiffTestAdapter_l109_1;
+  wire                when_ChiplabDiffTestAdapter_l109_2;
   wire       [63:0]   gprWords_0;
   wire       [63:0]   gprWords_1;
   wire       [63:0]   gprWords_2;
@@ -2217,15 +2803,35 @@ module ChiplabDiffTestAdapter (
   wire       [63:0]   gprWords_30;
   wire       [63:0]   gprWords_31;
 
-  assign _zz_commitContract = registeredCommit_store_pAddr;
-  assign _zz_commitContract_1 = registeredCommit_exception_tlbVppn;
-  assign _zz_commitContract_2 = {registeredCommit_exception_tlbException,{registeredCommit_exception_tlbRefill,{registeredCommit_exception_badVAddr,{_zz_commitContract_3,_zz_commitContract_4}}}};
-  assign _zz_commitContract_5 = {registeredCommit_csrWrite_data,{registeredCommit_csrWrite_address,registeredCommit_csrWrite_valid}};
-  assign _zz_commitContract_6 = {{registeredCommit_gprWrite_data,{registeredCommit_gprWrite_index,registeredCommit_gprWrite_valid}},{registeredCommit_csrReadData,{registeredCommit_csrRstat,{_zz_commitContract_7,_zz_commitContract_8}}}};
-  assign _zz_commitContract_3 = registeredCommit_exception_badVAddrValid;
-  assign _zz_commitContract_4 = {registeredCommit_exception_esubcode,{registeredCommit_exception_ecode,registeredCommit_exception_valid}};
-  assign _zz_commitContract_7 = registeredCommit_isCounterInstruction;
-  assign _zz_commitContract_8 = {registeredCommit_ertn,{registeredCommit_retired,{registeredCommit_instruction,registeredCommit_pc}}};
+  assign _zz_instructionCount = {62'd0, _zz_instructionCount_1};
+  assign _zz_instructionCount_2 = {rawRetired[2],{rawRetired[1],rawRetired[0]}};
+  assign _zz_commitContract = registeredCommit_events_0_store_pAddr;
+  assign _zz_commitContract_1 = registeredCommit_events_0_exception_tlbVppn;
+  assign _zz_commitContract_2 = {registeredCommit_events_0_exception_tlbException,{registeredCommit_events_0_exception_tlbRefill,{registeredCommit_events_0_exception_badVAddr,{_zz_commitContract_3,_zz_commitContract_4}}}};
+  assign _zz_commitContract_5 = {registeredCommit_events_0_csrWrite_data,{registeredCommit_events_0_csrWrite_address,registeredCommit_events_0_csrWrite_valid}};
+  assign _zz_commitContract_6 = {{registeredCommit_events_0_gprWrite_data,{registeredCommit_events_0_gprWrite_index,registeredCommit_events_0_gprWrite_valid}},{registeredCommit_events_0_csrReadData,{registeredCommit_events_0_csrRstat,{_zz_commitContract_7,_zz_commitContract_8}}}};
+  assign _zz_commitContract_3 = registeredCommit_events_0_exception_badVAddrValid;
+  assign _zz_commitContract_4 = {registeredCommit_events_0_exception_esubcode,{registeredCommit_events_0_exception_ecode,registeredCommit_events_0_exception_valid}};
+  assign _zz_commitContract_7 = registeredCommit_events_0_isCounterInstruction;
+  assign _zz_commitContract_8 = {registeredCommit_events_0_ertn,{registeredCommit_events_0_retired,{registeredCommit_events_0_instruction,registeredCommit_events_0_pc}}};
+  assign _zz_commitContract_9 = registeredCommit_events_1_store_pAddr;
+  assign _zz_commitContract_10 = registeredCommit_events_1_exception_tlbVppn;
+  assign _zz_commitContract_11 = {registeredCommit_events_1_exception_tlbException,{registeredCommit_events_1_exception_tlbRefill,{registeredCommit_events_1_exception_badVAddr,{_zz_commitContract_12,_zz_commitContract_13}}}};
+  assign _zz_commitContract_14 = {registeredCommit_events_1_csrWrite_data,{registeredCommit_events_1_csrWrite_address,registeredCommit_events_1_csrWrite_valid}};
+  assign _zz_commitContract_15 = {{registeredCommit_events_1_gprWrite_data,{registeredCommit_events_1_gprWrite_index,registeredCommit_events_1_gprWrite_valid}},{registeredCommit_events_1_csrReadData,{registeredCommit_events_1_csrRstat,{_zz_commitContract_16,_zz_commitContract_17}}}};
+  assign _zz_commitContract_12 = registeredCommit_events_1_exception_badVAddrValid;
+  assign _zz_commitContract_13 = {registeredCommit_events_1_exception_esubcode,{registeredCommit_events_1_exception_ecode,registeredCommit_events_1_exception_valid}};
+  assign _zz_commitContract_16 = registeredCommit_events_1_isCounterInstruction;
+  assign _zz_commitContract_17 = {registeredCommit_events_1_ertn,{registeredCommit_events_1_retired,{registeredCommit_events_1_instruction,registeredCommit_events_1_pc}}};
+  assign _zz_commitContract_18 = registeredCommit_events_2_store_pAddr;
+  assign _zz_commitContract_19 = registeredCommit_events_2_exception_tlbVppn;
+  assign _zz_commitContract_20 = {registeredCommit_events_2_exception_tlbException,{registeredCommit_events_2_exception_tlbRefill,{registeredCommit_events_2_exception_badVAddr,{_zz_commitContract_21,_zz_commitContract_22}}}};
+  assign _zz_commitContract_23 = {registeredCommit_events_2_csrWrite_data,{registeredCommit_events_2_csrWrite_address,registeredCommit_events_2_csrWrite_valid}};
+  assign _zz_commitContract_24 = {{registeredCommit_events_2_gprWrite_data,{registeredCommit_events_2_gprWrite_index,registeredCommit_events_2_gprWrite_valid}},{registeredCommit_events_2_csrReadData,{registeredCommit_events_2_csrRstat,{_zz_commitContract_25,_zz_commitContract_26}}}};
+  assign _zz_commitContract_21 = registeredCommit_events_2_exception_badVAddrValid;
+  assign _zz_commitContract_22 = {registeredCommit_events_2_exception_esubcode,{registeredCommit_events_2_exception_ecode,registeredCommit_events_2_exception_valid}};
+  assign _zz_commitContract_25 = registeredCommit_events_2_isCounterInstruction;
+  assign _zz_commitContract_26 = {registeredCommit_events_2_ertn,{registeredCommit_events_2_retired,{registeredCommit_events_2_instruction,registeredCommit_events_2_pc}}};
   assign _zz_csrState = {{{{{{{{_zz_csrState_1,_zz_csrState_5},{_zz_csrState_6,io_archState_save0}},{32'h0,io_archState_pgdh}},{32'h0,io_archState_pgdl}},{32'h0,io_archState_asid}},{32'h0,io_archState_tlbelo1}},{32'h0,io_archState_tlbelo0}},{32'h0,io_archState_tlbehi}};
   assign _zz_csrState_7 = {32'h0,io_archState_tlbidx};
   assign _zz_csrState_8 = 32'h0;
@@ -2236,66 +2842,467 @@ module ChiplabDiffTestAdapter (
   assign _zz_csrState_3 = {32'h0,io_archState_tlbrentry};
   assign _zz_csrState_4 = 32'h0;
   assign _zz_gprState = {{{{{{{{{{{{{{{gprWords_31,gprWords_30},gprWords_29},gprWords_28},gprWords_27},gprWords_26},gprWords_25},gprWords_24},gprWords_23},gprWords_22},gprWords_21},gprWords_20},gprWords_19},gprWords_18},gprWords_17},gprWords_16};
-  ChiplabDiffTestBlackBox wrapper (
-    .clock                (io_clock                             ), //i
-    .commitContract       (wrapper_commitContract[504:0]        ), //i
-    .instrValid           (wrapper_instrValid                   ), //i
-    .pc                   (wrapper_pc[63:0]                     ), //i
-    .instruction          (registeredCommit_instruction[31:0]   ), //i
-    .isTlbFill            (wrapper_isTlbFill                    ), //i
-    .tlbFillIndex         (wrapper_tlbFillIndex[4:0]            ), //i
-    .isCounterInstruction (registeredCommit_isCounterInstruction), //i
-    .timer                (wrapper_timer[63:0]                  ), //i
-    .gprWriteValid        (wrapper_gprWriteValid                ), //i
-    .gprWriteIndex        (wrapper_gprWriteIndex[7:0]           ), //i
-    .gprWriteData         (wrapper_gprWriteData[63:0]           ), //i
-    .csrRstat             (registeredCommit_csrRstat            ), //i
-    .csrReadData          (registeredCommit_csrReadData[31:0]   ), //i
-    .exceptionValid       (wrapper_exceptionValid               ), //i
-    .ertn                 (wrapper_ertn                         ), //i
-    .interruptNumber      (wrapper_interruptNumber[31:0]        ), //i
-    .exceptionCause       (wrapper_exceptionCause[31:0]         ), //i
-    .exceptionPc          (wrapper_exceptionPc[63:0]            ), //i
-    .exceptionInstruction (registeredCommit_instruction[31:0]   ), //i
-    .trapValid            (1'b0                                 ), //i
-    .trapCode             (wrapper_trapCode[2:0]                ), //i
-    .cycleCount           (wrapper_cycleCount[63:0]             ), //i
-    .instructionCount     (wrapper_instructionCount[63:0]       ), //i
-    .storeValid           (wrapper_storeValid[7:0]              ), //i
-    .storePhysicalAddress (wrapper_storePhysicalAddress[63:0]   ), //i
-    .storeVirtualAddress  (wrapper_storeVirtualAddress[63:0]    ), //i
-    .storeData            (wrapper_storeData[63:0]              ), //i
-    .loadValid            (wrapper_loadValid[7:0]               ), //i
-    .loadPhysicalAddress  (wrapper_loadPhysicalAddress[63:0]    ), //i
-    .loadVirtualAddress   (wrapper_loadVirtualAddress[63:0]     ), //i
-    .csrState             (wrapper_csrState[1727:0]             ), //i
-    .gprState             (wrapper_gprState[2047:0]             )  //i
+  OrderedCommitGroup ordered (
+    .io_input_valid                                     (io_commit_valid                                              ), //i
+    .io_input_payload_valid                             (io_commit_payload_valid[2:0]                                 ), //i
+    .io_input_payload_events_0_pc                       (io_commit_payload_events_0_pc[31:0]                          ), //i
+    .io_input_payload_events_0_instruction              (io_commit_payload_events_0_instruction[31:0]                 ), //i
+    .io_input_payload_events_0_retired                  (io_commit_payload_events_0_retired                           ), //i
+    .io_input_payload_events_0_ertn                     (io_commit_payload_events_0_ertn                              ), //i
+    .io_input_payload_events_0_isCounterInstruction     (io_commit_payload_events_0_isCounterInstruction              ), //i
+    .io_input_payload_events_0_csrRstat                 (io_commit_payload_events_0_csrRstat                          ), //i
+    .io_input_payload_events_0_csrReadData              (io_commit_payload_events_0_csrReadData[31:0]                 ), //i
+    .io_input_payload_events_0_gprWrite_valid           (io_commit_payload_events_0_gprWrite_valid                    ), //i
+    .io_input_payload_events_0_gprWrite_index           (io_commit_payload_events_0_gprWrite_index[4:0]               ), //i
+    .io_input_payload_events_0_gprWrite_data            (io_commit_payload_events_0_gprWrite_data[31:0]               ), //i
+    .io_input_payload_events_0_csrWrite_valid           (io_commit_payload_events_0_csrWrite_valid                    ), //i
+    .io_input_payload_events_0_csrWrite_address         (io_commit_payload_events_0_csrWrite_address[13:0]            ), //i
+    .io_input_payload_events_0_csrWrite_data            (io_commit_payload_events_0_csrWrite_data[31:0]               ), //i
+    .io_input_payload_events_0_exception_valid          (io_commit_payload_events_0_exception_valid                   ), //i
+    .io_input_payload_events_0_exception_ecode          (io_commit_payload_events_0_exception_ecode[5:0]              ), //i
+    .io_input_payload_events_0_exception_esubcode       (io_commit_payload_events_0_exception_esubcode[8:0]           ), //i
+    .io_input_payload_events_0_exception_badVAddrValid  (io_commit_payload_events_0_exception_badVAddrValid           ), //i
+    .io_input_payload_events_0_exception_badVAddr       (io_commit_payload_events_0_exception_badVAddr[31:0]          ), //i
+    .io_input_payload_events_0_exception_tlbRefill      (io_commit_payload_events_0_exception_tlbRefill               ), //i
+    .io_input_payload_events_0_exception_tlbException   (io_commit_payload_events_0_exception_tlbException            ), //i
+    .io_input_payload_events_0_exception_tlbVppn        (io_commit_payload_events_0_exception_tlbVppn[18:0]           ), //i
+    .io_input_payload_events_0_timer                    (io_commit_payload_events_0_timer[63:0]                       ), //i
+    .io_input_payload_events_0_load_instructionMask     (io_commit_payload_events_0_load_instructionMask[7:0]         ), //i
+    .io_input_payload_events_0_load_pAddr               (io_commit_payload_events_0_load_pAddr[31:0]                  ), //i
+    .io_input_payload_events_0_load_vAddr               (io_commit_payload_events_0_load_vAddr[31:0]                  ), //i
+    .io_input_payload_events_0_store_instructionMask    (io_commit_payload_events_0_store_instructionMask[7:0]        ), //i
+    .io_input_payload_events_0_store_pAddr              (io_commit_payload_events_0_store_pAddr[31:0]                 ), //i
+    .io_input_payload_events_0_store_vAddr              (io_commit_payload_events_0_store_vAddr[31:0]                 ), //i
+    .io_input_payload_events_0_store_data               (io_commit_payload_events_0_store_data[31:0]                  ), //i
+    .io_input_payload_events_0_store_byteMask           (io_commit_payload_events_0_store_byteMask[3:0]               ), //i
+    .io_input_payload_events_0_tlbFill_valid            (io_commit_payload_events_0_tlbFill_valid                     ), //i
+    .io_input_payload_events_0_tlbFill_index            (io_commit_payload_events_0_tlbFill_index[4:0]                ), //i
+    .io_input_payload_events_1_pc                       (io_commit_payload_events_1_pc[31:0]                          ), //i
+    .io_input_payload_events_1_instruction              (io_commit_payload_events_1_instruction[31:0]                 ), //i
+    .io_input_payload_events_1_retired                  (io_commit_payload_events_1_retired                           ), //i
+    .io_input_payload_events_1_ertn                     (io_commit_payload_events_1_ertn                              ), //i
+    .io_input_payload_events_1_isCounterInstruction     (io_commit_payload_events_1_isCounterInstruction              ), //i
+    .io_input_payload_events_1_csrRstat                 (io_commit_payload_events_1_csrRstat                          ), //i
+    .io_input_payload_events_1_csrReadData              (io_commit_payload_events_1_csrReadData[31:0]                 ), //i
+    .io_input_payload_events_1_gprWrite_valid           (io_commit_payload_events_1_gprWrite_valid                    ), //i
+    .io_input_payload_events_1_gprWrite_index           (io_commit_payload_events_1_gprWrite_index[4:0]               ), //i
+    .io_input_payload_events_1_gprWrite_data            (io_commit_payload_events_1_gprWrite_data[31:0]               ), //i
+    .io_input_payload_events_1_csrWrite_valid           (io_commit_payload_events_1_csrWrite_valid                    ), //i
+    .io_input_payload_events_1_csrWrite_address         (io_commit_payload_events_1_csrWrite_address[13:0]            ), //i
+    .io_input_payload_events_1_csrWrite_data            (io_commit_payload_events_1_csrWrite_data[31:0]               ), //i
+    .io_input_payload_events_1_exception_valid          (io_commit_payload_events_1_exception_valid                   ), //i
+    .io_input_payload_events_1_exception_ecode          (io_commit_payload_events_1_exception_ecode[5:0]              ), //i
+    .io_input_payload_events_1_exception_esubcode       (io_commit_payload_events_1_exception_esubcode[8:0]           ), //i
+    .io_input_payload_events_1_exception_badVAddrValid  (io_commit_payload_events_1_exception_badVAddrValid           ), //i
+    .io_input_payload_events_1_exception_badVAddr       (io_commit_payload_events_1_exception_badVAddr[31:0]          ), //i
+    .io_input_payload_events_1_exception_tlbRefill      (io_commit_payload_events_1_exception_tlbRefill               ), //i
+    .io_input_payload_events_1_exception_tlbException   (io_commit_payload_events_1_exception_tlbException            ), //i
+    .io_input_payload_events_1_exception_tlbVppn        (io_commit_payload_events_1_exception_tlbVppn[18:0]           ), //i
+    .io_input_payload_events_1_timer                    (io_commit_payload_events_1_timer[63:0]                       ), //i
+    .io_input_payload_events_1_load_instructionMask     (io_commit_payload_events_1_load_instructionMask[7:0]         ), //i
+    .io_input_payload_events_1_load_pAddr               (io_commit_payload_events_1_load_pAddr[31:0]                  ), //i
+    .io_input_payload_events_1_load_vAddr               (io_commit_payload_events_1_load_vAddr[31:0]                  ), //i
+    .io_input_payload_events_1_store_instructionMask    (io_commit_payload_events_1_store_instructionMask[7:0]        ), //i
+    .io_input_payload_events_1_store_pAddr              (io_commit_payload_events_1_store_pAddr[31:0]                 ), //i
+    .io_input_payload_events_1_store_vAddr              (io_commit_payload_events_1_store_vAddr[31:0]                 ), //i
+    .io_input_payload_events_1_store_data               (io_commit_payload_events_1_store_data[31:0]                  ), //i
+    .io_input_payload_events_1_store_byteMask           (io_commit_payload_events_1_store_byteMask[3:0]               ), //i
+    .io_input_payload_events_1_tlbFill_valid            (io_commit_payload_events_1_tlbFill_valid                     ), //i
+    .io_input_payload_events_1_tlbFill_index            (io_commit_payload_events_1_tlbFill_index[4:0]                ), //i
+    .io_input_payload_events_2_pc                       (io_commit_payload_events_2_pc[31:0]                          ), //i
+    .io_input_payload_events_2_instruction              (io_commit_payload_events_2_instruction[31:0]                 ), //i
+    .io_input_payload_events_2_retired                  (io_commit_payload_events_2_retired                           ), //i
+    .io_input_payload_events_2_ertn                     (io_commit_payload_events_2_ertn                              ), //i
+    .io_input_payload_events_2_isCounterInstruction     (io_commit_payload_events_2_isCounterInstruction              ), //i
+    .io_input_payload_events_2_csrRstat                 (io_commit_payload_events_2_csrRstat                          ), //i
+    .io_input_payload_events_2_csrReadData              (io_commit_payload_events_2_csrReadData[31:0]                 ), //i
+    .io_input_payload_events_2_gprWrite_valid           (io_commit_payload_events_2_gprWrite_valid                    ), //i
+    .io_input_payload_events_2_gprWrite_index           (io_commit_payload_events_2_gprWrite_index[4:0]               ), //i
+    .io_input_payload_events_2_gprWrite_data            (io_commit_payload_events_2_gprWrite_data[31:0]               ), //i
+    .io_input_payload_events_2_csrWrite_valid           (io_commit_payload_events_2_csrWrite_valid                    ), //i
+    .io_input_payload_events_2_csrWrite_address         (io_commit_payload_events_2_csrWrite_address[13:0]            ), //i
+    .io_input_payload_events_2_csrWrite_data            (io_commit_payload_events_2_csrWrite_data[31:0]               ), //i
+    .io_input_payload_events_2_exception_valid          (io_commit_payload_events_2_exception_valid                   ), //i
+    .io_input_payload_events_2_exception_ecode          (io_commit_payload_events_2_exception_ecode[5:0]              ), //i
+    .io_input_payload_events_2_exception_esubcode       (io_commit_payload_events_2_exception_esubcode[8:0]           ), //i
+    .io_input_payload_events_2_exception_badVAddrValid  (io_commit_payload_events_2_exception_badVAddrValid           ), //i
+    .io_input_payload_events_2_exception_badVAddr       (io_commit_payload_events_2_exception_badVAddr[31:0]          ), //i
+    .io_input_payload_events_2_exception_tlbRefill      (io_commit_payload_events_2_exception_tlbRefill               ), //i
+    .io_input_payload_events_2_exception_tlbException   (io_commit_payload_events_2_exception_tlbException            ), //i
+    .io_input_payload_events_2_exception_tlbVppn        (io_commit_payload_events_2_exception_tlbVppn[18:0]           ), //i
+    .io_input_payload_events_2_timer                    (io_commit_payload_events_2_timer[63:0]                       ), //i
+    .io_input_payload_events_2_load_instructionMask     (io_commit_payload_events_2_load_instructionMask[7:0]         ), //i
+    .io_input_payload_events_2_load_pAddr               (io_commit_payload_events_2_load_pAddr[31:0]                  ), //i
+    .io_input_payload_events_2_load_vAddr               (io_commit_payload_events_2_load_vAddr[31:0]                  ), //i
+    .io_input_payload_events_2_store_instructionMask    (io_commit_payload_events_2_store_instructionMask[7:0]        ), //i
+    .io_input_payload_events_2_store_pAddr              (io_commit_payload_events_2_store_pAddr[31:0]                 ), //i
+    .io_input_payload_events_2_store_vAddr              (io_commit_payload_events_2_store_vAddr[31:0]                 ), //i
+    .io_input_payload_events_2_store_data               (io_commit_payload_events_2_store_data[31:0]                  ), //i
+    .io_input_payload_events_2_store_byteMask           (io_commit_payload_events_2_store_byteMask[3:0]               ), //i
+    .io_input_payload_events_2_tlbFill_valid            (io_commit_payload_events_2_tlbFill_valid                     ), //i
+    .io_input_payload_events_2_tlbFill_index            (io_commit_payload_events_2_tlbFill_index[4:0]                ), //i
+    .io_output_valid                                    (ordered_io_output_valid                                      ), //o
+    .io_output_payload_valid                            (ordered_io_output_payload_valid[2:0]                         ), //o
+    .io_output_payload_events_0_pc                      (ordered_io_output_payload_events_0_pc[31:0]                  ), //o
+    .io_output_payload_events_0_instruction             (ordered_io_output_payload_events_0_instruction[31:0]         ), //o
+    .io_output_payload_events_0_retired                 (ordered_io_output_payload_events_0_retired                   ), //o
+    .io_output_payload_events_0_ertn                    (ordered_io_output_payload_events_0_ertn                      ), //o
+    .io_output_payload_events_0_isCounterInstruction    (ordered_io_output_payload_events_0_isCounterInstruction      ), //o
+    .io_output_payload_events_0_csrRstat                (ordered_io_output_payload_events_0_csrRstat                  ), //o
+    .io_output_payload_events_0_csrReadData             (ordered_io_output_payload_events_0_csrReadData[31:0]         ), //o
+    .io_output_payload_events_0_gprWrite_valid          (ordered_io_output_payload_events_0_gprWrite_valid            ), //o
+    .io_output_payload_events_0_gprWrite_index          (ordered_io_output_payload_events_0_gprWrite_index[4:0]       ), //o
+    .io_output_payload_events_0_gprWrite_data           (ordered_io_output_payload_events_0_gprWrite_data[31:0]       ), //o
+    .io_output_payload_events_0_csrWrite_valid          (ordered_io_output_payload_events_0_csrWrite_valid            ), //o
+    .io_output_payload_events_0_csrWrite_address        (ordered_io_output_payload_events_0_csrWrite_address[13:0]    ), //o
+    .io_output_payload_events_0_csrWrite_data           (ordered_io_output_payload_events_0_csrWrite_data[31:0]       ), //o
+    .io_output_payload_events_0_exception_valid         (ordered_io_output_payload_events_0_exception_valid           ), //o
+    .io_output_payload_events_0_exception_ecode         (ordered_io_output_payload_events_0_exception_ecode[5:0]      ), //o
+    .io_output_payload_events_0_exception_esubcode      (ordered_io_output_payload_events_0_exception_esubcode[8:0]   ), //o
+    .io_output_payload_events_0_exception_badVAddrValid (ordered_io_output_payload_events_0_exception_badVAddrValid   ), //o
+    .io_output_payload_events_0_exception_badVAddr      (ordered_io_output_payload_events_0_exception_badVAddr[31:0]  ), //o
+    .io_output_payload_events_0_exception_tlbRefill     (ordered_io_output_payload_events_0_exception_tlbRefill       ), //o
+    .io_output_payload_events_0_exception_tlbException  (ordered_io_output_payload_events_0_exception_tlbException    ), //o
+    .io_output_payload_events_0_exception_tlbVppn       (ordered_io_output_payload_events_0_exception_tlbVppn[18:0]   ), //o
+    .io_output_payload_events_0_timer                   (ordered_io_output_payload_events_0_timer[63:0]               ), //o
+    .io_output_payload_events_0_load_instructionMask    (ordered_io_output_payload_events_0_load_instructionMask[7:0] ), //o
+    .io_output_payload_events_0_load_pAddr              (ordered_io_output_payload_events_0_load_pAddr[31:0]          ), //o
+    .io_output_payload_events_0_load_vAddr              (ordered_io_output_payload_events_0_load_vAddr[31:0]          ), //o
+    .io_output_payload_events_0_store_instructionMask   (ordered_io_output_payload_events_0_store_instructionMask[7:0]), //o
+    .io_output_payload_events_0_store_pAddr             (ordered_io_output_payload_events_0_store_pAddr[31:0]         ), //o
+    .io_output_payload_events_0_store_vAddr             (ordered_io_output_payload_events_0_store_vAddr[31:0]         ), //o
+    .io_output_payload_events_0_store_data              (ordered_io_output_payload_events_0_store_data[31:0]          ), //o
+    .io_output_payload_events_0_store_byteMask          (ordered_io_output_payload_events_0_store_byteMask[3:0]       ), //o
+    .io_output_payload_events_0_tlbFill_valid           (ordered_io_output_payload_events_0_tlbFill_valid             ), //o
+    .io_output_payload_events_0_tlbFill_index           (ordered_io_output_payload_events_0_tlbFill_index[4:0]        ), //o
+    .io_output_payload_events_1_pc                      (ordered_io_output_payload_events_1_pc[31:0]                  ), //o
+    .io_output_payload_events_1_instruction             (ordered_io_output_payload_events_1_instruction[31:0]         ), //o
+    .io_output_payload_events_1_retired                 (ordered_io_output_payload_events_1_retired                   ), //o
+    .io_output_payload_events_1_ertn                    (ordered_io_output_payload_events_1_ertn                      ), //o
+    .io_output_payload_events_1_isCounterInstruction    (ordered_io_output_payload_events_1_isCounterInstruction      ), //o
+    .io_output_payload_events_1_csrRstat                (ordered_io_output_payload_events_1_csrRstat                  ), //o
+    .io_output_payload_events_1_csrReadData             (ordered_io_output_payload_events_1_csrReadData[31:0]         ), //o
+    .io_output_payload_events_1_gprWrite_valid          (ordered_io_output_payload_events_1_gprWrite_valid            ), //o
+    .io_output_payload_events_1_gprWrite_index          (ordered_io_output_payload_events_1_gprWrite_index[4:0]       ), //o
+    .io_output_payload_events_1_gprWrite_data           (ordered_io_output_payload_events_1_gprWrite_data[31:0]       ), //o
+    .io_output_payload_events_1_csrWrite_valid          (ordered_io_output_payload_events_1_csrWrite_valid            ), //o
+    .io_output_payload_events_1_csrWrite_address        (ordered_io_output_payload_events_1_csrWrite_address[13:0]    ), //o
+    .io_output_payload_events_1_csrWrite_data           (ordered_io_output_payload_events_1_csrWrite_data[31:0]       ), //o
+    .io_output_payload_events_1_exception_valid         (ordered_io_output_payload_events_1_exception_valid           ), //o
+    .io_output_payload_events_1_exception_ecode         (ordered_io_output_payload_events_1_exception_ecode[5:0]      ), //o
+    .io_output_payload_events_1_exception_esubcode      (ordered_io_output_payload_events_1_exception_esubcode[8:0]   ), //o
+    .io_output_payload_events_1_exception_badVAddrValid (ordered_io_output_payload_events_1_exception_badVAddrValid   ), //o
+    .io_output_payload_events_1_exception_badVAddr      (ordered_io_output_payload_events_1_exception_badVAddr[31:0]  ), //o
+    .io_output_payload_events_1_exception_tlbRefill     (ordered_io_output_payload_events_1_exception_tlbRefill       ), //o
+    .io_output_payload_events_1_exception_tlbException  (ordered_io_output_payload_events_1_exception_tlbException    ), //o
+    .io_output_payload_events_1_exception_tlbVppn       (ordered_io_output_payload_events_1_exception_tlbVppn[18:0]   ), //o
+    .io_output_payload_events_1_timer                   (ordered_io_output_payload_events_1_timer[63:0]               ), //o
+    .io_output_payload_events_1_load_instructionMask    (ordered_io_output_payload_events_1_load_instructionMask[7:0] ), //o
+    .io_output_payload_events_1_load_pAddr              (ordered_io_output_payload_events_1_load_pAddr[31:0]          ), //o
+    .io_output_payload_events_1_load_vAddr              (ordered_io_output_payload_events_1_load_vAddr[31:0]          ), //o
+    .io_output_payload_events_1_store_instructionMask   (ordered_io_output_payload_events_1_store_instructionMask[7:0]), //o
+    .io_output_payload_events_1_store_pAddr             (ordered_io_output_payload_events_1_store_pAddr[31:0]         ), //o
+    .io_output_payload_events_1_store_vAddr             (ordered_io_output_payload_events_1_store_vAddr[31:0]         ), //o
+    .io_output_payload_events_1_store_data              (ordered_io_output_payload_events_1_store_data[31:0]          ), //o
+    .io_output_payload_events_1_store_byteMask          (ordered_io_output_payload_events_1_store_byteMask[3:0]       ), //o
+    .io_output_payload_events_1_tlbFill_valid           (ordered_io_output_payload_events_1_tlbFill_valid             ), //o
+    .io_output_payload_events_1_tlbFill_index           (ordered_io_output_payload_events_1_tlbFill_index[4:0]        ), //o
+    .io_output_payload_events_2_pc                      (ordered_io_output_payload_events_2_pc[31:0]                  ), //o
+    .io_output_payload_events_2_instruction             (ordered_io_output_payload_events_2_instruction[31:0]         ), //o
+    .io_output_payload_events_2_retired                 (ordered_io_output_payload_events_2_retired                   ), //o
+    .io_output_payload_events_2_ertn                    (ordered_io_output_payload_events_2_ertn                      ), //o
+    .io_output_payload_events_2_isCounterInstruction    (ordered_io_output_payload_events_2_isCounterInstruction      ), //o
+    .io_output_payload_events_2_csrRstat                (ordered_io_output_payload_events_2_csrRstat                  ), //o
+    .io_output_payload_events_2_csrReadData             (ordered_io_output_payload_events_2_csrReadData[31:0]         ), //o
+    .io_output_payload_events_2_gprWrite_valid          (ordered_io_output_payload_events_2_gprWrite_valid            ), //o
+    .io_output_payload_events_2_gprWrite_index          (ordered_io_output_payload_events_2_gprWrite_index[4:0]       ), //o
+    .io_output_payload_events_2_gprWrite_data           (ordered_io_output_payload_events_2_gprWrite_data[31:0]       ), //o
+    .io_output_payload_events_2_csrWrite_valid          (ordered_io_output_payload_events_2_csrWrite_valid            ), //o
+    .io_output_payload_events_2_csrWrite_address        (ordered_io_output_payload_events_2_csrWrite_address[13:0]    ), //o
+    .io_output_payload_events_2_csrWrite_data           (ordered_io_output_payload_events_2_csrWrite_data[31:0]       ), //o
+    .io_output_payload_events_2_exception_valid         (ordered_io_output_payload_events_2_exception_valid           ), //o
+    .io_output_payload_events_2_exception_ecode         (ordered_io_output_payload_events_2_exception_ecode[5:0]      ), //o
+    .io_output_payload_events_2_exception_esubcode      (ordered_io_output_payload_events_2_exception_esubcode[8:0]   ), //o
+    .io_output_payload_events_2_exception_badVAddrValid (ordered_io_output_payload_events_2_exception_badVAddrValid   ), //o
+    .io_output_payload_events_2_exception_badVAddr      (ordered_io_output_payload_events_2_exception_badVAddr[31:0]  ), //o
+    .io_output_payload_events_2_exception_tlbRefill     (ordered_io_output_payload_events_2_exception_tlbRefill       ), //o
+    .io_output_payload_events_2_exception_tlbException  (ordered_io_output_payload_events_2_exception_tlbException    ), //o
+    .io_output_payload_events_2_exception_tlbVppn       (ordered_io_output_payload_events_2_exception_tlbVppn[18:0]   ), //o
+    .io_output_payload_events_2_timer                   (ordered_io_output_payload_events_2_timer[63:0]               ), //o
+    .io_output_payload_events_2_load_instructionMask    (ordered_io_output_payload_events_2_load_instructionMask[7:0] ), //o
+    .io_output_payload_events_2_load_pAddr              (ordered_io_output_payload_events_2_load_pAddr[31:0]          ), //o
+    .io_output_payload_events_2_load_vAddr              (ordered_io_output_payload_events_2_load_vAddr[31:0]          ), //o
+    .io_output_payload_events_2_store_instructionMask   (ordered_io_output_payload_events_2_store_instructionMask[7:0]), //o
+    .io_output_payload_events_2_store_pAddr             (ordered_io_output_payload_events_2_store_pAddr[31:0]         ), //o
+    .io_output_payload_events_2_store_vAddr             (ordered_io_output_payload_events_2_store_vAddr[31:0]         ), //o
+    .io_output_payload_events_2_store_data              (ordered_io_output_payload_events_2_store_data[31:0]          ), //o
+    .io_output_payload_events_2_store_byteMask          (ordered_io_output_payload_events_2_store_byteMask[3:0]       ), //o
+    .io_output_payload_events_2_tlbFill_valid           (ordered_io_output_payload_events_2_tlbFill_valid             ), //o
+    .io_output_payload_events_2_tlbFill_index           (ordered_io_output_payload_events_2_tlbFill_index[4:0]        )  //o
   );
-  assign rawRetired = (io_commit_valid && io_commit_payload_retired);
-  assign wrapper_commitContract = {{registeredCommit_tlbFill_index,registeredCommit_tlbFill_valid},{{registeredCommit_store_byteMask,{registeredCommit_store_data,{registeredCommit_store_vAddr,{_zz_commitContract,registeredCommit_store_instructionMask}}}},{{registeredCommit_load_vAddr,{registeredCommit_load_pAddr,registeredCommit_load_instructionMask}},{registeredCommit_timer,{{_zz_commitContract_1,_zz_commitContract_2},{_zz_commitContract_5,_zz_commitContract_6}}}}}};
-  assign wrapper_instrValid = (registeredValid && registeredCommit_retired);
-  assign wrapper_pc = {32'h0,registeredCommit_pc};
-  assign wrapper_isTlbFill = (registeredValid && registeredCommit_tlbFill_valid);
-  assign wrapper_tlbFillIndex = registeredCommit_tlbFill_index;
-  assign wrapper_timer = registeredCommit_timer;
-  assign wrapper_gprWriteValid = (registeredValid && registeredCommit_gprWrite_valid);
-  assign wrapper_gprWriteIndex = {3'b000,registeredCommit_gprWrite_index};
-  assign wrapper_gprWriteData = {32'h0,registeredCommit_gprWrite_data};
-  assign wrapper_exceptionValid = (registeredValid && registeredCommit_exception_valid);
-  assign wrapper_ertn = (registeredValid && registeredCommit_ertn);
+  ChiplabDiffTestBlackBox wrapper (
+    .clock                (io_clock                           ), //i
+    .commitContract       (wrapper_commitContract[1514:0]     ), //i
+    .instrValid           (wrapper_instrValid[2:0]            ), //i
+    .pc                   (wrapper_pc[191:0]                  ), //i
+    .instruction          (wrapper_instruction[95:0]          ), //i
+    .isTlbFill            (wrapper_isTlbFill[2:0]             ), //i
+    .tlbFillIndex         (wrapper_tlbFillIndex[14:0]         ), //i
+    .isCounterInstruction (wrapper_isCounterInstruction[2:0]  ), //i
+    .timer                (wrapper_timer[191:0]               ), //i
+    .gprWriteValid        (wrapper_gprWriteValid[2:0]         ), //i
+    .gprWriteIndex        (wrapper_gprWriteIndex[23:0]        ), //i
+    .gprWriteData         (wrapper_gprWriteData[191:0]        ), //i
+    .csrRstat             (wrapper_csrRstat[2:0]              ), //i
+    .csrReadData          (wrapper_csrReadData[95:0]          ), //i
+    .exceptionValid       (wrapper_exceptionValid             ), //i
+    .ertn                 (wrapper_ertn                       ), //i
+    .interruptNumber      (wrapper_interruptNumber[31:0]      ), //i
+    .exceptionCause       (wrapper_exceptionCause[31:0]       ), //i
+    .exceptionPc          (wrapper_exceptionPc[63:0]          ), //i
+    .exceptionInstruction (selectedControl_instruction[31:0]  ), //i
+    .trapValid            (1'b0                               ), //i
+    .trapCode             (wrapper_trapCode[2:0]              ), //i
+    .trapPc               (wrapper_trapPc[63:0]               ), //i
+    .cycleCount           (wrapper_cycleCount[63:0]           ), //i
+    .instructionCount     (wrapper_instructionCount[63:0]     ), //i
+    .storeValid           (wrapper_storeValid[23:0]           ), //i
+    .storePhysicalAddress (wrapper_storePhysicalAddress[191:0]), //i
+    .storeVirtualAddress  (wrapper_storeVirtualAddress[191:0] ), //i
+    .storeData            (wrapper_storeData[191:0]           ), //i
+    .loadValid            (wrapper_loadValid[23:0]            ), //i
+    .loadPhysicalAddress  (wrapper_loadPhysicalAddress[191:0] ), //i
+    .loadVirtualAddress   (wrapper_loadVirtualAddress[191:0]  ), //i
+    .csrState             (wrapper_csrState[1727:0]           ), //i
+    .gprState             (wrapper_gprState[2047:0]           )  //i
+  );
+  always @(*) begin
+    case(_zz_instructionCount_2)
+      3'b000 : _zz_instructionCount_1 = 2'b00;
+      3'b001 : _zz_instructionCount_1 = 2'b01;
+      3'b010 : _zz_instructionCount_1 = 2'b01;
+      3'b011 : _zz_instructionCount_1 = 2'b10;
+      3'b100 : _zz_instructionCount_1 = 2'b01;
+      3'b101 : _zz_instructionCount_1 = 2'b10;
+      3'b110 : _zz_instructionCount_1 = 2'b10;
+      default : _zz_instructionCount_1 = 2'b11;
+    endcase
+  end
+
+  always @(*) begin
+    rawRetired[0] = ((ordered_io_output_valid && ordered_io_output_payload_valid[0]) && ordered_io_output_payload_events_0_retired);
+    rawRetired[1] = ((ordered_io_output_valid && ordered_io_output_payload_valid[1]) && ordered_io_output_payload_events_1_retired);
+    rawRetired[2] = ((ordered_io_output_valid && ordered_io_output_payload_valid[2]) && ordered_io_output_payload_events_2_retired);
+  end
+
+  assign _zz_controlValid = (registeredValid && registeredCommit_valid[0]);
+  always @(*) begin
+    wrapper_commitContract[504 : 0] = {{registeredCommit_events_0_tlbFill_index,registeredCommit_events_0_tlbFill_valid},{{registeredCommit_events_0_store_byteMask,{registeredCommit_events_0_store_data,{registeredCommit_events_0_store_vAddr,{_zz_commitContract,registeredCommit_events_0_store_instructionMask}}}},{{registeredCommit_events_0_load_vAddr,{registeredCommit_events_0_load_pAddr,registeredCommit_events_0_load_instructionMask}},{registeredCommit_events_0_timer,{{_zz_commitContract_1,_zz_commitContract_2},{_zz_commitContract_5,_zz_commitContract_6}}}}}};
+    wrapper_commitContract[1009 : 505] = {{registeredCommit_events_1_tlbFill_index,registeredCommit_events_1_tlbFill_valid},{{registeredCommit_events_1_store_byteMask,{registeredCommit_events_1_store_data,{registeredCommit_events_1_store_vAddr,{_zz_commitContract_9,registeredCommit_events_1_store_instructionMask}}}},{{registeredCommit_events_1_load_vAddr,{registeredCommit_events_1_load_pAddr,registeredCommit_events_1_load_instructionMask}},{registeredCommit_events_1_timer,{{_zz_commitContract_10,_zz_commitContract_11},{_zz_commitContract_14,_zz_commitContract_15}}}}}};
+    wrapper_commitContract[1514 : 1010] = {{registeredCommit_events_2_tlbFill_index,registeredCommit_events_2_tlbFill_valid},{{registeredCommit_events_2_store_byteMask,{registeredCommit_events_2_store_data,{registeredCommit_events_2_store_vAddr,{_zz_commitContract_18,registeredCommit_events_2_store_instructionMask}}}},{{registeredCommit_events_2_load_vAddr,{registeredCommit_events_2_load_pAddr,registeredCommit_events_2_load_instructionMask}},{registeredCommit_events_2_timer,{{_zz_commitContract_19,_zz_commitContract_20},{_zz_commitContract_23,_zz_commitContract_24}}}}}};
+  end
+
+  always @(*) begin
+    wrapper_instrValid[0] = (_zz_controlValid && registeredCommit_events_0_retired);
+    wrapper_instrValid[1] = (_zz_controlValid_1 && registeredCommit_events_1_retired);
+    wrapper_instrValid[2] = (_zz_controlValid_2 && registeredCommit_events_2_retired);
+  end
+
+  always @(*) begin
+    wrapper_pc[63 : 0] = {32'h0,registeredCommit_events_0_pc};
+    wrapper_pc[127 : 64] = {32'h0,registeredCommit_events_1_pc};
+    wrapper_pc[191 : 128] = {32'h0,registeredCommit_events_2_pc};
+  end
+
+  always @(*) begin
+    wrapper_instruction[31 : 0] = registeredCommit_events_0_instruction;
+    wrapper_instruction[63 : 32] = registeredCommit_events_1_instruction;
+    wrapper_instruction[95 : 64] = registeredCommit_events_2_instruction;
+  end
+
+  always @(*) begin
+    wrapper_isTlbFill[0] = (_zz_controlValid && registeredCommit_events_0_tlbFill_valid);
+    wrapper_isTlbFill[1] = (_zz_controlValid_1 && registeredCommit_events_1_tlbFill_valid);
+    wrapper_isTlbFill[2] = (_zz_controlValid_2 && registeredCommit_events_2_tlbFill_valid);
+  end
+
+  always @(*) begin
+    wrapper_tlbFillIndex[4 : 0] = registeredCommit_events_0_tlbFill_index;
+    wrapper_tlbFillIndex[9 : 5] = registeredCommit_events_1_tlbFill_index;
+    wrapper_tlbFillIndex[14 : 10] = registeredCommit_events_2_tlbFill_index;
+  end
+
+  always @(*) begin
+    wrapper_isCounterInstruction[0] = registeredCommit_events_0_isCounterInstruction;
+    wrapper_isCounterInstruction[1] = registeredCommit_events_1_isCounterInstruction;
+    wrapper_isCounterInstruction[2] = registeredCommit_events_2_isCounterInstruction;
+  end
+
+  always @(*) begin
+    wrapper_timer[63 : 0] = registeredCommit_events_0_timer;
+    wrapper_timer[127 : 64] = registeredCommit_events_1_timer;
+    wrapper_timer[191 : 128] = registeredCommit_events_2_timer;
+  end
+
+  always @(*) begin
+    wrapper_gprWriteValid[0] = (_zz_controlValid && registeredCommit_events_0_gprWrite_valid);
+    wrapper_gprWriteValid[1] = (_zz_controlValid_1 && registeredCommit_events_1_gprWrite_valid);
+    wrapper_gprWriteValid[2] = (_zz_controlValid_2 && registeredCommit_events_2_gprWrite_valid);
+  end
+
+  always @(*) begin
+    wrapper_gprWriteIndex[7 : 0] = {3'b000,registeredCommit_events_0_gprWrite_index};
+    wrapper_gprWriteIndex[15 : 8] = {3'b000,registeredCommit_events_1_gprWrite_index};
+    wrapper_gprWriteIndex[23 : 16] = {3'b000,registeredCommit_events_2_gprWrite_index};
+  end
+
+  always @(*) begin
+    wrapper_gprWriteData[63 : 0] = {32'h0,registeredCommit_events_0_gprWrite_data};
+    wrapper_gprWriteData[127 : 64] = {32'h0,registeredCommit_events_1_gprWrite_data};
+    wrapper_gprWriteData[191 : 128] = {32'h0,registeredCommit_events_2_gprWrite_data};
+  end
+
+  always @(*) begin
+    wrapper_csrRstat[0] = registeredCommit_events_0_csrRstat;
+    wrapper_csrRstat[1] = registeredCommit_events_1_csrRstat;
+    wrapper_csrRstat[2] = registeredCommit_events_2_csrRstat;
+  end
+
+  always @(*) begin
+    wrapper_csrReadData[31 : 0] = registeredCommit_events_0_csrReadData;
+    wrapper_csrReadData[63 : 32] = registeredCommit_events_1_csrReadData;
+    wrapper_csrReadData[95 : 64] = registeredCommit_events_2_csrReadData;
+  end
+
+  always @(*) begin
+    wrapper_storeValid[7 : 0] = (_zz_controlValid ? registeredCommit_events_0_store_instructionMask : 8'h0);
+    wrapper_storeValid[15 : 8] = (_zz_controlValid_1 ? registeredCommit_events_1_store_instructionMask : 8'h0);
+    wrapper_storeValid[23 : 16] = (_zz_controlValid_2 ? registeredCommit_events_2_store_instructionMask : 8'h0);
+  end
+
+  always @(*) begin
+    wrapper_storePhysicalAddress[63 : 0] = {32'h0,registeredCommit_events_0_store_pAddr};
+    wrapper_storePhysicalAddress[127 : 64] = {32'h0,registeredCommit_events_1_store_pAddr};
+    wrapper_storePhysicalAddress[191 : 128] = {32'h0,registeredCommit_events_2_store_pAddr};
+  end
+
+  always @(*) begin
+    wrapper_storeVirtualAddress[63 : 0] = {32'h0,registeredCommit_events_0_store_vAddr};
+    wrapper_storeVirtualAddress[127 : 64] = {32'h0,registeredCommit_events_1_store_vAddr};
+    wrapper_storeVirtualAddress[191 : 128] = {32'h0,registeredCommit_events_2_store_vAddr};
+  end
+
+  always @(*) begin
+    wrapper_storeData[63 : 0] = {32'h0,registeredCommit_events_0_store_data};
+    wrapper_storeData[127 : 64] = {32'h0,registeredCommit_events_1_store_data};
+    wrapper_storeData[191 : 128] = {32'h0,registeredCommit_events_2_store_data};
+  end
+
+  always @(*) begin
+    wrapper_loadValid[7 : 0] = (_zz_controlValid ? registeredCommit_events_0_load_instructionMask : 8'h0);
+    wrapper_loadValid[15 : 8] = (_zz_controlValid_1 ? registeredCommit_events_1_load_instructionMask : 8'h0);
+    wrapper_loadValid[23 : 16] = (_zz_controlValid_2 ? registeredCommit_events_2_load_instructionMask : 8'h0);
+  end
+
+  always @(*) begin
+    wrapper_loadPhysicalAddress[63 : 0] = {32'h0,registeredCommit_events_0_load_pAddr};
+    wrapper_loadPhysicalAddress[127 : 64] = {32'h0,registeredCommit_events_1_load_pAddr};
+    wrapper_loadPhysicalAddress[191 : 128] = {32'h0,registeredCommit_events_2_load_pAddr};
+  end
+
+  always @(*) begin
+    wrapper_loadVirtualAddress[63 : 0] = {32'h0,registeredCommit_events_0_load_vAddr};
+    wrapper_loadVirtualAddress[127 : 64] = {32'h0,registeredCommit_events_1_load_vAddr};
+    wrapper_loadVirtualAddress[191 : 128] = {32'h0,registeredCommit_events_2_load_vAddr};
+  end
+
+  always @(*) begin
+    controlValid[0] = (_zz_controlValid && (registeredCommit_events_0_exception_valid || registeredCommit_events_0_ertn));
+    controlValid[1] = (_zz_controlValid_1 && (registeredCommit_events_1_exception_valid || registeredCommit_events_1_ertn));
+    controlValid[2] = (_zz_controlValid_2 && (registeredCommit_events_2_exception_valid || registeredCommit_events_2_ertn));
+  end
+
+  assign _zz_controlValid_1 = (registeredValid && registeredCommit_valid[1]);
+  assign _zz_controlValid_2 = (registeredValid && registeredCommit_valid[2]);
+  always @(*) begin
+    selectedControl_pc = registeredCommit_events_0_pc;
+    if(when_ChiplabDiffTestAdapter_l109) begin
+      selectedControl_pc = registeredCommit_events_0_pc;
+    end
+    if(when_ChiplabDiffTestAdapter_l109_1) begin
+      selectedControl_pc = registeredCommit_events_1_pc;
+    end
+    if(when_ChiplabDiffTestAdapter_l109_2) begin
+      selectedControl_pc = registeredCommit_events_2_pc;
+    end
+  end
+
+  always @(*) begin
+    selectedControl_instruction = registeredCommit_events_0_instruction;
+    if(when_ChiplabDiffTestAdapter_l109) begin
+      selectedControl_instruction = registeredCommit_events_0_instruction;
+    end
+    if(when_ChiplabDiffTestAdapter_l109_1) begin
+      selectedControl_instruction = registeredCommit_events_1_instruction;
+    end
+    if(when_ChiplabDiffTestAdapter_l109_2) begin
+      selectedControl_instruction = registeredCommit_events_2_instruction;
+    end
+  end
+
+  always @(*) begin
+    selectedControl_ertn = registeredCommit_events_0_ertn;
+    if(when_ChiplabDiffTestAdapter_l109) begin
+      selectedControl_ertn = registeredCommit_events_0_ertn;
+    end
+    if(when_ChiplabDiffTestAdapter_l109_1) begin
+      selectedControl_ertn = registeredCommit_events_1_ertn;
+    end
+    if(when_ChiplabDiffTestAdapter_l109_2) begin
+      selectedControl_ertn = registeredCommit_events_2_ertn;
+    end
+  end
+
+  always @(*) begin
+    selectedControl_exceptionValid = registeredCommit_events_0_exception_valid;
+    if(when_ChiplabDiffTestAdapter_l109) begin
+      selectedControl_exceptionValid = registeredCommit_events_0_exception_valid;
+    end
+    if(when_ChiplabDiffTestAdapter_l109_1) begin
+      selectedControl_exceptionValid = registeredCommit_events_1_exception_valid;
+    end
+    if(when_ChiplabDiffTestAdapter_l109_2) begin
+      selectedControl_exceptionValid = registeredCommit_events_2_exception_valid;
+    end
+  end
+
+  always @(*) begin
+    selectedControl_exceptionCode = registeredCommit_events_0_exception_ecode;
+    if(when_ChiplabDiffTestAdapter_l109) begin
+      selectedControl_exceptionCode = registeredCommit_events_0_exception_ecode;
+    end
+    if(when_ChiplabDiffTestAdapter_l109_1) begin
+      selectedControl_exceptionCode = registeredCommit_events_1_exception_ecode;
+    end
+    if(when_ChiplabDiffTestAdapter_l109_2) begin
+      selectedControl_exceptionCode = registeredCommit_events_2_exception_ecode;
+    end
+  end
+
+  assign olderControlSelected = 1'b0;
+  assign when_ChiplabDiffTestAdapter_l109 = (controlValid[0] && (! olderControlSelected));
+  assign _zz_when_ChiplabDiffTestAdapter_l109 = (olderControlSelected || controlValid[0]);
+  assign when_ChiplabDiffTestAdapter_l109_1 = (controlValid[1] && (! _zz_when_ChiplabDiffTestAdapter_l109));
+  assign when_ChiplabDiffTestAdapter_l109_2 = (controlValid[2] && (! (_zz_when_ChiplabDiffTestAdapter_l109 || controlValid[1])));
+  assign wrapper_exceptionValid = ((|controlValid) && selectedControl_exceptionValid);
+  assign wrapper_ertn = ((|controlValid) && selectedControl_ertn);
   assign wrapper_interruptNumber = {21'h0,io_archState_estat[12 : 2]};
-  assign wrapper_exceptionCause = {26'h0,registeredCommit_exception_ecode};
-  assign wrapper_exceptionPc = {32'h0,registeredCommit_pc};
+  assign wrapper_exceptionCause = {26'h0,selectedControl_exceptionCode};
+  assign wrapper_exceptionPc = {32'h0,selectedControl_pc};
   assign wrapper_trapCode = io_archState_gpr_10[2 : 0];
+  assign wrapper_trapPc = {32'h0,registeredCommit_events_0_pc};
   assign wrapper_cycleCount = cycleCount;
   assign wrapper_instructionCount = instructionCount;
-  assign wrapper_storeValid = (registeredValid ? registeredCommit_store_instructionMask : 8'h0);
-  assign wrapper_storePhysicalAddress = {32'h0,registeredCommit_store_pAddr};
-  assign wrapper_storeVirtualAddress = {32'h0,registeredCommit_store_vAddr};
-  assign wrapper_storeData = {32'h0,registeredCommit_store_data};
-  assign wrapper_loadValid = (registeredValid ? registeredCommit_load_instructionMask : 8'h0);
-  assign wrapper_loadPhysicalAddress = {32'h0,registeredCommit_load_pAddr};
-  assign wrapper_loadVirtualAddress = {32'h0,registeredCommit_load_vAddr};
   assign wrapper_csrState = {{{{{{{{{_zz_csrState,_zz_csrState_7},{_zz_csrState_8,io_archState_eentry}},{32'h0,io_archState_badv}},{32'h0,io_archState_era}},{32'h0,io_archState_estat}},{32'h0,io_archState_ecfg}},{32'h0,io_archState_euen}},{32'h0,io_archState_prmd}},{32'h0,io_archState_crmd}};
   assign gprWords_0 = {32'h0,io_archState_gpr_0};
   assign gprWords_1 = {32'h0,io_archState_gpr_1};
@@ -2336,47 +3343,110 @@ module ChiplabDiffTestAdapter (
       cycleCount <= 64'h0;
       instructionCount <= 64'h0;
     end else begin
-      registeredValid <= io_commit_valid;
+      registeredValid <= ordered_io_output_valid;
       cycleCount <= (cycleCount + 64'h0000000000000001);
-      if(rawRetired) begin
-        instructionCount <= (instructionCount + 64'h0000000000000001);
-      end
+      instructionCount <= (instructionCount + _zz_instructionCount);
     end
   end
 
   always @(posedge aclk) begin
-    registeredCommit_pc <= io_commit_payload_pc;
-    registeredCommit_instruction <= io_commit_payload_instruction;
-    registeredCommit_retired <= io_commit_payload_retired;
-    registeredCommit_ertn <= io_commit_payload_ertn;
-    registeredCommit_isCounterInstruction <= io_commit_payload_isCounterInstruction;
-    registeredCommit_csrRstat <= io_commit_payload_csrRstat;
-    registeredCommit_csrReadData <= io_commit_payload_csrReadData;
-    registeredCommit_gprWrite_valid <= io_commit_payload_gprWrite_valid;
-    registeredCommit_gprWrite_index <= io_commit_payload_gprWrite_index;
-    registeredCommit_gprWrite_data <= io_commit_payload_gprWrite_data;
-    registeredCommit_csrWrite_valid <= io_commit_payload_csrWrite_valid;
-    registeredCommit_csrWrite_address <= io_commit_payload_csrWrite_address;
-    registeredCommit_csrWrite_data <= io_commit_payload_csrWrite_data;
-    registeredCommit_exception_valid <= io_commit_payload_exception_valid;
-    registeredCommit_exception_ecode <= io_commit_payload_exception_ecode;
-    registeredCommit_exception_esubcode <= io_commit_payload_exception_esubcode;
-    registeredCommit_exception_badVAddrValid <= io_commit_payload_exception_badVAddrValid;
-    registeredCommit_exception_badVAddr <= io_commit_payload_exception_badVAddr;
-    registeredCommit_exception_tlbRefill <= io_commit_payload_exception_tlbRefill;
-    registeredCommit_exception_tlbException <= io_commit_payload_exception_tlbException;
-    registeredCommit_exception_tlbVppn <= io_commit_payload_exception_tlbVppn;
-    registeredCommit_timer <= io_commit_payload_timer;
-    registeredCommit_load_instructionMask <= io_commit_payload_load_instructionMask;
-    registeredCommit_load_pAddr <= io_commit_payload_load_pAddr;
-    registeredCommit_load_vAddr <= io_commit_payload_load_vAddr;
-    registeredCommit_store_instructionMask <= io_commit_payload_store_instructionMask;
-    registeredCommit_store_pAddr <= io_commit_payload_store_pAddr;
-    registeredCommit_store_vAddr <= io_commit_payload_store_vAddr;
-    registeredCommit_store_data <= io_commit_payload_store_data;
-    registeredCommit_store_byteMask <= io_commit_payload_store_byteMask;
-    registeredCommit_tlbFill_valid <= io_commit_payload_tlbFill_valid;
-    registeredCommit_tlbFill_index <= io_commit_payload_tlbFill_index;
+    registeredCommit_valid <= ordered_io_output_payload_valid;
+    registeredCommit_events_0_pc <= ordered_io_output_payload_events_0_pc;
+    registeredCommit_events_0_instruction <= ordered_io_output_payload_events_0_instruction;
+    registeredCommit_events_0_retired <= ordered_io_output_payload_events_0_retired;
+    registeredCommit_events_0_ertn <= ordered_io_output_payload_events_0_ertn;
+    registeredCommit_events_0_isCounterInstruction <= ordered_io_output_payload_events_0_isCounterInstruction;
+    registeredCommit_events_0_csrRstat <= ordered_io_output_payload_events_0_csrRstat;
+    registeredCommit_events_0_csrReadData <= ordered_io_output_payload_events_0_csrReadData;
+    registeredCommit_events_0_gprWrite_valid <= ordered_io_output_payload_events_0_gprWrite_valid;
+    registeredCommit_events_0_gprWrite_index <= ordered_io_output_payload_events_0_gprWrite_index;
+    registeredCommit_events_0_gprWrite_data <= ordered_io_output_payload_events_0_gprWrite_data;
+    registeredCommit_events_0_csrWrite_valid <= ordered_io_output_payload_events_0_csrWrite_valid;
+    registeredCommit_events_0_csrWrite_address <= ordered_io_output_payload_events_0_csrWrite_address;
+    registeredCommit_events_0_csrWrite_data <= ordered_io_output_payload_events_0_csrWrite_data;
+    registeredCommit_events_0_exception_valid <= ordered_io_output_payload_events_0_exception_valid;
+    registeredCommit_events_0_exception_ecode <= ordered_io_output_payload_events_0_exception_ecode;
+    registeredCommit_events_0_exception_esubcode <= ordered_io_output_payload_events_0_exception_esubcode;
+    registeredCommit_events_0_exception_badVAddrValid <= ordered_io_output_payload_events_0_exception_badVAddrValid;
+    registeredCommit_events_0_exception_badVAddr <= ordered_io_output_payload_events_0_exception_badVAddr;
+    registeredCommit_events_0_exception_tlbRefill <= ordered_io_output_payload_events_0_exception_tlbRefill;
+    registeredCommit_events_0_exception_tlbException <= ordered_io_output_payload_events_0_exception_tlbException;
+    registeredCommit_events_0_exception_tlbVppn <= ordered_io_output_payload_events_0_exception_tlbVppn;
+    registeredCommit_events_0_timer <= ordered_io_output_payload_events_0_timer;
+    registeredCommit_events_0_load_instructionMask <= ordered_io_output_payload_events_0_load_instructionMask;
+    registeredCommit_events_0_load_pAddr <= ordered_io_output_payload_events_0_load_pAddr;
+    registeredCommit_events_0_load_vAddr <= ordered_io_output_payload_events_0_load_vAddr;
+    registeredCommit_events_0_store_instructionMask <= ordered_io_output_payload_events_0_store_instructionMask;
+    registeredCommit_events_0_store_pAddr <= ordered_io_output_payload_events_0_store_pAddr;
+    registeredCommit_events_0_store_vAddr <= ordered_io_output_payload_events_0_store_vAddr;
+    registeredCommit_events_0_store_data <= ordered_io_output_payload_events_0_store_data;
+    registeredCommit_events_0_store_byteMask <= ordered_io_output_payload_events_0_store_byteMask;
+    registeredCommit_events_0_tlbFill_valid <= ordered_io_output_payload_events_0_tlbFill_valid;
+    registeredCommit_events_0_tlbFill_index <= ordered_io_output_payload_events_0_tlbFill_index;
+    registeredCommit_events_1_pc <= ordered_io_output_payload_events_1_pc;
+    registeredCommit_events_1_instruction <= ordered_io_output_payload_events_1_instruction;
+    registeredCommit_events_1_retired <= ordered_io_output_payload_events_1_retired;
+    registeredCommit_events_1_ertn <= ordered_io_output_payload_events_1_ertn;
+    registeredCommit_events_1_isCounterInstruction <= ordered_io_output_payload_events_1_isCounterInstruction;
+    registeredCommit_events_1_csrRstat <= ordered_io_output_payload_events_1_csrRstat;
+    registeredCommit_events_1_csrReadData <= ordered_io_output_payload_events_1_csrReadData;
+    registeredCommit_events_1_gprWrite_valid <= ordered_io_output_payload_events_1_gprWrite_valid;
+    registeredCommit_events_1_gprWrite_index <= ordered_io_output_payload_events_1_gprWrite_index;
+    registeredCommit_events_1_gprWrite_data <= ordered_io_output_payload_events_1_gprWrite_data;
+    registeredCommit_events_1_csrWrite_valid <= ordered_io_output_payload_events_1_csrWrite_valid;
+    registeredCommit_events_1_csrWrite_address <= ordered_io_output_payload_events_1_csrWrite_address;
+    registeredCommit_events_1_csrWrite_data <= ordered_io_output_payload_events_1_csrWrite_data;
+    registeredCommit_events_1_exception_valid <= ordered_io_output_payload_events_1_exception_valid;
+    registeredCommit_events_1_exception_ecode <= ordered_io_output_payload_events_1_exception_ecode;
+    registeredCommit_events_1_exception_esubcode <= ordered_io_output_payload_events_1_exception_esubcode;
+    registeredCommit_events_1_exception_badVAddrValid <= ordered_io_output_payload_events_1_exception_badVAddrValid;
+    registeredCommit_events_1_exception_badVAddr <= ordered_io_output_payload_events_1_exception_badVAddr;
+    registeredCommit_events_1_exception_tlbRefill <= ordered_io_output_payload_events_1_exception_tlbRefill;
+    registeredCommit_events_1_exception_tlbException <= ordered_io_output_payload_events_1_exception_tlbException;
+    registeredCommit_events_1_exception_tlbVppn <= ordered_io_output_payload_events_1_exception_tlbVppn;
+    registeredCommit_events_1_timer <= ordered_io_output_payload_events_1_timer;
+    registeredCommit_events_1_load_instructionMask <= ordered_io_output_payload_events_1_load_instructionMask;
+    registeredCommit_events_1_load_pAddr <= ordered_io_output_payload_events_1_load_pAddr;
+    registeredCommit_events_1_load_vAddr <= ordered_io_output_payload_events_1_load_vAddr;
+    registeredCommit_events_1_store_instructionMask <= ordered_io_output_payload_events_1_store_instructionMask;
+    registeredCommit_events_1_store_pAddr <= ordered_io_output_payload_events_1_store_pAddr;
+    registeredCommit_events_1_store_vAddr <= ordered_io_output_payload_events_1_store_vAddr;
+    registeredCommit_events_1_store_data <= ordered_io_output_payload_events_1_store_data;
+    registeredCommit_events_1_store_byteMask <= ordered_io_output_payload_events_1_store_byteMask;
+    registeredCommit_events_1_tlbFill_valid <= ordered_io_output_payload_events_1_tlbFill_valid;
+    registeredCommit_events_1_tlbFill_index <= ordered_io_output_payload_events_1_tlbFill_index;
+    registeredCommit_events_2_pc <= ordered_io_output_payload_events_2_pc;
+    registeredCommit_events_2_instruction <= ordered_io_output_payload_events_2_instruction;
+    registeredCommit_events_2_retired <= ordered_io_output_payload_events_2_retired;
+    registeredCommit_events_2_ertn <= ordered_io_output_payload_events_2_ertn;
+    registeredCommit_events_2_isCounterInstruction <= ordered_io_output_payload_events_2_isCounterInstruction;
+    registeredCommit_events_2_csrRstat <= ordered_io_output_payload_events_2_csrRstat;
+    registeredCommit_events_2_csrReadData <= ordered_io_output_payload_events_2_csrReadData;
+    registeredCommit_events_2_gprWrite_valid <= ordered_io_output_payload_events_2_gprWrite_valid;
+    registeredCommit_events_2_gprWrite_index <= ordered_io_output_payload_events_2_gprWrite_index;
+    registeredCommit_events_2_gprWrite_data <= ordered_io_output_payload_events_2_gprWrite_data;
+    registeredCommit_events_2_csrWrite_valid <= ordered_io_output_payload_events_2_csrWrite_valid;
+    registeredCommit_events_2_csrWrite_address <= ordered_io_output_payload_events_2_csrWrite_address;
+    registeredCommit_events_2_csrWrite_data <= ordered_io_output_payload_events_2_csrWrite_data;
+    registeredCommit_events_2_exception_valid <= ordered_io_output_payload_events_2_exception_valid;
+    registeredCommit_events_2_exception_ecode <= ordered_io_output_payload_events_2_exception_ecode;
+    registeredCommit_events_2_exception_esubcode <= ordered_io_output_payload_events_2_exception_esubcode;
+    registeredCommit_events_2_exception_badVAddrValid <= ordered_io_output_payload_events_2_exception_badVAddrValid;
+    registeredCommit_events_2_exception_badVAddr <= ordered_io_output_payload_events_2_exception_badVAddr;
+    registeredCommit_events_2_exception_tlbRefill <= ordered_io_output_payload_events_2_exception_tlbRefill;
+    registeredCommit_events_2_exception_tlbException <= ordered_io_output_payload_events_2_exception_tlbException;
+    registeredCommit_events_2_exception_tlbVppn <= ordered_io_output_payload_events_2_exception_tlbVppn;
+    registeredCommit_events_2_timer <= ordered_io_output_payload_events_2_timer;
+    registeredCommit_events_2_load_instructionMask <= ordered_io_output_payload_events_2_load_instructionMask;
+    registeredCommit_events_2_load_pAddr <= ordered_io_output_payload_events_2_load_pAddr;
+    registeredCommit_events_2_load_vAddr <= ordered_io_output_payload_events_2_load_vAddr;
+    registeredCommit_events_2_store_instructionMask <= ordered_io_output_payload_events_2_store_instructionMask;
+    registeredCommit_events_2_store_pAddr <= ordered_io_output_payload_events_2_store_pAddr;
+    registeredCommit_events_2_store_vAddr <= ordered_io_output_payload_events_2_store_vAddr;
+    registeredCommit_events_2_store_data <= ordered_io_output_payload_events_2_store_data;
+    registeredCommit_events_2_store_byteMask <= ordered_io_output_payload_events_2_store_byteMask;
+    registeredCommit_events_2_tlbFill_valid <= ordered_io_output_payload_events_2_tlbFill_valid;
+    registeredCommit_events_2_tlbFill_index <= ordered_io_output_payload_events_2_tlbFill_index;
   end
 
 
@@ -31109,7 +32179,6 @@ module DecodeStage (
   output wire [7:0]    io_delayedBranch_direction_phtIndex,
   output wire          io_delayedBranch_direction_baseTaken,
   output wire          io_delayedBranch_direction_localTaken,
-  input  wire          io_delayedBranchSlotCancel,
   output wire [31:0]   io_registers_0,
   output wire [31:0]   io_registers_1,
   output wire [31:0]   io_registers_2,
@@ -31189,7 +32258,6 @@ module DecodeStage (
   reg        [7:0]    directionPrediction_phtIndex;
   reg                 directionPrediction_baseTaken;
   reg                 directionPrediction_localTaken;
-  reg                 branchSlotCancel;
   reg        [31:0]   registerFile_0;
   reg        [31:0]   registerFile_1;
   reg        [31:0]   registerFile_2;
@@ -31384,12 +32452,9 @@ module DecodeStage (
   wire                btbTargetError;
   wire                btbRepair;
   wire       [31:0]   btbRepairTarget;
-  wire                when_DecodeStage_l743;
-  wire                when_DecodeStage_l746;
-  wire                when_DecodeStage_l752;
-  wire                when_DecodeStage_l757;
+  wire                when_DecodeStage_l750;
+  wire                when_DecodeStage_l756;
   wire                when_DecodeStage_l762;
-  wire                when_DecodeStage_l764;
   wire                counterEnabled;
   wire       [31:0]   counterResult;
   wire       [31:0]   csrData;
@@ -31711,12 +32776,9 @@ module DecodeStage (
   assign btbRepairTarget = (branchTaken ? branchTarget : _zz_btbRepairTarget);
   assign io_input_ready = ((((((io_flush_exception || io_flush_ertn) || io_flush_refetch) || io_flush_instructionCacheOperation) || io_flush_idle) || (! occupied)) || (readyGo && io_output_ready));
   assign io_output_valid = (occupied && readyGo);
-  assign when_DecodeStage_l743 = ((((io_flush_exception || io_flush_ertn) || io_flush_refetch) || io_flush_instructionCacheOperation) || io_flush_idle);
-  assign when_DecodeStage_l746 = ((btbRepair && io_output_ready) || branchSlotCancel);
-  assign when_DecodeStage_l752 = (io_input_valid && io_input_ready);
-  assign when_DecodeStage_l757 = ((((io_flush_exception || io_flush_ertn) || io_flush_refetch) || io_flush_instructionCacheOperation) || io_flush_idle);
-  assign when_DecodeStage_l762 = ((btbRepair && io_output_ready) && (! io_input_valid));
-  assign when_DecodeStage_l764 = (branchSlotCancel && io_input_valid);
+  assign when_DecodeStage_l750 = ((((io_flush_exception || io_flush_ertn) || io_flush_refetch) || io_flush_instructionCacheOperation) || io_flush_idle);
+  assign when_DecodeStage_l756 = ((btbRepair && io_output_ready) || 1'b0);
+  assign when_DecodeStage_l762 = (io_input_valid && io_input_ready);
   assign counterEnabled = ((instRdCntVlW || instRdCntVhW) || instRdCntIdW);
   assign counterResult = (instRdCntVlW ? io_timer[31 : 0] : (instRdCntVhW ? io_timer[63 : 32] : io_timerId));
   assign csrData = (counterEnabled ? counterResult : (instScW ? {31'h0,io_reservationValid} : io_csrReadData));
@@ -31827,27 +32889,15 @@ module DecodeStage (
   always @(posedge aclk) begin
     if(resetCapture_backendActiveHigh) begin
       occupied <= 1'b0;
-      branchSlotCancel <= 1'b0;
     end else begin
-      if(when_DecodeStage_l743) begin
+      if(when_DecodeStage_l750) begin
         occupied <= 1'b0;
       end else begin
         if(io_input_ready) begin
-          if(when_DecodeStage_l746) begin
+          if(when_DecodeStage_l756) begin
             occupied <= 1'b0;
           end else begin
             occupied <= io_input_valid;
-          end
-        end
-      end
-      if(when_DecodeStage_l757) begin
-        branchSlotCancel <= (io_delayedBranchSlotCancel && (! (io_input_valid && io_input_ready)));
-      end else begin
-        if(when_DecodeStage_l762) begin
-          branchSlotCancel <= 1'b1;
-        end else begin
-          if(when_DecodeStage_l764) begin
-            branchSlotCancel <= 1'b0;
           end
         end
       end
@@ -31953,7 +33003,7 @@ module DecodeStage (
         registerFile_31 <= io_registerWrite_data;
       end
     end
-    if(when_DecodeStage_l752) begin
+    if(when_DecodeStage_l762) begin
       fetch_pc <= io_input_payload_pc;
       fetch_instruction <= io_input_payload_instruction;
       fetch_exceptionCode <= io_input_payload_exceptionCode;
@@ -31966,6 +33016,1692 @@ module DecodeStage (
       directionPrediction_phtIndex <= io_directionPrediction_phtIndex;
       directionPrediction_baseTaken <= io_directionPrediction_baseTaken;
       directionPrediction_localTaken <= io_directionPrediction_localTaken;
+    end
+  end
+
+
+endmodule
+/* verilator lint_on DECLFILENAME */
+
+/* verilator lint_off DECLFILENAME */
+module FetchInstructionBuffer (
+  input  wire          io_flush,
+  input  wire          io_redirect,
+  input  wire          io_redirectTargetAccepted,
+  input  wire          io_push_valid,
+  output wire          io_push_ready,
+  input  wire [3:0]    io_push_payload_slotValid,
+  input  wire [31:0]   io_push_payload_slots_0_fetch_pc,
+  input  wire [31:0]   io_push_payload_slots_0_fetch_instruction,
+  input  wire [3:0]    io_push_payload_slots_0_fetch_exceptionCode,
+  input  wire          io_push_payload_slots_0_fetch_hasException,
+  input  wire          io_push_payload_slots_0_fetch_instructionCacheMiss,
+  input  wire          io_push_payload_slots_0_fetch_btbEnabled,
+  input  wire          io_push_payload_slots_0_fetch_btbTaken,
+  input  wire [4:0]    io_push_payload_slots_0_fetch_btbIndex,
+  input  wire [31:0]   io_push_payload_slots_0_fetch_btbTarget,
+  input  wire [7:0]    io_push_payload_slots_0_direction_phtIndex,
+  input  wire          io_push_payload_slots_0_direction_baseTaken,
+  input  wire          io_push_payload_slots_0_direction_localTaken,
+  input  wire [31:0]   io_push_payload_slots_1_fetch_pc,
+  input  wire [31:0]   io_push_payload_slots_1_fetch_instruction,
+  input  wire [3:0]    io_push_payload_slots_1_fetch_exceptionCode,
+  input  wire          io_push_payload_slots_1_fetch_hasException,
+  input  wire          io_push_payload_slots_1_fetch_instructionCacheMiss,
+  input  wire          io_push_payload_slots_1_fetch_btbEnabled,
+  input  wire          io_push_payload_slots_1_fetch_btbTaken,
+  input  wire [4:0]    io_push_payload_slots_1_fetch_btbIndex,
+  input  wire [31:0]   io_push_payload_slots_1_fetch_btbTarget,
+  input  wire [7:0]    io_push_payload_slots_1_direction_phtIndex,
+  input  wire          io_push_payload_slots_1_direction_baseTaken,
+  input  wire          io_push_payload_slots_1_direction_localTaken,
+  input  wire [31:0]   io_push_payload_slots_2_fetch_pc,
+  input  wire [31:0]   io_push_payload_slots_2_fetch_instruction,
+  input  wire [3:0]    io_push_payload_slots_2_fetch_exceptionCode,
+  input  wire          io_push_payload_slots_2_fetch_hasException,
+  input  wire          io_push_payload_slots_2_fetch_instructionCacheMiss,
+  input  wire          io_push_payload_slots_2_fetch_btbEnabled,
+  input  wire          io_push_payload_slots_2_fetch_btbTaken,
+  input  wire [4:0]    io_push_payload_slots_2_fetch_btbIndex,
+  input  wire [31:0]   io_push_payload_slots_2_fetch_btbTarget,
+  input  wire [7:0]    io_push_payload_slots_2_direction_phtIndex,
+  input  wire          io_push_payload_slots_2_direction_baseTaken,
+  input  wire          io_push_payload_slots_2_direction_localTaken,
+  input  wire [31:0]   io_push_payload_slots_3_fetch_pc,
+  input  wire [31:0]   io_push_payload_slots_3_fetch_instruction,
+  input  wire [3:0]    io_push_payload_slots_3_fetch_exceptionCode,
+  input  wire          io_push_payload_slots_3_fetch_hasException,
+  input  wire          io_push_payload_slots_3_fetch_instructionCacheMiss,
+  input  wire          io_push_payload_slots_3_fetch_btbEnabled,
+  input  wire          io_push_payload_slots_3_fetch_btbTaken,
+  input  wire [4:0]    io_push_payload_slots_3_fetch_btbIndex,
+  input  wire [31:0]   io_push_payload_slots_3_fetch_btbTarget,
+  input  wire [7:0]    io_push_payload_slots_3_direction_phtIndex,
+  input  wire          io_push_payload_slots_3_direction_baseTaken,
+  input  wire          io_push_payload_slots_3_direction_localTaken,
+  output wire          io_pop_valid,
+  input  wire          io_pop_ready,
+  output wire [31:0]   io_pop_payload_fetch_pc,
+  output wire [31:0]   io_pop_payload_fetch_instruction,
+  output wire [3:0]    io_pop_payload_fetch_exceptionCode,
+  output wire          io_pop_payload_fetch_hasException,
+  output wire          io_pop_payload_fetch_instructionCacheMiss,
+  output wire          io_pop_payload_fetch_btbEnabled,
+  output wire          io_pop_payload_fetch_btbTaken,
+  output wire [4:0]    io_pop_payload_fetch_btbIndex,
+  output wire [31:0]   io_pop_payload_fetch_btbTarget,
+  output wire [7:0]    io_pop_payload_direction_phtIndex,
+  output wire          io_pop_payload_direction_baseTaken,
+  output wire          io_pop_payload_direction_localTaken,
+  input  wire          aclk,
+  input  wire          resetCapture_backendActiveHigh
+);
+
+  wire       [2:0]    _zz_packetCount_8;
+  reg        [2:0]    _zz_packetCount_9;
+  wire       [2:0]    _zz_packetCount_10;
+  reg        [2:0]    _zz_packetCount_11;
+  wire       [2:0]    _zz_packetCount_12;
+  wire       [0:0]    _zz_packetCount_13;
+  wire       [3:0]    _zz_freeAfterPop;
+  wire       [3:0]    _zz_freeAfterPop_1;
+  wire       [0:0]    _zz_freeAfterPop_2;
+  reg        [31:0]   _zz_io_pop_payload_fetch_pc;
+  reg        [31:0]   _zz_io_pop_payload_fetch_instruction;
+  reg        [3:0]    _zz_io_pop_payload_fetch_exceptionCode;
+  reg                 _zz_io_pop_payload_fetch_hasException;
+  reg                 _zz_io_pop_payload_fetch_instructionCacheMiss;
+  reg                 _zz_io_pop_payload_fetch_btbEnabled;
+  reg                 _zz_io_pop_payload_fetch_btbTaken;
+  reg        [4:0]    _zz_io_pop_payload_fetch_btbIndex;
+  reg        [31:0]   _zz_io_pop_payload_fetch_btbTarget;
+  reg        [7:0]    _zz_io_pop_payload_direction_phtIndex;
+  reg                 _zz_io_pop_payload_direction_baseTaken;
+  reg                 _zz_io_pop_payload_direction_localTaken;
+  wire       [2:0]    _zz__zz_1;
+  wire       [2:0]    _zz__zz_10;
+  wire       [2:0]    _zz__zz_19;
+  wire       [2:0]    _zz__zz_28;
+  wire       [2:0]    _zz_writePointer;
+  wire       [3:0]    _zz_occupancy;
+  reg        [31:0]   storage_0_fetch_pc;
+  reg        [31:0]   storage_0_fetch_instruction;
+  reg        [3:0]    storage_0_fetch_exceptionCode;
+  reg                 storage_0_fetch_hasException;
+  reg                 storage_0_fetch_instructionCacheMiss;
+  reg                 storage_0_fetch_btbEnabled;
+  reg                 storage_0_fetch_btbTaken;
+  reg        [4:0]    storage_0_fetch_btbIndex;
+  reg        [31:0]   storage_0_fetch_btbTarget;
+  reg        [7:0]    storage_0_direction_phtIndex;
+  reg                 storage_0_direction_baseTaken;
+  reg                 storage_0_direction_localTaken;
+  reg        [31:0]   storage_1_fetch_pc;
+  reg        [31:0]   storage_1_fetch_instruction;
+  reg        [3:0]    storage_1_fetch_exceptionCode;
+  reg                 storage_1_fetch_hasException;
+  reg                 storage_1_fetch_instructionCacheMiss;
+  reg                 storage_1_fetch_btbEnabled;
+  reg                 storage_1_fetch_btbTaken;
+  reg        [4:0]    storage_1_fetch_btbIndex;
+  reg        [31:0]   storage_1_fetch_btbTarget;
+  reg        [7:0]    storage_1_direction_phtIndex;
+  reg                 storage_1_direction_baseTaken;
+  reg                 storage_1_direction_localTaken;
+  reg        [31:0]   storage_2_fetch_pc;
+  reg        [31:0]   storage_2_fetch_instruction;
+  reg        [3:0]    storage_2_fetch_exceptionCode;
+  reg                 storage_2_fetch_hasException;
+  reg                 storage_2_fetch_instructionCacheMiss;
+  reg                 storage_2_fetch_btbEnabled;
+  reg                 storage_2_fetch_btbTaken;
+  reg        [4:0]    storage_2_fetch_btbIndex;
+  reg        [31:0]   storage_2_fetch_btbTarget;
+  reg        [7:0]    storage_2_direction_phtIndex;
+  reg                 storage_2_direction_baseTaken;
+  reg                 storage_2_direction_localTaken;
+  reg        [31:0]   storage_3_fetch_pc;
+  reg        [31:0]   storage_3_fetch_instruction;
+  reg        [3:0]    storage_3_fetch_exceptionCode;
+  reg                 storage_3_fetch_hasException;
+  reg                 storage_3_fetch_instructionCacheMiss;
+  reg                 storage_3_fetch_btbEnabled;
+  reg                 storage_3_fetch_btbTaken;
+  reg        [4:0]    storage_3_fetch_btbIndex;
+  reg        [31:0]   storage_3_fetch_btbTarget;
+  reg        [7:0]    storage_3_direction_phtIndex;
+  reg                 storage_3_direction_baseTaken;
+  reg                 storage_3_direction_localTaken;
+  reg        [31:0]   storage_4_fetch_pc;
+  reg        [31:0]   storage_4_fetch_instruction;
+  reg        [3:0]    storage_4_fetch_exceptionCode;
+  reg                 storage_4_fetch_hasException;
+  reg                 storage_4_fetch_instructionCacheMiss;
+  reg                 storage_4_fetch_btbEnabled;
+  reg                 storage_4_fetch_btbTaken;
+  reg        [4:0]    storage_4_fetch_btbIndex;
+  reg        [31:0]   storage_4_fetch_btbTarget;
+  reg        [7:0]    storage_4_direction_phtIndex;
+  reg                 storage_4_direction_baseTaken;
+  reg                 storage_4_direction_localTaken;
+  reg        [31:0]   storage_5_fetch_pc;
+  reg        [31:0]   storage_5_fetch_instruction;
+  reg        [3:0]    storage_5_fetch_exceptionCode;
+  reg                 storage_5_fetch_hasException;
+  reg                 storage_5_fetch_instructionCacheMiss;
+  reg                 storage_5_fetch_btbEnabled;
+  reg                 storage_5_fetch_btbTaken;
+  reg        [4:0]    storage_5_fetch_btbIndex;
+  reg        [31:0]   storage_5_fetch_btbTarget;
+  reg        [7:0]    storage_5_direction_phtIndex;
+  reg                 storage_5_direction_baseTaken;
+  reg                 storage_5_direction_localTaken;
+  reg        [31:0]   storage_6_fetch_pc;
+  reg        [31:0]   storage_6_fetch_instruction;
+  reg        [3:0]    storage_6_fetch_exceptionCode;
+  reg                 storage_6_fetch_hasException;
+  reg                 storage_6_fetch_instructionCacheMiss;
+  reg                 storage_6_fetch_btbEnabled;
+  reg                 storage_6_fetch_btbTaken;
+  reg        [4:0]    storage_6_fetch_btbIndex;
+  reg        [31:0]   storage_6_fetch_btbTarget;
+  reg        [7:0]    storage_6_direction_phtIndex;
+  reg                 storage_6_direction_baseTaken;
+  reg                 storage_6_direction_localTaken;
+  reg        [31:0]   storage_7_fetch_pc;
+  reg        [31:0]   storage_7_fetch_instruction;
+  reg        [3:0]    storage_7_fetch_exceptionCode;
+  reg                 storage_7_fetch_hasException;
+  reg                 storage_7_fetch_instructionCacheMiss;
+  reg                 storage_7_fetch_btbEnabled;
+  reg                 storage_7_fetch_btbTaken;
+  reg        [4:0]    storage_7_fetch_btbIndex;
+  reg        [31:0]   storage_7_fetch_btbTarget;
+  reg        [7:0]    storage_7_direction_phtIndex;
+  reg                 storage_7_direction_baseTaken;
+  reg                 storage_7_direction_localTaken;
+  reg        [2:0]    readPointer;
+  reg        [2:0]    writePointer;
+  reg        [3:0]    occupancy;
+  reg                 discardNextPush;
+  wire                empty;
+  wire                popFire;
+  wire       [2:0]    _zz_packetCount;
+  wire       [2:0]    _zz_packetCount_1;
+  wire       [2:0]    _zz_packetCount_2;
+  wire       [2:0]    _zz_packetCount_3;
+  wire       [2:0]    _zz_packetCount_4;
+  wire       [2:0]    _zz_packetCount_5;
+  wire       [2:0]    _zz_packetCount_6;
+  wire       [2:0]    _zz_packetCount_7;
+  wire       [3:0]    packetCount;
+  wire       [3:0]    freeAfterPop;
+  wire                discardFire;
+  wire                pushFire;
+  wire                when_FetchInstructionBuffer_l100;
+  wire       [7:0]    _zz_1;
+  wire                _zz_2;
+  wire                _zz_3;
+  wire                _zz_4;
+  wire                _zz_5;
+  wire                _zz_6;
+  wire                _zz_7;
+  wire                _zz_8;
+  wire                _zz_9;
+  wire                when_FetchInstructionBuffer_l100_1;
+  wire       [7:0]    _zz_10;
+  wire                _zz_11;
+  wire                _zz_12;
+  wire                _zz_13;
+  wire                _zz_14;
+  wire                _zz_15;
+  wire                _zz_16;
+  wire                _zz_17;
+  wire                _zz_18;
+  wire                when_FetchInstructionBuffer_l100_2;
+  wire       [7:0]    _zz_19;
+  wire                _zz_20;
+  wire                _zz_21;
+  wire                _zz_22;
+  wire                _zz_23;
+  wire                _zz_24;
+  wire                _zz_25;
+  wire                _zz_26;
+  wire                _zz_27;
+  wire                when_FetchInstructionBuffer_l100_3;
+  wire       [7:0]    _zz_28;
+  wire                _zz_29;
+  wire                _zz_30;
+  wire                _zz_31;
+  wire                _zz_32;
+  wire                _zz_33;
+  wire                _zz_34;
+  wire                _zz_35;
+  wire                _zz_36;
+  wire                when_FetchInstructionBuffer_l124;
+
+  assign _zz_packetCount_8 = (_zz_packetCount_9 + _zz_packetCount_11);
+  assign _zz_packetCount_13 = io_push_payload_slotValid[3];
+  assign _zz_packetCount_12 = {2'd0, _zz_packetCount_13};
+  assign _zz_freeAfterPop = (4'b1000 - occupancy);
+  assign _zz_freeAfterPop_2 = popFire;
+  assign _zz_freeAfterPop_1 = {3'd0, _zz_freeAfterPop_2};
+  assign _zz__zz_1 = (writePointer + 3'b000);
+  assign _zz__zz_10 = (writePointer + 3'b001);
+  assign _zz__zz_19 = (writePointer + 3'b010);
+  assign _zz__zz_28 = (writePointer + 3'b011);
+  assign _zz_writePointer = packetCount[2:0];
+  assign _zz_occupancy = (occupancy + packetCount);
+  assign _zz_packetCount_10 = {io_push_payload_slotValid[2],{io_push_payload_slotValid[1],io_push_payload_slotValid[0]}};
+  always @(*) begin
+    case(_zz_packetCount_10)
+      3'b000 : _zz_packetCount_9 = _zz_packetCount;
+      3'b001 : _zz_packetCount_9 = _zz_packetCount_1;
+      3'b010 : _zz_packetCount_9 = _zz_packetCount_2;
+      3'b011 : _zz_packetCount_9 = _zz_packetCount_3;
+      3'b100 : _zz_packetCount_9 = _zz_packetCount_4;
+      3'b101 : _zz_packetCount_9 = _zz_packetCount_5;
+      3'b110 : _zz_packetCount_9 = _zz_packetCount_6;
+      default : _zz_packetCount_9 = _zz_packetCount_7;
+    endcase
+  end
+
+  always @(*) begin
+    case(_zz_packetCount_12)
+      3'b000 : _zz_packetCount_11 = _zz_packetCount;
+      3'b001 : _zz_packetCount_11 = _zz_packetCount_1;
+      3'b010 : _zz_packetCount_11 = _zz_packetCount_2;
+      3'b011 : _zz_packetCount_11 = _zz_packetCount_3;
+      3'b100 : _zz_packetCount_11 = _zz_packetCount_4;
+      3'b101 : _zz_packetCount_11 = _zz_packetCount_5;
+      3'b110 : _zz_packetCount_11 = _zz_packetCount_6;
+      default : _zz_packetCount_11 = _zz_packetCount_7;
+    endcase
+  end
+
+  always @(*) begin
+    case(readPointer)
+      3'b000 : begin
+        _zz_io_pop_payload_fetch_pc = storage_0_fetch_pc;
+        _zz_io_pop_payload_fetch_instruction = storage_0_fetch_instruction;
+        _zz_io_pop_payload_fetch_exceptionCode = storage_0_fetch_exceptionCode;
+        _zz_io_pop_payload_fetch_hasException = storage_0_fetch_hasException;
+        _zz_io_pop_payload_fetch_instructionCacheMiss = storage_0_fetch_instructionCacheMiss;
+        _zz_io_pop_payload_fetch_btbEnabled = storage_0_fetch_btbEnabled;
+        _zz_io_pop_payload_fetch_btbTaken = storage_0_fetch_btbTaken;
+        _zz_io_pop_payload_fetch_btbIndex = storage_0_fetch_btbIndex;
+        _zz_io_pop_payload_fetch_btbTarget = storage_0_fetch_btbTarget;
+        _zz_io_pop_payload_direction_phtIndex = storage_0_direction_phtIndex;
+        _zz_io_pop_payload_direction_baseTaken = storage_0_direction_baseTaken;
+        _zz_io_pop_payload_direction_localTaken = storage_0_direction_localTaken;
+      end
+      3'b001 : begin
+        _zz_io_pop_payload_fetch_pc = storage_1_fetch_pc;
+        _zz_io_pop_payload_fetch_instruction = storage_1_fetch_instruction;
+        _zz_io_pop_payload_fetch_exceptionCode = storage_1_fetch_exceptionCode;
+        _zz_io_pop_payload_fetch_hasException = storage_1_fetch_hasException;
+        _zz_io_pop_payload_fetch_instructionCacheMiss = storage_1_fetch_instructionCacheMiss;
+        _zz_io_pop_payload_fetch_btbEnabled = storage_1_fetch_btbEnabled;
+        _zz_io_pop_payload_fetch_btbTaken = storage_1_fetch_btbTaken;
+        _zz_io_pop_payload_fetch_btbIndex = storage_1_fetch_btbIndex;
+        _zz_io_pop_payload_fetch_btbTarget = storage_1_fetch_btbTarget;
+        _zz_io_pop_payload_direction_phtIndex = storage_1_direction_phtIndex;
+        _zz_io_pop_payload_direction_baseTaken = storage_1_direction_baseTaken;
+        _zz_io_pop_payload_direction_localTaken = storage_1_direction_localTaken;
+      end
+      3'b010 : begin
+        _zz_io_pop_payload_fetch_pc = storage_2_fetch_pc;
+        _zz_io_pop_payload_fetch_instruction = storage_2_fetch_instruction;
+        _zz_io_pop_payload_fetch_exceptionCode = storage_2_fetch_exceptionCode;
+        _zz_io_pop_payload_fetch_hasException = storage_2_fetch_hasException;
+        _zz_io_pop_payload_fetch_instructionCacheMiss = storage_2_fetch_instructionCacheMiss;
+        _zz_io_pop_payload_fetch_btbEnabled = storage_2_fetch_btbEnabled;
+        _zz_io_pop_payload_fetch_btbTaken = storage_2_fetch_btbTaken;
+        _zz_io_pop_payload_fetch_btbIndex = storage_2_fetch_btbIndex;
+        _zz_io_pop_payload_fetch_btbTarget = storage_2_fetch_btbTarget;
+        _zz_io_pop_payload_direction_phtIndex = storage_2_direction_phtIndex;
+        _zz_io_pop_payload_direction_baseTaken = storage_2_direction_baseTaken;
+        _zz_io_pop_payload_direction_localTaken = storage_2_direction_localTaken;
+      end
+      3'b011 : begin
+        _zz_io_pop_payload_fetch_pc = storage_3_fetch_pc;
+        _zz_io_pop_payload_fetch_instruction = storage_3_fetch_instruction;
+        _zz_io_pop_payload_fetch_exceptionCode = storage_3_fetch_exceptionCode;
+        _zz_io_pop_payload_fetch_hasException = storage_3_fetch_hasException;
+        _zz_io_pop_payload_fetch_instructionCacheMiss = storage_3_fetch_instructionCacheMiss;
+        _zz_io_pop_payload_fetch_btbEnabled = storage_3_fetch_btbEnabled;
+        _zz_io_pop_payload_fetch_btbTaken = storage_3_fetch_btbTaken;
+        _zz_io_pop_payload_fetch_btbIndex = storage_3_fetch_btbIndex;
+        _zz_io_pop_payload_fetch_btbTarget = storage_3_fetch_btbTarget;
+        _zz_io_pop_payload_direction_phtIndex = storage_3_direction_phtIndex;
+        _zz_io_pop_payload_direction_baseTaken = storage_3_direction_baseTaken;
+        _zz_io_pop_payload_direction_localTaken = storage_3_direction_localTaken;
+      end
+      3'b100 : begin
+        _zz_io_pop_payload_fetch_pc = storage_4_fetch_pc;
+        _zz_io_pop_payload_fetch_instruction = storage_4_fetch_instruction;
+        _zz_io_pop_payload_fetch_exceptionCode = storage_4_fetch_exceptionCode;
+        _zz_io_pop_payload_fetch_hasException = storage_4_fetch_hasException;
+        _zz_io_pop_payload_fetch_instructionCacheMiss = storage_4_fetch_instructionCacheMiss;
+        _zz_io_pop_payload_fetch_btbEnabled = storage_4_fetch_btbEnabled;
+        _zz_io_pop_payload_fetch_btbTaken = storage_4_fetch_btbTaken;
+        _zz_io_pop_payload_fetch_btbIndex = storage_4_fetch_btbIndex;
+        _zz_io_pop_payload_fetch_btbTarget = storage_4_fetch_btbTarget;
+        _zz_io_pop_payload_direction_phtIndex = storage_4_direction_phtIndex;
+        _zz_io_pop_payload_direction_baseTaken = storage_4_direction_baseTaken;
+        _zz_io_pop_payload_direction_localTaken = storage_4_direction_localTaken;
+      end
+      3'b101 : begin
+        _zz_io_pop_payload_fetch_pc = storage_5_fetch_pc;
+        _zz_io_pop_payload_fetch_instruction = storage_5_fetch_instruction;
+        _zz_io_pop_payload_fetch_exceptionCode = storage_5_fetch_exceptionCode;
+        _zz_io_pop_payload_fetch_hasException = storage_5_fetch_hasException;
+        _zz_io_pop_payload_fetch_instructionCacheMiss = storage_5_fetch_instructionCacheMiss;
+        _zz_io_pop_payload_fetch_btbEnabled = storage_5_fetch_btbEnabled;
+        _zz_io_pop_payload_fetch_btbTaken = storage_5_fetch_btbTaken;
+        _zz_io_pop_payload_fetch_btbIndex = storage_5_fetch_btbIndex;
+        _zz_io_pop_payload_fetch_btbTarget = storage_5_fetch_btbTarget;
+        _zz_io_pop_payload_direction_phtIndex = storage_5_direction_phtIndex;
+        _zz_io_pop_payload_direction_baseTaken = storage_5_direction_baseTaken;
+        _zz_io_pop_payload_direction_localTaken = storage_5_direction_localTaken;
+      end
+      3'b110 : begin
+        _zz_io_pop_payload_fetch_pc = storage_6_fetch_pc;
+        _zz_io_pop_payload_fetch_instruction = storage_6_fetch_instruction;
+        _zz_io_pop_payload_fetch_exceptionCode = storage_6_fetch_exceptionCode;
+        _zz_io_pop_payload_fetch_hasException = storage_6_fetch_hasException;
+        _zz_io_pop_payload_fetch_instructionCacheMiss = storage_6_fetch_instructionCacheMiss;
+        _zz_io_pop_payload_fetch_btbEnabled = storage_6_fetch_btbEnabled;
+        _zz_io_pop_payload_fetch_btbTaken = storage_6_fetch_btbTaken;
+        _zz_io_pop_payload_fetch_btbIndex = storage_6_fetch_btbIndex;
+        _zz_io_pop_payload_fetch_btbTarget = storage_6_fetch_btbTarget;
+        _zz_io_pop_payload_direction_phtIndex = storage_6_direction_phtIndex;
+        _zz_io_pop_payload_direction_baseTaken = storage_6_direction_baseTaken;
+        _zz_io_pop_payload_direction_localTaken = storage_6_direction_localTaken;
+      end
+      default : begin
+        _zz_io_pop_payload_fetch_pc = storage_7_fetch_pc;
+        _zz_io_pop_payload_fetch_instruction = storage_7_fetch_instruction;
+        _zz_io_pop_payload_fetch_exceptionCode = storage_7_fetch_exceptionCode;
+        _zz_io_pop_payload_fetch_hasException = storage_7_fetch_hasException;
+        _zz_io_pop_payload_fetch_instructionCacheMiss = storage_7_fetch_instructionCacheMiss;
+        _zz_io_pop_payload_fetch_btbEnabled = storage_7_fetch_btbEnabled;
+        _zz_io_pop_payload_fetch_btbTaken = storage_7_fetch_btbTaken;
+        _zz_io_pop_payload_fetch_btbIndex = storage_7_fetch_btbIndex;
+        _zz_io_pop_payload_fetch_btbTarget = storage_7_fetch_btbTarget;
+        _zz_io_pop_payload_direction_phtIndex = storage_7_direction_phtIndex;
+        _zz_io_pop_payload_direction_baseTaken = storage_7_direction_baseTaken;
+        _zz_io_pop_payload_direction_localTaken = storage_7_direction_localTaken;
+      end
+    endcase
+  end
+
+  assign empty = (occupancy == 4'b0000);
+  assign popFire = (io_pop_valid && io_pop_ready);
+  assign _zz_packetCount = 3'b000;
+  assign _zz_packetCount_1 = 3'b001;
+  assign _zz_packetCount_2 = 3'b001;
+  assign _zz_packetCount_3 = 3'b010;
+  assign _zz_packetCount_4 = 3'b001;
+  assign _zz_packetCount_5 = 3'b010;
+  assign _zz_packetCount_6 = 3'b010;
+  assign _zz_packetCount_7 = 3'b011;
+  assign packetCount = {1'd0, _zz_packetCount_8};
+  assign freeAfterPop = (_zz_freeAfterPop + _zz_freeAfterPop_1);
+  assign io_pop_valid = ((! io_flush) && (! empty));
+  assign io_pop_payload_fetch_pc = _zz_io_pop_payload_fetch_pc;
+  assign io_pop_payload_fetch_instruction = _zz_io_pop_payload_fetch_instruction;
+  assign io_pop_payload_fetch_exceptionCode = _zz_io_pop_payload_fetch_exceptionCode;
+  assign io_pop_payload_fetch_hasException = _zz_io_pop_payload_fetch_hasException;
+  assign io_pop_payload_fetch_instructionCacheMiss = _zz_io_pop_payload_fetch_instructionCacheMiss;
+  assign io_pop_payload_fetch_btbEnabled = _zz_io_pop_payload_fetch_btbEnabled;
+  assign io_pop_payload_fetch_btbTaken = _zz_io_pop_payload_fetch_btbTaken;
+  assign io_pop_payload_fetch_btbIndex = _zz_io_pop_payload_fetch_btbIndex;
+  assign io_pop_payload_fetch_btbTarget = _zz_io_pop_payload_fetch_btbTarget;
+  assign io_pop_payload_direction_phtIndex = _zz_io_pop_payload_direction_phtIndex;
+  assign io_pop_payload_direction_baseTaken = _zz_io_pop_payload_direction_baseTaken;
+  assign io_pop_payload_direction_localTaken = _zz_io_pop_payload_direction_localTaken;
+  assign io_push_ready = ((io_flush || discardNextPush) || (packetCount <= freeAfterPop));
+  assign discardFire = (((discardNextPush && io_push_valid) && io_push_ready) && (! io_flush));
+  assign pushFire = (((io_push_valid && io_push_ready) && (! io_flush)) && (! discardNextPush));
+  assign when_FetchInstructionBuffer_l100 = (pushFire && io_push_payload_slotValid[0]);
+  assign _zz_1 = ({7'd0,1'b1} <<< _zz__zz_1);
+  assign _zz_2 = _zz_1[0];
+  assign _zz_3 = _zz_1[1];
+  assign _zz_4 = _zz_1[2];
+  assign _zz_5 = _zz_1[3];
+  assign _zz_6 = _zz_1[4];
+  assign _zz_7 = _zz_1[5];
+  assign _zz_8 = _zz_1[6];
+  assign _zz_9 = _zz_1[7];
+  assign when_FetchInstructionBuffer_l100_1 = (pushFire && io_push_payload_slotValid[1]);
+  assign _zz_10 = ({7'd0,1'b1} <<< _zz__zz_10);
+  assign _zz_11 = _zz_10[0];
+  assign _zz_12 = _zz_10[1];
+  assign _zz_13 = _zz_10[2];
+  assign _zz_14 = _zz_10[3];
+  assign _zz_15 = _zz_10[4];
+  assign _zz_16 = _zz_10[5];
+  assign _zz_17 = _zz_10[6];
+  assign _zz_18 = _zz_10[7];
+  assign when_FetchInstructionBuffer_l100_2 = (pushFire && io_push_payload_slotValid[2]);
+  assign _zz_19 = ({7'd0,1'b1} <<< _zz__zz_19);
+  assign _zz_20 = _zz_19[0];
+  assign _zz_21 = _zz_19[1];
+  assign _zz_22 = _zz_19[2];
+  assign _zz_23 = _zz_19[3];
+  assign _zz_24 = _zz_19[4];
+  assign _zz_25 = _zz_19[5];
+  assign _zz_26 = _zz_19[6];
+  assign _zz_27 = _zz_19[7];
+  assign when_FetchInstructionBuffer_l100_3 = (pushFire && io_push_payload_slotValid[3]);
+  assign _zz_28 = ({7'd0,1'b1} <<< _zz__zz_28);
+  assign _zz_29 = _zz_28[0];
+  assign _zz_30 = _zz_28[1];
+  assign _zz_31 = _zz_28[2];
+  assign _zz_32 = _zz_28[3];
+  assign _zz_33 = _zz_28[4];
+  assign _zz_34 = _zz_28[5];
+  assign _zz_35 = _zz_28[6];
+  assign _zz_36 = _zz_28[7];
+  assign when_FetchInstructionBuffer_l124 = (pushFire && popFire);
+  always @(posedge aclk) begin
+    if(resetCapture_backendActiveHigh) begin
+      readPointer <= 3'b000;
+      writePointer <= 3'b000;
+      occupancy <= 4'b0000;
+      discardNextPush <= 1'b0;
+    end else begin
+      if(io_flush) begin
+        readPointer <= 3'b000;
+        writePointer <= 3'b000;
+        occupancy <= 4'b0000;
+        discardNextPush <= ((io_redirect && (! io_redirectTargetAccepted)) && (! io_push_valid));
+      end else begin
+        if(discardFire) begin
+          discardNextPush <= 1'b0;
+        end
+        if(popFire) begin
+          readPointer <= (readPointer + 3'b001);
+        end
+        if(pushFire) begin
+          writePointer <= (writePointer + _zz_writePointer);
+        end
+        if(when_FetchInstructionBuffer_l124) begin
+          occupancy <= (_zz_occupancy - 4'b0001);
+        end else begin
+          if(pushFire) begin
+            occupancy <= (occupancy + packetCount);
+          end else begin
+            if(popFire) begin
+              occupancy <= (occupancy - 4'b0001);
+            end
+          end
+        end
+      end
+    end
+  end
+
+  always @(posedge aclk) begin
+    if(when_FetchInstructionBuffer_l100) begin
+      if(_zz_2) begin
+        storage_0_fetch_pc <= io_push_payload_slots_0_fetch_pc;
+      end
+      if(_zz_3) begin
+        storage_1_fetch_pc <= io_push_payload_slots_0_fetch_pc;
+      end
+      if(_zz_4) begin
+        storage_2_fetch_pc <= io_push_payload_slots_0_fetch_pc;
+      end
+      if(_zz_5) begin
+        storage_3_fetch_pc <= io_push_payload_slots_0_fetch_pc;
+      end
+      if(_zz_6) begin
+        storage_4_fetch_pc <= io_push_payload_slots_0_fetch_pc;
+      end
+      if(_zz_7) begin
+        storage_5_fetch_pc <= io_push_payload_slots_0_fetch_pc;
+      end
+      if(_zz_8) begin
+        storage_6_fetch_pc <= io_push_payload_slots_0_fetch_pc;
+      end
+      if(_zz_9) begin
+        storage_7_fetch_pc <= io_push_payload_slots_0_fetch_pc;
+      end
+      if(_zz_2) begin
+        storage_0_fetch_instruction <= io_push_payload_slots_0_fetch_instruction;
+      end
+      if(_zz_3) begin
+        storage_1_fetch_instruction <= io_push_payload_slots_0_fetch_instruction;
+      end
+      if(_zz_4) begin
+        storage_2_fetch_instruction <= io_push_payload_slots_0_fetch_instruction;
+      end
+      if(_zz_5) begin
+        storage_3_fetch_instruction <= io_push_payload_slots_0_fetch_instruction;
+      end
+      if(_zz_6) begin
+        storage_4_fetch_instruction <= io_push_payload_slots_0_fetch_instruction;
+      end
+      if(_zz_7) begin
+        storage_5_fetch_instruction <= io_push_payload_slots_0_fetch_instruction;
+      end
+      if(_zz_8) begin
+        storage_6_fetch_instruction <= io_push_payload_slots_0_fetch_instruction;
+      end
+      if(_zz_9) begin
+        storage_7_fetch_instruction <= io_push_payload_slots_0_fetch_instruction;
+      end
+      if(_zz_2) begin
+        storage_0_fetch_exceptionCode <= io_push_payload_slots_0_fetch_exceptionCode;
+      end
+      if(_zz_3) begin
+        storage_1_fetch_exceptionCode <= io_push_payload_slots_0_fetch_exceptionCode;
+      end
+      if(_zz_4) begin
+        storage_2_fetch_exceptionCode <= io_push_payload_slots_0_fetch_exceptionCode;
+      end
+      if(_zz_5) begin
+        storage_3_fetch_exceptionCode <= io_push_payload_slots_0_fetch_exceptionCode;
+      end
+      if(_zz_6) begin
+        storage_4_fetch_exceptionCode <= io_push_payload_slots_0_fetch_exceptionCode;
+      end
+      if(_zz_7) begin
+        storage_5_fetch_exceptionCode <= io_push_payload_slots_0_fetch_exceptionCode;
+      end
+      if(_zz_8) begin
+        storage_6_fetch_exceptionCode <= io_push_payload_slots_0_fetch_exceptionCode;
+      end
+      if(_zz_9) begin
+        storage_7_fetch_exceptionCode <= io_push_payload_slots_0_fetch_exceptionCode;
+      end
+      if(_zz_2) begin
+        storage_0_fetch_hasException <= io_push_payload_slots_0_fetch_hasException;
+      end
+      if(_zz_3) begin
+        storage_1_fetch_hasException <= io_push_payload_slots_0_fetch_hasException;
+      end
+      if(_zz_4) begin
+        storage_2_fetch_hasException <= io_push_payload_slots_0_fetch_hasException;
+      end
+      if(_zz_5) begin
+        storage_3_fetch_hasException <= io_push_payload_slots_0_fetch_hasException;
+      end
+      if(_zz_6) begin
+        storage_4_fetch_hasException <= io_push_payload_slots_0_fetch_hasException;
+      end
+      if(_zz_7) begin
+        storage_5_fetch_hasException <= io_push_payload_slots_0_fetch_hasException;
+      end
+      if(_zz_8) begin
+        storage_6_fetch_hasException <= io_push_payload_slots_0_fetch_hasException;
+      end
+      if(_zz_9) begin
+        storage_7_fetch_hasException <= io_push_payload_slots_0_fetch_hasException;
+      end
+      if(_zz_2) begin
+        storage_0_fetch_instructionCacheMiss <= io_push_payload_slots_0_fetch_instructionCacheMiss;
+      end
+      if(_zz_3) begin
+        storage_1_fetch_instructionCacheMiss <= io_push_payload_slots_0_fetch_instructionCacheMiss;
+      end
+      if(_zz_4) begin
+        storage_2_fetch_instructionCacheMiss <= io_push_payload_slots_0_fetch_instructionCacheMiss;
+      end
+      if(_zz_5) begin
+        storage_3_fetch_instructionCacheMiss <= io_push_payload_slots_0_fetch_instructionCacheMiss;
+      end
+      if(_zz_6) begin
+        storage_4_fetch_instructionCacheMiss <= io_push_payload_slots_0_fetch_instructionCacheMiss;
+      end
+      if(_zz_7) begin
+        storage_5_fetch_instructionCacheMiss <= io_push_payload_slots_0_fetch_instructionCacheMiss;
+      end
+      if(_zz_8) begin
+        storage_6_fetch_instructionCacheMiss <= io_push_payload_slots_0_fetch_instructionCacheMiss;
+      end
+      if(_zz_9) begin
+        storage_7_fetch_instructionCacheMiss <= io_push_payload_slots_0_fetch_instructionCacheMiss;
+      end
+      if(_zz_2) begin
+        storage_0_fetch_btbEnabled <= io_push_payload_slots_0_fetch_btbEnabled;
+      end
+      if(_zz_3) begin
+        storage_1_fetch_btbEnabled <= io_push_payload_slots_0_fetch_btbEnabled;
+      end
+      if(_zz_4) begin
+        storage_2_fetch_btbEnabled <= io_push_payload_slots_0_fetch_btbEnabled;
+      end
+      if(_zz_5) begin
+        storage_3_fetch_btbEnabled <= io_push_payload_slots_0_fetch_btbEnabled;
+      end
+      if(_zz_6) begin
+        storage_4_fetch_btbEnabled <= io_push_payload_slots_0_fetch_btbEnabled;
+      end
+      if(_zz_7) begin
+        storage_5_fetch_btbEnabled <= io_push_payload_slots_0_fetch_btbEnabled;
+      end
+      if(_zz_8) begin
+        storage_6_fetch_btbEnabled <= io_push_payload_slots_0_fetch_btbEnabled;
+      end
+      if(_zz_9) begin
+        storage_7_fetch_btbEnabled <= io_push_payload_slots_0_fetch_btbEnabled;
+      end
+      if(_zz_2) begin
+        storage_0_fetch_btbTaken <= io_push_payload_slots_0_fetch_btbTaken;
+      end
+      if(_zz_3) begin
+        storage_1_fetch_btbTaken <= io_push_payload_slots_0_fetch_btbTaken;
+      end
+      if(_zz_4) begin
+        storage_2_fetch_btbTaken <= io_push_payload_slots_0_fetch_btbTaken;
+      end
+      if(_zz_5) begin
+        storage_3_fetch_btbTaken <= io_push_payload_slots_0_fetch_btbTaken;
+      end
+      if(_zz_6) begin
+        storage_4_fetch_btbTaken <= io_push_payload_slots_0_fetch_btbTaken;
+      end
+      if(_zz_7) begin
+        storage_5_fetch_btbTaken <= io_push_payload_slots_0_fetch_btbTaken;
+      end
+      if(_zz_8) begin
+        storage_6_fetch_btbTaken <= io_push_payload_slots_0_fetch_btbTaken;
+      end
+      if(_zz_9) begin
+        storage_7_fetch_btbTaken <= io_push_payload_slots_0_fetch_btbTaken;
+      end
+      if(_zz_2) begin
+        storage_0_fetch_btbIndex <= io_push_payload_slots_0_fetch_btbIndex;
+      end
+      if(_zz_3) begin
+        storage_1_fetch_btbIndex <= io_push_payload_slots_0_fetch_btbIndex;
+      end
+      if(_zz_4) begin
+        storage_2_fetch_btbIndex <= io_push_payload_slots_0_fetch_btbIndex;
+      end
+      if(_zz_5) begin
+        storage_3_fetch_btbIndex <= io_push_payload_slots_0_fetch_btbIndex;
+      end
+      if(_zz_6) begin
+        storage_4_fetch_btbIndex <= io_push_payload_slots_0_fetch_btbIndex;
+      end
+      if(_zz_7) begin
+        storage_5_fetch_btbIndex <= io_push_payload_slots_0_fetch_btbIndex;
+      end
+      if(_zz_8) begin
+        storage_6_fetch_btbIndex <= io_push_payload_slots_0_fetch_btbIndex;
+      end
+      if(_zz_9) begin
+        storage_7_fetch_btbIndex <= io_push_payload_slots_0_fetch_btbIndex;
+      end
+      if(_zz_2) begin
+        storage_0_fetch_btbTarget <= io_push_payload_slots_0_fetch_btbTarget;
+      end
+      if(_zz_3) begin
+        storage_1_fetch_btbTarget <= io_push_payload_slots_0_fetch_btbTarget;
+      end
+      if(_zz_4) begin
+        storage_2_fetch_btbTarget <= io_push_payload_slots_0_fetch_btbTarget;
+      end
+      if(_zz_5) begin
+        storage_3_fetch_btbTarget <= io_push_payload_slots_0_fetch_btbTarget;
+      end
+      if(_zz_6) begin
+        storage_4_fetch_btbTarget <= io_push_payload_slots_0_fetch_btbTarget;
+      end
+      if(_zz_7) begin
+        storage_5_fetch_btbTarget <= io_push_payload_slots_0_fetch_btbTarget;
+      end
+      if(_zz_8) begin
+        storage_6_fetch_btbTarget <= io_push_payload_slots_0_fetch_btbTarget;
+      end
+      if(_zz_9) begin
+        storage_7_fetch_btbTarget <= io_push_payload_slots_0_fetch_btbTarget;
+      end
+      if(_zz_2) begin
+        storage_0_direction_phtIndex <= io_push_payload_slots_0_direction_phtIndex;
+      end
+      if(_zz_3) begin
+        storage_1_direction_phtIndex <= io_push_payload_slots_0_direction_phtIndex;
+      end
+      if(_zz_4) begin
+        storage_2_direction_phtIndex <= io_push_payload_slots_0_direction_phtIndex;
+      end
+      if(_zz_5) begin
+        storage_3_direction_phtIndex <= io_push_payload_slots_0_direction_phtIndex;
+      end
+      if(_zz_6) begin
+        storage_4_direction_phtIndex <= io_push_payload_slots_0_direction_phtIndex;
+      end
+      if(_zz_7) begin
+        storage_5_direction_phtIndex <= io_push_payload_slots_0_direction_phtIndex;
+      end
+      if(_zz_8) begin
+        storage_6_direction_phtIndex <= io_push_payload_slots_0_direction_phtIndex;
+      end
+      if(_zz_9) begin
+        storage_7_direction_phtIndex <= io_push_payload_slots_0_direction_phtIndex;
+      end
+      if(_zz_2) begin
+        storage_0_direction_baseTaken <= io_push_payload_slots_0_direction_baseTaken;
+      end
+      if(_zz_3) begin
+        storage_1_direction_baseTaken <= io_push_payload_slots_0_direction_baseTaken;
+      end
+      if(_zz_4) begin
+        storage_2_direction_baseTaken <= io_push_payload_slots_0_direction_baseTaken;
+      end
+      if(_zz_5) begin
+        storage_3_direction_baseTaken <= io_push_payload_slots_0_direction_baseTaken;
+      end
+      if(_zz_6) begin
+        storage_4_direction_baseTaken <= io_push_payload_slots_0_direction_baseTaken;
+      end
+      if(_zz_7) begin
+        storage_5_direction_baseTaken <= io_push_payload_slots_0_direction_baseTaken;
+      end
+      if(_zz_8) begin
+        storage_6_direction_baseTaken <= io_push_payload_slots_0_direction_baseTaken;
+      end
+      if(_zz_9) begin
+        storage_7_direction_baseTaken <= io_push_payload_slots_0_direction_baseTaken;
+      end
+      if(_zz_2) begin
+        storage_0_direction_localTaken <= io_push_payload_slots_0_direction_localTaken;
+      end
+      if(_zz_3) begin
+        storage_1_direction_localTaken <= io_push_payload_slots_0_direction_localTaken;
+      end
+      if(_zz_4) begin
+        storage_2_direction_localTaken <= io_push_payload_slots_0_direction_localTaken;
+      end
+      if(_zz_5) begin
+        storage_3_direction_localTaken <= io_push_payload_slots_0_direction_localTaken;
+      end
+      if(_zz_6) begin
+        storage_4_direction_localTaken <= io_push_payload_slots_0_direction_localTaken;
+      end
+      if(_zz_7) begin
+        storage_5_direction_localTaken <= io_push_payload_slots_0_direction_localTaken;
+      end
+      if(_zz_8) begin
+        storage_6_direction_localTaken <= io_push_payload_slots_0_direction_localTaken;
+      end
+      if(_zz_9) begin
+        storage_7_direction_localTaken <= io_push_payload_slots_0_direction_localTaken;
+      end
+    end
+    if(when_FetchInstructionBuffer_l100_1) begin
+      if(_zz_11) begin
+        storage_0_fetch_pc <= io_push_payload_slots_1_fetch_pc;
+      end
+      if(_zz_12) begin
+        storage_1_fetch_pc <= io_push_payload_slots_1_fetch_pc;
+      end
+      if(_zz_13) begin
+        storage_2_fetch_pc <= io_push_payload_slots_1_fetch_pc;
+      end
+      if(_zz_14) begin
+        storage_3_fetch_pc <= io_push_payload_slots_1_fetch_pc;
+      end
+      if(_zz_15) begin
+        storage_4_fetch_pc <= io_push_payload_slots_1_fetch_pc;
+      end
+      if(_zz_16) begin
+        storage_5_fetch_pc <= io_push_payload_slots_1_fetch_pc;
+      end
+      if(_zz_17) begin
+        storage_6_fetch_pc <= io_push_payload_slots_1_fetch_pc;
+      end
+      if(_zz_18) begin
+        storage_7_fetch_pc <= io_push_payload_slots_1_fetch_pc;
+      end
+      if(_zz_11) begin
+        storage_0_fetch_instruction <= io_push_payload_slots_1_fetch_instruction;
+      end
+      if(_zz_12) begin
+        storage_1_fetch_instruction <= io_push_payload_slots_1_fetch_instruction;
+      end
+      if(_zz_13) begin
+        storage_2_fetch_instruction <= io_push_payload_slots_1_fetch_instruction;
+      end
+      if(_zz_14) begin
+        storage_3_fetch_instruction <= io_push_payload_slots_1_fetch_instruction;
+      end
+      if(_zz_15) begin
+        storage_4_fetch_instruction <= io_push_payload_slots_1_fetch_instruction;
+      end
+      if(_zz_16) begin
+        storage_5_fetch_instruction <= io_push_payload_slots_1_fetch_instruction;
+      end
+      if(_zz_17) begin
+        storage_6_fetch_instruction <= io_push_payload_slots_1_fetch_instruction;
+      end
+      if(_zz_18) begin
+        storage_7_fetch_instruction <= io_push_payload_slots_1_fetch_instruction;
+      end
+      if(_zz_11) begin
+        storage_0_fetch_exceptionCode <= io_push_payload_slots_1_fetch_exceptionCode;
+      end
+      if(_zz_12) begin
+        storage_1_fetch_exceptionCode <= io_push_payload_slots_1_fetch_exceptionCode;
+      end
+      if(_zz_13) begin
+        storage_2_fetch_exceptionCode <= io_push_payload_slots_1_fetch_exceptionCode;
+      end
+      if(_zz_14) begin
+        storage_3_fetch_exceptionCode <= io_push_payload_slots_1_fetch_exceptionCode;
+      end
+      if(_zz_15) begin
+        storage_4_fetch_exceptionCode <= io_push_payload_slots_1_fetch_exceptionCode;
+      end
+      if(_zz_16) begin
+        storage_5_fetch_exceptionCode <= io_push_payload_slots_1_fetch_exceptionCode;
+      end
+      if(_zz_17) begin
+        storage_6_fetch_exceptionCode <= io_push_payload_slots_1_fetch_exceptionCode;
+      end
+      if(_zz_18) begin
+        storage_7_fetch_exceptionCode <= io_push_payload_slots_1_fetch_exceptionCode;
+      end
+      if(_zz_11) begin
+        storage_0_fetch_hasException <= io_push_payload_slots_1_fetch_hasException;
+      end
+      if(_zz_12) begin
+        storage_1_fetch_hasException <= io_push_payload_slots_1_fetch_hasException;
+      end
+      if(_zz_13) begin
+        storage_2_fetch_hasException <= io_push_payload_slots_1_fetch_hasException;
+      end
+      if(_zz_14) begin
+        storage_3_fetch_hasException <= io_push_payload_slots_1_fetch_hasException;
+      end
+      if(_zz_15) begin
+        storage_4_fetch_hasException <= io_push_payload_slots_1_fetch_hasException;
+      end
+      if(_zz_16) begin
+        storage_5_fetch_hasException <= io_push_payload_slots_1_fetch_hasException;
+      end
+      if(_zz_17) begin
+        storage_6_fetch_hasException <= io_push_payload_slots_1_fetch_hasException;
+      end
+      if(_zz_18) begin
+        storage_7_fetch_hasException <= io_push_payload_slots_1_fetch_hasException;
+      end
+      if(_zz_11) begin
+        storage_0_fetch_instructionCacheMiss <= io_push_payload_slots_1_fetch_instructionCacheMiss;
+      end
+      if(_zz_12) begin
+        storage_1_fetch_instructionCacheMiss <= io_push_payload_slots_1_fetch_instructionCacheMiss;
+      end
+      if(_zz_13) begin
+        storage_2_fetch_instructionCacheMiss <= io_push_payload_slots_1_fetch_instructionCacheMiss;
+      end
+      if(_zz_14) begin
+        storage_3_fetch_instructionCacheMiss <= io_push_payload_slots_1_fetch_instructionCacheMiss;
+      end
+      if(_zz_15) begin
+        storage_4_fetch_instructionCacheMiss <= io_push_payload_slots_1_fetch_instructionCacheMiss;
+      end
+      if(_zz_16) begin
+        storage_5_fetch_instructionCacheMiss <= io_push_payload_slots_1_fetch_instructionCacheMiss;
+      end
+      if(_zz_17) begin
+        storage_6_fetch_instructionCacheMiss <= io_push_payload_slots_1_fetch_instructionCacheMiss;
+      end
+      if(_zz_18) begin
+        storage_7_fetch_instructionCacheMiss <= io_push_payload_slots_1_fetch_instructionCacheMiss;
+      end
+      if(_zz_11) begin
+        storage_0_fetch_btbEnabled <= io_push_payload_slots_1_fetch_btbEnabled;
+      end
+      if(_zz_12) begin
+        storage_1_fetch_btbEnabled <= io_push_payload_slots_1_fetch_btbEnabled;
+      end
+      if(_zz_13) begin
+        storage_2_fetch_btbEnabled <= io_push_payload_slots_1_fetch_btbEnabled;
+      end
+      if(_zz_14) begin
+        storage_3_fetch_btbEnabled <= io_push_payload_slots_1_fetch_btbEnabled;
+      end
+      if(_zz_15) begin
+        storage_4_fetch_btbEnabled <= io_push_payload_slots_1_fetch_btbEnabled;
+      end
+      if(_zz_16) begin
+        storage_5_fetch_btbEnabled <= io_push_payload_slots_1_fetch_btbEnabled;
+      end
+      if(_zz_17) begin
+        storage_6_fetch_btbEnabled <= io_push_payload_slots_1_fetch_btbEnabled;
+      end
+      if(_zz_18) begin
+        storage_7_fetch_btbEnabled <= io_push_payload_slots_1_fetch_btbEnabled;
+      end
+      if(_zz_11) begin
+        storage_0_fetch_btbTaken <= io_push_payload_slots_1_fetch_btbTaken;
+      end
+      if(_zz_12) begin
+        storage_1_fetch_btbTaken <= io_push_payload_slots_1_fetch_btbTaken;
+      end
+      if(_zz_13) begin
+        storage_2_fetch_btbTaken <= io_push_payload_slots_1_fetch_btbTaken;
+      end
+      if(_zz_14) begin
+        storage_3_fetch_btbTaken <= io_push_payload_slots_1_fetch_btbTaken;
+      end
+      if(_zz_15) begin
+        storage_4_fetch_btbTaken <= io_push_payload_slots_1_fetch_btbTaken;
+      end
+      if(_zz_16) begin
+        storage_5_fetch_btbTaken <= io_push_payload_slots_1_fetch_btbTaken;
+      end
+      if(_zz_17) begin
+        storage_6_fetch_btbTaken <= io_push_payload_slots_1_fetch_btbTaken;
+      end
+      if(_zz_18) begin
+        storage_7_fetch_btbTaken <= io_push_payload_slots_1_fetch_btbTaken;
+      end
+      if(_zz_11) begin
+        storage_0_fetch_btbIndex <= io_push_payload_slots_1_fetch_btbIndex;
+      end
+      if(_zz_12) begin
+        storage_1_fetch_btbIndex <= io_push_payload_slots_1_fetch_btbIndex;
+      end
+      if(_zz_13) begin
+        storage_2_fetch_btbIndex <= io_push_payload_slots_1_fetch_btbIndex;
+      end
+      if(_zz_14) begin
+        storage_3_fetch_btbIndex <= io_push_payload_slots_1_fetch_btbIndex;
+      end
+      if(_zz_15) begin
+        storage_4_fetch_btbIndex <= io_push_payload_slots_1_fetch_btbIndex;
+      end
+      if(_zz_16) begin
+        storage_5_fetch_btbIndex <= io_push_payload_slots_1_fetch_btbIndex;
+      end
+      if(_zz_17) begin
+        storage_6_fetch_btbIndex <= io_push_payload_slots_1_fetch_btbIndex;
+      end
+      if(_zz_18) begin
+        storage_7_fetch_btbIndex <= io_push_payload_slots_1_fetch_btbIndex;
+      end
+      if(_zz_11) begin
+        storage_0_fetch_btbTarget <= io_push_payload_slots_1_fetch_btbTarget;
+      end
+      if(_zz_12) begin
+        storage_1_fetch_btbTarget <= io_push_payload_slots_1_fetch_btbTarget;
+      end
+      if(_zz_13) begin
+        storage_2_fetch_btbTarget <= io_push_payload_slots_1_fetch_btbTarget;
+      end
+      if(_zz_14) begin
+        storage_3_fetch_btbTarget <= io_push_payload_slots_1_fetch_btbTarget;
+      end
+      if(_zz_15) begin
+        storage_4_fetch_btbTarget <= io_push_payload_slots_1_fetch_btbTarget;
+      end
+      if(_zz_16) begin
+        storage_5_fetch_btbTarget <= io_push_payload_slots_1_fetch_btbTarget;
+      end
+      if(_zz_17) begin
+        storage_6_fetch_btbTarget <= io_push_payload_slots_1_fetch_btbTarget;
+      end
+      if(_zz_18) begin
+        storage_7_fetch_btbTarget <= io_push_payload_slots_1_fetch_btbTarget;
+      end
+      if(_zz_11) begin
+        storage_0_direction_phtIndex <= io_push_payload_slots_1_direction_phtIndex;
+      end
+      if(_zz_12) begin
+        storage_1_direction_phtIndex <= io_push_payload_slots_1_direction_phtIndex;
+      end
+      if(_zz_13) begin
+        storage_2_direction_phtIndex <= io_push_payload_slots_1_direction_phtIndex;
+      end
+      if(_zz_14) begin
+        storage_3_direction_phtIndex <= io_push_payload_slots_1_direction_phtIndex;
+      end
+      if(_zz_15) begin
+        storage_4_direction_phtIndex <= io_push_payload_slots_1_direction_phtIndex;
+      end
+      if(_zz_16) begin
+        storage_5_direction_phtIndex <= io_push_payload_slots_1_direction_phtIndex;
+      end
+      if(_zz_17) begin
+        storage_6_direction_phtIndex <= io_push_payload_slots_1_direction_phtIndex;
+      end
+      if(_zz_18) begin
+        storage_7_direction_phtIndex <= io_push_payload_slots_1_direction_phtIndex;
+      end
+      if(_zz_11) begin
+        storage_0_direction_baseTaken <= io_push_payload_slots_1_direction_baseTaken;
+      end
+      if(_zz_12) begin
+        storage_1_direction_baseTaken <= io_push_payload_slots_1_direction_baseTaken;
+      end
+      if(_zz_13) begin
+        storage_2_direction_baseTaken <= io_push_payload_slots_1_direction_baseTaken;
+      end
+      if(_zz_14) begin
+        storage_3_direction_baseTaken <= io_push_payload_slots_1_direction_baseTaken;
+      end
+      if(_zz_15) begin
+        storage_4_direction_baseTaken <= io_push_payload_slots_1_direction_baseTaken;
+      end
+      if(_zz_16) begin
+        storage_5_direction_baseTaken <= io_push_payload_slots_1_direction_baseTaken;
+      end
+      if(_zz_17) begin
+        storage_6_direction_baseTaken <= io_push_payload_slots_1_direction_baseTaken;
+      end
+      if(_zz_18) begin
+        storage_7_direction_baseTaken <= io_push_payload_slots_1_direction_baseTaken;
+      end
+      if(_zz_11) begin
+        storage_0_direction_localTaken <= io_push_payload_slots_1_direction_localTaken;
+      end
+      if(_zz_12) begin
+        storage_1_direction_localTaken <= io_push_payload_slots_1_direction_localTaken;
+      end
+      if(_zz_13) begin
+        storage_2_direction_localTaken <= io_push_payload_slots_1_direction_localTaken;
+      end
+      if(_zz_14) begin
+        storage_3_direction_localTaken <= io_push_payload_slots_1_direction_localTaken;
+      end
+      if(_zz_15) begin
+        storage_4_direction_localTaken <= io_push_payload_slots_1_direction_localTaken;
+      end
+      if(_zz_16) begin
+        storage_5_direction_localTaken <= io_push_payload_slots_1_direction_localTaken;
+      end
+      if(_zz_17) begin
+        storage_6_direction_localTaken <= io_push_payload_slots_1_direction_localTaken;
+      end
+      if(_zz_18) begin
+        storage_7_direction_localTaken <= io_push_payload_slots_1_direction_localTaken;
+      end
+    end
+    if(when_FetchInstructionBuffer_l100_2) begin
+      if(_zz_20) begin
+        storage_0_fetch_pc <= io_push_payload_slots_2_fetch_pc;
+      end
+      if(_zz_21) begin
+        storage_1_fetch_pc <= io_push_payload_slots_2_fetch_pc;
+      end
+      if(_zz_22) begin
+        storage_2_fetch_pc <= io_push_payload_slots_2_fetch_pc;
+      end
+      if(_zz_23) begin
+        storage_3_fetch_pc <= io_push_payload_slots_2_fetch_pc;
+      end
+      if(_zz_24) begin
+        storage_4_fetch_pc <= io_push_payload_slots_2_fetch_pc;
+      end
+      if(_zz_25) begin
+        storage_5_fetch_pc <= io_push_payload_slots_2_fetch_pc;
+      end
+      if(_zz_26) begin
+        storage_6_fetch_pc <= io_push_payload_slots_2_fetch_pc;
+      end
+      if(_zz_27) begin
+        storage_7_fetch_pc <= io_push_payload_slots_2_fetch_pc;
+      end
+      if(_zz_20) begin
+        storage_0_fetch_instruction <= io_push_payload_slots_2_fetch_instruction;
+      end
+      if(_zz_21) begin
+        storage_1_fetch_instruction <= io_push_payload_slots_2_fetch_instruction;
+      end
+      if(_zz_22) begin
+        storage_2_fetch_instruction <= io_push_payload_slots_2_fetch_instruction;
+      end
+      if(_zz_23) begin
+        storage_3_fetch_instruction <= io_push_payload_slots_2_fetch_instruction;
+      end
+      if(_zz_24) begin
+        storage_4_fetch_instruction <= io_push_payload_slots_2_fetch_instruction;
+      end
+      if(_zz_25) begin
+        storage_5_fetch_instruction <= io_push_payload_slots_2_fetch_instruction;
+      end
+      if(_zz_26) begin
+        storage_6_fetch_instruction <= io_push_payload_slots_2_fetch_instruction;
+      end
+      if(_zz_27) begin
+        storage_7_fetch_instruction <= io_push_payload_slots_2_fetch_instruction;
+      end
+      if(_zz_20) begin
+        storage_0_fetch_exceptionCode <= io_push_payload_slots_2_fetch_exceptionCode;
+      end
+      if(_zz_21) begin
+        storage_1_fetch_exceptionCode <= io_push_payload_slots_2_fetch_exceptionCode;
+      end
+      if(_zz_22) begin
+        storage_2_fetch_exceptionCode <= io_push_payload_slots_2_fetch_exceptionCode;
+      end
+      if(_zz_23) begin
+        storage_3_fetch_exceptionCode <= io_push_payload_slots_2_fetch_exceptionCode;
+      end
+      if(_zz_24) begin
+        storage_4_fetch_exceptionCode <= io_push_payload_slots_2_fetch_exceptionCode;
+      end
+      if(_zz_25) begin
+        storage_5_fetch_exceptionCode <= io_push_payload_slots_2_fetch_exceptionCode;
+      end
+      if(_zz_26) begin
+        storage_6_fetch_exceptionCode <= io_push_payload_slots_2_fetch_exceptionCode;
+      end
+      if(_zz_27) begin
+        storage_7_fetch_exceptionCode <= io_push_payload_slots_2_fetch_exceptionCode;
+      end
+      if(_zz_20) begin
+        storage_0_fetch_hasException <= io_push_payload_slots_2_fetch_hasException;
+      end
+      if(_zz_21) begin
+        storage_1_fetch_hasException <= io_push_payload_slots_2_fetch_hasException;
+      end
+      if(_zz_22) begin
+        storage_2_fetch_hasException <= io_push_payload_slots_2_fetch_hasException;
+      end
+      if(_zz_23) begin
+        storage_3_fetch_hasException <= io_push_payload_slots_2_fetch_hasException;
+      end
+      if(_zz_24) begin
+        storage_4_fetch_hasException <= io_push_payload_slots_2_fetch_hasException;
+      end
+      if(_zz_25) begin
+        storage_5_fetch_hasException <= io_push_payload_slots_2_fetch_hasException;
+      end
+      if(_zz_26) begin
+        storage_6_fetch_hasException <= io_push_payload_slots_2_fetch_hasException;
+      end
+      if(_zz_27) begin
+        storage_7_fetch_hasException <= io_push_payload_slots_2_fetch_hasException;
+      end
+      if(_zz_20) begin
+        storage_0_fetch_instructionCacheMiss <= io_push_payload_slots_2_fetch_instructionCacheMiss;
+      end
+      if(_zz_21) begin
+        storage_1_fetch_instructionCacheMiss <= io_push_payload_slots_2_fetch_instructionCacheMiss;
+      end
+      if(_zz_22) begin
+        storage_2_fetch_instructionCacheMiss <= io_push_payload_slots_2_fetch_instructionCacheMiss;
+      end
+      if(_zz_23) begin
+        storage_3_fetch_instructionCacheMiss <= io_push_payload_slots_2_fetch_instructionCacheMiss;
+      end
+      if(_zz_24) begin
+        storage_4_fetch_instructionCacheMiss <= io_push_payload_slots_2_fetch_instructionCacheMiss;
+      end
+      if(_zz_25) begin
+        storage_5_fetch_instructionCacheMiss <= io_push_payload_slots_2_fetch_instructionCacheMiss;
+      end
+      if(_zz_26) begin
+        storage_6_fetch_instructionCacheMiss <= io_push_payload_slots_2_fetch_instructionCacheMiss;
+      end
+      if(_zz_27) begin
+        storage_7_fetch_instructionCacheMiss <= io_push_payload_slots_2_fetch_instructionCacheMiss;
+      end
+      if(_zz_20) begin
+        storage_0_fetch_btbEnabled <= io_push_payload_slots_2_fetch_btbEnabled;
+      end
+      if(_zz_21) begin
+        storage_1_fetch_btbEnabled <= io_push_payload_slots_2_fetch_btbEnabled;
+      end
+      if(_zz_22) begin
+        storage_2_fetch_btbEnabled <= io_push_payload_slots_2_fetch_btbEnabled;
+      end
+      if(_zz_23) begin
+        storage_3_fetch_btbEnabled <= io_push_payload_slots_2_fetch_btbEnabled;
+      end
+      if(_zz_24) begin
+        storage_4_fetch_btbEnabled <= io_push_payload_slots_2_fetch_btbEnabled;
+      end
+      if(_zz_25) begin
+        storage_5_fetch_btbEnabled <= io_push_payload_slots_2_fetch_btbEnabled;
+      end
+      if(_zz_26) begin
+        storage_6_fetch_btbEnabled <= io_push_payload_slots_2_fetch_btbEnabled;
+      end
+      if(_zz_27) begin
+        storage_7_fetch_btbEnabled <= io_push_payload_slots_2_fetch_btbEnabled;
+      end
+      if(_zz_20) begin
+        storage_0_fetch_btbTaken <= io_push_payload_slots_2_fetch_btbTaken;
+      end
+      if(_zz_21) begin
+        storage_1_fetch_btbTaken <= io_push_payload_slots_2_fetch_btbTaken;
+      end
+      if(_zz_22) begin
+        storage_2_fetch_btbTaken <= io_push_payload_slots_2_fetch_btbTaken;
+      end
+      if(_zz_23) begin
+        storage_3_fetch_btbTaken <= io_push_payload_slots_2_fetch_btbTaken;
+      end
+      if(_zz_24) begin
+        storage_4_fetch_btbTaken <= io_push_payload_slots_2_fetch_btbTaken;
+      end
+      if(_zz_25) begin
+        storage_5_fetch_btbTaken <= io_push_payload_slots_2_fetch_btbTaken;
+      end
+      if(_zz_26) begin
+        storage_6_fetch_btbTaken <= io_push_payload_slots_2_fetch_btbTaken;
+      end
+      if(_zz_27) begin
+        storage_7_fetch_btbTaken <= io_push_payload_slots_2_fetch_btbTaken;
+      end
+      if(_zz_20) begin
+        storage_0_fetch_btbIndex <= io_push_payload_slots_2_fetch_btbIndex;
+      end
+      if(_zz_21) begin
+        storage_1_fetch_btbIndex <= io_push_payload_slots_2_fetch_btbIndex;
+      end
+      if(_zz_22) begin
+        storage_2_fetch_btbIndex <= io_push_payload_slots_2_fetch_btbIndex;
+      end
+      if(_zz_23) begin
+        storage_3_fetch_btbIndex <= io_push_payload_slots_2_fetch_btbIndex;
+      end
+      if(_zz_24) begin
+        storage_4_fetch_btbIndex <= io_push_payload_slots_2_fetch_btbIndex;
+      end
+      if(_zz_25) begin
+        storage_5_fetch_btbIndex <= io_push_payload_slots_2_fetch_btbIndex;
+      end
+      if(_zz_26) begin
+        storage_6_fetch_btbIndex <= io_push_payload_slots_2_fetch_btbIndex;
+      end
+      if(_zz_27) begin
+        storage_7_fetch_btbIndex <= io_push_payload_slots_2_fetch_btbIndex;
+      end
+      if(_zz_20) begin
+        storage_0_fetch_btbTarget <= io_push_payload_slots_2_fetch_btbTarget;
+      end
+      if(_zz_21) begin
+        storage_1_fetch_btbTarget <= io_push_payload_slots_2_fetch_btbTarget;
+      end
+      if(_zz_22) begin
+        storage_2_fetch_btbTarget <= io_push_payload_slots_2_fetch_btbTarget;
+      end
+      if(_zz_23) begin
+        storage_3_fetch_btbTarget <= io_push_payload_slots_2_fetch_btbTarget;
+      end
+      if(_zz_24) begin
+        storage_4_fetch_btbTarget <= io_push_payload_slots_2_fetch_btbTarget;
+      end
+      if(_zz_25) begin
+        storage_5_fetch_btbTarget <= io_push_payload_slots_2_fetch_btbTarget;
+      end
+      if(_zz_26) begin
+        storage_6_fetch_btbTarget <= io_push_payload_slots_2_fetch_btbTarget;
+      end
+      if(_zz_27) begin
+        storage_7_fetch_btbTarget <= io_push_payload_slots_2_fetch_btbTarget;
+      end
+      if(_zz_20) begin
+        storage_0_direction_phtIndex <= io_push_payload_slots_2_direction_phtIndex;
+      end
+      if(_zz_21) begin
+        storage_1_direction_phtIndex <= io_push_payload_slots_2_direction_phtIndex;
+      end
+      if(_zz_22) begin
+        storage_2_direction_phtIndex <= io_push_payload_slots_2_direction_phtIndex;
+      end
+      if(_zz_23) begin
+        storage_3_direction_phtIndex <= io_push_payload_slots_2_direction_phtIndex;
+      end
+      if(_zz_24) begin
+        storage_4_direction_phtIndex <= io_push_payload_slots_2_direction_phtIndex;
+      end
+      if(_zz_25) begin
+        storage_5_direction_phtIndex <= io_push_payload_slots_2_direction_phtIndex;
+      end
+      if(_zz_26) begin
+        storage_6_direction_phtIndex <= io_push_payload_slots_2_direction_phtIndex;
+      end
+      if(_zz_27) begin
+        storage_7_direction_phtIndex <= io_push_payload_slots_2_direction_phtIndex;
+      end
+      if(_zz_20) begin
+        storage_0_direction_baseTaken <= io_push_payload_slots_2_direction_baseTaken;
+      end
+      if(_zz_21) begin
+        storage_1_direction_baseTaken <= io_push_payload_slots_2_direction_baseTaken;
+      end
+      if(_zz_22) begin
+        storage_2_direction_baseTaken <= io_push_payload_slots_2_direction_baseTaken;
+      end
+      if(_zz_23) begin
+        storage_3_direction_baseTaken <= io_push_payload_slots_2_direction_baseTaken;
+      end
+      if(_zz_24) begin
+        storage_4_direction_baseTaken <= io_push_payload_slots_2_direction_baseTaken;
+      end
+      if(_zz_25) begin
+        storage_5_direction_baseTaken <= io_push_payload_slots_2_direction_baseTaken;
+      end
+      if(_zz_26) begin
+        storage_6_direction_baseTaken <= io_push_payload_slots_2_direction_baseTaken;
+      end
+      if(_zz_27) begin
+        storage_7_direction_baseTaken <= io_push_payload_slots_2_direction_baseTaken;
+      end
+      if(_zz_20) begin
+        storage_0_direction_localTaken <= io_push_payload_slots_2_direction_localTaken;
+      end
+      if(_zz_21) begin
+        storage_1_direction_localTaken <= io_push_payload_slots_2_direction_localTaken;
+      end
+      if(_zz_22) begin
+        storage_2_direction_localTaken <= io_push_payload_slots_2_direction_localTaken;
+      end
+      if(_zz_23) begin
+        storage_3_direction_localTaken <= io_push_payload_slots_2_direction_localTaken;
+      end
+      if(_zz_24) begin
+        storage_4_direction_localTaken <= io_push_payload_slots_2_direction_localTaken;
+      end
+      if(_zz_25) begin
+        storage_5_direction_localTaken <= io_push_payload_slots_2_direction_localTaken;
+      end
+      if(_zz_26) begin
+        storage_6_direction_localTaken <= io_push_payload_slots_2_direction_localTaken;
+      end
+      if(_zz_27) begin
+        storage_7_direction_localTaken <= io_push_payload_slots_2_direction_localTaken;
+      end
+    end
+    if(when_FetchInstructionBuffer_l100_3) begin
+      if(_zz_29) begin
+        storage_0_fetch_pc <= io_push_payload_slots_3_fetch_pc;
+      end
+      if(_zz_30) begin
+        storage_1_fetch_pc <= io_push_payload_slots_3_fetch_pc;
+      end
+      if(_zz_31) begin
+        storage_2_fetch_pc <= io_push_payload_slots_3_fetch_pc;
+      end
+      if(_zz_32) begin
+        storage_3_fetch_pc <= io_push_payload_slots_3_fetch_pc;
+      end
+      if(_zz_33) begin
+        storage_4_fetch_pc <= io_push_payload_slots_3_fetch_pc;
+      end
+      if(_zz_34) begin
+        storage_5_fetch_pc <= io_push_payload_slots_3_fetch_pc;
+      end
+      if(_zz_35) begin
+        storage_6_fetch_pc <= io_push_payload_slots_3_fetch_pc;
+      end
+      if(_zz_36) begin
+        storage_7_fetch_pc <= io_push_payload_slots_3_fetch_pc;
+      end
+      if(_zz_29) begin
+        storage_0_fetch_instruction <= io_push_payload_slots_3_fetch_instruction;
+      end
+      if(_zz_30) begin
+        storage_1_fetch_instruction <= io_push_payload_slots_3_fetch_instruction;
+      end
+      if(_zz_31) begin
+        storage_2_fetch_instruction <= io_push_payload_slots_3_fetch_instruction;
+      end
+      if(_zz_32) begin
+        storage_3_fetch_instruction <= io_push_payload_slots_3_fetch_instruction;
+      end
+      if(_zz_33) begin
+        storage_4_fetch_instruction <= io_push_payload_slots_3_fetch_instruction;
+      end
+      if(_zz_34) begin
+        storage_5_fetch_instruction <= io_push_payload_slots_3_fetch_instruction;
+      end
+      if(_zz_35) begin
+        storage_6_fetch_instruction <= io_push_payload_slots_3_fetch_instruction;
+      end
+      if(_zz_36) begin
+        storage_7_fetch_instruction <= io_push_payload_slots_3_fetch_instruction;
+      end
+      if(_zz_29) begin
+        storage_0_fetch_exceptionCode <= io_push_payload_slots_3_fetch_exceptionCode;
+      end
+      if(_zz_30) begin
+        storage_1_fetch_exceptionCode <= io_push_payload_slots_3_fetch_exceptionCode;
+      end
+      if(_zz_31) begin
+        storage_2_fetch_exceptionCode <= io_push_payload_slots_3_fetch_exceptionCode;
+      end
+      if(_zz_32) begin
+        storage_3_fetch_exceptionCode <= io_push_payload_slots_3_fetch_exceptionCode;
+      end
+      if(_zz_33) begin
+        storage_4_fetch_exceptionCode <= io_push_payload_slots_3_fetch_exceptionCode;
+      end
+      if(_zz_34) begin
+        storage_5_fetch_exceptionCode <= io_push_payload_slots_3_fetch_exceptionCode;
+      end
+      if(_zz_35) begin
+        storage_6_fetch_exceptionCode <= io_push_payload_slots_3_fetch_exceptionCode;
+      end
+      if(_zz_36) begin
+        storage_7_fetch_exceptionCode <= io_push_payload_slots_3_fetch_exceptionCode;
+      end
+      if(_zz_29) begin
+        storage_0_fetch_hasException <= io_push_payload_slots_3_fetch_hasException;
+      end
+      if(_zz_30) begin
+        storage_1_fetch_hasException <= io_push_payload_slots_3_fetch_hasException;
+      end
+      if(_zz_31) begin
+        storage_2_fetch_hasException <= io_push_payload_slots_3_fetch_hasException;
+      end
+      if(_zz_32) begin
+        storage_3_fetch_hasException <= io_push_payload_slots_3_fetch_hasException;
+      end
+      if(_zz_33) begin
+        storage_4_fetch_hasException <= io_push_payload_slots_3_fetch_hasException;
+      end
+      if(_zz_34) begin
+        storage_5_fetch_hasException <= io_push_payload_slots_3_fetch_hasException;
+      end
+      if(_zz_35) begin
+        storage_6_fetch_hasException <= io_push_payload_slots_3_fetch_hasException;
+      end
+      if(_zz_36) begin
+        storage_7_fetch_hasException <= io_push_payload_slots_3_fetch_hasException;
+      end
+      if(_zz_29) begin
+        storage_0_fetch_instructionCacheMiss <= io_push_payload_slots_3_fetch_instructionCacheMiss;
+      end
+      if(_zz_30) begin
+        storage_1_fetch_instructionCacheMiss <= io_push_payload_slots_3_fetch_instructionCacheMiss;
+      end
+      if(_zz_31) begin
+        storage_2_fetch_instructionCacheMiss <= io_push_payload_slots_3_fetch_instructionCacheMiss;
+      end
+      if(_zz_32) begin
+        storage_3_fetch_instructionCacheMiss <= io_push_payload_slots_3_fetch_instructionCacheMiss;
+      end
+      if(_zz_33) begin
+        storage_4_fetch_instructionCacheMiss <= io_push_payload_slots_3_fetch_instructionCacheMiss;
+      end
+      if(_zz_34) begin
+        storage_5_fetch_instructionCacheMiss <= io_push_payload_slots_3_fetch_instructionCacheMiss;
+      end
+      if(_zz_35) begin
+        storage_6_fetch_instructionCacheMiss <= io_push_payload_slots_3_fetch_instructionCacheMiss;
+      end
+      if(_zz_36) begin
+        storage_7_fetch_instructionCacheMiss <= io_push_payload_slots_3_fetch_instructionCacheMiss;
+      end
+      if(_zz_29) begin
+        storage_0_fetch_btbEnabled <= io_push_payload_slots_3_fetch_btbEnabled;
+      end
+      if(_zz_30) begin
+        storage_1_fetch_btbEnabled <= io_push_payload_slots_3_fetch_btbEnabled;
+      end
+      if(_zz_31) begin
+        storage_2_fetch_btbEnabled <= io_push_payload_slots_3_fetch_btbEnabled;
+      end
+      if(_zz_32) begin
+        storage_3_fetch_btbEnabled <= io_push_payload_slots_3_fetch_btbEnabled;
+      end
+      if(_zz_33) begin
+        storage_4_fetch_btbEnabled <= io_push_payload_slots_3_fetch_btbEnabled;
+      end
+      if(_zz_34) begin
+        storage_5_fetch_btbEnabled <= io_push_payload_slots_3_fetch_btbEnabled;
+      end
+      if(_zz_35) begin
+        storage_6_fetch_btbEnabled <= io_push_payload_slots_3_fetch_btbEnabled;
+      end
+      if(_zz_36) begin
+        storage_7_fetch_btbEnabled <= io_push_payload_slots_3_fetch_btbEnabled;
+      end
+      if(_zz_29) begin
+        storage_0_fetch_btbTaken <= io_push_payload_slots_3_fetch_btbTaken;
+      end
+      if(_zz_30) begin
+        storage_1_fetch_btbTaken <= io_push_payload_slots_3_fetch_btbTaken;
+      end
+      if(_zz_31) begin
+        storage_2_fetch_btbTaken <= io_push_payload_slots_3_fetch_btbTaken;
+      end
+      if(_zz_32) begin
+        storage_3_fetch_btbTaken <= io_push_payload_slots_3_fetch_btbTaken;
+      end
+      if(_zz_33) begin
+        storage_4_fetch_btbTaken <= io_push_payload_slots_3_fetch_btbTaken;
+      end
+      if(_zz_34) begin
+        storage_5_fetch_btbTaken <= io_push_payload_slots_3_fetch_btbTaken;
+      end
+      if(_zz_35) begin
+        storage_6_fetch_btbTaken <= io_push_payload_slots_3_fetch_btbTaken;
+      end
+      if(_zz_36) begin
+        storage_7_fetch_btbTaken <= io_push_payload_slots_3_fetch_btbTaken;
+      end
+      if(_zz_29) begin
+        storage_0_fetch_btbIndex <= io_push_payload_slots_3_fetch_btbIndex;
+      end
+      if(_zz_30) begin
+        storage_1_fetch_btbIndex <= io_push_payload_slots_3_fetch_btbIndex;
+      end
+      if(_zz_31) begin
+        storage_2_fetch_btbIndex <= io_push_payload_slots_3_fetch_btbIndex;
+      end
+      if(_zz_32) begin
+        storage_3_fetch_btbIndex <= io_push_payload_slots_3_fetch_btbIndex;
+      end
+      if(_zz_33) begin
+        storage_4_fetch_btbIndex <= io_push_payload_slots_3_fetch_btbIndex;
+      end
+      if(_zz_34) begin
+        storage_5_fetch_btbIndex <= io_push_payload_slots_3_fetch_btbIndex;
+      end
+      if(_zz_35) begin
+        storage_6_fetch_btbIndex <= io_push_payload_slots_3_fetch_btbIndex;
+      end
+      if(_zz_36) begin
+        storage_7_fetch_btbIndex <= io_push_payload_slots_3_fetch_btbIndex;
+      end
+      if(_zz_29) begin
+        storage_0_fetch_btbTarget <= io_push_payload_slots_3_fetch_btbTarget;
+      end
+      if(_zz_30) begin
+        storage_1_fetch_btbTarget <= io_push_payload_slots_3_fetch_btbTarget;
+      end
+      if(_zz_31) begin
+        storage_2_fetch_btbTarget <= io_push_payload_slots_3_fetch_btbTarget;
+      end
+      if(_zz_32) begin
+        storage_3_fetch_btbTarget <= io_push_payload_slots_3_fetch_btbTarget;
+      end
+      if(_zz_33) begin
+        storage_4_fetch_btbTarget <= io_push_payload_slots_3_fetch_btbTarget;
+      end
+      if(_zz_34) begin
+        storage_5_fetch_btbTarget <= io_push_payload_slots_3_fetch_btbTarget;
+      end
+      if(_zz_35) begin
+        storage_6_fetch_btbTarget <= io_push_payload_slots_3_fetch_btbTarget;
+      end
+      if(_zz_36) begin
+        storage_7_fetch_btbTarget <= io_push_payload_slots_3_fetch_btbTarget;
+      end
+      if(_zz_29) begin
+        storage_0_direction_phtIndex <= io_push_payload_slots_3_direction_phtIndex;
+      end
+      if(_zz_30) begin
+        storage_1_direction_phtIndex <= io_push_payload_slots_3_direction_phtIndex;
+      end
+      if(_zz_31) begin
+        storage_2_direction_phtIndex <= io_push_payload_slots_3_direction_phtIndex;
+      end
+      if(_zz_32) begin
+        storage_3_direction_phtIndex <= io_push_payload_slots_3_direction_phtIndex;
+      end
+      if(_zz_33) begin
+        storage_4_direction_phtIndex <= io_push_payload_slots_3_direction_phtIndex;
+      end
+      if(_zz_34) begin
+        storage_5_direction_phtIndex <= io_push_payload_slots_3_direction_phtIndex;
+      end
+      if(_zz_35) begin
+        storage_6_direction_phtIndex <= io_push_payload_slots_3_direction_phtIndex;
+      end
+      if(_zz_36) begin
+        storage_7_direction_phtIndex <= io_push_payload_slots_3_direction_phtIndex;
+      end
+      if(_zz_29) begin
+        storage_0_direction_baseTaken <= io_push_payload_slots_3_direction_baseTaken;
+      end
+      if(_zz_30) begin
+        storage_1_direction_baseTaken <= io_push_payload_slots_3_direction_baseTaken;
+      end
+      if(_zz_31) begin
+        storage_2_direction_baseTaken <= io_push_payload_slots_3_direction_baseTaken;
+      end
+      if(_zz_32) begin
+        storage_3_direction_baseTaken <= io_push_payload_slots_3_direction_baseTaken;
+      end
+      if(_zz_33) begin
+        storage_4_direction_baseTaken <= io_push_payload_slots_3_direction_baseTaken;
+      end
+      if(_zz_34) begin
+        storage_5_direction_baseTaken <= io_push_payload_slots_3_direction_baseTaken;
+      end
+      if(_zz_35) begin
+        storage_6_direction_baseTaken <= io_push_payload_slots_3_direction_baseTaken;
+      end
+      if(_zz_36) begin
+        storage_7_direction_baseTaken <= io_push_payload_slots_3_direction_baseTaken;
+      end
+      if(_zz_29) begin
+        storage_0_direction_localTaken <= io_push_payload_slots_3_direction_localTaken;
+      end
+      if(_zz_30) begin
+        storage_1_direction_localTaken <= io_push_payload_slots_3_direction_localTaken;
+      end
+      if(_zz_31) begin
+        storage_2_direction_localTaken <= io_push_payload_slots_3_direction_localTaken;
+      end
+      if(_zz_32) begin
+        storage_3_direction_localTaken <= io_push_payload_slots_3_direction_localTaken;
+      end
+      if(_zz_33) begin
+        storage_4_direction_localTaken <= io_push_payload_slots_3_direction_localTaken;
+      end
+      if(_zz_34) begin
+        storage_5_direction_localTaken <= io_push_payload_slots_3_direction_localTaken;
+      end
+      if(_zz_35) begin
+        storage_6_direction_localTaken <= io_push_payload_slots_3_direction_localTaken;
+      end
+      if(_zz_36) begin
+        storage_7_direction_localTaken <= io_push_payload_slots_3_direction_localTaken;
+      end
     end
   end
 
@@ -32095,16 +34831,17 @@ module FetchStage (
   wire                fsAllow;
   wire                instructionRequest;
   wire                prefetchReady;
-  wire                when_FetchStage_l173;
-  wire                when_FetchStage_l186;
-  wire                when_FetchStage_l196;
-  wire                when_FetchStage_l202;
-  wire                when_FetchStage_l215;
-  wire                when_FetchStage_l220;
-  wire                when_FetchStage_l222;
-  wire                when_FetchStage_l228;
-  wire                when_FetchStage_l230;
-  wire                when_FetchStage_l240;
+  wire                branchTargetAccepted;
+  wire                when_FetchStage_l177;
+  wire                when_FetchStage_l190;
+  wire                when_FetchStage_l200;
+  wire                when_FetchStage_l206;
+  wire                when_FetchStage_l219;
+  wire                when_FetchStage_l224;
+  wire                when_FetchStage_l226;
+  wire                when_FetchStage_l232;
+  wire                when_FetchStage_l234;
+  wire                when_FetchStage_l244;
 
   assign _zz_instructionFlushPc = (io_writebackPc + 32'h00000004);
   assign branchEmpty = 3'b001;
@@ -32188,6 +34925,7 @@ module FetchStage (
   assign fsAllow = ((! fsValid) || (fsReady && io_downstream_ready));
   assign instructionRequest = (((((fsAllow && (! prefetchAlignmentException)) && (! tlbLockPc)) || flush) || io_branchRepair) && (! (io_idleFlush || idleLock)));
   assign prefetchReady = ((instructionRequest || prefetchAlignmentException) && io_instructionAddressAccepted);
+  assign branchTargetAccepted = (((io_branchRepair && instructionRequest) && io_instructionAddressAccepted) && (nextPc == io_branchTarget));
   assign io_downstream_valid = (fsValid && fsReady);
   assign io_downstream_payload_pc = fsPc;
   assign io_downstream_payload_instruction = (instructionBufferValid ? instructionBuffer : io_instructionData);
@@ -32210,16 +34948,16 @@ module FetchStage (
   assign io_dmw1Enabled = dmw1Enabled;
   assign io_fetchPc = nextPc;
   assign io_fetchEnable = (instructionRequest && io_instructionAddressAccepted);
-  assign when_FetchStage_l173 = (! flushRequestPending);
-  assign when_FetchStage_l186 = (io_idleFlush && (! io_interrupt));
-  assign when_FetchStage_l196 = ((io_branchRepair && (! fsValid)) && (! io_instructionAddressAccepted));
-  assign when_FetchStage_l202 = (((io_branchRepair && (! io_instructionAddressAccepted)) && fsValid) || ((io_branchRepair && io_instructionAddressAccepted) && (! fsValid)));
-  assign when_FetchStage_l215 = (prefetchReady || flush);
-  assign when_FetchStage_l220 = (flush || io_fetchEnable);
-  assign when_FetchStage_l222 = (io_btbEnabled && (! prefetchReady));
-  assign when_FetchStage_l228 = ((fsReady && io_downstream_ready) || flush);
-  assign when_FetchStage_l230 = (io_instructionDataValid && (! io_downstream_ready));
-  assign when_FetchStage_l240 = (prefetchReady && (fsAllow || flushDirty));
+  assign when_FetchStage_l177 = (! flushRequestPending);
+  assign when_FetchStage_l190 = (io_idleFlush && (! io_interrupt));
+  assign when_FetchStage_l200 = ((io_branchRepair && (! fsValid)) && (! io_instructionAddressAccepted));
+  assign when_FetchStage_l206 = (((io_branchRepair && (! io_instructionAddressAccepted)) && fsValid) || (((io_branchRepair && io_instructionAddressAccepted) && (! fsValid)) && (! branchTargetAccepted)));
+  assign when_FetchStage_l219 = (prefetchReady || flush);
+  assign when_FetchStage_l224 = (flush || io_fetchEnable);
+  assign when_FetchStage_l226 = (io_btbEnabled && (! prefetchReady));
+  assign when_FetchStage_l232 = ((fsReady && io_downstream_ready) || flush);
+  assign when_FetchStage_l234 = (io_instructionDataValid && (! io_downstream_ready));
+  assign when_FetchStage_l244 = (prefetchReady && (fsAllow || flushDirty));
   always @(posedge aclk) begin
     if(resetCapture_backendActiveHigh) begin
       fsValid <= 1'b0;
@@ -32232,7 +34970,7 @@ module FetchStage (
       flushRequestPending <= 1'b0;
       branchRequestState <= 3'b001;
     end else begin
-      if(when_FetchStage_l173) begin
+      if(when_FetchStage_l177) begin
         if(flushDelay) begin
           flushRequestPending <= 1'b1;
         end
@@ -32241,7 +34979,7 @@ module FetchStage (
           flushRequestPending <= 1'b0;
         end
       end
-      if(when_FetchStage_l186) begin
+      if(when_FetchStage_l190) begin
         idleLock <= 1'b1;
       end else begin
         if(io_interrupt) begin
@@ -32252,10 +34990,10 @@ module FetchStage (
           if(flush) begin
             branchRequestState <= branchEmpty;
           end else begin
-            if(when_FetchStage_l196) begin
+            if(when_FetchStage_l200) begin
               branchRequestState <= branchWaitSlot;
             end else begin
-              if(when_FetchStage_l202) begin
+              if(when_FetchStage_l206) begin
                 branchRequestState <= branchWaitTarget;
               end
             end
@@ -32269,23 +35007,23 @@ module FetchStage (
             end
           end
       end else if((branchRequestState == branchWaitTarget)) begin
-          if(when_FetchStage_l215) begin
+          if(when_FetchStage_l219) begin
             branchRequestState <= branchEmpty;
           end
       end else begin
           branchRequestState <= branchEmpty;
       end
-      if(when_FetchStage_l220) begin
+      if(when_FetchStage_l224) begin
         btbLockValid <= 1'b0;
       end else begin
-        if(when_FetchStage_l222) begin
+        if(when_FetchStage_l226) begin
           btbLockValid <= 1'b1;
         end
       end
-      if(when_FetchStage_l228) begin
+      if(when_FetchStage_l232) begin
         instructionBufferValid <= 1'b0;
       end else begin
-        if(when_FetchStage_l230) begin
+        if(when_FetchStage_l234) begin
           instructionBufferValid <= 1'b1;
         end
       end
@@ -32296,7 +35034,7 @@ module FetchStage (
           fsValid <= prefetchReady;
         end
       end
-      if(when_FetchStage_l240) begin
+      if(when_FetchStage_l244) begin
         fsPc <= nextPc;
         fsException <= prefetchAlignmentException;
         fsExceptionNumber <= prefetchAlignmentException;
@@ -32305,7 +35043,7 @@ module FetchStage (
   end
 
   always @(posedge aclk) begin
-    if(when_FetchStage_l173) begin
+    if(when_FetchStage_l177) begin
       if(flushDelay) begin
         flushRequestPc <= nextPc;
       end
@@ -32318,10 +35056,10 @@ module FetchStage (
     end
     if((branchRequestState == branchEmpty)) begin
         if(!flush) begin
-          if(when_FetchStage_l196) begin
+          if(when_FetchStage_l200) begin
             branchRequestPc <= io_branchTarget;
           end else begin
-            if(when_FetchStage_l202) begin
+            if(when_FetchStage_l206) begin
               branchRequestPc <= io_branchTarget;
             end
           end
@@ -32330,21 +35068,345 @@ module FetchStage (
     end else if((branchRequestState == branchWaitTarget)) begin
     end else begin
     end
-    if(!when_FetchStage_l220) begin
-      if(when_FetchStage_l222) begin
+    if(!when_FetchStage_l224) begin
+      if(when_FetchStage_l226) begin
         btbLock <= {{io_btbTaken,io_btbIndex},io_btbTarget};
         btbDirectionLock_phtIndex <= io_btbDirection_phtIndex;
         btbDirectionLock_baseTaken <= io_btbDirection_baseTaken;
         btbDirectionLock_localTaken <= io_btbDirection_localTaken;
       end
     end
-    if(!when_FetchStage_l228) begin
-      if(when_FetchStage_l230) begin
+    if(!when_FetchStage_l232) begin
+      if(when_FetchStage_l234) begin
         instructionBuffer <= io_instructionData;
       end
     end
   end
 
+
+endmodule
+/* verilator lint_on DECLFILENAME */
+
+/* verilator lint_off DECLFILENAME */
+module OrderedCommitGroup (
+  input  wire          io_input_valid,
+  input  wire [2:0]    io_input_payload_valid,
+  input  wire [31:0]   io_input_payload_events_0_pc,
+  input  wire [31:0]   io_input_payload_events_0_instruction,
+  input  wire          io_input_payload_events_0_retired,
+  input  wire          io_input_payload_events_0_ertn,
+  input  wire          io_input_payload_events_0_isCounterInstruction,
+  input  wire          io_input_payload_events_0_csrRstat,
+  input  wire [31:0]   io_input_payload_events_0_csrReadData,
+  input  wire          io_input_payload_events_0_gprWrite_valid,
+  input  wire [4:0]    io_input_payload_events_0_gprWrite_index,
+  input  wire [31:0]   io_input_payload_events_0_gprWrite_data,
+  input  wire          io_input_payload_events_0_csrWrite_valid,
+  input  wire [13:0]   io_input_payload_events_0_csrWrite_address,
+  input  wire [31:0]   io_input_payload_events_0_csrWrite_data,
+  input  wire          io_input_payload_events_0_exception_valid,
+  input  wire [5:0]    io_input_payload_events_0_exception_ecode,
+  input  wire [8:0]    io_input_payload_events_0_exception_esubcode,
+  input  wire          io_input_payload_events_0_exception_badVAddrValid,
+  input  wire [31:0]   io_input_payload_events_0_exception_badVAddr,
+  input  wire          io_input_payload_events_0_exception_tlbRefill,
+  input  wire          io_input_payload_events_0_exception_tlbException,
+  input  wire [18:0]   io_input_payload_events_0_exception_tlbVppn,
+  input  wire [63:0]   io_input_payload_events_0_timer,
+  input  wire [7:0]    io_input_payload_events_0_load_instructionMask,
+  input  wire [31:0]   io_input_payload_events_0_load_pAddr,
+  input  wire [31:0]   io_input_payload_events_0_load_vAddr,
+  input  wire [7:0]    io_input_payload_events_0_store_instructionMask,
+  input  wire [31:0]   io_input_payload_events_0_store_pAddr,
+  input  wire [31:0]   io_input_payload_events_0_store_vAddr,
+  input  wire [31:0]   io_input_payload_events_0_store_data,
+  input  wire [3:0]    io_input_payload_events_0_store_byteMask,
+  input  wire          io_input_payload_events_0_tlbFill_valid,
+  input  wire [4:0]    io_input_payload_events_0_tlbFill_index,
+  input  wire [31:0]   io_input_payload_events_1_pc,
+  input  wire [31:0]   io_input_payload_events_1_instruction,
+  input  wire          io_input_payload_events_1_retired,
+  input  wire          io_input_payload_events_1_ertn,
+  input  wire          io_input_payload_events_1_isCounterInstruction,
+  input  wire          io_input_payload_events_1_csrRstat,
+  input  wire [31:0]   io_input_payload_events_1_csrReadData,
+  input  wire          io_input_payload_events_1_gprWrite_valid,
+  input  wire [4:0]    io_input_payload_events_1_gprWrite_index,
+  input  wire [31:0]   io_input_payload_events_1_gprWrite_data,
+  input  wire          io_input_payload_events_1_csrWrite_valid,
+  input  wire [13:0]   io_input_payload_events_1_csrWrite_address,
+  input  wire [31:0]   io_input_payload_events_1_csrWrite_data,
+  input  wire          io_input_payload_events_1_exception_valid,
+  input  wire [5:0]    io_input_payload_events_1_exception_ecode,
+  input  wire [8:0]    io_input_payload_events_1_exception_esubcode,
+  input  wire          io_input_payload_events_1_exception_badVAddrValid,
+  input  wire [31:0]   io_input_payload_events_1_exception_badVAddr,
+  input  wire          io_input_payload_events_1_exception_tlbRefill,
+  input  wire          io_input_payload_events_1_exception_tlbException,
+  input  wire [18:0]   io_input_payload_events_1_exception_tlbVppn,
+  input  wire [63:0]   io_input_payload_events_1_timer,
+  input  wire [7:0]    io_input_payload_events_1_load_instructionMask,
+  input  wire [31:0]   io_input_payload_events_1_load_pAddr,
+  input  wire [31:0]   io_input_payload_events_1_load_vAddr,
+  input  wire [7:0]    io_input_payload_events_1_store_instructionMask,
+  input  wire [31:0]   io_input_payload_events_1_store_pAddr,
+  input  wire [31:0]   io_input_payload_events_1_store_vAddr,
+  input  wire [31:0]   io_input_payload_events_1_store_data,
+  input  wire [3:0]    io_input_payload_events_1_store_byteMask,
+  input  wire          io_input_payload_events_1_tlbFill_valid,
+  input  wire [4:0]    io_input_payload_events_1_tlbFill_index,
+  input  wire [31:0]   io_input_payload_events_2_pc,
+  input  wire [31:0]   io_input_payload_events_2_instruction,
+  input  wire          io_input_payload_events_2_retired,
+  input  wire          io_input_payload_events_2_ertn,
+  input  wire          io_input_payload_events_2_isCounterInstruction,
+  input  wire          io_input_payload_events_2_csrRstat,
+  input  wire [31:0]   io_input_payload_events_2_csrReadData,
+  input  wire          io_input_payload_events_2_gprWrite_valid,
+  input  wire [4:0]    io_input_payload_events_2_gprWrite_index,
+  input  wire [31:0]   io_input_payload_events_2_gprWrite_data,
+  input  wire          io_input_payload_events_2_csrWrite_valid,
+  input  wire [13:0]   io_input_payload_events_2_csrWrite_address,
+  input  wire [31:0]   io_input_payload_events_2_csrWrite_data,
+  input  wire          io_input_payload_events_2_exception_valid,
+  input  wire [5:0]    io_input_payload_events_2_exception_ecode,
+  input  wire [8:0]    io_input_payload_events_2_exception_esubcode,
+  input  wire          io_input_payload_events_2_exception_badVAddrValid,
+  input  wire [31:0]   io_input_payload_events_2_exception_badVAddr,
+  input  wire          io_input_payload_events_2_exception_tlbRefill,
+  input  wire          io_input_payload_events_2_exception_tlbException,
+  input  wire [18:0]   io_input_payload_events_2_exception_tlbVppn,
+  input  wire [63:0]   io_input_payload_events_2_timer,
+  input  wire [7:0]    io_input_payload_events_2_load_instructionMask,
+  input  wire [31:0]   io_input_payload_events_2_load_pAddr,
+  input  wire [31:0]   io_input_payload_events_2_load_vAddr,
+  input  wire [7:0]    io_input_payload_events_2_store_instructionMask,
+  input  wire [31:0]   io_input_payload_events_2_store_pAddr,
+  input  wire [31:0]   io_input_payload_events_2_store_vAddr,
+  input  wire [31:0]   io_input_payload_events_2_store_data,
+  input  wire [3:0]    io_input_payload_events_2_store_byteMask,
+  input  wire          io_input_payload_events_2_tlbFill_valid,
+  input  wire [4:0]    io_input_payload_events_2_tlbFill_index,
+  output wire          io_output_valid,
+  output reg  [2:0]    io_output_payload_valid,
+  output wire [31:0]   io_output_payload_events_0_pc,
+  output wire [31:0]   io_output_payload_events_0_instruction,
+  output wire          io_output_payload_events_0_retired,
+  output wire          io_output_payload_events_0_ertn,
+  output wire          io_output_payload_events_0_isCounterInstruction,
+  output wire          io_output_payload_events_0_csrRstat,
+  output wire [31:0]   io_output_payload_events_0_csrReadData,
+  output wire          io_output_payload_events_0_gprWrite_valid,
+  output wire [4:0]    io_output_payload_events_0_gprWrite_index,
+  output wire [31:0]   io_output_payload_events_0_gprWrite_data,
+  output wire          io_output_payload_events_0_csrWrite_valid,
+  output wire [13:0]   io_output_payload_events_0_csrWrite_address,
+  output wire [31:0]   io_output_payload_events_0_csrWrite_data,
+  output wire          io_output_payload_events_0_exception_valid,
+  output wire [5:0]    io_output_payload_events_0_exception_ecode,
+  output wire [8:0]    io_output_payload_events_0_exception_esubcode,
+  output wire          io_output_payload_events_0_exception_badVAddrValid,
+  output wire [31:0]   io_output_payload_events_0_exception_badVAddr,
+  output wire          io_output_payload_events_0_exception_tlbRefill,
+  output wire          io_output_payload_events_0_exception_tlbException,
+  output wire [18:0]   io_output_payload_events_0_exception_tlbVppn,
+  output wire [63:0]   io_output_payload_events_0_timer,
+  output wire [7:0]    io_output_payload_events_0_load_instructionMask,
+  output wire [31:0]   io_output_payload_events_0_load_pAddr,
+  output wire [31:0]   io_output_payload_events_0_load_vAddr,
+  output wire [7:0]    io_output_payload_events_0_store_instructionMask,
+  output wire [31:0]   io_output_payload_events_0_store_pAddr,
+  output wire [31:0]   io_output_payload_events_0_store_vAddr,
+  output wire [31:0]   io_output_payload_events_0_store_data,
+  output wire [3:0]    io_output_payload_events_0_store_byteMask,
+  output wire          io_output_payload_events_0_tlbFill_valid,
+  output wire [4:0]    io_output_payload_events_0_tlbFill_index,
+  output wire [31:0]   io_output_payload_events_1_pc,
+  output wire [31:0]   io_output_payload_events_1_instruction,
+  output wire          io_output_payload_events_1_retired,
+  output wire          io_output_payload_events_1_ertn,
+  output wire          io_output_payload_events_1_isCounterInstruction,
+  output wire          io_output_payload_events_1_csrRstat,
+  output wire [31:0]   io_output_payload_events_1_csrReadData,
+  output wire          io_output_payload_events_1_gprWrite_valid,
+  output wire [4:0]    io_output_payload_events_1_gprWrite_index,
+  output wire [31:0]   io_output_payload_events_1_gprWrite_data,
+  output wire          io_output_payload_events_1_csrWrite_valid,
+  output wire [13:0]   io_output_payload_events_1_csrWrite_address,
+  output wire [31:0]   io_output_payload_events_1_csrWrite_data,
+  output wire          io_output_payload_events_1_exception_valid,
+  output wire [5:0]    io_output_payload_events_1_exception_ecode,
+  output wire [8:0]    io_output_payload_events_1_exception_esubcode,
+  output wire          io_output_payload_events_1_exception_badVAddrValid,
+  output wire [31:0]   io_output_payload_events_1_exception_badVAddr,
+  output wire          io_output_payload_events_1_exception_tlbRefill,
+  output wire          io_output_payload_events_1_exception_tlbException,
+  output wire [18:0]   io_output_payload_events_1_exception_tlbVppn,
+  output wire [63:0]   io_output_payload_events_1_timer,
+  output wire [7:0]    io_output_payload_events_1_load_instructionMask,
+  output wire [31:0]   io_output_payload_events_1_load_pAddr,
+  output wire [31:0]   io_output_payload_events_1_load_vAddr,
+  output wire [7:0]    io_output_payload_events_1_store_instructionMask,
+  output wire [31:0]   io_output_payload_events_1_store_pAddr,
+  output wire [31:0]   io_output_payload_events_1_store_vAddr,
+  output wire [31:0]   io_output_payload_events_1_store_data,
+  output wire [3:0]    io_output_payload_events_1_store_byteMask,
+  output wire          io_output_payload_events_1_tlbFill_valid,
+  output wire [4:0]    io_output_payload_events_1_tlbFill_index,
+  output wire [31:0]   io_output_payload_events_2_pc,
+  output wire [31:0]   io_output_payload_events_2_instruction,
+  output wire          io_output_payload_events_2_retired,
+  output wire          io_output_payload_events_2_ertn,
+  output wire          io_output_payload_events_2_isCounterInstruction,
+  output wire          io_output_payload_events_2_csrRstat,
+  output wire [31:0]   io_output_payload_events_2_csrReadData,
+  output wire          io_output_payload_events_2_gprWrite_valid,
+  output wire [4:0]    io_output_payload_events_2_gprWrite_index,
+  output wire [31:0]   io_output_payload_events_2_gprWrite_data,
+  output wire          io_output_payload_events_2_csrWrite_valid,
+  output wire [13:0]   io_output_payload_events_2_csrWrite_address,
+  output wire [31:0]   io_output_payload_events_2_csrWrite_data,
+  output wire          io_output_payload_events_2_exception_valid,
+  output wire [5:0]    io_output_payload_events_2_exception_ecode,
+  output wire [8:0]    io_output_payload_events_2_exception_esubcode,
+  output wire          io_output_payload_events_2_exception_badVAddrValid,
+  output wire [31:0]   io_output_payload_events_2_exception_badVAddr,
+  output wire          io_output_payload_events_2_exception_tlbRefill,
+  output wire          io_output_payload_events_2_exception_tlbException,
+  output wire [18:0]   io_output_payload_events_2_exception_tlbVppn,
+  output wire [63:0]   io_output_payload_events_2_timer,
+  output wire [7:0]    io_output_payload_events_2_load_instructionMask,
+  output wire [31:0]   io_output_payload_events_2_load_pAddr,
+  output wire [31:0]   io_output_payload_events_2_load_vAddr,
+  output wire [7:0]    io_output_payload_events_2_store_instructionMask,
+  output wire [31:0]   io_output_payload_events_2_store_pAddr,
+  output wire [31:0]   io_output_payload_events_2_store_vAddr,
+  output wire [31:0]   io_output_payload_events_2_store_data,
+  output wire [3:0]    io_output_payload_events_2_store_byteMask,
+  output wire          io_output_payload_events_2_tlbFill_valid,
+  output wire [4:0]    io_output_payload_events_2_tlbFill_index
+);
+
+  wire                seenInvalid;
+  wire                seenTerminal;
+  wire                _zz_io_output_payload_valid;
+  wire                _zz_io_output_payload_valid_1;
+  wire                _zz_io_output_payload_valid_2;
+  wire                _zz_io_output_payload_valid_3;
+  wire                _zz_io_output_payload_valid_4;
+  wire                _zz_io_output_payload_valid_5;
+
+  assign io_output_valid = io_input_valid;
+  assign io_output_payload_events_0_pc = io_input_payload_events_0_pc;
+  assign io_output_payload_events_0_instruction = io_input_payload_events_0_instruction;
+  assign io_output_payload_events_0_retired = io_input_payload_events_0_retired;
+  assign io_output_payload_events_0_ertn = io_input_payload_events_0_ertn;
+  assign io_output_payload_events_0_isCounterInstruction = io_input_payload_events_0_isCounterInstruction;
+  assign io_output_payload_events_0_csrRstat = io_input_payload_events_0_csrRstat;
+  assign io_output_payload_events_0_csrReadData = io_input_payload_events_0_csrReadData;
+  assign io_output_payload_events_0_gprWrite_valid = io_input_payload_events_0_gprWrite_valid;
+  assign io_output_payload_events_0_gprWrite_index = io_input_payload_events_0_gprWrite_index;
+  assign io_output_payload_events_0_gprWrite_data = io_input_payload_events_0_gprWrite_data;
+  assign io_output_payload_events_0_csrWrite_valid = io_input_payload_events_0_csrWrite_valid;
+  assign io_output_payload_events_0_csrWrite_address = io_input_payload_events_0_csrWrite_address;
+  assign io_output_payload_events_0_csrWrite_data = io_input_payload_events_0_csrWrite_data;
+  assign io_output_payload_events_0_exception_valid = io_input_payload_events_0_exception_valid;
+  assign io_output_payload_events_0_exception_ecode = io_input_payload_events_0_exception_ecode;
+  assign io_output_payload_events_0_exception_esubcode = io_input_payload_events_0_exception_esubcode;
+  assign io_output_payload_events_0_exception_badVAddrValid = io_input_payload_events_0_exception_badVAddrValid;
+  assign io_output_payload_events_0_exception_badVAddr = io_input_payload_events_0_exception_badVAddr;
+  assign io_output_payload_events_0_exception_tlbRefill = io_input_payload_events_0_exception_tlbRefill;
+  assign io_output_payload_events_0_exception_tlbException = io_input_payload_events_0_exception_tlbException;
+  assign io_output_payload_events_0_exception_tlbVppn = io_input_payload_events_0_exception_tlbVppn;
+  assign io_output_payload_events_0_timer = io_input_payload_events_0_timer;
+  assign io_output_payload_events_0_load_instructionMask = io_input_payload_events_0_load_instructionMask;
+  assign io_output_payload_events_0_load_pAddr = io_input_payload_events_0_load_pAddr;
+  assign io_output_payload_events_0_load_vAddr = io_input_payload_events_0_load_vAddr;
+  assign io_output_payload_events_0_store_instructionMask = io_input_payload_events_0_store_instructionMask;
+  assign io_output_payload_events_0_store_pAddr = io_input_payload_events_0_store_pAddr;
+  assign io_output_payload_events_0_store_vAddr = io_input_payload_events_0_store_vAddr;
+  assign io_output_payload_events_0_store_data = io_input_payload_events_0_store_data;
+  assign io_output_payload_events_0_store_byteMask = io_input_payload_events_0_store_byteMask;
+  assign io_output_payload_events_0_tlbFill_valid = io_input_payload_events_0_tlbFill_valid;
+  assign io_output_payload_events_0_tlbFill_index = io_input_payload_events_0_tlbFill_index;
+  assign io_output_payload_events_1_pc = io_input_payload_events_1_pc;
+  assign io_output_payload_events_1_instruction = io_input_payload_events_1_instruction;
+  assign io_output_payload_events_1_retired = io_input_payload_events_1_retired;
+  assign io_output_payload_events_1_ertn = io_input_payload_events_1_ertn;
+  assign io_output_payload_events_1_isCounterInstruction = io_input_payload_events_1_isCounterInstruction;
+  assign io_output_payload_events_1_csrRstat = io_input_payload_events_1_csrRstat;
+  assign io_output_payload_events_1_csrReadData = io_input_payload_events_1_csrReadData;
+  assign io_output_payload_events_1_gprWrite_valid = io_input_payload_events_1_gprWrite_valid;
+  assign io_output_payload_events_1_gprWrite_index = io_input_payload_events_1_gprWrite_index;
+  assign io_output_payload_events_1_gprWrite_data = io_input_payload_events_1_gprWrite_data;
+  assign io_output_payload_events_1_csrWrite_valid = io_input_payload_events_1_csrWrite_valid;
+  assign io_output_payload_events_1_csrWrite_address = io_input_payload_events_1_csrWrite_address;
+  assign io_output_payload_events_1_csrWrite_data = io_input_payload_events_1_csrWrite_data;
+  assign io_output_payload_events_1_exception_valid = io_input_payload_events_1_exception_valid;
+  assign io_output_payload_events_1_exception_ecode = io_input_payload_events_1_exception_ecode;
+  assign io_output_payload_events_1_exception_esubcode = io_input_payload_events_1_exception_esubcode;
+  assign io_output_payload_events_1_exception_badVAddrValid = io_input_payload_events_1_exception_badVAddrValid;
+  assign io_output_payload_events_1_exception_badVAddr = io_input_payload_events_1_exception_badVAddr;
+  assign io_output_payload_events_1_exception_tlbRefill = io_input_payload_events_1_exception_tlbRefill;
+  assign io_output_payload_events_1_exception_tlbException = io_input_payload_events_1_exception_tlbException;
+  assign io_output_payload_events_1_exception_tlbVppn = io_input_payload_events_1_exception_tlbVppn;
+  assign io_output_payload_events_1_timer = io_input_payload_events_1_timer;
+  assign io_output_payload_events_1_load_instructionMask = io_input_payload_events_1_load_instructionMask;
+  assign io_output_payload_events_1_load_pAddr = io_input_payload_events_1_load_pAddr;
+  assign io_output_payload_events_1_load_vAddr = io_input_payload_events_1_load_vAddr;
+  assign io_output_payload_events_1_store_instructionMask = io_input_payload_events_1_store_instructionMask;
+  assign io_output_payload_events_1_store_pAddr = io_input_payload_events_1_store_pAddr;
+  assign io_output_payload_events_1_store_vAddr = io_input_payload_events_1_store_vAddr;
+  assign io_output_payload_events_1_store_data = io_input_payload_events_1_store_data;
+  assign io_output_payload_events_1_store_byteMask = io_input_payload_events_1_store_byteMask;
+  assign io_output_payload_events_1_tlbFill_valid = io_input_payload_events_1_tlbFill_valid;
+  assign io_output_payload_events_1_tlbFill_index = io_input_payload_events_1_tlbFill_index;
+  assign io_output_payload_events_2_pc = io_input_payload_events_2_pc;
+  assign io_output_payload_events_2_instruction = io_input_payload_events_2_instruction;
+  assign io_output_payload_events_2_retired = io_input_payload_events_2_retired;
+  assign io_output_payload_events_2_ertn = io_input_payload_events_2_ertn;
+  assign io_output_payload_events_2_isCounterInstruction = io_input_payload_events_2_isCounterInstruction;
+  assign io_output_payload_events_2_csrRstat = io_input_payload_events_2_csrRstat;
+  assign io_output_payload_events_2_csrReadData = io_input_payload_events_2_csrReadData;
+  assign io_output_payload_events_2_gprWrite_valid = io_input_payload_events_2_gprWrite_valid;
+  assign io_output_payload_events_2_gprWrite_index = io_input_payload_events_2_gprWrite_index;
+  assign io_output_payload_events_2_gprWrite_data = io_input_payload_events_2_gprWrite_data;
+  assign io_output_payload_events_2_csrWrite_valid = io_input_payload_events_2_csrWrite_valid;
+  assign io_output_payload_events_2_csrWrite_address = io_input_payload_events_2_csrWrite_address;
+  assign io_output_payload_events_2_csrWrite_data = io_input_payload_events_2_csrWrite_data;
+  assign io_output_payload_events_2_exception_valid = io_input_payload_events_2_exception_valid;
+  assign io_output_payload_events_2_exception_ecode = io_input_payload_events_2_exception_ecode;
+  assign io_output_payload_events_2_exception_esubcode = io_input_payload_events_2_exception_esubcode;
+  assign io_output_payload_events_2_exception_badVAddrValid = io_input_payload_events_2_exception_badVAddrValid;
+  assign io_output_payload_events_2_exception_badVAddr = io_input_payload_events_2_exception_badVAddr;
+  assign io_output_payload_events_2_exception_tlbRefill = io_input_payload_events_2_exception_tlbRefill;
+  assign io_output_payload_events_2_exception_tlbException = io_input_payload_events_2_exception_tlbException;
+  assign io_output_payload_events_2_exception_tlbVppn = io_input_payload_events_2_exception_tlbVppn;
+  assign io_output_payload_events_2_timer = io_input_payload_events_2_timer;
+  assign io_output_payload_events_2_load_instructionMask = io_input_payload_events_2_load_instructionMask;
+  assign io_output_payload_events_2_load_pAddr = io_input_payload_events_2_load_pAddr;
+  assign io_output_payload_events_2_load_vAddr = io_input_payload_events_2_load_vAddr;
+  assign io_output_payload_events_2_store_instructionMask = io_input_payload_events_2_store_instructionMask;
+  assign io_output_payload_events_2_store_pAddr = io_input_payload_events_2_store_pAddr;
+  assign io_output_payload_events_2_store_vAddr = io_input_payload_events_2_store_vAddr;
+  assign io_output_payload_events_2_store_data = io_input_payload_events_2_store_data;
+  assign io_output_payload_events_2_store_byteMask = io_input_payload_events_2_store_byteMask;
+  assign io_output_payload_events_2_tlbFill_valid = io_input_payload_events_2_tlbFill_valid;
+  assign io_output_payload_events_2_tlbFill_index = io_input_payload_events_2_tlbFill_index;
+  assign seenInvalid = 1'b0;
+  assign seenTerminal = 1'b0;
+  assign _zz_io_output_payload_valid = io_input_payload_valid[0];
+  assign _zz_io_output_payload_valid_1 = ((_zz_io_output_payload_valid && (! seenInvalid)) && (! seenTerminal));
+  always @(*) begin
+    io_output_payload_valid[0] = _zz_io_output_payload_valid_1;
+    io_output_payload_valid[1] = _zz_io_output_payload_valid_5;
+    io_output_payload_valid[2] = ((io_input_payload_valid[2] && (! (_zz_io_output_payload_valid_2 || (! _zz_io_output_payload_valid_4)))) && (! (_zz_io_output_payload_valid_3 || (_zz_io_output_payload_valid_5 && (io_input_payload_events_1_exception_valid || io_input_payload_events_1_ertn)))));
+  end
+
+  assign _zz_io_output_payload_valid_2 = (seenInvalid || (! _zz_io_output_payload_valid));
+  assign _zz_io_output_payload_valid_3 = (seenTerminal || (_zz_io_output_payload_valid_1 && (io_input_payload_events_0_exception_valid || io_input_payload_events_0_ertn)));
+  assign _zz_io_output_payload_valid_4 = io_input_payload_valid[1];
+  assign _zz_io_output_payload_valid_5 = ((_zz_io_output_payload_valid_4 && (! _zz_io_output_payload_valid_2)) && (! _zz_io_output_payload_valid_3));
 
 endmodule
 /* verilator lint_on DECLFILENAME */
@@ -38035,20 +41097,20 @@ endmodule
 `endif
 /* verilator lint_off DECLFILENAME */
 module ChiplabDiffTestBlackBox (
-    input  wire          clock,
-    input  wire [504:0]  commitContract,
-    input  wire          instrValid,
-    input  wire [63:0]   pc,
-    input  wire [31:0]   instruction,
-    input  wire          isTlbFill,
-    input  wire [4:0]    tlbFillIndex,
-    input  wire          isCounterInstruction,
-    input  wire [63:0]   timer,
-    input  wire          gprWriteValid,
-    input  wire [7:0]    gprWriteIndex,
-    input  wire [63:0]   gprWriteData,
-    input  wire          csrRstat,
-    input  wire [31:0]   csrReadData,
+    input  wire                                    clock,
+    input  wire [1514:0] commitContract,
+    input  wire [2:0]              instrValid,
+    input  wire [191:0]         pc,
+    input  wire [95:0]         instruction,
+    input  wire [2:0]              isTlbFill,
+    input  wire [14:0]          tlbFillIndex,
+    input  wire [2:0]              isCounterInstruction,
+    input  wire [191:0]         timer,
+    input  wire [2:0]              gprWriteValid,
+    input  wire [23:0]          gprWriteIndex,
+    input  wire [191:0]         gprWriteData,
+    input  wire [2:0]              csrRstat,
+    input  wire [95:0]         csrReadData,
     input  wire          exceptionValid,
     input  wire          ertn,
     input  wire [31:0]   interruptNumber,
@@ -38057,25 +41119,81 @@ module ChiplabDiffTestBlackBox (
     input  wire [31:0]   exceptionInstruction,
     input  wire          trapValid,
     input  wire [2:0]    trapCode,
+    input  wire [63:0]   trapPc,
     input  wire [63:0]   cycleCount,
     input  wire [63:0]   instructionCount,
-    input  wire [7:0]    storeValid,
-    input  wire [63:0]   storePhysicalAddress,
-    input  wire [63:0]   storeVirtualAddress,
-    input  wire [63:0]   storeData,
-    input  wire [7:0]    loadValid,
-    input  wire [63:0]   loadPhysicalAddress,
-    input  wire [63:0]   loadVirtualAddress,
+    input  wire [23:0]          storeValid,
+    input  wire [191:0]         storePhysicalAddress,
+    input  wire [191:0]         storeVirtualAddress,
+    input  wire [191:0]         storeData,
+    input  wire [23:0]          loadValid,
+    input  wire [191:0]         loadPhysicalAddress,
+    input  wire [191:0]         loadVirtualAddress,
     input  wire [1727:0] csrState,
     input  wire [2047:0] gprState
 );
 `ifdef DIFFTEST_EN
-  DifftestInstrCommit u_difftest_instr_commit (
-    .clock(clock), .coreid(8'b0), .index(8'b0), .valid(instrValid),
-    .pc(pc), .instr(instruction), .skip(1'b0 & ^commitContract), .is_TLBFILL(isTlbFill),
-    .TLBFILL_index(tlbFillIndex), .is_CNTinst(isCounterInstruction),
-    .timer_64_value(timer), .wen(gprWriteValid), .wdest(gprWriteIndex),
-    .wdata(gprWriteData), .csr_rstat(csrRstat), .csr_data(csrReadData)
+  DifftestInstrCommit u_difftest_instr_commit_0 (
+    .clock(clock), .coreid(8'b0), .index(8'd0), .valid(instrValid[0]),
+    .pc(pc[63:0]), .instr(instruction[31:0]),
+    .skip(1'b0 & ^commitContract[504:0]), .is_TLBFILL(isTlbFill[0]),
+    .TLBFILL_index(tlbFillIndex[4:0]), .is_CNTinst(isCounterInstruction[0]),
+    .timer_64_value(timer[63:0]), .wen(gprWriteValid[0]),
+    .wdest(gprWriteIndex[7:0]), .wdata(gprWriteData[63:0]),
+    .csr_rstat(csrRstat[0]), .csr_data(csrReadData[31:0])
+  );
+
+  DifftestStoreEvent u_difftest_store_0 (
+    .clock(clock), .coreid(8'b0), .index(8'd0), .valid(storeValid[7:0]),
+    .storePAddr(storePhysicalAddress[63:0]), .storeVAddr(storeVirtualAddress[63:0]),
+    .storeData(storeData[63:0])
+  );
+
+  DifftestLoadEvent u_difftest_load_0 (
+    .clock(clock), .coreid(8'b0), .index(8'd0), .valid(loadValid[7:0]),
+    .paddr(loadPhysicalAddress[63:0]), .vaddr(loadVirtualAddress[63:0])
+  );
+
+  DifftestInstrCommit u_difftest_instr_commit_1 (
+    .clock(clock), .coreid(8'b0), .index(8'd1), .valid(instrValid[1]),
+    .pc(pc[127:64]), .instr(instruction[63:32]),
+    .skip(1'b0 & ^commitContract[1009:505]), .is_TLBFILL(isTlbFill[1]),
+    .TLBFILL_index(tlbFillIndex[9:5]), .is_CNTinst(isCounterInstruction[1]),
+    .timer_64_value(timer[127:64]), .wen(gprWriteValid[1]),
+    .wdest(gprWriteIndex[15:8]), .wdata(gprWriteData[127:64]),
+    .csr_rstat(csrRstat[1]), .csr_data(csrReadData[63:32])
+  );
+
+  DifftestStoreEvent u_difftest_store_1 (
+    .clock(clock), .coreid(8'b0), .index(8'd1), .valid(storeValid[15:8]),
+    .storePAddr(storePhysicalAddress[127:64]), .storeVAddr(storeVirtualAddress[127:64]),
+    .storeData(storeData[127:64])
+  );
+
+  DifftestLoadEvent u_difftest_load_1 (
+    .clock(clock), .coreid(8'b0), .index(8'd1), .valid(loadValid[15:8]),
+    .paddr(loadPhysicalAddress[127:64]), .vaddr(loadVirtualAddress[127:64])
+  );
+
+  DifftestInstrCommit u_difftest_instr_commit_2 (
+    .clock(clock), .coreid(8'b0), .index(8'd2), .valid(instrValid[2]),
+    .pc(pc[191:128]), .instr(instruction[95:64]),
+    .skip(1'b0 & ^commitContract[1514:1010]), .is_TLBFILL(isTlbFill[2]),
+    .TLBFILL_index(tlbFillIndex[14:10]), .is_CNTinst(isCounterInstruction[2]),
+    .timer_64_value(timer[191:128]), .wen(gprWriteValid[2]),
+    .wdest(gprWriteIndex[23:16]), .wdata(gprWriteData[191:128]),
+    .csr_rstat(csrRstat[2]), .csr_data(csrReadData[95:64])
+  );
+
+  DifftestStoreEvent u_difftest_store_2 (
+    .clock(clock), .coreid(8'b0), .index(8'd2), .valid(storeValid[23:16]),
+    .storePAddr(storePhysicalAddress[191:128]), .storeVAddr(storeVirtualAddress[191:128]),
+    .storeData(storeData[191:128])
+  );
+
+  DifftestLoadEvent u_difftest_load_2 (
+    .clock(clock), .coreid(8'b0), .index(8'd2), .valid(loadValid[23:16]),
+    .paddr(loadPhysicalAddress[191:128]), .vaddr(loadVirtualAddress[191:128])
   );
 
   DifftestExcpEvent u_difftest_exception (
@@ -38085,19 +41203,8 @@ module ChiplabDiffTestBlackBox (
   );
 
   DifftestTrapEvent u_difftest_trap (
-    .clock(clock), .coreid(8'b0), .valid(trapValid), .code(trapCode), .pc(pc),
+    .clock(clock), .coreid(8'b0), .valid(trapValid), .code(trapCode), .pc(trapPc),
     .cycleCnt(cycleCount), .instrCnt(instructionCount)
-  );
-
-  DifftestStoreEvent u_difftest_store (
-    .clock(clock), .coreid(8'b0), .index(8'b0), .valid(storeValid),
-    .storePAddr(storePhysicalAddress), .storeVAddr(storeVirtualAddress),
-    .storeData(storeData)
-  );
-
-  DifftestLoadEvent u_difftest_load (
-    .clock(clock), .coreid(8'b0), .index(8'b0), .valid(loadValid),
-    .paddr(loadPhysicalAddress), .vaddr(loadVirtualAddress)
   );
 
   DifftestCSRRegState u_difftest_csr_state (

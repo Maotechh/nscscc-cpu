@@ -86,4 +86,22 @@ object PipelineCtrlPriority {
     else if (instructionCacheOp) Some(InstructionCacheOp)
     else if (idle) Some(Idle)
     else None
+
+  /** Select the oldest branch repair that is still architecturally live.
+    *
+    * A writeback redirect is older than both candidates and therefore suppresses them completely.
+    * Between branch repairs, EX is older than Decode. Keeping this arbitration in the shared
+    * control contract prevents a younger repair from attaching stale-response state to an older
+    * refetch/exception flush at the frontend boundary.
+    */
+  def selectBranchRepair(
+      globalFlush: Bool,
+      execute: RedirectRequest,
+      decode: RedirectRequest
+  ): RedirectRequest = {
+    val selected = RedirectRequest()
+    selected.active := !globalFlush && (execute.active || decode.active)
+    selected.target := Mux(execute.active, execute.target, decode.target)
+    selected
+  }
 }

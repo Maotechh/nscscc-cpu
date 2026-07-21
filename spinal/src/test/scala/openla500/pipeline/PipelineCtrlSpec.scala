@@ -11,6 +11,7 @@ private final class PipelineCtrlProbe extends Component {
     val globalTarget = out(UInt(32 bits))
     val olderStages = in(OlderStageOccupancy())
     val anyOlderStage = out(Bool())
+    val executeBranchRepair = in(RedirectRequest())
     val branchRepairActive = out(Bool())
     val branchRepairTarget = out(UInt(32 bits))
     val debugBreakPoint = out(Bool())
@@ -21,8 +22,13 @@ private final class PipelineCtrlProbe extends Component {
   io.globalFlush := io.control.globalFlush
   io.globalTarget := io.control.globalTarget
   io.anyOlderStage := io.olderStages.any
-  io.branchRepairActive := io.control.branchRepair.active
-  io.branchRepairTarget := io.control.branchRepair.target
+  val selectedBranchRepair = PipelineCtrlPriority.selectBranchRepair(
+    io.control.globalFlush,
+    io.executeBranchRepair,
+    io.control.branchRepair
+  )
+  io.branchRepairActive := selectedBranchRepair.active
+  io.branchRepairTarget := selectedBranchRepair.target
   io.debugBreakPoint := io.control.debugBreakPoint
   val heartbeat = Reg(Bool()) init (False)
   heartbeat := !heartbeat
@@ -86,6 +92,8 @@ class PipelineCtrlSpec extends AnyFunSuite {
           request.target #= 0x1000 + index * 4
         }
         dut.io.control.debugBreakPoint #= false
+        dut.io.executeBranchRepair.active #= false
+        dut.io.executeBranchRepair.target #= 0x2000
         dut.io.olderStages.execute #= false
         dut.io.olderStages.memory #= true
         dut.io.olderStages.writeback #= false
@@ -105,6 +113,27 @@ class PipelineCtrlSpec extends AnyFunSuite {
         dut.io.control.exception.active #= false
         sleep(1)
         assert(dut.io.globalTarget.toBigInt == 0x1004)
+
+        // A global writeback redirect is older than both repair sources.
+        dut.io.control.branchRepair.active #= true
+        dut.io.control.branchRepair.target #= 0x3000
+        dut.io.executeBranchRepair.active #= true
+        sleep(1)
+        assert(!dut.io.branchRepairActive.toBoolean)
+
+        // Once the global redirect drains, EX wins over Decode; Decode wins when EX is absent.
+        dut.io.control.ertn.active #= false
+        dut.io.control.refetch.active #= false
+        dut.io.control.instructionCacheOp.active #= false
+        dut.io.control.idle.active #= false
+        sleep(1)
+        assert(dut.io.branchRepairActive.toBoolean)
+        assert(dut.io.branchRepairTarget.toBigInt == 0x2000)
+
+        dut.io.executeBranchRepair.active #= false
+        sleep(1)
+        assert(dut.io.branchRepairActive.toBoolean)
+        assert(dut.io.branchRepairTarget.toBigInt == 0x3000)
       }
   }
 }

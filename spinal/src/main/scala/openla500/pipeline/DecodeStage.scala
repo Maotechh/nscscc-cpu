@@ -84,16 +84,19 @@ final case class DelayedBranchBtbUpdate() extends Bundle {
 /** Active openLA500 decode stage.
   *
   * Input/output use Stream contracts. The stage owns the decode payload register, GPR storage, and
-  * branch-slot cancellation state. Global flush wins over input acceptance; backpressure keeps the
-  * registered fetch payload stable. The legacy profile intentionally preserves the golden MS
-  * forwarding quirk. The complete core may additionally mark non-branch EX dependencies for late
-  * MEM-to-EX forwarding and consume completed MEM results in Decode branch comparisons.
+  * branch-slot cancellation state in the legacy profile. Global flush wins over input acceptance;
+  * backpressure keeps the registered fetch payload stable. The legacy profile intentionally
+  * preserves the golden MS forwarding quirk. The complete core may additionally mark non-branch EX
+  * dependencies for late MEM-to-EX forwarding and consume completed MEM results in Decode branch
+  * comparisons. A redirectable front-end buffer may own stale-response cancellation instead of this
+  * stage; in that profile the obsolete cancellation state and ports are not elaborated.
   */
 final class DecodeStage(
     config: CoreConfig = CoreConfig.Locked,
     lateResultForwardingEnabled: Boolean = false,
     memoryBranchForwardingEnabled: Boolean = false,
-    delayedBranchResolutionEnabled: Boolean = false
+    delayedBranchResolutionEnabled: Boolean = false,
+    frontendOwnsRedirectCancellation: Boolean = false
 ) extends Component {
   val io = new Bundle {
     val input = slave Stream (FetchPayload())
@@ -128,7 +131,10 @@ final class DecodeStage(
     val branchRepair = out(RedirectRequest())
     val btb = out(DecodeBtbUpdate())
     val delayedBranch = delayedBranchResolutionEnabled generate out(DelayedBranchPrediction())
-    val delayedBranchSlotCancel = delayedBranchResolutionEnabled generate in(Bool())
+    val delayedBranchSlotCancel =
+      (delayedBranchResolutionEnabled && !frontendOwnsRedirectCancellation) generate in(Bool())
+    val redirectTargetAccepted =
+      (delayedBranchResolutionEnabled && !frontendOwnsRedirectCancellation) generate in(Bool())
     val registers = config.diffTestEnabled generate out(Vec(Bits(32 bits), 32))
   }
 
@@ -138,7 +144,8 @@ final class DecodeStage(
   val occupied = RegInit(False)
   val fetch = Reg(FetchPayload())
   val directionPrediction = Reg(PredictorDirectionMetadata())
-  val branchSlotCancel = RegInit(False)
+  val branchSlotCancel =
+    if (frontendOwnsRedirectCancellation) Option.empty[Bool] else Some(RegInit(False))
 
   val registerFile = Vec.fill(32)(Reg(Bits(32 bits)))
   when(io.registerWrite.valid) {
@@ -743,7 +750,10 @@ final class DecodeStage(
   when(io.flush.active) {
     occupied := False
   } elsewhen (io.input.ready) {
-    when((btbRepair && io.output.ready) || branchSlotCancel) {
+    when(
+      (btbRepair && io.output.ready) ||
+        branchSlotCancel.getOrElse(False)
+    ) {
       occupied := False
     } otherwise {
       occupied := io.input.valid
@@ -754,15 +764,22 @@ final class DecodeStage(
     directionPrediction := io.directionPrediction
   }
 
-  when(io.flush.active) {
-    branchSlotCancel :=
-      (if (delayedBranchResolutionEnabled)
-         io.delayedBranchSlotCancel && !(io.input.valid && io.input.ready)
-       else False)
-  } elsewhen (btbRepair && io.output.ready && !io.input.valid) {
-    branchSlotCancel := True
-  } elsewhen (branchSlotCancel && io.input.valid) {
-    branchSlotCancel := False
+  if (!frontendOwnsRedirectCancellation) {
+    val cancelPending = branchSlotCancel.get
+    when(io.flush.active) {
+      cancelPending :=
+        (if (delayedBranchResolutionEnabled)
+           io.delayedBranchSlotCancel && !io.redirectTargetAccepted &&
+           !(io.input.valid && io.input.ready)
+         else False)
+    } elsewhen (
+      btbRepair && io.output.ready && !io.input.valid &&
+        (if (delayedBranchResolutionEnabled) !io.redirectTargetAccepted else True)
+    ) {
+      cancelPending := True
+    } elsewhen (cancelPending && io.input.valid) {
+      cancelPending := False
+    }
   }
 
   val counterEnabled = any(instRdCntVlW, instRdCntVhW, instRdCntIdW)

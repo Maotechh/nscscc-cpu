@@ -32,6 +32,8 @@ CPU 侧 `MemReq/MemRsp`、I-cache 只读 `LineReadPort`、D-cache `LineReadWrite
 
 `CommitEvent` 同时表达 normal retire、GPR/CSR、副作用、exception/ERTN、timer、load/store、TLB fill、counter 指令和 CSR read observation。load/store 的 `instructionMask` 是官方 DiffTest 的唯一 8-bit valid 真源，`active` 只由其非零派生。`Flow.valid` 表示 WB 有架构决策；normal retire 由独立 `retired` 字段表示，异常不能被吞掉。`ArchState` 包含 32 GPR 和 locked Difftest CSR state；adapter 不读取流水内部信号。
 
+`CommitGroup(3)` 是同拍退休的固定外部边界：lane 0 最老，lane valid 必须是 prefix，且异常或 ERTN 所在 lane 之后不得再有年轻 lane。`OrderedCommitGroup` 对不合法输入 fail-closed 并报告 contract violation；当前标量 WB 只填 lane 0。Chiplab adapter 为每个 lane 复制 `DifftestInstrCommit`、`DifftestStoreEvent` 和 `DifftestLoadEvent`，异常/ERTN 仍从最老控制 lane 发出，退休计数按同拍有效 lane 数累加。
+
 Golden `wb_stage` 的副作用以 `ws_valid` 驱动，而 breakpoint 会保留该 valid，存在重复 level side effect 风险。WB 行为迁移前必须用 ADR 和 directed test 决定严格复现还是作为独立 bugfix 改成 retire-fire；不得在“等价重构”中静默改变。`CommitEvent` 的长期合同仍是一条架构事件只发一次。
 
 ## 完成边界

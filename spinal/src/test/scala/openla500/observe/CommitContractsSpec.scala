@@ -121,6 +121,13 @@ private final class CommitContractsProbe extends Component {
   }
   noIoPrefix()
 
+  private val group = CommitGroup()
+  assert(group.valid.getBitsWidth == CommitGroup.Width)
+  assert(group.events.length == CommitGroup.Width)
+  assert(group.events.forall(_.getBitsWidth == CommitGroup.EventWidth))
+  assert(group.getBitsWidth == CommitGroup.Width * (CommitGroup.EventWidth + 1))
+  assertDirectionless(group)
+
   assert(io.commit.valid.isOutput)
   assert(io.commit.payload.flatten.forall(_.isOutput))
   assert(io.archState.flatten.forall(_.isOutput))
