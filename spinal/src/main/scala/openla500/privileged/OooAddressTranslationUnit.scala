@@ -117,6 +117,17 @@ final class OooAddressTranslationUnit(
       pagingMode && address(31 downto 29) === dmw(31 downto 29).asUInt &&
         ((io.csrPrivilege === 0 && dmw(0)) || (io.csrPrivilege === 3 && dmw(3)))
 
+    def bypassPhysicalAddress(address: UInt, dmw0Enabled: Bool, dmw1Enabled: Bool): UInt = {
+      val physicalAddress = UInt(config.xlen bits)
+      physicalAddress := address
+      when(dmw0Enabled) {
+        physicalAddress := (io.csrDmw0(27 downto 25) ## address(28 downto 0)).asUInt
+      }.elsewhen(dmw1Enabled) {
+        physicalAddress := (io.csrDmw1(27 downto 25) ## address(28 downto 0)).asUInt
+      }
+      physicalAddress
+    }
+
     val instructionContext = Reg(OooTranslationContext(config))
     val instructionSearchPending = RegInit(False)
     val instructionResponseValid = RegInit(False)
@@ -230,7 +241,28 @@ final class OooAddressTranslationUnit(
       )
       dataContext.privilege := io.csrPrivilege
       dataContext.disableCache := io.disableCache
-      dataSearchPending := True
+      dataSearchPending := dataTranslate
+      when(!dataTranslate) {
+        val memoryAttribute = Mux(
+          dataDmw0,
+          io.csrDmw0(5 downto 4),
+          Mux(dataDmw1, io.csrDmw1(5 downto 4), io.dataMat)
+        )
+        dataResponseValid := True
+        dataResponse.virtualAddress := io.dataRequest.virtualAddress
+        dataResponse.physicalAddress := bypassPhysicalAddress(
+          io.dataRequest.virtualAddress,
+          dataDmw0,
+          dataDmw1
+        )
+        dataResponse.uncached := io.disableCache || memoryAttribute === 0
+        dataResponse.exception.valid := False
+        dataResponse.exception.ecode := 0
+        dataResponse.exception.esubcode := 0
+        dataResponse.exception.badVAddrValid := False
+        dataResponse.exception.badVAddr := io.dataRequest.virtualAddress
+        dataResponse.exception.tlbRefill := False
+      }
     }
     when(io.dataResponse.valid && io.dataResponse.ready) { dataResponseValid := False }
 

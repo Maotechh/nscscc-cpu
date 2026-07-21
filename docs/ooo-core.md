@@ -6,7 +6,7 @@
 
 当前官方顶层已经实例化 `openla500.core.OooCoreSystem(OooCoreConfig.FourIssueThreeCommit)`。旧 `SpinalCoreBackend` 和 `openla500.pipeline` 不再参与生成；保留下来的少量 `OpenLa500*` leaf 模块仅供仍被 OoO 核复用的 ALU、乘除法、CSR、TLB 或独立合同测试使用。
 
-当前验证基线（2026-07-21，生成 RTL SHA-256 `270152e4dd38aa9c1598b232b2e115eea5245088fa417f41c9b9b74fb444aba3`）如下：
+当前验证基线（2026-07-21，生成 RTL SHA-256 `c0282ca0e6e2fe58832ff7e8f43e452c0e645706002673f1f51d8b4cc6a72231`）如下：
 
 | 检查 | 结果 |
 | --- | --- |
@@ -16,16 +16,16 @@
 | Verilator complete-top lint | pass，665 条精确签名审计后 closure 为 0 warning/error |
 | Yosys 结构检查 | pass，Yosys 0.33，无 warning/skip |
 | chiplab `func/func_lab19` + NEMU DiffTest | pass，syscall 结束并到达 end PC |
-| 官方仿真计数 | 131,226 committed instructions，743,893 clocks，IPC 0.176404 |
+| 官方仿真计数 | 131,225 committed instructions，737,817 clocks，IPC 0.177856 |
 | Vivado 2023.2 synthesis | 0 errors，0 critical synthesis warnings，DCP/report 生成成功 |
 
 Vivado 独立 DRC 报告仍有无约束顶层 I/O 的 NSTD-1/UCIO-1 critical warning；这是未提供板级 XDC 的 standalone 综合，不是 RTL elaboration 或 synthesis error。在 standalone 100 MHz（10 ns）时钟约束下，所有时序约束已经满足：WNS `+0.419 ns`，TNS `0 ns`，失败端点为 0。当前最差路径仍是 backend issue operand 到 multiplier result。
 
 完整顶层 lint 有 665 条审计项，类别只有 `UNUSEDSIGNAL` 和 1 条固定宽度 `CMPCONST`。大部分来自统一 uop/commit/cache/translation Bundle 在具体路径中只消费部分字段、综合时关闭的 DiffTest 状态输入，以及官方 debug/兼容端口必须保留。它们不是“以后会用”的功能预留；能在 Scala 结构层安全删除的字段应继续删除，但跨模块固定 Bundle 中的未消费字段由生成器保留更清晰。`reference/core-top-lint-waivers.json` 同时锁定 RTL SHA-256、warning 数量、类别和签名哈希，先运行无抑制审计，再只对完全匹配的签名执行 clean closure。它不是允许新增 warning 的全局开关。
 
-综合资源（`xc7a200tfbg676-2`，flatten hierarchy rebuilt）：71,687 LUT、39,563 FF、42 RAMB36、12 RAMB18、4 DSP。后续若继续提高频率，应优化乘法输入/结果路径；当前 100 MHz 已真实闭合，不需要也不允许用 false path 掩盖。
+综合资源（`xc7a200tfbg676-2`，flatten hierarchy rebuilt）：71,765 LUT、39,578 FF、42 RAMB36、12 RAMB18、4 DSP。后续若继续提高频率，应优化乘法输入/结果路径；当前 100 MHz 已真实闭合，不需要也不允许用 false path 掩盖。
 
-旧文档中的 776,232 周期记录复用了早于 RTL 的 `obj_dir/Vsimu_top__ALL.a`，没有重新执行 Verilator 编译，因此不能作为真实性能证据。本轮固定流程中显式执行 `make -j8 verilator`。在完全相同的 DiffTest、TLBFILL 修复和 seed `5570815` 下，关闭静态预测的公平基线为 126,157 instructions / 783,358 clocks / IPC 0.161046；启用静态预测为 131,198 instructions / 744,827 clocks / IPC 0.176146；再加入恢复训练表后为 131,226 instructions / 743,893 clocks / IPC 0.176404。最终相对公平基线减少 39,465 周期（5.04%），相对上一提交减少 934 周期（0.13%）。各次都由 NEMU DiffTest、`END by Syscall` 和 end PC 共同判定通过。
+旧文档中的 776,232 周期记录复用了早于 RTL 的 `obj_dir/Vsimu_top__ALL.a`，没有重新执行 Verilator 编译，因此不能作为真实性能证据。本轮固定流程中显式执行 `make -j8 verilator`。在完全相同的 DiffTest、TLBFILL 修复和 seed `5570815` 下，关闭静态预测的公平基线为 126,157 instructions / 783,358 clocks / IPC 0.161046；启用静态预测为 131,198 instructions / 744,827 clocks / IPC 0.176146；加入恢复训练表后为 131,226 instructions / 743,893 clocks / IPC 0.176404；本轮允许数据侧 direct/DMW 翻译提前完成后为 131,225 instructions / 737,817 clocks / IPC 0.177856。最终相对公平基线减少 45,541 周期（5.81%），相对上一提交减少 6,076 周期（0.82%）。各次都由 NEMU DiffTest、`END by Syscall` 和 end PC 共同判定通过。
 
 ## 源码布局
 
@@ -79,7 +79,7 @@ L1I/translation -> OooFrontend(fetch4) -> OooDecodeRenameBuffer
 * rename 同时分配 physical destination、ROB pointer、LDQ/STQ index。RAT 是投机映射，commit 时更新 architectural mapping 并释放旧 physical register；FreeList 使用 ysyx 风格的 `head/architecturalHead/tail` 环形队列，flush 只回退 speculative head 和 free count，commit 不会在 flush 边界写入回收槽位。
 * IQ 按执行端口能力选择 ready uop；serial/CSR/TLB/CACOP/IDLE 等操作必须等 ROB head，不能因为执行端空闲而越过更老指令。
 * 分支在执行端比较实际 taken/target。错误预测 completion 生成 `OooRecoveryRequest`，目标 PC 和异常元数据一起保存，避免把普通 serial stall 当作 branch recovery。
-* load 必须保留 ROB/LDQ 顺序、size/sign-extension 和目标 pdst。LSQ 的 cache request 输出有一拍寄存缓冲，flush 时丢弃未发出的 speculative load；store 保持在 SQ，只有 ordered commit 后才允许对 cache/uncached 总线产生写副作用。
+* load 必须保留 ROB/LDQ 顺序、size/sign-extension 和目标 pdst。LSQ 的 cache request 输出有一拍寄存缓冲，flush 时丢弃未发出的 speculative load；store 保持在 SQ，只有 ordered commit 后才允许对 cache/uncached 总线产生写副作用。无副作用的 direct/DMW 数据地址翻译可以与未解析的老 store 地址并行，真正的 D-cache 请求仍等待 store-order/forwarding 检查完成。
 * LSQ 用退休同步的 `loadBase` 旋转 pending bitmap，并在其后寄存调度槽位；首次分配组只用 ROB age 初始化 base。这样既支持物理槽位绕回，又把选择网络与 ROB completion 写使能隔开，调度延迟增加一拍但稳态仍每拍可推进一个 LSU 请求。
 * ROB 在 completion 到达拍完成 valid、generation pointer 和未完成状态检查，并寄存 accepted one-hot 目标以及 result、pdst、writesPdst、side-effect、exception、branch payload。下一拍同一个 stage 一方面写入 ROB entry/开放 commit，另一方面直接向 IQ、PRF 和 ready-map 提供物理写回，不再经过后端第二套 completion 寄存器；依赖唤醒和 PRF 写入的周期没有增加。flush 会屏蔽 staged wakeup 并清空 one-hot，重复或 stale completion 不会写入已经复用的 entry。
 * ROB 以 program order 提交最多三条。异常、ERTN、CSR、TLB、cache operation 和 barrier 都在 head 处理；外部 `OooCoreSystem` 在该边界接管 eentry/tlbrentry/ERA 和 CSR 更新，保证 precise exception。
@@ -126,7 +126,7 @@ L1I/translation -> OooFrontend(fetch4) -> OooDecodeRenameBuffer
 
 ### Privileged/maintenance
 
-`OooAddressTranslationUnit` 支持 direct、DMW、分页 TLB hit、refill/invalid 异常，并将 TLB search/read/write/fill/invalidate 作为 ROB head side effect。`CACOP`、`PRELD`、`DBAR`、`IBAR`、LL/SC 和 IDLE 不得绕过 LSQ/ROB 的顺序边界；cache invalidate 信号在 `OooCoreSystem` 映射到 L1I、L1D、writeback-invalidate 和 L2 四类维护动作。
+`OooAddressTranslationUnit` 支持 direct、DMW、分页 TLB hit、refill/invalid 异常，并将 TLB search/read/write/fill/invalidate 作为 ROB head side effect。数据侧 direct/DMW 请求直接返回物理地址和 cache 属性，分页请求仍走 TLB pending 路径；指令侧保持原有请求边界，避免 CSR/异常状态提前可见。`CACOP`、`PRELD`、`DBAR`、`IBAR`、LL/SC 和 IDLE 不得绕过 LSQ/ROB 的顺序边界；cache invalidate 信号在 `OooCoreSystem` 映射到 L1I、L1D、writeback-invalidate 和 L2 四类维护动作。
 
 ## 生成、检查和官方仿真
 
@@ -188,6 +188,6 @@ Vivado standalone 综合（PowerShell）：
 1. 只修改 `spinal/src/main/scala` 中的源代码；`build/core_top/package/rtl/mycpu_top.v` 和忽略的 `rtl/mycpu_top.v` 镜像必须由 `make generate-core` 产生，并通过 replacement spec 的 SHA-256 检查，不能加入 Git 或手工编辑。
 2. 新的 OoO 模块按上述功能目录放置；测试 package 必须与主 package 一致。不要重新引入 `openla500.ooo` 或 `openla500.pipeline` flat namespace。
 3. 任何宽度/队列/line geometry 改动都必须同时更新 `OooCoreConfig` 的 require、对应 directed test、官方仿真和 Vivado 资源/时序记录；不能只改生成参数。
-4. 先验证功能，再看时序。当前最紧路径是 issue operand -> multiplier result，100 MHz WNS 为正；不能用综合约束屏蔽真实路径，实现级 FPGA 性能仍必须以三次真实远程烧录的最低结果决定。
+4. 先验证功能，再看时序。当前最紧路径是 issue operand -> multiplier result，100 MHz WNS 为正；不能用综合约束屏蔽真实路径。当前没有上板环境，上板数据不作为本轮门禁；环境恢复后再以三次真实测试的最低结果确认 FPGA 性能。
 5. 官方 `func_lab19` 通过不等于 full random、Linux、FPGA 或比赛性能全部通过。每轮性能结论要记录实际 workload、时钟、seed、commit 和报告哈希。
-6. 当前基线已通过功能、端口、Yosys、synthesis 和 standalone 100 MHz timing；下一轮性能或时序修改必须重新跑 Scala 85 项、官方 DiffTest 和 Vivado，而不是只比较 RTL 文本。
+6. 当前基线已通过功能、端口、Yosys、synthesis 和 standalone 100 MHz timing；下一轮性能或时序修改必须重新跑 Scala 85 项、官方 DiffTest 和 Vivado，而不是只比较 RTL 文本。当前基线的官方计数为 737,817 clocks，Vivado WNS 为 `+0.419 ns`。

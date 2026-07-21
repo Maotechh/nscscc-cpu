@@ -24,6 +24,7 @@ private final class OooLoadStoreQueueProbe(config: OooCoreConfig) extends Compon
     val translationFault = in Bool ()
     val translationEcode = in UInt (6 bits)
     val translationResponseEnable = in Bool ()
+    val translationRequestValid = out Bool ()
     val reservationValid = in Bool ()
     val reservationLineAddress = in Bits (28 bits)
     val completionValid = out Bool ()
@@ -50,6 +51,7 @@ private final class OooLoadStoreQueueProbe(config: OooCoreConfig) extends Compon
   lsq.io.flush := io.flush
   lsq.io.translationRequest.ready := !translationValid ||
     (lsq.io.translationResponse.valid && lsq.io.translationResponse.ready)
+  io.translationRequestValid := lsq.io.translationRequest.valid
   val translationRequestFire =
     lsq.io.translationRequest.valid && lsq.io.translationRequest.ready
   when(lsq.io.translationResponse.valid && lsq.io.translationResponse.ready) {
@@ -520,7 +522,12 @@ class OooLoadStoreQueueSpec extends AnyFunSuite {
         assert(dut.io.aguReady.toBoolean)
         sample(dut)
         dut.io.aguValid #= false
-        sleep(1)
+        var translationWait = 0
+        while (!dut.io.translationRequestValid.toBoolean && translationWait < 4) {
+          sample(dut)
+          translationWait += 1
+        }
+        assert(dut.io.translationRequestValid.toBoolean)
         assert(!dut.io.completionValid.toBoolean)
         assert(!dut.io.dataRequestValid.toBoolean)
 
@@ -529,6 +536,14 @@ class OooLoadStoreQueueSpec extends AnyFunSuite {
         assert(dut.io.aguReady.toBoolean)
         sample(dut)
         dut.io.aguValid #= false
+        var storeTranslationWait = 0
+        while (!dut.io.completionValid.toBoolean && storeTranslationWait < 4) {
+          sample(dut)
+          storeTranslationWait += 1
+        }
+        assert(dut.io.completionValid.toBoolean)
+        assert(dut.io.completion.robPointer.toBigInt == 0)
+        sample(dut)
         var loadRequestWait = 0
         while (!dut.io.dataRequestValid.toBoolean && loadRequestWait < 12) {
           sample(dut)

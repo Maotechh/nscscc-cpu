@@ -51,7 +51,7 @@ class OooAddressTranslationUnitSpec extends AnyFunSuite {
   private def translateInstruction(
       dut: OooAddressTranslationUnit,
       virtualAddress: BigInt
-  ): Unit = {
+  ): Int = {
     dut.io.instructionRequest.valid #= true
     dut.io.instructionRequest.virtualAddress #= virtualAddress
     dut.io.instructionRequest.isWrite #= false
@@ -65,6 +65,28 @@ class OooAddressTranslationUnitSpec extends AnyFunSuite {
       cycles += 1
     }
     assert(dut.io.instructionResponse.valid.toBoolean)
+    cycles
+  }
+
+  private def translateData(
+      dut: OooAddressTranslationUnit,
+      virtualAddress: BigInt,
+      isWrite: Boolean
+  ): Int = {
+    dut.io.dataRequest.valid #= true
+    dut.io.dataRequest.virtualAddress #= virtualAddress
+    dut.io.dataRequest.isWrite #= isWrite
+    sleep(1)
+    assert(dut.io.dataRequest.ready.toBoolean)
+    sample(dut)
+    dut.io.dataRequest.valid #= false
+    var cycles = 0
+    while (!dut.io.dataResponse.valid.toBoolean && cycles < 8) {
+      sample(dut)
+      cycles += 1
+    }
+    assert(dut.io.dataResponse.valid.toBoolean)
+    cycles
   }
 
   test("direct, DMW, and TLB-refill instruction translations are precise") {
@@ -102,6 +124,12 @@ class OooAddressTranslationUnitSpec extends AnyFunSuite {
         assert(!dut.io.instructionResponse.exception.valid.toBoolean)
         sample(dut)
 
+        assert(translateData(dut, 0x80001238L, isWrite = true) == 0)
+        assert(dut.io.dataResponse.physicalAddress.toBigInt == 0x20001238)
+        assert(!dut.io.dataResponse.uncached.toBoolean)
+        assert(!dut.io.dataResponse.exception.valid.toBoolean)
+        sample(dut)
+
         dut.io.csrAsid #= 0xaa
         dut.io.csrTlbIndex #= ((BigInt(12) << 24) | 1)
         dut.io.csrTlbEntryHigh #= 0x00014000
@@ -123,7 +151,7 @@ class OooAddressTranslationUnitSpec extends AnyFunSuite {
         dut.io.tlbInvalidateOperation #= 0
         sample(dut)
         dut.io.tlbInvalidateValid #= false
-        translateInstruction(dut, 0x00004000)
+        assert(translateInstruction(dut, 0x00004000) > 0)
         assert(dut.io.instructionResponse.exception.valid.toBoolean)
         assert(dut.io.instructionResponse.exception.ecode.toBigInt == 0x3f)
         assert(dut.io.instructionResponse.exception.badVAddrValid.toBoolean)

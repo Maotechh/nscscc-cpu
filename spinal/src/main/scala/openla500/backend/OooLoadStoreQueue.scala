@@ -254,7 +254,9 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
   val translationOwnerStoreIndex = Reg(UInt(config.storeQueueIndexWidth bits))
   val storeNeedsTranslation = headStore.valid && headStore.addressReady &&
     !headStore.translationDone
-  val loadNeedsTranslation = cacheLoadBase && !headLoad.translationDone
+  // Translation has no memory side effect, so overlap it with the unresolved-store window.
+  // Store ordering and forwarding are still checked before a translated load reaches D-cache.
+  val loadNeedsTranslation = loadHeadReady && !headLoad.translationDone
   val selectStoreTranslation = storeNeedsTranslation
   io.translationRequest.valid := !io.flush && !translationActive && !translationCancelPending &&
     (storeNeedsTranslation || loadNeedsTranslation)
