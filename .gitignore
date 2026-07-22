@@ -31,7 +31,6 @@ __pycache__/
 # Local refactor/validation workspaces and generated artifacts
 /.work/
 /build/
-/rtl/
 /logs/refactor/**/raw/
 /logs/refactor/**/waveforms/
 
