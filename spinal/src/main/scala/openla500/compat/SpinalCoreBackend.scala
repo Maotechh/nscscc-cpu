@@ -48,8 +48,13 @@ private[compat] final class SpinalCoreBackend(
 
   val reset = !io.aresetn
 
-  val fetch = new FetchStage(config)
-  val fetchBuffer = new FetchInstructionBuffer(depth = 8, exposePreview = false)
+  // Keep the packet frontend behind an elaboration-time boundary while its redirect/response
+  // ordering is diagnosed. The implementation remains available without entering production RTL.
+  private val packetFrontendEnabled = true
+  val fetch = new FetchStage(config, fetchPacketEnabled = packetFrontendEnabled)
+  val fetchBuffer =
+    if (packetFrontendEnabled) new FetchInstructionBuffer(depth = 8, exposePreview = false)
+    else null
   // Full-core-only late forwarding removes the fixed load/mul-use bubble. Legacy leaf generators
   // keep their cycle-locked behavior by using DecodeStage's default `false` profile.
   val decode = new DecodeStage(
@@ -57,7 +62,7 @@ private[compat] final class SpinalCoreBackend(
     lateResultForwardingEnabled = true,
     memoryBranchForwardingEnabled = true,
     delayedBranchResolutionEnabled = true,
-    frontendOwnsRedirectCancellation = true
+    frontendOwnsRedirectCancellation = packetFrontendEnabled
   )
   val execute = new ExecuteStage(config, delayedBranchResolutionEnabled = true)
   val memory = new MemoryStage
@@ -69,31 +74,31 @@ private[compat] final class SpinalCoreBackend(
   val writebackFlushActive =
     writeback.io.flush.exception || writeback.io.flush.ertn || writeback.io.flush.refetch ||
       writeback.io.flush.instructionCacheOperation || writeback.io.flush.idle
-  val selectedBranchRepair = PipelineCtrlPriority.selectBranchRepair(
-    writebackFlushActive,
-    execute.io.branchRepair,
-    decode.io.branchRepair
-  )
-
-  fetchBuffer.io.push.valid := fetch.io.downstream.valid
-  fetch.io.downstream.ready := fetchBuffer.io.push.ready
-  fetchBuffer.io.push.payload.slotValid := B"4'b0001"
-  for (lane <- 0 until FetchPacket.Width) {
-    fetchBuffer.io.push.payload.slots(lane).fetch := fetch.io.downstream.payload
-    fetchBuffer.io.push.payload.slots(lane).direction := fetch.io.directionPrediction
+  if (packetFrontendEnabled) {
+    fetchBuffer.io.push.valid := fetch.io.downstreamPacket.valid
+    fetch.io.downstreamPacket.ready := fetchBuffer.io.push.ready
+    fetchBuffer.io.push.payload := fetch.io.downstreamPacket.payload
+    decode.io.input.valid := fetchBuffer.io.pop.valid
+    decode.io.input.payload := fetchBuffer.io.pop.payload.fetch
+    fetchBuffer.io.pop.ready := decode.io.input.ready
+    decode.io.directionPrediction := fetchBuffer.io.pop.payload.direction
+  } else {
+    fetch.io.downstream >> decode.io.input
+    decode.io.directionPrediction := fetch.io.directionPrediction
   }
-  decode.io.input.valid := fetchBuffer.io.pop.valid
-  decode.io.input.payload := fetchBuffer.io.pop.payload.fetch
-  fetchBuffer.io.pop.ready := decode.io.input.ready
-  decode.io.directionPrediction := fetchBuffer.io.pop.payload.direction
   // An EX-resolved misprediction is older than the instruction currently in Decode. Mask that
   // younger transfer in the repair cycle; Decode is cleared below while the resolving branch is
   // still allowed to advance to MEM.
-  val executeBranchRepair = execute.io.branchRepair.active && !writebackFlushActive
+  val executeBranchRepair =
+    if (packetFrontendEnabled) execute.io.branchRepair.active && !writebackFlushActive
+    else execute.io.branchRepair.active
   execute.io.input.valid := decode.io.output.valid && !executeBranchRepair
   execute.io.input.payload := decode.io.output.payload
   decode.io.output.ready := execute.io.input.ready && !executeBranchRepair
   execute.io.delayedBranch := decode.io.delayedBranch
+  if (!packetFrontendEnabled) {
+    decode.io.delayedBranchSlotCancel := executeBranchRepair
+  }
   execute.io.output >> memory.io.input
   memory.io.output >> writeback.io.input
 
@@ -101,7 +106,8 @@ private[compat] final class SpinalCoreBackend(
   val addressTranslation = new OpenLa500AddrTrans
   val instructionCache = new OpenLa500ICache(
     setCount = config.instructionCache.sets,
-    scrubOnReset = true
+    scrubOnReset = true,
+    exposeLineResponse = packetFrontendEnabled
   )
   val dataCache = new OpenLa500DCache(
     setCount = config.dataCache.sets,
@@ -110,6 +116,8 @@ private[compat] final class SpinalCoreBackend(
   // Cache-line eviction is write-back traffic, so let the AXI read channel make progress while
   // the four write beats and B response drain. Scalar and uncached stores remain serialized inside
   // the bridge to preserve the architectural ordering contract.
+  // Keep external/MMIO ordering strict until the overlap path has a complete peripheral-ordering
+  // proof.  Cache-line writeback overlap is an optimization candidate, not a correctness default.
   val axiBridge = new OpenLa500TypedAxiBridge(allowCacheLineReadOverlap = true)
   val divider = new OpenLa500Div
   val multiplier = new OpenLa500Mul
@@ -174,13 +182,32 @@ private[compat] final class SpinalCoreBackend(
   fetch.io.instructionCacheFlush := writeback.io.flush.instructionCacheOperation
   fetch.io.idleFlush := writeback.io.flush.idle
   fetch.io.writebackPc := writeback.io.debug.pc
-  val branchRepairActive = selectedBranchRepair.active
-  val branchRepairTarget = selectedBranchRepair.target
+  val branchRepairActive = Bool()
+  val branchRepairTarget = UInt(32 bits)
+  if (packetFrontendEnabled) {
+    val selectedBranchRepair = PipelineCtrlPriority.selectBranchRepair(
+      writebackFlushActive,
+      execute.io.branchRepair,
+      decode.io.branchRepair
+    )
+    branchRepairActive := selectedBranchRepair.active
+    branchRepairTarget := selectedBranchRepair.target
+  } else {
+    branchRepairActive := executeBranchRepair || decode.io.branchRepair.active
+    branchRepairTarget :=
+      Mux(executeBranchRepair, execute.io.branchRepair.target, decode.io.branchRepair.target)
+  }
   val redirectTargetAccepted =
     branchRepairActive && fetch.io.fetchEnable && fetch.io.fetchPc === branchRepairTarget
-  fetchBuffer.io.flush := branchRepairActive || writebackFlushActive
-  fetchBuffer.io.redirect := branchRepairActive
-  fetchBuffer.io.redirectTargetAccepted := redirectTargetAccepted
+  if (packetFrontendEnabled) {
+    fetchBuffer.io.flush := branchRepairActive || writebackFlushActive
+    fetchBuffer.io.redirect := branchRepairActive
+    fetchBuffer.io.redirectTargetAccepted := redirectTargetAccepted
+  } else {
+    // Scalar Fetch may accept the redirect address while an older response is still being
+    // discarded. Keep the proven iteration-012 cancellation rule for this diagnostic profile.
+    decode.io.redirectTargetAccepted := False
+  }
 
   decode.io.executeForward.writeEnabled := execute.io.forward.writeEnabled
   decode.io.executeForward.dependencyNeedsStall := execute.io.forward.dependencyNeedsStall
@@ -430,8 +457,14 @@ private[compat] final class SpinalCoreBackend(
   instructionCache.io.cacop_op_addr_offset := addressTranslation.io.data_offset
   instructionCache.io.tlb_excp_cancel_req := fetch.io.tlbCancel
   fetch.io.instructionAddressAccepted := instructionCache.io.addr_ok
-  fetch.io.instructionDataValid := instructionCache.io.data_ok
+  fetch.io.instructionDataValid :=
+    (if (packetFrontendEnabled) instructionCache.io.data_ok && !instructionCache.io.line_valid
+     else instructionCache.io.data_ok)
   fetch.io.instructionData := instructionCache.io.rdata
+  if (packetFrontendEnabled) {
+    fetch.io.instructionLineValid := instructionCache.io.line_valid
+    fetch.io.instructionLineData := instructionCache.io.line_data
+  }
   fetch.io.instructionMiss := instructionCache.io.cache_miss
   execute.io.instructionCacheUnbusy := instructionCache.io.icache_unbusy
 

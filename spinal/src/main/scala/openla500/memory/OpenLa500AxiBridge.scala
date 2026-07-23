@@ -111,7 +111,6 @@ final class OpenLa500AxiBridge(
     private val WriteWaitResponse = U(6, 3 bits)
 
     val readRequestBusy = Reg(Bool()) init (False)
-    val readResponseBusy = Reg(Bool()) init (False)
     val writeState = Reg(UInt(3 bits)) init (WriteEmpty)
 
     val arid = Reg(Bits(4 bits))
@@ -133,7 +132,8 @@ final class OpenLa500AxiBridge(
     val bready = Reg(Bool()) init (False)
     val writeBufferData = Reg(Bits(128 bits)) init (0)
     val writeBufferCount = Reg(UInt(3 bits)) init (0)
-    val writeIsCacheLine = Reg(Bool()) init (False)
+    val writeIsCacheLine =
+      if (allowCacheLineReadOverlap) Reg(Bool()) init (False) else null
 
     val writeBusy = writeState =/= WriteEmpty
     val completingWrite = io.bvalid && bready
@@ -171,22 +171,14 @@ final class OpenLa500AxiBridge(
       arvalid := False
     }
 
-    when(!readResponseBusy) {
-      when(io.rvalid && rready) {
-        readResponseBusy := True
-      }
-    }.otherwise {
-      when(io.rlast && io.rvalid) {
-        readResponseBusy := False
-      }
-    }
-
     switch(writeState) {
       is(WriteEmpty) {
         when(io.data_wr_req) {
           val cacheLine = io.data_wr_type === B"3'b100"
           writeState := WriteDataWait
-          writeIsCacheLine := cacheLine
+          if (allowCacheLineReadOverlap) {
+            writeIsCacheLine := cacheLine
+          }
           awaddr := io.data_wr_addr
           awsize := Mux(cacheLine, B"3'b010", io.data_wr_type)
           awlen := Mux(cacheLine, B"8'h03", B"8'h00")
@@ -230,7 +222,9 @@ final class OpenLa500AxiBridge(
       is(WriteWaitResponse) {
         when(io.bvalid && bready) {
           writeState := WriteEmpty
-          writeIsCacheLine := False
+          if (allowCacheLineReadOverlap) {
+            writeIsCacheLine := False
+          }
           bready := False
         }
       }

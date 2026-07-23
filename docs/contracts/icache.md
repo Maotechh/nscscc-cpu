@@ -60,6 +60,12 @@ SRAM set，lookup 拍以地址翻译返回的物理 `tag[1:0]` 核验。颜色�
 一拍。物理 tag 始终是体系结构权威，虚拟色只能作为性能提示。定向测试必须预置一个错误颜色
 的可命中旧行，证明旧指令不会逸出，并证明两个仅物理颜色不同的 line 可同时保留。
 
+地址翻译器在请求接受沿锁存虚拟地址，因此物理 tag 在随后 lookup 拍才与已锁存的 set/offset
+对齐；I-cache 禁止在接受拍锁存旧的物理 tag。活动 128-bit 响应 profile 对 cacheable miss 只在
+第四拍组装完成后发出一次 `line_valid`，不得同时保留 critical-word `data_ok` 形成双重响应。
+uncached 取指仍在唯一返回拍通过标量 `data_ok/rdata` 完成。整合测试必须从 reset vector 验证
+首个 uncached 请求的 AXI 地址，并验证 cacheable 四拍 refill 只产生一个 fetch packet。
+
 同步 reset 释放后，活动 I-cache 与 D-cache 并行逐 set 清除全部 tag-valid；scrub 期间
 `addr_ok=false`、`icache_unbusy=false`，不得接受取指或 CACOP。数据 SRAM 不清零，因为恢复
 请求前所有 tag-valid 已失效。CACOP 必须用其独立物理地址发起同步 tag probe，不能沿用前一条

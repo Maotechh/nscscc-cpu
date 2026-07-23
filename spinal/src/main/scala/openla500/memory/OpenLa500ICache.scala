@@ -11,7 +11,8 @@ import spinal.core._
   */
 final class OpenLa500ICache(
     setCount: Int = 256,
-    scrubOnReset: Boolean = false
+    scrubOnReset: Boolean = false,
+    exposeLineResponse: Boolean = false
 ) extends Component {
   private val ExternalIndexWidth = 8
   private val ExternalTagWidth = 20
@@ -50,6 +51,10 @@ final class OpenLa500ICache(
     val addr_ok = out Bool ()
     val data_ok = out Bool ()
     val rdata = out Bits (32 bits)
+    // The complete core can consume all four synchronous data banks at once. Standalone legacy
+    // generation leaves these ports out, so the historical I-cache module contract stays exact.
+    val line_valid = if (exposeLineResponse) out(Bool()) else null
+    val line_data = if (exposeLineResponse) out(Bits(128 bits)) else null
     val uncache_en = in Bool ()
     val icacop_op_en = in Bool ()
     val cacop_op_mode = in Bits (2 bits)
@@ -154,8 +159,12 @@ final class OpenLa500ICache(
       else (io.speculativeColor ## io.index).asUInt
     val cacopSet = physicalSet(io.cacop_op_addr_tag, io.cacop_op_addr_index)
     val initialSet = Mux(io.icacop_op_en, cacopSet, speculativeSet)
+    // Address translation captures the accepted virtual address on the same edge as this cache.
+    // Its physical tag therefore belongs to the lookup cycle, not the request-accept cycle.
+    val lookupRequestTag = io.tag
+    val lookupRequestUncache = io.uncache_en
     val translatedSet = physicalSet(
-      io.tag,
+      lookupRequestTag,
       requestSet(ExternalIndexWidth - 1 downto 0).asBits
     )
     val effectiveLookupTag = Bits(ExternalTagWidth bits)
@@ -169,7 +178,7 @@ final class OpenLa500ICache(
       if (ExtraIndexWidth > 0) {
         isLookup && !setReplayPending.get && !requestCacop &&
         requestSet(SetIndexWidth - 1 downto ExternalIndexWidth).asBits =/=
-          io.tag(ExtraIndexWidth - 1 downto 0) && !io.uncache_en
+          lookupRequestTag(ExtraIndexWidth - 1 downto 0) && !lookupRequestUncache
       } else False
     val replaySet = Mux(physicalColorMismatch, translatedSet, requestSet)
     // CACOP is intentionally excluded from addr_ok, but its accept cycle still has to launch the
@@ -227,7 +236,8 @@ final class OpenLa500ICache(
     // CACOP follows the locked passing d22c13c state path: it must not be
     // treated as a normal lookup hit, even when the indexed line is valid.
     val cacheHit =
-      wayHit.orR && !(io.uncache_en || mode0 || mode1 || mode2) && !physicalColorMismatch
+      wayHit.orR && !(lookupRequestUncache || mode0 || mode1 || mode2) &&
+        !physicalColorMismatch
     val addrOk =
       !scrubActive && (isIdle || (isLookup && cacheHit)) && !io.icacop_op_en
 
@@ -238,6 +248,34 @@ final class OpenLa500ICache(
     val loadResult =
       Mux(wayHit(0), wayWords(0), B(0, 32 bits)) |
         Mux(wayHit(1), wayWords(1), B(0, 32 bits))
+
+    val lineValid = if (exposeLineResponse) Bool() else null
+    val lineData = if (exposeLineResponse) Bits(128 bits) else null
+    if (exposeLineResponse) {
+      val refillWords = Vec.fill(WordsPerLine)(Reg(Bits(32 bits)) init (0))
+      val selectedHitWords = Vec(Bits(32 bits), WordsPerLine)
+      val completedRefillWords = Vec(Bits(32 bits), WordsPerLine)
+      for (bank <- 0 until WordsPerLine) {
+        selectedHitWords(bank) :=
+          Mux(wayHit(0), dataOutputs(0)(bank), B(0, 32 bits)) |
+            Mux(wayHit(1), dataOutputs(1)(bank), B(0, 32 bits))
+        completedRefillWords(bank) := Mux(
+          io.ret_valid && missRetNum === U(bank, 2 bits),
+          io.ret_data,
+          refillWords(bank)
+        )
+        when(isRefill && io.ret_valid && missRetNum === U(bank, 2 bits)) {
+          refillWords(bank) := io.ret_data
+        }
+      }
+
+      val hitLine = selectedHitWords.reverse.reduce(_ ## _)
+      val refillLine = completedRefillWords.reverse.reduce(_ ## _)
+      lineValid :=
+        (isLookup && cacheHit) ||
+          (isRefill && io.ret_valid && io.ret_last && !requestUncache && !requestCacop)
+      lineData := Mux(isLookup, hitLine, refillLine)
+    }
 
     val invalidWay = Bits(2 bits)
     invalidWay := B"2'b00"
@@ -261,10 +299,17 @@ final class OpenLa500ICache(
     }
 
     val rdReq = isReplace && !(mode0 || mode1 || mode2)
-    val refillMatch = missRetNum === requestOffset(3 downto 2).asUInt
+    // A wide frontend consumes one cacheable miss only after all four words are assembled. Keep
+    // the legacy critical-word response for the scalar profile and every uncached transaction.
+    val refillProducesScalar =
+      if (exposeLineResponse) requestUncache
+      else {
+        val refillMatch = missRetNum === requestOffset(3 downto 2).asUInt
+        refillMatch || requestUncache
+      }
     val dataOk =
       ((isLookup && (cacheHit || io.tlb_excp_cancel_req)) ||
-        (isRefill && io.ret_valid && (refillMatch || requestUncache) && !requestCacop)) &&
+        (isRefill && io.ret_valid && refillProducesScalar && !requestCacop)) &&
         !physicalColorMismatch
 
     // The legacy source increments this exact two-bit binary counter.
@@ -294,12 +339,12 @@ final class OpenLa500ICache(
           clearSetReplay()
         }.elsewhen(physicalColorMismatch) {
           requestSet := translatedSet
-          requestTag := io.tag
+          requestTag := lookupRequestTag
           markSetReplay()
         }.elsewhen(!cacheHit) {
           mainState := MainReplace
           requestTag := effectiveLookupTag
-          requestUncache := io.uncache_en && !requestCacop
+          requestUncache := lookupRequestUncache && !requestCacop
           missReplaceWay := replaceWay
           clearSetReplay()
         }.otherwise {
@@ -358,6 +403,10 @@ final class OpenLa500ICache(
     logic.loadResult,
     Mux(logic.isRefill, io.ret_data, B(0, 32 bits))
   )
+  if (exposeLineResponse) {
+    io.line_valid := logic.lineValid
+    io.line_data := logic.lineData
+  }
   io.icache_unbusy := logic.isIdle && !logic.scrubActive
   io.rd_req := logic.rdReq
   io.rd_type := Mux(logic.requestUncache, B"3'b010", B"3'b100")

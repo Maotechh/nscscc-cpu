@@ -28,6 +28,10 @@
 
 CPU 侧 `MemReq/MemRsp`、I-cache 只读 `LineReadPort`、D-cache `LineReadWritePort` 和 AXI3 五通道分层。response 没有 ready 的 golden 端使用 `Flow`；TLB/SC cancel 是独立 sideband，不撤回已握手 payload。`MemoryStatus` 单独提供 DBAR/IBAR 需要的 `writeBufferEmpty/dataCacheEmpty`。PRELD/CACOP 在 request fire 后均不欠 response；普通 load/store 必须恰有一个 response。顶层 AXI 保留 WID 和 8-bit len，不直接暴露 stock Axi4。
 
+活动取指路径在请求接受沿绑定虚拟 set/offset，在下一 lookup 拍绑定地址翻译器输出的物理 tag。
+uncached 取指通过一次标量 response 完成；cacheable miss 在四拍 refill 完整组装后只通过一次
+128-bit line response 完成，禁止 critical-word 和完整 cache line 对同一请求各产生一次提交。
+
 ## Commit 与架构状态
 
 `CommitEvent` 同时表达 normal retire、GPR/CSR、副作用、exception/ERTN、timer、load/store、TLB fill、counter 指令和 CSR read observation。load/store 的 `instructionMask` 是官方 DiffTest 的唯一 8-bit valid 真源，`active` 只由其非零派生。`Flow.valid` 表示 WB 有架构决策；normal retire 由独立 `retired` 字段表示，异常不能被吞掉。`ArchState` 包含 32 GPR 和 locked Difftest CSR state；adapter 不读取流水内部信号。

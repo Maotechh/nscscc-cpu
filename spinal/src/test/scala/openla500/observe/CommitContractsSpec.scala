@@ -122,6 +122,7 @@ private final class CommitContractsProbe extends Component {
   noIoPrefix()
 
   private val group = CommitGroup()
+  group.allowPruning()
   assert(group.valid.getBitsWidth == CommitGroup.Width)
   assert(group.events.length == CommitGroup.Width)
   assert(group.events.forall(_.getBitsWidth == CommitGroup.EventWidth))

@@ -20,11 +20,15 @@ private final class FetchBufferRedirectSimTop extends Component {
     val popValid = out Bool ()
     val popPc = out UInt (32 bits)
     val popInstruction = out Bits (32 bits)
+    val popPayload = out(BufferedFetchInstruction())
+    val previewValid = out Bool ()
+    val preview = out(BufferedFetchInstruction())
+    val fetchStatus = out Bits (5 bits)
     val occupancy = out UInt (4 bits)
   }
 
   val fetch = new FetchStage()
-  val buffer = new FetchInstructionBuffer(depth = 8)
+  val buffer = new FetchInstructionBuffer(depth = 8, packetWidth = 1, windowWidth = 1)
 
   buffer.io.flush := io.redirect
   buffer.io.redirect := io.redirect
@@ -32,11 +36,9 @@ private final class FetchBufferRedirectSimTop extends Component {
     io.redirect && fetch.io.fetchEnable && fetch.io.fetchPc === io.redirectTarget
   buffer.io.push.valid := fetch.io.downstream.valid
   fetch.io.downstream.ready := buffer.io.push.ready
-  buffer.io.push.payload.slotValid := B"4'b0001"
-  for (lane <- 0 until FetchPacket.Width) {
-    buffer.io.push.payload.slots(lane).fetch := fetch.io.downstream.payload
-    buffer.io.push.payload.slots(lane).direction := fetch.io.directionPrediction
-  }
+  buffer.io.push.payload.slotValid := B"1'b1"
+  buffer.io.push.payload.slots(0).fetch := fetch.io.downstream.payload
+  buffer.io.push.payload.slots(0).direction := fetch.io.directionPrediction
   buffer.io.pop.ready := io.popReady
 
   fetch.io.branchRepair := io.redirect
@@ -82,6 +84,11 @@ private final class FetchBufferRedirectSimTop extends Component {
   io.popValid := buffer.io.pop.valid
   io.popPc := buffer.io.pop.payload.fetch.pc
   io.popInstruction := buffer.io.pop.payload.fetch.instruction
+  io.popPayload := buffer.io.pop.payload
+  io.previewValid := buffer.io.windowValid(0)
+  io.preview := buffer.io.window(0)
+  io.fetchStatus := fetch.io.instructionUncached.asBits ## fetch.io.tlbCancel.asBits ##
+    fetch.io.addressTranslation.asBits ## fetch.io.dmw0Enabled.asBits ## fetch.io.dmw1Enabled.asBits
   io.occupancy := buffer.io.occupancy
 }
 
@@ -112,7 +119,7 @@ class FetchInstructionBufferSpec extends AnyFunSuite {
       sys.env.getOrElse("SPINAL_SIM_WORKSPACE", "target/sim-workspace-fetch-buffer")
     val workspace = Paths.get(workspaceRoot, "fetch4-window").toString
 
-    SimConfig
+    val compiled = SimConfig
       .withConfig(SpinalConfig(oneFilePerComponent = true))
       .withVerilator
       .addSimulatorFlag("-Wall")
@@ -124,6 +131,8 @@ class FetchInstructionBufferSpec extends AnyFunSuite {
       .disableCache
       .workspacePath(workspace)
       .compile(new FetchInstructionBuffer(depth = 8))
+
+    compiled
       .doSim("fetch-buffer-directed", 0x158aa8) { dut =>
         dut.clockDomain.forkStimulus(period = 10)
         dut.io.flush #= false

@@ -10,9 +10,15 @@ import spinal.lib._
   * The output Stream holds its payload while decode applies backpressure. Flushes cancel younger
   * state; instruction address and data acknowledgements retain the historical split handshake.
   */
-final class FetchStage(config: CoreConfig = CoreConfig.Locked) extends Component {
+final class FetchStage(
+    config: CoreConfig = CoreConfig.Locked,
+    fetchPacketEnabled: Boolean = false
+) extends Component {
   val io = new Bundle {
-    val downstream = master(Stream(FetchPayload()))
+    val downstream =
+      if (!fetchPacketEnabled) master(Stream(FetchPayload())) else null
+    val downstreamPacket =
+      if (fetchPacketEnabled) master(Stream(FetchPacket())) else null
     val branchRepair = in Bool ()
     val branchTarget = in UInt (32 bits)
     val exceptionFlush = in Bool ()
@@ -30,6 +36,8 @@ final class FetchStage(config: CoreConfig = CoreConfig.Locked) extends Component
     val instructionAddressAccepted = in Bool ()
     val instructionDataValid = in Bool ()
     val instructionData = in Bits (32 bits)
+    val instructionLineValid = if (fetchPacketEnabled) in(Bool()) else null
+    val instructionLineData = if (fetchPacketEnabled) in(Bits(128 bits)) else null
     val instructionMiss = in Bool ()
     val instructionRequest = out Bool ()
     val instructionAddress = out UInt (32 bits)
@@ -49,7 +57,8 @@ final class FetchStage(config: CoreConfig = CoreConfig.Locked) extends Component
     val btbEnabled = in Bool ()
     val btbIndex = in UInt (5 bits)
     val btbDirection = in(PredictorDirectionMetadata())
-    val directionPrediction = out(PredictorDirectionMetadata())
+    val directionPrediction =
+      if (!fetchPacketEnabled) out(PredictorDirectionMetadata()) else null
 
     val addressTranslation = out Bool ()
     val dmw0Enabled = out Bool ()
@@ -69,6 +78,10 @@ final class FetchStage(config: CoreConfig = CoreConfig.Locked) extends Component
   val fsExceptionNumber = Reg(Bool()) init (False)
   val instructionBuffer = Reg(Bits(32 bits))
   val instructionBufferValid = Reg(Bool()) init (False)
+  val instructionLineBuffer =
+    if (fetchPacketEnabled) Reg(Bits(128 bits)) else null
+  val instructionLineBufferValid =
+    if (fetchPacketEnabled) Reg(Bool()) init (False) else null
   val idleLock = Reg(Bool()) init (False)
   val btbLock = Reg(Bits(38 bits))
   val btbDirectionLock = Reg(PredictorDirectionMetadata())
@@ -97,7 +110,83 @@ final class FetchStage(config: CoreConfig = CoreConfig.Locked) extends Component
     btbDirectionLocked := btbDirectionLock
   }
   val fetchBtbTarget = (io.btbTaken && io.btbEnabled) || (btbLockValid && btbLock(37))
-  val sequencePc = fsPc + 4
+  val liveLineValid = if (fetchPacketEnabled) io.instructionLineValid else False
+  val bufferedLineValid =
+    if (fetchPacketEnabled) instructionLineBufferValid else False
+  val responseIsLine = liveLineValid || bufferedLineValid
+  val responseLineData =
+    if (fetchPacketEnabled)
+      Mux(
+        instructionLineBufferValid,
+        instructionLineBuffer,
+        io.instructionLineData
+      )
+    else null
+  val responseValid =
+    io.instructionDataValid || instructionBufferValid || responseIsLine
+
+  val lineWords =
+    if (fetchPacketEnabled) {
+      val words = Vec(Bits(32 bits), FetchPacket.Width)
+      for (bank <- 0 until FetchPacket.Width) {
+        words(bank) := responseLineData(bank * 32 + 31 downto bank * 32)
+      }
+      words
+    } else null
+  val lineStartWord = if (fetchPacketEnabled) fsPc(3 downto 2) else null
+  val firstInstruction =
+    if (fetchPacketEnabled)
+      Mux(
+        responseIsLine,
+        lineWords(lineStartWord),
+        Mux(instructionBufferValid, instructionBuffer, io.instructionData)
+      )
+    else Mux(instructionBufferValid, instructionBuffer, io.instructionData)
+
+  val packetInstructions =
+    if (fetchPacketEnabled) {
+      val instructions = Vec(Bits(32 bits), FetchPacket.Width)
+      for (lane <- 0 until FetchPacket.Width) {
+        val wrappedBank = (lineStartWord + U(lane, 2 bits)).resized
+        instructions(lane) := lineWords(wrappedBank)
+      }
+      instructions
+    } else null
+  val packetInLine =
+    if (fetchPacketEnabled) {
+      val inLine = Vec(Bool(), FetchPacket.Width)
+      for (lane <- 0 until FetchPacket.Width) {
+        val bank = lineStartWord.resize(3) + U(lane, 3 bits)
+        inLine(lane) := bank < U(FetchPacket.Width, 3 bits)
+      }
+      inLine
+    } else null
+  val packetControl =
+    if (fetchPacketEnabled) {
+      val control = Vec(Bool(), FetchPacket.Width)
+      for (lane <- 0 until FetchPacket.Width) {
+        val majorOpcode = packetInstructions(lane)(31 downto 26).asUInt
+        control(lane) := majorOpcode >= U(0x13, 6 bits) && majorOpcode <= U(0x1b, 6 bits)
+      }
+      control
+    } else null
+
+  val sequencePc =
+    if (fetchPacketEnabled) {
+      val lineSequencePc = UInt(32 bits)
+      lineSequencePc := (fsPc | U(0x0f, 32 bits)) + 1
+      for (lane <- (1 until FetchPacket.Width).reverse) {
+        when(packetInLine(lane) && packetControl(lane)) {
+          lineSequencePc := fsPc + U(lane * 4, 32 bits)
+        }
+      }
+      when(packetControl(0)) {
+        lineSequencePc := fsPc + 4
+      }
+      Mux(responseIsLine, lineSequencePc, fsPc + 4)
+    } else {
+      fsPc + 4
+    }
   val architecturalExceptionEntry = Mux(io.exceptionTlbRefill, io.tlbRefillEntry, io.exceptionEntry)
   val instructionFlushPc = Mux(io.ertnFlush, io.exceptionEra, io.writebackPc + 4)
 
@@ -132,34 +221,87 @@ final class FetchStage(config: CoreConfig = CoreConfig.Locked) extends Component
   val prefetchAlignmentException = nextPc(1 downto 0) =/= 0
 
   val fsExceptionAny = fsException || tlbRefill || tlbInvalid || tlbPrivilege
-  val fsReady = io.instructionDataValid || instructionBufferValid || fsExceptionAny
-  val fsAllow = !fsValid || (fsReady && io.downstream.ready)
+  val fsReady = responseValid || fsExceptionAny
+  val downstreamReady =
+    if (fetchPacketEnabled) io.downstreamPacket.ready else io.downstream.ready
+  val fsAllow = !fsValid || (fsReady && downstreamReady)
   val instructionRequest =
     ((fsAllow && !prefetchAlignmentException && !tlbLockPc) || flush || io.branchRepair) &&
       !(io.idleFlush || idleLock)
   val prefetchReady =
     (instructionRequest || prefetchAlignmentException) && io.instructionAddressAccepted
   val toFsValid = prefetchReady
+  // When a complete line retires without a replacement request, retain the next packet address as
+  // the request cursor. If a replacement was accepted, the normal fsPc update must instead bind the
+  // outstanding response to that accepted address.
+  val lineResponseConsumedWithoutReplacement =
+    if (fetchPacketEnabled)
+      responseIsLine && fsValid && downstreamReady && !flush && !toFsValid
+    else False
   // A coincident sequential request can already be the authoritative redirect target. Remembering
   // that target in branchWaitTarget would issue it twice and duplicate its first instruction.
   val branchTargetAccepted =
     io.branchRepair && instructionRequest && io.instructionAddressAccepted && nextPc === io.branchTarget
 
-  io.downstream.valid := fsValid && fsReady
-  io.downstream.payload.pc := fsPc
-  io.downstream.payload.instruction := Mux(
-    instructionBufferValid,
-    instructionBuffer,
-    io.instructionData
-  )
-  io.downstream.payload.exceptionCode := tlbPrivilege.asBits ## tlbInvalid.asBits ## tlbRefill.asBits ## fsExceptionNumber.asBits
-  io.downstream.payload.hasException := fsExceptionAny
-  io.downstream.payload.instructionCacheMiss := io.instructionMiss
-  io.downstream.payload.btbEnabled := btbEnabledLocked
-  io.downstream.payload.btbTaken := btbTakenLocked
-  io.downstream.payload.btbIndex := btbIndexLocked
-  io.downstream.payload.btbTarget := btbTargetLocked
-  io.directionPrediction := btbDirectionLocked
+  val scalarPayload = FetchPayload()
+  scalarPayload.pc := fsPc
+  scalarPayload.instruction := firstInstruction
+  scalarPayload.exceptionCode :=
+    tlbPrivilege.asBits ## tlbInvalid.asBits ## tlbRefill.asBits ## fsExceptionNumber.asBits
+  scalarPayload.hasException := fsExceptionAny
+  scalarPayload.instructionCacheMiss := io.instructionMiss
+  scalarPayload.btbEnabled := btbEnabledLocked
+  scalarPayload.btbTaken := btbTakenLocked
+  scalarPayload.btbIndex := btbIndexLocked
+  scalarPayload.btbTarget := btbTargetLocked
+
+  if (fetchPacketEnabled) {
+    io.downstreamPacket.valid := fsValid && fsReady
+    io.downstreamPacket.payload.slotValid := 0
+    var blockedByLaterControl: Bool = False
+    for (lane <- 0 until FetchPacket.Width) {
+      val validLineSlot =
+        if (lane == 0) responseIsLine && packetInLine(lane)
+        else
+          responseIsLine && packetInLine(lane) && !fetchBtbTarget &&
+          !blockedByLaterControl && !packetControl(lane)
+      val validScalarSlot = if (lane == 0) !responseIsLine else False
+      io.downstreamPacket.payload.slotValid(lane) := validLineSlot || validScalarSlot
+      io.downstreamPacket.payload.slots(lane).fetch.pc :=
+        (if (lane == 0) scalarPayload.pc else fsPc + U(lane * 4, 32 bits))
+      io.downstreamPacket.payload.slots(lane).fetch.instruction := Mux(
+        responseIsLine,
+        packetInstructions(lane),
+        (if (lane == 0) scalarPayload.instruction else firstInstruction)
+      )
+      io.downstreamPacket.payload.slots(lane).fetch.exceptionCode :=
+        (if (lane == 0) scalarPayload.exceptionCode else B(0, 4 bits))
+      io.downstreamPacket.payload.slots(lane).fetch.hasException :=
+        (if (lane == 0) scalarPayload.hasException else False)
+      io.downstreamPacket.payload.slots(lane).fetch.instructionCacheMiss :=
+        (if (lane == 0) scalarPayload.instructionCacheMiss else False)
+      io.downstreamPacket.payload.slots(lane).fetch.btbEnabled :=
+        (if (lane == 0) scalarPayload.btbEnabled else False)
+      io.downstreamPacket.payload.slots(lane).fetch.btbTaken :=
+        (if (lane == 0) scalarPayload.btbTaken else False)
+      io.downstreamPacket.payload.slots(lane).fetch.btbIndex :=
+        (if (lane == 0) scalarPayload.btbIndex else U(0, 5 bits))
+      io.downstreamPacket.payload.slots(lane).fetch.btbTarget :=
+        (if (lane == 0) scalarPayload.btbTarget else U(0, 32 bits))
+      if (lane == 0) {
+        io.downstreamPacket.payload.slots(lane).direction := btbDirectionLocked
+      } else {
+        io.downstreamPacket.payload.slots(lane).direction.phtIndex := 0
+        io.downstreamPacket.payload.slots(lane).direction.baseTaken := False
+        io.downstreamPacket.payload.slots(lane).direction.localTaken := False
+      }
+      blockedByLaterControl = blockedByLaterControl || packetControl(lane)
+    }
+  } else {
+    io.downstream.valid := fsValid && fsReady
+    io.downstream.payload := scalarPayload
+    io.directionPrediction := btbDirectionLocked
+  }
 
   io.instructionRequest := instructionRequest
   io.instructionAddress := nextPc
@@ -229,11 +371,28 @@ final class FetchStage(config: CoreConfig = CoreConfig.Locked) extends Component
     btbDirectionLock := io.btbDirection
   }
 
-  when((fsReady && io.downstream.ready) || flush) {
+  when((fsReady && downstreamReady) || flush) {
     instructionBufferValid := False
-  }.elsewhen(io.instructionDataValid && !io.downstream.ready) {
-    instructionBuffer := io.instructionData
-    instructionBufferValid := True
+    if (fetchPacketEnabled) {
+      instructionLineBufferValid := False
+    }
+  }.elsewhen(
+    (if (fetchPacketEnabled) responseValid else io.instructionDataValid) && !downstreamReady
+  ) {
+    if (fetchPacketEnabled) {
+      when(liveLineValid) {
+        instructionLineBuffer := io.instructionLineData
+        instructionLineBufferValid := True
+        instructionBufferValid := False
+      }.elsewhen(io.instructionDataValid) {
+        instructionLineBufferValid := False
+        instructionBuffer := io.instructionData
+        instructionBufferValid := True
+      }
+    } else {
+      instructionBuffer := io.instructionData
+      instructionBufferValid := True
+    }
   }
 
   when(flushDelay) {
@@ -241,7 +400,13 @@ final class FetchStage(config: CoreConfig = CoreConfig.Locked) extends Component
   }.elsewhen(fsAllow) {
     fsValid := toFsValid
   }
-  when(toFsValid && (fsAllow || flushDirty)) {
+  when(lineResponseConsumedWithoutReplacement) {
+    // fsPc is the accepted-request PC. With no request in flight, keep it one word behind the next
+    // packet address so the normal fsPc + 4 request expression retries that exact address.
+    fsPc := (nextPc - U(4, 32 bits)).resized
+    fsException := False
+    fsExceptionNumber := False
+  }.elsewhen(toFsValid && (fsAllow || flushDirty)) {
     fsPc := nextPc
     fsException := prefetchAlignmentException
     fsExceptionNumber := prefetchAlignmentException

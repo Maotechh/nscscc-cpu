@@ -258,6 +258,7 @@ module SpinalCoreBackend (
   wire       [31:0]   fetch_io_exceptionEntry;
   wire       [31:0]   fetch_io_exceptionEra;
   wire       [31:0]   fetch_io_tlbRefillEntry;
+  wire                fetch_io_instructionDataValid;
   wire       [1:0]    fetch_io_currentPlv;
   wire       [1:0]    fetch_io_tlbPlv;
   wire                fetchBuffer_io_flush;
@@ -373,23 +374,60 @@ module SpinalCoreBackend (
   wire       [3:0]    chiplabDiffTestAdapter_1_io_commit_payload_events_2_store_byteMask;
   wire                chiplabDiffTestAdapter_1_io_commit_payload_events_2_tlbFill_valid;
   wire       [4:0]    chiplabDiffTestAdapter_1_io_commit_payload_events_2_tlbFill_index;
-  wire                fetch_io_downstream_valid;
-  wire       [31:0]   fetch_io_downstream_payload_pc;
-  wire       [31:0]   fetch_io_downstream_payload_instruction;
-  wire       [3:0]    fetch_io_downstream_payload_exceptionCode;
-  wire                fetch_io_downstream_payload_hasException;
-  wire                fetch_io_downstream_payload_instructionCacheMiss;
-  wire                fetch_io_downstream_payload_btbEnabled;
-  wire                fetch_io_downstream_payload_btbTaken;
-  wire       [4:0]    fetch_io_downstream_payload_btbIndex;
-  wire       [31:0]   fetch_io_downstream_payload_btbTarget;
+  wire                fetch_io_downstreamPacket_valid;
+  wire       [3:0]    fetch_io_downstreamPacket_payload_slotValid;
+  wire       [31:0]   fetch_io_downstreamPacket_payload_slots_0_fetch_pc;
+  wire       [31:0]   fetch_io_downstreamPacket_payload_slots_0_fetch_instruction;
+  wire       [3:0]    fetch_io_downstreamPacket_payload_slots_0_fetch_exceptionCode;
+  wire                fetch_io_downstreamPacket_payload_slots_0_fetch_hasException;
+  wire                fetch_io_downstreamPacket_payload_slots_0_fetch_instructionCacheMiss;
+  wire                fetch_io_downstreamPacket_payload_slots_0_fetch_btbEnabled;
+  wire                fetch_io_downstreamPacket_payload_slots_0_fetch_btbTaken;
+  wire       [4:0]    fetch_io_downstreamPacket_payload_slots_0_fetch_btbIndex;
+  wire       [31:0]   fetch_io_downstreamPacket_payload_slots_0_fetch_btbTarget;
+  wire       [7:0]    fetch_io_downstreamPacket_payload_slots_0_direction_phtIndex;
+  wire                fetch_io_downstreamPacket_payload_slots_0_direction_baseTaken;
+  wire                fetch_io_downstreamPacket_payload_slots_0_direction_localTaken;
+  wire       [31:0]   fetch_io_downstreamPacket_payload_slots_1_fetch_pc;
+  wire       [31:0]   fetch_io_downstreamPacket_payload_slots_1_fetch_instruction;
+  wire       [3:0]    fetch_io_downstreamPacket_payload_slots_1_fetch_exceptionCode;
+  wire                fetch_io_downstreamPacket_payload_slots_1_fetch_hasException;
+  wire                fetch_io_downstreamPacket_payload_slots_1_fetch_instructionCacheMiss;
+  wire                fetch_io_downstreamPacket_payload_slots_1_fetch_btbEnabled;
+  wire                fetch_io_downstreamPacket_payload_slots_1_fetch_btbTaken;
+  wire       [4:0]    fetch_io_downstreamPacket_payload_slots_1_fetch_btbIndex;
+  wire       [31:0]   fetch_io_downstreamPacket_payload_slots_1_fetch_btbTarget;
+  wire       [7:0]    fetch_io_downstreamPacket_payload_slots_1_direction_phtIndex;
+  wire                fetch_io_downstreamPacket_payload_slots_1_direction_baseTaken;
+  wire                fetch_io_downstreamPacket_payload_slots_1_direction_localTaken;
+  wire       [31:0]   fetch_io_downstreamPacket_payload_slots_2_fetch_pc;
+  wire       [31:0]   fetch_io_downstreamPacket_payload_slots_2_fetch_instruction;
+  wire       [3:0]    fetch_io_downstreamPacket_payload_slots_2_fetch_exceptionCode;
+  wire                fetch_io_downstreamPacket_payload_slots_2_fetch_hasException;
+  wire                fetch_io_downstreamPacket_payload_slots_2_fetch_instructionCacheMiss;
+  wire                fetch_io_downstreamPacket_payload_slots_2_fetch_btbEnabled;
+  wire                fetch_io_downstreamPacket_payload_slots_2_fetch_btbTaken;
+  wire       [4:0]    fetch_io_downstreamPacket_payload_slots_2_fetch_btbIndex;
+  wire       [31:0]   fetch_io_downstreamPacket_payload_slots_2_fetch_btbTarget;
+  wire       [7:0]    fetch_io_downstreamPacket_payload_slots_2_direction_phtIndex;
+  wire                fetch_io_downstreamPacket_payload_slots_2_direction_baseTaken;
+  wire                fetch_io_downstreamPacket_payload_slots_2_direction_localTaken;
+  wire       [31:0]   fetch_io_downstreamPacket_payload_slots_3_fetch_pc;
+  wire       [31:0]   fetch_io_downstreamPacket_payload_slots_3_fetch_instruction;
+  wire       [3:0]    fetch_io_downstreamPacket_payload_slots_3_fetch_exceptionCode;
+  wire                fetch_io_downstreamPacket_payload_slots_3_fetch_hasException;
+  wire                fetch_io_downstreamPacket_payload_slots_3_fetch_instructionCacheMiss;
+  wire                fetch_io_downstreamPacket_payload_slots_3_fetch_btbEnabled;
+  wire                fetch_io_downstreamPacket_payload_slots_3_fetch_btbTaken;
+  wire       [4:0]    fetch_io_downstreamPacket_payload_slots_3_fetch_btbIndex;
+  wire       [31:0]   fetch_io_downstreamPacket_payload_slots_3_fetch_btbTarget;
+  wire       [7:0]    fetch_io_downstreamPacket_payload_slots_3_direction_phtIndex;
+  wire                fetch_io_downstreamPacket_payload_slots_3_direction_baseTaken;
+  wire                fetch_io_downstreamPacket_payload_slots_3_direction_localTaken;
   wire                fetch_io_instructionRequest;
   wire       [31:0]   fetch_io_instructionAddress;
   wire                fetch_io_instructionUncached;
   wire                fetch_io_tlbCancel;
-  wire       [7:0]    fetch_io_directionPrediction_phtIndex;
-  wire                fetch_io_directionPrediction_baseTaken;
-  wire                fetch_io_directionPrediction_localTaken;
   wire                fetch_io_addressTranslation;
   wire                fetch_io_dmw0Enabled;
   wire                fetch_io_dmw1Enabled;
@@ -825,6 +863,8 @@ module SpinalCoreBackend (
   wire                instructionCache_addr_ok;
   wire                instructionCache_data_ok;
   wire       [31:0]   instructionCache_rdata;
+  wire                instructionCache_line_valid;
+  wire       [127:0]  instructionCache_line_data;
   wire                instructionCache_icache_unbusy;
   wire                instructionCache_rd_req;
   wire       [2:0]    instructionCache_rd_type;
@@ -897,9 +937,9 @@ module SpinalCoreBackend (
   wire                predictor_io_prediction_payload_direction_localTaken;
   wire                reset;
   wire                writebackFlushActive;
-  wire                selectedBranchRepair_active;
-  wire       [31:0]   selectedBranchRepair_target;
   wire                executeBranchRepair;
+  wire                branchRepairActive;
+  wire       [31:0]   branchRepairTarget;
   wire                redirectTargetAccepted;
   wire                predictorUpdateFromExecute;
   wire                predictorUpdateFromDecode;
@@ -919,138 +959,177 @@ module SpinalCoreBackend (
   wire       [5:0]    _zz_io_commit_payload_events_2_tlbFill_valid;
 
   FetchStage fetch (
-    .io_downstream_valid                        (fetch_io_downstream_valid                              ), //o
-    .io_downstream_ready                        (fetchBuffer_io_push_ready                              ), //i
-    .io_downstream_payload_pc                   (fetch_io_downstream_payload_pc[31:0]                   ), //o
-    .io_downstream_payload_instruction          (fetch_io_downstream_payload_instruction[31:0]          ), //o
-    .io_downstream_payload_exceptionCode        (fetch_io_downstream_payload_exceptionCode[3:0]         ), //o
-    .io_downstream_payload_hasException         (fetch_io_downstream_payload_hasException               ), //o
-    .io_downstream_payload_instructionCacheMiss (fetch_io_downstream_payload_instructionCacheMiss       ), //o
-    .io_downstream_payload_btbEnabled           (fetch_io_downstream_payload_btbEnabled                 ), //o
-    .io_downstream_payload_btbTaken             (fetch_io_downstream_payload_btbTaken                   ), //o
-    .io_downstream_payload_btbIndex             (fetch_io_downstream_payload_btbIndex[4:0]              ), //o
-    .io_downstream_payload_btbTarget            (fetch_io_downstream_payload_btbTarget[31:0]            ), //o
-    .io_branchRepair                            (selectedBranchRepair_active                            ), //i
-    .io_branchTarget                            (selectedBranchRepair_target[31:0]                      ), //i
-    .io_exceptionFlush                          (writeback_io_flush_exception                           ), //i
-    .io_ertnFlush                               (writeback_io_flush_ertn                                ), //i
-    .io_refetchFlush                            (writeback_io_flush_refetch                             ), //i
-    .io_instructionCacheFlush                   (writeback_io_flush_instructionCacheOperation           ), //i
-    .io_idleFlush                               (writeback_io_flush_idle                                ), //i
-    .io_writebackPc                             (writeback_io_debug_pc[31:0]                            ), //i
-    .io_exceptionEntry                          (fetch_io_exceptionEntry[31:0]                          ), //i
-    .io_exceptionEra                            (fetch_io_exceptionEra[31:0]                            ), //i
-    .io_exceptionTlbRefill                      (writeback_io_exception_tlbRefill                       ), //i
-    .io_tlbRefillEntry                          (fetch_io_tlbRefillEntry[31:0]                          ), //i
-    .io_interrupt                               (csr_has_int                                            ), //i
-    .io_instructionAddressAccepted              (instructionCache_addr_ok                               ), //i
-    .io_instructionDataValid                    (instructionCache_data_ok                               ), //i
-    .io_instructionData                         (instructionCache_rdata[31:0]                           ), //i
-    .io_instructionMiss                         (instructionCache_cache_miss                            ), //i
-    .io_instructionRequest                      (fetch_io_instructionRequest                            ), //o
-    .io_instructionAddress                      (fetch_io_instructionAddress[31:0]                      ), //o
-    .io_instructionUncached                     (fetch_io_instructionUncached                           ), //o
-    .io_tlbCancel                               (fetch_io_tlbCancel                                     ), //o
-    .io_paging                                  (csr_pg_out                                             ), //i
-    .io_directAddress                           (csr_da_out                                             ), //i
-    .io_dmw0                                    (csr_dmw0_out[31:0]                                     ), //i
-    .io_dmw1                                    (csr_dmw1_out[31:0]                                     ), //i
-    .io_currentPlv                              (fetch_io_currentPlv[1:0]                               ), //i
-    .io_directFetchMat                          (csr_datf_out[1:0]                                      ), //i
-    .io_disableCache                            (csr_disable_cache_out                                  ), //i
-    .io_btbTarget                               (predictor_io_prediction_payload_target[31:0]           ), //i
-    .io_btbTaken                                (predictor_io_prediction_payload_taken                  ), //i
-    .io_btbEnabled                              (predictor_io_prediction_valid                          ), //i
-    .io_btbIndex                                (predictor_io_prediction_payload_legacyIndex[4:0]       ), //i
-    .io_btbDirection_phtIndex                   (predictor_io_prediction_payload_direction_phtIndex[7:0]), //i
-    .io_btbDirection_baseTaken                  (predictor_io_prediction_payload_direction_baseTaken    ), //i
-    .io_btbDirection_localTaken                 (predictor_io_prediction_payload_direction_localTaken   ), //i
-    .io_directionPrediction_phtIndex            (fetch_io_directionPrediction_phtIndex[7:0]             ), //o
-    .io_directionPrediction_baseTaken           (fetch_io_directionPrediction_baseTaken                 ), //o
-    .io_directionPrediction_localTaken          (fetch_io_directionPrediction_localTaken                ), //o
-    .io_addressTranslation                      (fetch_io_addressTranslation                            ), //o
-    .io_dmw0Enabled                             (fetch_io_dmw0Enabled                                   ), //o
-    .io_dmw1Enabled                             (fetch_io_dmw1Enabled                                   ), //o
-    .io_tlbFound                                (addressTranslation_inst_tlb_found                      ), //i
-    .io_tlbValid                                (addressTranslation_inst_tlb_v                          ), //i
-    .io_tlbMat                                  (addressTranslation_inst_tlb_mat[1:0]                   ), //i
-    .io_tlbPlv                                  (fetch_io_tlbPlv[1:0]                                   ), //i
-    .io_fetchPc                                 (fetch_io_fetchPc[31:0]                                 ), //o
-    .io_fetchEnable                             (fetch_io_fetchEnable                                   ), //o
-    .aclk                                       (aclk_1                                                 ), //i
-    .resetCapture_backendActiveHigh             (resetCapture_backendActiveHigh                         )  //i
+    .io_downstreamPacket_valid                                      (fetch_io_downstreamPacket_valid                                     ), //o
+    .io_downstreamPacket_ready                                      (fetchBuffer_io_push_ready                                           ), //i
+    .io_downstreamPacket_payload_slotValid                          (fetch_io_downstreamPacket_payload_slotValid[3:0]                    ), //o
+    .io_downstreamPacket_payload_slots_0_fetch_pc                   (fetch_io_downstreamPacket_payload_slots_0_fetch_pc[31:0]            ), //o
+    .io_downstreamPacket_payload_slots_0_fetch_instruction          (fetch_io_downstreamPacket_payload_slots_0_fetch_instruction[31:0]   ), //o
+    .io_downstreamPacket_payload_slots_0_fetch_exceptionCode        (fetch_io_downstreamPacket_payload_slots_0_fetch_exceptionCode[3:0]  ), //o
+    .io_downstreamPacket_payload_slots_0_fetch_hasException         (fetch_io_downstreamPacket_payload_slots_0_fetch_hasException        ), //o
+    .io_downstreamPacket_payload_slots_0_fetch_instructionCacheMiss (fetch_io_downstreamPacket_payload_slots_0_fetch_instructionCacheMiss), //o
+    .io_downstreamPacket_payload_slots_0_fetch_btbEnabled           (fetch_io_downstreamPacket_payload_slots_0_fetch_btbEnabled          ), //o
+    .io_downstreamPacket_payload_slots_0_fetch_btbTaken             (fetch_io_downstreamPacket_payload_slots_0_fetch_btbTaken            ), //o
+    .io_downstreamPacket_payload_slots_0_fetch_btbIndex             (fetch_io_downstreamPacket_payload_slots_0_fetch_btbIndex[4:0]       ), //o
+    .io_downstreamPacket_payload_slots_0_fetch_btbTarget            (fetch_io_downstreamPacket_payload_slots_0_fetch_btbTarget[31:0]     ), //o
+    .io_downstreamPacket_payload_slots_0_direction_phtIndex         (fetch_io_downstreamPacket_payload_slots_0_direction_phtIndex[7:0]   ), //o
+    .io_downstreamPacket_payload_slots_0_direction_baseTaken        (fetch_io_downstreamPacket_payload_slots_0_direction_baseTaken       ), //o
+    .io_downstreamPacket_payload_slots_0_direction_localTaken       (fetch_io_downstreamPacket_payload_slots_0_direction_localTaken      ), //o
+    .io_downstreamPacket_payload_slots_1_fetch_pc                   (fetch_io_downstreamPacket_payload_slots_1_fetch_pc[31:0]            ), //o
+    .io_downstreamPacket_payload_slots_1_fetch_instruction          (fetch_io_downstreamPacket_payload_slots_1_fetch_instruction[31:0]   ), //o
+    .io_downstreamPacket_payload_slots_1_fetch_exceptionCode        (fetch_io_downstreamPacket_payload_slots_1_fetch_exceptionCode[3:0]  ), //o
+    .io_downstreamPacket_payload_slots_1_fetch_hasException         (fetch_io_downstreamPacket_payload_slots_1_fetch_hasException        ), //o
+    .io_downstreamPacket_payload_slots_1_fetch_instructionCacheMiss (fetch_io_downstreamPacket_payload_slots_1_fetch_instructionCacheMiss), //o
+    .io_downstreamPacket_payload_slots_1_fetch_btbEnabled           (fetch_io_downstreamPacket_payload_slots_1_fetch_btbEnabled          ), //o
+    .io_downstreamPacket_payload_slots_1_fetch_btbTaken             (fetch_io_downstreamPacket_payload_slots_1_fetch_btbTaken            ), //o
+    .io_downstreamPacket_payload_slots_1_fetch_btbIndex             (fetch_io_downstreamPacket_payload_slots_1_fetch_btbIndex[4:0]       ), //o
+    .io_downstreamPacket_payload_slots_1_fetch_btbTarget            (fetch_io_downstreamPacket_payload_slots_1_fetch_btbTarget[31:0]     ), //o
+    .io_downstreamPacket_payload_slots_1_direction_phtIndex         (fetch_io_downstreamPacket_payload_slots_1_direction_phtIndex[7:0]   ), //o
+    .io_downstreamPacket_payload_slots_1_direction_baseTaken        (fetch_io_downstreamPacket_payload_slots_1_direction_baseTaken       ), //o
+    .io_downstreamPacket_payload_slots_1_direction_localTaken       (fetch_io_downstreamPacket_payload_slots_1_direction_localTaken      ), //o
+    .io_downstreamPacket_payload_slots_2_fetch_pc                   (fetch_io_downstreamPacket_payload_slots_2_fetch_pc[31:0]            ), //o
+    .io_downstreamPacket_payload_slots_2_fetch_instruction          (fetch_io_downstreamPacket_payload_slots_2_fetch_instruction[31:0]   ), //o
+    .io_downstreamPacket_payload_slots_2_fetch_exceptionCode        (fetch_io_downstreamPacket_payload_slots_2_fetch_exceptionCode[3:0]  ), //o
+    .io_downstreamPacket_payload_slots_2_fetch_hasException         (fetch_io_downstreamPacket_payload_slots_2_fetch_hasException        ), //o
+    .io_downstreamPacket_payload_slots_2_fetch_instructionCacheMiss (fetch_io_downstreamPacket_payload_slots_2_fetch_instructionCacheMiss), //o
+    .io_downstreamPacket_payload_slots_2_fetch_btbEnabled           (fetch_io_downstreamPacket_payload_slots_2_fetch_btbEnabled          ), //o
+    .io_downstreamPacket_payload_slots_2_fetch_btbTaken             (fetch_io_downstreamPacket_payload_slots_2_fetch_btbTaken            ), //o
+    .io_downstreamPacket_payload_slots_2_fetch_btbIndex             (fetch_io_downstreamPacket_payload_slots_2_fetch_btbIndex[4:0]       ), //o
+    .io_downstreamPacket_payload_slots_2_fetch_btbTarget            (fetch_io_downstreamPacket_payload_slots_2_fetch_btbTarget[31:0]     ), //o
+    .io_downstreamPacket_payload_slots_2_direction_phtIndex         (fetch_io_downstreamPacket_payload_slots_2_direction_phtIndex[7:0]   ), //o
+    .io_downstreamPacket_payload_slots_2_direction_baseTaken        (fetch_io_downstreamPacket_payload_slots_2_direction_baseTaken       ), //o
+    .io_downstreamPacket_payload_slots_2_direction_localTaken       (fetch_io_downstreamPacket_payload_slots_2_direction_localTaken      ), //o
+    .io_downstreamPacket_payload_slots_3_fetch_pc                   (fetch_io_downstreamPacket_payload_slots_3_fetch_pc[31:0]            ), //o
+    .io_downstreamPacket_payload_slots_3_fetch_instruction          (fetch_io_downstreamPacket_payload_slots_3_fetch_instruction[31:0]   ), //o
+    .io_downstreamPacket_payload_slots_3_fetch_exceptionCode        (fetch_io_downstreamPacket_payload_slots_3_fetch_exceptionCode[3:0]  ), //o
+    .io_downstreamPacket_payload_slots_3_fetch_hasException         (fetch_io_downstreamPacket_payload_slots_3_fetch_hasException        ), //o
+    .io_downstreamPacket_payload_slots_3_fetch_instructionCacheMiss (fetch_io_downstreamPacket_payload_slots_3_fetch_instructionCacheMiss), //o
+    .io_downstreamPacket_payload_slots_3_fetch_btbEnabled           (fetch_io_downstreamPacket_payload_slots_3_fetch_btbEnabled          ), //o
+    .io_downstreamPacket_payload_slots_3_fetch_btbTaken             (fetch_io_downstreamPacket_payload_slots_3_fetch_btbTaken            ), //o
+    .io_downstreamPacket_payload_slots_3_fetch_btbIndex             (fetch_io_downstreamPacket_payload_slots_3_fetch_btbIndex[4:0]       ), //o
+    .io_downstreamPacket_payload_slots_3_fetch_btbTarget            (fetch_io_downstreamPacket_payload_slots_3_fetch_btbTarget[31:0]     ), //o
+    .io_downstreamPacket_payload_slots_3_direction_phtIndex         (fetch_io_downstreamPacket_payload_slots_3_direction_phtIndex[7:0]   ), //o
+    .io_downstreamPacket_payload_slots_3_direction_baseTaken        (fetch_io_downstreamPacket_payload_slots_3_direction_baseTaken       ), //o
+    .io_downstreamPacket_payload_slots_3_direction_localTaken       (fetch_io_downstreamPacket_payload_slots_3_direction_localTaken      ), //o
+    .io_branchRepair                                                (branchRepairActive                                                  ), //i
+    .io_branchTarget                                                (branchRepairTarget[31:0]                                            ), //i
+    .io_exceptionFlush                                              (writeback_io_flush_exception                                        ), //i
+    .io_ertnFlush                                                   (writeback_io_flush_ertn                                             ), //i
+    .io_refetchFlush                                                (writeback_io_flush_refetch                                          ), //i
+    .io_instructionCacheFlush                                       (writeback_io_flush_instructionCacheOperation                        ), //i
+    .io_idleFlush                                                   (writeback_io_flush_idle                                             ), //i
+    .io_writebackPc                                                 (writeback_io_debug_pc[31:0]                                         ), //i
+    .io_exceptionEntry                                              (fetch_io_exceptionEntry[31:0]                                       ), //i
+    .io_exceptionEra                                                (fetch_io_exceptionEra[31:0]                                         ), //i
+    .io_exceptionTlbRefill                                          (writeback_io_exception_tlbRefill                                    ), //i
+    .io_tlbRefillEntry                                              (fetch_io_tlbRefillEntry[31:0]                                       ), //i
+    .io_interrupt                                                   (csr_has_int                                                         ), //i
+    .io_instructionAddressAccepted                                  (instructionCache_addr_ok                                            ), //i
+    .io_instructionDataValid                                        (fetch_io_instructionDataValid                                       ), //i
+    .io_instructionData                                             (instructionCache_rdata[31:0]                                        ), //i
+    .io_instructionLineValid                                        (instructionCache_line_valid                                         ), //i
+    .io_instructionLineData                                         (instructionCache_line_data[127:0]                                   ), //i
+    .io_instructionMiss                                             (instructionCache_cache_miss                                         ), //i
+    .io_instructionRequest                                          (fetch_io_instructionRequest                                         ), //o
+    .io_instructionAddress                                          (fetch_io_instructionAddress[31:0]                                   ), //o
+    .io_instructionUncached                                         (fetch_io_instructionUncached                                        ), //o
+    .io_tlbCancel                                                   (fetch_io_tlbCancel                                                  ), //o
+    .io_paging                                                      (csr_pg_out                                                          ), //i
+    .io_directAddress                                               (csr_da_out                                                          ), //i
+    .io_dmw0                                                        (csr_dmw0_out[31:0]                                                  ), //i
+    .io_dmw1                                                        (csr_dmw1_out[31:0]                                                  ), //i
+    .io_currentPlv                                                  (fetch_io_currentPlv[1:0]                                            ), //i
+    .io_directFetchMat                                              (csr_datf_out[1:0]                                                   ), //i
+    .io_disableCache                                                (csr_disable_cache_out                                               ), //i
+    .io_btbTarget                                                   (predictor_io_prediction_payload_target[31:0]                        ), //i
+    .io_btbTaken                                                    (predictor_io_prediction_payload_taken                               ), //i
+    .io_btbEnabled                                                  (predictor_io_prediction_valid                                       ), //i
+    .io_btbIndex                                                    (predictor_io_prediction_payload_legacyIndex[4:0]                    ), //i
+    .io_btbDirection_phtIndex                                       (predictor_io_prediction_payload_direction_phtIndex[7:0]             ), //i
+    .io_btbDirection_baseTaken                                      (predictor_io_prediction_payload_direction_baseTaken                 ), //i
+    .io_btbDirection_localTaken                                     (predictor_io_prediction_payload_direction_localTaken                ), //i
+    .io_addressTranslation                                          (fetch_io_addressTranslation                                         ), //o
+    .io_dmw0Enabled                                                 (fetch_io_dmw0Enabled                                                ), //o
+    .io_dmw1Enabled                                                 (fetch_io_dmw1Enabled                                                ), //o
+    .io_tlbFound                                                    (addressTranslation_inst_tlb_found                                   ), //i
+    .io_tlbValid                                                    (addressTranslation_inst_tlb_v                                       ), //i
+    .io_tlbMat                                                      (addressTranslation_inst_tlb_mat[1:0]                                ), //i
+    .io_tlbPlv                                                      (fetch_io_tlbPlv[1:0]                                                ), //i
+    .io_fetchPc                                                     (fetch_io_fetchPc[31:0]                                              ), //o
+    .io_fetchEnable                                                 (fetch_io_fetchEnable                                                ), //o
+    .aclk                                                           (aclk_1                                                              ), //i
+    .resetCapture_backendActiveHigh                                 (resetCapture_backendActiveHigh                                      )  //i
   );
   FetchInstructionBuffer fetchBuffer (
-    .io_flush                                           (fetchBuffer_io_flush                                 ), //i
-    .io_redirect                                        (selectedBranchRepair_active                          ), //i
-    .io_redirectTargetAccepted                          (redirectTargetAccepted                               ), //i
-    .io_push_valid                                      (fetch_io_downstream_valid                            ), //i
-    .io_push_ready                                      (fetchBuffer_io_push_ready                            ), //o
-    .io_push_payload_slotValid                          (4'b0001                                              ), //i
-    .io_push_payload_slots_0_fetch_pc                   (fetch_io_downstream_payload_pc[31:0]                 ), //i
-    .io_push_payload_slots_0_fetch_instruction          (fetch_io_downstream_payload_instruction[31:0]        ), //i
-    .io_push_payload_slots_0_fetch_exceptionCode        (fetch_io_downstream_payload_exceptionCode[3:0]       ), //i
-    .io_push_payload_slots_0_fetch_hasException         (fetch_io_downstream_payload_hasException             ), //i
-    .io_push_payload_slots_0_fetch_instructionCacheMiss (fetch_io_downstream_payload_instructionCacheMiss     ), //i
-    .io_push_payload_slots_0_fetch_btbEnabled           (fetch_io_downstream_payload_btbEnabled               ), //i
-    .io_push_payload_slots_0_fetch_btbTaken             (fetch_io_downstream_payload_btbTaken                 ), //i
-    .io_push_payload_slots_0_fetch_btbIndex             (fetch_io_downstream_payload_btbIndex[4:0]            ), //i
-    .io_push_payload_slots_0_fetch_btbTarget            (fetch_io_downstream_payload_btbTarget[31:0]          ), //i
-    .io_push_payload_slots_0_direction_phtIndex         (fetch_io_directionPrediction_phtIndex[7:0]           ), //i
-    .io_push_payload_slots_0_direction_baseTaken        (fetch_io_directionPrediction_baseTaken               ), //i
-    .io_push_payload_slots_0_direction_localTaken       (fetch_io_directionPrediction_localTaken              ), //i
-    .io_push_payload_slots_1_fetch_pc                   (fetch_io_downstream_payload_pc[31:0]                 ), //i
-    .io_push_payload_slots_1_fetch_instruction          (fetch_io_downstream_payload_instruction[31:0]        ), //i
-    .io_push_payload_slots_1_fetch_exceptionCode        (fetch_io_downstream_payload_exceptionCode[3:0]       ), //i
-    .io_push_payload_slots_1_fetch_hasException         (fetch_io_downstream_payload_hasException             ), //i
-    .io_push_payload_slots_1_fetch_instructionCacheMiss (fetch_io_downstream_payload_instructionCacheMiss     ), //i
-    .io_push_payload_slots_1_fetch_btbEnabled           (fetch_io_downstream_payload_btbEnabled               ), //i
-    .io_push_payload_slots_1_fetch_btbTaken             (fetch_io_downstream_payload_btbTaken                 ), //i
-    .io_push_payload_slots_1_fetch_btbIndex             (fetch_io_downstream_payload_btbIndex[4:0]            ), //i
-    .io_push_payload_slots_1_fetch_btbTarget            (fetch_io_downstream_payload_btbTarget[31:0]          ), //i
-    .io_push_payload_slots_1_direction_phtIndex         (fetch_io_directionPrediction_phtIndex[7:0]           ), //i
-    .io_push_payload_slots_1_direction_baseTaken        (fetch_io_directionPrediction_baseTaken               ), //i
-    .io_push_payload_slots_1_direction_localTaken       (fetch_io_directionPrediction_localTaken              ), //i
-    .io_push_payload_slots_2_fetch_pc                   (fetch_io_downstream_payload_pc[31:0]                 ), //i
-    .io_push_payload_slots_2_fetch_instruction          (fetch_io_downstream_payload_instruction[31:0]        ), //i
-    .io_push_payload_slots_2_fetch_exceptionCode        (fetch_io_downstream_payload_exceptionCode[3:0]       ), //i
-    .io_push_payload_slots_2_fetch_hasException         (fetch_io_downstream_payload_hasException             ), //i
-    .io_push_payload_slots_2_fetch_instructionCacheMiss (fetch_io_downstream_payload_instructionCacheMiss     ), //i
-    .io_push_payload_slots_2_fetch_btbEnabled           (fetch_io_downstream_payload_btbEnabled               ), //i
-    .io_push_payload_slots_2_fetch_btbTaken             (fetch_io_downstream_payload_btbTaken                 ), //i
-    .io_push_payload_slots_2_fetch_btbIndex             (fetch_io_downstream_payload_btbIndex[4:0]            ), //i
-    .io_push_payload_slots_2_fetch_btbTarget            (fetch_io_downstream_payload_btbTarget[31:0]          ), //i
-    .io_push_payload_slots_2_direction_phtIndex         (fetch_io_directionPrediction_phtIndex[7:0]           ), //i
-    .io_push_payload_slots_2_direction_baseTaken        (fetch_io_directionPrediction_baseTaken               ), //i
-    .io_push_payload_slots_2_direction_localTaken       (fetch_io_directionPrediction_localTaken              ), //i
-    .io_push_payload_slots_3_fetch_pc                   (fetch_io_downstream_payload_pc[31:0]                 ), //i
-    .io_push_payload_slots_3_fetch_instruction          (fetch_io_downstream_payload_instruction[31:0]        ), //i
-    .io_push_payload_slots_3_fetch_exceptionCode        (fetch_io_downstream_payload_exceptionCode[3:0]       ), //i
-    .io_push_payload_slots_3_fetch_hasException         (fetch_io_downstream_payload_hasException             ), //i
-    .io_push_payload_slots_3_fetch_instructionCacheMiss (fetch_io_downstream_payload_instructionCacheMiss     ), //i
-    .io_push_payload_slots_3_fetch_btbEnabled           (fetch_io_downstream_payload_btbEnabled               ), //i
-    .io_push_payload_slots_3_fetch_btbTaken             (fetch_io_downstream_payload_btbTaken                 ), //i
-    .io_push_payload_slots_3_fetch_btbIndex             (fetch_io_downstream_payload_btbIndex[4:0]            ), //i
-    .io_push_payload_slots_3_fetch_btbTarget            (fetch_io_downstream_payload_btbTarget[31:0]          ), //i
-    .io_push_payload_slots_3_direction_phtIndex         (fetch_io_directionPrediction_phtIndex[7:0]           ), //i
-    .io_push_payload_slots_3_direction_baseTaken        (fetch_io_directionPrediction_baseTaken               ), //i
-    .io_push_payload_slots_3_direction_localTaken       (fetch_io_directionPrediction_localTaken              ), //i
-    .io_pop_valid                                       (fetchBuffer_io_pop_valid                             ), //o
-    .io_pop_ready                                       (decode_io_input_ready                                ), //i
-    .io_pop_payload_fetch_pc                            (fetchBuffer_io_pop_payload_fetch_pc[31:0]            ), //o
-    .io_pop_payload_fetch_instruction                   (fetchBuffer_io_pop_payload_fetch_instruction[31:0]   ), //o
-    .io_pop_payload_fetch_exceptionCode                 (fetchBuffer_io_pop_payload_fetch_exceptionCode[3:0]  ), //o
-    .io_pop_payload_fetch_hasException                  (fetchBuffer_io_pop_payload_fetch_hasException        ), //o
-    .io_pop_payload_fetch_instructionCacheMiss          (fetchBuffer_io_pop_payload_fetch_instructionCacheMiss), //o
-    .io_pop_payload_fetch_btbEnabled                    (fetchBuffer_io_pop_payload_fetch_btbEnabled          ), //o
-    .io_pop_payload_fetch_btbTaken                      (fetchBuffer_io_pop_payload_fetch_btbTaken            ), //o
-    .io_pop_payload_fetch_btbIndex                      (fetchBuffer_io_pop_payload_fetch_btbIndex[4:0]       ), //o
-    .io_pop_payload_fetch_btbTarget                     (fetchBuffer_io_pop_payload_fetch_btbTarget[31:0]     ), //o
-    .io_pop_payload_direction_phtIndex                  (fetchBuffer_io_pop_payload_direction_phtIndex[7:0]   ), //o
-    .io_pop_payload_direction_baseTaken                 (fetchBuffer_io_pop_payload_direction_baseTaken       ), //o
-    .io_pop_payload_direction_localTaken                (fetchBuffer_io_pop_payload_direction_localTaken      ), //o
-    .aclk                                               (aclk_1                                               ), //i
-    .resetCapture_backendActiveHigh                     (resetCapture_backendActiveHigh                       )  //i
+    .io_flush                                           (fetchBuffer_io_flush                                                ), //i
+    .io_redirect                                        (branchRepairActive                                                  ), //i
+    .io_redirectTargetAccepted                          (redirectTargetAccepted                                              ), //i
+    .io_push_valid                                      (fetch_io_downstreamPacket_valid                                     ), //i
+    .io_push_ready                                      (fetchBuffer_io_push_ready                                           ), //o
+    .io_push_payload_slotValid                          (fetch_io_downstreamPacket_payload_slotValid[3:0]                    ), //i
+    .io_push_payload_slots_0_fetch_pc                   (fetch_io_downstreamPacket_payload_slots_0_fetch_pc[31:0]            ), //i
+    .io_push_payload_slots_0_fetch_instruction          (fetch_io_downstreamPacket_payload_slots_0_fetch_instruction[31:0]   ), //i
+    .io_push_payload_slots_0_fetch_exceptionCode        (fetch_io_downstreamPacket_payload_slots_0_fetch_exceptionCode[3:0]  ), //i
+    .io_push_payload_slots_0_fetch_hasException         (fetch_io_downstreamPacket_payload_slots_0_fetch_hasException        ), //i
+    .io_push_payload_slots_0_fetch_instructionCacheMiss (fetch_io_downstreamPacket_payload_slots_0_fetch_instructionCacheMiss), //i
+    .io_push_payload_slots_0_fetch_btbEnabled           (fetch_io_downstreamPacket_payload_slots_0_fetch_btbEnabled          ), //i
+    .io_push_payload_slots_0_fetch_btbTaken             (fetch_io_downstreamPacket_payload_slots_0_fetch_btbTaken            ), //i
+    .io_push_payload_slots_0_fetch_btbIndex             (fetch_io_downstreamPacket_payload_slots_0_fetch_btbIndex[4:0]       ), //i
+    .io_push_payload_slots_0_fetch_btbTarget            (fetch_io_downstreamPacket_payload_slots_0_fetch_btbTarget[31:0]     ), //i
+    .io_push_payload_slots_0_direction_phtIndex         (fetch_io_downstreamPacket_payload_slots_0_direction_phtIndex[7:0]   ), //i
+    .io_push_payload_slots_0_direction_baseTaken        (fetch_io_downstreamPacket_payload_slots_0_direction_baseTaken       ), //i
+    .io_push_payload_slots_0_direction_localTaken       (fetch_io_downstreamPacket_payload_slots_0_direction_localTaken      ), //i
+    .io_push_payload_slots_1_fetch_pc                   (fetch_io_downstreamPacket_payload_slots_1_fetch_pc[31:0]            ), //i
+    .io_push_payload_slots_1_fetch_instruction          (fetch_io_downstreamPacket_payload_slots_1_fetch_instruction[31:0]   ), //i
+    .io_push_payload_slots_1_fetch_exceptionCode        (fetch_io_downstreamPacket_payload_slots_1_fetch_exceptionCode[3:0]  ), //i
+    .io_push_payload_slots_1_fetch_hasException         (fetch_io_downstreamPacket_payload_slots_1_fetch_hasException        ), //i
+    .io_push_payload_slots_1_fetch_instructionCacheMiss (fetch_io_downstreamPacket_payload_slots_1_fetch_instructionCacheMiss), //i
+    .io_push_payload_slots_1_fetch_btbEnabled           (fetch_io_downstreamPacket_payload_slots_1_fetch_btbEnabled          ), //i
+    .io_push_payload_slots_1_fetch_btbTaken             (fetch_io_downstreamPacket_payload_slots_1_fetch_btbTaken            ), //i
+    .io_push_payload_slots_1_fetch_btbIndex             (fetch_io_downstreamPacket_payload_slots_1_fetch_btbIndex[4:0]       ), //i
+    .io_push_payload_slots_1_fetch_btbTarget            (fetch_io_downstreamPacket_payload_slots_1_fetch_btbTarget[31:0]     ), //i
+    .io_push_payload_slots_1_direction_phtIndex         (fetch_io_downstreamPacket_payload_slots_1_direction_phtIndex[7:0]   ), //i
+    .io_push_payload_slots_1_direction_baseTaken        (fetch_io_downstreamPacket_payload_slots_1_direction_baseTaken       ), //i
+    .io_push_payload_slots_1_direction_localTaken       (fetch_io_downstreamPacket_payload_slots_1_direction_localTaken      ), //i
+    .io_push_payload_slots_2_fetch_pc                   (fetch_io_downstreamPacket_payload_slots_2_fetch_pc[31:0]            ), //i
+    .io_push_payload_slots_2_fetch_instruction          (fetch_io_downstreamPacket_payload_slots_2_fetch_instruction[31:0]   ), //i
+    .io_push_payload_slots_2_fetch_exceptionCode        (fetch_io_downstreamPacket_payload_slots_2_fetch_exceptionCode[3:0]  ), //i
+    .io_push_payload_slots_2_fetch_hasException         (fetch_io_downstreamPacket_payload_slots_2_fetch_hasException        ), //i
+    .io_push_payload_slots_2_fetch_instructionCacheMiss (fetch_io_downstreamPacket_payload_slots_2_fetch_instructionCacheMiss), //i
+    .io_push_payload_slots_2_fetch_btbEnabled           (fetch_io_downstreamPacket_payload_slots_2_fetch_btbEnabled          ), //i
+    .io_push_payload_slots_2_fetch_btbTaken             (fetch_io_downstreamPacket_payload_slots_2_fetch_btbTaken            ), //i
+    .io_push_payload_slots_2_fetch_btbIndex             (fetch_io_downstreamPacket_payload_slots_2_fetch_btbIndex[4:0]       ), //i
+    .io_push_payload_slots_2_fetch_btbTarget            (fetch_io_downstreamPacket_payload_slots_2_fetch_btbTarget[31:0]     ), //i
+    .io_push_payload_slots_2_direction_phtIndex         (fetch_io_downstreamPacket_payload_slots_2_direction_phtIndex[7:0]   ), //i
+    .io_push_payload_slots_2_direction_baseTaken        (fetch_io_downstreamPacket_payload_slots_2_direction_baseTaken       ), //i
+    .io_push_payload_slots_2_direction_localTaken       (fetch_io_downstreamPacket_payload_slots_2_direction_localTaken      ), //i
+    .io_push_payload_slots_3_fetch_pc                   (fetch_io_downstreamPacket_payload_slots_3_fetch_pc[31:0]            ), //i
+    .io_push_payload_slots_3_fetch_instruction          (fetch_io_downstreamPacket_payload_slots_3_fetch_instruction[31:0]   ), //i
+    .io_push_payload_slots_3_fetch_exceptionCode        (fetch_io_downstreamPacket_payload_slots_3_fetch_exceptionCode[3:0]  ), //i
+    .io_push_payload_slots_3_fetch_hasException         (fetch_io_downstreamPacket_payload_slots_3_fetch_hasException        ), //i
+    .io_push_payload_slots_3_fetch_instructionCacheMiss (fetch_io_downstreamPacket_payload_slots_3_fetch_instructionCacheMiss), //i
+    .io_push_payload_slots_3_fetch_btbEnabled           (fetch_io_downstreamPacket_payload_slots_3_fetch_btbEnabled          ), //i
+    .io_push_payload_slots_3_fetch_btbTaken             (fetch_io_downstreamPacket_payload_slots_3_fetch_btbTaken            ), //i
+    .io_push_payload_slots_3_fetch_btbIndex             (fetch_io_downstreamPacket_payload_slots_3_fetch_btbIndex[4:0]       ), //i
+    .io_push_payload_slots_3_fetch_btbTarget            (fetch_io_downstreamPacket_payload_slots_3_fetch_btbTarget[31:0]     ), //i
+    .io_push_payload_slots_3_direction_phtIndex         (fetch_io_downstreamPacket_payload_slots_3_direction_phtIndex[7:0]   ), //i
+    .io_push_payload_slots_3_direction_baseTaken        (fetch_io_downstreamPacket_payload_slots_3_direction_baseTaken       ), //i
+    .io_push_payload_slots_3_direction_localTaken       (fetch_io_downstreamPacket_payload_slots_3_direction_localTaken      ), //i
+    .io_pop_valid                                       (fetchBuffer_io_pop_valid                                            ), //o
+    .io_pop_ready                                       (decode_io_input_ready                                               ), //i
+    .io_pop_payload_fetch_pc                            (fetchBuffer_io_pop_payload_fetch_pc[31:0]                           ), //o
+    .io_pop_payload_fetch_instruction                   (fetchBuffer_io_pop_payload_fetch_instruction[31:0]                  ), //o
+    .io_pop_payload_fetch_exceptionCode                 (fetchBuffer_io_pop_payload_fetch_exceptionCode[3:0]                 ), //o
+    .io_pop_payload_fetch_hasException                  (fetchBuffer_io_pop_payload_fetch_hasException                       ), //o
+    .io_pop_payload_fetch_instructionCacheMiss          (fetchBuffer_io_pop_payload_fetch_instructionCacheMiss               ), //o
+    .io_pop_payload_fetch_btbEnabled                    (fetchBuffer_io_pop_payload_fetch_btbEnabled                         ), //o
+    .io_pop_payload_fetch_btbTaken                      (fetchBuffer_io_pop_payload_fetch_btbTaken                           ), //o
+    .io_pop_payload_fetch_btbIndex                      (fetchBuffer_io_pop_payload_fetch_btbIndex[4:0]                      ), //o
+    .io_pop_payload_fetch_btbTarget                     (fetchBuffer_io_pop_payload_fetch_btbTarget[31:0]                    ), //o
+    .io_pop_payload_direction_phtIndex                  (fetchBuffer_io_pop_payload_direction_phtIndex[7:0]                  ), //o
+    .io_pop_payload_direction_baseTaken                 (fetchBuffer_io_pop_payload_direction_baseTaken                      ), //o
+    .io_pop_payload_direction_localTaken                (fetchBuffer_io_pop_payload_direction_localTaken                     ), //o
+    .aclk                                               (aclk_1                                                              ), //i
+    .resetCapture_backendActiveHigh                     (resetCapture_backendActiveHigh                                      )  //i
   );
   DecodeStage decode (
     .io_input_valid                         (fetchBuffer_io_pop_valid                             ), //i
@@ -1799,6 +1878,8 @@ module SpinalCoreBackend (
     .addr_ok              (instructionCache_addr_ok                      ), //o
     .data_ok              (instructionCache_data_ok                      ), //o
     .rdata                (instructionCache_rdata[31:0]                  ), //o
+    .line_valid           (instructionCache_line_valid                   ), //o
+    .line_data            (instructionCache_line_data[127:0]             ), //o
     .uncache_en           (fetch_io_instructionUncached                  ), //i
     .icacop_op_en         (execute_io_cache_instructionOperationEnable   ), //i
     .cacop_op_mode        (execute_io_cache_operationMode[1:0]           ), //i
@@ -2148,15 +2229,15 @@ module SpinalCoreBackend (
   );
   assign reset = (! aresetn);
   assign writebackFlushActive = ((((writeback_io_flush_exception || writeback_io_flush_ertn) || writeback_io_flush_refetch) || writeback_io_flush_instructionCacheOperation) || writeback_io_flush_idle);
-  assign selectedBranchRepair_active = ((! writebackFlushActive) && (execute_io_branchRepair_active || decode_io_branchRepair_active));
-  assign selectedBranchRepair_target = (execute_io_branchRepair_active ? execute_io_branchRepair_target : decode_io_branchRepair_target);
   assign executeBranchRepair = (execute_io_branchRepair_active && (! writebackFlushActive));
   assign execute_io_input_valid = (decode_io_output_valid && (! executeBranchRepair));
   assign decode_io_output_ready = (execute_io_input_ready && (! executeBranchRepair));
   assign writeback_io_tlbFillIndex = csr_rand_index;
   assign decode_io_flush_refetch = (writeback_io_flush_refetch || executeBranchRepair);
-  assign redirectTargetAccepted = ((selectedBranchRepair_active && fetch_io_fetchEnable) && (fetch_io_fetchPc == selectedBranchRepair_target));
-  assign fetchBuffer_io_flush = (selectedBranchRepair_active || writebackFlushActive);
+  assign branchRepairActive = ((! writebackFlushActive) && (execute_io_branchRepair_active || decode_io_branchRepair_active));
+  assign branchRepairTarget = (execute_io_branchRepair_active ? execute_io_branchRepair_target : decode_io_branchRepair_target);
+  assign redirectTargetAccepted = ((branchRepairActive && fetch_io_fetchEnable) && (fetch_io_fetchPc == branchRepairTarget));
+  assign fetchBuffer_io_flush = (branchRepairActive || writebackFlushActive);
   assign decode_io_executeLateResultAllowed = (! execute_io_output_payload_hasException);
   assign predictorUpdateFromExecute = (execute_io_btb_enable && (! writebackFlushActive));
   assign predictorUpdateFromDecode = (decode_io_btb_enable && (! writebackFlushActive));
@@ -2280,6 +2361,7 @@ module SpinalCoreBackend (
   assign chiplabDiffTestAdapter_1_io_commit_payload_events_2_tlbFill_valid = _zz_io_commit_payload_events_2_tlbFill_valid[0];
   assign chiplabDiffTestAdapter_1_io_commit_payload_events_2_tlbFill_index = _zz_io_commit_payload_events_2_tlbFill_valid[5 : 1];
   assign instructionCache_speculativeColor = fetch_io_instructionAddress[13 : 12];
+  assign fetch_io_instructionDataValid = (instructionCache_data_ok && (! instructionCache_line_valid));
   assign dataCache_speculativeColor = execute_io_memory_virtualAddress[13 : 12];
   assign axiBridge_inst_read_payload_address = instructionCache_rd_addr;
   assign axiBridge_inst_write_payload_address = instructionCache_wr_addr;
@@ -28795,6 +28877,8 @@ module OpenLa500ICache (
   output wire          addr_ok,
   output wire          data_ok,
   output wire [31:0]   rdata,
+  output wire          line_valid,
+  output wire [127:0]  line_data,
   input  wire          uncache_en,
   input  wire          icacop_op_en,
   input  wire [1:0]    cacop_op_mode,
@@ -28843,6 +28927,29 @@ module OpenLa500ICache (
   wire       [1:0]    _zz_logic_wayWords_0_1;
   reg        [31:0]   _zz_logic_wayWords_1;
   wire       [1:0]    _zz_logic_wayWords_1_1;
+  wire       [31:0]   _zz_logic_lineData_4;
+  wire                _zz_logic_lineData_5;
+  wire       [31:0]   _zz_logic_lineData_6;
+  wire                _zz_logic_lineData_7;
+  wire       [31:0]   _zz_logic_lineData_8;
+  wire       [31:0]   _zz_logic_lineData_9;
+  wire                _zz_logic_lineData_10;
+  wire       [31:0]   _zz_logic_lineData_11;
+  wire                _zz_logic_lineData_12;
+  wire       [31:0]   _zz_logic_lineData_13;
+  wire       [31:0]   _zz_logic_lineData_14;
+  wire       [31:0]   _zz_logic_lineData_15;
+  wire                _zz_logic_lineData_16;
+  wire       [31:0]   _zz_logic_lineData_17;
+  wire                _zz_logic_lineData_18;
+  wire       [31:0]   _zz_logic_lineData_19;
+  wire       [31:0]   _zz_logic_lineData_20;
+  wire                _zz_logic_lineData_21;
+  wire       [31:0]   _zz_logic_lineData_22;
+  wire                _zz_logic_lineData_23;
+  wire                _zz_logic_lineData_24;
+  wire       [1:0]    _zz_logic_lineData_25;
+  wire                _zz_logic_lineData_26;
   wire       [4:0]    logic_MainIdle;
   wire       [4:0]    logic_MainLookup;
   wire       [4:0]    logic_MainReplace;
@@ -28863,7 +28970,7 @@ module OpenLa500ICache (
   reg                 logic_legacyWrReq;
   reg                 logic_scrubActive;
   reg        [9:0]    logic_scrubIndex;
-  wire                when_OpenLa500ICache_l130;
+  wire                when_OpenLa500ICache_l135;
   wire                logic_isIdle;
   wire                logic_isLookup;
   wire                logic_isReplace;
@@ -28906,27 +29013,36 @@ module OpenLa500ICache (
   wire       [31:0]   logic_wayWords_0;
   wire       [31:0]   logic_wayWords_1;
   wire       [31:0]   logic_loadResult;
+  wire                logic_lineValid;
+  wire       [127:0]  logic_lineData;
+  reg        [31:0]   _zz_logic_lineData;
+  reg        [31:0]   _zz_logic_lineData_1;
+  reg        [31:0]   _zz_logic_lineData_2;
+  reg        [31:0]   _zz_logic_lineData_3;
+  wire                when_OpenLa500ICache_l267;
+  wire                when_OpenLa500ICache_l267_1;
+  wire                when_OpenLa500ICache_l267_2;
+  wire                when_OpenLa500ICache_l267_3;
   reg        [1:0]    logic_invalidWay;
-  wire                when_OpenLa500ICache_l244;
-  wire                when_OpenLa500ICache_l246;
+  wire                when_OpenLa500ICache_l282;
+  wire                when_OpenLa500ICache_l284;
   wire                logic_hasInvalidWay;
   wire       [1:0]    logic_randomWay;
   wire       [1:0]    logic_randomReplacement;
   wire       [1:0]    logic_cacopChosenWay;
   reg        [1:0]    logic_replaceWay;
-  wire                when_OpenLa500ICache_l255;
-  wire                when_OpenLa500ICache_l259;
+  wire                when_OpenLa500ICache_l293;
+  wire                when_OpenLa500ICache_l297;
   wire                logic_rdReq;
-  wire                logic_refillMatch;
   wire                logic_dataOk;
   wire       [1:0]    logic_nextRetNum;
-  wire                when_OpenLa500ICache_l283;
-  wire                when_OpenLa500ICache_l289;
-  wire                when_OpenLa500ICache_l299;
-  wire                when_OpenLa500ICache_l317;
-  wire                when_OpenLa500ICache_l329;
-  wire                when_OpenLa500ICache_l335;
-  wire                when_OpenLa500ICache_l339;
+  wire                when_OpenLa500ICache_l328;
+  wire                when_OpenLa500ICache_l334;
+  wire                when_OpenLa500ICache_l344;
+  wire                when_OpenLa500ICache_l362;
+  wire                when_OpenLa500ICache_l374;
+  wire                when_OpenLa500ICache_l380;
+  wire                when_OpenLa500ICache_l384;
   reg [31:0] logic_dataMem_0_0 [0:1023];
   reg [31:0] logic_dataMem_0_1 [0:1023];
   reg [31:0] logic_dataMem_0_2 [0:1023];
@@ -28948,6 +29064,29 @@ module OpenLa500ICache (
   assign _zz_logic_dataMem_1_3_port = (logic_dataEnabled && (((logic_isRefill && logic_missReplaceWay[1]) && ret_valid) && (logic_missRetNum == 2'b11)));
   assign _zz_logic_wayWords_0_1 = logic_requestOffset[3 : 2];
   assign _zz_logic_wayWords_1_1 = logic_requestOffset[3 : 2];
+  assign _zz_logic_lineData_4 = ((_zz_logic_lineData_5 ? logic_dataOutputs_0_3 : _zz_logic_lineData_6) | (_zz_logic_lineData_7 ? logic_dataOutputs_1_3 : _zz_logic_lineData_8));
+  assign _zz_logic_lineData_9 = ((_zz_logic_lineData_10 ? logic_dataOutputs_0_2 : _zz_logic_lineData_11) | (_zz_logic_lineData_12 ? logic_dataOutputs_1_2 : _zz_logic_lineData_13));
+  assign _zz_logic_lineData_14 = (logic_wayHit[0] ? logic_dataOutputs_0_1 : 32'h0);
+  assign _zz_logic_lineData_15 = (logic_wayHit[1] ? logic_dataOutputs_1_1 : 32'h0);
+  assign _zz_logic_lineData_16 = logic_wayHit[0];
+  assign _zz_logic_lineData_17 = 32'h0;
+  assign _zz_logic_lineData_18 = logic_wayHit[1];
+  assign _zz_logic_lineData_19 = 32'h0;
+  assign _zz_logic_lineData_20 = ((ret_valid && _zz_logic_lineData_21) ? ret_data : _zz_logic_lineData_3);
+  assign _zz_logic_lineData_22 = ((ret_valid && _zz_logic_lineData_23) ? ret_data : _zz_logic_lineData_2);
+  assign _zz_logic_lineData_24 = (ret_valid && (logic_missRetNum == _zz_logic_lineData_25));
+  assign _zz_logic_lineData_26 = (logic_missRetNum == 2'b00);
+  assign _zz_logic_lineData_5 = logic_wayHit[0];
+  assign _zz_logic_lineData_6 = 32'h0;
+  assign _zz_logic_lineData_7 = logic_wayHit[1];
+  assign _zz_logic_lineData_8 = 32'h0;
+  assign _zz_logic_lineData_10 = logic_wayHit[0];
+  assign _zz_logic_lineData_11 = 32'h0;
+  assign _zz_logic_lineData_12 = logic_wayHit[1];
+  assign _zz_logic_lineData_13 = 32'h0;
+  assign _zz_logic_lineData_21 = (logic_missRetNum == 2'b11);
+  assign _zz_logic_lineData_23 = (logic_missRetNum == 2'b10);
+  assign _zz_logic_lineData_25 = 2'b01;
   always @(posedge clk) begin
     if(logic_dataEnabled) begin
       logic_dataMem_0_0_spinal_port0 <= logic_dataMem_0_0[logic_pipelineReadSet];
@@ -29086,7 +29225,7 @@ module OpenLa500ICache (
   assign logic_MainLookup = 5'h02;
   assign logic_MainReplace = 5'h08;
   assign logic_MainRefill = 5'h10;
-  assign when_OpenLa500ICache_l130 = (logic_scrubIndex == 10'h3ff);
+  assign when_OpenLa500ICache_l135 = (logic_scrubIndex == 10'h3ff);
   assign logic_isIdle = (logic_mainState == logic_MainIdle);
   assign logic_isLookup = (logic_mainState == logic_MainLookup);
   assign logic_isReplace = (logic_mainState == logic_MainReplace);
@@ -29139,54 +29278,61 @@ module OpenLa500ICache (
   assign logic_wayWords_0 = _zz_logic_wayWords_0;
   assign logic_wayWords_1 = _zz_logic_wayWords_1;
   assign logic_loadResult = ((logic_wayHit[0] ? logic_wayWords_0 : 32'h0) | (logic_wayHit[1] ? logic_wayWords_1 : 32'h0));
+  assign when_OpenLa500ICache_l267 = ((logic_isRefill && ret_valid) && (logic_missRetNum == 2'b00));
+  assign when_OpenLa500ICache_l267_1 = ((logic_isRefill && ret_valid) && (logic_missRetNum == 2'b01));
+  assign when_OpenLa500ICache_l267_2 = ((logic_isRefill && ret_valid) && (logic_missRetNum == 2'b10));
+  assign when_OpenLa500ICache_l267_3 = ((logic_isRefill && ret_valid) && (logic_missRetNum == 2'b11));
+  assign logic_lineValid = ((logic_isLookup && logic_cacheHit) || ((((logic_isRefill && ret_valid) && ret_last) && (! logic_requestUncache)) && (! logic_requestCacop)));
+  assign logic_lineData = (logic_isLookup ? {{{_zz_logic_lineData_4,_zz_logic_lineData_9},(_zz_logic_lineData_14 | _zz_logic_lineData_15)},((_zz_logic_lineData_16 ? logic_dataOutputs_0_0 : _zz_logic_lineData_17) | (_zz_logic_lineData_18 ? logic_dataOutputs_1_0 : _zz_logic_lineData_19))} : {{{_zz_logic_lineData_20,_zz_logic_lineData_22},(_zz_logic_lineData_24 ? ret_data : _zz_logic_lineData_1)},((ret_valid && _zz_logic_lineData_26) ? ret_data : _zz_logic_lineData)});
   always @(*) begin
     logic_invalidWay = 2'b00;
-    if(when_OpenLa500ICache_l244) begin
+    if(when_OpenLa500ICache_l282) begin
       logic_invalidWay = 2'b01;
     end else begin
-      if(when_OpenLa500ICache_l246) begin
+      if(when_OpenLa500ICache_l284) begin
         logic_invalidWay = 2'b10;
       end
     end
   end
 
-  assign when_OpenLa500ICache_l244 = (! logic_tagOutputs_0[0]);
-  assign when_OpenLa500ICache_l246 = (! logic_tagOutputs_1[0]);
+  assign when_OpenLa500ICache_l282 = (! logic_tagOutputs_0[0]);
+  assign when_OpenLa500ICache_l284 = (! logic_tagOutputs_1[0]);
   assign logic_hasInvalidWay = (|logic_invalidWay);
   assign logic_randomWay = (logic_lfsr[6] ? 2'b10 : 2'b01);
   assign logic_randomReplacement = (logic_hasInvalidWay ? logic_invalidWay : logic_randomWay);
   assign logic_cacopChosenWay = (logic_requestOffset[0] ? 2'b10 : 2'b01);
   always @(*) begin
     logic_replaceWay = 2'b00;
-    if(when_OpenLa500ICache_l255) begin
+    if(when_OpenLa500ICache_l293) begin
       logic_replaceWay = logic_cacopChosenWay;
     end else begin
       if(logic_mode2) begin
         logic_replaceWay = logic_wayHit;
       end else begin
-        if(when_OpenLa500ICache_l259) begin
+        if(when_OpenLa500ICache_l297) begin
           logic_replaceWay = logic_randomReplacement;
         end
       end
     end
   end
 
-  assign when_OpenLa500ICache_l255 = (logic_mode0 || logic_mode1);
-  assign when_OpenLa500ICache_l259 = (! logic_requestCacop);
+  assign when_OpenLa500ICache_l293 = (logic_mode0 || logic_mode1);
+  assign when_OpenLa500ICache_l297 = (! logic_requestCacop);
   assign logic_rdReq = (logic_isReplace && (! ((logic_mode0 || logic_mode1) || logic_mode2)));
-  assign logic_refillMatch = (logic_missRetNum == logic_requestOffset[3 : 2]);
-  assign logic_dataOk = (((logic_isLookup && (logic_cacheHit || tlb_excp_cancel_req)) || (((logic_isRefill && ret_valid) && (logic_refillMatch || logic_requestUncache)) && (! logic_requestCacop))) && (! logic_physicalColorMismatch));
+  assign logic_dataOk = (((logic_isLookup && (logic_cacheHit || tlb_excp_cancel_req)) || (((logic_isRefill && ret_valid) && logic_requestUncache) && (! logic_requestCacop))) && (! logic_physicalColorMismatch));
   assign logic_nextRetNum = (logic_missRetNum + 2'b01);
-  assign when_OpenLa500ICache_l283 = ((! logic_scrubActive) && logic_requestValid);
-  assign when_OpenLa500ICache_l289 = (logic_requestValid && logic_cacheHit);
-  assign when_OpenLa500ICache_l299 = (! logic_cacheHit);
-  assign when_OpenLa500ICache_l317 = ((ret_valid && ret_last) || (! logic_rdReqBuffer));
-  assign when_OpenLa500ICache_l329 = (logic_mode2 && logic_isLookup);
-  assign when_OpenLa500ICache_l335 = ((logic_isRefill && ret_valid) && ret_last);
-  assign when_OpenLa500ICache_l339 = (! logic_scrubActive);
+  assign when_OpenLa500ICache_l328 = ((! logic_scrubActive) && logic_requestValid);
+  assign when_OpenLa500ICache_l334 = (logic_requestValid && logic_cacheHit);
+  assign when_OpenLa500ICache_l344 = (! logic_cacheHit);
+  assign when_OpenLa500ICache_l362 = ((ret_valid && ret_last) || (! logic_rdReqBuffer));
+  assign when_OpenLa500ICache_l374 = (logic_mode2 && logic_isLookup);
+  assign when_OpenLa500ICache_l380 = ((logic_isRefill && ret_valid) && ret_last);
+  assign when_OpenLa500ICache_l384 = (! logic_scrubActive);
   assign addr_ok = logic_addrOk;
   assign data_ok = logic_dataOk;
   assign rdata = (logic_isLookup ? logic_loadResult : (logic_isRefill ? ret_data : 32'h0));
+  assign line_valid = logic_lineValid;
+  assign line_data = logic_lineData;
   assign icache_unbusy = (logic_isIdle && (! logic_scrubActive));
   assign rd_req = logic_rdReq;
   assign rd_type = (logic_requestUncache ? 3'b010 : 3'b100);
@@ -29214,16 +29360,32 @@ module OpenLa500ICache (
       logic_legacyWrReq <= 1'b0;
       logic_scrubActive <= 1'b1;
       logic_scrubIndex <= 10'h0;
+      _zz_logic_lineData <= 32'h0;
+      _zz_logic_lineData_1 <= 32'h0;
+      _zz_logic_lineData_2 <= 32'h0;
+      _zz_logic_lineData_3 <= 32'h0;
     end else begin
       if(logic_scrubActive) begin
-        if(when_OpenLa500ICache_l130) begin
+        if(when_OpenLa500ICache_l135) begin
           logic_scrubActive <= 1'b0;
         end else begin
           logic_scrubIndex <= (logic_scrubIndex + 10'h001);
         end
       end
+      if(when_OpenLa500ICache_l267) begin
+        _zz_logic_lineData <= ret_data;
+      end
+      if(when_OpenLa500ICache_l267_1) begin
+        _zz_logic_lineData_1 <= ret_data;
+      end
+      if(when_OpenLa500ICache_l267_2) begin
+        _zz_logic_lineData_2 <= ret_data;
+      end
+      if(when_OpenLa500ICache_l267_3) begin
+        _zz_logic_lineData_3 <= ret_data;
+      end
       if((logic_mainState == logic_MainIdle)) begin
-          if(when_OpenLa500ICache_l283) begin
+          if(when_OpenLa500ICache_l328) begin
             logic_mainState <= logic_MainLookup;
             logic_requestSet <= logic_initialSet;
             logic_requestOffset <= logic_realOffset;
@@ -29232,7 +29394,7 @@ module OpenLa500ICache (
             logic_setReplayPending <= 1'b0;
           end
       end else if((logic_mainState == logic_MainLookup)) begin
-          if(when_OpenLa500ICache_l289) begin
+          if(when_OpenLa500ICache_l334) begin
             logic_mainState <= logic_MainLookup;
             logic_requestSet <= logic_initialSet;
             logic_requestOffset <= logic_realOffset;
@@ -29249,7 +29411,7 @@ module OpenLa500ICache (
                 logic_requestTag <= tag;
                 logic_setReplayPending <= 1'b1;
               end else begin
-                if(when_OpenLa500ICache_l299) begin
+                if(when_OpenLa500ICache_l344) begin
                   logic_mainState <= logic_MainReplace;
                   logic_requestTag <= logic_effectiveLookupTag;
                   logic_requestUncache <= (uncache_en && (! logic_requestCacop));
@@ -29267,24 +29429,24 @@ module OpenLa500ICache (
             logic_mainState <= logic_MainRefill;
           end
       end else if((logic_mainState == logic_MainRefill)) begin
-          if(when_OpenLa500ICache_l317) begin
+          if(when_OpenLa500ICache_l362) begin
             logic_mainState <= logic_MainIdle;
             logic_setReplayPending <= 1'b0;
           end
       end else begin
           logic_mainState <= logic_MainIdle;
       end
-      if(when_OpenLa500ICache_l329) begin
+      if(when_OpenLa500ICache_l374) begin
         logic_lookupWayHitBuffer <= logic_wayHit;
       end
       if(logic_rdReq) begin
         logic_rdReqBuffer <= 1'b1;
       end else begin
-        if(when_OpenLa500ICache_l335) begin
+        if(when_OpenLa500ICache_l380) begin
           logic_rdReqBuffer <= 1'b0;
         end
       end
-      if(when_OpenLa500ICache_l339) begin
+      if(when_OpenLa500ICache_l384) begin
         logic_lfsr[0] <= logic_lfsr[7];
         logic_lfsr[1] <= logic_lfsr[0];
         logic_lfsr[2] <= logic_lfsr[1];
@@ -29306,7 +29468,7 @@ module OpenLa500ICache (
           logic_missRetNum <= 2'b00;
         end
     end else if((logic_mainState == logic_MainRefill)) begin
-        if(!when_OpenLa500ICache_l317) begin
+        if(!when_OpenLa500ICache_l362) begin
           if(ret_valid) begin
             logic_missRetNum <= logic_nextRetNum;
           end
@@ -34711,17 +34873,57 @@ endmodule
 
 /* verilator lint_off DECLFILENAME */
 module FetchStage (
-  output wire          io_downstream_valid,
-  input  wire          io_downstream_ready,
-  output wire [31:0]   io_downstream_payload_pc,
-  output wire [31:0]   io_downstream_payload_instruction,
-  output wire [3:0]    io_downstream_payload_exceptionCode,
-  output wire          io_downstream_payload_hasException,
-  output wire          io_downstream_payload_instructionCacheMiss,
-  output wire          io_downstream_payload_btbEnabled,
-  output wire          io_downstream_payload_btbTaken,
-  output wire [4:0]    io_downstream_payload_btbIndex,
-  output wire [31:0]   io_downstream_payload_btbTarget,
+  output wire          io_downstreamPacket_valid,
+  input  wire          io_downstreamPacket_ready,
+  output reg  [3:0]    io_downstreamPacket_payload_slotValid,
+  output wire [31:0]   io_downstreamPacket_payload_slots_0_fetch_pc,
+  output wire [31:0]   io_downstreamPacket_payload_slots_0_fetch_instruction,
+  output wire [3:0]    io_downstreamPacket_payload_slots_0_fetch_exceptionCode,
+  output wire          io_downstreamPacket_payload_slots_0_fetch_hasException,
+  output wire          io_downstreamPacket_payload_slots_0_fetch_instructionCacheMiss,
+  output wire          io_downstreamPacket_payload_slots_0_fetch_btbEnabled,
+  output wire          io_downstreamPacket_payload_slots_0_fetch_btbTaken,
+  output wire [4:0]    io_downstreamPacket_payload_slots_0_fetch_btbIndex,
+  output wire [31:0]   io_downstreamPacket_payload_slots_0_fetch_btbTarget,
+  output wire [7:0]    io_downstreamPacket_payload_slots_0_direction_phtIndex,
+  output wire          io_downstreamPacket_payload_slots_0_direction_baseTaken,
+  output wire          io_downstreamPacket_payload_slots_0_direction_localTaken,
+  output wire [31:0]   io_downstreamPacket_payload_slots_1_fetch_pc,
+  output wire [31:0]   io_downstreamPacket_payload_slots_1_fetch_instruction,
+  output wire [3:0]    io_downstreamPacket_payload_slots_1_fetch_exceptionCode,
+  output wire          io_downstreamPacket_payload_slots_1_fetch_hasException,
+  output wire          io_downstreamPacket_payload_slots_1_fetch_instructionCacheMiss,
+  output wire          io_downstreamPacket_payload_slots_1_fetch_btbEnabled,
+  output wire          io_downstreamPacket_payload_slots_1_fetch_btbTaken,
+  output wire [4:0]    io_downstreamPacket_payload_slots_1_fetch_btbIndex,
+  output wire [31:0]   io_downstreamPacket_payload_slots_1_fetch_btbTarget,
+  output wire [7:0]    io_downstreamPacket_payload_slots_1_direction_phtIndex,
+  output wire          io_downstreamPacket_payload_slots_1_direction_baseTaken,
+  output wire          io_downstreamPacket_payload_slots_1_direction_localTaken,
+  output wire [31:0]   io_downstreamPacket_payload_slots_2_fetch_pc,
+  output wire [31:0]   io_downstreamPacket_payload_slots_2_fetch_instruction,
+  output wire [3:0]    io_downstreamPacket_payload_slots_2_fetch_exceptionCode,
+  output wire          io_downstreamPacket_payload_slots_2_fetch_hasException,
+  output wire          io_downstreamPacket_payload_slots_2_fetch_instructionCacheMiss,
+  output wire          io_downstreamPacket_payload_slots_2_fetch_btbEnabled,
+  output wire          io_downstreamPacket_payload_slots_2_fetch_btbTaken,
+  output wire [4:0]    io_downstreamPacket_payload_slots_2_fetch_btbIndex,
+  output wire [31:0]   io_downstreamPacket_payload_slots_2_fetch_btbTarget,
+  output wire [7:0]    io_downstreamPacket_payload_slots_2_direction_phtIndex,
+  output wire          io_downstreamPacket_payload_slots_2_direction_baseTaken,
+  output wire          io_downstreamPacket_payload_slots_2_direction_localTaken,
+  output wire [31:0]   io_downstreamPacket_payload_slots_3_fetch_pc,
+  output wire [31:0]   io_downstreamPacket_payload_slots_3_fetch_instruction,
+  output wire [3:0]    io_downstreamPacket_payload_slots_3_fetch_exceptionCode,
+  output wire          io_downstreamPacket_payload_slots_3_fetch_hasException,
+  output wire          io_downstreamPacket_payload_slots_3_fetch_instructionCacheMiss,
+  output wire          io_downstreamPacket_payload_slots_3_fetch_btbEnabled,
+  output wire          io_downstreamPacket_payload_slots_3_fetch_btbTaken,
+  output wire [4:0]    io_downstreamPacket_payload_slots_3_fetch_btbIndex,
+  output wire [31:0]   io_downstreamPacket_payload_slots_3_fetch_btbTarget,
+  output wire [7:0]    io_downstreamPacket_payload_slots_3_direction_phtIndex,
+  output wire          io_downstreamPacket_payload_slots_3_direction_baseTaken,
+  output wire          io_downstreamPacket_payload_slots_3_direction_localTaken,
   input  wire          io_branchRepair,
   input  wire [31:0]   io_branchTarget,
   input  wire          io_exceptionFlush,
@@ -34738,6 +34940,8 @@ module FetchStage (
   input  wire          io_instructionAddressAccepted,
   input  wire          io_instructionDataValid,
   input  wire [31:0]   io_instructionData,
+  input  wire          io_instructionLineValid,
+  input  wire [127:0]  io_instructionLineData,
   input  wire          io_instructionMiss,
   output wire          io_instructionRequest,
   output wire [31:0]   io_instructionAddress,
@@ -34761,9 +34965,6 @@ module FetchStage (
   input  wire [7:0]    io_btbDirection_phtIndex,
   input  wire          io_btbDirection_baseTaken,
   input  wire          io_btbDirection_localTaken,
-  output wire [7:0]    io_directionPrediction_phtIndex,
-  output wire          io_directionPrediction_baseTaken,
-  output wire          io_directionPrediction_localTaken,
   output wire          io_addressTranslation,
   output wire          io_dmw0Enabled,
   output wire          io_dmw1Enabled,
@@ -34777,6 +34978,24 @@ module FetchStage (
   input  wire          resetCapture_backendActiveHigh
 );
 
+  reg        [31:0]   _zz_firstInstruction;
+  reg        [31:0]   _zz_packetInstructions_0;
+  wire       [1:0]    _zz_packetInstructions_0_1;
+  reg        [31:0]   _zz_packetInstructions_1;
+  wire       [1:0]    _zz_packetInstructions_1_1;
+  reg        [31:0]   _zz_packetInstructions_2;
+  wire       [1:0]    _zz_packetInstructions_2_1;
+  reg        [31:0]   _zz_packetInstructions_3;
+  wire       [1:0]    _zz_packetInstructions_3_1;
+  wire       [2:0]    _zz_packetInLine_0;
+  wire       [2:0]    _zz_packetInLine_0_1;
+  wire       [2:0]    _zz_packetInLine_1;
+  wire       [2:0]    _zz_packetInLine_1_1;
+  wire       [2:0]    _zz_packetInLine_2;
+  wire       [2:0]    _zz_packetInLine_2_1;
+  wire       [2:0]    _zz_packetInLine_3;
+  wire       [2:0]    _zz_packetInLine_3_1;
+  wire       [31:0]   _zz_sequencePc_1;
   wire       [31:0]   _zz_instructionFlushPc;
   reg                 fsValid;
   reg        [31:0]   fsPc;
@@ -34784,6 +35003,8 @@ module FetchStage (
   reg                 fsExceptionNumber;
   reg        [31:0]   instructionBuffer;
   reg                 instructionBufferValid;
+  reg        [127:0]  instructionLineBuffer;
+  reg                 instructionLineBufferValid;
   reg                 idleLock;
   reg        [37:0]   btbLock;
   reg        [7:0]    btbDirectionLock_phtIndex;
@@ -34808,13 +35029,42 @@ module FetchStage (
   reg                 btbDirectionLocked_baseTaken;
   reg                 btbDirectionLocked_localTaken;
   wire                fetchBtbTarget;
+  wire                responseIsLine;
+  wire       [127:0]  responseLineData;
+  wire                responseValid;
+  wire       [31:0]   lineWords_0;
+  wire       [31:0]   lineWords_1;
+  wire       [31:0]   lineWords_2;
+  wire       [31:0]   lineWords_3;
+  wire       [1:0]    lineStartWord;
+  wire       [31:0]   firstInstruction;
+  wire       [31:0]   packetInstructions_0;
+  wire       [31:0]   packetInstructions_1;
+  wire       [31:0]   packetInstructions_2;
+  wire       [31:0]   packetInstructions_3;
+  wire                packetInLine_0;
+  wire                packetInLine_1;
+  wire                packetInLine_2;
+  wire                packetInLine_3;
+  wire                packetControl_0;
+  wire                packetControl_1;
+  wire                packetControl_2;
+  wire                packetControl_3;
+  wire       [5:0]    _zz_packetControl_0;
+  wire       [5:0]    _zz_packetControl_1;
+  wire       [5:0]    _zz_packetControl_2;
+  wire       [5:0]    _zz_packetControl_3;
+  reg        [31:0]   _zz_sequencePc;
+  wire                when_FetchStage_l179;
+  wire                when_FetchStage_l179_1;
+  wire                when_FetchStage_l179_2;
   wire       [31:0]   sequencePc;
   wire       [31:0]   architecturalExceptionEntry;
   wire       [31:0]   instructionFlushPc;
   reg        [31:0]   nextPc;
-  wire                when_FetchStage_l110;
-  wire                when_FetchStage_l112;
-  wire                when_FetchStage_l114;
+  wire                when_FetchStage_l199;
+  wire                when_FetchStage_l201;
+  wire                when_FetchStage_l203;
   wire                directMode;
   wire                pagingMode;
   wire                dmw0Enabled;
@@ -34831,19 +35081,89 @@ module FetchStage (
   wire                fsAllow;
   wire                instructionRequest;
   wire                prefetchReady;
+  wire                lineResponseConsumedWithoutReplacement;
   wire                branchTargetAccepted;
-  wire                when_FetchStage_l177;
-  wire                when_FetchStage_l190;
-  wire                when_FetchStage_l200;
-  wire                when_FetchStage_l206;
-  wire                when_FetchStage_l219;
-  wire                when_FetchStage_l224;
-  wire                when_FetchStage_l226;
-  wire                when_FetchStage_l232;
-  wire                when_FetchStage_l234;
-  wire                when_FetchStage_l244;
+  wire       [31:0]   scalarPayload_pc;
+  wire       [31:0]   scalarPayload_instruction;
+  wire       [3:0]    scalarPayload_exceptionCode;
+  wire                scalarPayload_hasException;
+  wire                scalarPayload_instructionCacheMiss;
+  wire                scalarPayload_btbEnabled;
+  wire                scalarPayload_btbTaken;
+  wire       [4:0]    scalarPayload_btbIndex;
+  wire       [31:0]   scalarPayload_btbTarget;
+  wire                _zz_io_downstreamPacket_payload_slotValid;
+  wire                _zz_io_downstreamPacket_payload_slotValid_1;
+  wire                when_FetchStage_l319;
+  wire                when_FetchStage_l332;
+  wire                when_FetchStage_l342;
+  wire                when_FetchStage_l348;
+  wire                when_FetchStage_l361;
+  wire                when_FetchStage_l366;
+  wire                when_FetchStage_l368;
+  wire                when_FetchStage_l374;
+  wire                when_FetchStage_l381;
+  wire                when_FetchStage_l409;
 
+  assign _zz_packetInstructions_0_1 = (lineStartWord + 2'b00);
+  assign _zz_packetInstructions_1_1 = (lineStartWord + 2'b01);
+  assign _zz_packetInstructions_2_1 = (lineStartWord + 2'b10);
+  assign _zz_packetInstructions_3_1 = (lineStartWord + 2'b11);
+  assign _zz_packetInLine_0 = (_zz_packetInLine_0_1 + 3'b000);
+  assign _zz_packetInLine_0_1 = {1'd0, lineStartWord};
+  assign _zz_packetInLine_1 = (_zz_packetInLine_1_1 + 3'b001);
+  assign _zz_packetInLine_1_1 = {1'd0, lineStartWord};
+  assign _zz_packetInLine_2 = (_zz_packetInLine_2_1 + 3'b010);
+  assign _zz_packetInLine_2_1 = {1'd0, lineStartWord};
+  assign _zz_packetInLine_3 = (_zz_packetInLine_3_1 + 3'b011);
+  assign _zz_packetInLine_3_1 = {1'd0, lineStartWord};
+  assign _zz_sequencePc_1 = (fsPc + 32'h00000004);
   assign _zz_instructionFlushPc = (io_writebackPc + 32'h00000004);
+  always @(*) begin
+    case(lineStartWord)
+      2'b00 : _zz_firstInstruction = lineWords_0;
+      2'b01 : _zz_firstInstruction = lineWords_1;
+      2'b10 : _zz_firstInstruction = lineWords_2;
+      default : _zz_firstInstruction = lineWords_3;
+    endcase
+  end
+
+  always @(*) begin
+    case(_zz_packetInstructions_0_1)
+      2'b00 : _zz_packetInstructions_0 = lineWords_0;
+      2'b01 : _zz_packetInstructions_0 = lineWords_1;
+      2'b10 : _zz_packetInstructions_0 = lineWords_2;
+      default : _zz_packetInstructions_0 = lineWords_3;
+    endcase
+  end
+
+  always @(*) begin
+    case(_zz_packetInstructions_1_1)
+      2'b00 : _zz_packetInstructions_1 = lineWords_0;
+      2'b01 : _zz_packetInstructions_1 = lineWords_1;
+      2'b10 : _zz_packetInstructions_1 = lineWords_2;
+      default : _zz_packetInstructions_1 = lineWords_3;
+    endcase
+  end
+
+  always @(*) begin
+    case(_zz_packetInstructions_2_1)
+      2'b00 : _zz_packetInstructions_2 = lineWords_0;
+      2'b01 : _zz_packetInstructions_2 = lineWords_1;
+      2'b10 : _zz_packetInstructions_2 = lineWords_2;
+      default : _zz_packetInstructions_2 = lineWords_3;
+    endcase
+  end
+
+  always @(*) begin
+    case(_zz_packetInstructions_3_1)
+      2'b00 : _zz_packetInstructions_3 = lineWords_0;
+      2'b01 : _zz_packetInstructions_3 = lineWords_1;
+      2'b10 : _zz_packetInstructions_3 = lineWords_2;
+      default : _zz_packetInstructions_3 = lineWords_3;
+    endcase
+  end
+
   assign branchEmpty = 3'b001;
   assign branchWaitSlot = 3'b010;
   assign branchWaitTarget = 3'b100;
@@ -34876,7 +35196,51 @@ module FetchStage (
   end
 
   assign fetchBtbTarget = ((io_btbTaken && io_btbEnabled) || (btbLockValid && btbLock[37]));
-  assign sequencePc = (fsPc + 32'h00000004);
+  assign responseIsLine = (io_instructionLineValid || instructionLineBufferValid);
+  assign responseLineData = (instructionLineBufferValid ? instructionLineBuffer : io_instructionLineData);
+  assign responseValid = ((io_instructionDataValid || instructionBufferValid) || responseIsLine);
+  assign lineWords_0 = responseLineData[31 : 0];
+  assign lineWords_1 = responseLineData[63 : 32];
+  assign lineWords_2 = responseLineData[95 : 64];
+  assign lineWords_3 = responseLineData[127 : 96];
+  assign lineStartWord = fsPc[3 : 2];
+  assign firstInstruction = (responseIsLine ? _zz_firstInstruction : (instructionBufferValid ? instructionBuffer : io_instructionData));
+  assign packetInstructions_0 = _zz_packetInstructions_0;
+  assign packetInstructions_1 = _zz_packetInstructions_1;
+  assign packetInstructions_2 = _zz_packetInstructions_2;
+  assign packetInstructions_3 = _zz_packetInstructions_3;
+  assign packetInLine_0 = (_zz_packetInLine_0 < 3'b100);
+  assign packetInLine_1 = (_zz_packetInLine_1 < 3'b100);
+  assign packetInLine_2 = (_zz_packetInLine_2 < 3'b100);
+  assign packetInLine_3 = (_zz_packetInLine_3 < 3'b100);
+  assign _zz_packetControl_0 = packetInstructions_0[31 : 26];
+  assign packetControl_0 = ((6'h13 <= _zz_packetControl_0) && (_zz_packetControl_0 <= 6'h1b));
+  assign _zz_packetControl_1 = packetInstructions_1[31 : 26];
+  assign packetControl_1 = ((6'h13 <= _zz_packetControl_1) && (_zz_packetControl_1 <= 6'h1b));
+  assign _zz_packetControl_2 = packetInstructions_2[31 : 26];
+  assign packetControl_2 = ((6'h13 <= _zz_packetControl_2) && (_zz_packetControl_2 <= 6'h1b));
+  assign _zz_packetControl_3 = packetInstructions_3[31 : 26];
+  assign packetControl_3 = ((6'h13 <= _zz_packetControl_3) && (_zz_packetControl_3 <= 6'h1b));
+  always @(*) begin
+    _zz_sequencePc = ((fsPc | 32'h0000000f) + 32'h00000001);
+    if(when_FetchStage_l179) begin
+      _zz_sequencePc = (fsPc + 32'h0000000c);
+    end
+    if(when_FetchStage_l179_1) begin
+      _zz_sequencePc = (fsPc + 32'h00000008);
+    end
+    if(when_FetchStage_l179_2) begin
+      _zz_sequencePc = (fsPc + 32'h00000004);
+    end
+    if(packetControl_0) begin
+      _zz_sequencePc = (fsPc + 32'h00000004);
+    end
+  end
+
+  assign when_FetchStage_l179 = (packetInLine_3 && packetControl_3);
+  assign when_FetchStage_l179_1 = (packetInLine_2 && packetControl_2);
+  assign when_FetchStage_l179_2 = (packetInLine_1 && packetControl_1);
+  assign sequencePc = (responseIsLine ? _zz_sequencePc : _zz_sequencePc_1);
   assign architecturalExceptionEntry = (io_exceptionTlbRefill ? io_tlbRefillEntry : io_exceptionEntry);
   assign instructionFlushPc = (io_ertnFlush ? io_exceptionEra : _zz_instructionFlushPc);
   always @(*) begin
@@ -34887,13 +35251,13 @@ module FetchStage (
       if(io_exceptionFlush) begin
         nextPc = architecturalExceptionEntry;
       end else begin
-        if(when_FetchStage_l110) begin
+        if(when_FetchStage_l199) begin
           nextPc = instructionFlushPc;
         end else begin
-          if(when_FetchStage_l112) begin
+          if(when_FetchStage_l201) begin
             nextPc = branchRequestPc;
           end else begin
-            if(when_FetchStage_l114) begin
+            if(when_FetchStage_l203) begin
               nextPc = io_branchTarget;
             end else begin
               if(fetchBtbTarget) begin
@@ -34906,9 +35270,9 @@ module FetchStage (
     end
   end
 
-  assign when_FetchStage_l110 = (((io_ertnFlush || io_refetchFlush) || io_instructionCacheFlush) || io_idleFlush);
-  assign when_FetchStage_l112 = (branchRequestState == branchWaitTarget);
-  assign when_FetchStage_l114 = (io_branchRepair && fsValid);
+  assign when_FetchStage_l199 = (((io_ertnFlush || io_refetchFlush) || io_instructionCacheFlush) || io_idleFlush);
+  assign when_FetchStage_l201 = (branchRequestState == branchWaitTarget);
+  assign when_FetchStage_l203 = (io_branchRepair && fsValid);
   assign directMode = (io_directAddress && (! io_paging));
   assign pagingMode = (io_paging && (! io_directAddress));
   assign dmw0Enabled = ((((io_dmw0[0] && (io_currentPlv == 2'b00)) || (io_dmw0[3] && (io_currentPlv == 2'b11))) && (fsPc[31 : 29] == io_dmw0[31 : 29])) && pagingMode);
@@ -34921,24 +35285,80 @@ module FetchStage (
   assign tlbLockPc = ((tlbCancel && (branchRequestState != branchWaitTarget)) && (! flushRequestPending));
   assign prefetchAlignmentException = (nextPc[1 : 0] != 2'b00);
   assign fsExceptionAny = (((fsException || tlbRefill) || tlbInvalid) || tlbPrivilege);
-  assign fsReady = ((io_instructionDataValid || instructionBufferValid) || fsExceptionAny);
-  assign fsAllow = ((! fsValid) || (fsReady && io_downstream_ready));
+  assign fsReady = (responseValid || fsExceptionAny);
+  assign fsAllow = ((! fsValid) || (fsReady && io_downstreamPacket_ready));
   assign instructionRequest = (((((fsAllow && (! prefetchAlignmentException)) && (! tlbLockPc)) || flush) || io_branchRepair) && (! (io_idleFlush || idleLock)));
   assign prefetchReady = ((instructionRequest || prefetchAlignmentException) && io_instructionAddressAccepted);
+  assign lineResponseConsumedWithoutReplacement = ((((responseIsLine && fsValid) && io_downstreamPacket_ready) && (! flush)) && (! prefetchReady));
   assign branchTargetAccepted = (((io_branchRepair && instructionRequest) && io_instructionAddressAccepted) && (nextPc == io_branchTarget));
-  assign io_downstream_valid = (fsValid && fsReady);
-  assign io_downstream_payload_pc = fsPc;
-  assign io_downstream_payload_instruction = (instructionBufferValid ? instructionBuffer : io_instructionData);
-  assign io_downstream_payload_exceptionCode = {{{tlbPrivilege,tlbInvalid},tlbRefill},fsExceptionNumber};
-  assign io_downstream_payload_hasException = fsExceptionAny;
-  assign io_downstream_payload_instructionCacheMiss = io_instructionMiss;
-  assign io_downstream_payload_btbEnabled = btbEnabledLocked;
-  assign io_downstream_payload_btbTaken = btbTakenLocked;
-  assign io_downstream_payload_btbIndex = btbIndexLocked;
-  assign io_downstream_payload_btbTarget = btbTargetLocked;
-  assign io_directionPrediction_phtIndex = btbDirectionLocked_phtIndex;
-  assign io_directionPrediction_baseTaken = btbDirectionLocked_baseTaken;
-  assign io_directionPrediction_localTaken = btbDirectionLocked_localTaken;
+  assign scalarPayload_pc = fsPc;
+  assign scalarPayload_instruction = firstInstruction;
+  assign scalarPayload_exceptionCode = {{{tlbPrivilege,tlbInvalid},tlbRefill},fsExceptionNumber};
+  assign scalarPayload_hasException = fsExceptionAny;
+  assign scalarPayload_instructionCacheMiss = io_instructionMiss;
+  assign scalarPayload_btbEnabled = btbEnabledLocked;
+  assign scalarPayload_btbTaken = btbTakenLocked;
+  assign scalarPayload_btbIndex = btbIndexLocked;
+  assign scalarPayload_btbTarget = btbTargetLocked;
+  assign io_downstreamPacket_valid = (fsValid && fsReady);
+  always @(*) begin
+    io_downstreamPacket_payload_slotValid = 4'b0000;
+    io_downstreamPacket_payload_slotValid[0] = ((responseIsLine && packetInLine_0) || (! responseIsLine));
+    io_downstreamPacket_payload_slotValid[1] = (((((responseIsLine && packetInLine_1) && (! fetchBtbTarget)) && (! _zz_io_downstreamPacket_payload_slotValid)) && (! packetControl_1)) || 1'b0);
+    io_downstreamPacket_payload_slotValid[2] = (((((responseIsLine && packetInLine_2) && (! fetchBtbTarget)) && (! _zz_io_downstreamPacket_payload_slotValid_1)) && (! packetControl_2)) || 1'b0);
+    io_downstreamPacket_payload_slotValid[3] = (((((responseIsLine && packetInLine_3) && (! fetchBtbTarget)) && (! (_zz_io_downstreamPacket_payload_slotValid_1 || packetControl_2))) && (! packetControl_3)) || 1'b0);
+  end
+
+  assign io_downstreamPacket_payload_slots_0_fetch_pc = scalarPayload_pc;
+  assign io_downstreamPacket_payload_slots_0_fetch_instruction = (responseIsLine ? packetInstructions_0 : scalarPayload_instruction);
+  assign io_downstreamPacket_payload_slots_0_fetch_exceptionCode = scalarPayload_exceptionCode;
+  assign io_downstreamPacket_payload_slots_0_fetch_hasException = scalarPayload_hasException;
+  assign io_downstreamPacket_payload_slots_0_fetch_instructionCacheMiss = scalarPayload_instructionCacheMiss;
+  assign io_downstreamPacket_payload_slots_0_fetch_btbEnabled = scalarPayload_btbEnabled;
+  assign io_downstreamPacket_payload_slots_0_fetch_btbTaken = scalarPayload_btbTaken;
+  assign io_downstreamPacket_payload_slots_0_fetch_btbIndex = scalarPayload_btbIndex;
+  assign io_downstreamPacket_payload_slots_0_fetch_btbTarget = scalarPayload_btbTarget;
+  assign io_downstreamPacket_payload_slots_0_direction_phtIndex = btbDirectionLocked_phtIndex;
+  assign io_downstreamPacket_payload_slots_0_direction_baseTaken = btbDirectionLocked_baseTaken;
+  assign io_downstreamPacket_payload_slots_0_direction_localTaken = btbDirectionLocked_localTaken;
+  assign _zz_io_downstreamPacket_payload_slotValid = (1'b0 || packetControl_0);
+  assign io_downstreamPacket_payload_slots_1_fetch_pc = (fsPc + 32'h00000004);
+  assign io_downstreamPacket_payload_slots_1_fetch_instruction = (responseIsLine ? packetInstructions_1 : firstInstruction);
+  assign io_downstreamPacket_payload_slots_1_fetch_exceptionCode = 4'b0000;
+  assign io_downstreamPacket_payload_slots_1_fetch_hasException = 1'b0;
+  assign io_downstreamPacket_payload_slots_1_fetch_instructionCacheMiss = 1'b0;
+  assign io_downstreamPacket_payload_slots_1_fetch_btbEnabled = 1'b0;
+  assign io_downstreamPacket_payload_slots_1_fetch_btbTaken = 1'b0;
+  assign io_downstreamPacket_payload_slots_1_fetch_btbIndex = 5'h0;
+  assign io_downstreamPacket_payload_slots_1_fetch_btbTarget = 32'h0;
+  assign io_downstreamPacket_payload_slots_1_direction_phtIndex = 8'h0;
+  assign io_downstreamPacket_payload_slots_1_direction_baseTaken = 1'b0;
+  assign io_downstreamPacket_payload_slots_1_direction_localTaken = 1'b0;
+  assign _zz_io_downstreamPacket_payload_slotValid_1 = (_zz_io_downstreamPacket_payload_slotValid || packetControl_1);
+  assign io_downstreamPacket_payload_slots_2_fetch_pc = (fsPc + 32'h00000008);
+  assign io_downstreamPacket_payload_slots_2_fetch_instruction = (responseIsLine ? packetInstructions_2 : firstInstruction);
+  assign io_downstreamPacket_payload_slots_2_fetch_exceptionCode = 4'b0000;
+  assign io_downstreamPacket_payload_slots_2_fetch_hasException = 1'b0;
+  assign io_downstreamPacket_payload_slots_2_fetch_instructionCacheMiss = 1'b0;
+  assign io_downstreamPacket_payload_slots_2_fetch_btbEnabled = 1'b0;
+  assign io_downstreamPacket_payload_slots_2_fetch_btbTaken = 1'b0;
+  assign io_downstreamPacket_payload_slots_2_fetch_btbIndex = 5'h0;
+  assign io_downstreamPacket_payload_slots_2_fetch_btbTarget = 32'h0;
+  assign io_downstreamPacket_payload_slots_2_direction_phtIndex = 8'h0;
+  assign io_downstreamPacket_payload_slots_2_direction_baseTaken = 1'b0;
+  assign io_downstreamPacket_payload_slots_2_direction_localTaken = 1'b0;
+  assign io_downstreamPacket_payload_slots_3_fetch_pc = (fsPc + 32'h0000000c);
+  assign io_downstreamPacket_payload_slots_3_fetch_instruction = (responseIsLine ? packetInstructions_3 : firstInstruction);
+  assign io_downstreamPacket_payload_slots_3_fetch_exceptionCode = 4'b0000;
+  assign io_downstreamPacket_payload_slots_3_fetch_hasException = 1'b0;
+  assign io_downstreamPacket_payload_slots_3_fetch_instructionCacheMiss = 1'b0;
+  assign io_downstreamPacket_payload_slots_3_fetch_btbEnabled = 1'b0;
+  assign io_downstreamPacket_payload_slots_3_fetch_btbTaken = 1'b0;
+  assign io_downstreamPacket_payload_slots_3_fetch_btbIndex = 5'h0;
+  assign io_downstreamPacket_payload_slots_3_fetch_btbTarget = 32'h0;
+  assign io_downstreamPacket_payload_slots_3_direction_phtIndex = 8'h0;
+  assign io_downstreamPacket_payload_slots_3_direction_baseTaken = 1'b0;
+  assign io_downstreamPacket_payload_slots_3_direction_localTaken = 1'b0;
   assign io_instructionRequest = instructionRequest;
   assign io_instructionAddress = nextPc;
   assign io_instructionUncached = (((((directMode && (io_directFetchMat == 2'b00)) || (dmw0Enabled && (io_dmw0[5 : 4] == 2'b00))) || (dmw1Enabled && (io_dmw1[5 : 4] == 2'b00))) || (addressTranslation && (io_tlbMat == 2'b00))) || io_disableCache);
@@ -34948,16 +35368,16 @@ module FetchStage (
   assign io_dmw1Enabled = dmw1Enabled;
   assign io_fetchPc = nextPc;
   assign io_fetchEnable = (instructionRequest && io_instructionAddressAccepted);
-  assign when_FetchStage_l177 = (! flushRequestPending);
-  assign when_FetchStage_l190 = (io_idleFlush && (! io_interrupt));
-  assign when_FetchStage_l200 = ((io_branchRepair && (! fsValid)) && (! io_instructionAddressAccepted));
-  assign when_FetchStage_l206 = (((io_branchRepair && (! io_instructionAddressAccepted)) && fsValid) || (((io_branchRepair && io_instructionAddressAccepted) && (! fsValid)) && (! branchTargetAccepted)));
-  assign when_FetchStage_l219 = (prefetchReady || flush);
-  assign when_FetchStage_l224 = (flush || io_fetchEnable);
-  assign when_FetchStage_l226 = (io_btbEnabled && (! prefetchReady));
-  assign when_FetchStage_l232 = ((fsReady && io_downstream_ready) || flush);
-  assign when_FetchStage_l234 = (io_instructionDataValid && (! io_downstream_ready));
-  assign when_FetchStage_l244 = (prefetchReady && (fsAllow || flushDirty));
+  assign when_FetchStage_l319 = (! flushRequestPending);
+  assign when_FetchStage_l332 = (io_idleFlush && (! io_interrupt));
+  assign when_FetchStage_l342 = ((io_branchRepair && (! fsValid)) && (! io_instructionAddressAccepted));
+  assign when_FetchStage_l348 = (((io_branchRepair && (! io_instructionAddressAccepted)) && fsValid) || (((io_branchRepair && io_instructionAddressAccepted) && (! fsValid)) && (! branchTargetAccepted)));
+  assign when_FetchStage_l361 = (prefetchReady || flush);
+  assign when_FetchStage_l366 = (flush || io_fetchEnable);
+  assign when_FetchStage_l368 = (io_btbEnabled && (! prefetchReady));
+  assign when_FetchStage_l374 = ((fsReady && io_downstreamPacket_ready) || flush);
+  assign when_FetchStage_l381 = (responseValid && (! io_downstreamPacket_ready));
+  assign when_FetchStage_l409 = (prefetchReady && (fsAllow || flushDirty));
   always @(posedge aclk) begin
     if(resetCapture_backendActiveHigh) begin
       fsValid <= 1'b0;
@@ -34965,12 +35385,13 @@ module FetchStage (
       fsException <= 1'b0;
       fsExceptionNumber <= 1'b0;
       instructionBufferValid <= 1'b0;
+      instructionLineBufferValid <= 1'b0;
       idleLock <= 1'b0;
       btbLockValid <= 1'b0;
       flushRequestPending <= 1'b0;
       branchRequestState <= 3'b001;
     end else begin
-      if(when_FetchStage_l177) begin
+      if(when_FetchStage_l319) begin
         if(flushDelay) begin
           flushRequestPending <= 1'b1;
         end
@@ -34979,7 +35400,7 @@ module FetchStage (
           flushRequestPending <= 1'b0;
         end
       end
-      if(when_FetchStage_l190) begin
+      if(when_FetchStage_l332) begin
         idleLock <= 1'b1;
       end else begin
         if(io_interrupt) begin
@@ -34990,10 +35411,10 @@ module FetchStage (
           if(flush) begin
             branchRequestState <= branchEmpty;
           end else begin
-            if(when_FetchStage_l200) begin
+            if(when_FetchStage_l342) begin
               branchRequestState <= branchWaitSlot;
             end else begin
-              if(when_FetchStage_l206) begin
+              if(when_FetchStage_l348) begin
                 branchRequestState <= branchWaitTarget;
               end
             end
@@ -35007,24 +35428,33 @@ module FetchStage (
             end
           end
       end else if((branchRequestState == branchWaitTarget)) begin
-          if(when_FetchStage_l219) begin
+          if(when_FetchStage_l361) begin
             branchRequestState <= branchEmpty;
           end
       end else begin
           branchRequestState <= branchEmpty;
       end
-      if(when_FetchStage_l224) begin
+      if(when_FetchStage_l366) begin
         btbLockValid <= 1'b0;
       end else begin
-        if(when_FetchStage_l226) begin
+        if(when_FetchStage_l368) begin
           btbLockValid <= 1'b1;
         end
       end
-      if(when_FetchStage_l232) begin
+      if(when_FetchStage_l374) begin
         instructionBufferValid <= 1'b0;
+        instructionLineBufferValid <= 1'b0;
       end else begin
-        if(when_FetchStage_l234) begin
-          instructionBufferValid <= 1'b1;
+        if(when_FetchStage_l381) begin
+          if(io_instructionLineValid) begin
+            instructionLineBufferValid <= 1'b1;
+            instructionBufferValid <= 1'b0;
+          end else begin
+            if(io_instructionDataValid) begin
+              instructionLineBufferValid <= 1'b0;
+              instructionBufferValid <= 1'b1;
+            end
+          end
         end
       end
       if(flushDelay) begin
@@ -35034,16 +35464,22 @@ module FetchStage (
           fsValid <= prefetchReady;
         end
       end
-      if(when_FetchStage_l244) begin
-        fsPc <= nextPc;
-        fsException <= prefetchAlignmentException;
-        fsExceptionNumber <= prefetchAlignmentException;
+      if(lineResponseConsumedWithoutReplacement) begin
+        fsPc <= (nextPc - 32'h00000004);
+        fsException <= 1'b0;
+        fsExceptionNumber <= 1'b0;
+      end else begin
+        if(when_FetchStage_l409) begin
+          fsPc <= nextPc;
+          fsException <= prefetchAlignmentException;
+          fsExceptionNumber <= prefetchAlignmentException;
+        end
       end
     end
   end
 
   always @(posedge aclk) begin
-    if(when_FetchStage_l177) begin
+    if(when_FetchStage_l319) begin
       if(flushDelay) begin
         flushRequestPc <= nextPc;
       end
@@ -35056,10 +35492,10 @@ module FetchStage (
     end
     if((branchRequestState == branchEmpty)) begin
         if(!flush) begin
-          if(when_FetchStage_l200) begin
+          if(when_FetchStage_l342) begin
             branchRequestPc <= io_branchTarget;
           end else begin
-            if(when_FetchStage_l206) begin
+            if(when_FetchStage_l348) begin
               branchRequestPc <= io_branchTarget;
             end
           end
@@ -35068,17 +35504,23 @@ module FetchStage (
     end else if((branchRequestState == branchWaitTarget)) begin
     end else begin
     end
-    if(!when_FetchStage_l224) begin
-      if(when_FetchStage_l226) begin
+    if(!when_FetchStage_l366) begin
+      if(when_FetchStage_l368) begin
         btbLock <= {{io_btbTaken,io_btbIndex},io_btbTarget};
         btbDirectionLock_phtIndex <= io_btbDirection_phtIndex;
         btbDirectionLock_baseTaken <= io_btbDirection_baseTaken;
         btbDirectionLock_localTaken <= io_btbDirection_localTaken;
       end
     end
-    if(!when_FetchStage_l232) begin
-      if(when_FetchStage_l234) begin
-        instructionBuffer <= io_instructionData;
+    if(!when_FetchStage_l374) begin
+      if(when_FetchStage_l381) begin
+        if(io_instructionLineValid) begin
+          instructionLineBuffer <= io_instructionLineData;
+        end else begin
+          if(io_instructionDataValid) begin
+            instructionBuffer <= io_instructionData;
+          end
+        end
       end
     end
   end
@@ -35503,7 +35945,6 @@ module OpenLa500AxiBridge (
   wire       [2:0]    logic_WriteDataWait;
   wire       [2:0]    logic_WriteWaitResponse;
   reg                 logic_readRequestBusy;
-  reg                 logic_readResponseBusy;
   reg        [2:0]    logic_writeState;
   reg        [3:0]    logic_arid;
   reg        [31:0]   logic_araddr;
@@ -35531,12 +35972,9 @@ module OpenLa500AxiBridge (
   wire                _zz_logic_arlen;
   wire                when_OpenLa500AxiBridge_l165;
   wire                _zz_logic_arlen_1;
-  wire                when_OpenLa500AxiBridge_l174;
-  wire                when_OpenLa500AxiBridge_l175;
-  wire                when_OpenLa500AxiBridge_l179;
-  wire                when_OpenLa500AxiBridge_l197;
-  wire                when_OpenLa500AxiBridge_l220;
-  wire                when_OpenLa500AxiBridge_l231;
+  wire                when_OpenLa500AxiBridge_l189;
+  wire                when_OpenLa500AxiBridge_l212;
+  wire                when_OpenLa500AxiBridge_l223;
   wire                readCanReceive;
 
   assign logic_WriteEmpty = 3'b000;
@@ -35551,12 +35989,9 @@ module OpenLa500AxiBridge (
   assign _zz_logic_arlen = (data_rd_type == 3'b100);
   assign when_OpenLa500AxiBridge_l165 = (! logic_writeBlocksRead);
   assign _zz_logic_arlen_1 = (inst_rd_type == 3'b100);
-  assign when_OpenLa500AxiBridge_l174 = (! logic_readResponseBusy);
-  assign when_OpenLa500AxiBridge_l175 = (rvalid && logic_rready);
-  assign when_OpenLa500AxiBridge_l179 = (rlast && rvalid);
-  assign when_OpenLa500AxiBridge_l197 = (data_wr_type == 3'b100);
-  assign when_OpenLa500AxiBridge_l220 = (logic_writeBufferCount == 3'b001);
-  assign when_OpenLa500AxiBridge_l231 = (bvalid && logic_bready);
+  assign when_OpenLa500AxiBridge_l189 = (data_wr_type == 3'b100);
+  assign when_OpenLa500AxiBridge_l212 = (logic_writeBufferCount == 3'b001);
+  assign when_OpenLa500AxiBridge_l223 = (bvalid && logic_bready);
   assign readCanReceive = ((! logic_readRequestBusy) && (! logic_writeBlocksRead));
   assign arid = logic_arid;
   assign araddr = logic_araddr;
@@ -35597,7 +36032,6 @@ module OpenLa500AxiBridge (
   always @(posedge clk) begin
     if(reset) begin
       logic_readRequestBusy <= 1'b0;
-      logic_readResponseBusy <= 1'b0;
       logic_writeState <= logic_WriteEmpty;
       logic_arvalid <= 1'b0;
       logic_rready <= 1'b1;
@@ -35630,22 +36064,13 @@ module OpenLa500AxiBridge (
           logic_arvalid <= 1'b0;
         end
       end
-      if(when_OpenLa500AxiBridge_l174) begin
-        if(when_OpenLa500AxiBridge_l175) begin
-          logic_readResponseBusy <= 1'b1;
-        end
-      end else begin
-        if(when_OpenLa500AxiBridge_l179) begin
-          logic_readResponseBusy <= 1'b0;
-        end
-      end
       if((logic_writeState == logic_WriteEmpty)) begin
           if(data_wr_req) begin
             logic_writeState <= logic_WriteDataWait;
-            logic_writeIsCacheLine <= when_OpenLa500AxiBridge_l197;
+            logic_writeIsCacheLine <= when_OpenLa500AxiBridge_l189;
             logic_awvalid <= 1'b1;
             logic_writeBufferData <= {32'h0,data_wr_data[127 : 32]};
-            if(when_OpenLa500AxiBridge_l197) begin
+            if(when_OpenLa500AxiBridge_l189) begin
               logic_writeBufferCount <= 3'b011;
             end else begin
               logic_writeBufferCount <= 3'b000;
@@ -35666,7 +36091,7 @@ module OpenLa500AxiBridge (
               logic_wlast <= 1'b0;
               logic_bready <= 1'b1;
             end else begin
-              if(when_OpenLa500AxiBridge_l220) begin
+              if(when_OpenLa500AxiBridge_l212) begin
                 logic_wlast <= 1'b1;
               end
               logic_wvalid <= 1'b1;
@@ -35675,7 +36100,7 @@ module OpenLa500AxiBridge (
             end
           end
       end else if((logic_writeState == logic_WriteWaitResponse)) begin
-          if(when_OpenLa500AxiBridge_l231) begin
+          if(when_OpenLa500AxiBridge_l223) begin
             logic_writeState <= logic_WriteEmpty;
             logic_writeIsCacheLine <= 1'b0;
             logic_bready <= 1'b0;
@@ -35709,8 +36134,8 @@ module OpenLa500AxiBridge (
     if((logic_writeState == logic_WriteEmpty)) begin
         if(data_wr_req) begin
           logic_awaddr <= data_wr_addr;
-          logic_awsize <= (when_OpenLa500AxiBridge_l197 ? 3'b010 : data_wr_type);
-          logic_awlen <= (when_OpenLa500AxiBridge_l197 ? 8'h03 : 8'h0);
+          logic_awsize <= (when_OpenLa500AxiBridge_l189 ? 3'b010 : data_wr_type);
+          logic_awlen <= (when_OpenLa500AxiBridge_l189 ? 8'h03 : 8'h0);
           logic_wdata <= data_wr_data[31 : 0];
           logic_wstrb <= data_wr_wstrb;
         end

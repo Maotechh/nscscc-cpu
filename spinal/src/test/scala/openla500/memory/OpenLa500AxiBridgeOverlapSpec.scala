@@ -73,7 +73,7 @@ class OpenLa500AxiBridgeOverlapSpec extends AnyFunSuite {
     val workspaceRoot =
       sys.env.getOrElse("SPINAL_SIM_WORKSPACE", "target/sim-workspace-axi-bridge-overlap")
     val workspace = Paths.get(workspaceRoot, workspaceName).toString
-    SimConfig
+    val compiled = SimConfig
       .withConfig(SpinalConfig(oneFilePerComponent = true))
       .withVerilator
       .addSimulatorFlag("-Wall")
@@ -85,6 +85,8 @@ class OpenLa500AxiBridgeOverlapSpec extends AnyFunSuite {
       .disableCache
       .workspacePath(workspace)
       .compile(new OpenLa500AxiBridge(allowCacheLineReadOverlap = allowOverlap))
+
+    compiled
       .doSim(s"axi-bridge-overlap-$workspaceName", 0x158aa8) { dut =>
         init(dut)
         edge(dut)

@@ -13,6 +13,7 @@ private final class OrderedCommitGroupProbe extends Component {
     val ertn = in Bits (CommitGroup.Width bits)
     val outputValid = out Bool ()
     val outputLaneValid = out Bits (CommitGroup.Width bits)
+    val outputEvents = out Bits (CommitGroup.Width * CommitGroup.EventWidth bits)
     val contractViolation = out Bool ()
   }
   noIoPrefix()
@@ -61,6 +62,7 @@ private final class OrderedCommitGroupProbe extends Component {
 
   io.outputValid := ordered.io.output.valid
   io.outputLaneValid := ordered.io.output.payload.valid
+  io.outputEvents := ordered.io.output.payload.events.asBits
   io.contractViolation := ordered.io.contractViolation
 }
 
@@ -70,9 +72,20 @@ class OrderedCommitGroupSpec extends AnyFunSuite {
       sys.env.getOrElse("SPINAL_SIM_WORKSPACE", "target/sim-workspace-ordered-commit")
     val workspace = Paths.get(workspaceRoot, "ordered-commit-group").toString
 
-    SimConfig.withVerilator.disableCache
+    val compiled = SimConfig
+      .withConfig(SpinalConfig(oneFilePerComponent = true))
+      .withVerilator
+      .addSimulatorFlag("-Wall")
+      .addSimulatorFlag("-Wwarn-WIDTH")
+      .addSimulatorFlag("-Wwarn-UNOPTFLAT")
+      .addSimulatorFlag("-Wwarn-CMPCONST")
+      .addSimulatorFlag("-Wwarn-UNSIGNED")
+      .addSimulatorFlag("-Wno-UNUSEDSIGNAL")
+      .disableCache
       .workspacePath(workspace)
       .compile(new OrderedCommitGroupProbe)
+
+    compiled
       .doSim("ordered-commit-directed", 0x158aa8) { dut =>
         def check(
             lanes: Int,
