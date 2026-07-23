@@ -276,7 +276,7 @@ class OooL1InstructionCacheSpec extends AnyFunSuite {
         }
         sample(dut)
         assert(!dut.io.responseValid.toBoolean)
-        assert(!dut.io.requestReady.toBoolean)
+        assert(dut.io.requestReady.toBoolean)
 
         for (beat <- 4 until OooCacheContract.BeatsPerLine) {
           dut.io.lineReadBeatValid #= true
@@ -299,6 +299,74 @@ class OooL1InstructionCacheSpec extends AnyFunSuite {
           firstInstruction = 512,
           forbidLineRead = true
         )
+      }
+  }
+
+  test("L1I streams later fetch groups from the line being refilled") {
+    SimConfig.withVerilator
+      .workspacePath("target/sim-workspace-ooo-l1i-streaming-groups")
+      .compile(new OooL1InstructionCacheProbe(config))
+      .doSim("ooo-l1i-streaming-groups", 0x4c53) { dut =>
+        dut.clockDomain.forkStimulus(period = 10)
+        clearInputs(dut)
+        dut.clockDomain.assertReset()
+        dut.clockDomain.waitSampling(2)
+        dut.clockDomain.deassertReset()
+        dut.clockDomain.waitSampling(config.instructionCache.sets + 8)
+
+        val virtualBase = BigInt("1c000100", 16)
+        val physicalBase = BigInt("100", 16)
+        acceptRequest(dut, virtualBase, physicalBase)
+        while (!dut.io.lineReadValid.toBoolean) { sample(dut) }
+        dut.io.lineReadReady #= true
+        sample(dut)
+        dut.io.lineReadReady #= false
+
+        for (beat <- 0 until 2) {
+          dut.io.lineReadBeatValid #= true
+          dut.io.lineReadBeat.beat #= beat
+          dut.io.lineReadBeat.data #= instructionBeat(700, beat)
+          sample(dut)
+        }
+        assert(dut.io.responseValid.toBoolean)
+        assert(dut.io.response.virtualAddress.toBigInt == virtualBase)
+
+        dut.io.requestValid #= true
+        dut.io.request.virtualAddress #= virtualBase + 16
+        dut.io.request.physicalAddress #= physicalBase + 16
+        dut.io.lineReadBeat.beat #= 2
+        dut.io.lineReadBeat.data #= instructionBeat(700, 2)
+        sleep(1)
+        assert(dut.io.requestReady.toBoolean)
+        sample(dut)
+        dut.io.requestValid #= false
+        assert(!dut.io.responseValid.toBoolean)
+
+        dut.io.lineReadBeat.beat #= 3
+        dut.io.lineReadBeat.data #= instructionBeat(700, 3)
+        sample(dut)
+        assert(dut.io.responseValid.toBoolean)
+        assert(dut.io.response.virtualAddress.toBigInt == virtualBase + 16)
+        for (lane <- 0 until config.fetchWidth) {
+          assert(dut.io.response.instructions(lane).toBigInt == 704 + lane)
+        }
+
+        dut.io.requestValid #= true
+        dut.io.request.virtualAddress #= virtualBase + 64
+        dut.io.request.physicalAddress #= physicalBase + 64
+        sleep(1)
+        assert(!dut.io.requestReady.toBoolean)
+        dut.io.requestValid #= false
+
+        for (beat <- 4 until OooCacheContract.BeatsPerLine) {
+          dut.io.lineReadBeat.beat #= beat
+          dut.io.lineReadBeat.data #= instructionBeat(700, beat)
+          dut.io.lineReadBeat.last #= beat == OooCacheContract.BeatsPerLine - 1
+          sample(dut)
+        }
+        dut.io.lineReadBeatValid #= false
+        sample(dut)
+        assert(dut.io.requestReady.toBoolean)
       }
   }
 }

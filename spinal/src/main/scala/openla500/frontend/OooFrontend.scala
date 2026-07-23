@@ -142,23 +142,27 @@ final class OooFrontend(config: OooCoreConfig = OooCoreConfig.FourIssueThreeComm
     io.translationResponse.virtualAddress === translationPc
   val translationExceptionFire = translationResponseFire && translationOutstanding &&
     !io.redirectValid && translationResponseMatches && io.translationResponse.exception.valid
+  val predictedRedirectOnResponse = Bool()
+  val cacheRequestCapacityAvailable = Bool()
+  // Cached requests can be killed at the L1 boundary, but an already accepted uncached AXI burst
+  // still completes.  Do not let that stale response satisfy a newer request after redirect.
+  val cacheResponseMatches = io.cacheResponse.virtualAddress === cachePc
+  val responseFire = io.cacheResponseValid && cacheOutstanding && !io.redirectValid &&
+    cacheResponseMatches
 
   // Translation may run while an older cache response is pending, but no buffer capacity is
   // reserved until the translated request reaches L1I.  Recheck space here so a fast prefetch
   // cannot overwrite four live instruction-buffer entries after the older response fills them.
-  io.cacheRequestValid := translatedRequestValid && !cacheOutstanding && !io.redirectValid &&
-    freeSlots >= config.fetchWidth
+  // On a sequential response, hand the prefetched translation directly to an idle L1I in the
+  // same cycle.  A predicted redirect suppresses the handoff because that translation is stale.
+  io.cacheRequestValid := translatedRequestValid && (!cacheOutstanding || responseFire) &&
+    !predictedRedirectOnResponse && !io.redirectValid && cacheRequestCapacityAvailable
   io.cacheRequest.virtualAddress := translationPc
   io.cacheRequest.physicalAddress := translatedPhysicalAddress
   io.cacheRequest.uncached := translatedUncached
   val requestFire = io.cacheRequestValid && io.cacheRequestReady
   io.cacheKill := io.redirectValid && cacheOutstanding
 
-  // Cached requests can be killed at the L1 boundary, but an already accepted uncached AXI burst
-  // still completes.  Do not let that stale response satisfy a newer request after redirect.
-  val cacheResponseMatches = io.cacheResponse.virtualAddress === cachePc
-  val responseFire = io.cacheResponseValid && cacheOutstanding && !io.redirectValid &&
-    cacheResponseMatches
   val groupBase = cachePc &
     U(((BigInt(1) << config.xlen) - 1) ^ (fetchGroupBytes - 1), config.xlen bits)
   val firstSlot = cachePc(fetchGroupOffsetWidth - 1 downto 2)
@@ -194,6 +198,14 @@ final class OooFrontend(config: OooCoreConfig = OooCoreConfig.FourIssueThreeComm
     responsePrefix(lane + 1) := responsePrefix(lane) + responseSlotValid(lane).asUInt
   }
   val enqueueCount = responsePrefix(config.fetchWidth)
+  predictedRedirectOnResponse := earlierResponsePredictionTaken(config.fetchWidth)
+  val overlapRequiredSlots =
+    (U(config.fetchWidth, countWidth bits) + enqueueCount.resize(countWidth)).resized
+  cacheRequestCapacityAvailable := Mux(
+    responseFire,
+    freeSlots >= overlapRequiredSlots,
+    freeSlots >= config.fetchWidth
+  )
 
   val decodeInputValid = Bits(config.fetchWidth bits)
   val decodePc = Vec(UInt(config.xlen bits), config.fetchWidth)
@@ -298,8 +310,14 @@ final class OooFrontend(config: OooCoreConfig = OooCoreConfig.FourIssueThreeComm
         fetchGroupBytes
     }
     when(responseFire) {
-      cacheOutstanding := False
-      nextFetchPc := groupBase + fetchGroupBytes
+      cacheOutstanding := requestFire
+      nextFetchPc := Mux(
+        requestFire,
+        (translationPc &
+          U(((BigInt(1) << config.xlen) - 1) ^ (fetchGroupBytes - 1), config.xlen bits)) +
+          fetchGroupBytes,
+        groupBase + fetchGroupBytes
+      )
       when(earlierResponsePredictionTaken(config.fetchWidth)) {
         when(responsePredictionTaken(0)) {
           nextFetchPc := responsePredictionTarget(0)

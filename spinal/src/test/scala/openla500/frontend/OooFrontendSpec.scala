@@ -466,6 +466,108 @@ class OooFrontendSpec extends AnyFunSuite {
       }
   }
 
+  test("a sequential response hands the prefetched next group to cache without a bubble") {
+    SimConfig.withVerilator
+      .workspacePath("target/sim-workspace-ooo-frontend")
+      .compile(new OooFrontend(config))
+      .doSim("ooo-frontend-cache-response-request-overlap", 0x4c68) { dut =>
+        dut.clockDomain.forkStimulus(period = 10)
+        clearInputs(dut)
+        dut.clockDomain.assertReset()
+        dut.clockDomain.waitSampling(2)
+        dut.clockDomain.deassertReset()
+        sample(dut)
+
+        val base = config.resetVector
+        val nextGroup = base + config.fetchWidth * 4
+        acceptFetch(dut, base)
+
+        assert(dut.io.translationRequest.valid.toBoolean)
+        assert(dut.io.translationRequest.virtualAddress.toBigInt == nextGroup)
+        dut.io.translationRequest.ready #= true
+        sample(dut)
+        dut.io.translationRequest.ready #= false
+        dut.io.translationResponse.valid #= true
+        dut.io.translationResponse.virtualAddress #= nextGroup
+        dut.io.translationResponse.physicalAddress #= nextGroup
+        sample(dut)
+        dut.io.translationResponse.valid #= false
+
+        dut.io.cacheRequestReady #= true
+        dut.io.cacheResponseValid #= true
+        dut.io.cacheResponse.virtualAddress #= base
+        dut.io.cacheResponse.physicalAddress #= base
+        for (lane <- 0 until config.fetchWidth) {
+          dut.io.cacheResponse.instructions(lane) #= (BigInt("00100000", 16) | (lane + 1))
+        }
+        sleep(1)
+        assert(dut.io.cacheRequestValid.toBoolean)
+        assert(dut.io.cacheRequest.virtualAddress.toBigInt == nextGroup)
+        assert(dut.io.cacheRequest.physicalAddress.toBigInt == nextGroup)
+        sample(dut)
+        dut.io.cacheRequestReady #= false
+        dut.io.cacheResponseValid #= false
+
+        assert(dut.io.fetchPc.toBigInt == base + 2 * config.fetchWidth * 4)
+        assert(dut.io.occupancy.toBigInt == config.fetchWidth)
+
+        returnGroup(dut, nextGroup, firstRd = 5)
+        assert(dut.io.occupancy.toBigInt == 2 * config.fetchWidth)
+      }
+  }
+
+  test("response handoff reserves buffer space for both fetch groups") {
+    SimConfig.withVerilator
+      .workspacePath("target/sim-workspace-ooo-frontend")
+      .compile(new OooFrontend(config))
+      .doSim("ooo-frontend-cache-response-capacity", 0x4c69) { dut =>
+        dut.clockDomain.forkStimulus(period = 10)
+        clearInputs(dut)
+        dut.clockDomain.assertReset()
+        dut.clockDomain.waitSampling(2)
+        dut.clockDomain.deassertReset()
+        sample(dut)
+
+        val base = config.resetVector
+        acceptFetch(dut, base)
+        returnGroup(dut, base, firstRd = 1)
+        assert(dut.io.occupancy.toBigInt == config.fetchWidth)
+
+        acceptFetch(dut, base + 16)
+        assert(dut.io.translationRequest.valid.toBoolean)
+        assert(dut.io.translationRequest.virtualAddress.toBigInt == base + 32)
+        dut.io.translationRequest.ready #= true
+        sample(dut)
+        dut.io.translationRequest.ready #= false
+        dut.io.translationResponse.valid #= true
+        dut.io.translationResponse.virtualAddress #= base + 32
+        dut.io.translationResponse.physicalAddress #= base + 32
+        sample(dut)
+        dut.io.translationResponse.valid #= false
+
+        dut.io.cacheRequestReady #= true
+        dut.io.cacheResponseValid #= true
+        dut.io.cacheResponse.virtualAddress #= base + 16
+        dut.io.cacheResponse.physicalAddress #= base + 16
+        for (lane <- 0 until config.fetchWidth) {
+          dut.io.cacheResponse.instructions(lane) #= (BigInt("00100000", 16) | (lane + 5))
+        }
+        sleep(1)
+        assert(!dut.io.cacheRequestValid.toBoolean)
+        sample(dut)
+        dut.io.cacheResponseValid #= false
+        dut.io.cacheRequestReady #= false
+        assert(dut.io.occupancy.toBigInt == config.instructionBufferEntries)
+
+        dut.io.decodeReady #= 7
+        sample(dut)
+        sample(dut)
+        dut.io.decodeReady #= 0
+        assert(dut.io.cacheRequestValid.toBoolean)
+        assert(dut.io.cacheRequest.virtualAddress.toBigInt == base + 32)
+      }
+  }
+
   test("static branch prediction truncates the response and redirects fetch") {
     SimConfig.withVerilator
       .workspacePath("target/sim-workspace-ooo-frontend")

@@ -8,10 +8,12 @@ object OooL1InstructionCacheState extends SpinalEnum {
   val idle, lookup, refillRequest, refillData, install = newElement()
 }
 
-/** Blocking two-way 8-KiB L1 instruction cache with 64-byte lines.
+/** Two-way 8-KiB L1 instruction cache with 64-byte lines.
   *
   * A killed request is allowed to finish its refill so a redirect back to the same line can hit,
-  * but no response is emitted for the stale fetch group.
+  * but no response is emitted for the stale fetch group.  Once the requested 16-byte group has
+  * returned, another request to the line being refilled may take ownership without waiting for
+  * installation; requests to a different line remain blocked.
   */
 final class OooL1InstructionCache(
     config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommit
@@ -116,15 +118,25 @@ final class OooL1InstructionCache(
   cacheArray.io.maintenanceReadIndex := 0
   cacheArray.io.maintenanceReadWay := 0
 
-  io.requestReady := state === OooL1InstructionCacheState.idle &&
-    cacheArray.io.lookupReady && !invalidateRequest && !io.kill
+  val idleRequestReady = state === OooL1InstructionCacheState.idle &&
+    cacheArray.io.lookupReady
+  val refillSameLineReady = state === OooL1InstructionCacheState.refillData &&
+    refillResponseSent && !requestKilled && !io.request.uncached &&
+    lineAddress(io.request.physicalAddress) === lineAddress(request.physicalAddress)
+  io.requestReady := (idleRequestReady || refillSameLineReady) &&
+    !invalidateRequest && !io.kill
   val requestFire = io.requestValid && io.requestReady
+  val refillRequestFire = requestFire && refillSameLineReady
   when(requestFire) {
     request := io.request
     requestKilled := False
-    cacheArray.io.lookupValid := True
-    cacheArray.io.lookupAddress := io.request.physicalAddress
-    state := OooL1InstructionCacheState.lookup
+    when(refillRequestFire) {
+      refillResponseSent := False
+    }.otherwise {
+      cacheArray.io.lookupValid := True
+      cacheArray.io.lookupAddress := io.request.physicalAddress
+      state := OooL1InstructionCacheState.lookup
+    }
   }
   when((io.kill || newInvalidate) && state =/= OooL1InstructionCacheState.idle) {
     requestKilled := True
@@ -174,12 +186,25 @@ final class OooL1InstructionCache(
   val requestedGroup = request.physicalAddress(offsetWidth - 1 downto fetchGroupOffsetWidth)
   val requestedBeatBase = (requestedGroup ## U(0, 1 bits)).asUInt
   val requestedBeatMask = (B(3, OooCacheContract.BeatsPerLine bits) |<< requestedBeatBase).resized
+  val acceptedBeatMask = Mux(
+    refillBeatFire,
+    UIntToOh(io.lineReadBeat.beat, OooCacheContract.BeatsPerLine),
+    B(0, OooCacheContract.BeatsPerLine bits)
+  )
+  val refillMaskWithAcceptedBeat = refillMask | acceptedBeatMask
+  val refillRequestGroup =
+    io.request.physicalAddress(offsetWidth - 1 downto fetchGroupOffsetWidth)
+  val refillRequestBeatBase = (refillRequestGroup ## U(0, 1 bits)).asUInt
+  val refillRequestBeatMask =
+    (B(3, OooCacheContract.BeatsPerLine bits) |<< refillRequestBeatBase).resized
+  val refillRequestGroupReady =
+    (refillMaskWithAcceptedBeat & refillRequestBeatMask) === refillRequestBeatMask
   when(refillBeatFire) {
     refillBeats(io.lineReadBeat.beat) := io.lineReadBeat.data
     refillError := refillError || io.lineReadBeat.error
-    val nextMask = refillMask | UIntToOh(io.lineReadBeat.beat, OooCacheContract.BeatsPerLine)
-    refillMask := nextMask
-    val requestedGroupReady = (nextMask & requestedBeatMask) === requestedBeatMask
+    refillMask := refillMaskWithAcceptedBeat
+    val requestedGroupReady =
+      (refillMaskWithAcceptedBeat & requestedBeatMask) === requestedBeatMask
     when(requestedGroupReady && !refillResponseSent && !requestKilled && !io.kill) {
       responseValid := True
       response.virtualAddress := request.virtualAddress
@@ -191,7 +216,18 @@ final class OooL1InstructionCache(
       response.error := refillError || io.lineReadBeat.error
       refillResponseSent := True
     }
-    when(nextMask.andR) { state := OooL1InstructionCacheState.install }
+    when(refillMaskWithAcceptedBeat.andR) { state := OooL1InstructionCacheState.install }
+  }
+  when(refillRequestFire && refillRequestGroupReady) {
+    responseValid := True
+    response.virtualAddress := io.request.virtualAddress
+    response.physicalAddress := io.request.physicalAddress
+    response.instructions := selectFetchGroup(
+      refillLineWithAcceptedBeat,
+      io.request.physicalAddress
+    )
+    response.error := refillError || (refillBeatFire && io.lineReadBeat.error)
+    refillResponseSent := True
   }
 
   when(state === OooL1InstructionCacheState.install) {
