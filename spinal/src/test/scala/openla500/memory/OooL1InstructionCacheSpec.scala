@@ -93,7 +93,8 @@ class OooL1InstructionCacheSpec extends AnyFunSuite {
   private def refill(
       dut: OooL1InstructionCacheProbe,
       expectedLineAddress: BigInt,
-      firstInstruction: Int
+      firstInstruction: Int,
+      expectedResponseFirstInstruction: Option[Int] = None
   ): Unit = {
     var cycles = 0
     while (!dut.io.lineReadValid.toBoolean && cycles < 16) {
@@ -106,6 +107,7 @@ class OooL1InstructionCacheSpec extends AnyFunSuite {
     sample(dut)
     dut.io.lineReadReady #= false
 
+    var responseCount = 0
     for (beat <- 0 until OooCacheContract.BeatsPerLine) {
       dut.io.lineReadBeatValid #= true
       dut.io.lineReadBeat.mshrId #= 0
@@ -115,9 +117,20 @@ class OooL1InstructionCacheSpec extends AnyFunSuite {
       sleep(1)
       assert(dut.io.lineReadBeatReady.toBoolean)
       sample(dut)
+      if (dut.io.responseValid.toBoolean) {
+        responseCount += 1
+        assert(expectedResponseFirstInstruction.nonEmpty)
+        for (lane <- 0 until config.fetchWidth) {
+          assert(
+            dut.io.response.instructions(lane).toBigInt ==
+              expectedResponseFirstInstruction.get + lane
+          )
+        }
+      }
     }
     dut.io.lineReadBeatValid #= false
     sample(dut)
+    assert(responseCount == expectedResponseFirstInstruction.size)
   }
 
   private def expectGroup(
@@ -156,8 +169,12 @@ class OooL1InstructionCacheSpec extends AnyFunSuite {
         assert(dut.io.requestReady.toBoolean)
 
         acceptRequest(dut, virtualAddress = 0x1c000130, physicalAddress = 0x130)
-        refill(dut, expectedLineAddress = 0x100, firstInstruction = 100)
-        expectGroup(dut, virtualAddress = 0x1c000130, firstInstruction = 112)
+        refill(
+          dut,
+          expectedLineAddress = 0x100,
+          firstInstruction = 100,
+          expectedResponseFirstInstruction = Some(112)
+        )
 
         acceptRequest(dut, virtualAddress = 0x1c000110, physicalAddress = 0x110)
         expectGroup(
@@ -218,6 +235,70 @@ class OooL1InstructionCacheSpec extends AnyFunSuite {
           cycles += 1
         }
         assert(dut.io.lineReadValid.toBoolean)
+      }
+  }
+
+  test("L1I returns the requested 16-byte group before the complete line is installed") {
+    SimConfig.withVerilator
+      .workspacePath("target/sim-workspace-ooo-l1i-critical-group")
+      .compile(new OooL1InstructionCacheProbe(config))
+      .doSim("ooo-l1i-critical-group-first", 0x4c52) { dut =>
+        dut.clockDomain.forkStimulus(period = 10)
+        clearInputs(dut)
+        dut.clockDomain.assertReset()
+        dut.clockDomain.waitSampling(2)
+        dut.clockDomain.deassertReset()
+        dut.clockDomain.waitSampling(config.instructionCache.sets + 8)
+
+        acceptRequest(dut, virtualAddress = 0x1c000110, physicalAddress = 0x110)
+        while (!dut.io.lineReadValid.toBoolean) { sample(dut) }
+        dut.io.lineReadReady #= true
+        sample(dut)
+        dut.io.lineReadReady #= false
+
+        for (beat <- 0 until 4) {
+          dut.io.lineReadBeatValid #= true
+          dut.io.lineReadBeat.mshrId #= 0
+          dut.io.lineReadBeat.beat #= beat
+          dut.io.lineReadBeat.data #= instructionBeat(500, beat)
+          dut.io.lineReadBeat.last #= false
+          sleep(1)
+          assert(dut.io.lineReadBeatReady.toBoolean)
+          if (beat < 3) assert(!dut.io.responseValid.toBoolean)
+          sample(dut)
+        }
+        dut.io.lineReadBeatValid #= false
+        sleep(1)
+        assert(dut.io.responseValid.toBoolean)
+        assert(dut.io.response.virtualAddress.toBigInt == 0x1c000110L)
+        for (lane <- 0 until config.fetchWidth) {
+          assert(dut.io.response.instructions(lane).toBigInt == 504 + lane)
+        }
+        sample(dut)
+        assert(!dut.io.responseValid.toBoolean)
+        assert(!dut.io.requestReady.toBoolean)
+
+        for (beat <- 4 until OooCacheContract.BeatsPerLine) {
+          dut.io.lineReadBeatValid #= true
+          dut.io.lineReadBeat.beat #= beat
+          dut.io.lineReadBeat.data #= instructionBeat(500, beat)
+          dut.io.lineReadBeat.last #= beat == OooCacheContract.BeatsPerLine - 1
+          sleep(1)
+          assert(dut.io.lineReadBeatReady.toBoolean)
+          assert(!dut.io.responseValid.toBoolean)
+          sample(dut)
+        }
+        dut.io.lineReadBeatValid #= false
+        sample(dut)
+        assert(!dut.io.responseValid.toBoolean)
+
+        acceptRequest(dut, virtualAddress = 0x1c000130, physicalAddress = 0x130)
+        expectGroup(
+          dut,
+          virtualAddress = 0x1c000130,
+          firstInstruction = 512,
+          forbidLineRead = true
+        )
       }
   }
 }

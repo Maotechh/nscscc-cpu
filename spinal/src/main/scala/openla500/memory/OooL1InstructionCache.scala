@@ -80,6 +80,7 @@ final class OooL1InstructionCache(
   )
   val refillMask = Reg(Bits(OooCacheContract.BeatsPerLine bits)) init (0)
   val refillError = RegInit(False)
+  val refillResponseSent = RegInit(False)
 
   val refillLine = Bits(OooCacheContract.LineBits bits)
   for (beat <- 0 until OooCacheContract.BeatsPerLine) {
@@ -154,15 +155,42 @@ final class OooL1InstructionCache(
   when(state === OooL1InstructionCacheState.refillRequest && io.lineReadReady) {
     refillMask := 0
     refillError := False
+    refillResponseSent := False
     state := OooL1InstructionCacheState.refillData
   }
 
   val refillBeatFire = io.lineReadBeatValid && io.lineReadBeatReady
+  val refillLineWithAcceptedBeat = Bits(OooCacheContract.LineBits bits)
+  for (beat <- 0 until OooCacheContract.BeatsPerLine) {
+    refillLineWithAcceptedBeat(
+      beat * OooCacheContract.BeatBits + OooCacheContract.BeatBits - 1 downto
+        beat * OooCacheContract.BeatBits
+    ) := Mux(
+      refillBeatFire && io.lineReadBeat.beat === beat,
+      io.lineReadBeat.data,
+      refillBeats(beat)
+    )
+  }
+  val requestedGroup = request.physicalAddress(offsetWidth - 1 downto fetchGroupOffsetWidth)
+  val requestedBeatBase = (requestedGroup ## U(0, 1 bits)).asUInt
+  val requestedBeatMask = (B(3, OooCacheContract.BeatsPerLine bits) |<< requestedBeatBase).resized
   when(refillBeatFire) {
     refillBeats(io.lineReadBeat.beat) := io.lineReadBeat.data
     refillError := refillError || io.lineReadBeat.error
     val nextMask = refillMask | UIntToOh(io.lineReadBeat.beat, OooCacheContract.BeatsPerLine)
     refillMask := nextMask
+    val requestedGroupReady = (nextMask & requestedBeatMask) === requestedBeatMask
+    when(requestedGroupReady && !refillResponseSent && !requestKilled && !io.kill) {
+      responseValid := True
+      response.virtualAddress := request.virtualAddress
+      response.physicalAddress := request.physicalAddress
+      response.instructions := selectFetchGroup(
+        refillLineWithAcceptedBeat,
+        request.physicalAddress
+      )
+      response.error := refillError || io.lineReadBeat.error
+      refillResponseSent := True
+    }
     when(nextMask.andR) { state := OooL1InstructionCacheState.install }
   }
 
@@ -172,7 +200,7 @@ final class OooL1InstructionCache(
     cacheArray.io.writeData := refillLine
     cacheArray.io.writeEntryValid := True
     cacheArray.io.writeDirty := False
-    when(!requestKilled && !io.kill) {
+    when(!refillResponseSent && !requestKilled && !io.kill) {
       responseValid := True
       response.virtualAddress := request.virtualAddress
       response.physicalAddress := request.physicalAddress

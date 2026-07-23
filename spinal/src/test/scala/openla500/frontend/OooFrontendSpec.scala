@@ -412,6 +412,60 @@ class OooFrontendSpec extends AnyFunSuite {
       }
   }
 
+  test("a predicted branch drains a sequential translation accepted on the response edge") {
+    SimConfig.withVerilator
+      .workspacePath("target/sim-workspace-ooo-frontend")
+      .compile(new OooFrontend(config))
+      .doSim("ooo-frontend-same-cycle-prediction-translation", 0x4c67) { dut =>
+        dut.clockDomain.forkStimulus(period = 10)
+        clearInputs(dut)
+        dut.clockDomain.assertReset()
+        dut.clockDomain.waitSampling(2)
+        dut.clockDomain.deassertReset()
+        sample(dut)
+
+        val base = config.resetVector
+        val sequentialPc = base + config.fetchWidth * 4
+        val branchTarget = base + 4 + 0x40
+        acceptFetch(dut, base)
+
+        // The speculative sequential translation and the branch-bearing cache response are both
+        // accepted on this edge.  The translation response appears later and must be drained.
+        dut.io.translationRequest.ready #= true
+        dut.io.cacheResponseValid #= true
+        dut.io.cacheResponse.virtualAddress #= base
+        dut.io.cacheResponse.physicalAddress #= base
+        dut.io.cacheResponse.instructions(0) #= (BigInt("00100000", 16) | 1)
+        dut.io.cacheResponse.instructions(1) #= encodeDirectBranch(0x14, 0x40)
+        dut.io.cacheResponse.instructions(2) #= (BigInt("00100000", 16) | 3)
+        dut.io.cacheResponse.instructions(3) #= (BigInt("00100000", 16) | 4)
+        dut.io.cacheResponse.error #= false
+        sleep(1)
+        assert(dut.io.translationRequest.valid.toBoolean)
+        assert(dut.io.translationRequest.virtualAddress.toBigInt == sequentialPc)
+        sample(dut)
+        dut.io.translationRequest.ready #= false
+        dut.io.cacheResponseValid #= false
+        assert(dut.io.fetchPc.toBigInt == branchTarget)
+
+        dut.io.translationResponse.valid #= true
+        dut.io.translationResponse.virtualAddress #= sequentialPc
+        dut.io.translationResponse.physicalAddress #= sequentialPc
+        sleep(1)
+        assert(dut.io.translationResponse.ready.toBoolean)
+        sample(dut)
+        dut.io.translationResponse.valid #= false
+
+        var retryWait = 0
+        while (!dut.io.translationRequest.valid.toBoolean && retryWait < 8) {
+          sample(dut)
+          retryWait += 1
+        }
+        assert(dut.io.translationRequest.valid.toBoolean)
+        assert(dut.io.translationRequest.virtualAddress.toBigInt == branchTarget)
+      }
+  }
+
   test("static branch prediction truncates the response and redirects fetch") {
     SimConfig.withVerilator
       .workspacePath("target/sim-workspace-ooo-frontend")

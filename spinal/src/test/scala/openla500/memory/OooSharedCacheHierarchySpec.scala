@@ -186,6 +186,8 @@ class OooSharedCacheHierarchySpec extends AnyFunSuite {
         sample(dut)
         dut.io.memoryReadReady #= false
 
+        var sawInstruction = false
+        var sawData = false
         for (beat <- 0 until OooCacheContract.BeatsPerLine) {
           dut.io.memoryReadBeatValid #= true
           dut.io.memoryReadBeat.mshrId #= 0
@@ -195,11 +197,24 @@ class OooSharedCacheHierarchySpec extends AnyFunSuite {
           sleep(1)
           assert(dut.io.memoryReadBeatReady.toBoolean)
           sample(dut)
+          if (dut.io.instructionResponseValid.toBoolean) {
+            assert(!sawInstruction)
+            assert(dut.io.instructionResponse.virtualAddress.toBigInt == BigInt("1c000410", 16))
+            for (lane <- 0 until config.fetchWidth) {
+              assert(dut.io.instructionResponse.instructions(lane).toBigInt == 304 + lane)
+            }
+            sawInstruction = true
+          }
+          if (dut.io.dataResponseValid.toBoolean) {
+            assert(!sawData)
+            assert(dut.io.dataResponse.robPointer.toBigInt == 5)
+            assert(dut.io.dataResponse.pdst.toBigInt == 9)
+            assert(dut.io.dataResponse.data.toBigInt == 302)
+            sawData = true
+          }
         }
         dut.io.memoryReadBeatValid #= false
 
-        var sawInstruction = false
-        var sawData = false
         var drainCycles = 0
         while (!(sawInstruction && sawData) && drainCycles < 64) {
           assert(!dut.io.memoryReadValid.toBoolean)
@@ -269,6 +284,7 @@ class OooSharedCacheHierarchySpec extends AnyFunSuite {
         dut.io.memoryReadReady #= true
         sample(dut)
         dut.io.memoryReadReady #= false
+        var instructionRefill = false
         for (beat <- 0 until OooCacheContract.BeatsPerLine) {
           dut.io.memoryReadBeatValid #= true
           dut.io.memoryReadBeat.mshrId #= 0
@@ -278,20 +294,28 @@ class OooSharedCacheHierarchySpec extends AnyFunSuite {
           sleep(1)
           assert(dut.io.memoryReadBeatReady.toBoolean)
           sample(dut)
+          if (dut.io.instructionResponseValid.toBoolean) {
+            assert(!instructionRefill)
+            for (lane <- 0 until config.fetchWidth) {
+              assert(dut.io.instructionResponse.instructions(lane).toBigInt == 404 + lane)
+            }
+            instructionRefill = true
+          }
         }
         dut.io.memoryReadBeatValid #= false
 
-        var instructionRefill = false
         var instructionRefillCycles = 0
         while (!instructionRefill && instructionRefillCycles < 64) {
           instructionRefill = dut.io.instructionResponseValid.toBoolean
+          if (instructionRefill) {
+            for (lane <- 0 until config.fetchWidth) {
+              assert(dut.io.instructionResponse.instructions(lane).toBigInt == 404 + lane)
+            }
+          }
           if (!instructionRefill) sample(dut)
           instructionRefillCycles += 1
         }
         assert(instructionRefill)
-        for (lane <- 0 until config.fetchWidth) {
-          assert(dut.io.instructionResponse.instructions(lane).toBigInt == 404 + lane)
-        }
       }
   }
 

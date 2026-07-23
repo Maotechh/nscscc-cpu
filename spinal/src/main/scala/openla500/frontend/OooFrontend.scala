@@ -311,12 +311,14 @@ final class OooFrontend(config: OooCoreConfig = OooCoreConfig.FourIssueThreeComm
           }
         }
         // A sequential translation issued during the cache wait is stale when this group predicts
-        // a branch.  A response arriving now is consumed; a later response is drained explicitly.
+        // a branch.  Include a request accepted on this same edge: otherwise the cancellation below
+        // loses its owner before the registered translator response arrives and deadlocks the port.
         translatedRequestValid := False
         translatedExceptionValid := False
         translationOutstanding := False
         translationDropPending :=
-          (translationOutstanding || translationDropPending) && !translationResponseFire
+          (translationOutstanding || translationDropPending || translationRequestFire) &&
+            !translationResponseFire
       }
       for (lane <- 0 until config.fetchWidth) {
         when(responseSlotValid(lane)) {
