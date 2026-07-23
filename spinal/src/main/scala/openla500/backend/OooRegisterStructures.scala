@@ -32,7 +32,10 @@ final class OooPhysicalRegisterFile(config: OooCoreConfig = OooCoreConfig.FourIs
       registers(io.readAddress(readPort))
     )
     for (writePort <- (0 until config.writebackWidth).reverse) {
-      when(io.writeValid(writePort) && io.write(writePort).pdst === io.readAddress(readPort)) {
+      when(
+        io.writeValid(writePort) && io.write(writePort).pdst =/= 0 &&
+          io.write(writePort).pdst === io.readAddress(readPort)
+      ) {
         selected := io.write(writePort).data
       }
     }
@@ -45,7 +48,10 @@ final class OooPhysicalRegisterFile(config: OooCoreConfig = OooCoreConfig.FourIs
     registers(io.debugReadAddress)
   )
   for (writePort <- (0 until config.writebackWidth).reverse) {
-    when(io.writeValid(writePort) && io.write(writePort).pdst === io.debugReadAddress) {
+    when(
+      io.writeValid(writePort) && io.write(writePort).pdst =/= 0 &&
+        io.write(writePort).pdst === io.debugReadAddress
+    ) {
       io.debugReadData := io.write(writePort).data
     }
   }

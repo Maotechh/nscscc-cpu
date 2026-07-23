@@ -190,7 +190,7 @@ final class OooRob(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommit) e
   val stagedBranchTarget = Vec.fill(config.writebackWidth)(Reg(UInt(config.xlen bits)))
   for (lane <- 0 until config.writebackWidth) {
     io.completionWakeupValid(lane) := !io.flush && stagedCompletionHits(lane).orR &&
-      stagedWritesPdst(lane)
+      stagedWritesPdst(lane) && stagedPdst(lane) =/= 0
     io.completionWakeupPdst(lane) := stagedPdst(lane)
     io.completionWakeupData(lane) := stagedResult(lane)
     val laneHits = Bits(config.robEntries bits)

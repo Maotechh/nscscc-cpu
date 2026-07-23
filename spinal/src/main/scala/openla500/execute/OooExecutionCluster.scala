@@ -46,7 +46,7 @@ final class OooMultiplyPipe(config: OooCoreConfig = OooCoreConfig.FourIssueThree
   io.completionValid := valid
   io.completion.robPointer := uop.robPointer
   io.completion.pdst := uop.pdst
-  io.completion.writesPdst := uop.decoded.writesGpr
+  io.completion.writesPdst := uop.pdst =/= 0
   io.completion.data := result
   io.completion.sideEffectData := B(0, config.xlen bits)
   io.completion.exception := uop.decoded.exception
@@ -147,7 +147,7 @@ final class OooDivideUnit(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCo
   io.completionValid := completionValid
   io.completion.robPointer := uop.robPointer
   io.completion.pdst := uop.pdst
-  io.completion.writesPdst := uop.decoded.writesGpr
+  io.completion.writesPdst := uop.pdst =/= 0
   io.completion.data := result
   io.completion.sideEffectData := B(0, config.xlen bits)
   io.completion.exception := uop.decoded.exception
@@ -341,7 +341,7 @@ final class OooExecutionCluster(config: OooCoreConfig = OooCoreConfig.FourIssueT
     directCompletionValid(port) := fire && direct
     directCompletion(port).robPointer := io.issue(port).robPointer
     directCompletion(port).pdst := io.issue(port).pdst
-    directCompletion(port).writesPdst := decoded.writesGpr
+    directCompletion(port).writesPdst := io.issue(port).pdst =/= 0
     directCompletion(port).data := Mux(decoded.resultFromCsr, systemReadResult, alu.io.alu_result)
     directCompletion(port).sideEffectData := Mux(decoded.csrMask, csrMaskResult, io.source2(port))
     when(decoded.systemOperation === OooSystemOp.invalidateTlb) {

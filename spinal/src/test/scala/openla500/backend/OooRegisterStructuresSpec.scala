@@ -49,6 +49,42 @@ private final class OooRegisterMapProbe(config: OooCoreConfig) extends Component
 }
 
 class OooRegisterStructuresSpec extends AnyFunSuite {
+  test("physical register zero ignores same-cycle writeback bypass") {
+    val config = OooCoreConfig.FourIssueThreeCommit
+    SimConfig.withVerilator
+      .workspacePath("target/sim-workspace-ooo-registers")
+      .compile(new OooPhysicalRegisterFile(config))
+      .doSim("ooo-prf-zero-bypass", 0x50524630) { dut =>
+        dut.clockDomain.forkStimulus(period = 10)
+        dut.io.writeValid #= 0
+        dut.io.flush #= false
+        dut.io.debugReadAddress #= 0
+        for (port <- 0 until config.executionWidth * 2) {
+          dut.io.readAddress(port) #= 0
+        }
+        for (port <- 0 until config.writebackWidth) {
+          dut.io.write(port).pdst #= 0
+          dut.io.write(port).data #= 0
+        }
+        dut.clockDomain.assertReset()
+        dut.clockDomain.waitSampling(2)
+        dut.clockDomain.deassertReset()
+
+        dut.io.writeValid #= 1
+        dut.io.write(0).pdst #= 0
+        dut.io.write(0).data #= BigInt("deadbeef", 16)
+        sleep(1)
+        assert(dut.io.readData(0).toBigInt == 0)
+        assert(dut.io.debugReadData.toBigInt == 0)
+
+        dut.clockDomain.waitSampling()
+        dut.io.writeValid #= 0
+        sleep(1)
+        assert(dut.io.readData(0).toBigInt == 0)
+        assert(dut.io.debugReadData.toBigInt == 0)
+      }
+  }
+
   private def clearFreeListInputs(dut: OooFreeList, config: OooCoreConfig): Unit = {
     dut.io.allocateValid #= 0
     dut.io.allocateAccept #= false

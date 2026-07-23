@@ -413,7 +413,7 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
   }.elsewhen(aguCompletionFire) {
     generatedCompletion.robPointer := io.agu.uop.robPointer
     generatedCompletion.pdst := io.agu.uop.pdst
-    generatedCompletion.writesPdst := io.agu.uop.decoded.writesGpr
+    generatedCompletion.writesPdst := io.agu.uop.pdst =/= 0
     generatedCompletion.data := Mux(
       io.agu.uop.decoded.isSc,
       B(1, config.xlen bits),
@@ -527,7 +527,7 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
       val index = io.agu.uop.storeQueueIndex
       stores(index).virtualAddress := io.agu.virtualAddress
       stores(index).pdst := io.agu.uop.pdst
-      stores(index).writesPdst := io.agu.uop.decoded.writesGpr
+      stores(index).writesPdst := io.agu.uop.pdst =/= 0
       stores(index).isSc := io.agu.uop.decoded.isSc
       stores(index).size := io.agu.size
       stores(index).byteMask := io.agu.byteMask
@@ -538,7 +538,7 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
     when(aguFire && !io.agu.isWrite) {
       val index = io.agu.uop.loadQueueIndex
       loads(index).pdst := io.agu.uop.pdst
-      loads(index).writesPdst := io.agu.uop.decoded.writesGpr
+      loads(index).writesPdst := io.agu.uop.pdst =/= 0
       loads(index).virtualAddress := io.agu.virtualAddress
       loads(index).size := io.agu.size
       loads(index).byteMask := io.agu.byteMask
