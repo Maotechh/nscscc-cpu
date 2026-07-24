@@ -48,6 +48,41 @@ class OooAddressTranslationUnitSpec extends AnyFunSuite {
     dut.io.tlbSearchVppn #= 0
   }
 
+  private def tlbLow(
+      ppn: BigInt,
+      global: Boolean = false,
+      memoryAttribute: Int = 1,
+      privilege: Int = 0,
+      dirty: Boolean = true,
+      valid: Boolean = true
+  ): BigInt =
+    (ppn << 8) |
+      (if (global) BigInt(1) << 6 else BigInt(0)) |
+      (BigInt(memoryAttribute) << 4) |
+      (BigInt(privilege) << 2) |
+      (if (dirty) BigInt(1) << 1 else BigInt(0)) |
+      (if (valid) BigInt(1) else BigInt(0))
+
+  private def writeTlb(
+      dut: OooAddressTranslationUnit,
+      index: Int,
+      virtualAddress: BigInt,
+      ppn0: BigInt,
+      ppn1: BigInt,
+      asid: Int,
+      low0Flags: BigInt = 0x13,
+      low1Flags: BigInt = 0x13
+  ): Unit = {
+    dut.io.csrAsid #= asid
+    dut.io.csrTlbIndex #= ((BigInt(12) << 24) | index)
+    dut.io.csrTlbEntryHigh #= ((virtualAddress >> 13) << 13)
+    dut.io.csrTlbEntryLow0 #= ((ppn0 << 8) | low0Flags)
+    dut.io.csrTlbEntryLow1 #= ((ppn1 << 8) | low1Flags)
+    dut.io.tlbWriteValid #= true
+    sample(dut)
+    dut.io.tlbWriteValid #= false
+  }
+
   private def translateInstruction(
       dut: OooAddressTranslationUnit,
       virtualAddress: BigInt
@@ -60,7 +95,7 @@ class OooAddressTranslationUnitSpec extends AnyFunSuite {
     sample(dut)
     dut.io.instructionRequest.valid #= false
     var cycles = 0
-    while (!dut.io.instructionResponse.valid.toBoolean && cycles < 8) {
+    while (!dut.io.instructionResponse.valid.toBoolean && cycles < 24) {
       sample(dut)
       cycles += 1
     }
@@ -81,7 +116,7 @@ class OooAddressTranslationUnitSpec extends AnyFunSuite {
     sample(dut)
     dut.io.dataRequest.valid #= false
     var cycles = 0
-    while (!dut.io.dataResponse.valid.toBoolean && cycles < 8) {
+    while (!dut.io.dataResponse.valid.toBoolean && cycles < 24) {
       sample(dut)
       cycles += 1
     }
@@ -157,6 +192,126 @@ class OooAddressTranslationUnitSpec extends AnyFunSuite {
         assert(dut.io.instructionResponse.exception.badVAddrValid.toBoolean)
         assert(dut.io.instructionResponse.exception.badVAddr.toBigInt == 0x00004000)
         assert(dut.io.instructionResponse.exception.tlbRefill.toBoolean)
+      }
+  }
+
+  test(
+    "micro TLBs cache main-walk results and mutations discard stale positive and negative state"
+  ) {
+    SimConfig.withVerilator
+      .workspacePath("target/sim-workspace-ooo-hierarchical-tlb")
+      .compile(new OooAddressTranslationUnit(config))
+      .doSim("ooo-hierarchical-tlb", 0x7b31) { dut =>
+        dut.domain.forkStimulus(period = 10)
+        clearInputs(dut)
+        dut.domain.assertReset()
+        dut.domain.waitSampling(2)
+        dut.domain.deassertReset()
+        sample(dut)
+
+        dut.io.csrDa #= false
+        dut.io.csrPg #= true
+        val asid = 0x12
+        val instructionAddress = BigInt("00456044", 16)
+        val dataAddress = BigInt("0089a088", 16)
+        val instructionPpn = BigInt("12345", 16)
+        val dataPpn = BigInt("23456", 16)
+        writeTlb(
+          dut,
+          index = 29,
+          virtualAddress = instructionAddress,
+          ppn0 = instructionPpn,
+          ppn1 = instructionPpn + 1,
+          asid = asid,
+          low0Flags = tlbLow(0) & 0xff,
+          low1Flags = tlbLow(0) & 0xff
+        )
+        writeTlb(
+          dut,
+          index = 30,
+          virtualAddress = dataAddress,
+          ppn0 = dataPpn,
+          ppn1 = dataPpn + 1,
+          asid = asid,
+          low0Flags = tlbLow(0) & 0xff,
+          low1Flags = tlbLow(0) & 0xff
+        )
+
+        dut.io.instructionRequest.valid #= true
+        dut.io.instructionRequest.virtualAddress #= instructionAddress
+        dut.io.dataRequest.valid #= true
+        dut.io.dataRequest.virtualAddress #= dataAddress
+        dut.io.dataRequest.isWrite #= false
+        sleep(1)
+        assert(dut.io.instructionRequest.ready.toBoolean)
+        assert(dut.io.dataRequest.ready.toBoolean)
+        sample(dut)
+        dut.io.instructionRequest.valid #= false
+        dut.io.dataRequest.valid #= false
+
+        var instructionSeen = false
+        var dataSeen = false
+        var arbitrationCycles = 0
+        while (!(instructionSeen && dataSeen) && arbitrationCycles < 24) {
+          sample(dut)
+          arbitrationCycles += 1
+          if (dut.io.instructionResponse.valid.toBoolean) {
+            instructionSeen = true
+            assert(!dut.io.instructionResponse.exception.valid.toBoolean)
+            assert(
+              dut.io.instructionResponse.physicalAddress.toBigInt ==
+                ((instructionPpn << 12) | (instructionAddress & 0xfff))
+            )
+          }
+          if (dut.io.dataResponse.valid.toBoolean) {
+            dataSeen = true
+            assert(!dut.io.dataResponse.exception.valid.toBoolean)
+            assert(
+              dut.io.dataResponse.physicalAddress.toBigInt ==
+                ((dataPpn << 12) | (dataAddress & 0xfff))
+            )
+          }
+        }
+        assert(instructionSeen && dataSeen)
+        assert(arbitrationCycles >= 9)
+        sample(dut)
+
+        assert(translateInstruction(dut, instructionAddress) == 1)
+        assert(!dut.io.instructionResponse.exception.valid.toBoolean)
+        sample(dut)
+        assert(translateData(dut, dataAddress, isWrite = false) == 1)
+        assert(!dut.io.dataResponse.exception.valid.toBoolean)
+        sample(dut)
+
+        dut.io.tlbInvalidateValid #= true
+        dut.io.tlbInvalidateOperation #= 0
+        sample(dut)
+        dut.io.tlbInvalidateValid #= false
+        assert(translateInstruction(dut, instructionAddress) >= 9)
+        assert(dut.io.instructionResponse.exception.valid.toBoolean)
+        assert(dut.io.instructionResponse.exception.ecode.toBigInt == 0x3f)
+        sample(dut)
+        assert(translateInstruction(dut, instructionAddress) == 1)
+        assert(dut.io.instructionResponse.exception.tlbRefill.toBoolean)
+        sample(dut)
+
+        val replacementPpn = BigInt("34567", 16)
+        writeTlb(
+          dut,
+          index = 29,
+          virtualAddress = instructionAddress,
+          ppn0 = replacementPpn,
+          ppn1 = replacementPpn + 1,
+          asid = asid,
+          low0Flags = tlbLow(0) & 0xff,
+          low1Flags = tlbLow(0) & 0xff
+        )
+        assert(translateInstruction(dut, instructionAddress) >= 9)
+        assert(!dut.io.instructionResponse.exception.valid.toBoolean)
+        assert(
+          dut.io.instructionResponse.physicalAddress.toBigInt ==
+            ((replacementPpn << 12) | (instructionAddress & 0xfff))
+        )
       }
   }
 }

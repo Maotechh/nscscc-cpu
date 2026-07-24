@@ -28,7 +28,7 @@ final case class OooTranslationContext(config: OooCoreConfig) extends Bundle {
   val disableCache = Bool()
 }
 
-/** Shared two-port LA32R translator around the verified 32-entry TLB storage. */
+/** Shared two-port LA32R translator with per-port micro-TLBs and a serialized main TLB. */
 final class OooAddressTranslationUnit(
     config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommit
 ) extends Component {
@@ -85,32 +85,49 @@ final class OooAddressTranslationUnit(
   )
 
   val area = new ClockingArea(domain) {
-    val translator = new OpenLa500AddrTrans(managementSearchEnabled = true)
-    translator.io.clk := io.clk
-    translator.io.asid := io.csrAsid
-    translator.io.tlbfill_en := io.tlbFillValid
-    translator.io.tlbwr_en := io.tlbWriteValid
-    translator.io.rand_index := io.tlbRandomIndex
-    translator.io.tlbehi_in := io.csrTlbEntryHigh
-    translator.io.tlbelo0_in := io.csrTlbEntryLow0
-    translator.io.tlbelo1_in := io.csrTlbEntryLow1
-    translator.io.tlbidx_in := io.csrTlbIndex
-    translator.io.ecode_in := io.csrExceptionCode
-    translator.io.invtlb_en := io.tlbInvalidateValid
-    translator.io.invtlb_asid := io.tlbInvalidateAsid
-    translator.io.invtlb_vpn := io.tlbInvalidateVpn
-    translator.io.invtlb_op := io.tlbInvalidateOperation
-    translator.io.csr_dmw0 := io.csrDmw0
-    translator.io.csr_dmw1 := io.csrDmw1
-    translator.io.csr_da := io.csrDa
-    translator.io.csr_pg := io.csrPg
-    translator.io.management_search_vppn := io.tlbSearchVppn
+    val tlb = new OooHierarchicalTlb()
+    tlb.io.clk := io.clk
+    tlb.io.reset := io.reset
+    tlb.io.writeValid := io.tlbFillValid || io.tlbWriteValid
+    tlb.io.writeIndex := Mux(
+      io.tlbFillValid,
+      io.tlbRandomIndex,
+      io.csrTlbIndex(4 downto 0).asUInt
+    )
+    tlb.io.writeEntry.vppn := io.csrTlbEntryHigh(31 downto 13)
+    tlb.io.writeEntry.asid := io.csrAsid
+    tlb.io.writeEntry.global := io.csrTlbEntryLow0(6) && io.csrTlbEntryLow1(6)
+    tlb.io.writeEntry.pageSize := io.csrTlbIndex(29 downto 24)
+    tlb.io.writeEntry.enabled :=
+      Mux(io.csrExceptionCode === B(0x3f, 6 bits), True, !io.csrTlbIndex(31))
+    tlb.io.writeEntry.ppn0 := io.csrTlbEntryLow0(27 downto 8)
+    tlb.io.writeEntry.privilege0 := io.csrTlbEntryLow0(3 downto 2)
+    tlb.io.writeEntry.memoryAttribute0 := io.csrTlbEntryLow0(5 downto 4)
+    tlb.io.writeEntry.dirty0 := io.csrTlbEntryLow0(1)
+    tlb.io.writeEntry.valid0 := io.csrTlbEntryLow0(0)
+    tlb.io.writeEntry.ppn1 := io.csrTlbEntryLow1(27 downto 8)
+    tlb.io.writeEntry.privilege1 := io.csrTlbEntryLow1(3 downto 2)
+    tlb.io.writeEntry.memoryAttribute1 := io.csrTlbEntryLow1(5 downto 4)
+    tlb.io.writeEntry.dirty1 := io.csrTlbEntryLow1(1)
+    tlb.io.writeEntry.valid1 := io.csrTlbEntryLow1(0)
+    tlb.io.invalidateValid := io.tlbInvalidateValid
+    tlb.io.invalidateOperation := io.tlbInvalidateOperation
+    tlb.io.invalidateAsid := io.tlbInvalidateAsid
+    tlb.io.invalidateVpn := io.tlbInvalidateVpn
+    tlb.io.readIndex := io.csrTlbIndex(4 downto 0).asUInt
+    tlb.io.managementVppn := io.tlbSearchVppn
+    tlb.io.managementAsid := io.csrAsid
 
-    io.tlbReadEntryHigh := translator.io.tlbehi_out
-    io.tlbReadEntryLow0 := translator.io.tlbelo0_out
-    io.tlbReadEntryLow1 := translator.io.tlbelo1_out
-    io.tlbReadIndex := translator.io.tlbidx_out
-    io.tlbReadAsid := translator.io.asid_out
+    io.tlbReadEntryHigh := tlb.io.readEntry.vppn ## B(0, 13 bits)
+    io.tlbReadEntryLow0 := B(0, 4 bits) ## tlb.io.readEntry.ppn0 ## B(0, 1 bits) ##
+      tlb.io.readEntry.global ## tlb.io.readEntry.memoryAttribute0 ##
+      tlb.io.readEntry.privilege0 ## tlb.io.readEntry.dirty0 ## tlb.io.readEntry.valid0
+    io.tlbReadEntryLow1 := B(0, 4 bits) ## tlb.io.readEntry.ppn1 ## B(0, 1 bits) ##
+      tlb.io.readEntry.global ## tlb.io.readEntry.memoryAttribute1 ##
+      tlb.io.readEntry.privilege1 ## tlb.io.readEntry.dirty1 ## tlb.io.readEntry.valid1
+    io.tlbReadIndex := (!tlb.io.readEntry.enabled).asBits ## B(0, 1 bits) ##
+      tlb.io.readEntry.pageSize ## B(0, 24 bits)
+    io.tlbReadAsid := tlb.io.readEntry.asid
 
     val pagingMode = !io.csrDa && io.csrPg
     def dmwEnabled(address: UInt, dmw: Bits): Bool =
@@ -128,6 +145,18 @@ final class OooAddressTranslationUnit(
       physicalAddress
     }
 
+    def translatedPhysicalAddress(
+        address: UInt,
+        lookup: OooTlbLookupResult
+    ): UInt = {
+      val physicalAddress = UInt(config.xlen bits)
+      physicalAddress := (lookup.ppn ## address(11 downto 0).asBits).asUInt
+      when(lookup.pageSize =/= B(12, 6 bits)) {
+        physicalAddress := (lookup.ppn(19 downto 10) ## address(21 downto 0).asBits).asUInt
+      }
+      physicalAddress
+    }
+
     val instructionContext = Reg(OooTranslationContext(config))
     val instructionSearchPending = RegInit(False)
     val instructionResponseValid = RegInit(False)
@@ -135,9 +164,14 @@ final class OooAddressTranslationUnit(
     val instructionDmw0 = dmwEnabled(io.instructionRequest.virtualAddress, io.csrDmw0)
     val instructionDmw1 = dmwEnabled(io.instructionRequest.virtualAddress, io.csrDmw1)
     val instructionTranslate = pagingMode && !instructionDmw0 && !instructionDmw1
-    val instructionRequestReady = !instructionSearchPending && !instructionResponseValid
+    val instructionRequestReady = !instructionSearchPending && !instructionResponseValid &&
+      (!instructionTranslate || tlb.io.instructionRequest.ready)
     io.instructionRequest.ready := instructionRequestReady
     val instructionRequestFire = io.instructionRequest.valid && io.instructionRequest.ready
+    tlb.io.instructionRequest.valid := instructionRequestFire && instructionTranslate
+    tlb.io.instructionRequest.vppn := io.instructionRequest.virtualAddress(31 downto 13).asBits
+    tlb.io.instructionRequest.oddPage := io.instructionRequest.virtualAddress(12)
+    tlb.io.instructionRequest.asid := io.csrAsid
     when(instructionRequestFire) {
       instructionContext.virtualAddress := io.instructionRequest.virtualAddress
       instructionContext.isWrite := False
@@ -179,46 +213,25 @@ final class OooAddressTranslationUnit(
       instructionResponseValid := False
     }
 
-    val instructionDriveAddress = Mux(
-      instructionRequestFire,
-      io.instructionRequest.virtualAddress,
-      instructionContext.virtualAddress
-    )
-    translator.io.inst_fetch := instructionRequestFire && instructionTranslate
-    translator.io.inst_vaddr := instructionDriveAddress.asBits
-    translator.io.inst_addr_trans_en := Mux(
-      instructionRequestFire,
-      instructionTranslate,
-      instructionContext.translationEnabled
-    )
-    translator.io.inst_dmw0_en := Mux(
-      instructionRequestFire,
-      instructionDmw0,
-      instructionContext.dmw0Enabled
-    )
-    translator.io.inst_dmw1_en := Mux(
-      instructionRequestFire,
-      instructionDmw1,
-      instructionContext.dmw1Enabled
-    )
-
-    when(instructionSearchPending) {
+    when(instructionSearchPending && tlb.io.instructionResponse.valid) {
       val misaligned = instructionContext.virtualAddress(1 downto 0) =/= 0
-      val refill = instructionContext.translationEnabled && !translator.io.inst_tlb_found
-      val invalid = instructionContext.translationEnabled && translator.io.inst_tlb_found &&
-        !translator.io.inst_tlb_v
-      val privilege = instructionContext.translationEnabled && translator.io.inst_tlb_found &&
-        translator.io.inst_tlb_v &&
-        instructionContext.privilege.asUInt > translator.io.inst_tlb_plv.asUInt
+      val refill = instructionContext.translationEnabled && !tlb.io.instructionResponse.found
+      val invalid = instructionContext.translationEnabled && tlb.io.instructionResponse.found &&
+        !tlb.io.instructionResponse.payload.valid
+      val privilege = instructionContext.translationEnabled && tlb.io.instructionResponse.found &&
+        tlb.io.instructionResponse.payload.valid &&
+        instructionContext.privilege.asUInt > tlb.io.instructionResponse.privilege.asUInt
       instructionSearchPending := False
       instructionResponseValid := True
       instructionResponse.virtualAddress := instructionContext.virtualAddress
-      instructionResponse.physicalAddress :=
-        (translator.io.inst_tag ## instructionContext.virtualAddress(11 downto 0)).asUInt
+      instructionResponse.physicalAddress := translatedPhysicalAddress(
+        instructionContext.virtualAddress,
+        tlb.io.instructionResponse.payload
+      )
       instructionResponse.uncached := instructionContext.disableCache ||
         Mux(
           instructionContext.translationEnabled,
-          translator.io.inst_tlb_mat,
+          tlb.io.instructionResponse.memoryAttribute,
           instructionContext.memoryAttribute
         ) === 0
       instructionResponse.exception.valid := misaligned || refill || invalid || privilege
@@ -246,9 +259,14 @@ final class OooAddressTranslationUnit(
     val dataDmw0 = dmwEnabled(io.dataRequest.virtualAddress, io.csrDmw0)
     val dataDmw1 = dmwEnabled(io.dataRequest.virtualAddress, io.csrDmw1)
     val dataTranslate = pagingMode && !dataDmw0 && !dataDmw1
-    val dataRequestReady = !dataSearchPending && !dataResponseValid
+    val dataRequestReady = !dataSearchPending && !dataResponseValid &&
+      (!dataTranslate || tlb.io.dataRequest.ready)
     io.dataRequest.ready := dataRequestReady
     val dataRequestFire = io.dataRequest.valid && io.dataRequest.ready
+    tlb.io.dataRequest.valid := dataRequestFire && dataTranslate
+    tlb.io.dataRequest.vppn := io.dataRequest.virtualAddress(31 downto 13).asBits
+    tlb.io.dataRequest.oddPage := io.dataRequest.virtualAddress(12)
+    tlb.io.dataRequest.asid := io.csrAsid
     io.tlbSearchReady := True
     when(dataRequestFire) {
       dataContext.virtualAddress := io.dataRequest.virtualAddress
@@ -288,39 +306,27 @@ final class OooAddressTranslationUnit(
     }
     when(io.dataResponse.valid && io.dataResponse.ready) { dataResponseValid := False }
 
-    val dataDriveAddress = UInt(config.xlen bits)
-    dataDriveAddress := dataContext.virtualAddress
-    when(dataRequestFire) { dataDriveAddress := io.dataRequest.virtualAddress }
-    translator.io.data_fetch := dataRequestFire
-    translator.io.data_vaddr := dataDriveAddress.asBits
-    translator.io.data_addr_trans_en := Mux(
-      dataRequestFire,
-      dataTranslate,
-      dataContext.translationEnabled
-    )
-    translator.io.data_dmw0_en := Mux(dataRequestFire, dataDmw0, dataContext.dmw0Enabled)
-    translator.io.data_dmw1_en := Mux(dataRequestFire, dataDmw1, dataContext.dmw1Enabled)
-    translator.io.cacop_op_mode_di := False
-
-    when(dataSearchPending) {
-      val refill = dataContext.translationEnabled && !translator.io.data_tlb_found
-      val invalid = dataContext.translationEnabled && translator.io.data_tlb_found &&
-        !translator.io.data_tlb_v
-      val privilege = dataContext.translationEnabled && translator.io.data_tlb_found &&
-        translator.io.data_tlb_v &&
-        dataContext.privilege.asUInt > translator.io.data_tlb_plv.asUInt
+    when(dataSearchPending && tlb.io.dataResponse.valid) {
+      val refill = dataContext.translationEnabled && !tlb.io.dataResponse.found
+      val invalid = dataContext.translationEnabled && tlb.io.dataResponse.found &&
+        !tlb.io.dataResponse.payload.valid
+      val privilege = dataContext.translationEnabled && tlb.io.dataResponse.found &&
+        tlb.io.dataResponse.payload.valid &&
+        dataContext.privilege.asUInt > tlb.io.dataResponse.privilege.asUInt
       val modify = dataContext.translationEnabled && dataContext.isWrite &&
-        translator.io.data_tlb_found && translator.io.data_tlb_v && !privilege &&
-        !translator.io.data_tlb_d
+        tlb.io.dataResponse.found && tlb.io.dataResponse.payload.valid && !privilege &&
+        !tlb.io.dataResponse.dirty
       dataSearchPending := False
       dataResponseValid := True
       dataResponse.virtualAddress := dataContext.virtualAddress
-      dataResponse.physicalAddress :=
-        (translator.io.data_tag ## dataContext.virtualAddress(11 downto 0)).asUInt
+      dataResponse.physicalAddress := translatedPhysicalAddress(
+        dataContext.virtualAddress,
+        tlb.io.dataResponse.payload
+      )
       dataResponse.uncached := dataContext.disableCache ||
         Mux(
           dataContext.translationEnabled,
-          translator.io.data_tlb_mat,
+          tlb.io.dataResponse.memoryAttribute,
           dataContext.memoryAttribute
         ) === 0
       dataResponse.exception.valid := refill || invalid || privilege || modify
@@ -343,7 +349,14 @@ final class OooAddressTranslationUnit(
     // Management search is combinational, matching the architectural TLBSRCH
     // boundary: TLBIDX is updated on the same edge that retires the instruction.
     io.tlbSearchResponseValid := io.tlbSearchValid
-    io.tlbSearchFound := translator.io.management_search_found
-    io.tlbSearchIndex := translator.io.management_search_index
+    io.tlbSearchFound := tlb.io.managementFound
+    io.tlbSearchIndex := tlb.io.managementIndex.asBits
+
+    when(io.tlbFillValid || io.tlbWriteValid || io.tlbInvalidateValid) {
+      instructionSearchPending := False
+      instructionResponseValid := False
+      dataSearchPending := False
+      dataResponseValid := False
+    }
   }
 }

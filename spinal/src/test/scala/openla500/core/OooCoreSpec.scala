@@ -133,7 +133,7 @@ class OooCoreSpec extends AnyFunSuite {
     assert(rtl.contains("module ooo_core_system"))
     assert(rtl.contains("module OooCore"))
     assert(rtl.contains("module OpenLa500Csr"))
-    assert(rtl.contains("module OpenLa500AddrTrans"))
+    assert(rtl.contains("module OooHierarchicalTlb"))
     assert(rtl.contains("module OooAxiLineBridge"))
     assert(rtl.contains("axi_ar_payload_len"))
   }
