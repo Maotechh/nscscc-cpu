@@ -45,6 +45,7 @@ final class OooMultiplyPipe(config: OooCoreConfig = OooCoreConfig.FourIssueThree
 
   io.completionValid := valid
   io.completion.robPointer := uop.robPointer
+  io.completion.recoveryEpoch := uop.recoveryEpoch
   io.completion.pdst := uop.pdst
   io.completion.writesPdst := uop.pdst =/= 0
   io.completion.data := result
@@ -146,6 +147,7 @@ final class OooDivideUnit(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCo
   io.ready := !busy
   io.completionValid := completionValid
   io.completion.robPointer := uop.robPointer
+  io.completion.recoveryEpoch := uop.recoveryEpoch
   io.completion.pdst := uop.pdst
   io.completion.writesPdst := uop.pdst =/= 0
   io.completion.data := result
@@ -199,6 +201,7 @@ final class OooExecutionCluster(config: OooCoreConfig = OooCoreConfig.FourIssueT
 
   private def clearCompletion(completion: OooCompletion): Unit = {
     completion.robPointer := 0
+    completion.recoveryEpoch := 0
     completion.pdst := 0
     completion.writesPdst := False
     completion.data := 0
@@ -264,6 +267,7 @@ final class OooExecutionCluster(config: OooCoreConfig = OooCoreConfig.FourIssueT
       cacheTranslationResponseFire && !io.flush
   val cacheTranslationCompletion = OooCompletion(config)
   cacheTranslationCompletion.robPointer := cacheTranslationUop.robPointer
+  cacheTranslationCompletion.recoveryEpoch := cacheTranslationUop.recoveryEpoch
   cacheTranslationCompletion.pdst := cacheTranslationUop.pdst
   cacheTranslationCompletion.writesPdst := False
   cacheTranslationCompletion.data := 0
@@ -340,6 +344,7 @@ final class OooExecutionCluster(config: OooCoreConfig = OooCoreConfig.FourIssueT
       (~io.source1(port) & io.systemReadData)
     directCompletionValid(port) := fire && direct
     directCompletion(port).robPointer := io.issue(port).robPointer
+    directCompletion(port).recoveryEpoch := io.issue(port).recoveryEpoch
     directCompletion(port).pdst := io.issue(port).pdst
     directCompletion(port).writesPdst := io.issue(port).pdst =/= 0
     directCompletion(port).data := Mux(decoded.resultFromCsr, systemReadResult, alu.io.alu_result)

@@ -15,7 +15,11 @@ private final class OooRobProbe(config: OooCoreConfig) extends Component {
     val completionValid = in Bits (config.writebackWidth bits)
     val completionWritesPdst = in Bits (config.writebackWidth bits)
     val completionRobPointer = in Vec (UInt(config.robPointerWidth bits), config.writebackWidth)
+    val completionRecoveryEpoch =
+      in Vec (UInt(config.recoveryEpochWidth bits), config.writebackWidth)
+    val currentEpoch = in UInt (config.recoveryEpochWidth bits)
     val completionWakeupValid = out Bits (config.writebackWidth bits)
+    val completionWakeupCandidateValid = out Bits (config.writebackWidth bits)
     val commitValid = out Bits (config.commitWidth bits)
     val occupancy = out UInt (log2Up(config.robEntries + 1) bits)
     val empty = out Bool ()
@@ -27,10 +31,12 @@ private final class OooRobProbe(config: OooCoreConfig) extends Component {
   for (lane <- 0 until config.renameWidth) {
     rob.io.allocate(lane).assignFromBits(B(0, rob.io.allocate(lane).getBitsWidth bits))
   }
+  rob.io.currentEpoch := io.currentEpoch
   rob.io.completionValid := io.completionValid
   for (lane <- 0 until config.writebackWidth) {
     val completion = rob.io.completion(lane)
     completion.robPointer := io.completionRobPointer(lane)
+    completion.recoveryEpoch := io.completionRecoveryEpoch(lane)
     completion.pdst := U(lane + 1, config.physicalRegIndexWidth bits)
     completion.writesPdst := io.completionWritesPdst(lane)
     completion.data := B(0x100 + lane, config.xlen bits)
@@ -53,6 +59,7 @@ private final class OooRobProbe(config: OooCoreConfig) extends Component {
   io.allocateReady := rob.io.allocateReady
   io.allocatedPointer := rob.io.allocatedPointer
   io.completionWakeupValid := rob.io.completionWakeupValid
+  io.completionWakeupCandidateValid := rob.io.completionWakeupCandidateValid
   io.commitValid := rob.io.commitValid
   io.occupancy := rob.io.occupancy
   io.empty := rob.io.empty
@@ -66,8 +73,10 @@ class OooRobSpec extends AnyFunSuite {
     dut.io.flush #= false
     dut.io.completionValid #= 0
     dut.io.completionWritesPdst #= 0
+    dut.io.currentEpoch #= 0
     for (lane <- 0 until config.writebackWidth) {
       dut.io.completionRobPointer(lane) #= 0
+      dut.io.completionRecoveryEpoch(lane) #= 0
     }
   }
 
@@ -146,6 +155,7 @@ class OooRobSpec extends AnyFunSuite {
         assert(dut.io.occupancy.toBigInt == 0)
 
         dut.io.flush #= false
+        dut.io.currentEpoch #= 1
         dut.io.allocateValid #= 1
         dut.io.allocateAccept #= true
         sleep(1)
@@ -164,6 +174,7 @@ class OooRobSpec extends AnyFunSuite {
         assert(dut.io.commitValid.toBigInt == 0)
 
         dut.io.completionRobPointer(0) #= newPointer
+        dut.io.completionRecoveryEpoch(0) #= 1
         sleep(1)
         sample()
         assert(dut.io.completionWakeupValid.toBigInt == 0)
@@ -264,12 +275,56 @@ class OooRobSpec extends AnyFunSuite {
 
         sample()
         assert(dut.io.completionWakeupValid.toBigInt == 1)
+        assert(dut.io.completionWakeupCandidateValid.toBigInt == 1)
         assert(dut.io.commitValid.toBigInt == 0)
 
         dut.io.completionValid #= 0
         sample()
         assert(dut.io.completionWakeupValid.toBigInt == 0)
         assert((dut.io.commitValid.toBigInt & 1) == 1)
+      }
+  }
+
+  test("ROB flush suppresses architectural wakeup without extending the IQ candidate path") {
+    val config = OooCoreConfig.FourIssueThreeCommit
+    SimConfig.withVerilator
+      .workspacePath("target/sim-workspace-ooo-rob")
+      .compile(new OooRobProbe(config))
+      .doSim("ooo-rob-flush-wakeup-candidate", 0x4f4f49) { dut =>
+        def sample(): Unit = {
+          dut.clockDomain.waitSampling()
+          sleep(1)
+        }
+
+        dut.clockDomain.forkStimulus(period = 10)
+        initialize(dut, config)
+        dut.clockDomain.assertReset()
+        dut.clockDomain.waitSampling(2)
+        dut.clockDomain.deassertReset()
+        sample()
+
+        dut.io.allocateValid #= 1
+        dut.io.allocateAccept #= true
+        sleep(1)
+        val pointer = dut.io.allocatedPointer(0).toBigInt
+        sample()
+
+        dut.io.allocateValid #= 0
+        dut.io.allocateAccept #= false
+        dut.io.completionRobPointer(0) #= pointer
+        dut.io.completionWritesPdst #= 1
+        dut.io.completionValid #= 1
+        sample()
+        assert(dut.io.completionWakeupValid.toBigInt == 1)
+        assert(dut.io.completionWakeupCandidateValid.toBigInt == 1)
+
+        dut.io.flush #= true
+        sleep(1)
+        assert(dut.io.completionWakeupValid.toBigInt == 0)
+        assert(dut.io.completionWakeupCandidateValid.toBigInt == 1)
+        sample()
+        assert(dut.io.completionWakeupCandidateValid.toBigInt == 0)
+        assert(dut.io.empty.toBoolean)
       }
   }
 }

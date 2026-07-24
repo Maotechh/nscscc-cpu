@@ -18,6 +18,7 @@ private final class OooBackendDispatchProbe(config: OooCoreConfig) extends Compo
     val issuePc = out Vec (UInt(config.xlen bits), config.executionWidth)
     val issuePdst = out Vec (UInt(config.physicalRegIndexWidth bits), config.executionWidth)
     val issueRobPointer = out Vec (UInt(config.robPointerWidth bits), config.executionWidth)
+    val issueRecoveryEpoch = out Vec (UInt(config.recoveryEpochWidth bits), config.executionWidth)
     val issueSource1 = out Vec (Bits(config.xlen bits), config.executionWidth)
     val issueSource2 = out Vec (Bits(config.xlen bits), config.executionWidth)
     val issueReady = in Bits (config.executionWidth bits)
@@ -63,6 +64,7 @@ private final class OooBackendDispatchProbe(config: OooCoreConfig) extends Compo
       )
   }
   backend.io.completion(0).robPointer := io.completionRobPointer
+  backend.io.completion(0).recoveryEpoch := 0
   backend.io.completion(0).pdst := io.completionPdst
   backend.io.completion(0).writesPdst := io.completionWritesPdst
   backend.io.completion(0).data := io.completionData
@@ -88,6 +90,7 @@ private final class OooBackendDispatchProbe(config: OooCoreConfig) extends Compo
     io.issuePc(port) := backend.io.issue(port).decoded.pc
     io.issuePdst(port) := backend.io.issue(port).pdst
     io.issueRobPointer(port) := backend.io.issue(port).robPointer
+    io.issueRecoveryEpoch(port) := backend.io.issue(port).recoveryEpoch
     io.issueSource1(port) := backend.io.issueSource1(port)
     io.issueSource2(port) := backend.io.issueSource2(port)
   }
@@ -95,6 +98,8 @@ private final class OooBackendDispatchProbe(config: OooCoreConfig) extends Compo
 
 class OooBackendDispatchSpec extends AnyFunSuite {
   private val config = OooCoreConfig.FourIssueThreeCommit
+  private val loadStorePort =
+    config.executionPorts.indexWhere(_.capabilities.contains(OooFuKind.LoadStore))
 
   private def clearControl(dut: OooBackendDispatchProbe): Unit = {
     dut.io.inputValid #= 0
@@ -171,6 +176,93 @@ class OooBackendDispatchSpec extends AnyFunSuite {
         assert(observedPc.toSet == expectedPc.toSet)
         assert(observedRob.toSet == (0 until 9).map(BigInt(_)).toSet)
         assert(threeIssueCycles >= 2)
+      }
+  }
+
+  test("registered LSU address buffering preserves ordered issues across backpressure") {
+    SimConfig.withVerilator
+      .workspacePath("target/sim-workspace-ooo-backend-dispatch")
+      .compile(new OooBackendDispatchProbe(config))
+      .doSim("ooo-backend-lsu-address-buffer", 0x4c45) { dut =>
+        dut.clockDomain.forkStimulus(period = 10)
+        clearControl(dut)
+        dut.io.issueReady #= 0x7
+        dut.clockDomain.assertReset()
+        dut.clockDomain.waitSampling(2)
+        dut.clockDomain.deassertReset()
+        dut.clockDomain.waitSampling()
+
+        val basePc = BigInt("1c000000", 16)
+        val expectedPc = (0 until 5).map(index => basePc + index * 4)
+        for (index <- expectedPc.indices) {
+          dut.io.inputValid #= 1
+          dut.io.pc(0) #= expectedPc(index)
+          // ld.w r(index + 1),r0,0
+          dut.io.instruction(0) #= (BigInt("28800000", 16) | (index + 1))
+          sleep(1)
+          assert(dut.io.renameReady.toBigInt == 7)
+          dut.clockDomain.waitSampling()
+        }
+        dut.io.inputValid #= 0
+        dut.clockDomain.waitSampling(3)
+        sleep(1)
+        assert((dut.io.issueValid.toBigInt & (BigInt(1) << loadStorePort)) != 0)
+        assert(dut.io.issuePc(loadStorePort).toBigInt == expectedPc.head)
+
+        val observedPc = ArrayBuffer(expectedPc.head)
+        dut.io.issueReady #= 0xf
+        var cycles = 0
+        while (observedPc.size < expectedPc.size && cycles < 16) {
+          dut.clockDomain.waitSampling()
+          sleep(1)
+          if ((dut.io.issueValid.toBigInt & (BigInt(1) << loadStorePort)) != 0) {
+            observedPc += dut.io.issuePc(loadStorePort).toBigInt
+          }
+          cycles += 1
+        }
+
+        assert(observedPc == expectedPc)
+      }
+  }
+
+  test("flush advances the recovery epoch carried by newly issued uops") {
+    SimConfig.withVerilator
+      .workspacePath("target/sim-workspace-ooo-backend-dispatch")
+      .compile(new OooBackendDispatchProbe(config))
+      .doSim("ooo-backend-recovery-epoch", 0x4c46) { dut =>
+        dut.clockDomain.forkStimulus(period = 10)
+        clearControl(dut)
+        dut.io.issueReady #= 0xf
+        dut.clockDomain.assertReset()
+        dut.clockDomain.waitSampling(2)
+        dut.clockDomain.deassertReset()
+
+        def issueEpoch(pc: BigInt): BigInt = {
+          dut.io.inputValid #= 1
+          dut.io.pc(0) #= pc
+          dut.io.instruction(0) #= BigInt("00100000", 16)
+          dut.clockDomain.waitSampling()
+          dut.io.inputValid #= 0
+          for (_ <- 0 until 12) {
+            dut.clockDomain.waitSampling()
+            sleep(1)
+            val mask = dut.io.issueValid.toBigInt
+            for (port <- 0 until config.executionWidth) {
+              if (
+                (mask & (BigInt(1) << port)) != 0 &&
+                dut.io.issuePc(port).toBigInt == pc
+              ) return dut.io.issueRecoveryEpoch(port).toBigInt
+            }
+          }
+          fail(s"uop at 0x${pc.toString(16)} did not issue")
+        }
+
+        val basePc = BigInt("1c000000", 16)
+        assert(issueEpoch(basePc) == 0)
+        dut.io.flush #= true
+        dut.clockDomain.waitSampling()
+        dut.io.flush #= false
+        assert(issueEpoch(basePc + 4) == 1)
       }
   }
 

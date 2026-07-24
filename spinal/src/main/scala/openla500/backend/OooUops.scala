@@ -122,6 +122,7 @@ final case class OooRenamedUop(config: OooCoreConfig) extends Bundle {
   val source1Ready = Bool()
   val source2Ready = Bool()
   val robPointer = UInt(config.robPointerWidth bits)
+  val recoveryEpoch = UInt(config.recoveryEpochWidth bits)
   val loadQueueIndex = UInt(config.loadQueueIndexWidth bits)
   val storeQueueIndex = UInt(config.storeQueueIndexWidth bits)
 }
@@ -134,6 +135,7 @@ final case class OooIssuedUop(config: OooCoreConfig) extends Bundle {
 
 final case class OooCompletion(config: OooCoreConfig) extends Bundle {
   val robPointer = UInt(config.robPointerWidth bits)
+  val recoveryEpoch = UInt(config.recoveryEpochWidth bits)
   val pdst = UInt(config.physicalRegIndexWidth bits)
   val writesPdst = Bool()
   val data = Bits(config.xlen bits)
@@ -189,6 +191,7 @@ final case class OooRobAllocate(config: OooCoreConfig) extends Bundle {
 /** Rename-time memory queue reservation. Address and data arrive later through the AGU. */
 final case class OooLsqAllocate(config: OooCoreConfig) extends Bundle {
   val robPointer = UInt(config.robPointerWidth bits)
+  val recoveryEpoch = UInt(config.recoveryEpochWidth bits)
   val isLoad = Bool()
   val isStore = Bool()
   val loadQueueIndex = UInt(config.loadQueueIndexWidth bits)

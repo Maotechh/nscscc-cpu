@@ -70,9 +70,54 @@ final class OooIssueQueue(
   val issueIndexWide = UInt(count.getWidth bits)
   issueIndexWide := issueIndex.resize(count.getWidth)
   val issueSlot = order(issueIndex)
-  io.issueValid := readyMap.orR
-  io.issue := payloadSlots(issueSlot)
-  val issueFire = io.issueValid && io.issueReady
+  val selectedUop = OooRenamedUop(config)
+  selectedUop := payloadSlots(issueSlot)
+  val queueDequeue = Bool()
+
+  if (config.executionPorts(portIndex).registeredIssueOutput) {
+    val outputSlots = Vec.fill(2)(Reg(OooRenamedUop(config)))
+    val outputReadPointer = RegInit(False)
+    val outputWritePointer = RegInit(False)
+    val outputCount = Reg(UInt(2 bits)) init (0)
+    val outputEnqueueReady = RegInit(True)
+
+    val outputHead = OooRenamedUop(config)
+    outputHead := outputSlots(0)
+    when(outputReadPointer) { outputHead := outputSlots(1) }
+    io.issueValid := outputCount =/= 0
+    io.issue := outputHead
+
+    val outputDequeue = io.issueValid && io.issueReady
+    queueDequeue := outputEnqueueReady && readyMap.orR
+    val nextOutputCount = UInt(outputCount.getWidth bits)
+    nextOutputCount := outputCount + queueDequeue.asUInt - outputDequeue.asUInt
+
+    when(io.flush) {
+      outputCount := 0
+      outputReadPointer := False
+      outputWritePointer := False
+      outputEnqueueReady := True
+    }.otherwise {
+      outputCount := nextOutputCount
+      outputEnqueueReady := nextOutputCount < 2
+      when(queueDequeue) {
+        when(outputWritePointer) {
+          outputSlots(1) := selectedUop
+        }.otherwise {
+          outputSlots(0) := selectedUop
+        }
+        outputWritePointer := !outputWritePointer
+      }
+      when(outputDequeue) { outputReadPointer := !outputReadPointer }
+    }
+
+    io.occupancy := (count + outputCount).resized
+  } else {
+    io.issueValid := readyMap.orR
+    io.issue := selectedUop
+    queueDequeue := io.issueValid && io.issueReady
+    io.occupancy := count
+  }
 
   // Register the backpressure boundary. Reserve one slot because the ready
   // value describes the previous cycle's count; one enqueue per cycle per IQ
@@ -81,7 +126,6 @@ final class OooIssueQueue(
   enqueueReadyReg := count < U(config.issueQueueEntriesPerPort - 1, count.getWidth bits)
   io.enqueueReady := !io.flush && enqueueReadyReg
   val enqueueFire = io.enqueueValid && io.enqueueReady
-  io.occupancy := count
   val enqueueSlot = selectLowest(~slotValid.asBits)
 
   val wakeupSlot1 = Bits(config.issueQueueEntriesPerPort bits)
@@ -124,6 +168,7 @@ final class OooIssueQueue(
   enqueued.source1Ready := io.enqueue.source1Ready || enqueueWakeup1
   enqueued.source2Ready := io.enqueue.source2Ready || enqueueWakeup2
   enqueued.robPointer := io.enqueue.robPointer
+  enqueued.recoveryEpoch := io.enqueue.recoveryEpoch
   enqueued.loadQueueIndex := io.enqueue.loadQueueIndex
   enqueued.storeQueueIndex := io.enqueue.storeQueueIndex
 
@@ -134,20 +179,24 @@ final class OooIssueQueue(
     for (slot <- 0 until config.issueQueueEntriesPerPort) {
       val slotEnqueue = enqueueFire &&
         enqueueSlot === U(slot, log2Up(config.issueQueueEntriesPerPort) bits)
-      val slotIssue = issueFire &&
+      val slotIssue = queueDequeue &&
         issueSlot === U(slot, log2Up(config.issueQueueEntriesPerPort) bits)
+
       when(slotEnqueue) {
-        payloadSlots(slot) := enqueued
         slotValid(slot) := True
       }.elsewhen(slotIssue) {
         slotValid(slot) := False
+      }
+
+      when(slotEnqueue) {
+        payloadSlots(slot) := enqueued
       }.otherwise {
         when(wakeupSlot1(slot)) { payloadSlots(slot).source1Ready := True }
         when(wakeupSlot2(slot)) { payloadSlots(slot).source2Ready := True }
       }
     }
 
-    when(issueFire) {
+    when(queueDequeue) {
       for (entry <- 0 until config.issueQueueEntriesPerPort - 1) {
         when(
           U(entry, count.getWidth bits) >= issueIndexWide &&
@@ -163,7 +212,7 @@ final class OooIssueQueue(
     }.elsewhen(enqueueFire) {
       order(count(log2Up(config.issueQueueEntriesPerPort) - 1 downto 0)) := enqueueSlot
     }
-    count := count + enqueueFire.asUInt - issueFire.asUInt
+    count := count + enqueueFire.asUInt - queueDequeue.asUInt
   }
 }
 

@@ -5,6 +5,10 @@ import spinal.core._
 
 final class OooBackend(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommit)
     extends Component {
+  private val loadStorePort =
+    config.executionPorts.indexWhere(_.capabilities.contains(OooFuKind.LoadStore))
+  require(loadStorePort >= 0)
+
   val io = new Bundle {
     val renameValid = in Bits (config.renameWidth bits)
     val rename = in Vec (OooDecodedUop(config), config.renameWidth)
@@ -42,12 +46,16 @@ final class OooBackend(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommi
   val router = new OooDispatchRouter(config)
   val issueQueues = (0 until config.executionWidth).map(index => new OooIssueQueue(config, index))
 
-  val issueAddressValid = RegInit(B(0, config.executionWidth bits))
-  val issueAddressUop = Vec.fill(config.executionWidth)(Reg(OooRenamedUop(config)))
+  private val ordinaryIssuePorts = (0 until config.executionWidth).filter(_ != loadStorePort)
+  val issueAddressValid = Vec.fill(ordinaryIssuePorts.size)(RegInit(False))
+  val issueAddressUop = Vec.fill(ordinaryIssuePorts.size)(Reg(OooRenamedUop(config)))
   val issueOperandValid = RegInit(B(0, config.executionWidth bits))
   val issueOperandUop = Vec.fill(config.executionWidth)(Reg(OooRenamedUop(config)))
   val issueOperandSource1 = Vec.fill(config.executionWidth)(Reg(Bits(config.xlen bits)))
   val issueOperandSource2 = Vec.fill(config.executionWidth)(Reg(Bits(config.xlen bits)))
+  val recoveryEpoch = Reg(UInt(config.recoveryEpochWidth bits)) init (0)
+  when(io.flush) { recoveryEpoch := recoveryEpoch + 1 }
+  rob.io.currentEpoch := recoveryEpoch
 
   val renamedInput = Vec(OooRenamedUop(config), config.renameWidth)
   val dispatchInput = Vec(OooRenamedUop(config), config.renameWidth)
@@ -66,6 +74,7 @@ final class OooBackend(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommi
     renamedInput(lane).source1Ready := registerMap.io.renameSource1Ready(lane)
     renamedInput(lane).source2Ready := registerMap.io.renameSource2Ready(lane)
     renamedInput(lane).robPointer := rob.io.allocatedPointer(lane)
+    renamedInput(lane).recoveryEpoch := recoveryEpoch
     renamedInput(lane).loadQueueIndex := lsqAllocator.io.allocateLoadIndex(lane)
     renamedInput(lane).storeQueueIndex := lsqAllocator.io.allocateStoreIndex(lane)
 
@@ -77,6 +86,7 @@ final class OooBackend(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommi
     dispatchInput(lane).source1Ready := False
     dispatchInput(lane).source2Ready := False
     dispatchInput(lane).robPointer := renamedInput(lane).robPointer
+    dispatchInput(lane).recoveryEpoch := renamedInput(lane).recoveryEpoch
     dispatchInput(lane).loadQueueIndex := renamedInput(lane).loadQueueIndex
     dispatchInput(lane).storeQueueIndex := renamedInput(lane).storeQueueIndex
   }
@@ -95,6 +105,7 @@ final class OooBackend(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommi
     router.io.input(lane).source2Ready :=
       registerMap.io.physicalReady(dispatchQueue.io.dequeue(lane).psrc2)
     router.io.input(lane).robPointer := dispatchQueue.io.dequeue(lane).robPointer
+    router.io.input(lane).recoveryEpoch := dispatchQueue.io.dequeue(lane).recoveryEpoch
     router.io.input(lane).loadQueueIndex := dispatchQueue.io.dequeue(lane).loadQueueIndex
     router.io.input(lane).storeQueueIndex := dispatchQueue.io.dequeue(lane).storeQueueIndex
   }
@@ -144,6 +155,7 @@ final class OooBackend(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommi
     io.memoryAllocateValid(lane) := accepted(lane) &&
       (renamedInput(lane).decoded.isLoad || renamedInput(lane).decoded.isStore)
     io.memoryAllocate(lane).robPointer := renamedInput(lane).robPointer
+    io.memoryAllocate(lane).recoveryEpoch := renamedInput(lane).recoveryEpoch
     io.memoryAllocate(lane).isLoad := renamedInput(lane).decoded.isLoad
     io.memoryAllocate(lane).isStore := renamedInput(lane).decoded.isStore
     io.memoryAllocate(lane).loadQueueIndex := renamedInput(lane).loadQueueIndex
@@ -155,28 +167,50 @@ final class OooBackend(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommi
     issueQueues(port).io.enqueue := router.io.portInput(port)
     issueQueues(port).io.robHeadPointer := rob.io.headPointer
     issueQueues(port).io.flush := io.flush
-    prf.io.readAddress(port * 2) := issueAddressUop(port).psrc1
-    prf.io.readAddress(port * 2 + 1) := issueAddressUop(port).psrc2
+    if (port == loadStorePort) {
+      prf.io.readAddress(port * 2) := issueQueues(port).io.issue.psrc1
+      prf.io.readAddress(port * 2 + 1) := issueQueues(port).io.issue.psrc2
 
-    val operandReady = !issueOperandValid(port) || io.issueReady(port)
-    val addressReady = !issueAddressValid(port) || operandReady
-    issueQueues(port).io.issueReady := addressReady
-    when(io.flush) {
-      issueAddressValid(port) := False
-      issueOperandValid(port) := False
-    }.otherwise {
-      when(operandReady) {
-        issueOperandValid(port) := issueAddressValid(port)
-        when(issueAddressValid(port)) {
-          issueOperandUop(port) := issueAddressUop(port)
-          issueOperandSource1(port) := prf.io.readData(port * 2)
-          issueOperandSource2(port) := prf.io.readData(port * 2 + 1)
+      val operandReady = !issueOperandValid(port) || io.issueReady(port)
+      issueQueues(port).io.issueReady := !io.flush && operandReady
+
+      when(io.flush) {
+        issueOperandValid(port) := False
+      }.otherwise {
+        when(operandReady) {
+          issueOperandValid(port) := issueQueues(port).io.issueValid
+          when(issueQueues(port).io.issueValid) {
+            issueOperandUop(port) := issueQueues(port).io.issue
+            issueOperandSource1(port) := prf.io.readData(port * 2)
+            issueOperandSource2(port) := prf.io.readData(port * 2 + 1)
+          }
         }
       }
-      when(addressReady) {
-        issueAddressValid(port) := issueQueues(port).io.issueValid
-        when(issueQueues(port).io.issueValid) {
-          issueAddressUop(port) := issueQueues(port).io.issue
+    } else {
+      val addressPort = ordinaryIssuePorts.indexOf(port)
+      prf.io.readAddress(port * 2) := issueAddressUop(addressPort).psrc1
+      prf.io.readAddress(port * 2 + 1) := issueAddressUop(addressPort).psrc2
+
+      val operandReady = !issueOperandValid(port) || io.issueReady(port)
+      val addressReady = !issueAddressValid(addressPort) || operandReady
+      issueQueues(port).io.issueReady := addressReady
+      when(io.flush) {
+        issueAddressValid(addressPort) := False
+        issueOperandValid(port) := False
+      }.otherwise {
+        when(operandReady) {
+          issueOperandValid(port) := issueAddressValid(addressPort)
+          when(issueAddressValid(addressPort)) {
+            issueOperandUop(port) := issueAddressUop(addressPort)
+            issueOperandSource1(port) := prf.io.readData(port * 2)
+            issueOperandSource2(port) := prf.io.readData(port * 2 + 1)
+          }
+        }
+        when(addressReady) {
+          issueAddressValid(addressPort) := issueQueues(port).io.issueValid
+          when(issueQueues(port).io.issueValid) {
+            issueAddressUop(addressPort) := issueQueues(port).io.issue
+          }
         }
       }
     }
@@ -185,7 +219,9 @@ final class OooBackend(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommi
     io.issue(port) := issueOperandUop(port)
     io.issueSource1(port) := issueOperandSource1(port)
     io.issueSource2(port) := issueOperandSource2(port)
-    issueQueues(port).io.wakeupValid := rob.io.completionWakeupValid
+    // Flush has priority over every IQ state update, so its combinational
+    // value need not sit on the same-cycle wakeup-to-select timing path.
+    issueQueues(port).io.wakeupValid := rob.io.completionWakeupCandidateValid
     for (write <- 0 until config.writebackWidth) {
       issueQueues(port).io.wakeupPdst(write) := rob.io.completionWakeupPdst(write)
     }

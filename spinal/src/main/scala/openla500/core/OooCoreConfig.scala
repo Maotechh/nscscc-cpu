@@ -14,7 +14,11 @@ object OooFuKind {
   case object LoadStore extends OooFuKind
 }
 
-final case class OooExecPortConfig(name: String, capabilities: Set[OooFuKind]) {
+final case class OooExecPortConfig(
+    name: String,
+    capabilities: Set[OooFuKind],
+    registeredIssueOutput: Boolean = false
+) {
   require(name.nonEmpty, "an execution port must have a name")
   require(capabilities.nonEmpty, s"execution port '$name' must accept at least one FU kind")
 }
@@ -117,6 +121,7 @@ final case class OooCoreConfig(
   val physicalRegIndexWidth: Int = log2Up(physicalRegs)
   val robIndexWidth: Int = log2Up(robEntries)
   val robPointerWidth: Int = robIndexWidth + 1
+  val recoveryEpochWidth: Int = 8
   val loadQueueIndexWidth: Int = log2Up(loadQueueEntries)
   val storeQueueIndexWidth: Int = log2Up(storeQueueEntries)
   val fetchSlotWidth: Int = log2Up(fetchWidth)
@@ -129,7 +134,7 @@ object OooCoreConfig {
     OooExecPortConfig("alu-csr", Set(Alu, Csr, Serial)),
     OooExecPortConfig("alu-div", Set(Alu, Divide)),
     OooExecPortConfig("alu-branch-mul", Set(Alu, Branch, Multiply)),
-    OooExecPortConfig("load-store", Set(LoadStore))
+    OooExecPortConfig("load-store", Set(LoadStore), registeredIssueOutput = true)
   )
 
   val FourIssueThreeCommit: OooCoreConfig = OooCoreConfig()

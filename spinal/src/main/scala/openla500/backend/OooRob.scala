@@ -37,9 +37,11 @@ final class OooRob(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommit) e
     val completionValid = in Bits (config.writebackWidth bits)
     val completion = in Vec (OooCompletion(config), config.writebackWidth)
     val completionWakeupValid = out Bits (config.writebackWidth bits)
+    val completionWakeupCandidateValid = out Bits (config.writebackWidth bits)
     val completionWakeupPdst =
       out Vec (UInt(config.physicalRegIndexWidth bits), config.writebackWidth)
     val completionWakeupData = out Vec (Bits(config.xlen bits), config.writebackWidth)
+    val currentEpoch = in UInt (config.recoveryEpochWidth bits)
 
     val commitValid = out Bits (config.commitWidth bits)
     val commit = out Vec (OooCommitRecord(config), config.commitWidth)
@@ -168,22 +170,15 @@ final class OooRob(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommit) e
     }
   }
 
-  // Resolve stale tags in the arrival cycle so rename wakeup keeps its current
-  // latency, then register the accepted one-hot destinations and payloads at
-  // the ROB boundary.  Entry writes no longer combine execution payload muxes,
-  // pointer compares, and the wide ROB CE network in one cycle.
-  val completionHits = Vec(Bits(config.writebackWidth bits), config.robEntries)
-  for (entryIndex <- 0 until config.robEntries) {
-    completionHits(entryIndex) := B(0, config.writebackWidth bits)
-    for (lane <- 0 until config.writebackWidth) {
-      completionHits(entryIndex)(lane) := !io.flush && io.completionValid(lane) &&
-        entries(entryIndex).valid && !entries(entryIndex).complete &&
-        entries(entryIndex).pointer === io.completion(lane).robPointer
-    }
-  }
-
-  val stagedCompletionHits = Vec.fill(config.writebackWidth)(
-    Reg(Bits(config.robEntries bits)) init B(0, config.robEntries bits)
+  // Register the narrow completion identity before validating it against the
+  // ROB.  This retains next-cycle wakeup while preventing the LSU completion
+  // cone from driving a full bank of one-hot hit registers.
+  val stagedCompletionValid = Reg(Bits(config.writebackWidth bits)) init (0)
+  val stagedRobPointer = Vec.fill(config.writebackWidth)(
+    Reg(UInt(config.robPointerWidth bits))
+  )
+  val stagedRecoveryEpoch = Vec.fill(config.writebackWidth)(
+    Reg(UInt(config.recoveryEpochWidth bits))
   )
   val stagedResult = Vec.fill(config.writebackWidth)(Reg(Bits(config.xlen bits)))
   val stagedPdst = Vec.fill(config.writebackWidth)(Reg(UInt(config.physicalRegIndexWidth bits)))
@@ -194,22 +189,36 @@ final class OooRob(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommit) e
   val stagedBranchTaken = Vec.fill(config.writebackWidth)(Reg(Bool()))
   val stagedBranchMispredict = Vec.fill(config.writebackWidth)(Reg(Bool()))
   val stagedBranchTarget = Vec.fill(config.writebackWidth)(Reg(UInt(config.xlen bits)))
+  val stagedCompletionCurrent = Bits(config.writebackWidth bits)
+  val stagedCompletionMatches = Vec(Bits(config.writebackWidth bits), config.robEntries)
   for (lane <- 0 until config.writebackWidth) {
-    io.completionWakeupValid(lane) := !io.flush && stagedCompletionHits(lane).orR &&
+    stagedCompletionCurrent(lane) := stagedCompletionValid(lane) &&
+      stagedRecoveryEpoch(lane) === io.currentEpoch
+  }
+  for (entryIndex <- 0 until config.robEntries) {
+    for (lane <- 0 until config.writebackWidth) {
+      val stagedIndex = stagedRobPointer(lane)(config.robIndexWidth - 1 downto 0)
+      stagedCompletionMatches(entryIndex)(lane) := stagedCompletionValid(lane) &&
+        stagedIndex === U(entryIndex, config.robIndexWidth bits) &&
+        entries(entryIndex).valid && !entries(entryIndex).complete &&
+        entries(entryIndex).pointer.msb === stagedRobPointer(lane).msb
+    }
+  }
+  for (lane <- 0 until config.writebackWidth) {
+    io.completionWakeupCandidateValid(lane) := stagedCompletionCurrent(lane) &&
       stagedWritesPdst(lane) && stagedPdst(lane) =/= 0
+    io.completionWakeupValid(lane) :=
+      !io.flush && io.completionWakeupCandidateValid(lane)
     io.completionWakeupPdst(lane) := stagedPdst(lane)
     io.completionWakeupData(lane) := stagedResult(lane)
-    val laneHits = Bits(config.robEntries bits)
-    for (entryIndex <- 0 until config.robEntries) {
-      laneHits(entryIndex) := completionHits(entryIndex)(lane)
-    }
     when(io.flush) {
-      stagedCompletionHits(lane) := B(0, config.robEntries bits)
+      stagedCompletionValid(lane) := False
     }.otherwise {
-      stagedCompletionHits(lane) := laneHits
-      // The hit bitmap is the payload's validity.  Capturing every lane each
-      // cycle avoids turning completionValid's wide control cone into the CE
-      // of all completion payload registers, which is costly after routing.
+      stagedCompletionValid(lane) := io.completionValid(lane)
+      stagedRobPointer(lane) := io.completion(lane).robPointer
+      stagedRecoveryEpoch(lane) := io.completion(lane).recoveryEpoch
+      // Valid and pointer define payload validity. Capturing each lane avoids
+      // turning completionValid into a wide payload-register enable.
       stagedResult(lane) := io.completion(lane).data
       stagedPdst(lane) := io.completion(lane).pdst
       stagedWritesPdst(lane) := io.completion(lane).writesPdst
@@ -224,7 +233,7 @@ final class OooRob(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommit) e
 
   for (entryIndex <- 0 until config.robEntries) {
     for (lane <- 0 until config.writebackWidth) {
-      when(stagedCompletionHits(lane)(entryIndex)) {
+      when(!io.flush && stagedCompletionMatches(entryIndex)(lane)) {
         entries(entryIndex).complete := True
         entries(entryIndex).result := stagedResult(lane)
         entries(entryIndex).sideEffectData := stagedSideEffectData(lane)

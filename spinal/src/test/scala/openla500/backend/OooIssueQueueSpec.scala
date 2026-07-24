@@ -5,7 +5,8 @@ import org.scalatest.funsuite.AnyFunSuite
 import spinal.core._
 import spinal.core.sim._
 
-private final class OooIssueQueueProbe(config: OooCoreConfig) extends Component {
+private final class OooIssueQueueProbe(config: OooCoreConfig, portIndex: Int = 0)
+    extends Component {
   val io = new Bundle {
     val enqueueValid = in Bool ()
     val enqueue = in(OooRenamedUop(config))
@@ -21,7 +22,7 @@ private final class OooIssueQueueProbe(config: OooCoreConfig) extends Component 
   }
   noIoPrefix()
 
-  val queue = new OooIssueQueue(config, 0)
+  val queue = new OooIssueQueue(config, portIndex)
   queue.io.enqueueValid := io.enqueueValid
   queue.io.enqueue := io.enqueue
   queue.io.wakeupValid := io.wakeupValid
@@ -47,6 +48,7 @@ class OooIssueQueueSpec extends AnyFunSuite {
     dut.io.enqueue.source1Ready #= false
     dut.io.enqueue.source2Ready #= false
     dut.io.enqueue.robPointer #= 0
+    dut.io.enqueue.recoveryEpoch #= 0
     dut.io.enqueue.loadQueueIndex #= 0
     dut.io.enqueue.storeQueueIndex #= 0
     dut.io.wakeupValid #= 0
@@ -178,6 +180,58 @@ class OooIssueQueueSpec extends AnyFunSuite {
         dut.io.flush #= false
         sample(dut)
         assert(dut.io.enqueueReady.toBoolean)
+      }
+  }
+
+  test("LSU IQ registered output holds backpressure and sustains one issue per cycle") {
+    val config = OooCoreConfig.FourIssueThreeCommit
+    val loadStorePort =
+      config.executionPorts.indexWhere(_.capabilities.contains(OooFuKind.LoadStore))
+    SimConfig.withVerilator
+      .workspacePath("target/sim-workspace-ooo-iq")
+      .compile(new OooIssueQueueProbe(config, loadStorePort))
+      .doSim("ooo-iq-lsu-registered-output", 0x4954) { dut =>
+        dut.clockDomain.forkStimulus(period = 10)
+        clearInputs(dut, config)
+        dut.clockDomain.assertReset()
+        dut.clockDomain.waitSampling(2)
+        dut.clockDomain.deassertReset()
+        sample(dut)
+
+        dut.io.enqueueValid #= true
+        dut.io.enqueue.source1Ready #= true
+        dut.io.enqueue.source2Ready #= true
+        for (entry <- 0 until 3) {
+          dut.io.enqueue.robPointer #= entry
+          sample(dut)
+        }
+        dut.io.enqueueValid #= false
+
+        assert(dut.io.issueValid.toBoolean)
+        assert(dut.io.issue.robPointer.toBigInt == 0)
+        assert(dut.io.occupancy.toBigInt == 3)
+
+        dut.io.issueReady #= true
+        for (entry <- 0 until 3) {
+          sleep(1)
+          assert(dut.io.issueValid.toBoolean)
+          assert(dut.io.issue.robPointer.toBigInt == entry)
+          sample(dut)
+        }
+        assert(!dut.io.issueValid.toBoolean)
+        assert(dut.io.occupancy.toBigInt == 0)
+
+        dut.io.enqueueValid #= true
+        dut.io.enqueue.robPointer #= 4
+        dut.io.issueReady #= false
+        sample(dut)
+        dut.io.enqueueValid #= false
+        sample(dut)
+        assert(dut.io.issueValid.toBoolean)
+        dut.io.flush #= true
+        sample(dut)
+        assert(!dut.io.issueValid.toBoolean)
+        assert(dut.io.occupancy.toBigInt == 0)
       }
   }
 }
