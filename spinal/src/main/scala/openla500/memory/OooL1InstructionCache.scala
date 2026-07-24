@@ -1,6 +1,7 @@
 package openla500.memory
 
 import openla500.core._
+import openla500.predict._
 import spinal.core._
 import spinal.lib._
 
@@ -11,7 +12,7 @@ object OooL1InstructionCacheState extends SpinalEnum {
 /** Two-way 8-KiB L1 instruction cache with 64-byte lines.
   *
   * A killed request is allowed to finish its refill so a redirect back to the same line can hit,
-  * but no response is emitted for the stale fetch group.  Once the requested 16-byte group has
+  * but no response is emitted for the stale fetch group. Once the requested 16-byte group has
   * returned, another request to the line being refilled may take ownership without waiting for
   * installation; requests to a different line remain blocked.
   */
@@ -51,6 +52,27 @@ final class OooL1InstructionCache(
     group
   }
 
+  private def writeResponse(
+      context: OooInstructionCacheRequest,
+      group: Vec[Bits],
+      error: Bool
+  ): Unit = {
+    val groupBase = context.virtualAddress &
+      U(((BigInt(1) << config.xlen) - 1) ^ (fetchGroupBytes - 1), config.xlen bits)
+    response.virtualAddress := context.virtualAddress
+    response.physicalAddress := context.physicalAddress
+    response.error := error
+    for (lane <- 0 until config.fetchWidth) {
+      response.instructions(lane) := group(lane)
+      OooFetchPredecoder.drive(
+        response.predecode(lane),
+        config,
+        groupBase + U(lane * 4, config.xlen bits),
+        group(lane)
+      )
+    }
+  }
+
   val io = new Bundle {
     val requestValid = in Bool ()
     val request = in(OooInstructionCacheRequest(config))
@@ -83,11 +105,14 @@ final class OooL1InstructionCache(
   val refillMask = Reg(Bits(OooCacheContract.BeatsPerLine bits)) init (0)
   val refillError = RegInit(False)
   val refillResponseSent = RegInit(False)
+  val refillReplayPending = RegInit(False)
 
   val refillLine = Bits(OooCacheContract.LineBits bits)
   for (beat <- 0 until OooCacheContract.BeatsPerLine) {
-    refillLine(beat * OooCacheContract.BeatBits + OooCacheContract.BeatBits - 1 downto
-      beat * OooCacheContract.BeatBits) := refillBeats(beat)
+    refillLine(
+      beat * OooCacheContract.BeatBits + OooCacheContract.BeatBits - 1 downto
+        beat * OooCacheContract.BeatBits
+    ) := refillBeats(beat)
   }
 
   val responseValid = RegInit(False)
@@ -121,7 +146,7 @@ final class OooL1InstructionCache(
   val idleRequestReady = state === OooL1InstructionCacheState.idle &&
     cacheArray.io.lookupReady
   val refillSameLineReady = state === OooL1InstructionCacheState.refillData &&
-    refillResponseSent && !requestKilled && !io.request.uncached &&
+    refillResponseSent && !refillReplayPending && !requestKilled && !io.request.uncached &&
     lineAddress(io.request.physicalAddress) === lineAddress(request.physicalAddress)
   io.requestReady := (idleRequestReady || refillSameLineReady) &&
     !invalidateRequest && !io.kill
@@ -152,10 +177,11 @@ final class OooL1InstructionCache(
     when(cacheArray.io.hit) {
       when(!requestKilled && !io.kill) {
         responseValid := True
-        response.virtualAddress := request.virtualAddress
-        response.physicalAddress := request.physicalAddress
-        response.instructions := selectFetchGroup(cacheArray.io.hitData, request.physicalAddress)
-        response.error := False
+        writeResponse(
+          request,
+          selectFetchGroup(cacheArray.io.hitData, request.physicalAddress),
+          False
+        )
       }
       state := OooL1InstructionCacheState.idle
     }.otherwise {
@@ -199,6 +225,14 @@ final class OooL1InstructionCache(
     (B(3, OooCacheContract.BeatsPerLine bits) |<< refillRequestBeatBase).resized
   val refillRequestGroupReady =
     (refillMaskWithAcceptedBeat & refillRequestBeatMask) === refillRequestBeatMask
+  when(refillReplayPending) {
+    refillReplayPending := False
+    when(!requestKilled && !io.kill) {
+      responseValid := True
+      writeResponse(request, selectFetchGroup(refillLine, request.physicalAddress), refillError)
+      refillResponseSent := True
+    }
+  }
   when(refillBeatFire) {
     refillBeats(io.lineReadBeat.beat) := io.lineReadBeat.data
     refillError := refillError || io.lineReadBeat.error
@@ -207,26 +241,17 @@ final class OooL1InstructionCache(
       (refillMaskWithAcceptedBeat & requestedBeatMask) === requestedBeatMask
     when(requestedGroupReady && !refillResponseSent && !requestKilled && !io.kill) {
       responseValid := True
-      response.virtualAddress := request.virtualAddress
-      response.physicalAddress := request.physicalAddress
-      response.instructions := selectFetchGroup(
-        refillLineWithAcceptedBeat,
-        request.physicalAddress
+      writeResponse(
+        request,
+        selectFetchGroup(refillLineWithAcceptedBeat, request.physicalAddress),
+        refillError || io.lineReadBeat.error
       )
-      response.error := refillError || io.lineReadBeat.error
       refillResponseSent := True
     }
     when(refillMaskWithAcceptedBeat.andR) { state := OooL1InstructionCacheState.install }
   }
   when(refillRequestFire && refillRequestGroupReady) {
-    responseValid := True
-    response.virtualAddress := io.request.virtualAddress
-    response.physicalAddress := io.request.physicalAddress
-    response.instructions := selectFetchGroup(
-      refillLineWithAcceptedBeat,
-      io.request.physicalAddress
-    )
-    response.error := refillError || (refillBeatFire && io.lineReadBeat.error)
+    refillReplayPending := True
     refillResponseSent := True
   }
 
@@ -238,10 +263,7 @@ final class OooL1InstructionCache(
     cacheArray.io.writeDirty := False
     when(!refillResponseSent && !requestKilled && !io.kill) {
       responseValid := True
-      response.virtualAddress := request.virtualAddress
-      response.physicalAddress := request.physicalAddress
-      response.instructions := selectFetchGroup(refillLine, request.physicalAddress)
-      response.error := refillError
+      writeResponse(request, selectFetchGroup(refillLine, request.physicalAddress), refillError)
     }
     state := OooL1InstructionCacheState.idle
   }

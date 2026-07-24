@@ -52,6 +52,11 @@ class OooCoreIntegrationSpec extends AnyFunSuite {
     dut.io.uncachedInstructionResponse.error #= false
     for (lane <- 0 until config.fetchWidth) {
       dut.io.uncachedInstructionResponse.instructions(lane) #= 0
+      dut.io.uncachedInstructionResponse.predecode(lane).valid #= false
+      dut.io.uncachedInstructionResponse.predecode(lane).branchType #= 1
+      dut.io.uncachedInstructionResponse.predecode(lane).target #= 0
+      dut.io.uncachedInstructionResponse.predecode(lane).staticTaken #= false
+      dut.io.uncachedInstructionResponse.predecode(lane).indirect #= false
     }
     dut.io.uncachedDataRequestReady #= false
     dut.io.uncachedDataResponseValid #= false
@@ -91,8 +96,10 @@ class OooCoreIntegrationSpec extends AnyFunSuite {
   ): Unit = {
     if (waitForInitialization) {
       var initializationCycles = 0
-      while (dut.io.cacheInvalidateBusy.toBoolean && initializationCycles <
-        config.level2Cache.sets + 32) {
+      while (
+        dut.io.cacheInvalidateBusy.toBoolean && initializationCycles <
+          config.level2Cache.sets + 32
+      ) {
         sample(dut)
         initializationCycles += 1
       }
@@ -275,8 +282,10 @@ class OooCoreIntegrationSpec extends AnyFunSuite {
         // Recovery is captured on the retirement pulse and applied one cycle later.
         sample(dut)
         var redirectRequestWait = 0
-        while (!dut.io.instructionTranslationRequest.valid.toBoolean &&
-          redirectRequestWait < 40) {
+        while (
+          !dut.io.instructionTranslationRequest.valid.toBoolean &&
+          redirectRequestWait < 40
+        ) {
           sample(dut)
           redirectRequestWait += 1
         }

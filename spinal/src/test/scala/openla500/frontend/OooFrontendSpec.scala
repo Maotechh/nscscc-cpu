@@ -1,6 +1,7 @@
 package openla500.frontend
 
 import openla500.core._
+import openla500.predict._
 import org.scalatest.funsuite.AnyFunSuite
 import spinal.core.sim._
 
@@ -32,6 +33,11 @@ class OooFrontendSpec extends AnyFunSuite {
     dut.io.cacheResponse.physicalAddress #= 0
     for (lane <- 0 until config.fetchWidth) {
       dut.io.cacheResponse.instructions(lane) #= 0
+      dut.io.cacheResponse.predecode(lane).valid #= false
+      dut.io.cacheResponse.predecode(lane).branchType #= 1
+      dut.io.cacheResponse.predecode(lane).target #= 0
+      dut.io.cacheResponse.predecode(lane).staticTaken #= false
+      dut.io.cacheResponse.predecode(lane).indirect #= false
     }
     dut.io.cacheResponse.error #= false
     dut.io.decodeReady #= 0
@@ -41,8 +47,36 @@ class OooFrontendSpec extends AnyFunSuite {
     dut.io.predictorUpdatePc #= 0
     dut.io.predictorUpdateTaken #= false
     dut.io.predictorUpdateTarget #= 0
+    dut.io.predictorUpdateType #= 0
+    dut.io.predictorUpdateMetadata #= 0
+    dut.io.predictorUpdateIsCall #= false
+    dut.io.predictorUpdateIsReturn #= false
     dut.io.privilege #= 0
     dut.io.interruptPending #= false
+  }
+
+  private def clearPredecode(dut: OooFrontend): Unit = {
+    for (lane <- 0 until config.fetchWidth) {
+      dut.io.cacheResponse.predecode(lane).valid #= false
+      dut.io.cacheResponse.predecode(lane).branchType #= 1
+      dut.io.cacheResponse.predecode(lane).target #= 0
+      dut.io.cacheResponse.predecode(lane).staticTaken #= false
+      dut.io.cacheResponse.predecode(lane).indirect #= false
+    }
+  }
+
+  private def setBranchPredecode(
+      dut: OooFrontend,
+      lane: Int,
+      branchType: Int,
+      target: BigInt,
+      staticTaken: Boolean
+  ): Unit = {
+    dut.io.cacheResponse.predecode(lane).valid #= true
+    dut.io.cacheResponse.predecode(lane).branchType #= branchType
+    dut.io.cacheResponse.predecode(lane).target #= target
+    dut.io.cacheResponse.predecode(lane).staticTaken #= staticTaken
+    dut.io.cacheResponse.predecode(lane).indirect #= false
   }
 
   private def acceptFetch(dut: OooFrontend, expectedAddress: BigInt): Unit = {
@@ -80,6 +114,7 @@ class OooFrontendSpec extends AnyFunSuite {
   }
 
   private def returnGroup(dut: OooFrontend, address: BigInt, firstRd: Int): Unit = {
+    clearPredecode(dut)
     dut.io.cacheResponseValid #= true
     dut.io.cacheResponse.virtualAddress #= address
     dut.io.cacheResponse.physicalAddress #= address
@@ -109,8 +144,10 @@ class OooFrontendSpec extends AnyFunSuite {
     assert(dut.io.decodeValid.toBigInt == ((BigInt(1) << pcs.size) - 1))
     pcs.indices.foreach { lane =>
       assert(dut.io.decoded(lane).pc.toBigInt == pcs(lane))
-      assert(dut.io.decoded(lane).instruction.toBigInt ==
-        (BigInt("00100000", 16) | rds(lane)))
+      assert(
+        dut.io.decoded(lane).instruction.toBigInt ==
+          (BigInt("00100000", 16) | rds(lane))
+      )
     }
   }
 
@@ -228,9 +265,10 @@ class OooFrontendSpec extends AnyFunSuite {
   }
 
   test("a pretranslated group waits for four free instruction-buffer slots") {
+    val capacityConfig = config.copy(instructionBufferEntries = 8)
     SimConfig.withVerilator
       .workspacePath("target/sim-workspace-ooo-frontend")
-      .compile(new OooFrontend(config))
+      .compile(new OooFrontend(capacityConfig))
       .doSim("ooo-frontend-pretranslation-capacity", 0x4c64) { dut =>
         dut.clockDomain.forkStimulus(period = 10)
         clearInputs(dut)
@@ -277,9 +315,10 @@ class OooFrontendSpec extends AnyFunSuite {
   }
 
   test("a buffered translation exception waits for an instruction-buffer slot") {
+    val capacityConfig = config.copy(instructionBufferEntries = 8)
     SimConfig.withVerilator
       .workspacePath("target/sim-workspace-ooo-frontend")
-      .compile(new OooFrontend(config))
+      .compile(new OooFrontend(capacityConfig))
       .doSim("ooo-frontend-pretranslation-exception-capacity", 0x4c65) { dut =>
         dut.clockDomain.forkStimulus(period = 10)
         clearInputs(dut)
@@ -439,6 +478,13 @@ class OooFrontendSpec extends AnyFunSuite {
         dut.io.cacheResponse.instructions(1) #= encodeDirectBranch(0x14, 0x40)
         dut.io.cacheResponse.instructions(2) #= (BigInt("00100000", 16) | 3)
         dut.io.cacheResponse.instructions(3) #= (BigInt("00100000", 16) | 4)
+        setBranchPredecode(
+          dut,
+          lane = 1,
+          branchType = 1,
+          target = branchTarget,
+          staticTaken = true
+        )
         dut.io.cacheResponse.error #= false
         sleep(1)
         assert(dut.io.translationRequest.valid.toBoolean)
@@ -446,6 +492,7 @@ class OooFrontendSpec extends AnyFunSuite {
         sample(dut)
         dut.io.translationRequest.ready #= false
         dut.io.cacheResponseValid #= false
+        sample(dut)
         assert(dut.io.fetchPc.toBigInt == branchTarget)
 
         dut.io.translationResponse.valid #= true
@@ -463,6 +510,172 @@ class OooFrontendSpec extends AnyFunSuite {
         }
         assert(dut.io.translationRequest.valid.toBoolean)
         assert(dut.io.translationRequest.virtualAddress.toBigInt == branchTarget)
+      }
+  }
+
+  test("FixBranch blocks a same-cycle stale cache handoff before issuing the corrected group") {
+    SimConfig.withVerilator
+      .workspacePath("target/sim-workspace-ooo-frontend")
+      .compile(new OooFrontend(config))
+      .doSim("ooo-frontend-fix-branch-poisoned-cache-handoff", 0x4c68) { dut =>
+        dut.clockDomain.forkStimulus(period = 10)
+        clearInputs(dut)
+        dut.clockDomain.assertReset()
+        dut.clockDomain.waitSampling(2)
+        dut.clockDomain.deassertReset()
+        sample(dut)
+
+        val base = config.resetVector
+        val sequentialPc = base + config.fetchWidth * 4
+        val branchTarget = base + 4 + 0x40
+        acceptFetch(dut, base)
+
+        // Finish translating the sequential group while the branch-bearing group is in L1I.
+        dut.io.translationRequest.ready #= true
+        sample(dut)
+        dut.io.translationRequest.ready #= false
+        dut.io.translationResponse.valid #= true
+        dut.io.translationResponse.virtualAddress #= sequentialPc
+        dut.io.translationResponse.physicalAddress #= sequentialPc
+        sample(dut)
+        dut.io.translationResponse.valid #= false
+
+        // The stale sequential request is accepted on the same edge that FixBranch discovers the
+        // direct branch. It must be drained rather than allowed into the instruction buffer.
+        dut.io.cacheRequestReady #= true
+        dut.io.cacheResponseValid #= true
+        dut.io.cacheResponse.virtualAddress #= base
+        dut.io.cacheResponse.physicalAddress #= base
+        dut.io.cacheResponse.instructions(0) #= (BigInt("00100000", 16) | 1)
+        dut.io.cacheResponse.instructions(1) #= encodeDirectBranch(0x14, 0x40)
+        dut.io.cacheResponse.instructions(2) #= (BigInt("00100000", 16) | 3)
+        dut.io.cacheResponse.instructions(3) #= (BigInt("00100000", 16) | 4)
+        setBranchPredecode(
+          dut,
+          lane = 1,
+          branchType = 1,
+          target = branchTarget,
+          staticTaken = true
+        )
+        sleep(1)
+        assert(!dut.io.cacheRequestValid.toBoolean)
+        sample(dut)
+        dut.io.cacheRequestReady #= false
+        dut.io.cacheResponseValid #= false
+        sample(dut)
+        assert(dut.io.fetchPc.toBigInt == branchTarget)
+        assert(dut.io.occupancy.toBigInt == 2)
+
+        // Translate the corrected target without waiting for a poisoned L1I response.
+        dut.io.translationRequest.ready #= true
+        sample(dut)
+        dut.io.translationRequest.ready #= false
+        dut.io.translationResponse.valid #= true
+        dut.io.translationResponse.virtualAddress #= branchTarget
+        dut.io.translationResponse.physicalAddress #= branchTarget
+        sample(dut)
+        dut.io.translationResponse.valid #= false
+        dut.io.cacheRequestReady #= true
+        sleep(1)
+        assert(dut.io.cacheRequestValid.toBoolean)
+        assert(dut.io.cacheRequest.virtualAddress.toBigInt == branchTarget)
+        sample(dut)
+        dut.io.cacheRequestReady #= false
+        assert(dut.io.occupancy.toBigInt == 2)
+
+        returnGroup(dut, branchTarget, firstRd = 9)
+        assert(dut.io.occupancy.toBigInt == 5)
+      }
+  }
+
+  test("FixBranch drains a same-cycle uncached handoff before issuing the corrected group") {
+    SimConfig.withVerilator
+      .workspacePath("target/sim-workspace-ooo-frontend")
+      .compile(new OooFrontend(config))
+      .doSim("ooo-frontend-fix-branch-uncached-drain", 0x4c6a) { dut =>
+        dut.clockDomain.forkStimulus(period = 10)
+        clearInputs(dut)
+        dut.clockDomain.assertReset()
+        dut.clockDomain.waitSampling(2)
+        dut.clockDomain.deassertReset()
+        sample(dut)
+
+        val base = config.resetVector
+        val sequentialPc = base + config.fetchWidth * 4
+        val branchTarget = base + 4 + 0x40
+        acceptFetch(dut, base)
+
+        dut.io.translationRequest.ready #= true
+        sample(dut)
+        dut.io.translationRequest.ready #= false
+        dut.io.translationResponse.valid #= true
+        dut.io.translationResponse.virtualAddress #= sequentialPc
+        dut.io.translationResponse.physicalAddress #= sequentialPc
+        dut.io.translationResponse.uncached #= true
+        sample(dut)
+        dut.io.translationResponse.valid #= false
+        dut.io.translationResponse.uncached #= false
+
+        // An accepted uncached AXI request cannot be killed. FixBranch therefore allows this
+        // handoff, tags its response for draining, and redirects translation to the real target.
+        dut.io.cacheRequestReady #= true
+        dut.io.cacheResponseValid #= true
+        dut.io.cacheResponse.virtualAddress #= base
+        dut.io.cacheResponse.physicalAddress #= base
+        dut.io.cacheResponse.instructions(0) #= (BigInt("00100000", 16) | 1)
+        dut.io.cacheResponse.instructions(1) #= encodeDirectBranch(0x14, 0x40)
+        dut.io.cacheResponse.instructions(2) #= (BigInt("00100000", 16) | 3)
+        dut.io.cacheResponse.instructions(3) #= (BigInt("00100000", 16) | 4)
+        setBranchPredecode(
+          dut,
+          lane = 1,
+          branchType = 1,
+          target = branchTarget,
+          staticTaken = true
+        )
+        sleep(1)
+        assert(!dut.io.cacheRequestValid.toBoolean)
+        assert(dut.io.cacheUncachedRequestValid.toBoolean)
+        assert(dut.io.cacheRequest.virtualAddress.toBigInt == sequentialPc)
+        sample(dut)
+        dut.io.cacheRequestReady #= false
+        dut.io.cacheResponseValid #= false
+        clearPredecode(dut)
+        assert(dut.io.fetchPc.toBigInt == branchTarget)
+        assert(dut.io.occupancy.toBigInt == 2)
+
+        dut.io.translationRequest.ready #= true
+        sample(dut)
+        dut.io.translationRequest.ready #= false
+        dut.io.translationResponse.valid #= true
+        dut.io.translationResponse.virtualAddress #= branchTarget
+        dut.io.translationResponse.physicalAddress #= branchTarget
+        sample(dut)
+        dut.io.translationResponse.valid #= false
+        sleep(1)
+        assert(!dut.io.cacheRequestValid.toBoolean)
+        assert(!dut.io.cacheUncachedRequestValid.toBoolean)
+
+        // The stale uncached response and corrected cached request may complete/handoff together,
+        // but the stale instructions must never enter the frontend buffer.
+        dut.io.cacheRequestReady #= true
+        dut.io.cacheResponseValid #= true
+        dut.io.cacheResponse.virtualAddress #= sequentialPc
+        dut.io.cacheResponse.physicalAddress #= sequentialPc
+        for (lane <- 0 until config.fetchWidth) {
+          dut.io.cacheResponse.instructions(lane) #= (BigInt("00100000", 16) | (5 + lane))
+        }
+        sleep(1)
+        assert(dut.io.cacheRequestValid.toBoolean)
+        assert(!dut.io.cacheUncachedRequestValid.toBoolean)
+        assert(dut.io.cacheRequest.virtualAddress.toBigInt == branchTarget)
+        sample(dut)
+        dut.io.cacheRequestReady #= false
+        dut.io.cacheResponseValid #= false
+        assert(dut.io.occupancy.toBigInt == 2)
+
+        returnGroup(dut, branchTarget, firstRd = 9)
+        assert(dut.io.occupancy.toBigInt == 5)
       }
   }
 
@@ -517,9 +730,10 @@ class OooFrontendSpec extends AnyFunSuite {
   }
 
   test("response handoff reserves buffer space for both fetch groups") {
+    val capacityConfig = config.copy(instructionBufferEntries = 8)
     SimConfig.withVerilator
       .workspacePath("target/sim-workspace-ooo-frontend")
-      .compile(new OooFrontend(config))
+      .compile(new OooFrontend(capacityConfig))
       .doSim("ooo-frontend-cache-response-capacity", 0x4c69) { dut =>
         dut.clockDomain.forkStimulus(period = 10)
         clearInputs(dut)
@@ -557,7 +771,7 @@ class OooFrontendSpec extends AnyFunSuite {
         sample(dut)
         dut.io.cacheResponseValid #= false
         dut.io.cacheRequestReady #= false
-        assert(dut.io.occupancy.toBigInt == config.instructionBufferEntries)
+        assert(dut.io.occupancy.toBigInt == capacityConfig.instructionBufferEntries)
 
         dut.io.decodeReady #= 7
         sample(dut)
@@ -589,9 +803,17 @@ class OooFrontendSpec extends AnyFunSuite {
         dut.io.cacheResponse.instructions(1) #= encodeDirectBranch(0x14, 0x40)
         dut.io.cacheResponse.instructions(2) #= (BigInt("00100000", 16) | 3)
         dut.io.cacheResponse.instructions(3) #= (BigInt("00100000", 16) | 4)
+        setBranchPredecode(
+          dut,
+          lane = 1,
+          branchType = 1,
+          target = base + 4 + 0x40,
+          staticTaken = true
+        )
         dut.io.cacheResponse.error #= false
         sample(dut)
         dut.io.cacheResponseValid #= false
+        sample(dut)
 
         assert(dut.io.occupancy.toBigInt == 2)
         assert(dut.io.fetchPc.toBigInt == base + 4 + 0x40)
@@ -611,6 +833,7 @@ class OooFrontendSpec extends AnyFunSuite {
         dut.io.cacheResponseValid #= true
         dut.io.cacheResponse.virtualAddress #= base + 4 + 0x40
         dut.io.cacheResponse.physicalAddress #= base + 4 + 0x40
+        clearPredecode(dut)
         for (lane <- 0 until config.fetchWidth) {
           dut.io.cacheResponse.instructions(lane) #= (BigInt("00100000", 16) | (9 + lane))
         }
@@ -629,13 +852,22 @@ class OooFrontendSpec extends AnyFunSuite {
         dut.io.cacheResponseValid #= true
         dut.io.cacheResponse.virtualAddress #= base + 0x100
         dut.io.cacheResponse.physicalAddress #= base + 0x100
+        clearPredecode(dut)
         dut.io.cacheResponse.instructions(0) #= encodeConditionalBranch(0x16, -4)
         dut.io.cacheResponse.instructions(1) #= (BigInt("00100000", 16) | 21)
         dut.io.cacheResponse.instructions(2) #= (BigInt("00100000", 16) | 22)
         dut.io.cacheResponse.instructions(3) #= (BigInt("00100000", 16) | 23)
+        setBranchPredecode(
+          dut,
+          lane = 0,
+          branchType = 0,
+          target = base + 0x100 - 4,
+          staticTaken = true
+        )
         dut.io.cacheResponse.error #= false
         sample(dut)
         dut.io.cacheResponseValid #= false
+        sample(dut)
         assert(dut.io.occupancy.toBigInt == 1)
         assert(dut.io.fetchPc.toBigInt == base + 0x100 - 4)
         assert(dut.io.decoded(0).predictedTaken.toBoolean)
@@ -643,12 +875,23 @@ class OooFrontendSpec extends AnyFunSuite {
 
         // A precise mispredict update overrides forward-not-taken on the next visit.
         val learnedPc = base + 0x200
-        val learnedTarget = base + 0x280
+        val learnedTarget = learnedPc + 0x10
+        // The BRAM-backed predictor clears the 128 BTB rows after reset; PHT payload does not need
+        // reset because an explicit trained bit guards every read.
+        dut.clockDomain.waitSampling(134)
+        sleep(1)
         dut.io.predictorUpdatePc #= learnedPc
         dut.io.predictorUpdateTaken #= true
         dut.io.predictorUpdateTarget #= learnedTarget
+        dut.io.predictorUpdateType #= 0
         dut.io.predictorUpdateValid #= true
-        sample(dut)
+        var learnedHistory = 0
+        for (_ <- 0 until 6) {
+          val phtIndex = ((learnedHistory & 0x1f) << 5) | ((learnedPc >> 4) & 0x1f)
+          dut.io.predictorUpdateMetadata #= (phtIndex | (2 << 10))
+          sample(dut)
+          learnedHistory = ((learnedHistory << 1) | 1) & 0x1f
+        }
         dut.io.predictorUpdateValid #= false
 
         dut.io.redirectTarget #= learnedPc
@@ -656,13 +899,28 @@ class OooFrontendSpec extends AnyFunSuite {
         sample(dut)
         dut.io.redirectValid #= false
         acceptFetch(dut, learnedPc)
+        assert(dut.io.predictorDebugHit.toBoolean)
+        assert(dut.io.predictorDebugType.toBigInt == 0)
+        assert((dut.io.predictorDebugPhtState.toBigInt & 2) != 0)
+        assert(dut.io.predictorDebugTaken.toBoolean)
+        sleep(1)
+        assert(dut.io.translationRequest.valid.toBoolean)
+        assert(dut.io.translationRequest.virtualAddress.toBigInt == learnedTarget)
         dut.io.cacheResponseValid #= true
         dut.io.cacheResponse.virtualAddress #= learnedPc
         dut.io.cacheResponse.physicalAddress #= learnedPc
+        clearPredecode(dut)
         dut.io.cacheResponse.instructions(0) #= encodeConditionalBranch(0x16, 0x10)
         dut.io.cacheResponse.instructions(1) #= (BigInt("00100000", 16) | 25)
         dut.io.cacheResponse.instructions(2) #= (BigInt("00100000", 16) | 26)
         dut.io.cacheResponse.instructions(3) #= (BigInt("00100000", 16) | 27)
+        setBranchPredecode(
+          dut,
+          lane = 0,
+          branchType = 0,
+          target = learnedTarget,
+          staticTaken = false
+        )
         dut.io.cacheResponse.error #= false
         sample(dut)
         dut.io.cacheResponseValid #= false

@@ -17,6 +17,7 @@ final class OooSharedCacheHierarchy(
 ) extends Component {
   val io = new Bundle {
     val instructionRequestValid = in Bool ()
+    val instructionUncachedRequestValid = in Bool ()
     val instructionRequest = in(OooInstructionCacheRequest(config))
     val instructionRequestReady = out Bool ()
     val instructionResponseValid = out Bool ()
@@ -74,30 +75,34 @@ final class OooSharedCacheHierarchy(
   when(maintenanceState === OooSharedCacheMaintenanceState.kickDataL1) {
     maintenanceState := OooSharedCacheMaintenanceState.waitDataL1
   }
-  when(maintenanceState === OooSharedCacheMaintenanceState.waitDataL1 &&
-    !l1d.io.invalidateBusy) {
+  when(
+    maintenanceState === OooSharedCacheMaintenanceState.waitDataL1 &&
+      !l1d.io.invalidateBusy
+  ) {
     maintenanceState := OooSharedCacheMaintenanceState.kickDataL2
   }
   when(maintenanceState === OooSharedCacheMaintenanceState.kickDataL2) {
     maintenanceState := OooSharedCacheMaintenanceState.waitDataL2
   }
-  when(maintenanceState === OooSharedCacheMaintenanceState.waitDataL2 &&
-    !l2.io.invalidateBusy) {
+  when(
+    maintenanceState === OooSharedCacheMaintenanceState.waitDataL2 &&
+      !l2.io.invalidateBusy
+  ) {
     maintenanceState := OooSharedCacheMaintenanceState.idle
   }
   val hierarchyMaintenanceBusy = l1i.io.invalidateBusy || l1d.io.invalidateBusy ||
     l2.io.invalidateBusy || maintenanceState =/= OooSharedCacheMaintenanceState.idle
 
-  val instructionUncached = io.instructionRequestValid && io.instructionRequest.uncached
-  l1i.io.requestValid := io.instructionRequestValid && !io.instructionRequest.uncached
+  l1i.io.requestValid := io.instructionRequestValid
   l1i.io.request := io.instructionRequest
-  io.uncachedInstructionRequestValid := instructionUncached && !hierarchyMaintenanceBusy
+  io.uncachedInstructionRequestValid := io.instructionUncachedRequestValid &&
+    !hierarchyMaintenanceBusy
   io.uncachedInstructionRequest := io.instructionRequest
   io.instructionRequestReady := !hierarchyMaintenanceBusy && Mux(
-      io.instructionRequest.uncached,
-      io.uncachedInstructionRequestReady,
-      l1i.io.requestReady
-    )
+    io.instructionRequest.uncached,
+    io.uncachedInstructionRequestReady,
+    l1i.io.requestReady
+  )
   io.instructionResponseValid := l1i.io.responseValid || io.uncachedInstructionResponseValid
   io.instructionResponse := io.uncachedInstructionResponse
   // A killed uncached AXI transaction may return in the same cycle as a new L1I hit.  The
@@ -114,10 +119,10 @@ final class OooSharedCacheHierarchy(
   io.uncachedDataRequestValid := dataUncached && !hierarchyMaintenanceBusy
   io.uncachedDataRequest := io.dataRequest
   io.dataRequestReady := !hierarchyMaintenanceBusy && Mux(
-      io.dataRequest.uncached,
-      io.uncachedDataRequestReady,
-      l1d.io.requestReady
-    )
+    io.dataRequest.uncached,
+    io.uncachedDataRequestReady,
+    l1d.io.requestReady
+  )
   io.dataResponseValid := l1d.io.responseValid || io.uncachedDataResponseValid
   io.dataResponse := l1d.io.response
   when(io.uncachedDataResponseValid) { io.dataResponse := io.uncachedDataResponse }

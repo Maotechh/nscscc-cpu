@@ -6,26 +6,26 @@
 
 当前官方顶层已经实例化 `openla500.core.OooCoreSystem(OooCoreConfig.FourIssueThreeCommit)`。旧 `SpinalCoreBackend` 和 `openla500.pipeline` 不再参与生成；保留下来的少量 `OpenLa500*` leaf 模块仅供仍被 OoO 核复用的 ALU、乘除法、CSR、TLB 或独立合同测试使用。
 
-当前验证基线（2026-07-23，生成 RTL SHA-256 `f1a1a42f322eb9e91d017975f0663caa1d23575cd12769ce78f19947052a3a61`）如下：
+当前本地验证候选（2026-07-24，生成 RTL SHA-256 `c46a277413c6b87acd5b1c94e4c94fafd4ea03d026dca1064025f052709e2bd3`）如下：
 
 | 检查 | 结果 |
 | --- | --- |
-| Scala/Spinal/Verilator | 35 suites，91 tests，91 passed，0 failed，0 aborted |
+| Scala/Spinal/Verilator | 35 suites，97 tests，97 passed，0 failed，0 aborted |
 | Python repository gates | 362 tests，362 passed，0 failed/error |
 | core_top package/port contract | pass，49 ports，17 inputs，32 outputs，`TLBNUM=32` |
-| Verilator complete-top lint | pass，665 条精确签名审计后 closure 为 0 warning/error |
+| Verilator complete-top lint | pass，730 条精确签名审计后 closure 为 0 warning/error |
 | Yosys 结构检查 | pass，Yosys 0.33，无 warning/skip |
 | chiplab `func/func_lab19` + NEMU DiffTest | pass，syscall 结束并到达 end PC |
-| 官方仿真计数 | 132,917 committed instructions，586,915 clocks，IPC 0.226467 |
+| 官方仿真计数 | 139,654 committed instructions，538,742 clocks，IPC 0.259222 |
 | Vivado 2023.2 synthesis | 0 errors，0 critical synthesis warnings，DCP/report 生成成功 |
 
-Vivado 独立 DRC 报告仍有无约束顶层 I/O 的 NSTD-1/UCIO-1 critical warning；这是未提供板级 XDC 的 standalone 综合，不是 RTL elaboration 或 synthesis error。在 standalone 100 MHz（10 ns）时钟约束下，所有时序约束已经满足：WNS `+0.419 ns`，TNS `0 ns`，失败端点为 0。当前最差路径仍是 backend issue operand 到 multiplier result。
+Vivado 独立 DRC 报告仍有无约束顶层 I/O 的 NSTD-1/UCIO-1 critical warning；这是未提供板级 XDC 的 standalone 综合，不是 RTL elaboration 或 synthesis error。在 standalone 100 MHz（10 ns）时钟约束下，所有时序约束已经满足：WNS `+0.135 ns`，TNS `0 ns`，失败端点为 0。当前最差路径是 ROB 第三提交槽的提交/训练控制到同步 PHT bank 写使能，数据路径 9.298 ns、14 级逻辑；不得用 false path 隐藏该真实路径。
 
-完整顶层 lint 有 665 条审计项，类别只有 `UNUSEDSIGNAL` 和 1 条固定宽度 `CMPCONST`。大部分来自统一 uop/commit/cache/translation Bundle 在具体路径中只消费部分字段、综合时关闭的 DiffTest 状态输入，以及官方 debug/兼容端口必须保留。它们不是“以后会用”的功能预留；能在 Scala 结构层安全删除的字段应继续删除，但跨模块固定 Bundle 中的未消费字段由生成器保留更清晰。`reference/core-top-lint-waivers.json` 同时锁定 RTL SHA-256、warning 数量、类别和签名哈希，先运行无抑制审计，再只对完全匹配的签名执行 clean closure。它不是允许新增 warning 的全局开关。
+完整顶层 lint 有 730 条审计项，类别只有 `UNUSEDSIGNAL` 和 3 条生成器固定范围比较产生的 `CMPCONST`。大部分来自统一 uop/commit/cache/translation Bundle 在具体路径中只消费部分字段、综合时关闭的 DiffTest 状态输入，以及官方 debug/兼容端口必须保留。它们不是“以后会用”的功能预留；能在 Scala 结构层安全删除的字段应继续删除，但跨模块固定 Bundle 中的未消费字段由生成器保留更清晰。`reference/core-top-lint-waivers.json` 同时锁定 RTL SHA-256、warning 数量、类别和签名哈希，先运行无抑制审计，再只对完全匹配的签名执行 clean closure。它不是允许新增 warning 的全局开关。
 
-综合资源（`xc7a200tfbg676-2`，flatten hierarchy rebuilt）：72,637 LUT、39,673 FF、42 RAMB36、12 RAMB18、4 DSP。相对上一基线为 `+622 LUT / -3 FF`；100 MHz WNS/TNS/失败端点仍为 `+0.419 ns / 0 ns / 0`。本轮 `timing.rpt` SHA-256 为 `b68d05f2e16132dcbab1ca2fc8bdaae7848891c953519efefb0cb2dc243cbfa4`，`utilization.rpt` SHA-256 为 `cac9978a24c452ad757ef62584a17869ad2dbf49044b6bdd691c9aef4e05fa91`。后续若继续提高频率，应优化乘法输入/结果路径；当前 100 MHz 已真实闭合，不需要也不允许用 false path 掩盖。
+综合资源（`xc7a200tfbg676-2`，flatten hierarchy rebuilt）：73,295 LUT、39,322 FF、46 RAMB36、16 RAMB18、4 DSP。同步 banked predictor 使用其中 4 RAMB36、4 RAMB18、628 LUT 和 570 FF。100 MHz WNS/TNS/失败端点为 `+0.135 ns / 0 ns / 0`。本轮 `timing.rpt` SHA-256 为 `dfdde6cc40b31bcda0ce2cd105d69d9790d457372633442f7358594367b3d7a0`，`utilization.rpt` SHA-256 为 `e6d2848e067c477c5003837699bc43c42744f799d0ff0b7e63410101dce1c8e7`，DCP SHA-256 为 `a27288d73eaaf76117a6069314b932baece0935a87d49cc17491aaa690d1e9a1`。
 
-旧文档中的 776,232 周期记录复用了早于 RTL 的 `obj_dir/Vsimu_top__ALL.a`，没有重新执行 Verilator 编译，因此不能作为真实性能证据。本轮固定流程中显式执行 `make -j8 verilator`。在完全相同的 DiffTest、TLBFILL 修复和 seed `5570815` 下，关闭静态预测的公平基线为 126,157 instructions / 783,358 clocks / IPC 0.161046；启用静态预测为 131,198 instructions / 744,827 clocks / IPC 0.176146；加入恢复训练表后为 131,226 instructions / 743,893 clocks / IPC 0.176404；允许数据侧 direct/DMW 翻译提前完成后为 131,225 instructions / 737,817 clocks / IPC 0.177856；让下一顺序取指组的地址翻译与当前 I-cache 请求重叠后为 130,008 instructions / 691,685 clocks / IPC 0.187958；让 instruction direct/DMW 翻译在请求接受拍直接产生寄存响应后为 132,934 instructions / 657,341 clocks / IPC 0.202230；让 L2 demand refill beat 在写入 L2 的同时流式返回请求 L1 后为 132,916 instructions / 599,313 clocks / IPC 0.221781；本轮让 L1I 在请求所在 16B 组 refill 完成时提前返回为 132,917 instructions / 586,915 clocks / IPC 0.226467。相对上一提交减少 12,398 周期（2.069%），相对关闭静态预测的公平基线减少 196,443 周期（25.08%）。各次都由 NEMU DiffTest、`END by Syscall` 和 end PC 共同判定通过。
+旧文档中的 776,232 周期记录复用了早于 RTL 的 `obj_dir/Vsimu_top__ALL.a`，没有重新执行 Verilator 编译，因此不能作为真实性能证据。本轮固定流程中显式删除 `obj_dir/output` 并执行 `make -j8 verilator`。在完全相同的 DiffTest、TLBFILL 修复和 seed `5570815` 下，关闭静态预测的公平基线为 126,157 instructions / 783,358 clocks / IPC 0.161046；启用静态预测为 131,198 instructions / 744,827 clocks / IPC 0.176146；加入恢复训练表后为 131,226 instructions / 743,893 clocks / IPC 0.176404；允许数据侧 direct/DMW 翻译提前完成后为 131,225 instructions / 737,817 clocks / IPC 0.177856；让下一顺序取指组的地址翻译与当前 I-cache 请求重叠后为 130,008 instructions / 691,685 clocks / IPC 0.187958；让 instruction direct/DMW 翻译在请求接受拍直接产生寄存响应后为 132,934 instructions / 657,341 clocks / IPC 0.202230；让 L2 demand refill beat 在写入 L2 的同时流式返回请求 L1 后为 132,916 instructions / 599,313 clocks / IPC 0.221781；让 L1I 在请求所在 16B 组 refill 完成时提前返回为 132,917 instructions / 586,915 clocks / IPC 0.226467；提交 `f395204` 的跨组流式取指结果为 539,497 clocks；当前同步 banked predictor、响应预解码、FixBranch 和 refill replay 组合为 139,654 instructions / 538,742 clocks / IPC 0.259222。当前候选相对 `f395204` 再减少 755 周期（0.140%），各次功能通过均由 NEMU DiffTest、`END by Syscall` 和 end PC 共同判定。
 
 ## 源码布局
 
@@ -37,6 +37,7 @@ spinal/src/main/scala/openla500/
   backend/      RAT/free-list/PRF、ROB、IQ、dispatch、LSQ、执行接线和提交
   execute/      四个执行端口的 ALU/branch/mul/div/AGU 集群
   memory/       L1I、L1D、共享 L2、MSHR、cache array、64B line AXI bridge
+  predict/      四银行同步 BTB/PHT、GHR/RAS 和取指响应预解码
   privileged/   CSR 外部连接所需的地址翻译、TLB 管理和 IDLE 控制
   observe/      Chiplab commit/DPI 适配以及架构状态合同
   config/       仍被独立 leaf 合同测试使用的历史配置类型
@@ -75,7 +76,7 @@ L1I/translation -> OooFrontend(fetch4) -> OooDecodeRenameBuffer
                                                              -> CSR/TLB/AXI/cache side effects
 ```
 
-* 前端以 64B cache line 为填充单位，每个请求向解码侧提供四条 32-bit 指令；当前组等待 I-cache 响应时，翻译端可以预先处理下一个对齐 16B 顺序组，并缓存翻译结果或异常。direct/DMW instruction 请求在接受拍直接寄存物理地址、MAT 和 ADEF 元数据，只有分页请求进入 TLB pending。预翻译不会越过未处理的 redirect，预测跳转会丢弃或 drain 错路径响应，向 L1I 真正发请求前还会重新检查四个 instruction-buffer 空位，避免旧响应填充后覆盖有效指令。静态预解码对 `B/BL` 直接预测跳转，并对向后条件分支采用 BTFNT。32-entry 带 tag 的恢复训练表只学习 ROB 已确认的方向/目标错误，用于覆盖反静态模式和 JIRL；预测结果随 fetch slot 入队，decode 不会因表更新而重算出不同结果。响应组在第一条预测跳转处截断并重定向。分支恢复由 `OooCore` 捕获 completion 后统一 flush frontend、rename buffer、IQ、ROB younger entries 和 LSQ。
+* 前端以 64B cache line 为填充单位，每个请求向解码侧提供四条 32-bit 指令；当前组等待 I-cache 响应时，翻译端可以预先处理下一个对齐 16B 顺序组，并缓存翻译结果或异常。direct/DMW instruction 请求在接受拍直接寄存物理地址、MAT 和 ADEF 元数据，只有分页请求进入 TLB pending。`OooBankedFetchPredictor` 按四个 fetch lane 分银行，每银行含 128-entry 同步 BTB、1024-entry 2-bit PHT，并共享 8-bit GHR 和 8-entry speculative/architectural RAS。条件分支在方向尚未完成提交训练时使用 BTFNT；提交边界训练精确方向、目标和 RAS，响应级 cold learning 只补一条确定的 direct branch。L1I/uncached AXI 在寄存响应旁生成 `OooFetchPredecode`，前端不再把 opcode 译码放在响应到状态更新的组合路径上。FixBranch 在响应拍比较提前预测与实际预解码：错误的 cached handoff 被阻止，已接受且不可取消的 uncached 请求由 `cacheDropPending` 排空，旧响应不能冒充纠正目标。预测结果随 fetch slot 入队，decode 不会因表更新而重算；分支 completion 恢复仍统一 flush frontend、rename buffer、IQ、ROB younger entries 和 LSQ。
 * rename 同时分配 physical destination、ROB pointer、LDQ/STQ index。只有 `writesGpr && rd != 0` 的 uop 才携带 FreeList 给出的 `pdst`；写 `r0` 或无 GPR 目的的 uop 固定使用 `pdst=0`，不能误唤醒随后分配同一自由表标签的真实生产者。RAT 是投机映射，commit 时更新 architectural mapping 并释放旧 physical register；FreeList 使用 ysyx 风格的 `head/architecturalHead/tail` 环形队列，flush 只回退 speculative head 和 free count，commit 不会在 flush 边界写入回收槽位。
 * IQ 按执行端口能力选择 ready uop；serial/CSR/TLB/CACOP/IDLE 等操作必须等 ROB head，不能因为执行端空闲而越过更老指令。
 * 分支在执行端比较实际 taken/target。错误预测 completion 生成 `OooRecoveryRequest`，目标 PC 和异常元数据一起保存，避免把普通 serial stall 当作 branch recovery。
@@ -122,7 +123,7 @@ L1I/translation -> OooFrontend(fetch4) -> OooDecodeRenameBuffer
 
 ### Cache/AXI line 边界
 
-`OooCacheContract` 固定 `LineBytes=64`、`BeatBytes=8`、每行 8 个内部 beat。L1I/L1D 共享 `OooSharedCacheHierarchy` 的 L2 和 `OooSharedReadMshrRouter`，I/D miss 通过 4-entry MSHR 标识复用。L2 demand miss 接受的内存 beat 会在写入 refill buffer 的同拍流式返回请求 L1；下游 backpressure 同步作用于内存 beat ready，最后一拍之后再把完整 line 安装进 L2，不再收满后额外重放 8 拍。L2 hit 仍从已安装 line 顺序返回 8 拍。L1D 的 dirty victim 以 write-through 方式写入 L2 并保留为 clean L2 hit；L2 再通过 `OooAxiLineBridge` 拆成官方 32-bit AXI burst。未经 cache 的 instruction 访问使用对齐四字 burst，data 访问保留 size、byte mask 和 write response backpressure。
+`OooCacheContract` 固定 `LineBytes=64`、`BeatBytes=8`、每行 8 个内部 beat。L1I/L1D 共享 `OooSharedCacheHierarchy` 的 L2 和 `OooSharedReadMshrRouter`，I/D miss 通过 4-entry MSHR 标识复用。L2 demand miss 接受的内存 beat会在写入 refill buffer 的同拍流式返回请求 L1；下游 backpressure 同步作用于内存 beat ready，最后一拍之后再把完整 line 安装进 L2。L1I 在请求 16B group 就绪时先返回，并用 `refillReplayPending` 把同线已就绪 group 的响应延后一拍，切断 response-to-response/predecode 时序环。L2 hit 仍从已安装 line 顺序返回 8 拍。L1D 的 dirty victim 以 write-through 方式写入 L2 并保留为 clean L2 hit；L2 再通过 `OooAxiLineBridge` 拆成官方 32-bit AXI burst。未经 cache 的 instruction 访问使用对齐四字 burst并携带同一预解码元数据，data 访问保留 size、byte mask 和 write response backpressure。
 
 ### Privileged/maintenance
 
@@ -166,12 +167,12 @@ openla500.memory.GenerateOooSharedCacheHierarchy
 export CHIPLAB_HOME=/home/ubuntu/nscscc-validation/ooo-manual-20260720
 cp rtl/mycpu_top.v "$CHIPLAB_HOME/IP/myCPU/mycpu_top.v"
 cd "$CHIPLAB_HOME/sims/verilator/run_prog"
-./configure.sh --run func/func_lab19 --disable-clk-time --dump-fst
+./configure.sh --run func/func_lab19 --disable-simu-trace --output-uart-info
+rm -rf obj_dir output
 make -j8 verilator
-make -j8 testbench
+make testbench
 make soft_compile
-rm -rf tmp
-CHIPLAB_HOME=/home/ubuntu/nscscc-validation/ooo-manual-20260720 make simulation_run_prog
+make simulation_run_prog TIME_LIMIT=1300000
 ```
 
 必须在 `make verilator` 和 `make testbench` 之前运行 `configure.sh`，否则编译参数仍是上一次配置；不能省略 `make verilator`，否则可能复用旧的 `obj_dir/Vsimu_top__ALL.a`。清理 `obj/` 后必须重新运行 `make soft_compile`，否则缺少 `rom.vlog` 的仿真会在初始化阶段退出。当前基线保留默认 `TRACE_COMP=y` 以获得正常结束条件；验证目录没有 `golden_trace.txt` 时复制会报警，但 NEMU DPI DiffTest 仍然执行，最终以 DiffTest、syscall 和 end PC 三项共同判断。不要使用会让当前测试失去结束条件的 `--disable-trace-comp --disable-simu-trace` 组合。
@@ -191,4 +192,20 @@ Vivado standalone 综合（PowerShell）：
 3. 任何宽度/队列/line geometry 改动都必须同时更新 `OooCoreConfig` 的 require、对应 directed test、官方仿真和 Vivado 资源/时序记录；不能只改生成参数。
 4. 先验证功能，再看时序。当前最紧路径是 issue operand -> multiplier result，100 MHz WNS 为正；不能用综合约束屏蔽真实路径。远程 `perf20` 三次真实测试尚未执行，不能把本地仿真收益当作 FPGA 性能结论。
 5. 官方 `func_lab19` 通过不等于 full random、Linux、FPGA 或比赛性能全部通过。每轮性能结论要记录实际 workload、时钟、seed、commit 和报告哈希。
-6. 当前基线已通过功能、端口、Yosys、synthesis 和 standalone 100 MHz timing；下一轮性能或时序修改必须重新跑 Scala 91 项、官方 DiffTest 和 Vivado，而不是只比较 RTL 文本。当前基线的官方计数为 586,915 clocks，Vivado WNS 为 `+0.419 ns`。
+6. 当前候选已通过功能、端口、Yosys、synthesis 和 standalone 100 MHz timing；下一轮性能或时序修改必须重新跑 Scala 97 项、官方 DiffTest 和 Vivado，而不是只比较 RTL 文本。当前候选的官方计数为 538,742 clocks，Vivado WNS 为 `+0.135 ns`。
+
+## 优化试验记录
+
+以下记录使用同一个官方 `func_lab19`、NEMU DiffTest 和 100 MHz standalone Vivado 口径。候选未同时满足功能、性能和时序时不得作为新基线。
+
+| 候选 | `func_lab19` | standalone WNS | 结论 |
+|---|---:|---:|---|
+| L1I BRAM 命中结果直接送前端 | 536,350 cycles，`END by Syscall` | `-3.343 ns` | 周期比 `f395204` 的 539,497 少 0.583%，但 BRAM tag/hit 到分支译码和前端状态形成 18 级组合路径，放弃 |
+| 128 项异步、2-bit、提交训练的方向预测表 | 536,483 cycles，`END by Syscall` | `-3.275 ns` | 误预测约减少 5%，但 128 项异步读取形成大 mux；后续预测器必须改为提前索引的 banked 同步 BRAM，不能继续扩大响应级表 |
+| 注册式 L1I 响应加两项有序请求跟踪，8 项指令缓冲 | 551,227 cycles，`END by Syscall` | 未综合 | 比 `f395204` 慢 2.174%，前端空周期增加，放弃 |
+| 上述请求跟踪加 16 项指令缓冲 | 551,017 cycles，`END by Syscall` | 未综合 | 只比 8 项版本减少 210 cycles，仍比 `f395204` 慢 2.135%；容量不是主因，放弃 |
+| 仅将基线指令缓冲从 8 项扩为 16 项 | 539,497 cycles，`END by Syscall` | 未综合 | 与 `f395204` 逐周期相同，只增加存储和指针成本，放弃 |
+| 32 项双组合查询提前目标表 | 538,501 cycles，`END by Syscall` | `-2.658 ns` | 周期改善 0.185%，但 tag 到 `nextFetchPc` CE 为 12.313 ns、23 级逻辑，且增加约 2,421 LUT/1,888 FF；必须改为同步 banked 预测，放弃 |
+| 四银行同步 BTB/PHT、响应预解码、FixBranch 和 refill replay | 538,742 cycles，`END by Syscall` | `+0.135 ns` | 相对 `f395204` 减少 755 cycles；本地功能和 100 MHz 时序通过，进入远程 `func58/perf20` 候选 |
+
+这些试验说明：在响应寄存后才识别分支，会先把年轻顺序组送入 L1I，再在预测跳转时清除；增加缓冲不能消除这个结构性代价。当前实现已完成提前同步 BTB/PHT 查询、提交训练和取回后的 FixBranch 校正，并保持 BRAM/预解码响应寄存边界。下一步优化应优先降低 commit-to-PHT 写使能路径和 7,096 次 cold-missing correction，而不是再次扩大 instruction buffer 或引入异步大表。

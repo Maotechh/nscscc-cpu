@@ -1,6 +1,7 @@
 package openla500.memory
 
 import openla500.core._
+import openla500.predict._
 import spinal.core._
 import spinal.lib._
 
@@ -47,6 +48,7 @@ final case class OooInstructionCacheResponse(config: OooCoreConfig) extends Bund
   val virtualAddress = UInt(config.xlen bits)
   val physicalAddress = UInt(config.xlen bits)
   val instructions = Vec(Bits(32 bits), config.fetchWidth)
+  val predecode = Vec(OooFetchPredecode(config), config.fetchWidth)
   val error = Bool()
 }
 

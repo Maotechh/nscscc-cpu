@@ -3,6 +3,7 @@ package openla500.core
 import openla500.backend._
 import openla500.frontend._
 import openla500.memory._
+import openla500.predict._
 import openla500.privileged._
 import spinal.core._
 import spinal.lib._
@@ -12,8 +13,7 @@ import spinal.lib._
   * Branch recovery is handled internally. Precise exception entry and privileged redirects remain
   * explicit inputs until the architectural CSR/MMU block is connected at the final core boundary.
   */
-final class OooCore(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommit)
-    extends Component {
+final class OooCore(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommit) extends Component {
   val io = new Bundle {
     val instructionTranslationRequest = master(Stream(OooTranslationRequest(config)))
     val instructionTranslationResponse = slave(Stream(OooTranslationResponse(config)))
@@ -128,6 +128,7 @@ final class OooCore(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommit)
   decodeRenameBuffer.io.outputReady := backend.io.renameReady
 
   backend.io.instructionRequestValid := frontend.io.cacheRequestValid
+  backend.io.instructionUncachedRequestValid := frontend.io.cacheUncachedRequestValid
   backend.io.instructionRequest := frontend.io.cacheRequest
   frontend.io.cacheRequestReady := backend.io.instructionRequestReady
   frontend.io.cacheResponseValid := backend.io.instructionResponseValid
@@ -169,11 +170,45 @@ final class OooCore(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommit)
 
   frontend.io.redirectValid := internalRedirectValid
   frontend.io.redirectTarget := internalRedirectTarget
-  frontend.io.predictorUpdateValid := backend.io.recoveryValid &&
-    backend.io.recovery.cause === OooRecoveryCause.branchMispredict
-  frontend.io.predictorUpdatePc := backend.io.recovery.pc
-  frontend.io.predictorUpdateTaken := backend.io.recovery.taken
-  frontend.io.predictorUpdateTarget := backend.io.recovery.target
+  val committedBranch = Bits(config.commitWidth bits)
+  for (lane <- 0 until config.commitWidth) {
+    committedBranch(lane) := backend.io.commitValid(lane) &&
+      backend.io.commit(lane).retired && backend.io.commit(lane).isBranch
+  }
+  val predictorUpdateLane = UInt(log2Up(config.commitWidth) bits)
+  predictorUpdateLane := 0
+  for (lane <- (0 until config.commitWidth).reverse) {
+    when(committedBranch(lane)) {
+      predictorUpdateLane := lane
+    }
+  }
+  val predictorCommit = backend.io.commit(predictorUpdateLane)
+  val predictorOpcode = predictorCommit.instruction(31 downto 26).asUInt
+  val predictorIsJirl = predictorOpcode === U(0x13, 6 bits)
+  val predictorIsReturn = predictorIsJirl && predictorCommit.instruction(4 downto 0) === 0 &&
+    predictorCommit.instruction(9 downto 5) === 1 &&
+    predictorCommit.instruction(25 downto 10) === 0
+  val predictorIsCall = predictorOpcode === U(0x15, 6 bits) ||
+    (predictorIsJirl && predictorCommit.instruction(4 downto 0) === 1)
+  val predictorType = UInt(OooPredictedBranchType.Width bits)
+  predictorType := OooPredictedBranchType.direct
+  when(predictorCommit.branchKind >= 1 && predictorCommit.branchKind <= 6) {
+    predictorType := OooPredictedBranchType.conditional
+  }.elsewhen(predictorIsReturn) {
+    predictorType := OooPredictedBranchType.ret
+  }.elsewhen(predictorIsCall) {
+    predictorType := OooPredictedBranchType.call
+  }.elsewhen(predictorIsJirl) {
+    predictorType := OooPredictedBranchType.indirect
+  }
+  frontend.io.predictorUpdateValid := committedBranch.orR
+  frontend.io.predictorUpdatePc := predictorCommit.pc
+  frontend.io.predictorUpdateTaken := predictorCommit.branchTaken
+  frontend.io.predictorUpdateTarget := predictorCommit.branchTarget
+  frontend.io.predictorUpdateType := predictorType
+  frontend.io.predictorUpdateMetadata := predictorCommit.predictorMetadata
+  frontend.io.predictorUpdateIsCall := predictorIsCall
+  frontend.io.predictorUpdateIsReturn := predictorIsReturn
   frontend.io.privilege := io.privilege
   frontend.io.interruptPending := io.interruptPending
   decodeRenameBuffer.io.flush := internalRedirectValid

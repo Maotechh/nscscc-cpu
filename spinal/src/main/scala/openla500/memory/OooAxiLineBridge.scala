@@ -2,6 +2,7 @@ package openla500.memory
 
 import openla500.compat.Axi3Compat
 import openla500.core._
+import openla500.predict._
 import spinal.core._
 import spinal.lib._
 
@@ -126,6 +127,11 @@ final class OooAxiLineBridge(
     instructionResponse.error := False
     for (word <- 0 until config.fetchWidth) {
       instructionResponse.instructions(word) := 0
+      instructionResponse.predecode(word).valid := False
+      instructionResponse.predecode(word).branchType := OooPredictedBranchType.direct
+      instructionResponse.predecode(word).target := 0
+      instructionResponse.predecode(word).staticTaken := False
+      instructionResponse.predecode(word).indirect := False
     }
   }
   when(startUncachedDataRead) {
@@ -188,6 +194,18 @@ final class OooAxiLineBridge(
       val responseError = io.axi.r.payload.response.orR ||
         io.axi.r.payload.id =/= B(2, 4 bits)
       instructionResponse.instructions(instructionReadWordIndex) := io.axi.r.payload.data
+      val instructionGroupBase = instructionResponse.virtualAddress &
+        U(((BigInt(1) << config.xlen) - 1) ^ (config.fetchWidth * 4 - 1), config.xlen bits)
+      for (word <- 0 until config.fetchWidth) {
+        when(instructionReadWordIndex === word) {
+          OooFetchPredecoder.drive(
+            instructionResponse.predecode(word),
+            config,
+            instructionGroupBase + U(word * 4, config.xlen bits),
+            io.axi.r.payload.data
+          )
+        }
+      }
       instructionReadError := instructionReadError || responseError
       when(expectedLast || io.axi.r.payload.last) {
         instructionResponseValid := True

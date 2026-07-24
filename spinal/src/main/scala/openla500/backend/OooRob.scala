@@ -37,7 +37,8 @@ final class OooRob(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommit) e
     val completionValid = in Bits (config.writebackWidth bits)
     val completion = in Vec (OooCompletion(config), config.writebackWidth)
     val completionWakeupValid = out Bits (config.writebackWidth bits)
-    val completionWakeupPdst = out Vec (UInt(config.physicalRegIndexWidth bits), config.writebackWidth)
+    val completionWakeupPdst =
+      out Vec (UInt(config.physicalRegIndexWidth bits), config.writebackWidth)
     val completionWakeupData = out Vec (Bits(config.xlen bits), config.writebackWidth)
 
     val commitValid = out Bits (config.commitWidth bits)
@@ -125,6 +126,11 @@ final class OooRob(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommit) e
     io.commit(lane).serializing := candidates(lane).uop.decoded.serializing
     io.commit(lane).isLoad := candidates(lane).uop.decoded.isLoad
     io.commit(lane).isStore := candidates(lane).uop.decoded.isStore
+    io.commit(lane).isBranch := candidates(lane).uop.decoded.isBranch
+    io.commit(lane).branchKind := candidates(lane).uop.decoded.branchKind
+    io.commit(lane).branchTaken := candidates(lane).branchTaken
+    io.commit(lane).branchTarget := candidates(lane).branchTarget
+    io.commit(lane).predictorMetadata := candidates(lane).uop.decoded.predictorMetadata
     io.commit(lane).loadQueueIndex := candidates(lane).uop.loadQueueIndex
     io.commit(lane).storeQueueIndex := candidates(lane).uop.storeQueueIndex
     io.commit(lane).exception := candidates(lane).exception

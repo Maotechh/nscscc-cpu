@@ -5,8 +5,8 @@ import spinal.core._
 import spinal.lib._
 
 object OooL1DataCacheState extends SpinalEnum {
-  val idle, lookup, writeback, refillRequest, refillData, install,
-    maintenanceLookup, maintenanceWriteback, maintenanceInvalidate = newElement()
+  val idle, lookup, writeback, refillRequest, refillData, install, maintenanceLookup,
+      maintenanceWriteback, maintenanceInvalidate = newElement()
 }
 
 /** Blocking reference controller for the 64-byte L1D data/tag arrays.
@@ -96,8 +96,10 @@ final class OooL1DataCache(config: OooCoreConfig = OooCoreConfig.FourIssueThreeC
 
   val refillLine = Bits(OooCacheContract.LineBits bits)
   for (beat <- 0 until OooCacheContract.BeatsPerLine) {
-    refillLine(beat * OooCacheContract.BeatBits + OooCacheContract.BeatBits - 1 downto
-      beat * OooCacheContract.BeatBits) := refillBeats(beat)
+    refillLine(
+      beat * OooCacheContract.BeatBits + OooCacheContract.BeatBits - 1 downto
+        beat * OooCacheContract.BeatBits
+    ) := refillBeats(beat)
   }
   val installedLine = mergeStore(refillLine, request)
   val hitStoreLine = mergeStore(cacheArray.io.hitData, request)
@@ -163,8 +165,10 @@ final class OooL1DataCache(config: OooCoreConfig = OooCoreConfig.FourIssueThreeC
     state === OooL1DataCacheState.maintenanceWriteback
   io.lineWrite.lineAddress := victimAddress
   io.lineWrite.data := victimData
-  io.lineWrite.byteMask := B((BigInt(1) << OooCacheContract.LineBytes) - 1,
-    OooCacheContract.LineBytes bits)
+  io.lineWrite.byteMask := B(
+    (BigInt(1) << OooCacheContract.LineBytes) - 1,
+    OooCacheContract.LineBytes bits
+  )
   io.lineWrite.mshrId := 0
 
   when(state === OooL1DataCacheState.lookup && cacheArray.io.responseValid) {
@@ -233,8 +237,10 @@ final class OooL1DataCache(config: OooCoreConfig = OooCoreConfig.FourIssueThreeC
     state := OooL1DataCacheState.idle
   }
 
-  when(state === OooL1DataCacheState.maintenanceLookup &&
-    cacheArray.io.maintenanceResponseValid) {
+  when(
+    state === OooL1DataCacheState.maintenanceLookup &&
+      cacheArray.io.maintenanceResponseValid
+  ) {
     when(cacheArray.io.maintenanceEntryValid && cacheArray.io.maintenanceEntryDirty) {
       victimAddress := cacheArray.io.maintenanceEntryAddress
       victimData := cacheArray.io.maintenanceEntryData

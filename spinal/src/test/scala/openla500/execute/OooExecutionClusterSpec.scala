@@ -166,10 +166,12 @@ class OooExecutionClusterSpec extends AnyFunSuite {
         dut.io.aguReady #= false
         dut.io.loadStoreCompletionValid #= false
 
-        for ((instruction, operation) <- Seq(
+        for (
+          (instruction, operation) <- Seq(
             BigInt("06000000", 16) -> 17,
             BigInt("2ac00000", 16) -> 18
-          )) {
+          )
+        ) {
           dut.io.instruction #= instruction
           dut.io.issueValid #= true
           sleep(1)

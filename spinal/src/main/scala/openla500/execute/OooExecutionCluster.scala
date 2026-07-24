@@ -385,23 +385,31 @@ final class OooExecutionCluster(config: OooCoreConfig = OooCoreConfig.FourIssueT
     cacheTranslationAddress := lsuAddress
     cacheTranslationState := OooCacheTranslationState.request
   }
-  when(cacheTranslationState === OooCacheTranslationState.request &&
-    io.cacheTranslationRequest.ready) {
+  when(
+    cacheTranslationState === OooCacheTranslationState.request &&
+      io.cacheTranslationRequest.ready
+  ) {
     cacheTranslationState := OooCacheTranslationState.response
   }
-  when(cacheTranslationState === OooCacheTranslationState.response &&
-    cacheTranslationResponseFire) {
+  when(
+    cacheTranslationState === OooCacheTranslationState.response &&
+      cacheTranslationResponseFire
+  ) {
     cacheTranslationState := OooCacheTranslationState.idle
   }
-  when(cacheTranslationState === OooCacheTranslationState.dropResponse &&
-    cacheTranslationResponseFire) {
+  when(
+    cacheTranslationState === OooCacheTranslationState.dropResponse &&
+      cacheTranslationResponseFire
+  ) {
     cacheTranslationState := OooCacheTranslationState.idle
   }
   when(io.flush) {
     when(cacheTranslationState === OooCacheTranslationState.request) {
       cacheTranslationState := OooCacheTranslationState.idle
-    }.elsewhen(cacheTranslationState === OooCacheTranslationState.response &&
-      !cacheTranslationResponseFire) {
+    }.elsewhen(
+      cacheTranslationState === OooCacheTranslationState.response &&
+        !cacheTranslationResponseFire
+    ) {
       cacheTranslationState := OooCacheTranslationState.dropResponse
     }
   }

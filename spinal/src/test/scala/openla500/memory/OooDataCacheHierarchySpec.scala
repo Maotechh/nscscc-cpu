@@ -244,8 +244,10 @@ class OooDataCacheHierarchySpec extends AnyFunSuite {
           (dut.io.memoryWrite.data.toBigInt & BigInt("ffffffffffffffff", 16)) ==
             BigInt("11110000deadbeef", 16)
         )
-        assert(dut.io.memoryWrite.byteMask.toBigInt ==
-          (BigInt(1) << OooCacheContract.LineBytes) - 1)
+        assert(
+          dut.io.memoryWrite.byteMask.toBigInt ==
+            (BigInt(1) << OooCacheContract.LineBytes) - 1
+        )
         dut.io.memoryWriteReady #= true
         sample(dut)
         dut.io.memoryWriteReady #= false

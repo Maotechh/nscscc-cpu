@@ -88,8 +88,10 @@ class OooAxiLineBridgeSpec extends AnyFunSuite {
               val beat = observed.size
               assert(dut.io.memoryReadBeat.mshrId.toBigInt == 3)
               assert(dut.io.memoryReadBeat.beat.toBigInt == beat)
-              assert(dut.io.memoryReadBeat.last.toBoolean ==
-                (beat == OooCacheContract.BeatsPerLine - 1))
+              assert(
+                dut.io.memoryReadBeat.last.toBoolean ==
+                  (beat == OooCacheContract.BeatsPerLine - 1)
+              )
               assert(!dut.io.memoryReadBeat.error.toBoolean)
               observed += dut.io.memoryReadBeat.data.toBigInt
             }
@@ -109,8 +111,10 @@ class OooAxiLineBridgeSpec extends AnyFunSuite {
         dut.io.axi.r.valid #= false
         while (observed.size < OooCacheContract.BeatsPerLine) { sample(dut) }
         for (beat <- observed.indices) {
-          assert(observed(beat) ==
-            (BigInt(0x101 + beat * 2) << 32 | BigInt(0x100 + beat * 2)))
+          assert(
+            observed(beat) ==
+              (BigInt(0x101 + beat * 2) << 32 | BigInt(0x100 + beat * 2))
+          )
         }
       }
   }
@@ -128,7 +132,8 @@ class OooAxiLineBridgeSpec extends AnyFunSuite {
         sample(dut)
 
         val words = (0 until 16).map(index => BigInt("a5000000", 16) | index)
-        val line = words.zipWithIndex.map { case (word, index) => word << (index * 32) }.reduce(_ | _)
+        val line =
+          words.zipWithIndex.map { case (word, index) => word << (index * 32) }.reduce(_ | _)
         val masks = (0 until 16).map(index => BigInt(index & 0xf) << (index * 4)).reduce(_ | _)
         dut.io.memoryWriteValid #= true
         dut.io.memoryWrite.lineAddress #= 0x8000
@@ -206,8 +211,10 @@ class OooAxiLineBridgeSpec extends AnyFunSuite {
         }
         dut.io.axi.r.valid #= false
         assert(dut.io.uncachedInstructionResponseValid.toBoolean)
-        assert(dut.io.uncachedInstructionResponse.virtualAddress.toBigInt ==
-          BigInt("1c00100c", 16))
+        assert(
+          dut.io.uncachedInstructionResponse.virtualAddress.toBigInt ==
+            BigInt("1c00100c", 16)
+        )
         assert(dut.io.uncachedInstructionResponse.physicalAddress.toBigInt == 0x100c)
         assert(!dut.io.uncachedInstructionResponse.error.toBoolean)
         for (word <- 0 until config.fetchWidth) {

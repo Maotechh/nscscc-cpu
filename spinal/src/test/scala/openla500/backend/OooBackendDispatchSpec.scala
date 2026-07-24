@@ -56,9 +56,11 @@ private final class OooBackendDispatchProbe(config: OooCoreConfig) extends Compo
   backend.io.issueReady := io.issueReady
   backend.io.completionValid := io.completionValid
   for (lane <- 1 until config.writebackWidth) {
-    backend.io.completion(lane).assignFromBits(
-      B(0, backend.io.completion(lane).getBitsWidth bits)
-    )
+    backend.io
+      .completion(lane)
+      .assignFromBits(
+        B(0, backend.io.completion(lane).getBitsWidth bits)
+      )
   }
   backend.io.completion(0).robPointer := io.completionRobPointer
   backend.io.completion(0).pdst := io.completionPdst
@@ -212,8 +214,10 @@ class OooBackendDispatchSpec extends AnyFunSuite {
           sleep(1)
           val issueMask = dut.io.issueValid.toBigInt
           for (port <- 0 until config.executionWidth) {
-            if ((issueMask & (BigInt(1) << port)) != 0 &&
-              dut.io.issuePc(port).toBigInt == basePc + 4) {
+            if (
+              (issueMask & (BigInt(1) << port)) != 0 &&
+              dut.io.issuePc(port).toBigInt == basePc + 4
+            ) {
               dependentIssued = true
             }
           }

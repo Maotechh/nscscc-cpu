@@ -5,11 +5,11 @@ import spinal.lib._
 
 /** Multi-retirement boundary for chiplab's indexed DPI commit arrays.
   *
-  * Commit records pass through a fixed three-cycle observation pipeline.  GPR and ordinary CSR
-  * state is sampled after the first cycle; CSR/TLB/ERTN operations whose architectural effects
-  * are staged for an extra cycle use the live CSR view at the third observation edge. Only one
-  * copy of the global exception, CSR, and GPR callbacks is emitted; instruction/load/store
-  * callbacks retain their retirement-lane index.
+  * Commit records pass through a fixed three-cycle observation pipeline. GPR and ordinary CSR state
+  * is sampled after the first cycle; CSR/TLB/ERTN operations whose architectural effects are staged
+  * for an extra cycle use the live CSR view at the third observation edge. Only one copy of the
+  * global exception, CSR, and GPR callbacks is emitted; instruction/load/store callbacks retain
+  * their retirement-lane index.
   */
 final class ChiplabMultiCommitDiffTestAdapter(commitWidth: Int) extends Component {
   require(commitWidth > 0 && commitWidth <= 6, "chiplab exposes six indexed commit slots")
@@ -66,8 +66,10 @@ final class ChiplabMultiCommitDiffTestAdapter(commitWidth: Int) extends Componen
   globalEvent := visibleCommit(0)
   globalEventValid := False
   for (lane <- (0 until commitWidth).reverse) {
-    when(visibleValid(lane) &&
-      (visibleCommit(lane).exception.valid || visibleCommit(lane).ertn)) {
+    when(
+      visibleValid(lane) &&
+        (visibleCommit(lane).exception.valid || visibleCommit(lane).ertn)
+    ) {
       globalEvent := visibleCommit(lane)
       globalEventValid := True
     }
@@ -210,8 +212,9 @@ private final class ChiplabMultiCommitDiffTestBlackBox(commitWidth: Int) extends
     s"$signal[$high:$low]"
   }
 
-  private val laneInstances = (0 until commitWidth).map { lane =>
-    s"""
+  private val laneInstances = (0 until commitWidth)
+    .map { lane =>
+      s"""
   DifftestInstrCommit u_difftest_instr_commit_$lane (
     .clock(clock), .coreid(8'b0), .index(8'd$lane), .valid(instrValid[$lane]),
     .pc(${slice("pc", lane, 64)}), .instr(${slice("instruction", lane, 32)}),
@@ -237,7 +240,8 @@ private final class ChiplabMultiCommitDiffTestBlackBox(commitWidth: Int) extends
     .paddr(${slice("loadPhysicalAddress", lane, 64)}),
     .vaddr(${slice("loadVirtualAddress", lane, 64)})
   );"""
-  }.mkString("\n")
+    }
+    .mkString("\n")
 
   private val csrNames = Seq(
     "crmd",
@@ -278,8 +282,9 @@ private final class ChiplabMultiCommitDiffTestBlackBox(commitWidth: Int) extends
     .mkString(",\n")
   private val gprConnections = (0 until 32)
     .map { index =>
-      val source = if (index == 0) "64'b0 & gprState[63:0]"
-      else s"gprState[${index * 64 + 63}:${index * 64}]"
+      val source =
+        if (index == 0) "64'b0 & gprState[63:0]"
+        else s"gprState[${index * 64 + 63}:${index * 64}]"
       s"    .gpr_$index($source)"
     }
     .mkString(",\n")

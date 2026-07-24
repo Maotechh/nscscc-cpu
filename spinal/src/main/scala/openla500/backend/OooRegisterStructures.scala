@@ -230,7 +230,10 @@ final class OooFreeList(config: OooCoreConfig = OooCoreConfig.FourIssueThreeComm
   }
 
   val freeEntries = Vec((0 until queueCapacity).map { index =>
-    Reg(UInt(config.physicalRegIndexWidth bits)) init U(index + 1, config.physicalRegIndexWidth bits)
+    Reg(UInt(config.physicalRegIndexWidth bits)) init U(
+      index + 1,
+      config.physicalRegIndexWidth bits
+    )
   })
   val headPtr = Reg(UInt(pointerWidth bits)) init U(0, pointerWidth bits)
   val architecturalHeadPtr = Reg(UInt(pointerWidth bits)) init U(0, pointerWidth bits)
@@ -240,9 +243,11 @@ final class OooFreeList(config: OooCoreConfig = OooCoreConfig.FourIssueThreeComm
 
   val allocateOffset = Vec(UInt(pointerWidth bits), config.renameWidth)
   for (lane <- 0 until config.renameWidth) {
-    allocateOffset(lane) := (if (lane == 0) U(0) else CountOne(
-      io.allocateValid(lane - 1 downto 0)
-    )).resized
+    allocateOffset(lane) := (if (lane == 0) U(0)
+                             else
+                               CountOne(
+                                 io.allocateValid(lane - 1 downto 0)
+                               )).resized
     io.allocatePdst(lane) := freeEntries(advance(headPtr, allocateOffset(lane)))
   }
 
@@ -259,9 +264,11 @@ final class OooFreeList(config: OooCoreConfig = OooCoreConfig.FourIssueThreeComm
   val confirmedCount = CountOne(io.commitFreeValid)
 
   for (lane <- 0 until config.commitWidth) {
-    val releaseOffset = (if (lane == 0) U(0) else CountOne(
-      releaseValid(lane - 1 downto 0)
-    )).resized
+    val releaseOffset = (if (lane == 0) U(0)
+                         else
+                           CountOne(
+                             releaseValid(lane - 1 downto 0)
+                           )).resized
     when(releaseValid(lane)) {
       freeEntries(advance(tailPtr, releaseOffset)) := io.commitFreePdst(lane)
     }

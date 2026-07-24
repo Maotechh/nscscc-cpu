@@ -16,6 +16,7 @@ final class OooBackendWithDataCache(
     val renameReady = out Bits (config.renameWidth bits)
 
     val instructionRequestValid = in Bool ()
+    val instructionUncachedRequestValid = in Bool ()
     val instructionRequest = in(OooInstructionCacheRequest(config))
     val instructionRequestReady = out Bool ()
     val instructionResponseValid = out Bool ()
@@ -106,6 +107,7 @@ final class OooBackendWithDataCache(
   io.renameReady := backend.io.renameReady
 
   cacheHierarchy.io.instructionRequestValid := io.instructionRequestValid
+  cacheHierarchy.io.instructionUncachedRequestValid := io.instructionUncachedRequestValid
   cacheHierarchy.io.instructionRequest := io.instructionRequest
   cacheHierarchy.io.instructionKill := io.instructionKill
   io.instructionRequestReady := cacheHierarchy.io.instructionRequestReady

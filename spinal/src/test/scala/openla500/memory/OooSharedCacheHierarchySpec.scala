@@ -46,7 +46,9 @@ private final class OooSharedCacheHierarchyProbe(config: OooCoreConfig) extends 
   noIoPrefix()
 
   val hierarchy = new OooSharedCacheHierarchy(config)
-  hierarchy.io.instructionRequestValid := io.instructionRequestValid
+  hierarchy.io.instructionRequestValid := io.instructionRequestValid && !io.instructionRequest.uncached
+  hierarchy.io.instructionUncachedRequestValid :=
+    io.instructionRequestValid && io.instructionRequest.uncached
   hierarchy.io.instructionRequest := io.instructionRequest
   hierarchy.io.instructionKill := io.instructionKill
   hierarchy.io.dataRequestValid := io.dataRequestValid
@@ -115,6 +117,11 @@ class OooSharedCacheHierarchySpec extends AnyFunSuite {
     dut.io.uncachedInstructionResponse.error #= false
     for (lane <- 0 until config.fetchWidth) {
       dut.io.uncachedInstructionResponse.instructions(lane) #= 0
+      dut.io.uncachedInstructionResponse.predecode(lane).valid #= false
+      dut.io.uncachedInstructionResponse.predecode(lane).branchType #= 1
+      dut.io.uncachedInstructionResponse.predecode(lane).target #= 0
+      dut.io.uncachedInstructionResponse.predecode(lane).staticTaken #= false
+      dut.io.uncachedInstructionResponse.predecode(lane).indirect #= false
     }
     dut.io.uncachedDataRequestReady #= false
     dut.io.uncachedDataResponseValid #= false
