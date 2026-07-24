@@ -892,7 +892,7 @@ def validate_generated_lint_annotations(text: str, source: str) -> None:
                 f"generated core_top UNUSEDSIGNAL annotation is unbalanced: {source}"
             )
 
-    if normal_unused != 14 or special_off != 1 or special_on != 1:
+    if normal_unused != 6 or special_off != 1 or special_on != 1:
         raise RefactorError(
             f"generated core_top lint annotation scopes differ: {source}"
         )

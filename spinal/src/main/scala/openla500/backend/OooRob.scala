@@ -207,17 +207,18 @@ final class OooRob(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommit) e
       stagedCompletionHits(lane) := B(0, config.robEntries bits)
     }.otherwise {
       stagedCompletionHits(lane) := laneHits
-      when(io.completionValid(lane)) {
-        stagedResult(lane) := io.completion(lane).data
-        stagedPdst(lane) := io.completion(lane).pdst
-        stagedWritesPdst(lane) := io.completion(lane).writesPdst
-        stagedSideEffectData(lane) := io.completion(lane).sideEffectData
-        stagedException(lane) := io.completion(lane).exception
-        stagedBranchResolved(lane) := io.completion(lane).branchResolved
-        stagedBranchTaken(lane) := io.completion(lane).branchTaken
-        stagedBranchMispredict(lane) := io.completion(lane).branchMispredict
-        stagedBranchTarget(lane) := io.completion(lane).branchTarget
-      }
+      // The hit bitmap is the payload's validity.  Capturing every lane each
+      // cycle avoids turning completionValid's wide control cone into the CE
+      // of all completion payload registers, which is costly after routing.
+      stagedResult(lane) := io.completion(lane).data
+      stagedPdst(lane) := io.completion(lane).pdst
+      stagedWritesPdst(lane) := io.completion(lane).writesPdst
+      stagedSideEffectData(lane) := io.completion(lane).sideEffectData
+      stagedException(lane) := io.completion(lane).exception
+      stagedBranchResolved(lane) := io.completion(lane).branchResolved
+      stagedBranchTaken(lane) := io.completion(lane).branchTaken
+      stagedBranchMispredict(lane) := io.completion(lane).branchMispredict
+      stagedBranchTarget(lane) := io.completion(lane).branchTarget
     }
   }
 
