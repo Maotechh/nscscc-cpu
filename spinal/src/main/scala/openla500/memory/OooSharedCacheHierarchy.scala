@@ -7,10 +7,10 @@ object OooSharedCacheMaintenanceState extends SpinalEnum {
   val idle, kickDataL1, waitDataL1, kickDataL2, waitDataL2 = newElement()
 }
 
-/** Blocking L1I/L1D hierarchy sharing one 64-byte L2 cache.
+/** Private L1I/L1D hierarchy sharing one nonblocking 64-byte-line L2 cache.
   *
-  * Dirty L1D writebacks have priority. Read ownership is locked from L2 request acceptance through
-  * the final response beat, so identical local MSHR ids from L1I and L1D cannot cross-route data.
+  * Dirty L1D writebacks have priority. Four hierarchy-global read identities preserve the owning
+  * L1 and its local MSHR id across arbitrarily interleaved L2 response beats.
   */
 final class OooSharedCacheHierarchy(
     config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommit

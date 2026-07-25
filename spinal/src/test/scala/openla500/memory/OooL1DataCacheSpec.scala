@@ -228,6 +228,284 @@ class OooL1DataCacheSpec extends AnyFunSuite {
       }
   }
 
+  test("L1D allocates all four miss identities under lower-level backpressure") {
+    SimConfig.withVerilator
+      .workspacePath("target/sim-workspace-ooo-l1d")
+      .compile(new OooL1DataCacheProbe(config))
+      .doSim("ooo-l1d-four-mshr-allocation", 0x4c34) { dut =>
+        dut.clockDomain.forkStimulus(period = 10)
+        clearInputs(dut)
+        dut.clockDomain.assertReset()
+        dut.clockDomain.waitSampling(2)
+        dut.clockDomain.deassertReset()
+        dut.clockDomain.waitSampling(70)
+        sleep(1)
+
+        val addresses = Seq(BigInt(0x100), BigInt(0x180), BigInt(0x200), BigInt(0x280))
+        for ((address, index) <- addresses.zipWithIndex) {
+          setRequest(
+            dut,
+            address,
+            isWrite = false,
+            data = 0,
+            mask = 0xf,
+            robPointer = index,
+            pdst = index + 1
+          )
+          var wait = 0
+          while (!dut.io.requestReady.toBoolean && wait < 8) {
+            sample(dut)
+            wait += 1
+          }
+          assert(dut.io.requestReady.toBoolean)
+          sample(dut)
+          dut.io.requestValid #= false
+          sample(dut)
+        }
+
+        setRequest(dut, 0x300, isWrite = false, data = 0, mask = 0xf, robPointer = 4, pdst = 5)
+        for (_ <- 0 until 3) sample(dut)
+        assert(!dut.io.requestReady.toBoolean)
+        dut.io.requestValid #= false
+
+        for ((address, id) <- addresses.zipWithIndex) {
+          var wait = 0
+          while (!dut.io.lineReadValid.toBoolean && wait < 8) {
+            sample(dut)
+            wait += 1
+          }
+          assert(dut.io.lineReadValid.toBoolean)
+          assert(dut.io.lineRead.lineAddress.toBigInt == address)
+          assert(dut.io.lineRead.mshrId.toBigInt == id)
+          dut.io.lineReadReady #= true
+          sample(dut)
+          dut.io.lineReadReady #= false
+        }
+      }
+  }
+
+  test("L1D routes interleaved refills and returns every merged load") {
+    SimConfig.withVerilator
+      .workspacePath("target/sim-workspace-ooo-l1d")
+      .compile(new OooL1DataCacheProbe(config))
+      .doSim("ooo-l1d-interleaved-refill-merge", 0x4c35) { dut =>
+        dut.clockDomain.forkStimulus(period = 10)
+        clearInputs(dut)
+        dut.clockDomain.assertReset()
+        dut.clockDomain.waitSampling(2)
+        dut.clockDomain.deassertReset()
+        dut.clockDomain.waitSampling(70)
+        sleep(1)
+
+        def acceptRequest(address: BigInt, pointer: Int, pdst: Int): Unit = {
+          setRequest(
+            dut,
+            address,
+            isWrite = false,
+            data = 0,
+            mask = 0xf,
+            robPointer = pointer,
+            pdst = pdst
+          )
+          var wait = 0
+          while (!dut.io.requestReady.toBoolean && wait < 8) {
+            sample(dut)
+            wait += 1
+          }
+          assert(dut.io.requestReady.toBoolean)
+          sample(dut)
+          dut.io.requestValid #= false
+          sample(dut)
+        }
+
+        acceptRequest(0x100, pointer = 1, pdst = 8)
+        acceptRequest(0x180, pointer = 2, pdst = 9)
+
+        for ((address, id) <- Seq(BigInt(0x100), BigInt(0x180)).zipWithIndex) {
+          var wait = 0
+          while (!dut.io.lineReadValid.toBoolean && wait < 8) {
+            sample(dut)
+            wait += 1
+          }
+          assert(dut.io.lineRead.lineAddress.toBigInt == address)
+          assert(dut.io.lineRead.mshrId.toBigInt == id)
+          dut.io.lineReadReady #= true
+          sample(dut)
+          dut.io.lineReadReady #= false
+        }
+
+        acceptRequest(0x104, pointer = 3, pdst = 10)
+
+        val responses = scala.collection.mutable.ArrayBuffer.empty[(BigInt, BigInt)]
+        def captureResponse(): Unit = {
+          if (dut.io.responseValid.toBoolean) {
+            responses += dut.io.response.robPointer.toBigInt -> dut.io.response.data.toBigInt
+          }
+        }
+        def sendBeat(id: Int, beat: Int, data: BigInt): Unit = {
+          dut.io.lineReadBeatValid #= true
+          dut.io.lineReadBeat.mshrId #= id
+          dut.io.lineReadBeat.beat #= beat
+          dut.io.lineReadBeat.data #= data
+          dut.io.lineReadBeat.last #= beat == OooCacheContract.BeatsPerLine - 1
+          sleep(1)
+          assert(dut.io.lineReadBeatReady.toBoolean)
+          sample(dut)
+          captureResponse()
+        }
+
+        for (beat <- 0 until OooCacheContract.BeatsPerLine) {
+          val dataB = if (beat == 0) BigInt("bbbbbbbbaaaaaaaa", 16) else BigInt(0x80 + beat)
+          val dataA = if (beat == 0) BigInt("2222222211111111", 16) else BigInt(0x10 + beat)
+          sendBeat(id = 1, beat = beat, data = dataB)
+          sendBeat(id = 0, beat = beat, data = dataA)
+        }
+        dut.io.lineReadBeatValid #= false
+        for (_ <- 0 until 4) {
+          sample(dut)
+          captureResponse()
+        }
+
+        assert(
+          responses.toSeq == Seq(
+            BigInt(2) -> BigInt("aaaaaaaa", 16),
+            BigInt(1) -> BigInt("11111111", 16),
+            BigInt(3) -> BigInt("22222222", 16)
+          )
+        )
+      }
+  }
+
+  test("L1D preserves a byte store accepted with the matching refill beat") {
+    SimConfig.withVerilator
+      .workspacePath("target/sim-workspace-ooo-l1d")
+      .compile(new OooL1DataCacheProbe(config))
+      .doSim("ooo-l1d-store-refill-same-cycle", 0x4c37) { dut =>
+        dut.clockDomain.forkStimulus(period = 10)
+        clearInputs(dut)
+        dut.clockDomain.assertReset()
+        dut.clockDomain.waitSampling(2)
+        dut.clockDomain.deassertReset()
+        dut.clockDomain.waitSampling(70)
+        sleep(1)
+
+        setRequest(dut, 0x100, isWrite = false, data = 0, mask = 0xf, robPointer = 1, pdst = 8)
+        sample(dut)
+        dut.io.requestValid #= false
+        while (!dut.io.lineReadValid.toBoolean) { sample(dut) }
+        assert(dut.io.lineRead.mshrId.toBigInt == 0)
+        dut.io.lineReadReady #= true
+        sample(dut)
+        dut.io.lineReadReady #= false
+
+        setRequest(
+          dut,
+          0x10c,
+          isWrite = true,
+          data = BigInt("aabbccdd", 16),
+          mask = 0x5,
+          robPointer = 2,
+          pdst = 0
+        )
+        dut.io.lineReadBeatValid #= true
+        dut.io.lineReadBeat.mshrId #= 0
+        dut.io.lineReadBeat.beat #= 1
+        dut.io.lineReadBeat.data #= BigInt("1122334455667788", 16)
+        dut.io.lineReadBeat.last #= false
+        sleep(1)
+        assert(dut.io.requestReady.toBoolean)
+        assert(dut.io.lineReadBeatReady.toBoolean)
+        sample(dut)
+        dut.io.requestValid #= false
+        dut.io.lineReadBeatValid #= false
+
+        setRequest(dut, 0x10c, isWrite = false, data = 0, mask = 0xf, robPointer = 3, pdst = 9)
+        sleep(1)
+        assert(dut.io.requestReady.toBoolean)
+        sample(dut)
+        dut.io.requestValid #= false
+
+        val responses = scala.collection.mutable.ArrayBuffer.empty[(BigInt, BigInt)]
+        def sendBeat(beat: Int, data: BigInt): Unit = {
+          dut.io.lineReadBeatValid #= true
+          dut.io.lineReadBeat.mshrId #= 0
+          dut.io.lineReadBeat.beat #= beat
+          dut.io.lineReadBeat.data #= data
+          dut.io.lineReadBeat.last #= beat == OooCacheContract.BeatsPerLine - 1
+          sleep(1)
+          assert(dut.io.lineReadBeatReady.toBoolean)
+          sample(dut)
+          if (dut.io.responseValid.toBoolean) {
+            responses += dut.io.response.robPointer.toBigInt -> dut.io.response.data.toBigInt
+          }
+        }
+
+        sendBeat(0, BigInt("aaaabbbbccccdddd", 16))
+        for (beat <- 2 until OooCacheContract.BeatsPerLine) {
+          sendBeat(beat, BigInt(0x80 + beat))
+        }
+        dut.io.lineReadBeatValid #= false
+        for (_ <- 0 until 4) {
+          sample(dut)
+          if (dut.io.responseValid.toBoolean) {
+            responses += dut.io.response.robPointer.toBigInt -> dut.io.response.data.toBigInt
+          }
+        }
+
+        assert(
+          responses.toSeq == Seq(
+            BigInt(1) -> BigInt("ccccdddd", 16),
+            BigInt(3) -> BigInt("11bb33dd", 16)
+          )
+        )
+      }
+  }
+
+  test("L1D serves a hit while an unrelated miss waits below the cache") {
+    SimConfig.withVerilator
+      .workspacePath("target/sim-workspace-ooo-l1d")
+      .compile(new OooL1DataCacheProbe(config))
+      .doSim("ooo-l1d-hit-under-miss", 0x4c36) { dut =>
+        dut.clockDomain.forkStimulus(period = 10)
+        clearInputs(dut)
+        dut.clockDomain.assertReset()
+        dut.clockDomain.waitSampling(2)
+        dut.clockDomain.deassertReset()
+        dut.clockDomain.waitSampling(70)
+        sleep(1)
+
+        setRequest(dut, 0x100, isWrite = false, data = 0, mask = 0xf, robPointer = 1, pdst = 4)
+        sample(dut)
+        dut.io.requestValid #= false
+        refillLine(
+          dut,
+          expectedAddress = 0x100,
+          beat => if (beat == 0) BigInt("1122334455667788", 16) else BigInt(beat)
+        )
+        assert(dut.io.responseValid.toBoolean)
+        sample(dut)
+
+        setRequest(dut, 0x180, isWrite = false, data = 0, mask = 0xf, robPointer = 2, pdst = 5)
+        assert(dut.io.requestReady.toBoolean)
+        sample(dut)
+        dut.io.requestValid #= false
+        while (!dut.io.lineReadValid.toBoolean) { sample(dut) }
+        assert(dut.io.lineRead.lineAddress.toBigInt == 0x180)
+
+        setRequest(dut, 0x100, isWrite = false, data = 0, mask = 0xf, robPointer = 3, pdst = 6)
+        assert(dut.io.requestReady.toBoolean)
+        sample(dut)
+        dut.io.requestValid #= false
+        sample(dut)
+        assert(dut.io.lineReadValid.toBoolean)
+        assert(dut.io.lineRead.lineAddress.toBigInt == 0x180)
+        assert(dut.io.responseValid.toBoolean)
+        assert(dut.io.response.robPointer.toBigInt == 3)
+        assert(dut.io.response.pdst.toBigInt == 6)
+        assert(dut.io.response.data.toBigInt == BigInt("55667788", 16))
+      }
+  }
+
   test("L1D writes a dirty 64-byte victim before refilling its replacement") {
     SimConfig.withVerilator
       .workspacePath("target/sim-workspace-ooo-l1d")

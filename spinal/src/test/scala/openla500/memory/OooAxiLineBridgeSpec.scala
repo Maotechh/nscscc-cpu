@@ -74,6 +74,7 @@ class OooAxiLineBridgeSpec extends AnyFunSuite {
 
         assert(dut.io.axi.ar.valid.toBoolean)
         assert(dut.io.axi.ar.payload.address.toBigInt == 0x4000)
+        assert(dut.io.axi.ar.payload.id.toBigInt == 7)
         assert(dut.io.axi.ar.payload.len.toBigInt == 15)
         assert(dut.io.axi.ar.payload.size.toBigInt == 2)
         dut.io.axi.ar.ready #= true
@@ -100,7 +101,7 @@ class OooAxiLineBridgeSpec extends AnyFunSuite {
 
         for (word <- 0 until 16) {
           dut.io.axi.r.valid #= true
-          dut.io.axi.r.payload.id #= 0
+          dut.io.axi.r.payload.id #= 7
           dut.io.axi.r.payload.data #= (0x100 + word)
           dut.io.axi.r.payload.response #= 0
           dut.io.axi.r.payload.last #= word == 15
@@ -115,6 +116,95 @@ class OooAxiLineBridgeSpec extends AnyFunSuite {
             observed(beat) ==
               (BigInt(0x101 + beat * 2) << 32 | BigInt(0x100 + beat * 2))
           )
+        }
+      }
+  }
+
+  test("four cached line reads keep independent state under interleaved AXI responses") {
+    SimConfig.withVerilator
+      .workspacePath("target/sim-workspace-ooo-axi-line-read")
+      .compile(new OooAxiLineBridge(config))
+      .doSim("ooo-axi-four-interleaved-line-reads", 0x4c69) { dut =>
+        dut.clockDomain.forkStimulus(period = 10)
+        clearInputs(dut)
+        dut.clockDomain.assertReset()
+        dut.clockDomain.waitSampling(2)
+        dut.clockDomain.deassertReset()
+        sample(dut)
+
+        for (id <- 0 until config.mshrEntries) {
+          dut.io.memoryReadValid #= true
+          dut.io.memoryRead.lineAddress #= 0x4000 + id * OooCacheContract.LineBytes
+          dut.io.memoryRead.mshrId #= id
+          sleep(1)
+          assert(dut.io.memoryReadReady.toBoolean)
+          sample(dut)
+          dut.io.memoryReadValid #= false
+
+          assert(dut.io.axi.ar.valid.toBoolean)
+          assert(dut.io.axi.ar.payload.id.toBigInt == 4 + id)
+          assert(
+            dut.io.axi.ar.payload.address.toBigInt ==
+              0x4000 + id * OooCacheContract.LineBytes
+          )
+          dut.io.axi.ar.ready #= true
+          sample(dut)
+          dut.io.axi.ar.ready #= false
+        }
+
+        val observed = ArrayBuffer.empty[(Int, Int, BigInt, Boolean)]
+        fork {
+          while (observed.size < config.mshrEntries * OooCacheContract.BeatsPerLine) {
+            sample(dut)
+            if (dut.io.memoryReadBeatValid.toBoolean) {
+              observed += ((
+                dut.io.memoryReadBeat.mshrId.toInt,
+                dut.io.memoryReadBeat.beat.toInt,
+                dut.io.memoryReadBeat.data.toBigInt,
+                dut.io.memoryReadBeat.last.toBoolean
+              ))
+              assert(!dut.io.memoryReadBeat.error.toBoolean)
+            }
+          }
+        }
+
+        val responseOrder = Seq(3, 0, 2, 1)
+        def sendWord(id: Int, data: BigInt, last: Boolean): Unit = {
+          dut.io.axi.r.valid #= true
+          dut.io.axi.r.payload.id #= 4 + id
+          dut.io.axi.r.payload.data #= data
+          dut.io.axi.r.payload.last #= last
+          sleep(1)
+          while (!dut.io.axi.r.ready.toBoolean) { sample(dut) }
+          sample(dut)
+        }
+        for (beat <- 0 until OooCacheContract.BeatsPerLine) {
+          for (id <- responseOrder) {
+            val lowWord = 0x1000 + id * 0x100 + beat * 2
+            sendWord(id, lowWord, last = false)
+          }
+          for (id <- responseOrder.reverse) {
+            val highWord = 0x1001 + id * 0x100 + beat * 2
+            sendWord(
+              id,
+              highWord,
+              last = beat == OooCacheContract.BeatsPerLine - 1
+            )
+          }
+        }
+        dut.io.axi.r.valid #= false
+        while (observed.size < config.mshrEntries * OooCacheContract.BeatsPerLine) {
+          sample(dut)
+        }
+
+        for (id <- 0 until config.mshrEntries; beat <- 0 until OooCacheContract.BeatsPerLine) {
+          val matches = observed.filter(entry => entry._1 == id && entry._2 == beat)
+          assert(matches.size == 1)
+          val expected =
+            (BigInt(0x1001 + id * 0x100 + beat * 2) << 32) |
+              BigInt(0x1000 + id * 0x100 + beat * 2)
+          assert(matches.head._3 == expected)
+          assert(matches.head._4 == (beat == OooCacheContract.BeatsPerLine - 1))
         }
       }
   }

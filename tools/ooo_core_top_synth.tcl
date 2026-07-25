@@ -3,9 +3,8 @@ if {$argc != 2} {
   exit 2
 }
 
-# The 14700KF has enough physical cores to keep Vivado's synthesis workers busy
-# without pushing the process into the memory-heavy high thread-count regime.
-set_param general.maxThreads 8
+# Use one Vivado run with enough worker threads for the host's 14700KF.
+set_param general.maxThreads 16
 
 set rtl [file normalize [lindex $argv 0]]
 set out_dir [file normalize [lindex $argv 1]]

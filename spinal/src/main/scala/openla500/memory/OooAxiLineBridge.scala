@@ -46,20 +46,24 @@ final class OooAxiLineBridge(
     val axi = master(Axi3Compat())
   }
 
-  val lineReadKind = U(0, 2 bits)
   val instructionReadKind = U(1, 2 bits)
   val dataReadKind = U(2, 2 bits)
 
   val readActive = RegInit(False)
-  val readKind = Reg(UInt(2 bits)) init (lineReadKind)
+  val readKind = Reg(UInt(2 bits)) init (instructionReadKind)
   val readAddress = Reg(UInt(config.xlen bits))
   val readSize = Reg(Bits(3 bits)) init (B(2, 3 bits))
-  val readMshrId = Reg(UInt(log2Up(config.mshrEntries) bits))
   val readAddressValid = RegInit(False)
-  val readHalf = RegInit(False)
-  val readLowWord = Reg(Bits(32 bits))
-  val readLowError = RegInit(False)
-  val readBeatIndex = Reg(UInt(OooCacheContract.BeatIndexWidth bits)) init (0)
+  val lineActive = Vec.fill(config.mshrEntries)(Reg(Bool()) init (False))
+  val lineHalf = Vec.fill(config.mshrEntries)(Reg(Bool()) init (False))
+  val lineLowWord = Vec.fill(config.mshrEntries)(Reg(Bits(32 bits)))
+  val lineLowError = Vec.fill(config.mshrEntries)(Reg(Bool()) init (False))
+  val lineBeatIndex = Vec.fill(config.mshrEntries)(
+    Reg(UInt(OooCacheContract.BeatIndexWidth bits)) init (0)
+  )
+  val lineArValid = RegInit(False)
+  val lineArMshrId = Reg(UInt(log2Up(config.mshrEntries) bits))
+  val lineArAddress = Reg(UInt(config.xlen bits))
   val readOutputValid = RegInit(False)
   val readOutput = Reg(OooLineReadBeat(config))
   val instructionReadWordIndex = Reg(UInt(2 bits)) init (0)
@@ -88,7 +92,8 @@ final class OooAxiLineBridge(
   io.uncachedDataResponseValid := dataResponseValid
   io.uncachedDataResponse := dataResponse
 
-  val busIdle = !readActive && !writeActive && !readOutputValid
+  val lineBusy = lineArValid || lineActive.asBits.orR
+  val busIdle = !readActive && !writeActive && !readOutputValid && !lineBusy
   val startUncachedData = busIdle && io.uncachedDataRequestValid
   val startUncachedDataRead = startUncachedData && !io.uncachedDataRequest.isWrite
   val startUncachedDataWrite = startUncachedData && io.uncachedDataRequest.isWrite
@@ -97,21 +102,23 @@ final class OooAxiLineBridge(
   io.uncachedDataRequestReady := startUncachedDataRead ||
     (writeIsUncachedData && writeResponsePending && io.axi.b.valid)
   io.uncachedInstructionRequestReady := startUncachedInstruction
-  io.memoryReadReady := busIdle && !io.uncachedDataRequestValid &&
+  io.memoryReadReady := !readActive && !writeActive && !lineArValid &&
+    !lineActive(io.memoryRead.mshrId) && !io.uncachedDataRequestValid &&
     !io.uncachedInstructionRequestValid
-  io.memoryWriteReady := io.memoryReadReady && !io.memoryReadValid
+  io.memoryWriteReady := busIdle && !io.memoryReadValid &&
+    !io.uncachedDataRequestValid && !io.uncachedInstructionRequestValid
   val readRequestFire = io.memoryReadValid && io.memoryReadReady
   val writeRequestFire = io.memoryWriteValid && io.memoryWriteReady
 
   when(readRequestFire) {
-    readActive := True
-    readKind := lineReadKind
-    readAddress := io.memoryRead.lineAddress
-    readSize := B(2, 3 bits)
-    readMshrId := io.memoryRead.mshrId
-    readAddressValid := True
-    readHalf := False
-    readBeatIndex := 0
+    val id = io.memoryRead.mshrId
+    lineActive(id) := True
+    lineHalf(id) := False
+    lineLowError(id) := False
+    lineBeatIndex(id) := U(0, OooCacheContract.BeatIndexWidth bits)
+    lineArValid := True
+    lineArMshrId := id
+    lineArAddress := io.memoryRead.lineAddress
   }
   when(startUncachedInstruction) {
     readActive := True
@@ -143,50 +150,73 @@ final class OooAxiLineBridge(
     dataReadContext := io.uncachedDataRequest
   }
 
-  io.axi.ar.valid := readAddressValid
-  io.axi.ar.payload.id := B(0, 4 bits)
-  when(readKind === instructionReadKind) { io.axi.ar.payload.id := B(2, 4 bits) }
-  when(readKind === dataReadKind) { io.axi.ar.payload.id := B(3, 4 bits) }
-  io.axi.ar.payload.address := readAddress.asBits
+  val uncachedAr = readAddressValid
+  io.axi.ar.valid := uncachedAr || lineArValid
+  io.axi.ar.payload.id := B"2'b01" ## lineArMshrId.asBits
+  io.axi.ar.payload.address := lineArAddress.asBits
   io.axi.ar.payload.len := B(axiWordsPerLine - 1, 8 bits)
-  when(readKind === instructionReadKind) {
-    io.axi.ar.payload.len := B(config.fetchWidth - 1, 8 bits)
+  io.axi.ar.payload.size := B(2, 3 bits)
+  when(uncachedAr) {
+    io.axi.ar.payload.id := Mux(
+      readKind === instructionReadKind,
+      B(2, 4 bits),
+      B(3, 4 bits)
+    )
+    io.axi.ar.payload.address := readAddress.asBits
+    io.axi.ar.payload.len := Mux(
+      readKind === instructionReadKind,
+      B(config.fetchWidth - 1, 8 bits),
+      B(0, 8 bits)
+    )
+    io.axi.ar.payload.size := readSize
   }
-  when(readKind === dataReadKind) { io.axi.ar.payload.len := B(0, 8 bits) }
-  io.axi.ar.payload.size := readSize
   io.axi.ar.payload.burst := B"2'b01"
   io.axi.ar.payload.lock := B"2'b00"
   io.axi.ar.payload.cache := B"4'b0000"
   io.axi.ar.payload.prot := B"3'b000"
-  when(io.axi.ar.valid && io.axi.ar.ready) { readAddressValid := False }
+  when(io.axi.ar.valid && io.axi.ar.ready) {
+    when(uncachedAr) {
+      readAddressValid := False
+    }.otherwise {
+      lineArValid := False
+    }
+  }
 
   val readOutputFire = readOutputValid && io.memoryReadBeatReady
   when(readOutputFire) { readOutputValid := False }
-  val secondWordReady = !readOutputValid || io.memoryReadBeatReady
-  io.axi.r.ready := readActive && !readAddressValid &&
-    (readKind =/= lineReadKind || !readHalf || secondWordReady)
+  val lineResponse = io.axi.r.payload.id(3 downto 2) === B"2'b01"
+  val lineResponseId = io.axi.r.payload.id(log2Up(config.mshrEntries) - 1 downto 0).asUInt
+  // The low half can arrive while the previous beat drains, but a high half only enters an empty
+  // output register. This cuts cache-hierarchy backpressure out of the AXI R-ready timing path
+  // without adding a bubble to the normal low/high/low/high 32-bit burst sequence.
+  val secondWordReady = !readOutputValid
+  val lineResponseReady = lineResponse && lineActive(lineResponseId) &&
+    (!lineHalf(lineResponseId) || secondWordReady)
+  val uncachedResponseReady = !lineResponse && readActive && !readAddressValid
+  io.axi.r.ready := lineResponseReady || uncachedResponseReady
   val readWordFire = io.axi.r.valid && io.axi.r.ready
   when(readWordFire) {
-    when(readKind === lineReadKind) {
-      val responseError = io.axi.r.payload.response.orR || io.axi.r.payload.id =/= 0
-      when(!readHalf) {
-        readLowWord := io.axi.r.payload.data
-        readLowError := responseError || io.axi.r.payload.last
-        readHalf := True
+    when(lineResponse) {
+      val responseError = io.axi.r.payload.response.orR
+      when(!lineHalf(lineResponseId)) {
+        lineLowWord(lineResponseId) := io.axi.r.payload.data
+        lineLowError(lineResponseId) := responseError || io.axi.r.payload.last
+        lineHalf(lineResponseId) := True
       }.otherwise {
-        val expectedLast = readBeatIndex === OooCacheContract.BeatsPerLine - 1
+        val expectedLast =
+          lineBeatIndex(lineResponseId) === OooCacheContract.BeatsPerLine - 1
         readOutputValid := True
-        readOutput.mshrId := readMshrId
-        readOutput.beat := readBeatIndex
-        readOutput.data := io.axi.r.payload.data ## readLowWord
+        readOutput.mshrId := lineResponseId
+        readOutput.beat := lineBeatIndex(lineResponseId)
+        readOutput.data := io.axi.r.payload.data ## lineLowWord(lineResponseId)
         readOutput.last := expectedLast
-        readOutput.error := readLowError || responseError ||
+        readOutput.error := lineLowError(lineResponseId) || responseError ||
           (io.axi.r.payload.last =/= expectedLast)
-        readHalf := False
+        lineHalf(lineResponseId) := False
         when(expectedLast) {
-          readActive := False
+          lineActive(lineResponseId) := False
         }.otherwise {
-          readBeatIndex := readBeatIndex + 1
+          lineBeatIndex(lineResponseId) := lineBeatIndex(lineResponseId) + 1
         }
       }
     }.elsewhen(readKind === instructionReadKind) {

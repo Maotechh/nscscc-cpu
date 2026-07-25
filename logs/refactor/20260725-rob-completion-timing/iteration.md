@@ -536,3 +536,34 @@ The standalone worst path remains LSQ-local at 9.388 ns. This result proves
 that the intended IQ-to-LSU structural path is removed without a cycle-count
 regression, but it still requires a committed 100 MHz complete-SoC run before
 it can be promoted or rejected as a timing baseline.
+
+## Complete-SoC result of the LSU-local output
+
+Commit `7b237f0f7b19f9a29f679b0838da53fed3801aee` completed the locked
+Vivado 2023.2 `func58` build at an actual 100 MHz CPU clock. Implementation,
+bitstream generation, and routed DRC completed with zero DRC errors. Timing did
+not close: WNS was `-0.675179 ns`, TNS was `-227.324081 ns`, and 1,264
+CPU-clock endpoints failed setup; hold timing closed at WHS `+0.053 ns`.
+Routed use was 83,840 slice LUTs and 53,488 slice registers. The 2,905,643-byte
+package SHA-256 was
+`29605c6cb74b9d95aab2a15d9d038bb53ca3c7708baed3da3fc634e6422b7ca9`.
+
+The targeted IQ age-selection to LSU payload path is absent. The new worst path
+starts at the replicated LSQ `loadHead` register and crosses the eight-store
+age/partial-overlap comparison before reaching completion exception control.
+Its 10.148 ns data delay contains 2.669 ns logic and 7.479 ns routing across 15
+logic levels. WNS improves by 0.052289 ns over the stationary-FIFO candidate,
+but TNS regresses by 26.567215 ns, so this is not a 100 MHz timing baseline and
+no remote board job was submitted.
+
+Report SHA-256 values are:
+
+- timing: `e491c4cd730f2eb65794d9b638db12ebd8d2803ae37a8da3d3bc0989c5707bc2`
+- utilization: `56c9554562f2fa4db20ceca292d19f56274aa7567f38ab050a7b177bc16503b4`
+- DRC: `e4ecd7d485927644553bae5a06c9e3318e7c1b137f3757bd9beaa9a6b7868569`
+- Vivado metrics: `81c4dc5a1b17bf8459d76e435eddcfb34bbe32710eab2db47663075c2453b0b9`
+
+The next memory-system iteration replaces this single scheduled-load cone with
+registered issue and response identities while making all four MSHRs carry
+real concurrent misses. That functional refactor is also the next structural
+cut for the current worst timing path.

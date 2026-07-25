@@ -155,7 +155,8 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
   // program order across physical slot wrap-around.
   val pendingLoads = Bits(config.loadQueueEntries bits)
   for (entry <- 0 until config.loadQueueEntries) {
-    pendingLoads(entry) := loads(entry).valid && !loads(entry).completed
+    pendingLoads(entry) := loads(entry).valid && !loads(entry).requestSent &&
+      !loads(entry).completed
   }
   val rotatedPending = ((pendingLoads ## pendingLoads) |>> loadBase)
     .resize(config.loadQueueEntries)
@@ -325,8 +326,24 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
   val storeRequestFire = dataRequestFire && requestBuffer.isWrite
   val loadRequestFire = dataRequestFire && !requestBuffer.isWrite
 
-  val responseAccepted = io.dataResponseValid && headLoad.valid && headLoad.requestSent &&
-    !headLoad.completed && io.dataResponse.robPointer === headLoad.robPointer
+  val responseLoadMatch = Bits(config.loadQueueEntries bits)
+  for (entry <- 0 until config.loadQueueEntries) {
+    responseLoadMatch(entry) := loads(entry).valid && loads(entry).requestSent &&
+      !loads(entry).completed && io.dataResponse.robPointer === loads(entry).robPointer
+  }
+  val responseLoadValid = responseLoadMatch.orR
+  val responseLoadIndex = OHToUInt(OHMasking.first(responseLoadMatch))
+  val responseLoadRobPointer = loads(responseLoadIndex).robPointer
+  val responseLoadRecoveryEpoch = loads(responseLoadIndex).recoveryEpoch
+  val responseLoadPdst = loads(responseLoadIndex).pdst
+  val responseLoadWritesPdst = loads(responseLoadIndex).writesPdst
+  val responseLoadVirtualAddress = loads(responseLoadIndex).virtualAddress
+  val responseLoadSize = loads(responseLoadIndex).size
+  val responseLoadSignExtend = loads(responseLoadIndex).signExtend
+  val responseLoadIsLl = loads(responseLoadIndex).isLl
+  val responseLoadPhysicalAddress = loads(responseLoadIndex).physicalAddress
+  val responseLoadUncached = loads(responseLoadIndex).uncached
+  val responseAccepted = io.dataResponseValid && responseLoadValid
   val forwardFire = !io.dataResponseValid && forwardCandidate
 
   val aguMisaligned = (io.agu.size === B(2, 3 bits) && io.agu.virtualAddress(1 downto 0) =/= 0) ||
@@ -365,25 +382,25 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
     !io.translationResponse.uncached && io.reservationValid &&
     io.reservationLineAddress === io.translationResponse.physicalAddress(31 downto 4).asBits
   when(responseAccepted) {
-    generatedCompletion.robPointer := headLoad.robPointer
-    generatedCompletion.recoveryEpoch := headLoad.recoveryEpoch
-    generatedCompletion.pdst := headLoad.pdst
-    generatedCompletion.writesPdst := headLoad.writesPdst
+    generatedCompletion.robPointer := responseLoadRobPointer
+    generatedCompletion.recoveryEpoch := responseLoadRecoveryEpoch
+    generatedCompletion.pdst := responseLoadPdst
+    generatedCompletion.writesPdst := responseLoadWritesPdst
     generatedCompletion.data := formatLoad(
       io.dataResponse.data,
-      headLoad.virtualAddress,
-      headLoad.size,
-      headLoad.signExtend
+      responseLoadVirtualAddress,
+      responseLoadSize,
+      responseLoadSignExtend
     )
-    when(headLoad.isLl) {
+    when(responseLoadIsLl) {
       generatedCompletion.sideEffectData :=
-        headLoad.physicalAddress(31 downto 1).asBits ## headLoad.uncached.asBits
+        responseLoadPhysicalAddress(31 downto 1).asBits ## responseLoadUncached.asBits
     }
     when(io.dataResponse.error) {
       generatedCompletion.exception.valid := True
       generatedCompletion.exception.ecode := U(8, 6 bits)
       generatedCompletion.exception.badVAddrValid := True
-      generatedCompletion.exception.badVAddr := headLoad.virtualAddress
+      generatedCompletion.exception.badVAddr := responseLoadVirtualAddress
     }
   }.elsewhen(forwardFire) {
     generatedCompletion.robPointer := headLoad.robPointer
@@ -605,7 +622,10 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
         entry.requestSent := True
       }
     }
-    when(responseAccepted || forwardFire) {
+    when(responseAccepted) {
+      loads(responseLoadIndex).completed := True
+    }
+    when(forwardFire) {
       loads(loadHead).completed := True
     }
     when(storeRequestFire || failedScRelease) {

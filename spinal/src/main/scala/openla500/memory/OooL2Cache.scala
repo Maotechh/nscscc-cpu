@@ -5,14 +5,13 @@ import spinal.core._
 import spinal.lib._
 
 object OooL2CacheState extends SpinalEnum {
-  val idle, lookup, writeback, writeThrough, refillRequest, refillData, installRead, installWrite,
-      returnData, maintenanceLookup, maintenanceWriteback, maintenanceInvalidate = newElement()
+  val normal, maintenanceLookup, maintenanceWriteback, maintenanceInvalidate = newElement()
 }
 
-/** Blocking 64-KiB L2 controller used to establish the complete 64-byte line hierarchy.
+/** Nonblocking 64-KiB shared L2 indexed by the hierarchy-global MSHR identity.
   *
-  * Requests carry their L1 MSHR id through hit and refill paths. The downstream memory side uses id
-  * zero until arbitration is widened for concurrent L1I/L1D misses.
+  * Different sets may be looked up and refilled concurrently. Same-set requests are held above L2
+  * until the active owner installs, which prevents two MSHRs from selecting one physical victim.
   */
 final class OooL2Cache(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommit)
     extends Component {
@@ -20,6 +19,7 @@ final class OooL2Cache(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommi
   private val wayWidth = log2Up(geometry.ways)
   private val indexWidth = geometry.indexWidth
   private val offsetWidth = geometry.offsetWidth
+  private val mshrIdWidth = log2Up(config.mshrEntries)
 
   require(geometry.capacityBytes == 64 * 1024)
   require(geometry.lineBytes == OooCacheContract.LineBytes)
@@ -32,6 +32,15 @@ final class OooL2Cache(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommi
 
   private def tagOf(address: UInt): UInt =
     address(config.xlen - 1 downto offsetWidth + indexWidth)
+
+  private def selectLowest(mask: Bits, count: Int): UInt = {
+    val selected = UInt(log2Up(count) bits)
+    selected := 0
+    for (index <- (0 until count).reverse) {
+      when(mask(index)) { selected := U(index, log2Up(count) bits) }
+    }
+    selected
+  }
 
   val io = new Bundle {
     val readValid = in Bool ()
@@ -62,52 +71,57 @@ final class OooL2Cache(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommi
   }
 
   val cacheArray = new OooCacheArray(geometry)
-  val state = RegInit(OooL2CacheState.idle)
+  val state = RegInit(OooL2CacheState.normal)
+  val misses = Vec.fill(config.mshrEntries)(Reg(OooL2Mshr(config)))
+  for (entry <- misses) {
+    entry.valid.init(False)
+    entry.state.init(OooL2MshrState.readRequest)
+  }
+
+  val lookupPending = RegInit(False)
+  val lookupIsWrite = RegInit(False)
+  val lookupMshrId = Reg(UInt(mshrIdWidth bits))
+  val lookupAddress = Reg(UInt(config.xlen bits))
+
+  val writeState = RegInit(OooL2WriteState.idle)
+  val writeAddress = Reg(UInt(config.xlen bits))
+  val writeMshrId = Reg(UInt(mshrIdWidth bits))
+  val writeData = Reg(Bits(OooCacheContract.LineBits bits))
+  val writeWay = Reg(UInt(wayWidth bits))
+  val writeVictimAddress = Reg(UInt(config.xlen bits))
+  val writeVictimData = Reg(Bits(OooCacheContract.LineBits bits))
+
   val invalidateSeen = RegInit(False)
   val invalidatePending = RegInit(False)
   val writebackInvalidateSeen = RegInit(False)
   val writebackInvalidatePending = RegInit(False)
-  val pendingAddress = Reg(UInt(config.xlen bits))
-  val pendingMshrId = Reg(UInt(log2Up(config.mshrEntries) bits))
-  val pendingIsWrite = RegInit(False)
-  val pendingWriteData = Reg(Bits(OooCacheContract.LineBits bits))
-  val victimWay = Reg(UInt(wayWidth bits))
-  val victimAddress = Reg(UInt(config.xlen bits))
-  val victimData = Reg(Bits(OooCacheContract.LineBits bits))
-  val refillBeats = Vec.fill(OooCacheContract.BeatsPerLine)(
-    Reg(Bits(OooCacheContract.BeatBits bits))
-  )
-  val refillMask = Reg(Bits(OooCacheContract.BeatsPerLine bits)) init (0)
-  val refillError = RegInit(False)
-  val returnLine = Reg(Bits(OooCacheContract.LineBits bits))
-  val returnError = RegInit(False)
-  val returnBeat = Reg(UInt(OooCacheContract.BeatIndexWidth bits)) init (0)
   val maintenanceIndex = Reg(UInt(indexWidth bits)) init (0)
   val maintenanceWay = Reg(UInt(wayWidth bits)) init (0)
-
-  val refillLine = Bits(OooCacheContract.LineBits bits)
-  for (beat <- 0 until OooCacheContract.BeatsPerLine) {
-    refillLine(
-      beat * OooCacheContract.BeatBits + OooCacheContract.BeatBits - 1 downto
-        beat * OooCacheContract.BeatBits
-    ) := refillBeats(beat)
-  }
+  val maintenanceVictimAddress = Reg(UInt(config.xlen bits))
+  val maintenanceVictimData = Reg(Bits(OooCacheContract.LineBits bits))
 
   val newInvalidate = io.invalidate && !invalidateSeen
   when(io.invalidate) { invalidateSeen := True }.otherwise { invalidateSeen := False }
-  val invalidateRequest = invalidatePending || newInvalidate
+  when(newInvalidate) { invalidatePending := True }
   val newWritebackInvalidate = io.writebackInvalidate && !writebackInvalidateSeen
   when(io.writebackInvalidate) { writebackInvalidateSeen := True }
     .otherwise { writebackInvalidateSeen := False }
-  val writebackInvalidateRequest = writebackInvalidatePending || newWritebackInvalidate
-  val startInvalidate = invalidateRequest && state === OooL2CacheState.idle &&
-    !cacheArray.io.invalidateBusy
-  when(newInvalidate) { invalidatePending := True }
-  when(startInvalidate) { invalidatePending := False }
   when(newWritebackInvalidate) { writebackInvalidatePending := True }
-  val startWritebackInvalidate = writebackInvalidateRequest &&
-    state === OooL2CacheState.idle && !invalidateRequest &&
-    !cacheArray.io.invalidateBusy
+
+  val activeMissMask = Bits(config.mshrEntries bits)
+  for (entry <- 0 until config.mshrEntries) {
+    activeMissMask(entry) := misses(entry).valid
+  }
+  val normalBusy = lookupPending || activeMissMask.orR ||
+    writeState =/= OooL2WriteState.idle
+  val maintenanceRequest = invalidatePending || newInvalidate ||
+    writebackInvalidatePending || newWritebackInvalidate
+  val startInvalidate = (invalidatePending || newInvalidate) && !normalBusy &&
+    state === OooL2CacheState.normal && !cacheArray.io.invalidateBusy
+  val startWritebackInvalidate = (writebackInvalidatePending || newWritebackInvalidate) &&
+    !normalBusy && state === OooL2CacheState.normal &&
+    !(invalidatePending || newInvalidate) && !cacheArray.io.invalidateBusy
+  when(startInvalidate) { invalidatePending := False }
   when(startWritebackInvalidate) {
     writebackInvalidatePending := False
     maintenanceIndex := 0
@@ -115,13 +129,48 @@ final class OooL2Cache(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommi
     state := OooL2CacheState.maintenanceLookup
   }
 
-  cacheArray.io.lookupValid := False
-  cacheArray.io.lookupAddress := pendingAddress
+  val installMask = Bits(config.mshrEntries bits)
+  val missWritebackMask = Bits(config.mshrEntries bits)
+  val readRequestMask = Bits(config.mshrEntries bits)
+  val hitResponseMask = Bits(config.mshrEntries bits)
+  for (entry <- 0 until config.mshrEntries) {
+    installMask(entry) := misses(entry).valid && misses(entry).state === OooL2MshrState.install
+    missWritebackMask(entry) := misses(entry).valid &&
+      misses(entry).state === OooL2MshrState.writeback
+    readRequestMask(entry) := misses(entry).valid &&
+      misses(entry).state === OooL2MshrState.readRequest
+    hitResponseMask(entry) := misses(entry).valid &&
+      misses(entry).state === OooL2MshrState.respond
+  }
+
+  val readSetConflict = Bits(config.mshrEntries bits)
+  val writeSetConflict = Bits(config.mshrEntries bits)
+  for (entry <- 0 until config.mshrEntries) {
+    readSetConflict(entry) := misses(entry).valid &&
+      indexOf(misses(entry).lineAddress) === indexOf(io.read.lineAddress)
+    writeSetConflict(entry) := misses(entry).valid &&
+      indexOf(misses(entry).lineAddress) === indexOf(io.write.lineAddress)
+  }
+  val writeContextConflictsRead = writeState =/= OooL2WriteState.idle &&
+    indexOf(writeAddress) === indexOf(io.read.lineAddress)
+  val canStartLookup = state === OooL2CacheState.normal && !maintenanceRequest &&
+    !cacheArray.io.invalidateBusy && !lookupPending && !installMask.orR &&
+    writeState =/= OooL2WriteState.install && cacheArray.io.lookupReady
+
+  io.readReady := canStartLookup && !misses(io.read.mshrId).valid &&
+    !readSetConflict.orR && !writeContextConflictsRead
+  io.writeReady := canStartLookup && writeState === OooL2WriteState.idle &&
+    !io.readValid && !writeSetConflict.orR && io.write.byteMask.andR
+  val readFire = io.readValid && io.readReady
+  val writeFire = io.writeValid && io.writeReady
+
+  cacheArray.io.lookupValid := readFire || writeFire
+  cacheArray.io.lookupAddress := Mux(readFire, io.read.lineAddress, io.write.lineAddress)
   cacheArray.io.writeValid := False
-  cacheArray.io.writeIndex := indexOf(pendingAddress)
-  cacheArray.io.writeWay := victimWay
-  cacheArray.io.writeTag := tagOf(pendingAddress)
-  cacheArray.io.writeData := refillLine
+  cacheArray.io.writeIndex := 0
+  cacheArray.io.writeWay := 0
+  cacheArray.io.writeTag := 0
+  cacheArray.io.writeData := 0
   cacheArray.io.writeEntryValid := True
   cacheArray.io.writeDirty := False
   cacheArray.io.invalidate := startInvalidate
@@ -129,157 +178,194 @@ final class OooL2Cache(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommi
   cacheArray.io.maintenanceReadIndex := maintenanceIndex
   cacheArray.io.maintenanceReadWay := maintenanceWay
 
-  io.readReady := state === OooL2CacheState.idle && cacheArray.io.lookupReady &&
-    !invalidateRequest && !writebackInvalidateRequest
-  io.writeReady := state === OooL2CacheState.idle && cacheArray.io.lookupReady &&
-    !invalidateRequest && !writebackInvalidateRequest && !io.readValid && io.write.byteMask.andR
-  val readFire = io.readValid && io.readReady
-  val writeFire = io.writeValid && io.writeReady
   when(readFire) {
-    pendingAddress := lineAddress(io.read.lineAddress)
-    pendingMshrId := io.read.mshrId
-    pendingIsWrite := False
-    cacheArray.io.lookupValid := True
-    cacheArray.io.lookupAddress := io.read.lineAddress
-    state := OooL2CacheState.lookup
+    lookupPending := True
+    lookupIsWrite := False
+    lookupMshrId := io.read.mshrId
+    lookupAddress := lineAddress(io.read.lineAddress)
   }.elsewhen(writeFire) {
-    pendingAddress := lineAddress(io.write.lineAddress)
-    pendingMshrId := io.write.mshrId
-    pendingIsWrite := True
-    pendingWriteData := io.write.data
-    cacheArray.io.lookupValid := True
-    cacheArray.io.lookupAddress := io.write.lineAddress
-    state := OooL2CacheState.lookup
+    lookupPending := True
+    lookupIsWrite := True
+    lookupMshrId := io.write.mshrId
+    lookupAddress := lineAddress(io.write.lineAddress)
+    writeState := OooL2WriteState.lookup
+    writeAddress := lineAddress(io.write.lineAddress)
+    writeMshrId := io.write.mshrId
+    writeData := io.write.data
   }
 
-  io.memoryWriteValid := state === OooL2CacheState.writeback ||
-    state === OooL2CacheState.writeThrough ||
-    state === OooL2CacheState.maintenanceWriteback
-  io.memoryWrite.lineAddress := Mux(
-    state === OooL2CacheState.writeThrough,
-    pendingAddress,
-    victimAddress
-  )
-  io.memoryWrite.data := Mux(
-    state === OooL2CacheState.writeThrough,
-    pendingWriteData,
-    victimData
-  )
+  val lookupResponse = lookupPending && cacheArray.io.responseValid
+  when(lookupResponse) {
+    lookupPending := False
+    when(lookupIsWrite) {
+      writeWay := Mux(cacheArray.io.hit, cacheArray.io.hitWay, cacheArray.io.victimWay)
+      writeVictimAddress := cacheArray.io.victimAddress
+      writeVictimData := cacheArray.io.victimData
+      writeState := Mux(
+        !cacheArray.io.hit && cacheArray.io.victimValid && cacheArray.io.victimDirty,
+        OooL2WriteState.victimWriteback,
+        OooL2WriteState.writeThrough
+      )
+    }.otherwise {
+      val entry = misses(lookupMshrId)
+      entry.valid := True
+      entry.lineAddress := lookupAddress
+      entry.returnBeat := U(0, OooCacheContract.BeatIndexWidth bits)
+      entry.error := False
+      entry.refillMask := B(0, OooCacheContract.BeatsPerLine bits)
+      when(cacheArray.io.hit) {
+        entry.state := OooL2MshrState.respond
+        for (beat <- 0 until OooCacheContract.BeatsPerLine) {
+          entry.lineData(beat) := cacheArray.io.hitData(
+            beat * OooCacheContract.BeatBits + OooCacheContract.BeatBits - 1 downto
+              beat * OooCacheContract.BeatBits
+          )
+        }
+      }.otherwise {
+        entry.victimWay := cacheArray.io.victimWay
+        entry.victimAddress := cacheArray.io.victimAddress
+        entry.victimData := cacheArray.io.victimData
+        entry.state := Mux(
+          cacheArray.io.victimValid && cacheArray.io.victimDirty,
+          OooL2MshrState.writeback,
+          OooL2MshrState.readRequest
+        )
+      }
+    }
+  }
+
+  val missWritebackId = selectLowest(missWritebackMask, config.mshrEntries)
+  io.memoryWriteValid := False
+  io.memoryWrite.lineAddress := misses(missWritebackId).victimAddress
+  io.memoryWrite.data := misses(missWritebackId).victimData
   io.memoryWrite.byteMask := B(
     (BigInt(1) << OooCacheContract.LineBytes) - 1,
     OooCacheContract.LineBytes bits
   )
-  io.memoryWrite.mshrId := 0
-  io.memoryReadValid := state === OooL2CacheState.refillRequest
-  io.memoryRead.lineAddress := pendingAddress
-  io.memoryRead.mshrId := 0
-  val streamingRefillBeat = state === OooL2CacheState.refillData &&
-    io.memoryReadBeatValid && io.memoryReadBeat.mshrId === 0
-  io.memoryReadBeatReady := state === OooL2CacheState.refillData &&
-    io.memoryReadBeat.mshrId === 0 && io.readBeatReady
+  io.memoryWrite.mshrId := missWritebackId
+  when(state === OooL2CacheState.normal) {
+    when(writeState === OooL2WriteState.victimWriteback) {
+      io.memoryWriteValid := True
+      io.memoryWrite.lineAddress := writeVictimAddress
+      io.memoryWrite.data := writeVictimData
+      io.memoryWrite.mshrId := writeMshrId
+    }.elsewhen(writeState === OooL2WriteState.writeThrough) {
+      io.memoryWriteValid := True
+      io.memoryWrite.lineAddress := writeAddress
+      io.memoryWrite.data := writeData
+      io.memoryWrite.mshrId := writeMshrId
+    }.otherwise {
+      io.memoryWriteValid := missWritebackMask.orR
+    }
+  }
+  when(state === OooL2CacheState.maintenanceWriteback) {
+    io.memoryWriteValid := True
+    io.memoryWrite.lineAddress := maintenanceVictimAddress
+    io.memoryWrite.data := maintenanceVictimData
+    io.memoryWrite.mshrId := 0
+  }
+  val memoryWriteFire = io.memoryWriteValid && io.memoryWriteReady
+  when(state === OooL2CacheState.normal && memoryWriteFire) {
+    when(writeState === OooL2WriteState.victimWriteback) {
+      writeState := OooL2WriteState.writeThrough
+    }.elsewhen(writeState === OooL2WriteState.writeThrough) {
+      writeState := OooL2WriteState.install
+    }.otherwise {
+      misses(missWritebackId).state := OooL2MshrState.readRequest
+    }
+  }
 
-  // A demand refill already carries the complete L1 response. Forward each accepted memory beat
-  // immediately while retaining a copy for the L2 install, instead of replaying all eight beats
-  // after the line has arrived.
-  io.readBeatValid := state === OooL2CacheState.returnData || streamingRefillBeat
-  io.readBeat.mshrId := pendingMshrId
-  io.readBeat.beat := Mux(streamingRefillBeat, io.memoryReadBeat.beat, returnBeat)
-  val returnShift = (returnBeat ## U(0, 6 bits)).asUInt
+  val readRequestId = selectLowest(readRequestMask, config.mshrEntries)
+  io.memoryReadValid := state === OooL2CacheState.normal && readRequestMask.orR
+  io.memoryRead.lineAddress := misses(readRequestId).lineAddress
+  io.memoryRead.mshrId := readRequestId
+  val memoryReadFire = io.memoryReadValid && io.memoryReadReady
+  when(memoryReadFire) {
+    misses(readRequestId).state := OooL2MshrState.refill
+    misses(readRequestId).refillMask := B(0, OooCacheContract.BeatsPerLine bits)
+    misses(readRequestId).error := False
+  }
+
+  val memoryResponseId = io.memoryReadBeat.mshrId
+  // The hierarchy-global MSHR router owns response-ID validation. Rechecking the same identity
+  // through this complete miss record would put L2 state on the critical-word-first return path.
+  val streamingRefillBeat = io.memoryReadBeatValid
+
+  val hitResponseId = selectLowest(hitResponseMask, config.mshrEntries)
+  io.readBeatValid := streamingRefillBeat || hitResponseMask.orR
+  io.readBeat.mshrId := Mux(streamingRefillBeat, memoryResponseId, hitResponseId)
+  io.readBeat.beat := Mux(
+    streamingRefillBeat,
+    io.memoryReadBeat.beat,
+    misses(hitResponseId).returnBeat
+  )
   io.readBeat.data := Mux(
     streamingRefillBeat,
     io.memoryReadBeat.data,
-    (returnLine |>> returnShift)(OooCacheContract.BeatBits - 1 downto 0)
+    misses(hitResponseId).lineData(misses(hitResponseId).returnBeat)
   )
   io.readBeat.last := Mux(
     streamingRefillBeat,
     io.memoryReadBeat.last,
-    returnBeat === OooCacheContract.BeatsPerLine - 1
+    misses(hitResponseId).returnBeat === OooCacheContract.BeatsPerLine - 1
   )
-  io.readBeat.error := Mux(streamingRefillBeat, io.memoryReadBeat.error, returnError)
+  io.readBeat.error := Mux(
+    streamingRefillBeat,
+    io.memoryReadBeat.error,
+    misses(hitResponseId).error
+  )
+  io.memoryReadBeatReady := streamingRefillBeat && io.readBeatReady
+  val readBeatFire = io.readBeatValid && io.readBeatReady
 
-  when(state === OooL2CacheState.lookup && cacheArray.io.responseValid) {
-    when(cacheArray.io.hit) {
-      when(pendingIsWrite) {
-        victimWay := cacheArray.io.hitWay
-        state := OooL2CacheState.writeThrough
-      }.otherwise {
-        returnLine := cacheArray.io.hitData
-        returnError := False
-        returnBeat := 0
-        state := OooL2CacheState.returnData
-      }
-    }.otherwise {
-      victimWay := cacheArray.io.victimWay
-      victimAddress := cacheArray.io.victimAddress
-      victimData := cacheArray.io.victimData
-      when(cacheArray.io.victimValid && cacheArray.io.victimDirty) {
-        state := OooL2CacheState.writeback
-      }.elsewhen(pendingIsWrite) {
-        state := OooL2CacheState.writeThrough
-      }.otherwise {
-        state := OooL2CacheState.refillRequest
-      }
-    }
-  }
-
-  when(state === OooL2CacheState.writeback && io.memoryWriteReady) {
-    state := Mux(
-      pendingIsWrite,
-      OooL2CacheState.writeThrough,
-      OooL2CacheState.refillRequest
-    )
-  }
-
-  // A dirty L1D victim must become visible to uncached aliases before the L2 accepts a
-  // replacement.  Keep a clean L2 copy after forwarding the complete line to memory.
-  when(state === OooL2CacheState.writeThrough && io.memoryWriteReady) {
-    state := OooL2CacheState.installWrite
-  }
-
-  when(state === OooL2CacheState.refillRequest && io.memoryReadReady) {
-    refillMask := 0
-    refillError := False
-    state := OooL2CacheState.refillData
-  }
-
-  val memoryBeatFire = io.memoryReadBeatValid && io.memoryReadBeatReady
-  when(memoryBeatFire) {
-    refillBeats(io.memoryReadBeat.beat) := io.memoryReadBeat.data
-    refillError := refillError || io.memoryReadBeat.error
-    val nextMask = refillMask | UIntToOh(
+  when(streamingRefillBeat && io.readBeatReady) {
+    val entry = misses(memoryResponseId)
+    entry.lineData(io.memoryReadBeat.beat) := io.memoryReadBeat.data
+    entry.error := entry.error || io.memoryReadBeat.error
+    val nextMask = entry.refillMask | UIntToOh(
       io.memoryReadBeat.beat,
       OooCacheContract.BeatsPerLine
     )
-    refillMask := nextMask
-    when(nextMask.andR) { state := OooL2CacheState.installRead }
+    entry.refillMask := nextMask
+    when(nextMask.andR) { entry.state := OooL2MshrState.install }
   }
-
-  when(state === OooL2CacheState.installRead) {
-    cacheArray.io.writeValid := True
-    cacheArray.io.writeWay := victimWay
-    cacheArray.io.writeData := refillLine
-    cacheArray.io.writeEntryValid := True
-    cacheArray.io.writeDirty := False
-    state := OooL2CacheState.idle
-  }
-
-  when(state === OooL2CacheState.installWrite) {
-    cacheArray.io.writeValid := True
-    cacheArray.io.writeWay := victimWay
-    cacheArray.io.writeData := pendingWriteData
-    cacheArray.io.writeEntryValid := True
-    cacheArray.io.writeDirty := False
-    state := OooL2CacheState.idle
-  }
-
-  val returnFire = state === OooL2CacheState.returnData &&
-    io.readBeatValid && io.readBeatReady
-  when(returnFire) {
+  when(!streamingRefillBeat && readBeatFire && hitResponseMask.orR) {
     when(io.readBeat.last) {
-      state := OooL2CacheState.idle
+      misses(hitResponseId).valid := False
     }.otherwise {
-      returnBeat := returnBeat + 1
+      misses(hitResponseId).returnBeat := misses(hitResponseId).returnBeat + 1
     }
+  }
+
+  val installId = selectLowest(installMask, config.mshrEntries)
+  val installLine = Bits(OooCacheContract.LineBits bits)
+  for (beat <- 0 until OooCacheContract.BeatsPerLine) {
+    installLine(
+      beat * OooCacheContract.BeatBits + OooCacheContract.BeatBits - 1 downto
+        beat * OooCacheContract.BeatBits
+    ) := misses(installId).lineData(beat)
+  }
+  val writeInstall = state === OooL2CacheState.normal &&
+    writeState === OooL2WriteState.install && !lookupResponse
+  val missInstall = state === OooL2CacheState.normal && installMask.orR &&
+    !writeInstall && !lookupResponse
+  when(writeInstall) {
+    cacheArray.io.writeValid := True
+    cacheArray.io.writeIndex := indexOf(writeAddress)
+    cacheArray.io.writeWay := writeWay
+    cacheArray.io.writeTag := tagOf(writeAddress)
+    cacheArray.io.writeData := writeData
+    cacheArray.io.writeEntryValid := True
+    cacheArray.io.writeDirty := False
+    writeState := OooL2WriteState.idle
+  }.elsewhen(missInstall) {
+    cacheArray.io.writeValid := True
+    cacheArray.io.writeIndex := indexOf(misses(installId).lineAddress)
+    cacheArray.io.writeWay := misses(installId).victimWay
+    cacheArray.io.writeTag := tagOf(misses(installId).lineAddress)
+    cacheArray.io.writeData := installLine
+    cacheArray.io.writeEntryValid := True
+    cacheArray.io.writeDirty := False
+    misses(installId).valid := False
   }
 
   when(
@@ -287,18 +373,16 @@ final class OooL2Cache(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommi
       cacheArray.io.maintenanceResponseValid
   ) {
     when(cacheArray.io.maintenanceEntryValid && cacheArray.io.maintenanceEntryDirty) {
-      victimAddress := cacheArray.io.maintenanceEntryAddress
-      victimData := cacheArray.io.maintenanceEntryData
+      maintenanceVictimAddress := cacheArray.io.maintenanceEntryAddress
+      maintenanceVictimData := cacheArray.io.maintenanceEntryData
       state := OooL2CacheState.maintenanceWriteback
     }.otherwise {
       state := OooL2CacheState.maintenanceInvalidate
     }
   }
-
-  when(state === OooL2CacheState.maintenanceWriteback && io.memoryWriteReady) {
+  when(state === OooL2CacheState.maintenanceWriteback && memoryWriteFire) {
     state := OooL2CacheState.maintenanceInvalidate
   }
-
   when(state === OooL2CacheState.maintenanceInvalidate) {
     cacheArray.io.writeValid := True
     cacheArray.io.writeIndex := maintenanceIndex
@@ -310,7 +394,7 @@ final class OooL2Cache(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommi
     when(maintenanceWay === U(geometry.ways - 1, wayWidth bits)) {
       maintenanceWay := 0
       when(maintenanceIndex === U(geometry.sets - 1, indexWidth bits)) {
-        state := OooL2CacheState.idle
+        state := OooL2CacheState.normal
       }.otherwise {
         maintenanceIndex := maintenanceIndex + 1
         state := OooL2CacheState.maintenanceLookup
@@ -321,9 +405,6 @@ final class OooL2Cache(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommi
     }
   }
 
-  val maintenanceBusy = state === OooL2CacheState.maintenanceLookup ||
-    state === OooL2CacheState.maintenanceWriteback ||
-    state === OooL2CacheState.maintenanceInvalidate
-  io.invalidateBusy := cacheArray.io.invalidateBusy || invalidateRequest ||
-    writebackInvalidateRequest || maintenanceBusy
+  io.invalidateBusy := cacheArray.io.invalidateBusy || maintenanceRequest ||
+    state =/= OooL2CacheState.normal
 }
