@@ -17,8 +17,6 @@ final case class OooL2Mshr(config: OooCoreConfig) extends Bundle {
   val lineAddress = UInt(config.xlen bits)
   val victimWay = UInt(log2Up(config.level2Cache.ways) bits)
   val victimAddress = UInt(config.xlen bits)
-  val victimData = Bits(OooCacheContract.LineBits bits)
-  val lineData = Vec(Bits(OooCacheContract.BeatBits bits), OooCacheContract.BeatsPerLine)
   val refillMask = Bits(OooCacheContract.BeatsPerLine bits)
   val error = Bool()
   val returnBeat = UInt(OooCacheContract.BeatIndexWidth bits)

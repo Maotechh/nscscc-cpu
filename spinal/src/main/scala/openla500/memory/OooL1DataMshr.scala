@@ -13,8 +13,6 @@ final case class OooL1DataMshr(config: OooCoreConfig) extends Bundle {
   val lineAddress = UInt(config.xlen bits)
   val victimWay = UInt(log2Up(config.dataCache.ways) bits)
   val victimAddress = UInt(config.xlen bits)
-  val victimData = Bits(OooCacheContract.LineBits bits)
-  val refillData = Vec(Bits(OooCacheContract.BeatBits bits), OooCacheContract.BeatsPerLine)
   val refillMask = Bits(OooCacheContract.BeatsPerLine bits)
   val refillError = Bool()
   val storeByteMask = Bits(OooCacheContract.LineBytes bits)

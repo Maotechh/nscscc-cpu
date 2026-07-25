@@ -130,7 +130,12 @@ class OooL1DataCacheSpec extends AnyFunSuite {
       sample(dut)
     }
     dut.io.lineReadBeatValid #= false
-    sample(dut)
+    var responseWait = 0
+    while (!dut.io.responseValid.toBoolean && responseWait < 4) {
+      sample(dut)
+      responseWait += 1
+    }
+    assert(dut.io.responseValid.toBoolean)
   }
 
   test("L1D invalidates, refills eight beats, hits, and merges byte stores") {

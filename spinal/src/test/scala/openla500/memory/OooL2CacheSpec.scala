@@ -80,12 +80,27 @@ class OooL2CacheSpec extends AnyFunSuite {
         dut.clockDomain.waitSampling()
         dut.io.memoryWriteReady #= false
 
+        dut.io.readBeatReady #= false
         dut.io.readValid #= true
         dut.io.read.lineAddress #= address
         dut.io.read.mshrId #= 3
         while (!dut.io.readReady.toBoolean) { dut.clockDomain.waitSampling() }
         dut.clockDomain.waitSampling()
         dut.io.readValid #= false
+
+        var firstBeatWait = 0
+        while (!dut.io.readBeatValid.toBoolean && firstBeatWait < 8) {
+          dut.clockDomain.waitSampling()
+          firstBeatWait += 1
+        }
+        for (_ <- 0 until 2) {
+          sleep(1)
+          assert(dut.io.readBeatValid.toBoolean)
+          assert(dut.io.readBeat.beat.toBigInt == 0)
+          assert(dut.io.readBeat.data.toBigInt == beats.head)
+          dut.clockDomain.waitSampling()
+        }
+        dut.io.readBeatReady #= true
 
         for (expectedBeat <- beats.indices) {
           var responseWait = 0
@@ -103,6 +118,7 @@ class OooL2CacheSpec extends AnyFunSuite {
               (expectedBeat == OooCacheContract.BeatsPerLine - 1)
           )
           dut.clockDomain.waitSampling()
+          sleep(1)
         }
       }
   }
@@ -208,14 +224,31 @@ class OooL2CacheSpec extends AnyFunSuite {
           dut.io.memoryReadBeat.beat #= beat
           dut.io.memoryReadBeat.data #= beats(beat)
           dut.io.memoryReadBeat.last #= beat == beats.size - 1
+          if (beat == 3) {
+            dut.io.readBeatReady #= false
+            sleep(1)
+            assert(!dut.io.memoryReadBeatReady.toBoolean)
+            assert(dut.io.readBeatValid.toBoolean)
+            assert(dut.io.readBeat.beat.toBigInt == beat)
+            for (_ <- 0 until 2) {
+              dut.clockDomain.waitSampling()
+              sleep(1)
+              assert(!dut.io.memoryReadBeatReady.toBoolean)
+              assert(dut.io.readBeatValid.toBoolean)
+              assert(dut.io.readBeat.beat.toBigInt == beat)
+              assert(dut.io.readBeat.data.toBigInt == beats(beat))
+            }
+            dut.io.readBeatReady #= true
+          }
           sleep(1)
           assert(dut.io.memoryReadBeatReady.toBoolean)
+          dut.clockDomain.waitSampling()
+          sleep(1)
           assert(dut.io.readBeatValid.toBoolean)
           assert(dut.io.readBeat.mshrId.toBigInt == 2)
           assert(dut.io.readBeat.beat.toBigInt == beat)
           assert(dut.io.readBeat.data.toBigInt == beats(beat))
           assert(dut.io.readBeat.last.toBoolean == (beat == beats.size - 1))
-          dut.clockDomain.waitSampling()
         }
         dut.io.memoryReadBeatValid #= false
 
@@ -303,12 +336,13 @@ class OooL2CacheSpec extends AnyFunSuite {
             dut.io.memoryReadBeat.last #= beat == OooCacheContract.BeatsPerLine - 1
             sleep(1)
             assert(dut.io.memoryReadBeatReady.toBoolean)
+            dut.clockDomain.waitSampling()
+            sleep(1)
             assert(dut.io.readBeatValid.toBoolean)
             assert(dut.io.readBeat.mshrId.toBigInt == id)
             assert(dut.io.readBeat.beat.toBigInt == beat)
             assert(dut.io.readBeat.data.toBigInt == data)
             assert(dut.io.readBeat.last.toBoolean == (beat == OooCacheContract.BeatsPerLine - 1))
-            dut.clockDomain.waitSampling()
           }
         }
         dut.io.memoryReadBeatValid #= false
