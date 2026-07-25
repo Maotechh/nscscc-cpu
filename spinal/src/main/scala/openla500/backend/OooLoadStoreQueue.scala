@@ -367,15 +367,26 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
   val translationCompletionFire = translationResponseFire && !io.flush &&
     translationActive && translationProducesCompletion
   val translationCompletionCandidate = translationResponseCandidate && translationProducesCompletion
-  val aguProducesCompletion = aguMisaligned
-  val completionPortAvailable = !baseCompletionBusy && !translationCompletionCandidate
+  // Misaligned accesses are rare and already terminal exceptions. Buffer that
+  // completion instead of feeding the current load/translation arbitration
+  // back into aguReady. This keeps an older load's forwarding cone out of the
+  // store-entry write enable while preserving every exceptional completion.
+  val aguExceptionCompletionValid = RegInit(False)
+  val aguExceptionRobPointer = Reg(UInt(config.robPointerWidth bits))
+  val aguExceptionRecoveryEpoch = Reg(UInt(config.recoveryEpochWidth bits))
+  val aguExceptionPdst = Reg(UInt(config.physicalRegIndexWidth bits))
+  val aguExceptionIsSc = Reg(Bool())
+  val aguExceptionWriteData = Reg(Bits(config.xlen bits))
+  val aguExceptionBadVAddr = Reg(UInt(config.xlen bits))
+  val aguExceptionCompletionReady = aguExceptionCompletionValid &&
+    !baseCompletionBusy && !translationCompletionCandidate
   io.aguReady := !io.flush && aguTargetAvailable &&
-    (!aguProducesCompletion || completionPortAvailable)
+    (!aguMisaligned || !aguExceptionCompletionValid)
   val aguFire = io.aguValid && io.aguReady
-  val aguCompletionFire = aguFire && aguProducesCompletion
+  val aguExceptionCapture = aguFire && aguMisaligned
 
   val generatedCompletionValid = responseAccepted || forwardFire ||
-    translationCompletionFire || aguCompletionFire
+    translationCompletionFire || aguExceptionCompletionReady
   val generatedCompletion = OooCompletion(config)
   clearCompletion(generatedCompletion)
   val translatedScSuccess = !io.translationResponse.exception.valid &&
@@ -439,36 +450,46 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
       B(0, config.xlen bits)
     )
     generatedCompletion.exception := io.translationResponse.exception
-  }.elsewhen(aguCompletionFire) {
-    generatedCompletion.robPointer := io.agu.uop.robPointer
-    generatedCompletion.recoveryEpoch := io.agu.uop.recoveryEpoch
-    generatedCompletion.pdst := io.agu.uop.pdst
-    generatedCompletion.writesPdst := io.agu.uop.pdst =/= 0
+  }.elsewhen(aguExceptionCompletionReady) {
+    generatedCompletion.robPointer := aguExceptionRobPointer
+    generatedCompletion.recoveryEpoch := aguExceptionRecoveryEpoch
+    generatedCompletion.pdst := aguExceptionPdst
+    generatedCompletion.writesPdst := aguExceptionPdst =/= 0
     generatedCompletion.data := Mux(
-      io.agu.uop.decoded.isSc,
+      aguExceptionIsSc,
       B(1, config.xlen bits),
       B(0, config.xlen bits)
     )
-    generatedCompletion.sideEffectData := io.agu.writeData
-    generatedCompletion.exception := io.agu.uop.decoded.exception
-    when(aguMisaligned) {
-      generatedCompletion.exception.valid := True
-      generatedCompletion.exception.ecode := U(9, 6 bits)
-      generatedCompletion.exception.esubcode := U(0, 9 bits)
-      generatedCompletion.exception.badVAddrValid := True
-      generatedCompletion.exception.badVAddr := io.agu.virtualAddress
-      generatedCompletion.exception.tlbRefill := False
-    }
+    generatedCompletion.sideEffectData := aguExceptionWriteData
+    generatedCompletion.exception.valid := True
+    generatedCompletion.exception.ecode := U(9, 6 bits)
+    generatedCompletion.exception.esubcode := U(0, 9 bits)
+    generatedCompletion.exception.badVAddrValid := True
+    generatedCompletion.exception.badVAddr := aguExceptionBadVAddr
+    generatedCompletion.exception.tlbRefill := False
   }
 
   val completionValid = RegInit(False)
   val completion = Reg(OooCompletion(config))
   when(io.flush) {
+    aguExceptionCompletionValid := False
     when(requestBufferValid && !requestBuffer.isWrite) {
       requestBufferValid := False
     }
     completionValid := False
   }.otherwise {
+    when(aguExceptionCompletionReady) {
+      aguExceptionCompletionValid := False
+    }
+    when(aguExceptionCapture) {
+      aguExceptionCompletionValid := True
+      aguExceptionRobPointer := io.agu.uop.robPointer
+      aguExceptionRecoveryEpoch := io.agu.uop.recoveryEpoch
+      aguExceptionPdst := io.agu.uop.pdst
+      aguExceptionIsSc := io.agu.uop.decoded.isSc
+      aguExceptionWriteData := io.agu.writeData
+      aguExceptionBadVAddr := io.agu.virtualAddress
+    }
     when(requestCapture) {
       requestBufferValid := True
       requestBuffer := requestCandidate

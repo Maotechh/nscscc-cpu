@@ -632,6 +632,65 @@ class OooLoadStoreQueueSpec extends AnyFunSuite {
       }
   }
 
+  test("a misaligned AGU completion is buffered behind a cache response") {
+    SimConfig.withVerilator
+      .workspacePath("target/sim-workspace-ooo-lsq")
+      .compile(new OooLoadStoreQueueProbe(config))
+      .doSim("ooo-lsq-misaligned-completion-buffer", 0x4c5c) { dut =>
+        dut.clockDomain.forkStimulus(period = 10)
+        clearInputs(dut)
+        dut.clockDomain.assertReset()
+        dut.clockDomain.waitSampling(2)
+        dut.clockDomain.deassertReset()
+        sample(dut)
+
+        dut.io.allocateValid #= 3
+        dut.io.allocate(0).robPointer #= 0
+        dut.io.allocate(0).isLoad #= true
+        dut.io.allocate(0).loadQueueIndex #= 0
+        dut.io.allocate(1).robPointer #= 1
+        dut.io.allocate(1).isStore #= true
+        dut.io.allocate(1).storeQueueIndex #= 0
+        sample(dut)
+        dut.io.allocateValid #= 0
+
+        setLoadAgu(dut, 0, 0x180)
+        sample(dut)
+        dut.io.aguValid #= false
+        var requestWait = 0
+        while (!dut.io.dataRequestValid.toBoolean && requestWait < 10) {
+          sample(dut)
+          requestWait += 1
+        }
+        assert(dut.io.dataRequestValid.toBoolean)
+        dut.io.dataRequestReady #= true
+        sample(dut)
+        dut.io.dataRequestReady #= false
+
+        dut.io.dataResponseValid #= true
+        dut.io.dataResponse.robPointer #= 0
+        dut.io.dataResponse.data #= BigInt("12345678", 16)
+        setStoreAgu(dut, 1, 0x201, BigInt("89abcdef", 16))
+        sleep(1)
+        assert(dut.io.aguReady.toBoolean)
+        sample(dut)
+        assert(dut.io.completionValid.toBoolean)
+        assert(dut.io.completion.robPointer.toBigInt == 0)
+        assert(dut.io.completion.data.toBigInt == BigInt("12345678", 16))
+
+        dut.io.dataResponseValid #= false
+        dut.io.aguValid #= false
+        sample(dut)
+        assert(dut.io.completionValid.toBoolean)
+        assert(dut.io.completion.robPointer.toBigInt == 1)
+        assert(dut.io.completion.exception.valid.toBoolean)
+        assert(dut.io.completion.exception.ecode.toBigInt == 9)
+        assert(dut.io.completion.exception.badVAddrValid.toBoolean)
+        assert(dut.io.completion.exception.badVAddr.toBigInt == 0x201)
+        assert(!dut.io.dataRequestValid.toBoolean)
+      }
+  }
+
   test("a store translation exception completes without issuing a memory request") {
     SimConfig.withVerilator
       .workspacePath("target/sim-workspace-ooo-lsq")

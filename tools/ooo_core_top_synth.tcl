@@ -3,8 +3,8 @@ if {$argc != 2} {
   exit 2
 }
 
-# Use one Vivado run with enough worker threads for the host's 14700KF.
-set_param general.maxThreads 16
+# Keep individual Vivado commands within the host's established thread budget.
+set_param general.maxThreads 8
 
 set rtl [file normalize [lindex $argv 0]]
 set out_dir [file normalize [lindex $argv 1]]

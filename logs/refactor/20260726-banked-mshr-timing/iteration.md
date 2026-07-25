@@ -91,3 +91,74 @@ Promotion to a board-performance baseline still requires a full committed build,
 remote `func58`, and three `perf20` evaluations. Only after that evidence is
 available should work proceed to ALU/MUL zero-cycle forwarding and decoupled
 store address/data handling.
+
+## Committed complete-SoC evidence
+
+The banked MSHR implementation was committed as
+`40a3b53f10918878e135bff8087b2b3ebd0540da` and pushed to
+`origin/dev-OoOE`. Its locked `func58` package has SHA-256
+`6872fa8c9dbbed8612ee3074b253b51c835da8f34a4b062786685041ef8d3fd4`.
+Vivado 2023.2 completed synthesis, placement, routing, bitstream generation,
+and DRC with zero errors at the requested 100 MHz. Routed timing did not close:
+WNS was `-0.977163 ns` and TNS was `-1228.851318 ns`. This is substantially
+better than the first nonblocking MSHR result (`-2.344203 ns` /
+`-14887.989258 ns`), but remains a timing failure under the advisory policy.
+
+The routed worst path started at `loadHead_reg[0]` in the LSQ and ended at the
+clock enable for `stores_2_byteMask_reg[2]`. It crossed store ordering and
+forwarding selection, completion arbitration, `aguReady`, and store-entry
+write qualification. The 10.516 ns data path had 14 logic levels and was about
+75% routing delay. This identified a control dependency outside the banked
+MSHR arrays as the next timing target.
+
+Remote job `20260725-190713-92986670` progressed through preparing and
+programming, then ended as `infra_error` with
+`ERROR: [Labtoolstcl 44-469] There is no current hw_target.` There is no
+programming summary, VIO result, or DUT verdict. It is neither a functional
+failure nor a functional pass, and no `perf20` claim can be made from it.
+
+## LSQ exceptional-completion isolation
+
+Normal aligned AGU traffic previously inherited the entire current load and
+translation completion arbitration cone through `aguReady`, even though only
+a misaligned AGU request needs to emit an immediate completion. A one-entry
+narrow exception-completion buffer now captures the ROB pointer, recovery
+epoch, destination tag, SC flag, store data, and bad virtual address for ALE.
+Aligned AGU requests no longer depend on the completion port. A misaligned
+access waits only when this single exceptional entry is occupied; its precise
+exception completion is delayed by one cycle and remains ordered with cache and
+translation completions.
+
+A directed LSQ collision test presents a cache response and a misaligned store
+AGU in the same cycle. It proves that the AGU is accepted, the older load
+completion is emitted first, the buffered ALE completion follows with ecode 9
+and the original bad address, and no memory request is issued for the invalid
+store.
+
+Final local evidence after narrowing the buffer is:
+
+| Check | Result |
+| --- | --- |
+| Scala/Spinal/Verilator full regression | 35 suites, 111/111 passed |
+| Python repository gates | 362/362 passed |
+| package/port/lint/Yosys/publish | passed; 49 ports; RTL SHA-256 `0bcecbd36496b0f47faae2a84b4961526c3025c63570cee0315d436d327d68df` |
+| Exact complete-top lint | 776 warnings, only `UNUSEDSIGNAL`/`CMPCONST`; signature `55638bf7f6cd6c52948c51210fd291062d62f259aea2b8758d462e59d11dc591` |
+| Fresh Chiplab `func_lab19` | NEMU DiffTest, syscall, and end PC passed; 139,654 instructions / 538,555 cycles / IPC 0.259312 |
+| Standalone Vivado 2023.2 | 8-thread policy; 100 MHz WNS `+0.359 ns`; TNS `0 ns`; 78,735 LUT / 42,699 FF |
+
+Standalone evidence SHA-256 values are:
+
+- timing: `d09d24394d38a2e603011066d681f3f3330ad98bf944c8482c78e0d1eab8afb5`
+- utilization: `d95c3e0b4895e3137d208dbea22fa661ba9cf35071075e00339bf2dced8a1832`
+- DRC: `478c71863d693c24c90b07d24fe8327e78f18ba1701fad3c796fcd43c01fe65e`
+- DCP: `bb0b2b70330cbf7ad5ddd9c7bd518a634e8e83253fff54794552e8fce0afd743`
+
+The standalone worst path moved to L1I response predecode driving a data-array
+enable. The former LSQ path is absent from the top 20 timing paths. The change
+adds 90 FF while removing 41 LUT relative to the committed banked MSHR top and
+does not change the official local cycle count. A fresh committed complete-SoC
+implementation is still required before claiming routed 100 MHz closure.
+
+Vivado host scheduling is restored to the agreed policy:
+`general.maxThreads=8`, with `launch_runs -jobs 4` supplied when the caller does
+not specify a job count.
