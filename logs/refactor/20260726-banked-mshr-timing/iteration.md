@@ -162,3 +162,76 @@ implementation is still required before claiming routed 100 MHz closure.
 Vivado host scheduling is restored to the agreed policy:
 `general.maxThreads=8`, with `launch_runs -jobs 4` supplied when the caller does
 not specify a job count.
+
+## LSQ-isolation complete-SoC result
+
+The LSQ exceptional-completion isolation was committed and pushed as
+`7ada9ba51e7e69b5e6c95a45dcf1984a4114a022`. Its locked 100 MHz `func58`
+package is `team-7ada9ba-func58-100mhz.fpgajob`, SHA-256
+`a02b2b72ba0d3ab53a4cc80f6a1baf6d2328684b2796e467b45329572070101b`.
+Vivado 2023.2 completed bitstream generation with zero routed DRC errors. The
+final advisory timing metrics are WNS `-0.535200 ns`, TNS `-95.344513 ns`,
+90,110 slice LUT, and 55,281 registers. This improves the committed banked MSHR
+result by 0.441963 ns WNS and reduces the TNS magnitude by 92.4%, but it is not
+100 MHz timing closure.
+
+Every packaged artifact was independently streamed through SHA-256 and matched
+the manifest:
+
+- `design.bit`: `4c14380493da8e4f5684d254b14758a6d0c3c495deef69fe37e21681d64b2588`
+- `program.bin`: `04e79fe1dcfac195b546cfab52959e03e530d08ba96deedab49cbae65b52501a`
+- `probes.ltx`: `cbb0799a601e9c9a69cc594e74faf4c08fe028f1374760137317c037c2f395b8`
+- `timing_summary.rpt`: `3da22dc29a6b52fc4637378554165650ce23ffd360453e7621e36d3436501aca`
+- `utilization.rpt`: `77fe0b3a91c4875f5fe3468058ef944be6a661980f8957767aad635ca5533310`
+- `drc.rpt`: `bce9af260be595c43f36fb11a87ff4fd752ac1356e45302e2eac9941a6a1a9a6`
+
+The routed worst CPU path now starts at `recoveryEpoch_reg[1]`, passes through
+ROB completion-wakeup qualification and the port-1 IQ oldest-ready selection,
+and ends at `issueAddressUop_1_decoded_immediate_reg[4]`. Its 10.386 ns data
+path has 11 logic levels and 8.779 ns (84.5%) routing delay. The former LSQ
+`loadHead -> aguReady` path is no longer critical.
+
+Remote `func58` job `20260725-210149-13a43932` used the package hash above and
+progressed from queued to programming. It ended as `infra_error` because the
+worker again reported `There is no current hw_target`; programming evidence,
+VIO output, and a DUT verdict are absent. No `perf20` job was submitted.
+
+## Registered completion-epoch qualification
+
+The completion payload was already registered before ROB validation, but the
+comparison between its staged recovery epoch and `currentEpoch` remained
+combinational on the next-cycle IQ wakeup path. The comparison result is now a
+per-writeback-lane register captured in the same edge as the completion payload.
+Thus stale-epoch suppression is preserved and wakeup still appears on the same
+next cycle, while `currentEpoch` terminates at this narrow register bank instead
+of traversing the IQ selector.
+
+A directed ROB test drives an invalid epoch completion followed by a valid one
+without allocating a ROB entry. The invalid completion produces no wakeup
+candidate; the valid completion appears exactly one cycle after its input, and
+clears on the following cycle. Existing flush, pointer-generation, physical
+write, dispatch, and full-core regressions continue to pass.
+
+Current local evidence is:
+
+| Check | Result |
+| --- | --- |
+| Scala/Spinal/Verilator full regression | 35 suites, 112/112 passed |
+| Python repository gates | 362/362 passed |
+| package/port/lint/Yosys/publish | passed; 49 ports; RTL SHA-256 `83d1c1ad988a38d7cd27a7194a8dc9f91f2bcd170ba669ceedfbfbd68211711b` |
+| Exact complete-top lint | 781 warnings, only `UNUSEDSIGNAL`/`CMPCONST`; signature `5e4fbab6ffdbd2d1438847a3fc27143fa67d35fa3fa2bc09affddedfffc319fb` |
+| Fresh Chiplab `func_lab19` | NEMU DiffTest, syscall, and end PC passed; 139,654 instructions / 538,555 cycles / IPC 0.259312 |
+| Standalone Vivado 2023.2 | 8-thread policy; 100 MHz WNS `+0.292 ns`; TNS `0 ns`; 78,640 LUT / 42,665 FF |
+
+Standalone evidence SHA-256 values are:
+
+- timing: `7ac5cfcd7e8692f6c11801898705af5b63d2e164b654d15b23c0e6e5ed46af6f`
+- utilization: `7bfd331d2e211c68f7d29308b9b4885e2f53cd973535284a910bf227a8bfb40b`
+- DRC: `f9eb920e372d8fad611f84029828f8766a1060c05fff3a5e175ff7cc3a4e4164`
+- DCP: `48339457e98dd346ba4968ca03a050d1cee5c0c9050fcb1f6d3eb7b5da0201f3`
+
+The targeted recovery-to-IQ path is absent from the standalone top 20. The
+new worst path runs from a ROB serializing bit to predictor PHT enables. The
+change reduces standalone synthesis by 95 LUT and 34 FF relative to `7ada9ba`
+despite the five explicit epoch-valid bits. A committed full-SoC route is the
+next decisive timing gate.

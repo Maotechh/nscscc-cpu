@@ -285,6 +285,42 @@ class OooRobSpec extends AnyFunSuite {
       }
   }
 
+  test("ROB registers epoch qualification without adding wakeup latency") {
+    val config = OooCoreConfig.FourIssueThreeCommit
+    SimConfig.withVerilator
+      .workspacePath("target/sim-workspace-ooo-rob")
+      .compile(new OooRobProbe(config))
+      .doSim("ooo-rob-registered-epoch-qualification", 0x4f4f4a) { dut =>
+        def sample(): Unit = {
+          dut.clockDomain.waitSampling()
+          sleep(1)
+        }
+
+        dut.clockDomain.forkStimulus(period = 10)
+        initialize(dut, config)
+        dut.clockDomain.assertReset()
+        dut.clockDomain.waitSampling(2)
+        dut.clockDomain.deassertReset()
+        sample()
+
+        dut.io.currentEpoch #= 2
+        dut.io.completionWritesPdst #= 1
+        dut.io.completionValid #= 1
+        dut.io.completionRecoveryEpoch(0) #= 1
+        sample()
+        assert(dut.io.completionWakeupCandidateValid.toBigInt == 0)
+
+        dut.io.completionRecoveryEpoch(0) #= 2
+        sample()
+        assert(dut.io.completionWakeupCandidateValid.toBigInt == 1)
+        assert(dut.io.completionWakeupValid.toBigInt == 1)
+
+        dut.io.completionValid #= 0
+        sample()
+        assert(dut.io.completionWakeupCandidateValid.toBigInt == 0)
+      }
+  }
+
   test("ROB flush suppresses architectural wakeup without extending the IQ candidate path") {
     val config = OooCoreConfig.FourIssueThreeCommit
     SimConfig.withVerilator

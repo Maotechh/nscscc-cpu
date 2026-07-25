@@ -189,12 +189,12 @@ final class OooRob(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommit) e
   val stagedBranchTaken = Vec.fill(config.writebackWidth)(Reg(Bool()))
   val stagedBranchMispredict = Vec.fill(config.writebackWidth)(Reg(Bool()))
   val stagedBranchTarget = Vec.fill(config.writebackWidth)(Reg(UInt(config.xlen bits)))
-  val stagedCompletionCurrent = Bits(config.writebackWidth bits)
+  // Epoch validation is registered alongside the completion payload.  The
+  // payload is already staged before wakeup, so this preserves the existing
+  // wakeup latency while keeping currentEpoch out of the IQ select-to-uop
+  // write path.
+  val stagedCompletionCurrent = Reg(Bits(config.writebackWidth bits)) init (0)
   val stagedCompletionMatches = Vec(Bits(config.writebackWidth bits), config.robEntries)
-  for (lane <- 0 until config.writebackWidth) {
-    stagedCompletionCurrent(lane) := stagedCompletionValid(lane) &&
-      stagedRecoveryEpoch(lane) === io.currentEpoch
-  }
   for (entryIndex <- 0 until config.robEntries) {
     for (lane <- 0 until config.writebackWidth) {
       val stagedIndex = stagedRobPointer(lane)(config.robIndexWidth - 1 downto 0)
@@ -213,10 +213,13 @@ final class OooRob(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommit) e
     io.completionWakeupData(lane) := stagedResult(lane)
     when(io.flush) {
       stagedCompletionValid(lane) := False
+      stagedCompletionCurrent(lane) := False
     }.otherwise {
       stagedCompletionValid(lane) := io.completionValid(lane)
       stagedRobPointer(lane) := io.completion(lane).robPointer
       stagedRecoveryEpoch(lane) := io.completion(lane).recoveryEpoch
+      stagedCompletionCurrent(lane) :=
+        io.completionValid(lane) && io.completion(lane).recoveryEpoch === io.currentEpoch
       // Valid and pointer define payload validity. Capturing each lane avoids
       // turning completionValid into a wide payload-register enable.
       stagedResult(lane) := io.completion(lane).data
