@@ -31,17 +31,31 @@ ysyx `la32r-linux` 的 LoadQueue 在选择边界寄存完整 AGU uop，而不是
 全部 CPU 逻辑只修改 Scala/SpinalHDL；`rtl/mycpu_top.v` 由生成器重新产生，没有手工
 Verilog。
 
+## 功能回归诊断与修复
+
+提交 `26ec431da4773b07c8d92ece744a507bb1bd1dd9` 的 100 MHz `perf20` 板测在 20 项
+上全部超时，而同一提交的 `func58` 通过。进一步在完整 Chiplab SoC 仿真中定位到：不可
+反压的 cache load response 与已就绪 store completion 同拍时，completion payload 仲裁由
+load 获胜，但 store 仍被错误标记为 `completed`。该 store 此后不会重试，ROB 则永久等待
+从未发出的 store completion。
+
+修复将“store completion 候选”和“store completion 实际发出”分离。只有本拍没有 cache
+response 和 load forwarding 占用 completion 端口时，store 才发出 completion 并置
+`completed`；冲突时 store 保持 pending，下一拍自动重试。新增定向测试构造同拍 load
+response/store completion 冲突，检查先完成 load、下一拍再完成 store。
+
 ## 本地证据
 
 | 检查 | 结果 |
 | --- | --- |
-| Scala/Spinal/Verilator | 36 suites，126/126 passed |
-| LSQ 定向测试 | 14/14 passed；固定周期 store-forwarding 覆盖 AGU 同拍旁路 |
+| Scala/Spinal/Verilator | 36 suites，127/127 passed |
+| LSQ 定向测试 | 15/15 passed；新增 load response/store completion 冲突重试覆盖 |
 | Python repository gates | 362/362 passed |
 | package/port/Yosys/publish | 全部通过；官方 49-port 合同不变 |
 | exact generated-top lint | 852 项，仅 `UNUSEDSIGNAL`/`CMPCONST`；签名 `cfd92c9f9503099b2269ec97abc7023886b9e4fabc4cef0d43f7aa9f6ea1613b` |
-| generated RTL | SHA-256 `03f482db0e8d6c042fca76b16f3d16b4120f8fe3a9b022769f1a9b38bcad0cc1` |
-| standalone Vivado 2023.2 | WNS `+0.359 ns`、TNS `0`、0 failing endpoint；72,108 LUT / 39,404 FF / 58 RAMB36 / 16 RAMB18 / 4 DSP |
+| generated RTL | SHA-256 `8fba51e050c9bfce82dbf66ee638ad908e3c69df70810fe1eb8d314bc44835b7` |
+| 完整 Chiplab SoC bitcount | PASS；SoC count `0x53e10`（343,568），进入官方 `test_finish` |
+| 前一生成版本 standalone Vivado 2023.2 | WNS `+0.359 ns`、TNS `0`、0 failing endpoint；当前精确 RTL 待完整 SoC 构建 |
 
 LSQ 从 2,004 LUT / 2,157 FF 变为 2,039 LUT / 2,217 FF，即 +35 LUT / +60 FF。
 上一版 LSQ 最差路径不在 standalone top 20；最差路径回到既有 L1I predecode 到 BRAM
@@ -56,7 +70,7 @@ standalone DRC 的 NSTD-1/UCIO-1 来自未加载板级 XDC，不能作为完整 
 
 ## 后续决定门禁
 
-本轮尚未获得当前精确提交的完整 SoC route 或真实板测结果，因此不能声称 100 MHz
+修复后的精确 RTL 尚未获得完整 SoC route 或真实板测结果，因此不能声称 100 MHz
 闭合或性能提升。提交并推送后直接构建显式 `perf20@100MHz` 包；若负 WNS，仍按 advisory
 策略分别报告 timing not met 与板测结果。按当前测试策略，先完成三次真实 `perf20` 并取
 最低总用时；只有 `perf20` 暴露功能问题时才回到 `func58` 定位。

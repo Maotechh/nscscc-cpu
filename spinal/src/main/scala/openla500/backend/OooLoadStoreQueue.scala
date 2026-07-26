@@ -463,6 +463,10 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
   val storeCompletionCandidate = headStore.valid && headStore.addressReady &&
     headStore.translationDone && !headStore.completed &&
     (headStore.dataReady || (headStore.isSc && !headStore.scSuccess))
+  // Cache responses cannot be backpressured here.  A simultaneously ready
+  // Store must retry instead of being marked complete behind the winning Load.
+  val storeCompletionFire = storeCompletionCandidate && !io.dataResponseValid &&
+    !forwardCandidate
   val baseCompletionBusy = io.dataResponseValid || forwardCandidate ||
     storeCompletionCandidate
   io.translationResponse.ready := translationCancelPending ||
@@ -489,7 +493,7 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
   val aguExceptionCapture = aguFire && aguMisaligned
 
   val generatedCompletionValid = responseAccepted || forwardFire ||
-    storeCompletionCandidate || translationCompletionFire || aguExceptionCompletionReady
+    storeCompletionFire || translationCompletionFire || aguExceptionCompletionReady
   val generatedCompletion = OooCompletion(config)
   clearCompletion(generatedCompletion)
   when(responseAccepted) {
@@ -524,7 +528,7 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
       scheduledLoad.size,
       scheduledLoad.signExtend
     )
-  }.elsewhen(storeCompletionCandidate) {
+  }.elsewhen(storeCompletionFire) {
     generatedCompletion.robPointer := headStore.robPointer
     generatedCompletion.recoveryEpoch := headStore.recoveryEpoch
     generatedCompletion.pdst := headStore.pdst
@@ -744,7 +748,7 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
         }
       }
     }
-    when(storeCompletionCandidate) {
+    when(storeCompletionFire) {
       stores(storeHead).completed := True
     }
 

@@ -6,18 +6,18 @@
 
 当前官方顶层已经实例化 `openla500.core.OooCoreSystem(OooCoreConfig.FourIssueThreeCommit)`。旧 `SpinalCoreBackend` 和 `openla500.pipeline` 不再参与生成；保留下来的少量 `OpenLa500*` leaf 模块仅供仍被 OoO 核复用的 ALU、乘除法、CSR、TLB 或独立合同测试使用。
 
-当前本地验证候选（2026-07-27，生成 RTL SHA-256 `03f482db0e8d6c042fca76b16f3d16b4120f8fe3a9b022769f1a9b38bcad0cc1`）如下：
+当前本地验证候选（2026-07-27，生成 RTL SHA-256 `8fba51e050c9bfce82dbf66ee638ad908e3c69df70810fe1eb8d314bc44835b7`）如下：
 
 | 检查 | 结果 |
 | --- | --- |
-| Scala/Spinal/Verilator | 36 suites，126 tests，126 passed，0 failed，0 aborted |
+| Scala/Spinal/Verilator | 36 suites，127 tests，127 passed，0 failed，0 aborted |
 | Python repository gates | 362 tests，362 passed，0 failed/error |
 | core_top package/port contract | pass，49 ports，17 inputs，32 outputs，`TLBNUM=32` |
 | Verilator complete-top lint | pass，852 条精确签名审计后 closure 为 0 warning/error |
 | Yosys 结构检查 | pass，Yosys 0.33，无 warning/skip |
 | 上一精确提交的 chiplab `func/func_lab19` | pass，syscall 结束并到达 end PC；139,671 instructions / 534,497 clocks |
-| 本轮 LSQ 定向与完整仿真 | store forwarding/AGU 同拍旁路通过；Scala 126/126、Python 362/362 |
-| Vivado 2023.2 synthesis | 0 errors，0 critical synthesis warnings，DCP/report 生成成功 |
+| 本轮 LSQ 定向与完整仿真 | 15 项 LSQ 测试通过；完整 SoC bitcount PASS，SoC count 343,568 |
+| 当前精确 RTL 的 Vivado 2023.2 | 待提交后执行锁定的完整 SoC `perf20@100MHz` 构建 |
 
 Vivado 独立 DRC 报告仍有无约束顶层 I/O 的 NSTD-1/UCIO-1 critical warning；这是未提供板级 XDC 的 standalone 综合，不是 RTL elaboration 或 synthesis error。在 standalone 100 MHz（10 ns）时钟约束下，所有时序约束已经满足：WNS `+0.359 ns`，TNS `0 ns`，失败端点为 0。该结果不含官方 SoC、板级 XDC、placement 和 routing，不能据此声称完整设计已经在板上闭合 100 MHz。紧凑 IQ 提交 `b5d020e` 已完成 100 MHz 完整 SoC route：WNS `-0.584979 ns`、TNS `-167.869400 ns`、1114 个 setup 失败端点，bitstream 成功且 DRC 0 error；因此当前完整设计仍未闭合。本轮 LSQ payload 寄存候选尚未产生完整 SoC routed DCP。
 
@@ -90,7 +90,7 @@ L1I/translation -> OooFrontend(fetch4) -> OooDecodeRenameBuffer
 * 四个 IQ 分别按执行端口能力保存八项，并像 ysyx 一样保持 resident uop 按年龄紧凑排列；ready bitmap 因而天然按年龄排序，PriorityEncoder 后只需一次 payload 索引。发射中间项时年轻 payload 向 head 搬移，同拍 wake bit 合入搬移目标，避免脉冲丢失。serial/CSR/TLB/CACOP/IDLE 等操作必须等 ROB head，不能因为执行端空闲而越过更老指令。单周期 ALU 和固定延迟 MUL 可在结果进入通用 completion 仲裁前用窄 `valid/pdst` 唤醒依赖者；数据仍只在 PRF operand 边界转发，不把 32-bit 结果送入 IQ oldest-ready 选择网络。
 * 分支在执行端比较实际 taken/target。错误预测 completion 生成 `OooRecoveryRequest`，目标 PC 和异常元数据一起保存，避免把普通 serial stall 当作 branch recovery。
 * load 必须保留 ROB/LDQ 顺序、size/sign-extension 和目标 pdst。LSQ 的 cache request 输出有一拍寄存缓冲，flush 时丢弃未发出的 speculative load；已接受的 load 不再阻塞后续独立 load 发射，cache response 用完整 ROB generation pointer 在全部 8 个 LDQ entry 中匹配，不依赖当前 `loadHead`。Store 地址只等待 base operand 后即可进入 AGU/翻译，Store 数据由独立 8-entry `OooStoreDataQueue` 等待 `psrc2` 并写入同一 STQ entry；地址与数据都到齐后 ROB 才允许普通 Store 完成，异常或失败 SC 走精确例外。只有 ordered commit 后才允许对 cache/uncached 总线产生写副作用。无副作用的 direct/DMW 数据地址翻译可以与未解析的老 store 地址并行，真正的 D-cache 请求仍等待 store-order/forwarding 检查完成。
-* LSQ 用退休同步的 `loadBase` 旋转 pending bitmap，并在其后寄存调度槽位和不可变 load payload；首次分配组只用 ROB age 初始化 base。`robPointer/recoveryEpoch/pdst/virtualAddress/size/byteMask/signExtend/isLl` 在选择边界一次性寄存，后续 forwarding 和 completion 不再通过第二个宽 `loads(loadHead)` mux；`valid/addressReady/requestSent/completed/translationDone/physicalAddress/uncached` 等易变状态仍从被选槽位读取。AGU 与 scheduler 同拍命中同一 load 时直接旁路新地址和元数据，故正常地址到翻译路径不增加周期。调度 mask 排除 `requestSent` entry，但不等待更老请求返回；老 store 未解析、部分覆盖和 forwarding 规则仍可阻止不安全的年轻 load。
+* LSQ 用退休同步的 `loadBase` 旋转 pending bitmap，并在其后寄存调度槽位和不可变 load payload；首次分配组只用 ROB age 初始化 base。`robPointer/recoveryEpoch/pdst/virtualAddress/size/byteMask/signExtend/isLl` 在选择边界一次性寄存，后续 forwarding 和 completion 不再通过第二个宽 `loads(loadHead)` mux；`valid/addressReady/requestSent/completed/translationDone/physicalAddress/uncached` 等易变状态仍从被选槽位读取。AGU 与 scheduler 同拍命中同一 load 时直接旁路新地址和元数据，故正常地址到翻译路径不增加周期。调度 mask 排除 `requestSent` entry，但不等待更老请求返回；老 store 未解析、部分覆盖和 forwarding 规则仍可阻止不安全的年轻 load。cache load response 不能反压，因此它与 store completion 同拍时由 load 占用 completion 端口，store 保持 pending 并在下一拍重试，只有实际发出 store completion 后才置 `completed`。
 * ROB 在 completion 到达拍完成 valid、generation pointer 和未完成状态检查，并寄存 accepted one-hot 目标以及 result、pdst、writesPdst、side-effect、exception、branch payload。下一拍同一个 stage 一方面写入 ROB entry/开放 commit，另一方面直接向 IQ、PRF 和 ready-map 提供物理写回，不再经过后端第二套 completion 寄存器；依赖唤醒和 PRF 写入的周期没有增加。commit payload 按三提交 lane 进行同步 bank 预取，valid/complete/exception/serial 等 hot control 保留窄寄存状态，避免 182-bit entry 异步 mux 落在退休和 predictor 更新路径。flush 会屏蔽 staged wakeup 并清空 one-hot，重复或 stale completion 不会写入已经复用的 entry。
 * ROB 以 program order 提交最多三条。异常、ERTN、CSR、TLB、cache operation 和 barrier 都在 head 处理；外部 `OooCoreSystem` 在该边界接管 eentry/tlbrentry/ERA 和 CSR 更新，保证 precise exception。
 * Chiplab 多提交适配按 lane 输出 instruction/load/store 事件，但异常、CSR 和架构状态是单一全局流。DPI 适配不是提交逻辑的旁路，不能用 debug 端口替代内部 commit。
@@ -230,6 +230,6 @@ Vivado standalone 综合（PowerShell）：
 | I-side AXI critical-first refill | 536,336 cycles，`END by Syscall` | 未单独综合 | 相对当前候选退化 2,592 cycles（0.486%），关闭；D-side critical-first 单独启用仍为 533,744 cycles |
 | DIV raw completion 唤醒寄存化、registered wake 同 lane 优先 | 534,497 cycles，`END by Syscall` | `+0.359 ns` | 消除已知 divider-to-IQ 结构路径；相对 `fbe0125` 增加 753 cycles（0.141%），本地 125/125、362/362 和 DiffTest 通过，完整 SoC route 决定是否保留 |
 | 紧凑年龄顺序 IQ | 534,497 cycles，`END by Syscall` | `+0.359 ns` | 直接 tag compare、年龄选择后一次 payload 索引；物理槽位中间版为 `-0.044 ns`，紧凑版修复 `0.403 ns`，代价为 +999 LUT/-121 FF；本地 126/126、362/362 和 DiffTest 通过；完整 SoC WNS `-0.584979 ns` |
-| LSQ 已选 load payload 寄存 | 按新策略待真实 `perf20` | `+0.359 ns` | 宽不可变 payload 在选择边界寄存，AGU 同拍旁路保持延迟；LSQ +35 LUT/+60 FF，上一版 `loadHead -> completion.data` 路径退出 standalone top 20；本地 126/126、362/362 通过 |
+| LSQ 已选 load payload 寄存及 completion 冲突修复 | 按新策略待真实 `perf20` | 前一生成版本 `+0.359 ns` | 宽不可变 payload 在选择边界寄存，AGU 同拍旁路保持延迟；load response/store completion 冲突时 store 下一拍重试；本地 127/127、362/362、完整 SoC bitcount PASS |
 
 这些试验说明：响应级异步大表或单纯扩容会用很大的面积/时序代价换取很小的周期收益；同步 banked 状态、按固定/可变延迟分类的窄 tag 唤醒、紧凑 IQ 和真实并发 MSHR 才能保留寄存边界。ALU/MUL 提前唤醒和 Store 地址/数据解耦已经实现，L1D 也能在目标 beat 到达时提前返回。下一决定性门禁是 LSQ payload 寄存候选的 100 MHz SoC placement/routing 和三次真实 `perf20`；`perf20` 若出现功能错误再回到 `func58` 定位。WNS 是否非负与板测是否通过必须分别报告，在结果出来前不能把正 standalone WNS 或负 WNS 下的板测通过描述为完整时序闭合。

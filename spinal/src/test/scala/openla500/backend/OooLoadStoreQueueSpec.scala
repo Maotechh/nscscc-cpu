@@ -807,6 +807,69 @@ class OooLoadStoreQueueSpec extends AnyFunSuite {
       }
   }
 
+  test("a Store completion retries after a simultaneous Load response") {
+    SimConfig.withVerilator
+      .workspacePath("target/sim-workspace-ooo-lsq")
+      .compile(new OooLoadStoreQueueProbe(config))
+      .doSim("ooo-lsq-store-load-completion-collision", 0x4c72) { dut =>
+        dut.clockDomain.forkStimulus(period = 10)
+        clearInputs(dut)
+        dut.clockDomain.assertReset()
+        dut.clockDomain.waitSampling(2)
+        dut.clockDomain.deassertReset()
+        sample(dut)
+
+        dut.io.allocateValid #= 3
+        dut.io.allocate(0).robPointer #= 0
+        dut.io.allocate(0).isStore #= true
+        dut.io.allocate(0).storeQueueIndex #= 0
+        dut.io.allocate(1).robPointer #= 1
+        dut.io.allocate(1).isLoad #= true
+        dut.io.allocate(1).loadQueueIndex #= 0
+        sample(dut)
+        dut.io.allocateValid #= 0
+
+        dut.io.storeDataEnable #= false
+        setStoreAgu(dut, 0, 0x100, BigInt("89abcdef", 16))
+        sample(dut)
+        dut.io.aguValid #= false
+        sample(dut)
+
+        setLoadAgu(dut, 1, 0x200, loadIndex = 0, pdst = 8)
+        sample(dut)
+        dut.io.aguValid #= false
+        dut.io.dataRequestReady #= true
+        var requestWait = 0
+        while (!dut.io.dataRequestValid.toBoolean && requestWait < 12) {
+          sample(dut)
+          requestWait += 1
+        }
+        assert(dut.io.dataRequestValid.toBoolean)
+        assert(dut.io.dataRequest.robPointer.toBigInt == 1)
+        sample(dut)
+        dut.io.dataRequestReady #= false
+
+        dut.io.storeDataEnable #= true
+        setStoreAgu(dut, 0, 0x100, BigInt("89abcdef", 16))
+        sample(dut)
+        dut.io.aguValid #= false
+
+        dut.io.dataResponseValid #= true
+        dut.io.dataResponse.robPointer #= 1
+        dut.io.dataResponse.data #= BigInt("12345678", 16)
+        sample(dut)
+        assert(dut.io.completionValid.toBoolean)
+        assert(dut.io.completion.robPointer.toBigInt == 1)
+        assert(dut.io.completion.data.toBigInt == BigInt("12345678", 16))
+
+        dut.io.dataResponseValid #= false
+        sample(dut)
+        assert(dut.io.completionValid.toBoolean)
+        assert(dut.io.completion.robPointer.toBigInt == 0)
+        assert(!dut.io.completion.exception.valid.toBoolean)
+      }
+  }
+
   test("a store translation exception completes without issuing a memory request") {
     SimConfig.withVerilator
       .workspacePath("target/sim-workspace-ooo-lsq")

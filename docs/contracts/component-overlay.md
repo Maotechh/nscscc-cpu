@@ -1,10 +1,10 @@
 # Component replacement overlay 行为合同
 
 > 状态说明：该合同保留用于历史的、已提交 Git blob 形式的 leaf replacement。
-> 当前 OoO `mycpu_top.v` 是完全可再生且不追踪的构建产物，不能满足下文规则 4，
-> 因而不得使用本 overlay 流程发布。当前顶层使用 `make generate-core`、
-> `make publish-check`，再将生成镜像复制到 Chiplab；不要为迁就生成物而放宽
-> overlay 的 Git provenance 校验。
+> 当前 OoO `mycpu_top.v` 是完全可再生且受 Git 跟踪的发布镜像，可满足下文规则 4。
+> 当前顶层必须先运行 `make generate-core`、`make publish-check`，并将生成镜像与
+> Scala 源码、replacement spec 一起提交；不要为迁就未提交生成物而放宽 overlay 的
+> Git provenance 校验。
 
 ## 目标
 
