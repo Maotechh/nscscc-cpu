@@ -384,24 +384,23 @@ final class OooExecutionCluster(config: OooCoreConfig = OooCoreConfig.FourIssueT
     directCompletion(port).branchTaken := branchTaken
     directCompletion(port).branchTarget := resolvedTarget
     directCompletion(port).branchMispredict := branchMispredict
-    if (port == dividePort) {
-      val dividerWake = divider.io.completionValid &&
-        divider.io.completion.writesPdst
-      val directWake = io.issueValid(port) && direct &&
-        !divider.io.completionValid && directCompletion(port).writesPdst
-      io.directWakeupValid(port) :=
-        directWake || dividerWake
-      io.directWakeupPdst(port) :=
-        Mux(dividerWake, divider.io.completion.pdst, directCompletion(port).pdst)
+    // Only one-cycle operations and the fixed-latency multiplier may wake on
+    // issue. Keep flush out of this narrow event: IQ flush has priority over
+    // ready-bit updates. The shared DIV lane still suppresses a direct wake
+    // while its older divide completion owns the lane.
+    val singleCycleWake = if (port == dividePort) {
+      io.issueValid(port) && direct && !divider.io.completionValid &&
+      directCompletion(port).writesPdst
     } else {
-      val fixedLatencyWake = if (port == multiplyPort) {
-        io.issueValid(port) && (direct || isMultiply) && directCompletion(port).writesPdst
-      } else {
-        io.issueValid(port) && direct && directCompletion(port).writesPdst
-      }
-      io.directWakeupValid(port) := fixedLatencyWake
-      io.directWakeupPdst(port) := directCompletion(port).pdst
+      io.issueValid(port) && direct && directCompletion(port).writesPdst
     }
+    val fixedLatencyWake = if (port == multiplyPort) {
+      io.issueValid(port) && (direct || isMultiply) && directCompletion(port).writesPdst
+    } else {
+      singleCycleWake
+    }
+    io.directWakeupValid(port) := fixedLatencyWake
+    io.directWakeupPdst(port) := directCompletion(port).pdst
   }
 
   val cacheTranslationAccept = io.issueValid(loadStorePort) &&

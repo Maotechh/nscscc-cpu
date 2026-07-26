@@ -228,12 +228,13 @@ final class OooBackend(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommi
     if (write < config.executionWidth && write != loadStorePort) {
       // IQ flush has priority over wakeup state updates, so this is a candidate
       // event and deliberately excludes the global flush signal from select.
+      val registeredWake = rob.io.completionWakeupCandidateValid(write)
       val directWake = io.directWakeupValid(write) && io.directWakeupPdst(write) =/= 0
-      earlyWakeupValid(write) := directWake || rob.io.completionWakeupCandidateValid(write)
+      earlyWakeupValid(write) := directWake || registeredWake
       earlyWakeupPdst(write) := Mux(
-        directWake,
-        io.directWakeupPdst(write),
-        rob.io.completionWakeupPdst(write)
+        registeredWake,
+        rob.io.completionWakeupPdst(write),
+        io.directWakeupPdst(write)
       )
     } else {
       earlyWakeupValid(write) := rob.io.completionWakeupCandidateValid(write)

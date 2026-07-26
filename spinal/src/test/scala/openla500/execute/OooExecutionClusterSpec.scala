@@ -93,6 +93,8 @@ private final class OooDivideCompletionCollisionProbe(config: OooCoreConfig) ext
     val robPointer = in UInt (config.robPointerWidth bits)
     val pdst = in UInt (config.physicalRegIndexWidth bits)
     val issueReady = out Bool ()
+    val directWakeupValid = out Bool ()
+    val directWakeupPdst = out UInt (config.physicalRegIndexWidth bits)
     val completionValid = out Bool ()
     val completionRobPointer = out UInt (config.robPointerWidth bits)
   }
@@ -149,6 +151,8 @@ private final class OooDivideCompletionCollisionProbe(config: OooCoreConfig) ext
   )
 
   io.issueReady := execution.io.issueReady(dividePort)
+  io.directWakeupValid := execution.io.directWakeupValid(dividePort)
+  io.directWakeupPdst := execution.io.directWakeupPdst(dividePort)
   io.completionValid := execution.io.completionValid(dividePort)
   io.completionRobPointer := execution.io.completion(dividePort).robPointer
 }
@@ -311,6 +315,7 @@ class OooExecutionClusterSpec extends AnyFunSuite {
         dut.io.issueValid #= true
         sleep(1)
         assert(dut.io.issueReady.toBoolean)
+        assert(!dut.io.directWakeupValid.toBoolean)
         dut.clockDomain.waitSampling()
         dut.io.issueValid #= false
 
@@ -322,6 +327,7 @@ class OooExecutionClusterSpec extends AnyFunSuite {
         }
         assert(dut.io.completionValid.toBoolean)
         assert(dut.io.completionRobPointer.toBigInt == 5)
+        assert(!dut.io.directWakeupValid.toBoolean)
 
         // ori r12, r12, imm would otherwise be accepted and overwritten by
         // the divider result on this exact cycle.
@@ -333,12 +339,15 @@ class OooExecutionClusterSpec extends AnyFunSuite {
         assert(!dut.io.issueReady.toBoolean)
         assert(dut.io.completionValid.toBoolean)
         assert(dut.io.completionRobPointer.toBigInt == 5)
+        assert(!dut.io.directWakeupValid.toBoolean)
 
         dut.clockDomain.waitSampling()
         sleep(1)
         assert(dut.io.issueReady.toBoolean)
         assert(dut.io.completionValid.toBoolean)
         assert(dut.io.completionRobPointer.toBigInt == 6)
+        assert(dut.io.directWakeupValid.toBoolean)
+        assert(dut.io.directWakeupPdst.toBigInt == 11)
       }
   }
 
