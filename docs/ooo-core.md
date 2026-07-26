@@ -6,24 +6,24 @@
 
 当前官方顶层已经实例化 `openla500.core.OooCoreSystem(OooCoreConfig.FourIssueThreeCommit)`。旧 `SpinalCoreBackend` 和 `openla500.pipeline` 不再参与生成；保留下来的少量 `OpenLa500*` leaf 模块仅供仍被 OoO 核复用的 ALU、乘除法、CSR、TLB 或独立合同测试使用。
 
-当前本地验证候选（2026-07-27，生成 RTL SHA-256 `4f3964af34fdb67b26193420f4d48e584e42fc3c9f2579a504c7b54176d90886`）如下：
+当前本地验证候选（2026-07-27，生成 RTL SHA-256 `03f482db0e8d6c042fca76b16f3d16b4120f8fe3a9b022769f1a9b38bcad0cc1`）如下：
 
 | 检查 | 结果 |
 | --- | --- |
 | Scala/Spinal/Verilator | 36 suites，126 tests，126 passed，0 failed，0 aborted |
 | Python repository gates | 362 tests，362 passed，0 failed/error |
 | core_top package/port contract | pass，49 ports，17 inputs，32 outputs，`TLBNUM=32` |
-| Verilator complete-top lint | pass，844 条精确签名审计后 closure 为 0 warning/error |
+| Verilator complete-top lint | pass，852 条精确签名审计后 closure 为 0 warning/error |
 | Yosys 结构检查 | pass，Yosys 0.33，无 warning/skip |
-| chiplab `func/func_lab19` + NEMU DiffTest | pass，syscall 结束并到达 end PC |
-| 官方仿真计数 | 139,671 committed instructions，534,497 clocks，IPC 0.261313 |
+| 上一精确提交的 chiplab `func/func_lab19` | pass，syscall 结束并到达 end PC；139,671 instructions / 534,497 clocks |
+| 本轮 LSQ 定向与完整仿真 | store forwarding/AGU 同拍旁路通过；Scala 126/126、Python 362/362 |
 | Vivado 2023.2 synthesis | 0 errors，0 critical synthesis warnings，DCP/report 生成成功 |
 
-Vivado 独立 DRC 报告仍有无约束顶层 I/O 的 NSTD-1/UCIO-1 critical warning；这是未提供板级 XDC 的 standalone 综合，不是 RTL elaboration 或 synthesis error。在 standalone 100 MHz（10 ns）时钟约束下，所有时序约束已经满足：WNS `+0.359 ns`，TNS `0 ns`，失败端点为 0。该结果不含官方 SoC、板级 XDC、placement 和 routing，不能据此声称完整设计已经在板上闭合 100 MHz。当前候选尚未产生新的完整 SoC routed DCP；最近一次已提交候选 `2965219` 的完整 route 为 WNS `-0.729440 ns`、TNS `-183.101868 ns`，因此 100 MHz 完整设计尚未闭合。
+Vivado 独立 DRC 报告仍有无约束顶层 I/O 的 NSTD-1/UCIO-1 critical warning；这是未提供板级 XDC 的 standalone 综合，不是 RTL elaboration 或 synthesis error。在 standalone 100 MHz（10 ns）时钟约束下，所有时序约束已经满足：WNS `+0.359 ns`，TNS `0 ns`，失败端点为 0。该结果不含官方 SoC、板级 XDC、placement 和 routing，不能据此声称完整设计已经在板上闭合 100 MHz。紧凑 IQ 提交 `b5d020e` 已完成 100 MHz 完整 SoC route：WNS `-0.584979 ns`、TNS `-167.869400 ns`、1114 个 setup 失败端点，bitstream 成功且 DRC 0 error；因此当前完整设计仍未闭合。本轮 LSQ payload 寄存候选尚未产生完整 SoC routed DCP。
 
-完整顶层 lint 有 844 条审计项，类别只有 `UNUSEDSIGNAL` 和 `CMPCONST`，精确签名为 `3cc89716969f5559058cde99455e7b51aa92eb336be94b2cf7ead1235a0c8484`。大部分来自统一 uop/commit/cache/translation Bundle 在具体路径中只消费部分字段、综合时关闭的 DiffTest 状态输入，以及官方 debug/兼容端口必须保留。本轮新增的 Store-data queue、direct wakeup 和 critical-beat 合同也会在不消费对应字段的测试/层次中形成精确可复现的未使用项。它们不是“以后会用”的功能预留；能在 Scala 结构层安全删除的字段应继续删除，但跨模块固定 Bundle 中的未消费字段由生成器保留更清晰。`reference/core-top-lint-waivers.json` 同时锁定 RTL SHA-256、warning 数量、类别和签名哈希，先运行无抑制审计，再只对完全匹配的签名执行 clean closure。它不是允许新增 warning 的全局开关。
+完整顶层 lint 有 852 条审计项，类别只有 `UNUSEDSIGNAL` 和 `CMPCONST`，精确签名为 `cfd92c9f9503099b2269ec97abc7023886b9e4fabc4cef0d43f7aa9f6ea1613b`。大部分来自统一 uop/commit/cache/translation Bundle 在具体路径中只消费部分字段、综合时关闭的 DiffTest 状态输入，以及官方 debug/兼容端口必须保留。本轮增加的 8 条是 load entry 动态读端口中不再被第二次消费的宽 payload 字段；Vivado 在综合时会裁剪这些字段，保留的窄状态读端口仍用于 `valid/requestSent/translationDone` 等易变控制。它们不是“以后会用”的功能预留；能在 Scala 结构层安全删除的字段应继续删除，但跨模块固定 Bundle 中的未消费字段由生成器保留更清晰。`reference/core-top-lint-waivers.json` 同时锁定 RTL SHA-256、warning 数量、类别和签名哈希，先运行无抑制审计，再只对完全匹配的签名执行 clean closure。它不是允许新增 warning 的全局开关。
 
-综合资源（`xc7a200tfbg676-2`，flatten hierarchy rebuilt）：72,088 LUT、39,349 FF、58 RAMB36、16 RAMB18、4 DSP。其中 ROB 为 28,632 LUT / 5,717 FF，LSQ 为 2,004 LUT / 2,157 FF，四个 IQ 合计 6,070 LUT / 7,326 FF。IQ 以年龄顺序紧凑保存八项，唤醒标签直接比较 resident entry，oldest-ready 后只做一次 payload 索引；中间项发射时搬移所有年轻项，并把同拍 wake 合入搬移后的 ready bit。ROB payload 使用同步 bank 预取，retirement hot control 与大 payload 分离。ALU 和固定延迟 MUL 使用窄 tag 提前唤醒，MUL 数据在 PRF operand 边界转发；可变延迟 DIV 只经 ROB 寄存写回唤醒，避免 raw divider tag 直接进入 IQ oldest-ready 选择。Store 地址进入 LSU IQ，Store 数据进入独立 8-entry queue，二者按 ROB/STQ identity 在 LSQ 汇合。100 MHz WNS/TNS/失败端点为 `+0.359 ns / 0 ns / 0`。最终 8 线程综合证据的 `timing.rpt` SHA-256 为 `ff66ff258d40661ac49679bc60729e3cf83c8f9de2016a0ff5596e034fb080e5`，`utilization.rpt` SHA-256 为 `8a3c22d49c576f0ca8d88199bf1c5a49604949ed5d6faaf4f72f3bc83584089f`，DRC SHA-256 为 `09069a591112966e828a59b71aa3b11d8a542638e383669776c0719c6a0b273b`，DCP SHA-256 为 `efb03e334fd555c5fd40cb721d6eed2495a124fe91d06581893e8691aea1feaa`。
+综合资源（`xc7a200tfbg676-2`，flatten hierarchy rebuilt）：72,108 LUT、39,404 FF、58 RAMB36、16 RAMB18、4 DSP。其中 ROB 为 28,635 LUT / 5,716 FF，LSQ 为 2,039 LUT / 2,217 FF，四个 IQ 合计 6,056 LUT / 7,326 FF。IQ 以年龄顺序紧凑保存八项，唤醒标签直接比较 resident entry，oldest-ready 后只做一次 payload 索引；中间项发射时搬移所有年轻项，并把同拍 wake 合入搬移后的 ready bit。ROB payload 使用同步 bank 预取，retirement hot control 与大 payload 分离。ALU 和固定延迟 MUL 使用窄 tag 提前唤醒，MUL 数据在 PRF operand 边界转发；可变延迟 DIV 只经 ROB 寄存写回唤醒，避免 raw divider tag 直接进入 IQ oldest-ready 选择。Store 地址进入 LSU IQ，Store 数据进入独立 8-entry queue，二者按 ROB/STQ identity 在 LSQ 汇合。LSQ 选择 load 时同时寄存不可变 payload，后续翻译、store-order 和 forwarding 不再第二次经过宽 `loads(loadHead)` 选择；AGU 同拍旁路避免增加正常 load 延迟。100 MHz WNS/TNS/失败端点为 `+0.359 ns / 0 ns / 0`。最终 8 线程综合证据的 `timing.rpt` SHA-256 为 `1570c31ab4bd011247b41b8aaef4b912563e059b7e495684d10b7cd2854dab4f`，`utilization.rpt` SHA-256 为 `fda6160d61a100e046200226bd39fb540af83c049a48fd3b4ced9a67e5e49b17`，DRC SHA-256 为 `56fe6bf48582d84ce2967d0debe085b70230ca1290dbc9011061b17d06f1e2cc`，DCP SHA-256 为 `4d172efd3fdb6b214c502d04778323a2cb37387e3325ec7e8a65450b89128b12`。
 
 已提交的 LSQ 时序版本 `7ada9ba51e7e69b5e6c95a45dcf1984a4114a022` 完成了官方完整 SoC implementation：100 MHz WNS `-0.535200 ns`、TNS `-95.344513 ns`、90,110 slice LUT、55,281 registers、DRC 0 error、bitstream 成功。它比 banked MSHR 提交 `40a3b53` 的 `-0.977163/-1228.851318 ns` 继续改善，但仍未闭合。最差 CPU 路径变为 `recoveryEpoch_reg[1]` 经 ROB wakeup 和 IQ oldest-ready 选择到 `issueAddressUop_1.decoded.immediate`，10.386 ns 数据路径中 84.5% 为布线。锁定 package SHA-256 为 `a02b2b72ba0d3ab53a4cc80f6a1baf6d2328684b2796e467b45329572070101b`，包内全部 artifact 哈希已逐项验证。远端 `func58` Job `20260725-210149-13a43932` 仍在 programming 阶段因实验箱 `There is no current hw_target` 结束为 `infra_error`，没有 programming/VIO/DUT 结论。
 
@@ -90,7 +90,7 @@ L1I/translation -> OooFrontend(fetch4) -> OooDecodeRenameBuffer
 * 四个 IQ 分别按执行端口能力保存八项，并像 ysyx 一样保持 resident uop 按年龄紧凑排列；ready bitmap 因而天然按年龄排序，PriorityEncoder 后只需一次 payload 索引。发射中间项时年轻 payload 向 head 搬移，同拍 wake bit 合入搬移目标，避免脉冲丢失。serial/CSR/TLB/CACOP/IDLE 等操作必须等 ROB head，不能因为执行端空闲而越过更老指令。单周期 ALU 和固定延迟 MUL 可在结果进入通用 completion 仲裁前用窄 `valid/pdst` 唤醒依赖者；数据仍只在 PRF operand 边界转发，不把 32-bit 结果送入 IQ oldest-ready 选择网络。
 * 分支在执行端比较实际 taken/target。错误预测 completion 生成 `OooRecoveryRequest`，目标 PC 和异常元数据一起保存，避免把普通 serial stall 当作 branch recovery。
 * load 必须保留 ROB/LDQ 顺序、size/sign-extension 和目标 pdst。LSQ 的 cache request 输出有一拍寄存缓冲，flush 时丢弃未发出的 speculative load；已接受的 load 不再阻塞后续独立 load 发射，cache response 用完整 ROB generation pointer 在全部 8 个 LDQ entry 中匹配，不依赖当前 `loadHead`。Store 地址只等待 base operand 后即可进入 AGU/翻译，Store 数据由独立 8-entry `OooStoreDataQueue` 等待 `psrc2` 并写入同一 STQ entry；地址与数据都到齐后 ROB 才允许普通 Store 完成，异常或失败 SC 走精确例外。只有 ordered commit 后才允许对 cache/uncached 总线产生写副作用。无副作用的 direct/DMW 数据地址翻译可以与未解析的老 store 地址并行，真正的 D-cache 请求仍等待 store-order/forwarding 检查完成。
-* LSQ 用退休同步的 `loadBase` 旋转 pending bitmap，并在其后寄存调度槽位；首次分配组只用 ROB age 初始化 base。这样既支持物理槽位绕回，又把选择网络与 ROB completion 写使能隔开，调度延迟增加一拍但稳态仍每拍可推进一个 LSU 请求。调度 mask 排除 `requestSent` entry，但不等待更老请求返回；老 store 未解析、部分覆盖和 forwarding 规则仍可阻止不安全的年轻 load。
+* LSQ 用退休同步的 `loadBase` 旋转 pending bitmap，并在其后寄存调度槽位和不可变 load payload；首次分配组只用 ROB age 初始化 base。`robPointer/recoveryEpoch/pdst/virtualAddress/size/byteMask/signExtend/isLl` 在选择边界一次性寄存，后续 forwarding 和 completion 不再通过第二个宽 `loads(loadHead)` mux；`valid/addressReady/requestSent/completed/translationDone/physicalAddress/uncached` 等易变状态仍从被选槽位读取。AGU 与 scheduler 同拍命中同一 load 时直接旁路新地址和元数据，故正常地址到翻译路径不增加周期。调度 mask 排除 `requestSent` entry，但不等待更老请求返回；老 store 未解析、部分覆盖和 forwarding 规则仍可阻止不安全的年轻 load。
 * ROB 在 completion 到达拍完成 valid、generation pointer 和未完成状态检查，并寄存 accepted one-hot 目标以及 result、pdst、writesPdst、side-effect、exception、branch payload。下一拍同一个 stage 一方面写入 ROB entry/开放 commit，另一方面直接向 IQ、PRF 和 ready-map 提供物理写回，不再经过后端第二套 completion 寄存器；依赖唤醒和 PRF 写入的周期没有增加。commit payload 按三提交 lane 进行同步 bank 预取，valid/complete/exception/serial 等 hot control 保留窄寄存状态，避免 182-bit entry 异步 mux 落在退休和 predictor 更新路径。flush 会屏蔽 staged wakeup 并清空 one-hot，重复或 stale completion 不会写入已经复用的 entry。
 * ROB 以 program order 提交最多三条。异常、ERTN、CSR、TLB、cache operation 和 barrier 都在 head 处理；外部 `OooCoreSystem` 在该边界接管 eentry/tlbrentry/ERA 和 CSR 更新，保证 precise exception。
 * Chiplab 多提交适配按 lane 输出 instruction/load/store 事件，但异常、CSR 和架构状态是单一全局流。DPI 适配不是提交逻辑的旁路，不能用 debug 端口替代内部 commit。
@@ -205,7 +205,7 @@ Vivado standalone 综合（PowerShell）：
 1. 只在 `spinal/src/main/scala` 中实现 CPU 逻辑；`build/core_top/package/rtl/mycpu_top.v` 和被 Git 跟踪的 `rtl/mycpu_top.v` 发布镜像必须由 `make generate-core` 产生，并通过 replacement spec 的 SHA-256 检查，不能手工编辑。
 2. 新的 OoO 模块按上述功能目录放置；测试 package 必须与主 package 一致。不要重新引入 `openla500.ooo` 或 `openla500.pipeline` flat namespace。
 3. 任何宽度/队列/line geometry 改动都必须同时更新 `OooCoreConfig` 的 require、对应 directed test、官方仿真和 Vivado 资源/时序记录；不能只改生成参数。
-4. 先验证功能，再看时序。当前 standalone 100 MHz WNS 为正；不能用综合约束屏蔽真实路径，也不能把 standalone synthesis 扩大为 complete-SoC timing closure。远程 `perf20` 三次真实测试尚未执行，不能把本地仿真收益当作 FPGA 性能结论。
+4. 先验证功能，再看时序。当前 standalone 100 MHz WNS 为正；不能用综合约束屏蔽真实路径，也不能把 standalone synthesis 扩大为 complete-SoC timing closure。远程评测直接使用 `perf20`，只有 `perf20` 暴露功能问题时才回到 `func58`；三次真实测试尚未执行，不能把本地仿真收益当作 FPGA 性能结论。
 5. 官方 `func_lab19` 通过不等于 full random、Linux、FPGA 或比赛性能全部通过。每轮性能结论要记录实际 workload、时钟、seed、commit 和报告哈希。
 6. 当前候选已通过功能、端口、Yosys、synthesis 和 standalone 100 MHz timing；下一轮性能或时序修改必须重新跑 Scala 126 项、官方 DiffTest 和 Vivado，而不是只比较 RTL 文本。当前候选的官方计数为 534,497 clocks，standalone Vivado WNS 为 `+0.359 ns`。Vivado 主机策略固定为 `general.maxThreads=8`，没有显式设置并发数的 `launch_runs` 默认使用 `-jobs 4`。
 
@@ -229,6 +229,7 @@ Vivado standalone 综合（PowerShell）：
 | ROB 同步提交 bank、ALU/MUL 提前唤醒、Store 地址/数据解耦 | 533,744 cycles，`END by Syscall` | `+0.359 ns` | 相对 `d126f57` 减少 4,811 cycles（0.893%），并把 standalone 资源降至 71,070 LUT / 39,450 FF；本地 124/124、362/362 和 DiffTest 通过 |
 | I-side AXI critical-first refill | 536,336 cycles，`END by Syscall` | 未单独综合 | 相对当前候选退化 2,592 cycles（0.486%），关闭；D-side critical-first 单独启用仍为 533,744 cycles |
 | DIV raw completion 唤醒寄存化、registered wake 同 lane 优先 | 534,497 cycles，`END by Syscall` | `+0.359 ns` | 消除已知 divider-to-IQ 结构路径；相对 `fbe0125` 增加 753 cycles（0.141%），本地 125/125、362/362 和 DiffTest 通过，完整 SoC route 决定是否保留 |
-| 紧凑年龄顺序 IQ | 534,497 cycles，`END by Syscall` | `+0.359 ns` | 直接 tag compare、年龄选择后一次 payload 索引；物理槽位中间版为 `-0.044 ns`，紧凑版修复 `0.403 ns`，代价为 +999 LUT/-121 FF；本地 126/126、362/362 和 DiffTest 通过 |
+| 紧凑年龄顺序 IQ | 534,497 cycles，`END by Syscall` | `+0.359 ns` | 直接 tag compare、年龄选择后一次 payload 索引；物理槽位中间版为 `-0.044 ns`，紧凑版修复 `0.403 ns`，代价为 +999 LUT/-121 FF；本地 126/126、362/362 和 DiffTest 通过；完整 SoC WNS `-0.584979 ns` |
+| LSQ 已选 load payload 寄存 | 按新策略待真实 `perf20` | `+0.359 ns` | 宽不可变 payload 在选择边界寄存，AGU 同拍旁路保持延迟；LSQ +35 LUT/+60 FF，上一版 `loadHead -> completion.data` 路径退出 standalone top 20；本地 126/126、362/362 通过 |
 
-这些试验说明：响应级异步大表或单纯扩容会用很大的面积/时序代价换取很小的周期收益；同步 banked 状态、按固定/可变延迟分类的窄 tag 唤醒、紧凑 IQ 和真实并发 MSHR 才能保留寄存边界。ALU/MUL 提前唤醒和 Store 地址/数据解耦已经实现，L1D 也能在目标 beat 到达时提前返回。下一决定性门禁是紧凑 IQ 候选的 100 MHz SoC placement/routing；只有 WNS 非负且 `func58` 通过后才进入三次真实 `perf20`。在这些结果出来前，不能把本地周期变化、正 standalone WNS 或一次负 WNS 板测通过描述为板上性能提升或时序闭合。
+这些试验说明：响应级异步大表或单纯扩容会用很大的面积/时序代价换取很小的周期收益；同步 banked 状态、按固定/可变延迟分类的窄 tag 唤醒、紧凑 IQ 和真实并发 MSHR 才能保留寄存边界。ALU/MUL 提前唤醒和 Store 地址/数据解耦已经实现，L1D 也能在目标 beat 到达时提前返回。下一决定性门禁是 LSQ payload 寄存候选的 100 MHz SoC placement/routing 和三次真实 `perf20`；`perf20` 若出现功能错误再回到 `func58` 定位。WNS 是否非负与板测是否通过必须分别报告，在结果出来前不能把正 standalone WNS 或负 WNS 下的板测通过描述为完整时序闭合。

@@ -47,6 +47,21 @@ final case class OooLoadQueueEntry(config: OooCoreConfig) extends Bundle {
   val isLl = Bool()
 }
 
+// Payload consumed after load selection.  Volatile queue state such as
+// requestSent/translationDone stays in the indexed entry, while the wide
+// immutable fields cross the selection boundary once and remain registered.
+final case class OooScheduledLoad(config: OooCoreConfig) extends Bundle {
+  val robPointer = UInt(config.robPointerWidth bits)
+  val recoveryEpoch = UInt(config.recoveryEpochWidth bits)
+  val pdst = UInt(config.physicalRegIndexWidth bits)
+  val writesPdst = Bool()
+  val virtualAddress = UInt(config.xlen bits)
+  val size = Bits(3 bits)
+  val byteMask = Bits(4 bits)
+  val signExtend = Bool()
+  val isLl = Bool()
+}
+
 final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommit)
     extends Component {
   private def isOlder(older: UInt, younger: UInt): Bool = {
@@ -150,6 +165,9 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
 
   val loadReleaseValid = Bits(config.commitWidth bits)
   val storeReleaseValid = Bits(config.commitWidth bits)
+  val aguMisaligned = (io.agu.size === B(2, 3 bits) && io.agu.virtualAddress(1 downto 0) =/= 0) ||
+    (io.agu.size === B(1, 3 bits) && io.agu.virtualAddress(0))
+  val aguFire = Bool()
 
   val stores = Vec.fill(config.storeQueueEntries)(Reg(OooStoreQueueEntry(config)))
   val loads = Vec.fill(config.loadQueueEntries)(Reg(OooLoadQueueEntry(config)))
@@ -197,17 +215,47 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
   val selectedLoadHead = (loadBase + loadHeadOffset).resized
   val selectedLoadValid = pendingLoads.orR
   // Match the registered uop boundary used by the reference LoadQueue.  The
-  // selected index is state: translation, forwarding, and cache request
-  // ownership all consume this registered value, so synthesis cannot fold the
-  // full queue select into a later ROB write enable.
+  // selected index and immutable payload are state: translation, forwarding,
+  // and cache request ownership no longer re-read wide queue fields through a
+  // second asynchronous loadHead mux.
   val scheduledLoadValid = RegInit(False)
   val loadHead = Reg(UInt(config.loadQueueIndexWidth bits)) init (0)
+  val scheduledLoad = Reg(OooScheduledLoad(config))
   when(io.flush) {
     scheduledLoadValid := False
   }.otherwise {
     scheduledLoadValid := selectedLoadValid
     when(selectedLoadValid) {
       loadHead := selectedLoadHead
+      val selectedLoad = loads(selectedLoadHead)
+      scheduledLoad.robPointer := selectedLoad.robPointer
+      scheduledLoad.recoveryEpoch := selectedLoad.recoveryEpoch
+      scheduledLoad.pdst := selectedLoad.pdst
+      scheduledLoad.writesPdst := selectedLoad.writesPdst
+      scheduledLoad.virtualAddress := selectedLoad.virtualAddress
+      scheduledLoad.size := selectedLoad.size
+      scheduledLoad.byteMask := selectedLoad.byteMask
+      scheduledLoad.signExtend := selectedLoad.signExtend
+      scheduledLoad.isLl := selectedLoad.isLl
+
+      // AGU and scheduler can target the same newly-ready entry on one edge.
+      // Bypass that write into the registered payload so this timing cut does
+      // not add a cycle to the normal address-to-translation path.
+      when(
+        aguFire && !io.agu.isWrite && !aguMisaligned &&
+          io.agu.uop.loadQueueIndex === selectedLoadHead &&
+          selectedLoad.valid && selectedLoad.robPointer === io.agu.uop.robPointer
+      ) {
+        scheduledLoad.robPointer := io.agu.uop.robPointer
+        scheduledLoad.recoveryEpoch := io.agu.uop.recoveryEpoch
+        scheduledLoad.pdst := io.agu.uop.pdst
+        scheduledLoad.writesPdst := io.agu.uop.pdst =/= 0
+        scheduledLoad.virtualAddress := io.agu.virtualAddress
+        scheduledLoad.size := io.agu.size
+        scheduledLoad.byteMask := io.agu.byteMask
+        scheduledLoad.signExtend := io.agu.uop.decoded.memorySignExtend
+        scheduledLoad.isLl := io.agu.uop.decoded.isLl
+      }
     }
   }
 
@@ -248,9 +296,10 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
   }
 
   val headStore = stores(storeHead)
-  val headLoad = loads(loadHead)
-  val loadHeadReady = scheduledLoadValid && headLoad.valid && headLoad.addressReady &&
-    !headLoad.requestSent && !headLoad.completed
+  val headLoadState = loads(loadHead)
+  val loadHeadReady = scheduledLoadValid && headLoadState.valid &&
+    headLoadState.robPointer === scheduledLoad.robPointer && headLoadState.addressReady &&
+    !headLoadState.requestSent && !headLoadState.completed
 
   val unknownOlderStore = Bits(config.storeQueueEntries bits)
   val partialOverlapStore = Bits(config.storeQueueEntries bits)
@@ -258,11 +307,11 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
   val forwardingStore = Bits(config.storeQueueEntries bits)
   for (entry <- 0 until config.storeQueueEntries) {
     val store = stores(entry)
-    val older = store.valid && isOlder(store.robPointer, headLoad.robPointer)
+    val older = store.valid && isOlder(store.robPointer, scheduledLoad.robPointer)
     val sameWord = store.virtualAddress(config.xlen - 1 downto 2) ===
-      headLoad.virtualAddress(config.xlen - 1 downto 2)
-    val overlap = (store.byteMask & headLoad.byteMask).orR
-    val covers = (store.byteMask & headLoad.byteMask) === headLoad.byteMask
+      scheduledLoad.virtualAddress(config.xlen - 1 downto 2)
+    val overlap = (store.byteMask & scheduledLoad.byteMask).orR
+    val covers = (store.byteMask & scheduledLoad.byteMask) === scheduledLoad.byteMask
     unknownOlderStore(entry) := older && !store.addressReady
     partialOverlapStore(entry) := older && store.addressReady && sameWord && overlap && !covers
     pendingDataStore(entry) := older && store.addressReady && sameWord && overlap &&
@@ -274,10 +323,10 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
   val forwardingId = OHToUInt(OHMasking.first(forwardingStore))
   val loadOrderClear = !unknownOlderStore.orR && !partialOverlapStore.orR &&
     !pendingDataStore.orR
-  val forwardCandidate = loadHeadReady && !headLoad.isLl && loadOrderClear &&
+  val forwardCandidate = loadHeadReady && !scheduledLoad.isLl && loadOrderClear &&
     forwardingCount === 1
   val cacheLoadBase = loadHeadReady && loadOrderClear && forwardingCount === 0
-  val cacheLoadCandidate = cacheLoadBase && headLoad.translationDone
+  val cacheLoadCandidate = cacheLoadBase && headLoadState.translationDone
   val storeRequest = headStore.valid && headStore.addressReady && headStore.dataReady &&
     headStore.translationDone && headStore.completed && headStore.committed &&
     (!headStore.isSc || headStore.scSuccess)
@@ -300,14 +349,14 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
     !headStore.translationDone
   // Translation has no memory side effect, so overlap it with the unresolved-store window.
   // Store ordering and forwarding are still checked before a translated load reaches D-cache.
-  val loadNeedsTranslation = loadHeadReady && !headLoad.translationDone
+  val loadNeedsTranslation = loadHeadReady && !headLoadState.translationDone
   val selectStoreTranslation = storeNeedsTranslation
   io.translationRequest.valid := !io.flush && !translationActive && !translationCancelPending &&
     (storeNeedsTranslation || loadNeedsTranslation)
   io.translationRequest.virtualAddress := Mux(
     selectStoreTranslation,
     headStore.virtualAddress,
-    headLoad.virtualAddress
+    scheduledLoad.virtualAddress
   )
   io.translationRequest.isWrite := selectStoreTranslation
   val translationRequestFire = io.translationRequest.valid && io.translationRequest.ready
@@ -317,27 +366,27 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
     translationOwnerRobPointer := Mux(
       selectStoreTranslation,
       headStore.robPointer,
-      headLoad.robPointer
+      scheduledLoad.robPointer
     )
     translationOwnerRecoveryEpoch := Mux(
       selectStoreTranslation,
       headStore.recoveryEpoch,
-      headLoad.recoveryEpoch
+      scheduledLoad.recoveryEpoch
     )
     translationOwnerLoadIndex := loadHead
     translationOwnerStoreIndex := storeHead
   }
 
   val requestCandidate = OooCacheRequest(config)
-  requestCandidate.virtualAddress := headLoad.virtualAddress
-  requestCandidate.physicalAddress := headLoad.physicalAddress
+  requestCandidate.virtualAddress := scheduledLoad.virtualAddress
+  requestCandidate.physicalAddress := headLoadState.physicalAddress
   requestCandidate.isWrite := False
-  requestCandidate.size := headLoad.size
-  requestCandidate.byteMask := headLoad.byteMask
+  requestCandidate.size := scheduledLoad.size
+  requestCandidate.byteMask := scheduledLoad.byteMask
   requestCandidate.writeData := B(0, config.xlen bits)
-  requestCandidate.uncached := headLoad.uncached
-  requestCandidate.robPointer := headLoad.robPointer
-  requestCandidate.pdst := headLoad.pdst
+  requestCandidate.uncached := headLoadState.uncached
+  requestCandidate.robPointer := scheduledLoad.robPointer
+  requestCandidate.pdst := scheduledLoad.pdst
   when(storeRequest) {
     requestCandidate.virtualAddress := headStore.virtualAddress
     requestCandidate.physicalAddress := headStore.physicalAddress
@@ -389,8 +438,6 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
   val responseAccepted = io.dataResponseValid && responseLoadValid
   val forwardFire = !io.dataResponseValid && forwardCandidate
 
-  val aguMisaligned = (io.agu.size === B(2, 3 bits) && io.agu.virtualAddress(1 downto 0) =/= 0) ||
-    (io.agu.size === B(1, 3 bits) && io.agu.virtualAddress(0))
   val aguTargetAvailable = Mux(
     io.agu.isWrite,
     stores(io.agu.uop.storeQueueIndex).valid &&
@@ -438,7 +485,7 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
     !baseCompletionBusy && !translationCompletionCandidate
   io.aguReady := !io.flush && aguTargetAvailable &&
     (!aguMisaligned || !aguExceptionCompletionValid)
-  val aguFire = io.aguValid && io.aguReady
+  aguFire := io.aguValid && io.aguReady
   val aguExceptionCapture = aguFire && aguMisaligned
 
   val generatedCompletionValid = responseAccepted || forwardFire ||
@@ -463,19 +510,19 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
       generatedCompletion.exception.badVAddr := responseLoadVirtualAddress
     }
   }.elsewhen(forwardFire) {
-    generatedCompletion.robPointer := headLoad.robPointer
-    generatedCompletion.recoveryEpoch := headLoad.recoveryEpoch
-    generatedCompletion.pdst := headLoad.pdst
-    generatedCompletion.writesPdst := headLoad.writesPdst
+    generatedCompletion.robPointer := scheduledLoad.robPointer
+    generatedCompletion.recoveryEpoch := scheduledLoad.recoveryEpoch
+    generatedCompletion.pdst := scheduledLoad.pdst
+    generatedCompletion.writesPdst := scheduledLoad.writesPdst
     generatedCompletion.data := formatLoad(
       formatStore(
         stores(forwardingId).writeData,
         stores(forwardingId).virtualAddress,
         stores(forwardingId).size
       ),
-      headLoad.virtualAddress,
-      headLoad.size,
-      headLoad.signExtend
+      scheduledLoad.virtualAddress,
+      scheduledLoad.size,
+      scheduledLoad.signExtend
     )
   }.elsewhen(storeCompletionCandidate) {
     generatedCompletion.robPointer := headStore.robPointer
