@@ -137,10 +137,16 @@ final class OooIssueQueue(
       val slotIssue = issueFire &&
         issueSlot === U(slot, log2Up(config.issueQueueEntriesPerPort) bits)
       when(slotEnqueue) {
-        payloadSlots(slot) := enqueued
         slotValid(slot) := True
       }.elsewhen(slotIssue) {
         slotValid(slot) := False
+      }
+
+      // Issuing invalidates the narrow slot-valid bit at the clock edge, so
+      // payload wakeups in that same cycle are unobservable.  Keep slotIssue
+      // out of the wide source-ready update cone to shorten LSU-to-IQ routing.
+      when(slotEnqueue) {
+        payloadSlots(slot) := enqueued
       }.otherwise {
         when(wakeupSlot1(slot)) { payloadSlots(slot).source1Ready := True }
         when(wakeupSlot2(slot)) { payloadSlots(slot).source2Ready := True }
