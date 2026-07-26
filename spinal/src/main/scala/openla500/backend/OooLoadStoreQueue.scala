@@ -376,7 +376,6 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
   val aguExceptionRecoveryEpoch = Reg(UInt(config.recoveryEpochWidth bits))
   val aguExceptionPdst = Reg(UInt(config.physicalRegIndexWidth bits))
   val aguExceptionIsSc = Reg(Bool())
-  val aguExceptionWriteData = Reg(Bits(config.xlen bits))
   val aguExceptionBadVAddr = Reg(UInt(config.xlen bits))
   val aguExceptionCompletionReady = aguExceptionCompletionValid &&
     !baseCompletionBusy && !translationCompletionCandidate
@@ -403,10 +402,6 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
       responseLoadSize,
       responseLoadSignExtend
     )
-    when(responseLoadIsLl) {
-      generatedCompletion.sideEffectData :=
-        responseLoadPhysicalAddress(31 downto 1).asBits ## responseLoadUncached.asBits
-    }
     when(io.dataResponse.error) {
       generatedCompletion.exception.valid := True
       generatedCompletion.exception.ecode := U(8, 6 bits)
@@ -444,11 +439,6 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
       translatedScSuccess.asBits.resize(config.xlen),
       B(0, config.xlen bits)
     )
-    generatedCompletion.sideEffectData := Mux(
-      translationOwnerStore,
-      store.writeData,
-      B(0, config.xlen bits)
-    )
     generatedCompletion.exception := io.translationResponse.exception
   }.elsewhen(aguExceptionCompletionReady) {
     generatedCompletion.robPointer := aguExceptionRobPointer
@@ -460,13 +450,19 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
       B(1, config.xlen bits),
       B(0, config.xlen bits)
     )
-    generatedCompletion.sideEffectData := aguExceptionWriteData
     generatedCompletion.exception.valid := True
     generatedCompletion.exception.ecode := U(9, 6 bits)
     generatedCompletion.exception.esubcode := U(0, 9 bits)
     generatedCompletion.exception.badVAddrValid := True
     generatedCompletion.exception.badVAddr := aguExceptionBadVAddr
     generatedCompletion.exception.tlbRefill := False
+  }
+  // Only LL consumes the LSQ side-effect sidecar at retirement. Keep it out of
+  // the store-forwarding/completion-arbitration cone so ordinary completions do
+  // not turn the entire 32-bit field into a timing-critical conditional clear.
+  when(responseAccepted && responseLoadIsLl) {
+    generatedCompletion.sideEffectData :=
+      responseLoadPhysicalAddress(31 downto 1).asBits ## responseLoadUncached.asBits
   }
 
   val completionValid = RegInit(False)
@@ -487,7 +483,6 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
       aguExceptionRecoveryEpoch := io.agu.uop.recoveryEpoch
       aguExceptionPdst := io.agu.uop.pdst
       aguExceptionIsSc := io.agu.uop.decoded.isSc
-      aguExceptionWriteData := io.agu.writeData
       aguExceptionBadVAddr := io.agu.virtualAddress
     }
     when(requestCapture) {
@@ -500,7 +495,10 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
       requestBufferValid := False
     }
     completionValid := generatedCompletionValid
-    when(generatedCompletionValid) { completion := generatedCompletion }
+    // Validity, not payload clock-enables, defines whether this register is
+    // observable. Sampling every cycle prevents the deep forwarding predicate
+    // from being replicated onto every completion payload register.
+    completion := generatedCompletion
   }
   io.completionValid := completionValid
   io.completion := completion

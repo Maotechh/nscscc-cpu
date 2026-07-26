@@ -235,3 +235,66 @@ new worst path runs from a ROB serializing bit to predictor PHT enables. The
 change reduces standalone synthesis by 95 LUT and 34 FF relative to `7ada9ba`
 despite the five explicit epoch-valid bits. A committed full-SoC route is the
 next decisive timing gate.
+
+## Registered completion-epoch complete-SoC result
+
+Commit `2c376d740de384a9cee177d6831bf73802704ac4` completed the locked Vivado
+2023.2 100 MHz `func58` build. Bitstream generation and routed DRC completed
+with zero errors, but advisory timing remained negative:
+
+| Metric | Result |
+| --- | --- |
+| WNS / TNS | `-0.562604 ns` / `-263.107880 ns` |
+| utilization | 90,163 slice LUT / 55,316 registers / 56.5 BRAM / 8 DSP |
+| package | `team-2c376d7-func58-100mhz.fpgajob` |
+| package SHA-256 | `cd78329d84a7c5812f881eb768f1adb27560cabf9d761f88ded6e280ffdc1491` |
+| timing policy | advisory, `timing_met=0`; not 100 MHz closure |
+
+All eight packaged artifacts were streamed from the archive and matched the
+manifest. The recovery-epoch-to-IQ path is no longer critical. The new worst
+CPU path starts at the LSQ `loadHead` register, crosses store-order and
+forwarding selection plus completion arbitration, and ends at the reset input
+of `completion_sideEffectData_reg[18]`. Its 10.029 ns data path contains 14
+logic levels; routing contributes 7.381 ns (73.6%). Vivado mapped the
+`generatedCompletionValid` payload enable and the ordinary-forwarding zero
+value into a conditional clear of the entire 32-bit side-effect field.
+
+Relative to `7ada9ba`, WNS regressed by only 0.027404 ns but TNS increased from
+`-95.344513 ns` to `-263.107880 ns`. The structural epoch path removal is
+retained as the basis for the next path cut, but this result is not itself a
+timing or board-performance improvement.
+
+## LSQ completion-payload isolation
+
+The LSQ completion register now samples its payload every non-flush cycle;
+the separately registered valid bit remains the sole visibility contract.
+This removes the deep forwarding predicate from the clock enable or reset of
+every payload field without adding a completion, wakeup, or commit cycle.
+Only load-linked retirement consumes LSQ `sideEffectData`, so that sidecar is
+now generated solely from an accepted LL response. Store translation and ALE
+completion no longer route unused write data through the 32-bit sidecar.
+
+Generated Verilog confirms that all completion payload fields are assigned
+unconditionally and `generatedCompletion_sideEffectData` depends only on the
+LL response predicate. No manual Verilog was introduced. Current local
+evidence is:
+
+| Check | Result |
+| --- | --- |
+| Scala/Spinal/Verilator full regression | 35 suites, 112/112 passed |
+| Python repository gates | 362/362 passed |
+| package/port/lint/Yosys/publish | passed; 49 ports; RTL SHA-256 `c5397660cb65af524de513b52a919578886346c964767c0c0511b6d0b44ee142` |
+| Exact complete-top lint | 781 warnings, only `UNUSEDSIGNAL`/`CMPCONST`; unchanged signature `5e4fbab6ffdbd2d1438847a3fc27143fa67d35fa3fa2bc09affddedfffc319fb` |
+| Fresh Chiplab `func_lab19` | NEMU DiffTest and `END by Syscall`; 139,654 instructions / 538,555 cycles / IPC 0.259312 |
+| Standalone Vivado 2023.2 | 100 MHz WNS `+0.292 ns`; 78,574 LUT / 42,634 FF; zero synthesis errors |
+
+Standalone report SHA-256 values are:
+
+- timing: `561d34595c58be8fc9f1cd944a60c5282dcdba1e8b9cc5b37886e4dace195d1d`
+- utilization: `e5460eca0c9b498bd36542788ce8312ad74de8360b05a8013733fb9e49d69a9e`
+- DRC: `467b1e1195cebfa337976a5470e6d3741f231532287be838d829ae41d473bf10`
+- DCP: `54f13a1408a6b206fdcd7bbb44356b5b271ec5acad7f01c39f78fb2be8b6f31f`
+
+The exact `func_lab19` cycle count is unchanged, while standalone synthesis
+drops another 66 LUT and 31 FF. A committed complete-SoC route is required to
+decide whether the targeted routed path and TNS improve.
