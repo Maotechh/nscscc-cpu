@@ -17,6 +17,8 @@ private final class OooIssueQueueProbe(config: OooCoreConfig, portIndex: Int = 0
     val issue = out(OooRenamedUop(config))
     val issueReady = in Bool ()
     val robHeadPointer = in UInt (config.robPointerWidth bits)
+    val serialFenceValid = in Bool ()
+    val serialFencePointer = in UInt (config.robPointerWidth bits)
     val flush = in Bool ()
     val occupancy = out UInt (log2Up(config.issueQueueEntriesPerPort + 1) bits)
   }
@@ -29,6 +31,8 @@ private final class OooIssueQueueProbe(config: OooCoreConfig, portIndex: Int = 0
   queue.io.wakeupPdst := io.wakeupPdst
   queue.io.issueReady := io.issueReady
   queue.io.robHeadPointer := io.robHeadPointer
+  queue.io.serialFenceValid := io.serialFenceValid
+  queue.io.serialFencePointer := io.serialFencePointer
   queue.io.flush := io.flush
 
   io.enqueueReady := queue.io.enqueueReady
@@ -57,6 +61,8 @@ class OooIssueQueueSpec extends AnyFunSuite {
     }
     dut.io.issueReady #= false
     dut.io.robHeadPointer #= 0
+    dut.io.serialFenceValid #= false
+    dut.io.serialFencePointer #= 0
     dut.io.flush #= false
   }
 
@@ -136,6 +142,53 @@ class OooIssueQueueSpec extends AnyFunSuite {
 
         dut.io.enqueueValid #= false
         dut.io.robHeadPointer #= 3
+        sleep(1)
+        assert(dut.io.issueValid.toBoolean)
+        assert(dut.io.issue.robPointer.toBigInt == 3)
+      }
+  }
+
+  test("a serial fence keeps younger work behind an older newly-ready uop") {
+    val config = OooCoreConfig.FourIssueThreeCommit
+    SimConfig.withVerilator
+      .workspacePath("target/sim-workspace-ooo-iq")
+      .compile(new OooIssueQueueProbe(config))
+      .doSim("ooo-iq-serial-fence-order", 0x4955) { dut =>
+        dut.clockDomain.forkStimulus(period = 10)
+        clearInputs(dut, config)
+        dut.clockDomain.assertReset()
+        dut.clockDomain.waitSampling(2)
+        dut.clockDomain.deassertReset()
+        sample(dut)
+
+        dut.io.enqueueValid #= true
+        dut.io.enqueue.robPointer #= 1
+        dut.io.enqueue.psrc1 #= 5
+        dut.io.enqueue.source1Ready #= false
+        dut.io.enqueue.source2Ready #= true
+        sample(dut)
+
+        dut.io.enqueue.robPointer #= 3
+        dut.io.enqueue.psrc1 #= 0
+        dut.io.enqueue.source1Ready #= true
+        dut.io.serialFenceValid #= true
+        dut.io.serialFencePointer #= 2
+        sample(dut)
+        dut.io.enqueueValid #= false
+        sleep(1)
+        assert(!dut.io.issueValid.toBoolean)
+
+        dut.io.wakeupValid #= 1
+        dut.io.wakeupPdst(0) #= 5
+        sleep(1)
+        assert(dut.io.issueValid.toBoolean)
+        assert(dut.io.issue.robPointer.toBigInt == 1)
+        dut.io.issueReady #= true
+        sample(dut)
+        sleep(1)
+        assert(!dut.io.issueValid.toBoolean)
+
+        dut.io.serialFenceValid #= false
         sleep(1)
         assert(dut.io.issueValid.toBoolean)
         assert(dut.io.issue.robPointer.toBigInt == 3)

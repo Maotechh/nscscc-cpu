@@ -5,6 +5,11 @@ import spinal.core._
 
 final class OooBackend(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommit)
     extends Component {
+  private def isYounger(candidate: UInt, boundary: UInt): Bool = {
+    val distance = (candidate - boundary).resize(config.robPointerWidth)
+    distance =/= U(0, config.robPointerWidth bits) && !distance.msb
+  }
+
   private val loadStorePort =
     config.executionPorts.indexWhere(_.capabilities.contains(OooFuKind.LoadStore))
   require(loadStorePort >= 0)
@@ -56,6 +61,8 @@ final class OooBackend(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommi
   val recoveryEpoch = Reg(UInt(config.recoveryEpochWidth bits)) init (0)
   when(io.flush) { recoveryEpoch := recoveryEpoch + 1 }
   rob.io.currentEpoch := recoveryEpoch
+  val serialFenceValid = RegInit(False)
+  val serialFencePointer = Reg(UInt(config.robPointerWidth bits))
 
   val renamedInput = Vec(OooRenamedUop(config), config.renameWidth)
   val dispatchInput = Vec(OooRenamedUop(config), config.renameWidth)
@@ -124,12 +131,35 @@ final class OooBackend(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommi
       io.rename(lane).writesGpr && io.rename(lane).rd =/= 0
   }
   val resourcesReady = dispatchQueue.io.enqueueReady && rob.io.allocateReady &&
-    freeList.io.allocateReady && lsqAllocator.io.allocateReady && !io.flush
+    freeList.io.allocateReady && lsqAllocator.io.allocateReady && !serialFenceValid && !io.flush
   val acceptAll = resourcesReady && io.renameValid.orR
   val accepted = Bits(config.renameWidth bits)
   val allLanes = B((BigInt(1) << config.renameWidth) - 1, config.renameWidth bits)
   accepted := Mux(acceptAll, io.renameValid, B(0, config.renameWidth bits))
   io.renameReady := Mux(resourcesReady, allLanes, B(0, config.renameWidth bits))
+
+  val acceptedSerial = Bits(config.renameWidth bits)
+  for (lane <- 0 until config.renameWidth) {
+    acceptedSerial(lane) := accepted(lane) && io.rename(lane).serializing
+  }
+  val firstSerialLane = UInt(log2Up(config.renameWidth) bits)
+  firstSerialLane := 0
+  for (lane <- (0 until config.renameWidth).reverse) {
+    when(acceptedSerial(lane)) { firstSerialLane := lane }
+  }
+  val serialFenceCommitted = (0 until config.commitWidth)
+    .map { lane =>
+      rob.io.commitValid(lane) && rob.io.commit(lane).robPointer === serialFencePointer
+    }
+    .reduce(_ || _)
+  when(io.flush) {
+    serialFenceValid := False
+  }.elsewhen(acceptedSerial.orR) {
+    serialFenceValid := True
+    serialFencePointer := renamedInput(firstSerialLane).robPointer
+  }.elsewhen(serialFenceCommitted) {
+    serialFenceValid := False
+  }
 
   registerMap.io.renameValid := accepted
   for (lane <- 0 until config.renameWidth) {
@@ -166,12 +196,17 @@ final class OooBackend(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommi
     issueQueues(port).io.enqueueValid := router.io.portValid(port)
     issueQueues(port).io.enqueue := router.io.portInput(port)
     issueQueues(port).io.robHeadPointer := rob.io.headPointer
+    issueQueues(port).io.serialFenceValid := serialFenceValid
+    issueQueues(port).io.serialFencePointer := serialFencePointer
     issueQueues(port).io.flush := io.flush
+    val operandBlockedBySerial = issueOperandValid(port) && serialFenceValid &&
+      isYounger(issueOperandUop(port).robPointer, serialFencePointer)
+    val operandReady = !issueOperandValid(port) ||
+      (io.issueReady(port) && !operandBlockedBySerial)
     if (port == loadStorePort) {
       prf.io.readAddress(port * 2) := issueQueues(port).io.issue.psrc1
       prf.io.readAddress(port * 2 + 1) := issueQueues(port).io.issue.psrc2
 
-      val operandReady = !issueOperandValid(port) || io.issueReady(port)
       issueQueues(port).io.issueReady := !io.flush && operandReady
 
       when(io.flush) {
@@ -191,7 +226,6 @@ final class OooBackend(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommi
       prf.io.readAddress(port * 2) := issueAddressUop(addressPort).psrc1
       prf.io.readAddress(port * 2 + 1) := issueAddressUop(addressPort).psrc2
 
-      val operandReady = !issueOperandValid(port) || io.issueReady(port)
       val addressReady = !issueAddressValid(addressPort) || operandReady
       issueQueues(port).io.issueReady := addressReady
       when(io.flush) {
@@ -215,7 +249,7 @@ final class OooBackend(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommi
       }
     }
 
-    io.issueValid(port) := issueOperandValid(port)
+    io.issueValid(port) := issueOperandValid(port) && !operandBlockedBySerial
     io.issue(port) := issueOperandUop(port)
     io.issueSource1(port) := issueOperandSource1(port)
     io.issueSource2(port) := issueOperandSource2(port)

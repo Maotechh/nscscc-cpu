@@ -34,6 +34,14 @@ __pycache__/
 /logs/refactor/**/raw/
 /logs/refactor/**/waveforms/
 
+# Local performance, review, and simulator evidence. Commit only condensed reports.
+/dse_results/
+/logs/dev/evidence/
+/review-stage/
+/.pytest_cache/
+/simu_trace.txt
+/uart_output.txt
+
 jsfa.pdf
 
 .vscode/

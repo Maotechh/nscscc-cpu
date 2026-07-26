@@ -4,13 +4,14 @@ import openla500.core._
 import spinal.core._
 
 object OooSharedCacheMaintenanceState extends SpinalEnum {
-  val idle, kickDataL1, waitDataL1, kickDataL2, waitDataL2 = newElement()
+  val idle, kickDataL1, waitDataL1, kickDataL2, waitDataL2, kickInstruction, waitInstruction =
+    newElement()
 }
 
 /** Private L1I/L1D hierarchy sharing one nonblocking 64-byte-line L2 cache.
   *
-  * Dirty L1D writebacks have priority. Four hierarchy-global read identities preserve the owning
-  * L1 and its local MSHR id across arbitrarily interleaved L2 response beats.
+  * Dirty L1D writebacks have priority. Four hierarchy-global read identities preserve the owning L1
+  * and its local MSHR id across arbitrarily interleaved L2 response beats.
   */
 final class OooSharedCacheHierarchy(
     config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommit
@@ -65,11 +66,20 @@ final class OooSharedCacheHierarchy(
   val readMshrs = new OooSharedReadMshrRouter(config)
   val l2 = new OooL2Cache(config)
   val maintenanceState = RegInit(OooSharedCacheMaintenanceState.idle)
-  val maintenanceSeen = RegInit(False)
-  val newDataWritebackInvalidate = io.dataWritebackInvalidate && !maintenanceSeen
-  when(io.dataWritebackInvalidate) { maintenanceSeen := True }
-    .otherwise { maintenanceSeen := False }
-  when(newDataWritebackInvalidate && maintenanceState === OooSharedCacheMaintenanceState.idle) {
+  val dataMaintenanceSeen = RegNext(io.dataWritebackInvalidate) init (False)
+  val instructionMaintenanceSeen = RegNext(io.invalidate) init (False)
+  val instructionMaintenance = RegInit(False)
+  val newDataWritebackInvalidate = io.dataWritebackInvalidate && !dataMaintenanceSeen
+  val newInstructionInvalidate = io.invalidate && !instructionMaintenanceSeen
+  when(
+    newInstructionInvalidate && maintenanceState === OooSharedCacheMaintenanceState.idle
+  ) {
+    instructionMaintenance := True
+    maintenanceState := OooSharedCacheMaintenanceState.kickDataL1
+  }.elsewhen(
+    newDataWritebackInvalidate && maintenanceState === OooSharedCacheMaintenanceState.idle
+  ) {
+    instructionMaintenance := False
     maintenanceState := OooSharedCacheMaintenanceState.kickDataL1
   }
   when(maintenanceState === OooSharedCacheMaintenanceState.kickDataL1) {
@@ -89,9 +99,23 @@ final class OooSharedCacheHierarchy(
       !l2.io.invalidateBusy
   ) {
     maintenanceState := OooSharedCacheMaintenanceState.idle
+    when(instructionMaintenance) {
+      maintenanceState := OooSharedCacheMaintenanceState.kickInstruction
+    }
+  }
+  when(maintenanceState === OooSharedCacheMaintenanceState.kickInstruction) {
+    maintenanceState := OooSharedCacheMaintenanceState.waitInstruction
+  }
+  when(
+    maintenanceState === OooSharedCacheMaintenanceState.waitInstruction &&
+      !l1i.io.invalidateBusy
+  ) {
+    instructionMaintenance := False
+    maintenanceState := OooSharedCacheMaintenanceState.idle
   }
   val hierarchyMaintenanceBusy = l1i.io.invalidateBusy || l1d.io.invalidateBusy ||
-    l2.io.invalidateBusy || maintenanceState =/= OooSharedCacheMaintenanceState.idle
+    l2.io.invalidateBusy || maintenanceState =/= OooSharedCacheMaintenanceState.idle ||
+    io.invalidate || io.dataWritebackInvalidate
 
   l1i.io.requestValid := io.instructionRequestValid
   l1i.io.request := io.instructionRequest
@@ -165,15 +189,16 @@ final class OooSharedCacheHierarchy(
   io.memoryWrite := l2.io.memoryWrite
   l2.io.memoryWriteReady := io.memoryWriteReady
 
-  // An I-cache maintenance operation must also evict the shared copy.  Otherwise an uncached
-  // self-modifying-code store is followed by an L1I miss that simply reloads the stale L2 line.
-  // L1D remains untouched because dropping a dirty private line would lose architectural data.
-  l1i.io.invalidate := io.invalidate
+  // Instruction maintenance first writes back and invalidates L1D, then L2, and only then
+  // invalidates L1I. A cacheable self-modifying-code store may leave the newest instruction bytes
+  // dirty in L1D; invalidating L1I/L2 first would let the following refill recover stale memory.
+  l1i.io.invalidate :=
+    maintenanceState === OooSharedCacheMaintenanceState.kickInstruction
   l1d.io.invalidate := io.dataInvalidate
   l1d.io.writebackInvalidate := maintenanceState ===
     OooSharedCacheMaintenanceState.kickDataL1
   l2.io.writebackInvalidate := maintenanceState ===
     OooSharedCacheMaintenanceState.kickDataL2
-  l2.io.invalidate := io.invalidate || io.dataInvalidate || io.level2Invalidate
+  l2.io.invalidate := io.dataInvalidate || io.level2Invalidate
   io.invalidateBusy := hierarchyMaintenanceBusy
 }

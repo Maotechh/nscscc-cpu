@@ -19,6 +19,11 @@ final class OooIssueQueue(
     selected
   }
 
+  private def isYounger(candidate: UInt, boundary: UInt): Bool = {
+    val distance = (candidate - boundary).resize(config.robPointerWidth)
+    distance =/= U(0, config.robPointerWidth bits) && !distance.msb
+  }
+
   val io = new Bundle {
     val enqueueValid = in Bool ()
     val enqueue = in(OooRenamedUop(config))
@@ -31,6 +36,8 @@ final class OooIssueQueue(
     val issue = out(OooRenamedUop(config))
     val issueReady = in Bool ()
     val robHeadPointer = in UInt (config.robPointerWidth bits)
+    val serialFenceValid = in Bool ()
+    val serialFencePointer = in UInt (config.robPointerWidth bits)
     val flush = in Bool ()
     val occupancy = out UInt (log2Up(config.issueQueueEntriesPerPort + 1) bits)
   }
@@ -42,28 +49,37 @@ final class OooIssueQueue(
   )
   val count = Reg(UInt(log2Up(config.issueQueueEntriesPerPort + 1) bits)) init (0)
 
-  val wakeupReady1 = Bits(config.issueQueueEntriesPerPort bits)
-  val wakeupReady2 = Bits(config.issueQueueEntriesPerPort bits)
-  for (entry <- 0 until config.issueQueueEntriesPerPort) {
-    wakeupReady1(entry) := False
-    wakeupReady2(entry) := False
+  // Wakeup readiness belongs to physical slots. Keeping it in that coordinate system avoids
+  // remapping every writeback through the order vector before mapping it back during state update.
+  val wakeupSlot1 = Bits(config.issueQueueEntriesPerPort bits)
+  val wakeupSlot2 = Bits(config.issueQueueEntriesPerPort bits)
+  for (slot <- 0 until config.issueQueueEntriesPerPort) {
+    wakeupSlot1(slot) := False
+    wakeupSlot2(slot) := False
     for (write <- 0 until config.writebackWidth) {
-      when(io.wakeupValid(write) && io.wakeupPdst(write) === payloadSlots(order(entry)).psrc1) {
-        wakeupReady1(entry) := True
+      when(
+        slotValid(slot) && io.wakeupValid(write) &&
+          io.wakeupPdst(write) === payloadSlots(slot).psrc1
+      ) {
+        wakeupSlot1(slot) := True
       }
-      when(io.wakeupValid(write) && io.wakeupPdst(write) === payloadSlots(order(entry)).psrc2) {
-        wakeupReady2(entry) := True
+      when(
+        slotValid(slot) && io.wakeupValid(write) &&
+          io.wakeupPdst(write) === payloadSlots(slot).psrc2
+      ) {
+        wakeupSlot2(slot) := True
       }
     }
   }
 
   val readyMap = Bits(config.issueQueueEntriesPerPort bits)
   for (entry <- 0 until config.issueQueueEntriesPerPort) {
+    val payload = payloadSlots(order(entry))
     readyMap(entry) := U(entry, count.getWidth bits) < count &&
-      (payloadSlots(order(entry)).source1Ready || wakeupReady1(entry)) &&
-      (payloadSlots(order(entry)).source2Ready || wakeupReady2(entry)) &&
-      (!payloadSlots(order(entry)).decoded.serializing ||
-        payloadSlots(order(entry)).robPointer === io.robHeadPointer)
+      (payload.source1Ready || wakeupSlot1(order(entry))) &&
+      (payload.source2Ready || wakeupSlot2(order(entry))) &&
+      (!payload.decoded.serializing || payload.robPointer === io.robHeadPointer) &&
+      (!io.serialFenceValid || !isYounger(payload.robPointer, io.serialFencePointer))
   }
 
   val issueIndex = selectLowest(readyMap)
@@ -127,29 +143,6 @@ final class OooIssueQueue(
   io.enqueueReady := !io.flush && enqueueReadyReg
   val enqueueFire = io.enqueueValid && io.enqueueReady
   val enqueueSlot = selectLowest(~slotValid.asBits)
-
-  val wakeupSlot1 = Bits(config.issueQueueEntriesPerPort bits)
-  val wakeupSlot2 = Bits(config.issueQueueEntriesPerPort bits)
-  for (slot <- 0 until config.issueQueueEntriesPerPort) {
-    wakeupSlot1(slot) := False
-    wakeupSlot2(slot) := False
-    for (entry <- 0 until config.issueQueueEntriesPerPort) {
-      when(
-        U(entry, count.getWidth bits) < count &&
-          order(entry) === U(slot, log2Up(config.issueQueueEntriesPerPort) bits) &&
-          wakeupReady1(entry)
-      ) {
-        wakeupSlot1(slot) := True
-      }
-      when(
-        U(entry, count.getWidth bits) < count &&
-          order(entry) === U(slot, log2Up(config.issueQueueEntriesPerPort) bits) &&
-          wakeupReady2(entry)
-      ) {
-        wakeupSlot2(slot) := True
-      }
-    }
-  }
 
   val enqueueWakeup1 = io.wakeupValid.asBools
     .zip(io.wakeupPdst)

@@ -266,6 +266,70 @@ class OooBackendDispatchSpec extends AnyFunSuite {
       }
   }
 
+  test("a serial instruction fences younger issue until it commits") {
+    SimConfig.withVerilator
+      .workspacePath("target/sim-workspace-ooo-backend-dispatch")
+      .compile(new OooBackendDispatchProbe(config))
+      .doSim("ooo-backend-serial-fence", 0x4c47) { dut =>
+        dut.clockDomain.forkStimulus(period = 10)
+        clearControl(dut)
+        dut.io.issueReady #= 0xf
+        dut.clockDomain.assertReset()
+        dut.clockDomain.waitSampling(2)
+        dut.clockDomain.deassertReset()
+        dut.clockDomain.waitSampling()
+
+        val basePc = BigInt("1c000000", 16)
+        // dbar 0; addi.w r13,r0,1
+        dut.io.inputValid #= 3
+        dut.io.pc(0) #= basePc
+        dut.io.instruction(0) #= BigInt("38720000", 16)
+        dut.io.pc(1) #= basePc + 4
+        dut.io.instruction(1) #= BigInt("0280040d", 16)
+        dut.clockDomain.waitSampling()
+        dut.io.inputValid #= 0
+
+        var serialIssued = false
+        var youngerIssued = false
+        for (_ <- 0 until 12) {
+          dut.clockDomain.waitSampling()
+          sleep(1)
+          val issueMask = dut.io.issueValid.toBigInt
+          for (port <- 0 until config.executionWidth) {
+            if ((issueMask & (BigInt(1) << port)) != 0) {
+              val pointer = dut.io.issueRobPointer(port).toBigInt
+              if (pointer == 0) serialIssued = true
+              if (pointer == 1) youngerIssued = true
+            }
+          }
+        }
+        assert(serialIssued)
+        assert(!youngerIssued)
+
+        dut.io.completionValid #= 1
+        dut.io.completionRobPointer #= 0
+        dut.io.completionPdst #= 0
+        dut.io.completionWritesPdst #= false
+        dut.clockDomain.waitSampling()
+        dut.io.completionValid #= 0
+
+        for (_ <- 0 until 12 if !youngerIssued) {
+          dut.clockDomain.waitSampling()
+          sleep(1)
+          val issueMask = dut.io.issueValid.toBigInt
+          for (port <- 0 until config.executionWidth) {
+            if (
+              (issueMask & (BigInt(1) << port)) != 0 &&
+              dut.io.issueRobPointer(port).toBigInt == 1
+            ) {
+              youngerIssued = true
+            }
+          }
+        }
+        assert(youngerIssued)
+      }
+  }
+
   test("a completion without a physical write cannot wake a reused destination tag") {
     SimConfig.withVerilator
       .workspacePath("target/sim-workspace-ooo-backend-dispatch")

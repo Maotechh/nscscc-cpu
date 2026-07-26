@@ -247,51 +247,67 @@ class OooSharedCacheHierarchySpec extends AnyFunSuite {
         assert(sawInstruction)
         assert(sawData)
 
+        // Make the shared instruction line dirty in L1D. Instruction maintenance must publish
+        // this newer word through L2 before it invalidates L1I.
+        dut.io.dataRequestValid #= true
+        dut.io.dataRequest.virtualAddress #= 0x408
+        dut.io.dataRequest.physicalAddress #= 0x408
+        dut.io.dataRequest.isWrite #= true
+        dut.io.dataRequest.writeData #= BigInt("deadbeef", 16)
+        dut.io.dataRequest.robPointer #= 6
+        while (!dut.io.dataRequestReady.toBoolean) { sample(dut) }
+        sample(dut)
+        dut.io.dataRequestValid #= false
+        dut.io.dataRequest.isWrite #= false
+        // Stores complete in the LSQ when the request is accepted; L1D intentionally emits no
+        // response pulse. Allow the lookup/write stage to mark the resident line dirty.
+        sample(dut)
+        sample(dut)
+
+        dut.io.memoryWriteReady #= true
         dut.io.invalidate #= true
         sample(dut)
         dut.io.invalidate #= false
+        var sawDirtyWriteback = false
         var invalidateCycles = 0
-        while (dut.io.invalidateBusy.toBoolean && invalidateCycles < config.level2Cache.sets + 16) {
+        val maintenanceCycleLimit =
+          config.dataCache.sets * config.dataCache.ways * 4 +
+            config.level2Cache.sets * config.level2Cache.ways * 4
+        while (dut.io.invalidateBusy.toBoolean && invalidateCycles < maintenanceCycleLimit) {
+          if (dut.io.memoryWriteValid.toBoolean) {
+            assert(dut.io.memoryWrite.lineAddress.toBigInt == 0x400)
+            assert(
+              ((dut.io.memoryWrite.data.toBigInt >> 64) & BigInt("ffffffff", 16)) ==
+                BigInt("deadbeef", 16)
+            )
+            sawDirtyWriteback = true
+          }
           sample(dut)
           invalidateCycles += 1
         }
+        dut.io.memoryWriteReady #= false
         assert(!dut.io.invalidateBusy.toBoolean)
+        assert(sawDirtyWriteback)
 
-        // I-cache maintenance keeps the private data copy but removes the shared instruction copy.
+        // Both data levels were cleaned and invalidated, so the first data access must refill from
+        // memory instead of observing a stale private hit.
         dut.io.dataRequestValid #= true
         dut.io.dataRequest.virtualAddress #= 0x408
         dut.io.dataRequest.physicalAddress #= 0x408
         while (!dut.io.dataRequestReady.toBoolean) { sample(dut) }
         sample(dut)
         dut.io.dataRequestValid #= false
-        var dataHit = false
-        var dataHitCycles = 0
-        while (!dataHit && dataHitCycles < 16) {
-          assert(!dut.io.memoryReadValid.toBoolean)
-          dataHit = dut.io.dataResponseValid.toBoolean
-          if (!dataHit) sample(dut)
-          dataHitCycles += 1
-        }
-        assert(dataHit)
-        assert(dut.io.dataResponse.data.toBigInt == 302)
-
-        dut.io.instructionRequestValid #= true
-        dut.io.instructionRequest.virtualAddress #= BigInt("1c000410", 16)
-        dut.io.instructionRequest.physicalAddress #= 0x410
-        while (!dut.io.instructionRequestReady.toBoolean) { sample(dut) }
-        sample(dut)
-        dut.io.instructionRequestValid #= false
-        var refillWait = 0
-        while (!dut.io.memoryReadValid.toBoolean && refillWait < 32) {
+        var dataRefillWait = 0
+        while (!dut.io.memoryReadValid.toBoolean && dataRefillWait < 32) {
           sample(dut)
-          refillWait += 1
+          dataRefillWait += 1
         }
         assert(dut.io.memoryReadValid.toBoolean)
         assert(dut.io.memoryRead.lineAddress.toBigInt == 0x400)
         dut.io.memoryReadReady #= true
         sample(dut)
         dut.io.memoryReadReady #= false
-        var instructionRefill = false
+        var dataRefill = false
         for (beat <- 0 until OooCacheContract.BeatsPerLine) {
           dut.io.memoryReadBeatValid #= true
           dut.io.memoryReadBeat.mshrId #= 0
@@ -301,23 +317,40 @@ class OooSharedCacheHierarchySpec extends AnyFunSuite {
           sleep(1)
           assert(dut.io.memoryReadBeatReady.toBoolean)
           sample(dut)
+          if (dut.io.dataResponseValid.toBoolean) {
+            assert(dut.io.dataResponse.data.toBigInt == 402)
+            dataRefill = true
+          }
+        }
+        dut.io.memoryReadBeatValid #= false
+        var dataRefillCycles = 0
+        while (!dataRefill && dataRefillCycles < 64) {
+          if (dut.io.dataResponseValid.toBoolean) {
+            assert(dut.io.dataResponse.data.toBigInt == 402)
+            dataRefill = true
+          }
+          if (!dataRefill) sample(dut)
+          dataRefillCycles += 1
+        }
+        assert(dataRefill)
+
+        dut.io.instructionRequestValid #= true
+        dut.io.instructionRequest.virtualAddress #= BigInt("1c000410", 16)
+        dut.io.instructionRequest.physicalAddress #= 0x410
+        while (!dut.io.instructionRequestReady.toBoolean) { sample(dut) }
+        sample(dut)
+        dut.io.instructionRequestValid #= false
+        // The data refill repopulated L2 with the post-maintenance memory contents. L1I should
+        // therefore refill from L2 without a second external read.
+        var instructionRefill = false
+        var instructionRefillCycles = 0
+        while (!instructionRefill && instructionRefillCycles < 64) {
+          assert(!dut.io.memoryReadValid.toBoolean)
           if (dut.io.instructionResponseValid.toBoolean) {
-            assert(!instructionRefill)
             for (lane <- 0 until config.fetchWidth) {
               assert(dut.io.instructionResponse.instructions(lane).toBigInt == 404 + lane)
             }
             instructionRefill = true
-          }
-        }
-        dut.io.memoryReadBeatValid #= false
-
-        var instructionRefillCycles = 0
-        while (!instructionRefill && instructionRefillCycles < 64) {
-          instructionRefill = dut.io.instructionResponseValid.toBoolean
-          if (instructionRefill) {
-            for (lane <- 0 until config.fetchWidth) {
-              assert(dut.io.instructionResponse.instructions(lane).toBigInt == 404 + lane)
-            }
           }
           if (!instructionRefill) sample(dut)
           instructionRefillCycles += 1
