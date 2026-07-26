@@ -75,11 +75,13 @@ Standalone report SHA-256 values:
 
 ## Promotion boundary
 
-Standalone synthesis does not include board placement, routing congestion, or the complete SoC.
-This candidate must be committed so the locked evaluator can build an exact 40-character revision.
-It is not a new timing baseline until the 100 MHz full design has non-negative routed WNS. Only
-after timing closure and a passing `func58` job may the same committed candidate proceed to three
-real `perf20` runs.
+The exact committed candidate completed the locked 100 MHz full-SoC implementation and generated
+a bitstream with no DRC errors. WNS improved from `-0.780680 ns` to `-0.729440 ns`, TNS improved
+from `-393.443848 ns` to `-183.101868 ns`, and hold WNS was `+0.015 ns`. The divider path was
+removed, but a new path from ROB `stagedPdst` through IQ age/physical-slot selection remained
+critical. Therefore this iteration was retained as an intermediate structural fix, not promoted as
+a timing-closed baseline. The next iteration restructures IQ selection and must repeat the locked
+full-SoC gate before any `perf20` claim.
 
 ## Rule audit
 

@@ -113,6 +113,72 @@ class OooIssueQueueSpec extends AnyFunSuite {
       }
   }
 
+  test("IQ wakeup follows compacted age order after an older dequeue") {
+    val config = OooCoreConfig.FourIssueThreeCommit
+    SimConfig.withVerilator
+      .workspacePath("target/sim-workspace-ooo-iq")
+      .compile(new OooIssueQueueProbe(config))
+      .doSim("ooo-iq-compacted-wakeup", 0x4956) { dut =>
+        dut.clockDomain.forkStimulus(period = 10)
+        clearInputs(dut, config)
+        dut.clockDomain.assertReset()
+        dut.clockDomain.waitSampling(2)
+        dut.clockDomain.deassertReset()
+        sample(dut)
+
+        // Put a ready oldest entry at the queue head.
+        dut.io.enqueueValid #= true
+        dut.io.enqueue.robPointer #= 0
+        dut.io.enqueue.source1Ready #= true
+        dut.io.enqueue.source2Ready #= true
+        sample(dut)
+
+        // Issue the head while enqueuing a blocked entry behind it.
+        dut.io.issueReady #= true
+        dut.io.enqueue.robPointer #= 1
+        dut.io.enqueue.psrc1 #= 5
+        dut.io.enqueue.source1Ready #= false
+        sample(dut)
+        assert(dut.io.occupancy.toBigInt == 1)
+        assert(!dut.io.issueValid.toBoolean)
+
+        // Enqueue a younger blocked entry after the survivor was compacted to
+        // the head. Waking the younger entry must not corrupt the older tag.
+        dut.io.issueReady #= false
+        dut.io.enqueue.robPointer #= 2
+        dut.io.enqueue.psrc1 #= 6
+        sample(dut)
+        dut.io.enqueueValid #= false
+        assert(dut.io.occupancy.toBigInt == 2)
+
+        dut.io.wakeupValid #= 1
+        dut.io.wakeupPdst(0) #= 6
+        sleep(1)
+        assert(dut.io.issueValid.toBoolean)
+        assert(dut.io.issue.robPointer.toBigInt == 2)
+
+        // Capture the wake pulse, then prove that the stored ready bit holds
+        // after the tag disappears.
+        sample(dut)
+        dut.io.wakeupValid #= 0
+        sleep(1)
+        assert(dut.io.issueValid.toBoolean)
+        assert(dut.io.issue.robPointer.toBigInt == 2)
+
+        dut.io.issueReady #= true
+        sample(dut)
+        dut.io.issueReady #= false
+        assert(dut.io.occupancy.toBigInt == 1)
+        assert(!dut.io.issueValid.toBoolean)
+
+        dut.io.wakeupValid #= 1
+        dut.io.wakeupPdst(0) #= 5
+        sleep(1)
+        assert(dut.io.issueValid.toBoolean)
+        assert(dut.io.issue.robPointer.toBigInt == 1)
+      }
+  }
+
   test("serial IQ entries wait for the matching ROB head") {
     val config = OooCoreConfig.FourIssueThreeCommit
     SimConfig.withVerilator

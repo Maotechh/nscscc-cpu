@@ -35,24 +35,23 @@ final class OooIssueQueue(
     val occupancy = out UInt (log2Up(config.issueQueueEntriesPerPort + 1) bits)
   }
 
-  val slotValid = Vec.fill(config.issueQueueEntriesPerPort)(Reg(Bool()) init (False))
-  val payloadSlots = Vec.fill(config.issueQueueEntriesPerPort)(Reg(OooRenamedUop(config)))
-  val order = Vec.fill(config.issueQueueEntriesPerPort)(
-    Reg(UInt(log2Up(config.issueQueueEntriesPerPort) bits)) init (0)
-  )
+  // Keep resident uops compacted in age order, as the ysyx issue queue does.
+  // Wakeup-to-select therefore crosses one payload lookup instead of an age
+  // lookup followed by a second physical-slot lookup.
+  val queue = Vec.fill(config.issueQueueEntriesPerPort)(Reg(OooRenamedUop(config)))
   val count = Reg(UInt(log2Up(config.issueQueueEntriesPerPort + 1) bits)) init (0)
 
-  val wakeupReady1 = Bits(config.issueQueueEntriesPerPort bits)
-  val wakeupReady2 = Bits(config.issueQueueEntriesPerPort bits)
+  val wakeupEntry1 = Bits(config.issueQueueEntriesPerPort bits)
+  val wakeupEntry2 = Bits(config.issueQueueEntriesPerPort bits)
   for (entry <- 0 until config.issueQueueEntriesPerPort) {
-    wakeupReady1(entry) := False
-    wakeupReady2(entry) := False
+    wakeupEntry1(entry) := False
+    wakeupEntry2(entry) := False
     for (write <- 0 until config.writebackWidth) {
-      when(io.wakeupValid(write) && io.wakeupPdst(write) === payloadSlots(order(entry)).psrc1) {
-        wakeupReady1(entry) := True
+      when(io.wakeupValid(write) && io.wakeupPdst(write) === queue(entry).psrc1) {
+        wakeupEntry1(entry) := True
       }
-      when(io.wakeupValid(write) && io.wakeupPdst(write) === payloadSlots(order(entry)).psrc2) {
-        wakeupReady2(entry) := True
+      when(io.wakeupValid(write) && io.wakeupPdst(write) === queue(entry).psrc2) {
+        wakeupEntry2(entry) := True
       }
     }
   }
@@ -61,24 +60,21 @@ final class OooIssueQueue(
   for (entry <- 0 until config.issueQueueEntriesPerPort) {
     val storeDataIsDecoupled =
       if (config.executionPorts(portIndex).capabilities.contains(OooFuKind.LoadStore)) {
-        payloadSlots(order(entry)).decoded.isStore
+        queue(entry).decoded.isStore
       } else {
         False
       }
     readyMap(entry) := U(entry, count.getWidth bits) < count &&
-      (payloadSlots(order(entry)).source1Ready || wakeupReady1(entry)) &&
-      (storeDataIsDecoupled || payloadSlots(order(entry)).source2Ready ||
-        wakeupReady2(entry)) &&
-      (!payloadSlots(order(entry)).decoded.serializing ||
-        payloadSlots(order(entry)).robPointer === io.robHeadPointer)
+      (queue(entry).source1Ready || wakeupEntry1(entry)) &&
+      (storeDataIsDecoupled || queue(entry).source2Ready || wakeupEntry2(entry)) &&
+      (!queue(entry).decoded.serializing || queue(entry).robPointer === io.robHeadPointer)
   }
 
   val issueIndex = selectLowest(readyMap)
   val issueIndexWide = UInt(count.getWidth bits)
   issueIndexWide := issueIndex.resize(count.getWidth)
-  val issueSlot = order(issueIndex)
   val selectedUop = OooRenamedUop(config)
-  selectedUop := payloadSlots(issueSlot)
+  selectedUop := queue(issueIndex)
   val queueDequeue = Bool()
 
   if (config.executionPorts(portIndex).registeredIssueOutput) {
@@ -133,30 +129,9 @@ final class OooIssueQueue(
   enqueueReadyReg := count < U(config.issueQueueEntriesPerPort - 1, count.getWidth bits)
   io.enqueueReady := !io.flush && enqueueReadyReg
   val enqueueFire = io.enqueueValid && io.enqueueReady
-  val enqueueSlot = selectLowest(~slotValid.asBits)
-
-  val wakeupSlot1 = Bits(config.issueQueueEntriesPerPort bits)
-  val wakeupSlot2 = Bits(config.issueQueueEntriesPerPort bits)
-  for (slot <- 0 until config.issueQueueEntriesPerPort) {
-    wakeupSlot1(slot) := False
-    wakeupSlot2(slot) := False
-    for (entry <- 0 until config.issueQueueEntriesPerPort) {
-      when(
-        U(entry, count.getWidth bits) < count &&
-          order(entry) === U(slot, log2Up(config.issueQueueEntriesPerPort) bits) &&
-          wakeupReady1(entry)
-      ) {
-        wakeupSlot1(slot) := True
-      }
-      when(
-        U(entry, count.getWidth bits) < count &&
-          order(entry) === U(slot, log2Up(config.issueQueueEntriesPerPort) bits) &&
-          wakeupReady2(entry)
-      ) {
-        wakeupSlot2(slot) := True
-      }
-    }
-  }
+  val enqueueIndex = UInt(log2Up(config.issueQueueEntriesPerPort) bits)
+  enqueueIndex := count.resized
+  when(queueDequeue) { enqueueIndex := (count - 1).resized }
 
   val enqueueWakeup1 = io.wakeupValid.asBools
     .zip(io.wakeupPdst)
@@ -181,43 +156,42 @@ final class OooIssueQueue(
 
   when(io.flush) {
     count := 0
-    for (slot <- 0 until config.issueQueueEntriesPerPort) { slotValid(slot) := False }
   }.otherwise {
-    for (slot <- 0 until config.issueQueueEntriesPerPort) {
-      val slotEnqueue = enqueueFire &&
-        enqueueSlot === U(slot, log2Up(config.issueQueueEntriesPerPort) bits)
-      val slotIssue = queueDequeue &&
-        issueSlot === U(slot, log2Up(config.issueQueueEntriesPerPort) bits)
-
-      when(slotEnqueue) {
-        slotValid(slot) := True
-      }.elsewhen(slotIssue) {
-        slotValid(slot) := False
-      }
-
-      when(slotEnqueue) {
-        payloadSlots(slot) := enqueued
-      }.otherwise {
-        when(wakeupSlot1(slot)) { payloadSlots(slot).source1Ready := True }
-        when(wakeupSlot2(slot)) { payloadSlots(slot).source2Ready := True }
-      }
-    }
-
-    when(queueDequeue) {
-      for (entry <- 0 until config.issueQueueEntriesPerPort - 1) {
-        when(
+    for (entry <- 0 until config.issueQueueEntriesPerPort) {
+      val entryEnqueue = enqueueFire &&
+        enqueueIndex === U(entry, log2Up(config.issueQueueEntriesPerPort) bits)
+      if (entry < config.issueQueueEntriesPerPort - 1) {
+        val entryShift = queueDequeue &&
           U(entry, count.getWidth bits) >= issueIndexWide &&
-            U(entry + 1, count.getWidth bits) < count
-        ) {
-          order(entry) := order(entry + 1)
+          U(entry + 1, count.getWidth bits) < count
+        when(entryEnqueue) {
+          queue(entry) := enqueued
+        }.elsewhen(entryShift) {
+          queue(entry).decoded := queue(entry + 1).decoded
+          queue(entry).pdst := queue(entry + 1).pdst
+          queue(entry).oldPdst := queue(entry + 1).oldPdst
+          queue(entry).psrc1 := queue(entry + 1).psrc1
+          queue(entry).psrc2 := queue(entry + 1).psrc2
+          queue(entry).source1Ready :=
+            queue(entry + 1).source1Ready || wakeupEntry1(entry + 1)
+          queue(entry).source2Ready :=
+            queue(entry + 1).source2Ready || wakeupEntry2(entry + 1)
+          queue(entry).robPointer := queue(entry + 1).robPointer
+          queue(entry).recoveryEpoch := queue(entry + 1).recoveryEpoch
+          queue(entry).loadQueueIndex := queue(entry + 1).loadQueueIndex
+          queue(entry).storeQueueIndex := queue(entry + 1).storeQueueIndex
+        }.otherwise {
+          when(wakeupEntry1(entry)) { queue(entry).source1Ready := True }
+          when(wakeupEntry2(entry)) { queue(entry).source2Ready := True }
+        }
+      } else {
+        when(entryEnqueue) {
+          queue(entry) := enqueued
+        }.otherwise {
+          when(wakeupEntry1(entry)) { queue(entry).source1Ready := True }
+          when(wakeupEntry2(entry)) { queue(entry).source2Ready := True }
         }
       }
-      when(enqueueFire) {
-        val destination = (count - U(1, count.getWidth bits)).resized
-        order(destination(log2Up(config.issueQueueEntriesPerPort) - 1 downto 0)) := enqueueSlot
-      }
-    }.elsewhen(enqueueFire) {
-      order(count(log2Up(config.issueQueueEntriesPerPort) - 1 downto 0)) := enqueueSlot
     }
     count := count + enqueueFire.asUInt - queueDequeue.asUInt
   }
