@@ -11,6 +11,7 @@ final case class OooL1DataMshr(config: OooCoreConfig) extends Bundle {
   val valid = Bool()
   val state = OooL1DataMshrState()
   val lineAddress = UInt(config.xlen bits)
+  val criticalBeat = UInt(OooCacheContract.BeatIndexWidth bits)
   val victimWay = UInt(log2Up(config.dataCache.ways) bits)
   val victimAddress = UInt(config.xlen bits)
   val refillMask = Bits(OooCacheContract.BeatsPerLine bits)

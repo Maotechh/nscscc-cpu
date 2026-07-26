@@ -6,24 +6,24 @@
 
 当前官方顶层已经实例化 `openla500.core.OooCoreSystem(OooCoreConfig.FourIssueThreeCommit)`。旧 `SpinalCoreBackend` 和 `openla500.pipeline` 不再参与生成；保留下来的少量 `OpenLa500*` leaf 模块仅供仍被 OoO 核复用的 ALU、乘除法、CSR、TLB 或独立合同测试使用。
 
-当前本地验证候选（2026-07-26，生成 RTL SHA-256 `c5397660cb65af524de513b52a919578886346c964767c0c0511b6d0b44ee142`）如下：
+当前本地验证候选（2026-07-26，生成 RTL SHA-256 `27f45f359ade94ced4c323da8d5748f8bcd21399ff08c164355d1b9add019a4b`）如下：
 
 | 检查 | 结果 |
 | --- | --- |
-| Scala/Spinal/Verilator | 35 suites，112 tests，112 passed，0 failed，0 aborted |
+| Scala/Spinal/Verilator | 36 suites，124 tests，124 passed，0 failed，0 aborted |
 | Python repository gates | 362 tests，362 passed，0 failed/error |
 | core_top package/port contract | pass，49 ports，17 inputs，32 outputs，`TLBNUM=32` |
-| Verilator complete-top lint | pass，781 条精确签名审计后 closure 为 0 warning/error |
+| Verilator complete-top lint | pass，844 条精确签名审计后 closure 为 0 warning/error |
 | Yosys 结构检查 | pass，Yosys 0.33，无 warning/skip |
 | chiplab `func/func_lab19` + NEMU DiffTest | pass，syscall 结束并到达 end PC |
-| 官方仿真计数 | 139,654 committed instructions，538,555 clocks，IPC 0.259312 |
+| 官方仿真计数 | 139,693 committed instructions，533,744 clocks，IPC 0.261723 |
 | Vivado 2023.2 synthesis | 0 errors，0 critical synthesis warnings，DCP/report 生成成功 |
 
-Vivado 独立 DRC 报告仍有无约束顶层 I/O 的 NSTD-1/UCIO-1 critical warning；这是未提供板级 XDC 的 standalone 综合，不是 RTL elaboration 或 synthesis error。在 standalone 100 MHz（10 ns）时钟约束下，所有时序约束已经满足：WNS `+0.292 ns`，TNS `0 ns`，失败端点为 0。该结果不含官方 SoC、板级 XDC、placement 和 routing，不能据此声称完整设计已经在板上闭合 100 MHz。
+Vivado 独立 DRC 报告仍有无约束顶层 I/O 的 NSTD-1/UCIO-1 critical warning；这是未提供板级 XDC 的 standalone 综合，不是 RTL elaboration 或 synthesis error。在 standalone 100 MHz（10 ns）时钟约束下，所有时序约束已经满足：WNS `+0.359 ns`，TNS `0 ns`，失败端点为 0。该结果不含官方 SoC、板级 XDC、placement 和 routing，不能据此声称完整设计已经在板上闭合 100 MHz。当前候选尚未产生新的完整 SoC routed DCP；最近一次已提交候选的完整 route 仍是 `2c376d7` 的 WNS `-0.562604 ns`，因此 100 MHz 完整设计尚未闭合。
 
-完整顶层 lint 有 781 条审计项，类别只有 `UNUSEDSIGNAL` 和 `CMPCONST`，精确签名为 `5e4fbab6ffdbd2d1438847a3fc27143fa67d35fa3fa2bc09affddedfffc319fb`。大部分来自统一 uop/commit/cache/translation Bundle 在具体路径中只消费部分字段、综合时关闭的 DiffTest 状态输入，以及官方 debug/兼容端口必须保留。ALE 路径不再复制随后必定被覆盖的 decoded exception 字段；本轮新增的 5 条名称来自 per-lane registered epoch qualification。它们不是“以后会用”的功能预留；能在 Scala 结构层安全删除的字段应继续删除，但跨模块固定 Bundle 中的未消费字段由生成器保留更清晰。`reference/core-top-lint-waivers.json` 同时锁定 RTL SHA-256、warning 数量、类别和签名哈希，先运行无抑制审计，再只对完全匹配的签名执行 clean closure。它不是允许新增 warning 的全局开关。
+完整顶层 lint 有 844 条审计项，类别只有 `UNUSEDSIGNAL` 和 `CMPCONST`，精确签名为 `10013d4b67d69396cce21460233cf3189d0c99b9bc6b96368b4eb8ca3baa9139`。大部分来自统一 uop/commit/cache/translation Bundle 在具体路径中只消费部分字段、综合时关闭的 DiffTest 状态输入，以及官方 debug/兼容端口必须保留。本轮新增的 Store-data queue、direct wakeup 和 critical-beat 合同也会在不消费对应字段的测试/层次中形成精确可复现的未使用项。它们不是“以后会用”的功能预留；能在 Scala 结构层安全删除的字段应继续删除，但跨模块固定 Bundle 中的未消费字段由生成器保留更清晰。`reference/core-top-lint-waivers.json` 同时锁定 RTL SHA-256、warning 数量、类别和签名哈希，先运行无抑制审计，再只对完全匹配的签名执行 clean closure。它不是允许新增 warning 的全局开关。
 
-综合资源（`xc7a200tfbg676-2`，flatten hierarchy rebuilt）：78,574 LUT、42,634 FF、46 RAMB36、16 RAMB18、4 DSP。其中 ROB 为 30,612 LUT / 9,175 FF，LSQ 为 1,837 LUT / 2,139 FF，L1D 为 6,144 LUT / 1,982 FF，L1I 为 2,614 LUT / 995 FF，L2 为 4,313 LUT / 3,599 FF。MSHR line bank 化和单项 merged-store 缓冲保留四个在途 miss；LSQ 的窄异常完成缓冲使普通对齐 AGU `ready` 与 completion 仲裁解耦。ROB 把 completion epoch 合法性与 payload 同拍寄存，保持原有下一拍 wakeup，同时阻止 `currentEpoch` 经 IQ oldest-ready 选择驱动 issue uop 寄存器。LSQ completion payload 也改为每拍采样、由独立 valid 决定可见性；只有 LL 响应生成退休时需要的 `sideEffectData`，普通转发不再驱动整条 payload 的条件清零。100 MHz WNS/TNS/失败端点为 `+0.292 ns / 0 ns / 0`；standalone 最差路径仍是 ROB serializing 状态至 predictor PHT enable。最终 8 线程综合证据的 `timing.rpt` SHA-256 为 `561d34595c58be8fc9f1cd944a60c5282dcdba1e8b9cc5b37886e4dace195d1d`，`utilization.rpt` SHA-256 为 `e5460eca0c9b498bd36542788ce8312ad74de8360b05a8013733fb9e49d69a9e`，DRC SHA-256 为 `467b1e1195cebfa337976a5470e6d3741f231532287be838d829ae41d473bf10`，DCP SHA-256 为 `54f13a1408a6b206fdcd7bbb44356b5b271ec5acad7f01c39f78fb2be8b6f31f`。
+综合资源（`xc7a200tfbg676-2`，flatten hierarchy rebuilt）：71,070 LUT、39,450 FF、58 RAMB36、16 RAMB18、4 DSP。其中 ROB 为 28,741 LUT / 5,717 FF，LSQ 为 2,003 LUT / 2,156 FF，L1D 为 6,017 LUT / 1,994 FF，L1I 为 2,638 LUT / 995 FF，L2 为 4,328 LUT / 3,626 FF。ROB payload 改为同步 bank 预取，retirement hot control 与大 payload 分离；这也是本轮 LUT/FF 下降的主要来源。ALU 和固定延迟 MUL 使用窄 tag 提前唤醒，MUL 数据在 PRF operand 边界转发；Store 地址进入 LSU IQ，Store 数据进入独立 8-entry queue，二者按 ROB/STQ identity 在 LSQ 汇合。100 MHz WNS/TNS/失败端点为 `+0.359 ns / 0 ns / 0`。最终 8 线程综合证据的 `timing.rpt` SHA-256 为 `22a11cde5fbce5fd4e932e60a87564a1720ebfb93c934024b7b9c65d986683d6`，`utilization.rpt` SHA-256 为 `5f0a96cf5369a9e1ae9dffab05bda4d073f16d19adc533e05c4e613f057d9fd1`，DRC SHA-256 为 `893ff5c9a3be27bddeb5a02284eab827da4e2666f95edad3db81f91674daceef`，DCP SHA-256 为 `ff797bd237f7f982ced6eb5ca3b9ddededcc7c478779fbb4ed15b253bec2426a`。
 
 已提交的 LSQ 时序版本 `7ada9ba51e7e69b5e6c95a45dcf1984a4114a022` 完成了官方完整 SoC implementation：100 MHz WNS `-0.535200 ns`、TNS `-95.344513 ns`、90,110 slice LUT、55,281 registers、DRC 0 error、bitstream 成功。它比 banked MSHR 提交 `40a3b53` 的 `-0.977163/-1228.851318 ns` 继续改善，但仍未闭合。最差 CPU 路径变为 `recoveryEpoch_reg[1]` 经 ROB wakeup 和 IQ oldest-ready 选择到 `issueAddressUop_1.decoded.immediate`，10.386 ns 数据路径中 84.5% 为布线。锁定 package SHA-256 为 `a02b2b72ba0d3ab53a4cc80f6a1baf6d2328684b2796e467b45329572070101b`，包内全部 artifact 哈希已逐项验证。远端 `func58` Job `20260725-210149-13a43932` 仍在 programming 阶段因实验箱 `There is no current hw_target` 结束为 `infra_error`，没有 programming/VIO/DUT 结论。
 
@@ -60,6 +60,7 @@ spinal/src/main/scala/openla500/
 | Physical registers / ROB | 64 / 32 |
 | Instruction buffer / dispatch queue | 8 / 8 |
 | Per-port IQ / LDQ / STQ | 8 / 8 / 8 |
+| Store-data queue | 8 |
 | MSHR | 4 |
 | L1I / L1D | 2-way，64 sets，64B line，8 KiB each |
 | Shared L2 | 2-way，512 sets，64B line，64 KiB |
@@ -82,11 +83,11 @@ L1I/translation -> OooFrontend(fetch4) -> OooDecodeRenameBuffer
 
 * 前端以 64B cache line 为填充单位，每个请求向解码侧提供四条 32-bit 指令；当前组等待 I-cache 响应时，翻译端可以预先处理下一个对齐 16B 顺序组，并缓存翻译结果或异常。direct/DMW instruction 请求在接受拍直接寄存物理地址、MAT 和 ADEF 元数据，只有分页请求进入 TLB pending。`OooBankedFetchPredictor` 按四个 fetch lane 分银行，每银行含 128-entry 同步 BTB、1024-entry 2-bit PHT，并共享 8-bit GHR 和 8-entry speculative/architectural RAS。条件分支在方向尚未完成提交训练时使用 BTFNT；提交边界训练精确方向、目标和 RAS，响应级 cold learning 只补一条确定的 direct branch。L1I/uncached AXI 在寄存响应旁生成 `OooFetchPredecode`，前端不再把 opcode 译码放在响应到状态更新的组合路径上。FixBranch 在响应拍比较提前预测与实际预解码：错误的 cached handoff 被阻止，已接受且不可取消的 uncached 请求由 `cacheDropPending` 排空，旧响应不能冒充纠正目标。预测结果随 fetch slot 入队，decode 不会因表更新而重算；分支 completion 恢复仍统一 flush frontend、rename buffer、IQ、ROB younger entries 和 LSQ。
 * rename 同时分配 physical destination、ROB pointer、LDQ/STQ index。只有 `writesGpr && rd != 0` 的 uop 才携带 FreeList 给出的 `pdst`；写 `r0` 或无 GPR 目的的 uop 固定使用 `pdst=0`，不能误唤醒随后分配同一自由表标签的真实生产者。RAT 是投机映射，commit 时更新 architectural mapping 并释放旧 physical register；FreeList 使用 ysyx 风格的 `head/architecturalHead/tail` 环形队列，flush 只回退 speculative head 和 free count，commit 不会在 flush 边界写入回收槽位。
-* IQ 按执行端口能力选择 ready uop；serial/CSR/TLB/CACOP/IDLE 等操作必须等 ROB head，不能因为执行端空闲而越过更老指令。
+* IQ 按执行端口能力选择 ready uop；serial/CSR/TLB/CACOP/IDLE 等操作必须等 ROB head，不能因为执行端空闲而越过更老指令。单周期 ALU 和固定延迟 MUL 可在结果进入通用 completion 仲裁前用窄 `valid/pdst` 唤醒依赖者；数据仍只在 PRF operand 边界转发，不把 32-bit 结果送入 IQ oldest-ready 选择网络。
 * 分支在执行端比较实际 taken/target。错误预测 completion 生成 `OooRecoveryRequest`，目标 PC 和异常元数据一起保存，避免把普通 serial stall 当作 branch recovery。
-* load 必须保留 ROB/LDQ 顺序、size/sign-extension 和目标 pdst。LSQ 的 cache request 输出有一拍寄存缓冲，flush 时丢弃未发出的 speculative load；已接受的 load 不再阻塞后续独立 load 发射，cache response 用完整 ROB generation pointer 在全部 8 个 LDQ entry 中匹配，不依赖当前 `loadHead`。store 保持在 SQ，只有 ordered commit 后才允许对 cache/uncached 总线产生写副作用。无副作用的 direct/DMW 数据地址翻译可以与未解析的老 store 地址并行，真正的 D-cache 请求仍等待 store-order/forwarding 检查完成。
+* load 必须保留 ROB/LDQ 顺序、size/sign-extension 和目标 pdst。LSQ 的 cache request 输出有一拍寄存缓冲，flush 时丢弃未发出的 speculative load；已接受的 load 不再阻塞后续独立 load 发射，cache response 用完整 ROB generation pointer 在全部 8 个 LDQ entry 中匹配，不依赖当前 `loadHead`。Store 地址只等待 base operand 后即可进入 AGU/翻译，Store 数据由独立 8-entry `OooStoreDataQueue` 等待 `psrc2` 并写入同一 STQ entry；地址与数据都到齐后 ROB 才允许普通 Store 完成，异常或失败 SC 走精确例外。只有 ordered commit 后才允许对 cache/uncached 总线产生写副作用。无副作用的 direct/DMW 数据地址翻译可以与未解析的老 store 地址并行，真正的 D-cache 请求仍等待 store-order/forwarding 检查完成。
 * LSQ 用退休同步的 `loadBase` 旋转 pending bitmap，并在其后寄存调度槽位；首次分配组只用 ROB age 初始化 base。这样既支持物理槽位绕回，又把选择网络与 ROB completion 写使能隔开，调度延迟增加一拍但稳态仍每拍可推进一个 LSU 请求。调度 mask 排除 `requestSent` entry，但不等待更老请求返回；老 store 未解析、部分覆盖和 forwarding 规则仍可阻止不安全的年轻 load。
-* ROB 在 completion 到达拍完成 valid、generation pointer 和未完成状态检查，并寄存 accepted one-hot 目标以及 result、pdst、writesPdst、side-effect、exception、branch payload。下一拍同一个 stage 一方面写入 ROB entry/开放 commit，另一方面直接向 IQ、PRF 和 ready-map 提供物理写回，不再经过后端第二套 completion 寄存器；依赖唤醒和 PRF 写入的周期没有增加。flush 会屏蔽 staged wakeup 并清空 one-hot，重复或 stale completion 不会写入已经复用的 entry。
+* ROB 在 completion 到达拍完成 valid、generation pointer 和未完成状态检查，并寄存 accepted one-hot 目标以及 result、pdst、writesPdst、side-effect、exception、branch payload。下一拍同一个 stage 一方面写入 ROB entry/开放 commit，另一方面直接向 IQ、PRF 和 ready-map 提供物理写回，不再经过后端第二套 completion 寄存器；依赖唤醒和 PRF 写入的周期没有增加。commit payload 按三提交 lane 进行同步 bank 预取，valid/complete/exception/serial 等 hot control 保留窄寄存状态，避免 182-bit entry 异步 mux 落在退休和 predictor 更新路径。flush 会屏蔽 staged wakeup 并清空 one-hot，重复或 stale completion 不会写入已经复用的 entry。
 * ROB 以 program order 提交最多三条。异常、ERTN、CSR、TLB、cache operation 和 barrier 都在 head 处理；外部 `OooCoreSystem` 在该边界接管 eentry/tlbrentry/ERA 和 CSR 更新，保证 precise exception。
 * Chiplab 多提交适配按 lane 输出 instruction/load/store 事件，但异常、CSR 和架构状态是单一全局流。DPI 适配不是提交逻辑的旁路，不能用 debug 端口替代内部 commit。
 
@@ -127,13 +128,13 @@ L1I/translation -> OooFrontend(fetch4) -> OooDecodeRenameBuffer
 
 ### Cache/AXI line 边界
 
-`OooCacheContract` 固定 `LineBytes=64`、`BeatBytes=8`、每行 8 个内部 beat。L1I/L1D 共享 `OooSharedCacheHierarchy` 的 L2 和 `OooSharedReadMshrRouter`。router 是 4 个全局 line-read ID 的唯一所有者，记录 instruction/data owner 和 client local ID；未知返回 ID 不会被转发。L1I 当前仍只有一个 local miss context，但能与多个 L1D/L2 miss 并存。
+`OooCacheContract` 固定 `LineBytes=64`、`BeatBytes=8`、每行 8 个内部 beat。`OooLineReadRequest` 携带 line address、MSHR ID 和 3-bit `criticalBeat`。L1I/L1D 共享 `OooSharedCacheHierarchy` 的 L2 和 `OooSharedReadMshrRouter`。router 是 4 个全局 line-read ID 的唯一所有者，记录 instruction/data owner 和 client local ID，并原样下传 critical beat；未知返回 ID 不会被转发。L1I 当前仍只有一个 local miss context，但能与多个 L1D/L2 miss 并存。
 
-L1D 有 4 个实际 MSHR 和 8 个 load waiter。同 line load/store 合并，同 set 不同 line 保守串行，其他 set 和 cache hit 可在 miss 下继续。每个 MSHR 保存地址、victim 元数据、refill mask/error 和 waiter 状态；8 个浅层 64-bit bank 保存四条在途 line 的 refill beat，避免每个 MSHR 复制完整 512-bit line 寄存器。dirty victim 使用一个全局缓冲并串行写回；merged store 进入单项 pending-store 缓冲，应用时更新对应 bank 和 byte mask。最后一个 refill beat 与 pending store 的竞争会延迟 install，确保 store byte 优先，再按 waiter 的 physical address、ROB pointer 和 pdst 返回 load。
+L1D 有 4 个实际 MSHR 和 8 个 load waiter。同 line load/store 合并，同 set 不同 line 保守串行，其他 set 和 cache hit 可在 miss 下继续。每个 MSHR 保存地址、critical beat、victim 元数据、refill mask/error 和 waiter 状态；8 个浅层 64-bit bank 保存四条在途 line 的 refill beat，避免每个 MSHR 复制完整 512-bit line 寄存器。waiter 的目标 beat 一到达即可返回 load，MSHR 仍继续收齐其余 beat 并安装整行。dirty victim 使用一个全局缓冲并串行写回；merged store 进入单项 pending-store 缓冲，应用时更新对应 bank 和 byte mask。最后一个 refill beat 与 pending store 的竞争会延迟 install，确保 store byte 优先。
 
 L2 以恢复后的全局 ID 直接索引 4 个 MSHR，支持不同 set 并行、hit-under-miss 和任意 ID 交错的 refill；8 个浅层 beat bank 保存四条 refill line，单项 dirty victim 缓冲负责写回。demand refill beat 在写入 L2 bank 的同拍流式返回请求 L1，最后一拍之后安装完整 line。命中数据先进入 registered hit-capture，再顺序写入 bank 并由单项输出寄存器返回；外部 refill 保持直接流式路径，因此正常 refill 不额外增加关键字延迟。L1I 在请求 16B group 就绪时先返回，并用 `refillReplayPending` 把同线已就绪 group 的响应延后一拍，切断 response-to-response/predecode 时序环。
 
-`OooAxiLineBridge` 把 cached read 映射到 AXI ID 4..7，每个 ID 分别保存 active、32-bit half、error 和 beat index，因此最多保留 4 个已发 AR 的 64B burst，并接受交错 R 返回。高 32-bit half 只在 64-bit 输出寄存器为空时接收，切断 cache backpressure 到 AXI `rready` 的组合路径；正常 low/high 序列仍可每拍接收一个 32-bit word。IDs 2/3 分别保留给 uncached instruction/data read。line write 和 uncached traffic 仍全局有序，data 访问保留 size、byte mask 和 write response backpressure。
+`OooAxiLineBridge` 把 cached read 映射到 AXI ID 4..7，每个 ID 分别保存 active、32-bit half、error、beat index 和返回计数，因此最多保留 4 个已发 AR 的 64B burst，并接受交错 R 返回。数据侧 miss 使用 16 个 32-bit transfer 的 WRAP burst，从 `criticalBeat * 8` 开始并在 64B 边界回绕；`last` 由独立 8-beat 计数器判定，不能错误地把地址 beat 7 当作固定末拍。I 侧 `criticalBeat` 当前固定为 0：A/B 测试表明 I-side critical-first 会把 `func_lab19` 从 533,744 退化到 536,336 cycles，因此未保留。高 32-bit half 只在 64-bit 输出寄存器为空时接收，切断 cache backpressure 到 AXI `rready` 的组合路径；正常 low/high 序列仍可每拍接收一个 32-bit word。IDs 2/3 分别保留给 uncached instruction/data read。line write 和 uncached traffic 仍全局有序，data 访问保留 size、byte mask 和 write response backpressure。
 
 ### Privileged/maintenance
 
@@ -202,7 +203,7 @@ Vivado standalone 综合（PowerShell）：
 3. 任何宽度/队列/line geometry 改动都必须同时更新 `OooCoreConfig` 的 require、对应 directed test、官方仿真和 Vivado 资源/时序记录；不能只改生成参数。
 4. 先验证功能，再看时序。当前 standalone 100 MHz WNS 为正；不能用综合约束屏蔽真实路径，也不能把 standalone synthesis 扩大为 complete-SoC timing closure。远程 `perf20` 三次真实测试尚未执行，不能把本地仿真收益当作 FPGA 性能结论。
 5. 官方 `func_lab19` 通过不等于 full random、Linux、FPGA 或比赛性能全部通过。每轮性能结论要记录实际 workload、时钟、seed、commit 和报告哈希。
-6. 当前候选已通过功能、端口、Yosys、synthesis 和 standalone 100 MHz timing；下一轮性能或时序修改必须重新跑 Scala 112 项、官方 DiffTest 和 Vivado，而不是只比较 RTL 文本。当前候选的官方计数为 538,555 clocks，standalone Vivado WNS 为 `+0.292 ns`。Vivado 主机策略固定为 `general.maxThreads=8`，没有显式设置并发数的 `launch_runs` 默认使用 `-jobs 4`。
+6. 当前候选已通过功能、端口、Yosys、synthesis 和 standalone 100 MHz timing；下一轮性能或时序修改必须重新跑 Scala 124 项、官方 DiffTest 和 Vivado，而不是只比较 RTL 文本。当前候选的官方计数为 533,744 clocks，standalone Vivado WNS 为 `+0.359 ns`。Vivado 主机策略固定为 `general.maxThreads=8`，没有显式设置并发数的 `launch_runs` 默认使用 `-jobs 4`。
 
 ## 优化试验记录
 
@@ -221,5 +222,7 @@ Vivado standalone 综合（PowerShell）：
 | LSQ 地址不对齐异常完成缓冲 | 538,555 cycles，`END by Syscall` | `+0.359 ns` | 普通 AGU ready 与 load/translation completion 仲裁解耦；本地 111/111、DiffTest 和 standalone 时序通过，周期不变，完整 SoC 尚待验证 |
 | ROB completion epoch 同拍寄存 | 538,555 cycles，`END by Syscall` | `+0.292 ns` | 隔离 currentEpoch 到 IQ oldest-ready 长路径；本地 112/112、DiffTest 和 standalone 时序通过，周期不变，完整 SoC 尚待验证 |
 | LSQ completion payload/valid 解耦 | 538,555 cycles，`END by Syscall` | `+0.292 ns` | payload 每拍采样且 LL sidecar 独立生成，切断 forwarding 到 32-bit 条件清零；本地 112/112、362/362、DiffTest 和 standalone 时序通过，完整 SoC 尚待验证 |
+| ROB 同步提交 bank、ALU/MUL 提前唤醒、Store 地址/数据解耦 | 533,744 cycles，`END by Syscall` | `+0.359 ns` | 相对 `d126f57` 减少 4,811 cycles（0.893%），并把 standalone 资源降至 71,070 LUT / 39,450 FF；本地 124/124、362/362 和 DiffTest 通过 |
+| I-side AXI critical-first refill | 536,336 cycles，`END by Syscall` | 未单独综合 | 相对当前候选退化 2,592 cycles（0.486%），关闭；D-side critical-first 单独启用仍为 533,744 cycles |
 
-这些试验说明：响应级异步大表或单纯扩容会用很大的面积/时序代价换取很小的周期收益；同步 banked 预测器和真实并发 MSHR 才能保留寄存边界。当前 MSHR 候选已证明四个 ID 的端到端并发和本地功能正确，但 `func_lab19` 只改善 0.0347%，必须以完整 SoC 时序和三次真实 `perf20` 判断是否保留。当前首先完成 registered epoch 修复的完整 SoC 验证并继续闭合 100 MHz；时序成立后再依次实现 ALU/MUL 零周期转发、store 地址/数据解耦，并依据性能计数器选择前端或 ROB/IQ 优化。
+这些试验说明：响应级异步大表或单纯扩容会用很大的面积/时序代价换取很小的周期收益；同步 banked 状态、窄 tag 唤醒和真实并发 MSHR 才能保留寄存边界。ALU/MUL 提前唤醒和 Store 地址/数据解耦已经实现，L1D 也能在目标 beat 到达时提前返回。下一决定性门禁是基于完整 commit 的 100 MHz SoC placement/routing、`func58` 和三次真实 `perf20`；在这些结果出来前，不能把 0.893% 本地周期改善或正 standalone WNS 描述为板上性能提升或时序闭合。

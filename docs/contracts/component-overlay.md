@@ -83,7 +83,7 @@ doctor、overlay、smoke 必须共用 `OUT_DIR`；doctor 与 overlay 必须共�
 - source Git tree mode 只能是 `100644` 或 `100755` 普通 blob；拒绝 `120000` symlink、submodule、目录和 path traversal。
 - `base_sha256` 必须匹配 `a158aa8:<target>`；`replacement_sha256` 必须匹配 `<source-head>:<source>`。
 - replacement 内只允许 literal `` `include "mycpu.h"``；拒绝绝对/相对其他 include 和宏展开 include。spec 不能引入额外 support HDL。
-- replacement 禁止本地 `` `define/`undef``、token-paste、历史 base 未引用的新宏、`$readmemh/$readmemb`、文件 I/O、dump/random、plusargs、`$system` 和 DPI 等未绑定外部依赖。所有可写 simulator log 或改变仿真终止状态的 system task 也必须拒绝，包括 `$display/$write/$monitor/$strobe` 及其文件/进制 variants，以及 `$finish/$stop/$fatal/$error/$warning/$info/$exit`。其他未知 `$identifier` 默认拒绝；只允许代码中明确列出的无外部副作用 elaboration/bit-query function allowlist，例如 `$signed/$unsigned/$clog2/$bits`。扫描忽略注释和字符串。内联 lint 注解默认拒绝；唯一例外是 `rtl/mycpu_top.v` 中由 package gate 生成并严格核对作用域的 21 对 `DECLFILENAME`、36 对声明级 `UNUSEDSIGNAL` 和一对 DiffTest-disabled shell `UNUSEDSIGNAL` 注解。数量、类别、配对或位置任一漂移都拒绝。未来若活动功能确需其他输入或注解，必须先扩展合同并记录 Git blob、SHA256 和 overlay target。
+- replacement 禁止本地 `` `define/`undef``、token-paste、历史 base 未引用的新宏、`$readmemh/$readmemb`、文件 I/O、dump/random、plusargs、`$system` 和 DPI 等未绑定外部依赖。所有可写 simulator log 或改变仿真终止状态的 system task 也必须拒绝，包括 `$display/$write/$monitor/$strobe` 及其文件/进制 variants，以及 `$finish/$stop/$fatal/$error/$warning/$info/$exit`。其他未知 `$identifier` 默认拒绝；只允许代码中明确列出的无外部副作用 elaboration/bit-query function allowlist，例如 `$signed/$unsigned/$clog2/$bits`。扫描忽略注释和字符串。内联 lint 注解默认拒绝；唯一例外是 `rtl/mycpu_top.v` 中由 package gate 生成并严格核对作用域的 41 对 module-scoped `DECLFILENAME` 和 7 对 `UNUSEDSIGNAL` 注解。数量、类别、配对或位置任一漂移都拒绝。未来若活动功能确需其他输入或注解，必须先扩展合同并记录 Git blob、SHA256 和 overlay target。
 
 ## 导出与 overlay 不变量
 

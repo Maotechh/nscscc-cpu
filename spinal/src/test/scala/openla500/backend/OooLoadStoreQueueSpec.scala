@@ -11,6 +11,7 @@ private final class OooLoadStoreQueueProbe(config: OooCoreConfig) extends Compon
   val io = new Bundle {
     val allocateValid = in Bits (config.renameWidth bits)
     val allocate = in Vec (OooLsqAllocate(config), config.renameWidth)
+    val storeDataEnable = in Bool ()
     val aguValid = in Bool ()
     val agu = in(OooAguRequest(config))
     val aguReady = out Bool ()
@@ -41,6 +42,10 @@ private final class OooLoadStoreQueueProbe(config: OooCoreConfig) extends Compon
   val translationAddress = Reg(UInt(config.xlen bits))
   lsq.io.allocateValid := io.allocateValid
   lsq.io.allocate := io.allocate
+  lsq.io.storeDataValid := io.aguValid && io.agu.isWrite && io.storeDataEnable
+  lsq.io.storeDataRobPointer := io.agu.uop.robPointer
+  lsq.io.storeDataStoreQueueIndex := io.agu.uop.storeQueueIndex
+  lsq.io.storeData := io.agu.writeData
   lsq.io.aguValid := io.aguValid
   lsq.io.agu := io.agu
   lsq.io.commitValid := io.commitValid
@@ -90,6 +95,7 @@ class OooLoadStoreQueueSpec extends AnyFunSuite {
 
   private def clearInputs(dut: OooLoadStoreQueueProbe): Unit = {
     dut.io.allocateValid #= 0
+    dut.io.storeDataEnable #= true
     dut.io.aguValid #= false
     dut.io.commitValid #= 0
     dut.io.dataRequestReady #= false
@@ -509,6 +515,116 @@ class OooLoadStoreQueueSpec extends AnyFunSuite {
         assert(dut.io.releaseStoreValid.toBigInt == 1)
         sample(dut)
         assert(!dut.io.dataRequestValid.toBoolean)
+      }
+  }
+
+  test("Store translation may finish before its independently scheduled data") {
+    SimConfig.withVerilator
+      .workspacePath("target/sim-workspace-ooo-lsq")
+      .compile(new OooLoadStoreQueueProbe(config))
+      .doSim("ooo-lsq-store-address-before-data", 0x4c5a) { dut =>
+        dut.clockDomain.forkStimulus(period = 10)
+        clearInputs(dut)
+        dut.clockDomain.assertReset()
+        dut.clockDomain.waitSampling(2)
+        dut.clockDomain.deassertReset()
+        sample(dut)
+
+        dut.io.allocateValid #= 1
+        dut.io.allocate(0).robPointer #= 4
+        dut.io.allocate(0).isStore #= true
+        dut.io.allocate(0).storeQueueIndex #= 0
+        sample(dut)
+        dut.io.allocateValid #= 0
+
+        dut.io.storeDataEnable #= false
+        setStoreAgu(dut, 4, 0x104, BigInt("a5a55a5a", 16))
+        sample(dut)
+        dut.io.aguValid #= false
+
+        // Address translation is allowed to finish, but the ROB completion
+        // must wait because recovery would otherwise be able to discard the
+        // only pending copy of architectural Store data.
+        for (_ <- 0 until 5) {
+          sample(dut)
+          assert(!dut.io.completionValid.toBoolean)
+        }
+
+        dut.io.storeDataEnable #= true
+        dut.io.aguValid #= true
+        sample(dut)
+        dut.io.aguValid #= false
+
+        var completionWait = 0
+        while (!dut.io.completionValid.toBoolean && completionWait < 6) {
+          sample(dut)
+          completionWait += 1
+        }
+        assert(dut.io.completionValid.toBoolean)
+        assert(dut.io.completion.robPointer.toBigInt == 4)
+
+        dut.io.commitValid #= 1
+        dut.io.commit(0).robPointer #= 4
+        dut.io.commit(0).isStore #= true
+        dut.io.commit(0).storeQueueIndex #= 0
+        sample(dut)
+        dut.io.commitValid #= 0
+        var requestWait = 0
+        while (!dut.io.dataRequestValid.toBoolean && requestWait < 6) {
+          sample(dut)
+          requestWait += 1
+        }
+        assert(dut.io.dataRequestValid.toBoolean)
+        assert(dut.io.dataRequest.writeData.toBigInt == BigInt("a5a55a5a", 16))
+      }
+  }
+
+  test("a byte Store aligns raw data to its selected write lane") {
+    SimConfig.withVerilator
+      .workspacePath("target/sim-workspace-ooo-lsq")
+      .compile(new OooLoadStoreQueueProbe(config))
+      .doSim("ooo-lsq-byte-store-alignment", 0x4c5e) { dut =>
+        dut.clockDomain.forkStimulus(period = 10)
+        clearInputs(dut)
+        dut.clockDomain.assertReset()
+        dut.clockDomain.waitSampling(2)
+        dut.clockDomain.deassertReset()
+        sample(dut)
+
+        dut.io.allocateValid #= 1
+        dut.io.allocate(0).robPointer #= 4
+        dut.io.allocate(0).isStore #= true
+        dut.io.allocate(0).storeQueueIndex #= 0
+        sample(dut)
+        dut.io.allocateValid #= 0
+
+        setStoreAgu(dut, 4, 0x102, BigInt("25474bf0", 16))
+        dut.io.agu.size #= 0
+        dut.io.agu.byteMask #= 4
+        sample(dut)
+        dut.io.aguValid #= false
+
+        var completionWait = 0
+        while (!dut.io.completionValid.toBoolean && completionWait < 8) {
+          sample(dut)
+          completionWait += 1
+        }
+        assert(dut.io.completionValid.toBoolean)
+        dut.io.commitValid #= 1
+        dut.io.commit(0).robPointer #= 4
+        dut.io.commit(0).isStore #= true
+        dut.io.commit(0).storeQueueIndex #= 0
+        sample(dut)
+        dut.io.commitValid #= 0
+
+        var requestWait = 0
+        while (!dut.io.dataRequestValid.toBoolean && requestWait < 8) {
+          sample(dut)
+          requestWait += 1
+        }
+        assert(dut.io.dataRequestValid.toBoolean)
+        assert(dut.io.dataRequest.byteMask.toBigInt == 4)
+        assert(dut.io.dataRequest.writeData.toBigInt == BigInt("00f00000", 16))
       }
   }
 

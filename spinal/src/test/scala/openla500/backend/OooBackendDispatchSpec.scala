@@ -27,6 +27,18 @@ private final class OooBackendDispatchProbe(config: OooCoreConfig) extends Compo
     val completionPdst = in UInt (config.physicalRegIndexWidth bits)
     val completionWritesPdst = in Bool ()
     val completionData = in Bits (config.xlen bits)
+    val multiplyWakeupValid = in Bool ()
+    val multiplyWakeupPdst = in UInt (config.physicalRegIndexWidth bits)
+    val multiplyForwardValid = in Bool ()
+    val multiplyForwardPdst = in UInt (config.physicalRegIndexWidth bits)
+    val multiplyForwardData = in Bits (config.xlen bits)
+    val storeDataReady = in Bool ()
+    val storeDataValid = out Bool ()
+    val storeDataRobPointer = out UInt (config.robPointerWidth bits)
+    val storeDataStoreQueueIndex = out UInt (config.storeQueueIndexWidth bits)
+    val storeData = out Bits (config.xlen bits)
+    val loadStoreIssueOccupancy = out UInt (log2Up(config.issueQueueEntriesPerPort + 1) bits)
+    val storeDataOccupancy = out UInt (log2Up(config.storeQueueEntries + 1) bits)
     val flush = in Bool ()
   }
   noIoPrefix()
@@ -56,6 +68,24 @@ private final class OooBackendDispatchProbe(config: OooCoreConfig) extends Compo
 
   backend.io.issueReady := io.issueReady
   backend.io.completionValid := io.completionValid
+  backend.io.directWakeupValid := 0
+  backend.io.directWakeupValid(0) := io.completionValid(0) && io.completionWritesPdst
+  private val multiplyPort =
+    config.executionPorts.indexWhere(_.capabilities.contains(OooFuKind.Multiply))
+  backend.io.directWakeupValid(multiplyPort) := io.multiplyWakeupValid
+  for (lane <- 0 until config.executionWidth) {
+    if (lane == multiplyPort) {
+      backend.io.directWakeupPdst(lane) := io.multiplyWakeupPdst
+    } else if (lane == 0) {
+      backend.io.directWakeupPdst(lane) := io.completionPdst
+    } else {
+      backend.io.directWakeupPdst(lane) := 0
+    }
+  }
+  backend.io.resultForwardValid := io.multiplyForwardValid
+  backend.io.resultForwardPdst := io.multiplyForwardPdst
+  backend.io.resultForwardData := io.multiplyForwardData
+  backend.io.storeDataReady := io.storeDataReady
   for (lane <- 1 until config.writebackWidth) {
     backend.io
       .completion(lane)
@@ -86,6 +116,14 @@ private final class OooBackendDispatchProbe(config: OooCoreConfig) extends Compo
 
   io.renameReady := backend.io.renameReady
   io.issueValid := backend.io.issueValid
+  io.storeDataValid := backend.io.storeDataValid
+  io.storeDataRobPointer := backend.io.storeDataRobPointer
+  io.storeDataStoreQueueIndex := backend.io.storeDataStoreQueueIndex
+  io.storeData := backend.io.storeData
+  private val loadStorePort =
+    config.executionPorts.indexWhere(_.capabilities.contains(OooFuKind.LoadStore))
+  io.loadStoreIssueOccupancy := backend.io.loadStoreIssueOccupancy
+  io.storeDataOccupancy := backend.io.storeDataOccupancy
   for (port <- 0 until config.executionWidth) {
     io.issuePc(port) := backend.io.issue(port).decoded.pc
     io.issuePdst(port) := backend.io.issue(port).pdst
@@ -109,6 +147,12 @@ class OooBackendDispatchSpec extends AnyFunSuite {
     dut.io.completionPdst #= 0
     dut.io.completionWritesPdst #= false
     dut.io.completionData #= 0
+    dut.io.multiplyWakeupValid #= false
+    dut.io.multiplyWakeupPdst #= 0
+    dut.io.multiplyForwardValid #= false
+    dut.io.multiplyForwardPdst #= 0
+    dut.io.multiplyForwardData #= 0
+    dut.io.storeDataReady #= true
     dut.io.flush #= false
     for (lane <- 0 until config.renameWidth) {
       dut.io.pc(lane) #= 0
@@ -225,6 +269,329 @@ class OooBackendDispatchSpec extends AnyFunSuite {
       }
   }
 
+  test("a Store address issues before its data dependency reaches writeback") {
+    SimConfig.withVerilator
+      .workspacePath("target/sim-workspace-ooo-backend-dispatch")
+      .compile(new OooBackendDispatchProbe(config))
+      .doSim("ooo-backend-store-address-data-decoupling", 0x4c49) { dut =>
+        dut.clockDomain.forkStimulus(period = 10)
+        clearControl(dut)
+        dut.io.issueReady #= 0xf
+        dut.clockDomain.assertReset()
+        dut.clockDomain.waitSampling(2)
+        dut.clockDomain.deassertReset()
+        dut.clockDomain.waitSampling()
+
+        val producerPc = BigInt("1c000000", 16)
+        val storePc = producerPc + 4
+        dut.io.inputValid #= 3
+        dut.io.pc(0) #= producerPc
+        dut.io.instruction(0) #= BigInt("2880000d", 16) // ld.w r13,r0,0
+        dut.io.pc(1) #= storePc
+        dut.io.instruction(1) #= BigInt("2980000d", 16) // st.w r13,r0,0
+        dut.clockDomain.waitSampling()
+        dut.io.inputValid #= 0
+
+        var producerPdst = BigInt(0)
+        var storeIssued = false
+        for (_ <- 0 until 16 if !storeIssued) {
+          dut.clockDomain.waitSampling()
+          sleep(1)
+          val mask = dut.io.issueValid.toBigInt
+          for (port <- 0 until config.executionWidth) {
+            if ((mask & (BigInt(1) << port)) != 0) {
+              if (dut.io.issuePc(port).toBigInt == producerPc) {
+                producerPdst = dut.io.issuePdst(port).toBigInt
+              }
+              if (dut.io.issuePc(port).toBigInt == storePc) {
+                storeIssued = true
+              }
+            }
+          }
+        }
+        assert(producerPdst != 0)
+        assert(storeIssued)
+        assert(!dut.io.storeDataValid.toBoolean)
+
+        val loadResult = BigInt("89abcdef", 16)
+        dut.io.completionValid #= 1
+        dut.io.completionRobPointer #= 0
+        dut.io.completionPdst #= producerPdst
+        dut.io.completionWritesPdst #= true
+        dut.io.completionData #= loadResult
+        dut.clockDomain.waitSampling()
+        dut.io.completionValid #= 0
+
+        var dataSeen = false
+        for (_ <- 0 until 8 if !dataSeen) {
+          dut.clockDomain.waitSampling()
+          sleep(1)
+          if (dut.io.storeDataValid.toBoolean) {
+            dataSeen = true
+          }
+        }
+        assert(dataSeen)
+        assert(dut.io.storeDataRobPointer.toBigInt == 1)
+        assert(dut.io.storeDataStoreQueueIndex.toBigInt == 0)
+        assert(dut.io.storeData.toBigInt == loadResult)
+      }
+  }
+
+  test("Store dispatch remains atomic when the address IQ is full") {
+    val asymmetricConfig = config.copy(loadQueueEntries = 16, storeQueueEntries = 16)
+    val asymmetricLoadStorePort = asymmetricConfig.executionPorts
+      .indexWhere(_.capabilities.contains(OooFuKind.LoadStore))
+    SimConfig.withVerilator
+      .workspacePath("target/sim-workspace-ooo-backend-dispatch")
+      .compile(new OooBackendDispatchProbe(asymmetricConfig))
+      .doSim("ooo-backend-store-atomic-dispatch", 0x4c5c) { dut =>
+        dut.clockDomain.forkStimulus(period = 10)
+        clearControl(dut)
+        dut.io.storeDataReady #= false
+        dut.clockDomain.assertReset()
+        dut.clockDomain.waitSampling(2)
+        dut.clockDomain.deassertReset()
+        dut.clockDomain.waitSampling()
+
+        val basePc = BigInt("1c001000", 16)
+        val expectedPc = (0 until 12).map(index => basePc + index * 4)
+        for (index <- expectedPc.indices) {
+          dut.io.inputValid #= 1
+          dut.io.pc(0) #= expectedPc(index)
+          dut.io.instruction(0) #= BigInt("29800000", 16) // st.w r0,r0,0
+          sleep(1)
+          assert((dut.io.renameReady.toBigInt & 1) != 0)
+          dut.clockDomain.waitSampling()
+        }
+        dut.io.inputValid #= 0
+        dut.clockDomain.waitSampling(8)
+        sleep(1)
+
+        // Eleven unique Stores occupy the address IQ plus its operand holding
+        // stage. Later Stores remain in dispatch and must not be copied into
+        // the still-ready data IQ while the address side is backpressured.
+        assert(dut.io.loadStoreIssueOccupancy.toBigInt == 10)
+        assert(
+          (dut.io.issueValid.toBigInt & (BigInt(1) << asymmetricLoadStorePort)) != 0
+        )
+        assert(dut.io.storeDataOccupancy.toBigInt == 11)
+
+        val observedPc = ArrayBuffer(dut.io.issuePc(asymmetricLoadStorePort).toBigInt)
+        dut.io.issueReady #= BigInt(1) << asymmetricLoadStorePort
+        var cycles = 0
+        while (observedPc.size < expectedPc.size && cycles < 32) {
+          dut.clockDomain.waitSampling()
+          sleep(1)
+          if ((dut.io.issueValid.toBigInt & (BigInt(1) << asymmetricLoadStorePort)) != 0) {
+            observedPc += dut.io.issuePc(asymmetricLoadStorePort).toBigInt
+          }
+          cycles += 1
+        }
+        assert(observedPc == expectedPc)
+      }
+  }
+
+  test("an accepted Store is not replayed when the next LSU read port conflicts") {
+    SimConfig.withVerilator
+      .workspacePath("target/sim-workspace-ooo-backend-dispatch")
+      .compile(new OooBackendDispatchProbe(config))
+      .doSim("ooo-backend-store-consume-with-read-conflict", 0x4c5d) { dut =>
+        dut.clockDomain.forkStimulus(period = 10)
+        clearControl(dut)
+        dut.io.storeDataReady #= false
+        dut.clockDomain.assertReset()
+        dut.clockDomain.waitSampling(2)
+        dut.clockDomain.deassertReset()
+        dut.clockDomain.waitSampling()
+
+        val storePc = BigInt("1c0193e0", 16)
+        val loadPc = storePc + 4
+        dut.io.inputValid #= 3
+        dut.io.pc(0) #= storePc
+        dut.io.instruction(0) #= BigInt("299db0a5", 16) // st.w r5,r5,1900
+        dut.io.pc(1) #= loadPc
+        dut.io.instruction(1) #= BigInt("289db18a", 16) // ld.w r10,r12,1900
+        dut.clockDomain.waitSampling()
+        dut.io.inputValid #= 0
+
+        var waitCycles = 0
+        while (
+          (!(dut.io.storeDataValid.toBoolean &&
+            (dut.io.issueValid.toBigInt & (BigInt(1) << loadStorePort)) != 0 &&
+            dut.io.issuePc(loadStorePort).toBigInt == storePc)) && waitCycles < 16
+        ) {
+          dut.clockDomain.waitSampling()
+          sleep(1)
+          waitCycles += 1
+        }
+        assert(dut.io.storeDataValid.toBoolean)
+        assert((dut.io.issueValid.toBigInt & (BigInt(1) << loadStorePort)) != 0)
+        assert(dut.io.issuePc(loadStorePort).toBigInt == storePc)
+
+        dut.io.issueReady #= BigInt(1) << loadStorePort
+        dut.clockDomain.waitSampling()
+        sleep(1)
+        assert(
+          (dut.io.issueValid.toBigInt & (BigInt(1) << loadStorePort)) == 0 ||
+            dut.io.issuePc(loadStorePort).toBigInt != storePc
+        )
+
+        dut.io.storeDataReady #= true
+        for (_ <- 0 until 8) {
+          dut.clockDomain.waitSampling()
+          sleep(1)
+          assert(
+            (dut.io.issueValid.toBigInt & (BigInt(1) << loadStorePort)) == 0 ||
+              dut.io.issuePc(loadStorePort).toBigInt != storePc
+          )
+        }
+      }
+  }
+
+  test("raw ALU completion wakes a dependant into the registered PRF bypass") {
+    SimConfig.withVerilator
+      .workspacePath("target/sim-workspace-ooo-backend-dispatch")
+      .compile(new OooBackendDispatchProbe(config))
+      .doSim("ooo-backend-early-alu-wakeup", 0x4c47) { dut =>
+        dut.clockDomain.forkStimulus(period = 10)
+        clearControl(dut)
+        dut.io.issueReady #= 0xf
+        dut.clockDomain.assertReset()
+        dut.clockDomain.waitSampling(2)
+        dut.clockDomain.deassertReset()
+        dut.clockDomain.waitSampling()
+
+        val producerPc = BigInt("1c000000", 16)
+        val consumerPc = producerPc + 4
+        dut.io.inputValid #= 3
+        dut.io.pc(0) #= producerPc
+        dut.io.instruction(0) #= BigInt("0280040d", 16) // addi.w r13,r0,1
+        dut.io.pc(1) #= consumerPc
+        dut.io.instruction(1) #= BigInt("028005ae", 16) // addi.w r14,r13,1
+        dut.clockDomain.waitSampling()
+        dut.io.inputValid #= 0
+
+        var producerPdst = BigInt(0)
+        var producerSeen = false
+        var cycles = 0
+        while (!producerSeen && cycles < 16) {
+          dut.clockDomain.waitSampling()
+          sleep(1)
+          val mask = dut.io.issueValid.toBigInt
+          for (port <- 0 until config.executionWidth) {
+            if (
+              (mask & (BigInt(1) << port)) != 0 &&
+              dut.io.issuePc(port).toBigInt == producerPc
+            ) {
+              producerSeen = true
+              producerPdst = dut.io.issuePdst(port).toBigInt
+            }
+          }
+          cycles += 1
+        }
+        assert(producerSeen)
+        assert(producerPdst != 0)
+
+        val result = BigInt("12345678", 16)
+        dut.io.completionValid #= 1
+        dut.io.completionRobPointer #= 0
+        dut.io.completionPdst #= producerPdst
+        dut.io.completionWritesPdst #= true
+        dut.io.completionData #= result
+
+        dut.clockDomain.waitSampling()
+        sleep(1)
+        assert(
+          !(0 until config.executionWidth).exists { port =>
+            (dut.io.issueValid.toBigInt & (BigInt(1) << port)) != 0 &&
+            dut.io.issuePc(port).toBigInt == consumerPc
+          }
+        )
+        dut.io.completionValid #= 0
+
+        dut.clockDomain.waitSampling()
+        sleep(1)
+        val consumerPort = (0 until config.executionWidth).find { port =>
+          (dut.io.issueValid.toBigInt & (BigInt(1) << port)) != 0 &&
+          dut.io.issuePc(port).toBigInt == consumerPc
+        }
+        assert(consumerPort.nonEmpty)
+        assert(dut.io.issueSource1(consumerPort.get).toBigInt == result)
+      }
+  }
+
+  test("multiply issue wakes a dependant into the next-cycle result forward") {
+    SimConfig.withVerilator
+      .workspacePath("target/sim-workspace-ooo-backend-dispatch")
+      .compile(new OooBackendDispatchProbe(config))
+      .doSim("ooo-backend-early-multiply-wakeup", 0x4c48) { dut =>
+        dut.clockDomain.forkStimulus(period = 10)
+        clearControl(dut)
+        dut.io.issueReady #= 0xf
+        dut.clockDomain.assertReset()
+        dut.clockDomain.waitSampling(2)
+        dut.clockDomain.deassertReset()
+        dut.clockDomain.waitSampling()
+
+        val producerPc = BigInt("1c000000", 16)
+        val consumerPc = producerPc + 4
+        dut.io.inputValid #= 3
+        dut.io.pc(0) #= producerPc
+        dut.io.instruction(0) #= BigInt("001c000d", 16) // mul.w r13,r0,r0
+        dut.io.pc(1) #= consumerPc
+        dut.io.instruction(1) #= BigInt("028005ae", 16) // addi.w r14,r13,1
+        dut.clockDomain.waitSampling()
+        dut.io.inputValid #= 0
+
+        var producerPdst = BigInt(0)
+        var producerSeen = false
+        var cycles = 0
+        while (!producerSeen && cycles < 16) {
+          dut.clockDomain.waitSampling()
+          sleep(1)
+          val mask = dut.io.issueValid.toBigInt
+          for (port <- 0 until config.executionWidth) {
+            if (
+              (mask & (BigInt(1) << port)) != 0 &&
+              dut.io.issuePc(port).toBigInt == producerPc
+            ) {
+              producerSeen = true
+              producerPdst = dut.io.issuePdst(port).toBigInt
+            }
+          }
+          cycles += 1
+        }
+        assert(producerSeen)
+        assert(producerPdst != 0)
+
+        // Wake on multiply issue.  The product itself becomes available from
+        // the multiply pipeline during the following PRF-read cycle.
+        dut.io.multiplyWakeupValid #= true
+        dut.io.multiplyWakeupPdst #= producerPdst
+        dut.clockDomain.waitSampling()
+        dut.io.multiplyWakeupValid #= false
+
+        val product = BigInt("76543210", 16)
+        dut.io.multiplyForwardValid #= true
+        dut.io.multiplyForwardPdst #= producerPdst
+        dut.io.multiplyForwardData #= product
+        dut.io.completionValid #= 1
+        dut.io.completionRobPointer #= 0
+        dut.io.completionPdst #= producerPdst
+        dut.io.completionWritesPdst #= true
+        dut.io.completionData #= product
+        dut.clockDomain.waitSampling()
+        sleep(1)
+
+        val consumerPort = (0 until config.executionWidth).find { port =>
+          (dut.io.issueValid.toBigInt & (BigInt(1) << port)) != 0 &&
+          dut.io.issuePc(port).toBigInt == consumerPc
+        }
+        assert(consumerPort.nonEmpty)
+        assert(dut.io.issueSource1(consumerPort.get).toBigInt == product)
+      }
+  }
+
   test("flush advances the recovery epoch carried by newly issued uops") {
     SimConfig.withVerilator
       .workspacePath("target/sim-workspace-ooo-backend-dispatch")
@@ -279,10 +646,11 @@ class OooBackendDispatchSpec extends AnyFunSuite {
         dut.clockDomain.waitSampling()
 
         val basePc = BigInt("1c000000", 16)
-        // addi.w r13,r0,1; addi.w r14,r13,1; b 0
+        // ld.w r13,r0,0; addi.w r14,r13,1; b 0.  The load does not use the
+        // fixed-latency direct wakeup, so only a writing completion may release r14.
         dut.io.inputValid #= 7
         dut.io.pc(0) #= basePc
-        dut.io.instruction(0) #= BigInt("0280040d", 16)
+        dut.io.instruction(0) #= BigInt("2880000d", 16)
         dut.io.pc(1) #= basePc + 4
         dut.io.instruction(1) #= BigInt("028005ae", 16)
         dut.io.pc(2) #= basePc + 8

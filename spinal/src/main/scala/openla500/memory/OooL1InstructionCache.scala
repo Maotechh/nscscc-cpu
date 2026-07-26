@@ -170,6 +170,7 @@ final class OooL1InstructionCache(
   io.lineReadValid := state === OooL1InstructionCacheState.refillRequest
   io.lineRead.lineAddress := lineAddress(request.physicalAddress)
   io.lineRead.mshrId := 0
+  io.lineRead.criticalBeat := U(0, OooCacheContract.BeatIndexWidth bits)
   io.lineReadBeatReady := state === OooL1InstructionCacheState.refillData &&
     io.lineReadBeat.mshrId === 0
 

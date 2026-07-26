@@ -10,6 +10,8 @@ import spinal.lib._
 final case class OooStoreQueueEntry(config: OooCoreConfig) extends Bundle {
   val valid = Bool()
   val addressReady = Bool()
+  val dataReady = Bool()
+  val completed = Bool()
   val committed = Bool()
   val robPointer = UInt(config.robPointerWidth bits)
   val recoveryEpoch = UInt(config.recoveryEpochWidth bits)
@@ -71,6 +73,30 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
     result
   }
 
+  private def formatStore(data: Bits, address: UInt, size: Bits): Bits = {
+    val shifted = Bits(config.xlen bits)
+    shifted := data
+    when(size === B(0, 3 bits)) {
+      switch(address(1 downto 0)) {
+        is(U(0, 2 bits)) { shifted := B(0, 24 bits) ## data(7 downto 0) }
+        is(U(1, 2 bits)) {
+          shifted := B(0, 16 bits) ## data(7 downto 0) ## B(0, 8 bits)
+        }
+        is(U(2, 2 bits)) {
+          shifted := B(0, 8 bits) ## data(7 downto 0) ## B(0, 16 bits)
+        }
+        default { shifted := data(7 downto 0) ## B(0, 24 bits) }
+      }
+    }.elsewhen(size === B(1, 3 bits)) {
+      shifted := Mux(
+        address(1),
+        data(15 downto 0) ## B(0, 16 bits),
+        B(0, 16 bits) ## data(15 downto 0)
+      )
+    }
+    shifted
+  }
+
   private def clearCompletion(completion: OooCompletion): Unit = {
     completion.robPointer := U(0, config.robPointerWidth bits)
     completion.recoveryEpoch := U(0, config.recoveryEpochWidth bits)
@@ -93,6 +119,11 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
   val io = new Bundle {
     val allocateValid = in Bits (config.renameWidth bits)
     val allocate = in Vec (OooLsqAllocate(config), config.renameWidth)
+    val storeDataValid = in Bool ()
+    val storeDataRobPointer = in UInt (config.robPointerWidth bits)
+    val storeDataStoreQueueIndex = in UInt (config.storeQueueIndexWidth bits)
+    val storeData = in Bits (config.xlen bits)
+    val storeDataReady = out Bool ()
     val aguValid = in Bool ()
     val agu = in(OooAguRequest(config))
     val aguReady = out Bool ()
@@ -125,6 +156,8 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
   for (entry <- stores) {
     entry.valid.init(False)
     entry.addressReady.init(False)
+    entry.dataReady.init(False)
+    entry.completed.init(False)
     entry.committed.init(False)
     entry.translationDone.init(False)
   }
@@ -221,6 +254,7 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
 
   val unknownOlderStore = Bits(config.storeQueueEntries bits)
   val partialOverlapStore = Bits(config.storeQueueEntries bits)
+  val pendingDataStore = Bits(config.storeQueueEntries bits)
   val forwardingStore = Bits(config.storeQueueEntries bits)
   for (entry <- 0 until config.storeQueueEntries) {
     val store = stores(entry)
@@ -231,20 +265,25 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
     val covers = (store.byteMask & headLoad.byteMask) === headLoad.byteMask
     unknownOlderStore(entry) := older && !store.addressReady
     partialOverlapStore(entry) := older && store.addressReady && sameWord && overlap && !covers
-    forwardingStore(entry) := older && store.addressReady && sameWord && covers
+    pendingDataStore(entry) := older && store.addressReady && sameWord && overlap &&
+      !store.dataReady
+    forwardingStore(entry) := older && store.addressReady && store.dataReady && sameWord && covers
   }
 
   val forwardingCount = CountOne(forwardingStore)
   val forwardingId = OHToUInt(OHMasking.first(forwardingStore))
-  val loadOrderClear = !unknownOlderStore.orR && !partialOverlapStore.orR
+  val loadOrderClear = !unknownOlderStore.orR && !partialOverlapStore.orR &&
+    !pendingDataStore.orR
   val forwardCandidate = loadHeadReady && !headLoad.isLl && loadOrderClear &&
     forwardingCount === 1
   val cacheLoadBase = loadHeadReady && loadOrderClear && forwardingCount === 0
   val cacheLoadCandidate = cacheLoadBase && headLoad.translationDone
-  val storeRequest = headStore.valid && headStore.addressReady && headStore.translationDone &&
-    headStore.committed && (!headStore.isSc || headStore.scSuccess)
+  val storeRequest = headStore.valid && headStore.addressReady && headStore.dataReady &&
+    headStore.translationDone && headStore.completed && headStore.committed &&
+    (!headStore.isSc || headStore.scSuccess)
   val failedScRelease = headStore.valid && headStore.addressReady &&
-    headStore.translationDone && headStore.committed && headStore.isSc && !headStore.scSuccess
+    headStore.translationDone && headStore.completed && headStore.committed &&
+    headStore.isSc && !headStore.scSuccess
 
   val translationActive = RegInit(False)
   // A redirect can invalidate the LSQ owner after a translation request has
@@ -305,7 +344,11 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
     requestCandidate.isWrite := True
     requestCandidate.size := headStore.size
     requestCandidate.byteMask := headStore.byteMask
-    requestCandidate.writeData := headStore.writeData
+    requestCandidate.writeData := formatStore(
+      headStore.writeData,
+      headStore.virtualAddress,
+      headStore.size
+    )
     requestCandidate.uncached := headStore.uncached
     requestCandidate.robPointer := headStore.robPointer
     requestCandidate.pdst := U(0, config.physicalRegIndexWidth bits)
@@ -357,10 +400,24 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
       loads(io.agu.uop.loadQueueIndex).robPointer === io.agu.uop.robPointer &&
       !loads(io.agu.uop.loadQueueIndex).addressReady
   )
+  val storeDataTarget = stores(io.storeDataStoreQueueIndex)
+  io.storeDataReady := !io.flush && storeDataTarget.valid &&
+    storeDataTarget.robPointer === io.storeDataRobPointer && !storeDataTarget.dataReady
+  val storeDataFire = io.storeDataValid && io.storeDataReady
+  val translatedScSuccess = !io.translationResponse.exception.valid &&
+    !io.translationResponse.uncached && io.reservationValid &&
+    io.reservationLineAddress === io.translationResponse.physicalAddress(31 downto 4).asBits
   val translationResponseCandidate = io.translationResponse.valid && translationActive
-  val translationProducesCompletion = translationOwnerStore ||
-    io.translationResponse.exception.valid
-  val baseCompletionBusy = io.dataResponseValid || forwardCandidate
+  val translationStore = stores(translationOwnerStoreIndex)
+  val translationStoreCanComplete = translationStore.dataReady ||
+    (translationStore.isSc && !translatedScSuccess)
+  val translationProducesCompletion = io.translationResponse.exception.valid ||
+    (translationOwnerStore && translationStoreCanComplete)
+  val storeCompletionCandidate = headStore.valid && headStore.addressReady &&
+    headStore.translationDone && !headStore.completed &&
+    (headStore.dataReady || (headStore.isSc && !headStore.scSuccess))
+  val baseCompletionBusy = io.dataResponseValid || forwardCandidate ||
+    storeCompletionCandidate
   io.translationResponse.ready := translationCancelPending ||
     (translationActive && (!translationProducesCompletion || !baseCompletionBusy))
   val translationResponseFire = io.translationResponse.valid && io.translationResponse.ready
@@ -385,12 +442,9 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
   val aguExceptionCapture = aguFire && aguMisaligned
 
   val generatedCompletionValid = responseAccepted || forwardFire ||
-    translationCompletionFire || aguExceptionCompletionReady
+    storeCompletionCandidate || translationCompletionFire || aguExceptionCompletionReady
   val generatedCompletion = OooCompletion(config)
   clearCompletion(generatedCompletion)
-  val translatedScSuccess = !io.translationResponse.exception.valid &&
-    !io.translationResponse.uncached && io.reservationValid &&
-    io.reservationLineAddress === io.translationResponse.physicalAddress(31 downto 4).asBits
   when(responseAccepted) {
     generatedCompletion.robPointer := responseLoadRobPointer
     generatedCompletion.recoveryEpoch := responseLoadRecoveryEpoch
@@ -414,10 +468,24 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
     generatedCompletion.pdst := headLoad.pdst
     generatedCompletion.writesPdst := headLoad.writesPdst
     generatedCompletion.data := formatLoad(
-      stores(forwardingId).writeData,
+      formatStore(
+        stores(forwardingId).writeData,
+        stores(forwardingId).virtualAddress,
+        stores(forwardingId).size
+      ),
       headLoad.virtualAddress,
       headLoad.size,
       headLoad.signExtend
+    )
+  }.elsewhen(storeCompletionCandidate) {
+    generatedCompletion.robPointer := headStore.robPointer
+    generatedCompletion.recoveryEpoch := headStore.recoveryEpoch
+    generatedCompletion.pdst := headStore.pdst
+    generatedCompletion.writesPdst := headStore.writesPdst
+    generatedCompletion.data := Mux(
+      headStore.isSc,
+      headStore.scSuccess.asBits.resize(config.xlen),
+      B(0, config.xlen bits)
     )
   }.elsewhen(translationCompletionFire) {
     val store = stores(translationOwnerStoreIndex)
@@ -532,6 +600,8 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
       when(!entry.committed) {
         entry.valid := False
         entry.addressReady := False
+        entry.dataReady := False
+        entry.completed := False
         entry.committed := False
         entry.translationDone := False
       }
@@ -556,6 +626,8 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
         val index = io.allocate(lane).storeQueueIndex
         stores(index).valid := True
         stores(index).addressReady := False
+        stores(index).dataReady := False
+        stores(index).completed := False
         stores(index).committed := False
         stores(index).translationDone := False
         stores(index).scSuccess := False
@@ -582,9 +654,13 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
       stores(index).isSc := io.agu.uop.decoded.isSc
       stores(index).size := io.agu.size
       stores(index).byteMask := io.agu.byteMask
-      stores(index).writeData := io.agu.writeData
       stores(index).addressReady := !aguMisaligned
       stores(index).translationDone := False
+    }
+    when(storeDataFire) {
+      val index = io.storeDataStoreQueueIndex
+      stores(index).writeData := io.storeData
+      stores(index).dataReady := True
     }
     when(aguFire && !io.agu.isWrite) {
       val index = io.agu.uop.loadQueueIndex
@@ -609,6 +685,7 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
           entry.uncached := io.translationResponse.uncached
           entry.translationDone := True
           when(entry.isSc) { entry.scSuccess := translatedScSuccess }
+          when(translationCompletionFire) { entry.completed := True }
         }
       }.otherwise {
         val entry = loads(translationOwnerLoadIndex)
@@ -619,6 +696,9 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
           when(io.translationResponse.exception.valid) { entry.completed := True }
         }
       }
+    }
+    when(storeCompletionCandidate) {
+      stores(storeHead).completed := True
     }
 
     for (lane <- 0 until config.commitWidth) {
@@ -655,6 +735,8 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
       )
       stores(releaseIndex).valid := False
       stores(releaseIndex).addressReady := False
+      stores(releaseIndex).dataReady := False
+      stores(releaseIndex).completed := False
       stores(releaseIndex).committed := False
       stores(releaseIndex).translationDone := False
       storeHead := storeHead + 1

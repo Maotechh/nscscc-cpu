@@ -86,6 +86,7 @@ final class OooL2Cache(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommi
   val lookupIsWrite = RegInit(False)
   val lookupMshrId = Reg(UInt(mshrIdWidth bits))
   val lookupAddress = Reg(UInt(config.xlen bits))
+  val lookupCriticalBeat = Reg(UInt(OooCacheContract.BeatIndexWidth bits))
 
   val writeState = RegInit(OooL2WriteState.idle)
   val writeAddress = Reg(UInt(config.xlen bits))
@@ -188,6 +189,7 @@ final class OooL2Cache(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommi
     lookupIsWrite := False
     lookupMshrId := io.read.mshrId
     lookupAddress := lineAddress(io.read.lineAddress)
+    lookupCriticalBeat := io.read.criticalBeat
   }.elsewhen(writeFire) {
     lookupPending := True
     lookupIsWrite := True
@@ -215,7 +217,9 @@ final class OooL2Cache(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommi
       val entry = misses(lookupMshrId)
       entry.valid := True
       entry.lineAddress := lookupAddress
-      entry.returnBeat := U(0, OooCacheContract.BeatIndexWidth bits)
+      entry.criticalBeat := lookupCriticalBeat
+      entry.returnBeat := lookupCriticalBeat
+      entry.returnCount := U(0, OooCacheContract.BeatIndexWidth bits)
       entry.error := False
       entry.refillMask := B(0, OooCacheContract.BeatsPerLine bits)
       when(cacheArray.io.hit) {
@@ -291,6 +295,7 @@ final class OooL2Cache(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommi
   io.memoryReadValid := state === OooL2CacheState.normal && readRequestMask.orR
   io.memoryRead.lineAddress := misses(readRequestId).lineAddress
   io.memoryRead.mshrId := readRequestId
+  io.memoryRead.criticalBeat := misses(readRequestId).criticalBeat
   val memoryReadFire = io.memoryReadValid && io.memoryReadReady
   when(memoryReadFire) {
     misses(readRequestId).state := OooL2MshrState.refill
@@ -330,7 +335,7 @@ final class OooL2Cache(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommi
       hitOutput.mshrId := hitResponseId
       hitOutput.beat := misses(hitResponseId).returnBeat
       hitOutput.data := hitResponseBeats(misses(hitResponseId).returnBeat)
-      hitOutput.last := misses(hitResponseId).returnBeat ===
+      hitOutput.last := misses(hitResponseId).returnCount ===
         OooCacheContract.BeatsPerLine - 1
       hitOutput.error := misses(hitResponseId).error
     }
@@ -370,10 +375,11 @@ final class OooL2Cache(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommi
     when(nextMask.andR) { entry.state := OooL2MshrState.install }
   }
   when(hitResponseLoad) {
-    when(misses(hitResponseId).returnBeat === OooCacheContract.BeatsPerLine - 1) {
+    when(misses(hitResponseId).returnCount === OooCacheContract.BeatsPerLine - 1) {
       misses(hitResponseId).valid := False
     }.otherwise {
       misses(hitResponseId).returnBeat := misses(hitResponseId).returnBeat + 1
+      misses(hitResponseId).returnCount := misses(hitResponseId).returnCount + 1
     }
   }
 

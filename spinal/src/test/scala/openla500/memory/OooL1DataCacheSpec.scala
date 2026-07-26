@@ -102,11 +102,26 @@ class OooL1DataCacheSpec extends AnyFunSuite {
       dut: OooL1DataCacheProbe,
       expectedAddress: BigInt,
       beatData: Int => BigInt
-  ): Unit = {
+  ): (BigInt, BigInt, BigInt) = {
+    var response = Option.empty[(BigInt, BigInt, BigInt)]
+    def captureResponse(): Unit = {
+      if (dut.io.responseValid.toBoolean) {
+        assert(response.isEmpty)
+        response = Some(
+          (
+            dut.io.response.robPointer.toBigInt,
+            dut.io.response.pdst.toBigInt,
+            dut.io.response.data.toBigInt
+          )
+        )
+      }
+    }
+
     dut.io.lineReadReady #= false
     var waitCycles = 0
     while (!dut.io.lineReadValid.toBoolean && waitCycles < 6) {
       sample(dut)
+      captureResponse()
       waitCycles += 1
     }
     assert(dut.io.lineReadValid.toBoolean)
@@ -116,6 +131,7 @@ class OooL1DataCacheSpec extends AnyFunSuite {
     sleep(1)
     assert(dut.io.lineReadValid.toBoolean)
     sample(dut)
+    captureResponse()
     dut.io.lineReadReady #= false
 
     for (beat <- 0 until OooCacheContract.BeatsPerLine) {
@@ -128,14 +144,25 @@ class OooL1DataCacheSpec extends AnyFunSuite {
       sleep(1)
       assert(dut.io.lineReadBeatReady.toBoolean)
       sample(dut)
+      captureResponse()
     }
     dut.io.lineReadBeatValid #= false
     var responseWait = 0
-    while (!dut.io.responseValid.toBoolean && responseWait < 4) {
+    while (response.isEmpty && responseWait < 4) {
       sample(dut)
+      captureResponse()
       responseWait += 1
     }
-    assert(dut.io.responseValid.toBoolean)
+    assert(response.nonEmpty)
+
+    var installWait = 0
+    while (!dut.io.requestReady.toBoolean && installWait < 4) {
+      sample(dut)
+      captureResponse()
+      installWait += 1
+    }
+    assert(dut.io.requestReady.toBoolean)
+    response.get
   }
 
   test("L1D invalidates, refills eight beats, hits, and merges byte stores") {
@@ -161,15 +188,14 @@ class OooL1DataCacheSpec extends AnyFunSuite {
         dut.io.requestValid #= false
         assert(!dut.io.lineReadValid.toBoolean)
 
-        refillLine(
+        val refillResponse = refillLine(
           dut,
           expectedAddress = 0x100,
           beat => if (beat == 1) BigInt("1122334455667788", 16) else BigInt(beat + 1)
         )
-        assert(dut.io.responseValid.toBoolean)
-        assert(dut.io.response.robPointer.toBigInt == 3)
-        assert(dut.io.response.pdst.toBigInt == 9)
-        assert(dut.io.response.data.toBigInt == BigInt("11223344", 16))
+        assert(refillResponse._1 == 3)
+        assert(refillResponse._2 == 9)
+        assert(refillResponse._3 == BigInt("11223344", 16))
         sample(dut)
         assert(!dut.io.responseValid.toBoolean)
 
@@ -202,6 +228,73 @@ class OooL1DataCacheSpec extends AnyFunSuite {
         sample(dut)
         assert(dut.io.responseValid.toBoolean)
         assert(dut.io.response.data.toBigInt == BigInt("11bb33dd", 16))
+      }
+  }
+
+  test("L1D returns a load as soon as its refill beat arrives") {
+    SimConfig.withVerilator
+      .workspacePath("target/sim-workspace-ooo-l1d")
+      .compile(new OooL1DataCacheProbe(config))
+      .doSim("ooo-l1d-critical-beat-response", 0x4c38) { dut =>
+        dut.clockDomain.forkStimulus(period = 10)
+        clearInputs(dut)
+        dut.clockDomain.assertReset()
+        dut.clockDomain.waitSampling(2)
+        dut.clockDomain.deassertReset()
+        dut.clockDomain.waitSampling(70)
+        sleep(1)
+
+        setRequest(dut, 0x12c, isWrite = false, data = 0, mask = 0xf, robPointer = 7, pdst = 12)
+        sample(dut)
+        dut.io.requestValid #= false
+        while (!dut.io.lineReadValid.toBoolean) { sample(dut) }
+        assert(dut.io.lineRead.lineAddress.toBigInt == 0x100)
+        assert(dut.io.lineRead.criticalBeat.toBigInt == 5)
+        dut.io.lineReadReady #= true
+        sample(dut)
+        dut.io.lineReadReady #= false
+
+        dut.io.lineReadBeatValid #= true
+        dut.io.lineReadBeat.mshrId #= 0
+        dut.io.lineReadBeat.beat #= 5
+        dut.io.lineReadBeat.data #= BigInt("1122334455667788", 16)
+        dut.io.lineReadBeat.last #= false
+        sleep(1)
+        assert(dut.io.lineReadBeatReady.toBoolean)
+        sample(dut)
+        dut.io.lineReadBeatValid #= false
+
+        var responseWait = 0
+        while (!dut.io.responseValid.toBoolean && responseWait < 3) {
+          sample(dut)
+          responseWait += 1
+        }
+        assert(dut.io.responseValid.toBoolean)
+        assert(dut.io.response.robPointer.toBigInt == 7)
+        assert(dut.io.response.pdst.toBigInt == 12)
+        assert(dut.io.response.data.toBigInt == BigInt("11223344", 16))
+        sample(dut)
+
+        for (beat <- Seq(0, 1, 2, 3, 4, 6, 7)) {
+          dut.io.lineReadBeatValid #= true
+          dut.io.lineReadBeat.beat #= beat
+          dut.io.lineReadBeat.data #= BigInt(0x80 + beat)
+          dut.io.lineReadBeat.last #= beat == 7
+          sleep(1)
+          assert(dut.io.lineReadBeatReady.toBoolean)
+          sample(dut)
+          assert(!dut.io.responseValid.toBoolean)
+        }
+        dut.io.lineReadBeatValid #= false
+        dut.clockDomain.waitSampling(3)
+
+        setRequest(dut, 0x12c, isWrite = false, data = 0, mask = 0xf, robPointer = 8, pdst = 13)
+        sample(dut)
+        dut.io.requestValid #= false
+        sample(dut)
+        assert(dut.io.responseValid.toBoolean)
+        assert(dut.io.response.robPointer.toBigInt == 8)
+        assert(dut.io.response.data.toBigInt == BigInt("11223344", 16))
       }
   }
 
@@ -459,8 +552,8 @@ class OooL1DataCacheSpec extends AnyFunSuite {
 
         assert(
           responses.toSeq == Seq(
-            BigInt(1) -> BigInt("ccccdddd", 16),
-            BigInt(3) -> BigInt("11bb33dd", 16)
+            BigInt(3) -> BigInt("11bb33dd", 16),
+            BigInt(1) -> BigInt("ccccdddd", 16)
           )
         )
       }
@@ -482,12 +575,13 @@ class OooL1DataCacheSpec extends AnyFunSuite {
         setRequest(dut, 0x100, isWrite = false, data = 0, mask = 0xf, robPointer = 1, pdst = 4)
         sample(dut)
         dut.io.requestValid #= false
-        refillLine(
+        val refillResponse = refillLine(
           dut,
           expectedAddress = 0x100,
           beat => if (beat == 0) BigInt("1122334455667788", 16) else BigInt(beat)
         )
-        assert(dut.io.responseValid.toBoolean)
+        assert(refillResponse._1 == 1)
+        assert(refillResponse._3 == BigInt("55667788", 16))
         sample(dut)
 
         setRequest(dut, 0x180, isWrite = false, data = 0, mask = 0xf, robPointer = 2, pdst = 5)
@@ -530,8 +624,8 @@ class OooL1DataCacheSpec extends AnyFunSuite {
           assert(dut.io.requestReady.toBoolean)
           sample(dut)
           dut.io.requestValid #= false
-          refillLine(dut, address & ~BigInt(0x3f), beat => fill + beat)
-          assert(dut.io.responseValid.toBoolean)
+          val refillResponse = refillLine(dut, address & ~BigInt(0x3f), beat => fill + beat)
+          assert(refillResponse._1 == pointer)
           sample(dut)
         }
 

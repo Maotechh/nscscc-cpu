@@ -13,6 +13,7 @@ class OooL2CacheSpec extends AnyFunSuite {
     dut.io.readValid #= false
     dut.io.read.lineAddress #= 0
     dut.io.read.mshrId #= 0
+    dut.io.read.criticalBeat #= 0
     dut.io.readBeatReady #= true
     dut.io.writeValid #= false
     dut.io.write.lineAddress #= 0
@@ -84,6 +85,7 @@ class OooL2CacheSpec extends AnyFunSuite {
         dut.io.readValid #= true
         dut.io.read.lineAddress #= address
         dut.io.read.mshrId #= 3
+        dut.io.read.criticalBeat #= 5
         while (!dut.io.readReady.toBoolean) { dut.clockDomain.waitSampling() }
         dut.clockDomain.waitSampling()
         dut.io.readValid #= false
@@ -96,13 +98,14 @@ class OooL2CacheSpec extends AnyFunSuite {
         for (_ <- 0 until 2) {
           sleep(1)
           assert(dut.io.readBeatValid.toBoolean)
-          assert(dut.io.readBeat.beat.toBigInt == 0)
-          assert(dut.io.readBeat.data.toBigInt == beats.head)
+          assert(dut.io.readBeat.beat.toBigInt == 5)
+          assert(dut.io.readBeat.data.toBigInt == beats(5))
           dut.clockDomain.waitSampling()
         }
         dut.io.readBeatReady #= true
 
-        for (expectedBeat <- beats.indices) {
+        val expectedOrder = Seq(5, 6, 7, 0, 1, 2, 3, 4)
+        for ((expectedBeat, responseIndex) <- expectedOrder.zipWithIndex) {
           var responseWait = 0
           while (!dut.io.readBeatValid.toBoolean && responseWait < 8) {
             assert(!dut.io.memoryReadValid.toBoolean)
@@ -115,7 +118,7 @@ class OooL2CacheSpec extends AnyFunSuite {
           assert(dut.io.readBeat.data.toBigInt == beats(expectedBeat))
           assert(
             dut.io.readBeat.last.toBoolean ==
-              (expectedBeat == OooCacheContract.BeatsPerLine - 1)
+              (responseIndex == OooCacheContract.BeatsPerLine - 1)
           )
           dut.clockDomain.waitSampling()
           sleep(1)

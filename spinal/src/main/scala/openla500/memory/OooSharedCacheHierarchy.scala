@@ -9,8 +9,8 @@ object OooSharedCacheMaintenanceState extends SpinalEnum {
 
 /** Private L1I/L1D hierarchy sharing one nonblocking 64-byte-line L2 cache.
   *
-  * Dirty L1D writebacks have priority. Four hierarchy-global read identities preserve the owning
-  * L1 and its local MSHR id across arbitrarily interleaved L2 response beats.
+  * Dirty L1D writebacks have priority. Four hierarchy-global read identities preserve the owning L1
+  * and its local MSHR id across arbitrarily interleaved L2 response beats.
   */
 final class OooSharedCacheHierarchy(
     config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommit

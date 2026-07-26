@@ -95,13 +95,7 @@ class OooDataCacheHierarchySpec extends AnyFunSuite {
       robPointer: BigInt,
       pdst: BigInt
   ): Unit = {
-    var cycles = 0
-    while (!dut.io.requestReady.toBoolean && cycles < 40) {
-      sample(dut)
-      cycles += 1
-    }
-    assert(dut.io.requestReady.toBoolean)
-    dut.io.requestValid #= true
+    dut.io.requestValid #= false
     dut.io.request.virtualAddress #= address
     dut.io.request.physicalAddress #= address
     dut.io.request.isWrite #= isWrite
@@ -112,7 +106,18 @@ class OooDataCacheHierarchySpec extends AnyFunSuite {
     dut.io.request.robPointer #= robPointer
     dut.io.request.pdst #= pdst
     sleep(1)
+
+    var cycles = 0
+    while (!dut.io.requestReady.toBoolean && cycles < 40) {
+      sample(dut)
+      cycles += 1
+    }
     assert(dut.io.requestReady.toBoolean)
+    dut.io.requestValid #= true
+    sleep(1)
+    withClue(s"request rob=$robPointer address=0x${address.toString(16)}: ") {
+      assert(dut.io.requestReady.toBoolean)
+    }
     sample(dut)
     dut.io.requestValid #= false
   }
@@ -121,24 +126,43 @@ class OooDataCacheHierarchySpec extends AnyFunSuite {
       dut: OooDataCacheHierarchyProbe,
       expectedAddress: BigInt,
       beatData: Int => BigInt
-  ): Unit = {
+  ): (BigInt, BigInt, BigInt, Boolean) = {
+    var response = Option.empty[(BigInt, BigInt, BigInt, Boolean)]
+    def captureResponse(): Unit = {
+      if (dut.io.responseValid.toBoolean) {
+        assert(response.isEmpty)
+        response = Some(
+          (
+            dut.io.response.data.toBigInt,
+            dut.io.response.robPointer.toBigInt,
+            dut.io.response.pdst.toBigInt,
+            dut.io.response.error.toBoolean
+          )
+        )
+      }
+    }
+
     var cycles = 0
     while (!dut.io.memoryReadValid.toBoolean && cycles < 30) {
       sample(dut)
+      captureResponse()
       cycles += 1
     }
     assert(dut.io.memoryReadValid.toBoolean)
     assert(dut.io.memoryRead.lineAddress.toBigInt == expectedAddress)
     assert(dut.io.memoryRead.mshrId.toBigInt == 0)
+    assert(dut.io.memoryRead.criticalBeat.toBigInt == 0)
 
     for (_ <- 0 until 2) {
       sample(dut)
+      captureResponse()
       assert(dut.io.memoryReadValid.toBoolean)
       assert(dut.io.memoryRead.lineAddress.toBigInt == expectedAddress)
     }
 
     dut.io.memoryReadReady #= true
     sample(dut)
+    captureResponse()
     dut.io.memoryReadReady #= false
 
     for (beat <- 0 until OooCacheContract.BeatsPerLine) {
@@ -151,8 +175,26 @@ class OooDataCacheHierarchySpec extends AnyFunSuite {
       sleep(1)
       assert(dut.io.memoryReadBeatReady.toBoolean)
       sample(dut)
+      captureResponse()
     }
     dut.io.memoryReadBeatValid #= false
+
+    var responseCycles = 0
+    while (response.isEmpty && responseCycles < 40) {
+      sample(dut)
+      captureResponse()
+      responseCycles += 1
+    }
+    assert(response.nonEmpty)
+
+    var installCycles = 0
+    while (!dut.io.requestReady.toBoolean && installCycles < 40) {
+      sample(dut)
+      captureResponse()
+      installCycles += 1
+    }
+    assert(dut.io.requestReady.toBoolean)
+    response.get
   }
 
   private def expectResponse(
@@ -184,12 +226,15 @@ class OooDataCacheHierarchySpec extends AnyFunSuite {
       robPointer: BigInt
   ): Unit = {
     acceptRequest(dut, address, isWrite = false, 0, 0xf, robPointer, pdst = 7)
-    serviceMemoryRefill(
+    val response = serviceMemoryRefill(
       dut,
       address & ~BigInt(OooCacheContract.LineBytes - 1),
       beat => base + beat
     )
-    expectResponse(dut, base & BigInt("ffffffff", 16), robPointer, pdst = 7)
+    assert(response._1 == (base & BigInt("ffffffff", 16)))
+    assert(response._2 == robPointer)
+    assert(response._3 == 7)
+    assert(!response._4)
   }
 
   test("L1D and L2 form a coherent 64-byte writeback hierarchy") {
@@ -251,13 +296,12 @@ class OooDataCacheHierarchySpec extends AnyFunSuite {
         dut.io.memoryWriteReady #= true
         sample(dut)
         dut.io.memoryWriteReady #= false
-        serviceMemoryRefill(dut, 0x2100, beat => BigInt("3333000000000000", 16) + beat)
-        expectResponse(
-          dut,
-          BigInt(0),
-          robPointer = 6,
-          pdst = 7
-        )
+        val refillResponse =
+          serviceMemoryRefill(dut, 0x2100, beat => BigInt("3333000000000000", 16) + beat)
+        assert(refillResponse._1 == 0)
+        assert(refillResponse._2 == 6)
+        assert(refillResponse._3 == 7)
+        assert(!refillResponse._4)
         loadFromMemory(dut, 0x3100, BigInt("4444000000000000", 16), robPointer = 7)
 
         acceptRequest(dut, 0x0100, isWrite = false, 0, 0xf, robPointer = 8, pdst = 10)

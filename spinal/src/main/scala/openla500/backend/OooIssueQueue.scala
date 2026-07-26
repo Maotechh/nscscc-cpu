@@ -59,9 +59,16 @@ final class OooIssueQueue(
 
   val readyMap = Bits(config.issueQueueEntriesPerPort bits)
   for (entry <- 0 until config.issueQueueEntriesPerPort) {
+    val storeDataIsDecoupled =
+      if (config.executionPorts(portIndex).capabilities.contains(OooFuKind.LoadStore)) {
+        payloadSlots(order(entry)).decoded.isStore
+      } else {
+        False
+      }
     readyMap(entry) := U(entry, count.getWidth bits) < count &&
       (payloadSlots(order(entry)).source1Ready || wakeupReady1(entry)) &&
-      (payloadSlots(order(entry)).source2Ready || wakeupReady2(entry)) &&
+      (storeDataIsDecoupled || payloadSlots(order(entry)).source2Ready ||
+        wakeupReady2(entry)) &&
       (!payloadSlots(order(entry)).decoded.serializing ||
         payloadSlots(order(entry)).robPointer === io.robHeadPointer)
   }

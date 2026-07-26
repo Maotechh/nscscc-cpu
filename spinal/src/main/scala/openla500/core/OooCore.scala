@@ -183,29 +183,13 @@ final class OooCore(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommit) 
     }
   }
   val predictorCommit = backend.io.commit(predictorUpdateLane)
-  val predictorOpcode = predictorCommit.instruction(31 downto 26).asUInt
-  val predictorIsJirl = predictorOpcode === U(0x13, 6 bits)
-  val predictorIsReturn = predictorIsJirl && predictorCommit.instruction(4 downto 0) === 0 &&
-    predictorCommit.instruction(9 downto 5) === 1 &&
-    predictorCommit.instruction(25 downto 10) === 0
-  val predictorIsCall = predictorOpcode === U(0x15, 6 bits) ||
-    (predictorIsJirl && predictorCommit.instruction(4 downto 0) === 1)
-  val predictorType = UInt(OooPredictedBranchType.Width bits)
-  predictorType := OooPredictedBranchType.direct
-  when(predictorCommit.branchKind >= 1 && predictorCommit.branchKind <= 6) {
-    predictorType := OooPredictedBranchType.conditional
-  }.elsewhen(predictorIsReturn) {
-    predictorType := OooPredictedBranchType.ret
-  }.elsewhen(predictorIsCall) {
-    predictorType := OooPredictedBranchType.call
-  }.elsewhen(predictorIsJirl) {
-    predictorType := OooPredictedBranchType.indirect
-  }
+  val predictorIsCall = predictorCommit.predictorType === OooPredictedBranchType.call
+  val predictorIsReturn = predictorCommit.predictorType === OooPredictedBranchType.ret
   frontend.io.predictorUpdateValid := committedBranch.orR
   frontend.io.predictorUpdatePc := predictorCommit.pc
   frontend.io.predictorUpdateTaken := predictorCommit.branchTaken
   frontend.io.predictorUpdateTarget := predictorCommit.branchTarget
-  frontend.io.predictorUpdateType := predictorType
+  frontend.io.predictorUpdateType := predictorCommit.predictorType
   frontend.io.predictorUpdateMetadata := predictorCommit.predictorMetadata
   frontend.io.predictorUpdateIsCall := predictorIsCall
   frontend.io.predictorUpdateIsReturn := predictorIsReturn

@@ -817,8 +817,8 @@ def validate_generated_lint_annotations(text: str, source: str) -> None:
             key = (match.group(1), match.group(2))
             counts[key] = counts.get(key, 0) + 1
     expected = {
-        ("off", "DECLFILENAME"): 40,
-        ("on", "DECLFILENAME"): 40,
+        ("off", "DECLFILENAME"): 41,
+        ("on", "DECLFILENAME"): 41,
         ("off", "UNUSEDSIGNAL"): 7,
         ("on", "UNUSEDSIGNAL"): 7,
     }

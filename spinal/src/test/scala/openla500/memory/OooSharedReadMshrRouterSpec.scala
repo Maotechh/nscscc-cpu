@@ -64,10 +64,12 @@ class OooSharedReadMshrRouterSpec extends AnyFunSuite {
     dut.io.instructionReadValid #= false
     dut.io.instructionRead.lineAddress #= 0
     dut.io.instructionRead.mshrId #= 0
+    dut.io.instructionRead.criticalBeat #= 0
     dut.io.instructionReadBeatReady #= true
     dut.io.dataReadValid #= false
     dut.io.dataRead.lineAddress #= 0
     dut.io.dataRead.mshrId #= 0
+    dut.io.dataRead.criticalBeat #= 0
     dut.io.dataReadBeatReady #= true
     dut.io.lowerReadReady #= true
     dut.io.lowerReadBeatValid #= false
@@ -99,15 +101,18 @@ class OooSharedReadMshrRouterSpec extends AnyFunSuite {
             dut.io.dataReadValid #= true
             dut.io.dataRead.lineAddress #= address
             dut.io.dataRead.mshrId #= localIds(globalId)
+            dut.io.dataRead.criticalBeat #= globalId + 1
           } else {
             dut.io.instructionReadValid #= true
             dut.io.instructionRead.lineAddress #= address
             dut.io.instructionRead.mshrId #= localIds(globalId)
+            dut.io.instructionRead.criticalBeat #= globalId + 1
           }
           sleep(1)
           assert(dut.io.lowerReadValid.toBoolean)
           assert(dut.io.lowerRead.lineAddress.toBigInt == address)
           assert(dut.io.lowerRead.mshrId.toBigInt == globalId)
+          assert(dut.io.lowerRead.criticalBeat.toBigInt == globalId + 1)
           assert(
             if (isData) dut.io.dataReadReady.toBoolean
             else dut.io.instructionReadReady.toBoolean

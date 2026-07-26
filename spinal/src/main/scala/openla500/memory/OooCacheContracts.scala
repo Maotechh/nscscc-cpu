@@ -55,6 +55,7 @@ final case class OooInstructionCacheResponse(config: OooCoreConfig) extends Bund
 final case class OooLineReadRequest(config: OooCoreConfig) extends Bundle {
   val lineAddress = UInt(config.xlen bits)
   val mshrId = UInt(log2Up(config.mshrEntries) bits)
+  val criticalBeat = UInt(OooCacheContract.BeatIndexWidth bits)
 }
 
 final case class OooLineReadBeat(config: OooCoreConfig) extends Bundle {

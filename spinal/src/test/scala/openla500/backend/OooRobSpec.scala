@@ -10,6 +10,7 @@ private final class OooRobProbe(config: OooCoreConfig) extends Component {
     val allocateValid = in Bits (config.renameWidth bits)
     val allocateAccept = in Bool ()
     val flush = in Bool ()
+    val allocatePc = in Vec (UInt(config.xlen bits), config.renameWidth)
     val allocateReady = out Bool ()
     val allocatedPointer = out Vec (UInt(config.robPointerWidth bits), config.renameWidth)
     val completionValid = in Bits (config.writebackWidth bits)
@@ -21,6 +22,7 @@ private final class OooRobProbe(config: OooCoreConfig) extends Component {
     val completionWakeupValid = out Bits (config.writebackWidth bits)
     val completionWakeupCandidateValid = out Bits (config.writebackWidth bits)
     val commitValid = out Bits (config.commitWidth bits)
+    val commitPc = out Vec (UInt(config.xlen bits), config.commitWidth)
     val occupancy = out UInt (log2Up(config.robEntries + 1) bits)
     val empty = out Bool ()
     val headPointer = out UInt (config.robPointerWidth bits)
@@ -30,6 +32,8 @@ private final class OooRobProbe(config: OooCoreConfig) extends Component {
   val rob = new OooRob(config)
   for (lane <- 0 until config.renameWidth) {
     rob.io.allocate(lane).assignFromBits(B(0, rob.io.allocate(lane).getBitsWidth bits))
+    rob.io.allocate(lane).uop.decoded.pc.allowOverride()
+    rob.io.allocate(lane).uop.decoded.pc := io.allocatePc(lane)
   }
   rob.io.currentEpoch := io.currentEpoch
   rob.io.completionValid := io.completionValid
@@ -61,6 +65,9 @@ private final class OooRobProbe(config: OooCoreConfig) extends Component {
   io.completionWakeupValid := rob.io.completionWakeupValid
   io.completionWakeupCandidateValid := rob.io.completionWakeupCandidateValid
   io.commitValid := rob.io.commitValid
+  for (lane <- 0 until config.commitWidth) {
+    io.commitPc(lane) := rob.io.commit(lane).pc
+  }
   io.occupancy := rob.io.occupancy
   io.empty := rob.io.empty
   io.headPointer := rob.io.headPointer
@@ -77,6 +84,9 @@ class OooRobSpec extends AnyFunSuite {
     for (lane <- 0 until config.writebackWidth) {
       dut.io.completionRobPointer(lane) #= 0
       dut.io.completionRecoveryEpoch(lane) #= 0
+    }
+    for (lane <- 0 until config.renameWidth) {
+      dut.io.allocatePc(lane) #= 0
     }
   }
 
@@ -238,6 +248,73 @@ class OooRobSpec extends AnyFunSuite {
         sample()
         assert(dut.io.occupancy.toBigInt == 0)
         assert(dut.io.empty.toBoolean)
+      }
+  }
+
+  test("banked ROB payload remains ordered across the physical index wrap") {
+    val config = OooCoreConfig.FourIssueThreeCommit
+    SimConfig.withVerilator
+      .workspacePath("target/sim-workspace-ooo-rob")
+      .compile(new OooRobProbe(config))
+      .doSim("ooo-rob-payload-bank-wrap", 0x4f4f4b) { dut =>
+        def sample(): Unit = {
+          dut.clockDomain.waitSampling()
+          sleep(1)
+        }
+
+        dut.clockDomain.forkStimulus(period = 10)
+        initialize(dut, config)
+        dut.clockDomain.assertReset()
+        dut.clockDomain.waitSampling(2)
+        dut.clockDomain.deassertReset()
+        sample()
+
+        for (index <- 0 until config.robEntries - 1) {
+          dut.io.allocateValid #= 1
+          dut.io.allocateAccept #= true
+          dut.io.allocatePc(0) #= index
+          sleep(1)
+          val pointer = dut.io.allocatedPointer(0).toBigInt
+          sample()
+
+          dut.io.allocateValid #= 0
+          dut.io.allocateAccept #= false
+          dut.io.completionRobPointer(0) #= pointer
+          dut.io.completionValid #= 1
+          sample()
+          dut.io.completionValid #= 0
+          sample()
+          assert(dut.io.commitValid.toBigInt == 1)
+          assert(dut.io.commitPc(0).toBigInt == index)
+          sample()
+        }
+
+        dut.io.allocatePc(0) #= 0x31
+        dut.io.allocatePc(1) #= 0x32
+        dut.io.allocatePc(2) #= 0x33
+        dut.io.allocateValid #= 7
+        dut.io.allocateAccept #= true
+        sleep(1)
+        val pointers = (0 until config.renameWidth).map { lane =>
+          dut.io.allocatedPointer(lane).toBigInt
+        }
+        assert(pointers.map(_ & (config.robEntries - 1)) == Seq(31, 0, 1))
+        sample()
+
+        dut.io.allocateValid #= 0
+        dut.io.allocateAccept #= false
+        for (lane <- 0 until config.commitWidth) {
+          dut.io.completionRobPointer(lane) #= pointers(lane)
+        }
+        dut.io.completionValid #= 7
+        sample()
+        dut.io.completionValid #= 0
+        sample()
+        assert(dut.io.commitValid.toBigInt == 7)
+        assert(
+          (0 until config.commitWidth).map(lane => dut.io.commitPc(lane).toBigInt) ==
+            Seq(0x31, 0x32, 0x33)
+        )
       }
   }
 

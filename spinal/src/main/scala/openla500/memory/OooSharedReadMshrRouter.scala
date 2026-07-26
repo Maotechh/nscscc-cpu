@@ -70,6 +70,11 @@ final class OooSharedReadMshrRouter(
     io.instructionRead.lineAddress
   )
   io.lowerRead.mshrId := allocateId
+  io.lowerRead.criticalBeat := Mux(
+    selectData,
+    io.dataRead.criticalBeat,
+    io.instructionRead.criticalBeat
+  )
   io.dataReadReady := hasFree && selectData && io.lowerReadReady
   io.instructionReadReady := hasFree && selectInstruction && io.lowerReadReady
 

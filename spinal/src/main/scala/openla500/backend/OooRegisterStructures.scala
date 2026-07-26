@@ -204,19 +204,19 @@ final class OooFreeList(config: OooCoreConfig = OooCoreConfig.FourIssueThreeComm
   // ysyx rename stage.  A bitmap needs a priority encoder for every allocation
   // lane and then converts the one-hot result back to an index.  The queue only
   // performs a bounded indexed read and advances one pointer per accepted uop.
-  private val queueCapacity = config.physicalRegs - 1
-  private val pointerWidth = log2Up(queueCapacity)
-  private val countWidth = log2Up(queueCapacity + 1)
+  private val storageCapacity = config.physicalRegs
+  private val usableCapacity = config.physicalRegs - 1
+  private val pointerWidth = log2Up(storageCapacity)
+  private val countWidth = log2Up(usableCapacity + 1)
 
-  require(queueCapacity > 0)
+  require(usableCapacity > 0)
+  require(
+    (storageCapacity & (storageCapacity - 1)) == 0,
+    "the free-list storage uses natural binary pointer wrap"
+  )
 
   private def advance(pointer: UInt, amount: UInt): UInt = {
-    val extendedWidth = pointerWidth + 1
-    val extended = pointer.resize(extendedWidth) + amount.resize(extendedWidth)
-    val capacity = U(queueCapacity, extendedWidth bits)
-    val normalized = UInt(pointerWidth bits)
-    normalized := Mux(extended >= capacity, extended - capacity, extended).resized
-    normalized
+    (pointer + amount.resize(pointerWidth)).resized
   }
 
   val io = new Bundle {
@@ -229,17 +229,22 @@ final class OooFreeList(config: OooCoreConfig = OooCoreConfig.FourIssueThreeComm
     val flush = in Bool ()
   }
 
-  val freeEntries = Vec((0 until queueCapacity).map { index =>
+  // One physical slot is a sentinel and is never included in freeCount.  The
+  // power-of-two storage removes modulo-63 compare/subtract logic from every
+  // three-wide release address while preserving exactly p1..p63 as allocatable.
+  val freeEntries = Vec((0 until storageCapacity).map { index =>
     Reg(UInt(config.physicalRegIndexWidth bits)) init U(
-      index + 1,
+      if (index < usableCapacity) index + 1 else 0,
       config.physicalRegIndexWidth bits
     )
   })
   val headPtr = Reg(UInt(pointerWidth bits)) init U(0, pointerWidth bits)
   val architecturalHeadPtr = Reg(UInt(pointerWidth bits)) init U(0, pointerWidth bits)
-  val tailPtr = Reg(UInt(pointerWidth bits)) init U(0, pointerWidth bits)
-  val freeCount = Reg(UInt(countWidth bits)) init U(queueCapacity, countWidth bits)
-  val architecturalFreeCount = Reg(UInt(countWidth bits)) init U(queueCapacity, countWidth bits)
+  val tailPtr =
+    Reg(UInt(pointerWidth bits)) init U(usableCapacity, pointerWidth bits)
+  val freeCount = Reg(UInt(countWidth bits)) init U(usableCapacity, countWidth bits)
+  val architecturalFreeCount =
+    Reg(UInt(countWidth bits)) init U(usableCapacity, countWidth bits)
 
   val allocateOffset = Vec(UInt(pointerWidth bits), config.renameWidth)
   for (lane <- 0 until config.renameWidth) {

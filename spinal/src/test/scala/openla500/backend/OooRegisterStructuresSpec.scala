@@ -305,7 +305,18 @@ class OooRegisterStructuresSpec extends AnyFunSuite {
 
         dut.io.allocateAccept #= false
         dut.io.allocateValid #= 1
-        checkAllocation(dut, Seq(4), ready = false)
+        sleep(1)
+        assert(!dut.io.allocateReady.toBoolean)
+
+        dut.io.allocateValid #= 0
+        dut.io.commitFreeValid #= 1
+        dut.io.commitFreePdst(0) #= 4
+        freeListSample(dut)
+
+        dut.io.commitFreeValid #= 0
+        dut.io.commitFreePdst(0) #= 0
+        dut.io.allocateValid #= 1
+        checkAllocation(dut, Seq(4))
       }
   }
 }

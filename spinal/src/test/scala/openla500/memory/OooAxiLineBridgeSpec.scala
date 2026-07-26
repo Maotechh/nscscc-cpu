@@ -19,6 +19,7 @@ class OooAxiLineBridgeSpec extends AnyFunSuite {
     dut.io.memoryReadValid #= false
     dut.io.memoryRead.lineAddress #= 0
     dut.io.memoryRead.mshrId #= 0
+    dut.io.memoryRead.criticalBeat #= 0
     dut.io.memoryReadBeatReady #= true
     dut.io.memoryWriteValid #= false
     dut.io.memoryWrite.lineAddress #= 0
@@ -52,7 +53,7 @@ class OooAxiLineBridgeSpec extends AnyFunSuite {
     dut.io.axi.b.payload.response #= 0
   }
 
-  test("64-byte line reads merge sixteen AXI words into eight internal beats") {
+  test("critical-word-first line reads use AXI wrapping and return eight internal beats") {
     SimConfig.withVerilator
       .workspacePath("target/sim-workspace-ooo-axi-line-read")
       .compile(new OooAxiLineBridge(config))
@@ -67,16 +68,18 @@ class OooAxiLineBridgeSpec extends AnyFunSuite {
         dut.io.memoryReadValid #= true
         dut.io.memoryRead.lineAddress #= 0x4000
         dut.io.memoryRead.mshrId #= 3
+        dut.io.memoryRead.criticalBeat #= 5
         sleep(1)
         assert(dut.io.memoryReadReady.toBoolean)
         sample(dut)
         dut.io.memoryReadValid #= false
 
         assert(dut.io.axi.ar.valid.toBoolean)
-        assert(dut.io.axi.ar.payload.address.toBigInt == 0x4000)
+        assert(dut.io.axi.ar.payload.address.toBigInt == 0x4028)
         assert(dut.io.axi.ar.payload.id.toBigInt == 7)
         assert(dut.io.axi.ar.payload.len.toBigInt == 15)
         assert(dut.io.axi.ar.payload.size.toBigInt == 2)
+        assert(dut.io.axi.ar.payload.burst.toBigInt == 2)
         dut.io.axi.ar.ready #= true
         sample(dut)
         dut.io.axi.ar.ready #= false
@@ -86,12 +89,13 @@ class OooAxiLineBridgeSpec extends AnyFunSuite {
           while (observed.size < OooCacheContract.BeatsPerLine) {
             sample(dut)
             if (dut.io.memoryReadBeatValid.toBoolean) {
-              val beat = observed.size
+              val responseIndex = observed.size
+              val beat = (5 + responseIndex) % OooCacheContract.BeatsPerLine
               assert(dut.io.memoryReadBeat.mshrId.toBigInt == 3)
               assert(dut.io.memoryReadBeat.beat.toBigInt == beat)
               assert(
                 dut.io.memoryReadBeat.last.toBoolean ==
-                  (beat == OooCacheContract.BeatsPerLine - 1)
+                  (responseIndex == OooCacheContract.BeatsPerLine - 1)
               )
               assert(!dut.io.memoryReadBeat.error.toBoolean)
               observed += dut.io.memoryReadBeat.data.toBigInt
@@ -111,10 +115,11 @@ class OooAxiLineBridgeSpec extends AnyFunSuite {
         }
         dut.io.axi.r.valid #= false
         while (observed.size < OooCacheContract.BeatsPerLine) { sample(dut) }
-        for (beat <- observed.indices) {
+        for (responseIndex <- observed.indices) {
           assert(
-            observed(beat) ==
-              (BigInt(0x101 + beat * 2) << 32 | BigInt(0x100 + beat * 2))
+            observed(responseIndex) ==
+              (BigInt(0x101 + responseIndex * 2) << 32 |
+                BigInt(0x100 + responseIndex * 2))
           )
         }
       }

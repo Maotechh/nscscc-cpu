@@ -153,6 +153,82 @@ private final class OooDivideCompletionCollisionProbe(config: OooCoreConfig) ext
   io.completionRobPointer := execution.io.completion(dividePort).robPointer
 }
 
+private final class OooMultiplyWakeupProbe(config: OooCoreConfig) extends Component {
+  private val multiplyPort =
+    config.executionPorts.indexWhere(_.capabilities.contains(OooFuKind.Multiply))
+
+  val io = new Bundle {
+    val instruction = in Bits (32 bits)
+    val issueValid = in Bool ()
+    val source1 = in Bits (config.xlen bits)
+    val source2 = in Bits (config.xlen bits)
+    val pdst = in UInt (config.physicalRegIndexWidth bits)
+    val directWakeupValid = out Bool ()
+    val directWakeupPdst = out UInt (config.physicalRegIndexWidth bits)
+    val completionValid = out Bool ()
+    val completionPdst = out UInt (config.physicalRegIndexWidth bits)
+    val completionData = out Bits (config.xlen bits)
+  }
+  noIoPrefix()
+
+  val decoder = new OooLa32rDecoder(config)
+  decoder.io.pc := U(config.resetVector, config.xlen bits)
+  decoder.io.instruction := io.instruction
+  decoder.io.fetchSlot := 0
+  decoder.io.predictedTaken := False
+  decoder.io.predictedTarget := U(config.resetVector + 4, config.xlen bits)
+  decoder.io.predictorMetadata := 0
+  decoder.io.fetchException.assignFromBits(B(0, decoder.io.fetchException.getBitsWidth bits))
+  decoder.io.privilege := 0
+  decoder.io.interruptPending := False
+
+  val execution = new OooExecutionCluster(config)
+  execution.io.issueValid := 0
+  execution.io.issueValid(multiplyPort) := io.issueValid
+  for (port <- 0 until config.executionWidth) {
+    if (port == multiplyPort) {
+      execution.io.issue(port).decoded := decoder.io.decoded
+      execution.io.issue(port).pdst := io.pdst
+      execution.io.issue(port).oldPdst := 0
+      execution.io.issue(port).psrc1 := 0
+      execution.io.issue(port).psrc2 := 0
+      execution.io.issue(port).source1Ready := True
+      execution.io.issue(port).source2Ready := True
+      execution.io.issue(port).robPointer := 3
+      execution.io.issue(port).recoveryEpoch := 0
+      execution.io.issue(port).loadQueueIndex := 0
+      execution.io.issue(port).storeQueueIndex := 0
+      execution.io.source1(port) := io.source1
+      execution.io.source2(port) := io.source2
+    } else {
+      execution.io.issue(port).assignFromBits(B(0, execution.io.issue(port).getBitsWidth bits))
+      execution.io.source1(port) := 0
+      execution.io.source2(port) := 0
+    }
+  }
+  execution.io.flush := False
+  execution.io.systemReadData := 0
+  execution.io.timer := 0
+  execution.io.timerId := 0
+  execution.io.aguReady := True
+  execution.io.loadStoreCompletionValid := False
+  execution.io.loadStoreCompletion.assignFromBits(
+    B(0, execution.io.loadStoreCompletion.getBitsWidth bits)
+  )
+  execution.io.olderStorePending := False
+  execution.io.cacheTranslationRequest.ready := True
+  execution.io.cacheTranslationResponse.valid := False
+  execution.io.cacheTranslationResponse.payload.assignFromBits(
+    B(0, execution.io.cacheTranslationResponse.payload.getBitsWidth bits)
+  )
+
+  io.directWakeupValid := execution.io.directWakeupValid(multiplyPort)
+  io.directWakeupPdst := execution.io.directWakeupPdst(multiplyPort)
+  io.completionValid := execution.io.completionValid(config.executionWidth)
+  io.completionPdst := execution.io.completion(config.executionWidth).pdst
+  io.completionData := execution.io.completion(config.executionWidth).data
+}
+
 class OooExecutionClusterSpec extends AnyFunSuite {
   private val config = OooCoreConfig.FourIssueThreeCommit
 
@@ -263,6 +339,38 @@ class OooExecutionClusterSpec extends AnyFunSuite {
         assert(dut.io.issueReady.toBoolean)
         assert(dut.io.completionValid.toBoolean)
         assert(dut.io.completionRobPointer.toBigInt == 6)
+      }
+  }
+
+  test("multiply wakes on issue and forwards its registered result one cycle later") {
+    SimConfig.withVerilator
+      .workspacePath("target/sim-workspace-ooo-execution-cluster")
+      .compile(new OooMultiplyWakeupProbe(config))
+      .doSim("ooo-execution-cluster-multiply-forward", 0x4c69) { dut =>
+        dut.clockDomain.forkStimulus(period = 10)
+        dut.io.instruction #= BigInt("001c082d", 16) // mul.w r13,r1,r2
+        dut.io.source1 #= 7
+        dut.io.source2 #= 9
+        dut.io.pdst #= 10
+        dut.io.issueValid #= false
+        dut.clockDomain.assertReset()
+        dut.clockDomain.waitSampling(2)
+        dut.clockDomain.deassertReset()
+        dut.clockDomain.waitSampling()
+
+        dut.io.issueValid #= true
+        sleep(1)
+        assert(dut.io.directWakeupValid.toBoolean)
+        assert(dut.io.directWakeupPdst.toBigInt == 10)
+        assert(!dut.io.completionValid.toBoolean)
+
+        dut.clockDomain.waitSampling()
+        dut.io.issueValid #= false
+        sleep(1)
+        assert(!dut.io.directWakeupValid.toBoolean)
+        assert(dut.io.completionValid.toBoolean)
+        assert(dut.io.completionPdst.toBigInt == 10)
+        assert(dut.io.completionData.toBigInt == 63)
       }
   }
 }

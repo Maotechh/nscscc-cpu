@@ -91,6 +91,11 @@ final class OooBackendWithExecution(
   )
   loadStoreQueue.io.allocateValid := backend.io.memoryAllocateValid
   loadStoreQueue.io.allocate := backend.io.memoryAllocate
+  loadStoreQueue.io.storeDataValid := backend.io.storeDataValid
+  loadStoreQueue.io.storeDataRobPointer := backend.io.storeDataRobPointer
+  loadStoreQueue.io.storeDataStoreQueueIndex := backend.io.storeDataStoreQueueIndex
+  loadStoreQueue.io.storeData := backend.io.storeData
+  backend.io.storeDataReady := loadStoreQueue.io.storeDataReady
 
   execution.io.issueValid := backend.io.issueValid
   execution.io.issue := backend.io.issue
@@ -161,6 +166,13 @@ final class OooBackendWithExecution(
 
   backend.io.completionValid := execution.io.completionValid
   backend.io.completion := execution.io.completion
+  backend.io.directWakeupValid := execution.io.directWakeupValid
+  backend.io.directWakeupPdst := execution.io.directWakeupPdst
+  backend.io.resultForwardValid :=
+    execution.io.completionValid(config.executionWidth) &&
+      execution.io.completion(config.executionWidth).writesPdst
+  backend.io.resultForwardPdst := execution.io.completion(config.executionWidth).pdst
+  backend.io.resultForwardData := execution.io.completion(config.executionWidth).data
   io.commitValid := backend.io.commitValid
   io.commit := backend.io.commit
   io.recoveryValid := backend.io.recoveryValid

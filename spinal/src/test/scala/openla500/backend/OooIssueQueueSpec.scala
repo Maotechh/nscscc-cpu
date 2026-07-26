@@ -41,6 +41,7 @@ class OooIssueQueueSpec extends AnyFunSuite {
   private def clearInputs(dut: OooIssueQueueProbe, config: OooCoreConfig): Unit = {
     dut.io.enqueueValid #= false
     dut.io.enqueue.decoded.serializing #= false
+    dut.io.enqueue.decoded.isStore #= false
     dut.io.enqueue.pdst #= 0
     dut.io.enqueue.oldPdst #= 0
     dut.io.enqueue.psrc1 #= 0
@@ -232,6 +233,45 @@ class OooIssueQueueSpec extends AnyFunSuite {
         sample(dut)
         assert(!dut.io.issueValid.toBoolean)
         assert(dut.io.occupancy.toBigInt == 0)
+      }
+  }
+
+  test("LSU IQ schedules a Store address without waiting for Store data") {
+    val config = OooCoreConfig.FourIssueThreeCommit
+    val loadStorePort =
+      config.executionPorts.indexWhere(_.capabilities.contains(OooFuKind.LoadStore))
+    SimConfig.withVerilator
+      .workspacePath("target/sim-workspace-ooo-iq")
+      .compile(new OooIssueQueueProbe(config, loadStorePort))
+      .doSim("ooo-iq-store-address-data-decoupling", 0x4955) { dut =>
+        dut.clockDomain.forkStimulus(period = 10)
+        clearInputs(dut, config)
+        dut.clockDomain.assertReset()
+        dut.clockDomain.waitSampling(2)
+        dut.clockDomain.deassertReset()
+        sample(dut)
+
+        dut.io.enqueueValid #= true
+        dut.io.enqueue.decoded.isStore #= true
+        dut.io.enqueue.source1Ready #= true
+        dut.io.enqueue.source2Ready #= false
+        dut.io.enqueue.psrc2 #= 7
+        sample(dut)
+        dut.io.enqueueValid #= false
+        sample(dut)
+        assert(dut.io.issueValid.toBoolean)
+
+        dut.io.flush #= true
+        sample(dut)
+        dut.io.flush #= false
+        dut.io.enqueueValid #= true
+        dut.io.enqueue.decoded.isStore #= false
+        dut.io.enqueue.source1Ready #= true
+        dut.io.enqueue.source2Ready #= false
+        sample(dut)
+        dut.io.enqueueValid #= false
+        sample(dut)
+        assert(!dut.io.issueValid.toBoolean)
       }
   }
 }

@@ -61,6 +61,9 @@ final class OooAxiLineBridge(
   val lineBeatIndex = Vec.fill(config.mshrEntries)(
     Reg(UInt(OooCacheContract.BeatIndexWidth bits)) init (0)
   )
+  val lineBeatCount = Vec.fill(config.mshrEntries)(
+    Reg(UInt(OooCacheContract.BeatIndexWidth bits)) init (0)
+  )
   val lineArValid = RegInit(False)
   val lineArMshrId = Reg(UInt(log2Up(config.mshrEntries) bits))
   val lineArAddress = Reg(UInt(config.xlen bits))
@@ -115,10 +118,12 @@ final class OooAxiLineBridge(
     lineActive(id) := True
     lineHalf(id) := False
     lineLowError(id) := False
-    lineBeatIndex(id) := U(0, OooCacheContract.BeatIndexWidth bits)
+    lineBeatIndex(id) := io.memoryRead.criticalBeat
+    lineBeatCount(id) := U(0, OooCacheContract.BeatIndexWidth bits)
     lineArValid := True
     lineArMshrId := id
-    lineArAddress := io.memoryRead.lineAddress
+    lineArAddress := io.memoryRead.lineAddress +
+      (io.memoryRead.criticalBeat.resize(config.xlen) |<< 3)
   }
   when(startUncachedInstruction) {
     readActive := True
@@ -156,6 +161,7 @@ final class OooAxiLineBridge(
   io.axi.ar.payload.address := lineArAddress.asBits
   io.axi.ar.payload.len := B(axiWordsPerLine - 1, 8 bits)
   io.axi.ar.payload.size := B(2, 3 bits)
+  io.axi.ar.payload.burst := B"2'b10"
   when(uncachedAr) {
     io.axi.ar.payload.id := Mux(
       readKind === instructionReadKind,
@@ -169,8 +175,8 @@ final class OooAxiLineBridge(
       B(0, 8 bits)
     )
     io.axi.ar.payload.size := readSize
+    io.axi.ar.payload.burst := B"2'b01"
   }
-  io.axi.ar.payload.burst := B"2'b01"
   io.axi.ar.payload.lock := B"2'b00"
   io.axi.ar.payload.cache := B"4'b0000"
   io.axi.ar.payload.prot := B"3'b000"
@@ -204,7 +210,7 @@ final class OooAxiLineBridge(
         lineHalf(lineResponseId) := True
       }.otherwise {
         val expectedLast =
-          lineBeatIndex(lineResponseId) === OooCacheContract.BeatsPerLine - 1
+          lineBeatCount(lineResponseId) === OooCacheContract.BeatsPerLine - 1
         readOutputValid := True
         readOutput.mshrId := lineResponseId
         readOutput.beat := lineBeatIndex(lineResponseId)
@@ -217,6 +223,7 @@ final class OooAxiLineBridge(
           lineActive(lineResponseId) := False
         }.otherwise {
           lineBeatIndex(lineResponseId) := lineBeatIndex(lineResponseId) + 1
+          lineBeatCount(lineResponseId) := lineBeatCount(lineResponseId) + 1
         }
       }
     }.elsewhen(readKind === instructionReadKind) {

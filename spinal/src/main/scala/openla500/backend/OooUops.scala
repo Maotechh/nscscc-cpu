@@ -170,7 +170,7 @@ final case class OooCommitRecord(config: OooCoreConfig) extends Bundle {
   val isLoad = Bool()
   val isStore = Bool()
   val isBranch = Bool()
-  val branchKind = UInt(3 bits)
+  val predictorType = UInt(3 bits)
   val branchTaken = Bool()
   val branchTarget = UInt(config.xlen bits)
   val predictorMetadata = Bits(16 bits)

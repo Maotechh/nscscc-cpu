@@ -1,20 +1,51 @@
 package openla500.backend
 
 import openla500.core._
+import openla500.predict.OooPredictedBranchType
 import spinal.core._
 import spinal.lib._
 
-final case class OooRobEntry(config: OooCoreConfig) extends Bundle {
+final case class OooRobPayload(config: OooCoreConfig) extends Bundle {
+  val pc = UInt(config.xlen bits)
+  val instruction = Bits(32 bits)
+  val rd = UInt(config.archRegIndexWidth bits)
+  val pdst = UInt(config.physicalRegIndexWidth bits)
+  val oldPdst = UInt(config.physicalRegIndexWidth bits)
+  val writesGpr = Bool()
+  val systemOperation = UInt(OooSystemOp.Width bits)
+  val csrAddress = UInt(14 bits)
+  val csrWrite = Bool()
+  val csrMask = Bool()
+  val isLoad = Bool()
+  val isStore = Bool()
+  val isBranch = Bool()
+  val predictorType = UInt(OooPredictedBranchType.Width bits)
+  val predictorMetadata = Bits(16 bits)
+  val loadQueueIndex = UInt(config.loadQueueIndexWidth bits)
+  val storeQueueIndex = UInt(config.storeQueueIndexWidth bits)
+  val decodedException = OooExceptionMeta()
+}
+
+final case class OooRobState(config: OooCoreConfig) extends Bundle {
   val valid = Bool()
   val complete = Bool()
+  val payloadReady = Bool()
+  val decodedExceptionValid = Bool()
+  val serializing = Bool()
   val pointer = UInt(config.robPointerWidth bits)
-  val uop = OooRenamedUop(config)
   val result = Bits(config.xlen bits)
   val sideEffectData = Bits(config.xlen bits)
-  val exception = OooExceptionMeta()
+  val completionExceptionValid = Bool()
+  val completionException = OooExceptionMeta()
   val branchMispredict = Bool()
   val branchTaken = Bool()
   val branchTarget = UInt(config.xlen bits)
+}
+
+final case class OooRobEntry(config: OooCoreConfig) extends Bundle {
+  val state = OooRobState(config)
+  val payload = OooRobPayload(config)
+  val exception = OooExceptionMeta()
 }
 
 final class OooRob(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommit) extends Component {
@@ -57,92 +88,244 @@ final class OooRob(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommit) e
   val allocatePointer = Reg(UInt(config.robPointerWidth bits)) init (0)
   val commitPointer = Reg(UInt(config.robPointerWidth bits)) init (0)
   val occupancy = Reg(UInt(log2Up(config.robEntries + 1) bits)) init (0)
-  val entries = Vec.fill(config.robEntries)(Reg(OooRobEntry(config)))
+  val entries = Vec.fill(config.robEntries)(Reg(OooRobState(config)))
   for (entry <- entries) {
     entry.valid.init(False)
     entry.complete.init(False)
+    entry.payloadReady.init(False)
+    entry.decodedExceptionValid.init(False)
+    entry.serializing.init(False)
   }
+  private val payloadBankCount = 4
+  private val payloadBankWidth = log2Up(payloadBankCount)
+  private val payloadDepth = config.robEntries / payloadBankCount
+  private val payloadWidth = OooRobPayload(config).getBitsWidth
+  require(config.robEntries % payloadBankCount == 0)
+  require(config.renameWidth < payloadBankCount)
+  require(config.commitWidth < payloadBankCount)
+  val payloadBanks = Array.fill(payloadBankCount)(Mem(Bits(payloadWidth bits), payloadDepth))
 
   val allocatePrefix = Vec(UInt(log2Up(config.renameWidth + 1) bits), config.renameWidth + 1)
+  val allocationDestination = Vec(UInt(config.robPointerWidth bits), config.renameWidth)
   allocatePrefix(0) := U(0, allocatePrefix(0).getWidth bits)
   for (lane <- 0 until config.renameWidth) {
     allocatePrefix(lane + 1) := allocatePrefix(lane) + io.allocateValid(lane).asUInt
-    io.allocatedPointer(lane) := (allocatePointer + allocatePrefix(lane)).resized
+    allocationDestination(lane) := (allocatePointer + allocatePrefix(lane)).resized
+    io.allocatedPointer(lane) := allocationDestination(lane)
   }
 
   val requested = allocatePrefix(config.renameWidth)
   val freeSlots = U(config.robEntries, occupancy.getWidth bits) - occupancy
   io.allocateReady := !io.flush && freeSlots >= requested
 
+  val allocationPayload = Vec(OooRobPayload(config), config.renameWidth)
   for (lane <- 0 until config.renameWidth) {
+    allocationPayload(lane).pc := io.allocate(lane).uop.decoded.pc
+    allocationPayload(lane).instruction := io.allocate(lane).uop.decoded.instruction
+    allocationPayload(lane).rd := io.allocate(lane).uop.decoded.rd
+    allocationPayload(lane).pdst := io.allocate(lane).uop.pdst
+    allocationPayload(lane).oldPdst := io.allocate(lane).uop.oldPdst
+    allocationPayload(lane).writesGpr := io.allocate(lane).uop.decoded.writesGpr
+    allocationPayload(lane).systemOperation := io.allocate(lane).uop.decoded.systemOperation
+    allocationPayload(lane).csrAddress := io.allocate(lane).uop.decoded.csrAddress
+    allocationPayload(lane).csrWrite := io.allocate(lane).uop.decoded.csrWrite
+    allocationPayload(lane).csrMask := io.allocate(lane).uop.decoded.csrMask
+    allocationPayload(lane).isLoad := io.allocate(lane).uop.decoded.isLoad
+    allocationPayload(lane).isStore := io.allocate(lane).uop.decoded.isStore
+    allocationPayload(lane).isBranch := io.allocate(lane).uop.decoded.isBranch
+    val instruction = io.allocate(lane).uop.decoded.instruction
+    val opcode = instruction(31 downto 26).asUInt
+    val isJirl = opcode === U(0x13, 6 bits)
+    val isReturn = isJirl && instruction(4 downto 0) === 0 &&
+      instruction(9 downto 5) === 1 && instruction(25 downto 10) === 0
+    val isCall = opcode === U(0x15, 6 bits) ||
+      (isJirl && instruction(4 downto 0) === 1)
+    allocationPayload(lane).predictorType := OooPredictedBranchType.direct
+    when(
+      io.allocate(lane).uop.decoded.branchKind >= 1 &&
+        io.allocate(lane).uop.decoded.branchKind <= 6
+    ) {
+      allocationPayload(lane).predictorType := OooPredictedBranchType.conditional
+    }.elsewhen(isReturn) {
+      allocationPayload(lane).predictorType := OooPredictedBranchType.ret
+    }.elsewhen(isCall) {
+      allocationPayload(lane).predictorType := OooPredictedBranchType.call
+    }.elsewhen(isJirl) {
+      allocationPayload(lane).predictorType := OooPredictedBranchType.indirect
+    }
+    allocationPayload(lane).predictorMetadata :=
+      io.allocate(lane).uop.decoded.predictorMetadata
+    allocationPayload(lane).loadQueueIndex := io.allocate(lane).uop.loadQueueIndex
+    allocationPayload(lane).storeQueueIndex := io.allocate(lane).uop.storeQueueIndex
+    allocationPayload(lane).decodedException := io.allocate(lane).uop.decoded.exception
+
     when(io.allocateAccept && io.allocateValid(lane)) {
-      val destination = (allocatePointer + allocatePrefix(lane)).resized
+      val destination = allocationDestination(lane)
       entries(destination(config.robIndexWidth - 1 downto 0)).valid := True
       entries(destination(config.robIndexWidth - 1 downto 0)).complete :=
         io.allocate(lane).uop.decoded.exception.valid
+      entries(destination(config.robIndexWidth - 1 downto 0)).payloadReady := False
+      entries(destination(config.robIndexWidth - 1 downto 0)).decodedExceptionValid :=
+        io.allocate(lane).uop.decoded.exception.valid
+      entries(destination(config.robIndexWidth - 1 downto 0)).serializing :=
+        io.allocate(lane).uop.decoded.serializing
       entries(destination(config.robIndexWidth - 1 downto 0)).pointer := destination
-      entries(destination(config.robIndexWidth - 1 downto 0)).uop := io.allocate(lane).uop
       entries(destination(config.robIndexWidth - 1 downto 0)).result := B(0, config.xlen bits)
       entries(destination(config.robIndexWidth - 1 downto 0)).sideEffectData :=
         B(0, config.xlen bits)
-      entries(destination(config.robIndexWidth - 1 downto 0)).exception :=
-        io.allocate(lane).uop.decoded.exception
+      entries(destination(config.robIndexWidth - 1 downto 0)).completionExceptionValid := False
       entries(destination(config.robIndexWidth - 1 downto 0)).branchMispredict := False
       entries(destination(config.robIndexWidth - 1 downto 0)).branchTaken := False
       entries(destination(config.robIndexWidth - 1 downto 0)).branchTarget := U(0, config.xlen bits)
     }
   }
 
+  // A decoded exception is complete at allocation time, while the payload RAM is written
+  // on that same edge.  Delay retirement eligibility until the next synchronous read has
+  // observed the new payload instead of relying on device-specific read-during-write data.
+  val stagedAllocationValid = Reg(Bits(config.renameWidth bits)) init (0)
+  val stagedAllocationPointer = Vec.fill(config.renameWidth)(
+    Reg(UInt(config.robPointerWidth bits)) init (0)
+  )
+  when(io.flush) {
+    stagedAllocationValid := 0
+  }.otherwise {
+    for (lane <- 0 until config.renameWidth) {
+      stagedAllocationValid(lane) := io.allocateAccept && io.allocateValid(lane)
+      stagedAllocationPointer(lane) := allocationDestination(lane)
+    }
+  }
+  for (lane <- 0 until config.renameWidth) {
+    val pointer = stagedAllocationPointer(lane)
+    val state = entries(pointer(config.robIndexWidth - 1 downto 0))
+    when(
+      !io.flush && stagedAllocationValid(lane) && state.valid &&
+        state.pointer === pointer
+    ) {
+      state.payloadReady := True
+    }
+  }
+
+  // Three consecutive ROB destinations always occupy distinct low-two-bit banks, including wrap.
+  // Each bank therefore needs one physical write port even though allocation is three-wide.
+  for (bank <- 0 until payloadBankCount) {
+    val writeMask = Bits(config.renameWidth bits)
+    for (lane <- 0 until config.renameWidth) {
+      writeMask(lane) := io.allocateAccept && io.allocateValid(lane) &&
+        allocationDestination(lane)(payloadBankWidth - 1 downto 0) ===
+        U(bank, payloadBankWidth bits)
+    }
+    val writeLane = selectLowest(writeMask, log2Up(config.renameWidth))
+    payloadBanks(bank).write(
+      address = allocationDestination(writeLane)(config.robIndexWidth - 1 downto payloadBankWidth),
+      data = allocationPayload(writeLane).asBits,
+      enable = writeMask.orR
+    )
+  }
+
+  // Prefetch the next commit group through synchronous payload-bank reads.  Feeding the
+  // current commit pointer directly into an asynchronous 182-bit LUTRAM read put the
+  // predictor update behind the ROB address decoder and bank crossbar.  The prefetch
+  // pointer advances by this cycle's commit count, so a full three-wide commit still
+  // presents the following group without a bubble.
+  val payloadReadAdvance = UInt(log2Up(config.commitWidth + 1) bits)
+  val payloadReadBase = UInt(config.robPointerWidth bits)
+  payloadReadBase := (commitPointer + payloadReadAdvance).resized
+  when(io.flush) {
+    payloadReadBase := allocatePointer
+  }
+  val payloadReadPointer = Vec(UInt(config.robPointerWidth bits), config.commitWidth)
+  val candidatePointer = Vec.fill(config.commitWidth)(
+    Reg(UInt(config.robPointerWidth bits)) init (0)
+  )
+  for (lane <- 0 until config.commitWidth) {
+    payloadReadPointer(lane) :=
+      (payloadReadBase + U(lane, config.robPointerWidth bits)).resized
+    candidatePointer(lane) := payloadReadPointer(lane)
+  }
+  val payloadBankRead = Vec(Bits(payloadWidth bits), payloadBankCount)
+  for (bank <- 0 until payloadBankCount) {
+    val readMask = Bits(config.commitWidth bits)
+    for (lane <- 0 until config.commitWidth) {
+      readMask(lane) := payloadReadPointer(lane)(payloadBankWidth - 1 downto 0) ===
+        U(bank, payloadBankWidth bits)
+    }
+    val readLane = selectLowest(readMask, log2Up(config.commitWidth))
+    payloadBankRead(bank) := payloadBanks(bank).readSync(
+      address = payloadReadPointer(readLane)(
+        config.robIndexWidth - 1 downto payloadBankWidth
+      ),
+      enable = True
+    )
+  }
+
   val candidates = Vec(OooRobEntry(config), config.commitWidth)
   for (lane <- 0 until config.commitWidth) {
-    val pointer = (commitPointer + U(lane, config.robPointerWidth bits)).resized
-    candidates(lane) := entries(pointer(config.robIndexWidth - 1 downto 0))
+    val pointer = candidatePointer(lane)
+    val bank = pointer(payloadBankWidth - 1 downto 0)
+    candidates(lane).state := entries(pointer(config.robIndexWidth - 1 downto 0))
+    candidates(lane).payload.assignFromBits(payloadBankRead(bank))
+    // Exception validity is retirement-control state.  Keeping that hot bit beside valid/complete
+    // avoids routing a block-RAM payload output through the three-wide commit stop chain.  The
+    // cold exception payload remains banked, preserving almost all of the storage reduction.
+    candidates(lane).exception.valid := candidates(lane).state.decodedExceptionValid
+    candidates(lane).exception.ecode := candidates(lane).payload.decodedException.ecode
+    candidates(lane).exception.esubcode := candidates(lane).payload.decodedException.esubcode
+    candidates(lane).exception.badVAddrValid :=
+      candidates(lane).payload.decodedException.badVAddrValid
+    candidates(lane).exception.badVAddr := candidates(lane).payload.decodedException.badVAddr
+    candidates(lane).exception.tlbRefill := candidates(lane).payload.decodedException.tlbRefill
+    when(candidates(lane).state.completionExceptionValid) {
+      candidates(lane).exception := candidates(lane).state.completionException
+    }
   }
 
   val canCommit = Vec(Bool(), config.commitWidth)
   val stopAfter = Vec(Bool(), config.commitWidth)
   for (lane <- 0 until config.commitWidth) {
     stopAfter(lane) := candidates(lane).exception.valid ||
-      candidates(lane).uop.decoded.serializing || candidates(lane).branchMispredict
+      candidates(lane).state.serializing || candidates(lane).state.branchMispredict
     if (lane == 0) {
-      canCommit(lane) := candidates(lane).valid && candidates(lane).complete
+      canCommit(lane) := candidates(lane).state.valid && candidates(lane).state.complete &&
+        candidates(lane).state.payloadReady
     } else {
-      canCommit(lane) := candidates(lane).valid && candidates(lane).complete &&
-        canCommit(lane - 1) && !stopAfter(lane - 1)
+      canCommit(lane) := candidates(lane).state.valid && candidates(lane).state.complete &&
+        candidates(lane).state.payloadReady && canCommit(lane - 1) && !stopAfter(lane - 1)
     }
     io.commitValid(lane) := canCommit(lane)
-    io.commit(lane).pc := candidates(lane).uop.decoded.pc
-    io.commit(lane).instruction := candidates(lane).uop.decoded.instruction
-    io.commit(lane).robPointer := candidates(lane).pointer
-    io.commit(lane).rd := candidates(lane).uop.decoded.rd
-    io.commit(lane).pdst := candidates(lane).uop.pdst
-    io.commit(lane).oldPdst := candidates(lane).uop.oldPdst
-    io.commit(lane).writesGpr := candidates(lane).uop.decoded.writesGpr
-    io.commit(lane).result := candidates(lane).result
-    io.commit(lane).systemOperation := candidates(lane).uop.decoded.systemOperation
-    io.commit(lane).csrAddress := candidates(lane).uop.decoded.csrAddress
-    io.commit(lane).csrWrite := candidates(lane).uop.decoded.csrWrite
-    io.commit(lane).csrMask := candidates(lane).uop.decoded.csrMask
-    io.commit(lane).sideEffectData := candidates(lane).sideEffectData
+    io.commit(lane).pc := candidates(lane).payload.pc
+    io.commit(lane).instruction := candidates(lane).payload.instruction
+    io.commit(lane).robPointer := candidates(lane).state.pointer
+    io.commit(lane).rd := candidates(lane).payload.rd
+    io.commit(lane).pdst := candidates(lane).payload.pdst
+    io.commit(lane).oldPdst := candidates(lane).payload.oldPdst
+    io.commit(lane).writesGpr := candidates(lane).payload.writesGpr
+    io.commit(lane).result := candidates(lane).state.result
+    io.commit(lane).systemOperation := candidates(lane).payload.systemOperation
+    io.commit(lane).csrAddress := candidates(lane).payload.csrAddress
+    io.commit(lane).csrWrite := candidates(lane).payload.csrWrite
+    io.commit(lane).csrMask := candidates(lane).payload.csrMask
+    io.commit(lane).sideEffectData := candidates(lane).state.sideEffectData
     io.commit(lane).retired := canCommit(lane) && !candidates(lane).exception.valid
-    io.commit(lane).serializing := candidates(lane).uop.decoded.serializing
-    io.commit(lane).isLoad := candidates(lane).uop.decoded.isLoad
-    io.commit(lane).isStore := candidates(lane).uop.decoded.isStore
-    io.commit(lane).isBranch := candidates(lane).uop.decoded.isBranch
-    io.commit(lane).branchKind := candidates(lane).uop.decoded.branchKind
-    io.commit(lane).branchTaken := candidates(lane).branchTaken
-    io.commit(lane).branchTarget := candidates(lane).branchTarget
-    io.commit(lane).predictorMetadata := candidates(lane).uop.decoded.predictorMetadata
-    io.commit(lane).loadQueueIndex := candidates(lane).uop.loadQueueIndex
-    io.commit(lane).storeQueueIndex := candidates(lane).uop.storeQueueIndex
+    io.commit(lane).serializing := candidates(lane).state.serializing
+    io.commit(lane).isLoad := candidates(lane).payload.isLoad
+    io.commit(lane).isStore := candidates(lane).payload.isStore
+    io.commit(lane).isBranch := candidates(lane).payload.isBranch
+    io.commit(lane).predictorType := candidates(lane).payload.predictorType
+    io.commit(lane).branchTaken := candidates(lane).state.branchTaken
+    io.commit(lane).branchTarget := candidates(lane).state.branchTarget
+    io.commit(lane).predictorMetadata := candidates(lane).payload.predictorMetadata
+    io.commit(lane).loadQueueIndex := candidates(lane).payload.loadQueueIndex
+    io.commit(lane).storeQueueIndex := candidates(lane).payload.storeQueueIndex
     io.commit(lane).exception := candidates(lane).exception
   }
 
   val committedCount = CountOne(io.commitValid)
+  payloadReadAdvance := committedCount
   val recoveryMask = Bits(config.commitWidth bits)
   for (lane <- 0 until config.commitWidth) {
     recoveryMask(lane) := io.commitValid(lane) &&
-      (candidates(lane).exception.valid || candidates(lane).branchMispredict)
+      (candidates(lane).exception.valid || candidates(lane).state.branchMispredict)
   }
   io.recoveryValid := recoveryMask.orR
   io.recovery.cause := OooRecoveryCause.none
@@ -158,10 +341,10 @@ final class OooRob(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommit) e
   io.recovery.exception.tlbRefill := False
   when(recoveryMask.orR) {
     val recoveryIndex = selectLowest(recoveryMask, log2Up(config.commitWidth))
-    io.recovery.robPointer := candidates(recoveryIndex).pointer
-    io.recovery.pc := candidates(recoveryIndex).uop.decoded.pc
-    io.recovery.taken := candidates(recoveryIndex).branchTaken
-    io.recovery.target := candidates(recoveryIndex).branchTarget
+    io.recovery.robPointer := candidates(recoveryIndex).state.pointer
+    io.recovery.pc := candidates(recoveryIndex).payload.pc
+    io.recovery.taken := candidates(recoveryIndex).state.branchTaken
+    io.recovery.target := candidates(recoveryIndex).state.branchTarget
     io.recovery.exception := candidates(recoveryIndex).exception
     when(candidates(recoveryIndex).exception.valid) {
       io.recovery.cause := OooRecoveryCause.exception
@@ -240,7 +423,8 @@ final class OooRob(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommit) e
         entries(entryIndex).complete := True
         entries(entryIndex).result := stagedResult(lane)
         entries(entryIndex).sideEffectData := stagedSideEffectData(lane)
-        entries(entryIndex).exception := stagedException(lane)
+        entries(entryIndex).completionExceptionValid := stagedException(lane).valid
+        entries(entryIndex).completionException := stagedException(lane)
         when(stagedBranchResolved(lane)) {
           entries(entryIndex).branchTaken := stagedBranchTaken(lane)
           entries(entryIndex).branchMispredict := stagedBranchMispredict(lane)
@@ -258,6 +442,9 @@ final class OooRob(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommit) e
     for (entry <- entries) {
       entry.valid := False
       entry.complete := False
+      entry.payloadReady := False
+      entry.decodedExceptionValid := False
+      entry.serializing := False
     }
   }.otherwise {
     when(io.allocateAccept) {

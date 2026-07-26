@@ -22,6 +22,19 @@ final class OooBackend(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommi
 
     val completionValid = in Bits (config.writebackWidth bits)
     val completion = in Vec (OooCompletion(config), config.writebackWidth)
+    val directWakeupValid = in Bits (config.executionWidth bits)
+    val directWakeupPdst =
+      in Vec (UInt(config.physicalRegIndexWidth bits), config.executionWidth)
+    val resultForwardValid = in Bool ()
+    val resultForwardPdst = in UInt (config.physicalRegIndexWidth bits)
+    val resultForwardData = in Bits (config.xlen bits)
+    val storeDataValid = out Bool ()
+    val storeDataRobPointer = out UInt (config.robPointerWidth bits)
+    val storeDataStoreQueueIndex = out UInt (config.storeQueueIndexWidth bits)
+    val storeData = out Bits (config.xlen bits)
+    val storeDataReady = in Bool ()
+    val loadStoreIssueOccupancy = out UInt (log2Up(config.issueQueueEntriesPerPort + 1) bits)
+    val storeDataOccupancy = out UInt (log2Up(config.storeQueueEntries + 1) bits)
     val memoryAllocateValid = out Bits (config.renameWidth bits)
     val memoryAllocate = out Vec (OooLsqAllocate(config), config.renameWidth)
     val releaseLoadValid = in Bits (config.commitWidth bits)
@@ -45,6 +58,7 @@ final class OooBackend(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommi
   val dispatchQueue = new OooDispatchQueue(config)
   val router = new OooDispatchRouter(config)
   val issueQueues = (0 until config.executionWidth).map(index => new OooIssueQueue(config, index))
+  val storeDataQueue = new OooStoreDataQueue(config)
 
   private val ordinaryIssuePorts = (0 until config.executionWidth).filter(_ != loadStorePort)
   val issueAddressValid = Vec.fill(ordinaryIssuePorts.size)(RegInit(False))
@@ -100,20 +114,63 @@ final class OooBackend(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommi
     router.io.input(lane).oldPdst := dispatchQueue.io.dequeue(lane).oldPdst
     router.io.input(lane).psrc1 := dispatchQueue.io.dequeue(lane).psrc1
     router.io.input(lane).psrc2 := dispatchQueue.io.dequeue(lane).psrc2
-    router.io.input(lane).source1Ready :=
+    val dispatchSource1Ready = Bool()
+    val dispatchSource2Ready = Bool()
+    dispatchSource1Ready :=
       registerMap.io.physicalReady(dispatchQueue.io.dequeue(lane).psrc1)
-    router.io.input(lane).source2Ready :=
+    dispatchSource2Ready :=
       registerMap.io.physicalReady(dispatchQueue.io.dequeue(lane).psrc2)
+    // A uop entering an IQ on the registered writeback edge must observe the
+    // same bypass as a uop already resident in the IQ on the raw-completion edge.
+    for (write <- 0 until config.writebackWidth) {
+      when(
+        rob.io.completionWakeupValid(write) &&
+          rob.io.completionWakeupPdst(write) === dispatchQueue.io.dequeue(lane).psrc1
+      ) {
+        dispatchSource1Ready := True
+      }
+      when(
+        rob.io.completionWakeupValid(write) &&
+          rob.io.completionWakeupPdst(write) === dispatchQueue.io.dequeue(lane).psrc2
+      ) {
+        dispatchSource2Ready := True
+      }
+    }
+    router.io.input(lane).source1Ready := dispatchSource1Ready
+    router.io.input(lane).source2Ready := dispatchSource2Ready
     router.io.input(lane).robPointer := dispatchQueue.io.dequeue(lane).robPointer
     router.io.input(lane).recoveryEpoch := dispatchQueue.io.dequeue(lane).recoveryEpoch
     router.io.input(lane).loadQueueIndex := dispatchQueue.io.dequeue(lane).loadQueueIndex
     router.io.input(lane).storeQueueIndex := dispatchQueue.io.dequeue(lane).storeQueueIndex
   }
   router.io.flush := io.flush
+  val lsuDispatchIsStore = router.io.portValid(loadStorePort) &&
+    router.io.portInput(loadStorePort).decoded.isStore
   for (port <- 0 until config.executionWidth) {
-    router.io.portReady(port) := issueQueues(port).io.enqueueReady
+    if (port == loadStorePort) {
+      // Keep readiness independent of the selected payload: the router uses
+      // portReady while choosing that payload. Atomic Store acceptance is
+      // enforced by the peer-ready valid gates below.
+      router.io.portReady(port) := issueQueues(port).io.enqueueReady &&
+        storeDataQueue.io.enqueueReady
+    } else {
+      router.io.portReady(port) := issueQueues(port).io.enqueueReady
+    }
   }
   dispatchQueue.io.dequeueReady := router.io.inputReady
+
+  // Gate each half with the peer's ready.  The router keeps portValid asserted
+  // under backpressure, so driving either queue directly would enqueue the
+  // same Store repeatedly while the other queue is full.
+  storeDataQueue.io.enqueueValid := lsuDispatchIsStore &&
+    issueQueues(loadStorePort).io.enqueueReady
+  storeDataQueue.io.enqueue := router.io.portInput(loadStorePort)
+  storeDataQueue.io.wakeupValid := rob.io.completionWakeupValid
+  for (write <- 0 until config.writebackWidth) {
+    storeDataQueue.io.wakeupPdst(write) := rob.io.completionWakeupPdst(write)
+  }
+  storeDataQueue.io.readReady := io.storeDataReady && !io.flush
+  storeDataQueue.io.flush := io.flush
 
   rob.io.allocateValid := io.renameValid
   lsqAllocator.io.allocateValid := io.renameValid
@@ -162,28 +219,89 @@ final class OooBackend(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommi
     io.memoryAllocate(lane).storeQueueIndex := renamedInput(lane).storeQueueIndex
   }
 
+  // Direct results bypass the variable-latency completion mux with a narrow
+  // valid/tag event.  The consumer reaches the PRF bypass together with the
+  // qualified writeback data; MUL, DIV and LSU keep the registered ROB wakeup.
+  val earlyWakeupValid = Bits(config.writebackWidth bits)
+  val earlyWakeupPdst = Vec(UInt(config.physicalRegIndexWidth bits), config.writebackWidth)
+  for (write <- 0 until config.writebackWidth) {
+    if (write < config.executionWidth && write != loadStorePort) {
+      // IQ flush has priority over wakeup state updates, so this is a candidate
+      // event and deliberately excludes the global flush signal from select.
+      val directWake = io.directWakeupValid(write) && io.directWakeupPdst(write) =/= 0
+      earlyWakeupValid(write) := directWake || rob.io.completionWakeupCandidateValid(write)
+      earlyWakeupPdst(write) := Mux(
+        directWake,
+        io.directWakeupPdst(write),
+        rob.io.completionWakeupPdst(write)
+      )
+    } else {
+      earlyWakeupValid(write) := rob.io.completionWakeupCandidateValid(write)
+      earlyWakeupPdst(write) := rob.io.completionWakeupPdst(write)
+    }
+  }
+
+  // A multiply wakes dependants when it enters the fixed-latency pipe.  Its
+  // registered result is available one cycle later, exactly when the selected
+  // consumer reads the PRF.  Keep this data path out of the IQ: only the tag
+  // participates in select, while the value is muxed at the operand boundary.
+  val operandReadData = Vec(Bits(config.xlen bits), config.executionWidth * 2)
+  for (readPort <- 0 until config.executionWidth * 2) {
+    operandReadData(readPort) := prf.io.readData(readPort)
+    when(
+      io.resultForwardValid && io.resultForwardPdst =/= 0 &&
+        io.resultForwardPdst === prf.io.readAddress(readPort)
+    ) {
+      operandReadData(readPort) := io.resultForwardData
+    }
+  }
+
   for (port <- 0 until config.executionWidth) {
-    issueQueues(port).io.enqueueValid := router.io.portValid(port)
+    if (port == loadStorePort) {
+      issueQueues(port).io.enqueueValid := router.io.portValid(port) &&
+        (!router.io.portInput(port).decoded.isStore || storeDataQueue.io.enqueueReady)
+    } else {
+      issueQueues(port).io.enqueueValid := router.io.portValid(port)
+    }
     issueQueues(port).io.enqueue := router.io.portInput(port)
     issueQueues(port).io.robHeadPointer := rob.io.headPointer
     issueQueues(port).io.flush := io.flush
     if (port == loadStorePort) {
       prf.io.readAddress(port * 2) := issueQueues(port).io.issue.psrc1
-      prf.io.readAddress(port * 2 + 1) := issueQueues(port).io.issue.psrc2
+      prf.io.readAddress(port * 2 + 1) := Mux(
+        storeDataQueue.io.readValid,
+        storeDataQueue.io.readPsrc,
+        issueQueues(port).io.issue.psrc2
+      )
 
-      val operandReady = !issueOperandValid(port) || io.issueReady(port)
-      issueQueues(port).io.issueReady := !io.flush && operandReady
+      val lsuNeedsSource2 = issueQueues(port).io.issueValid &&
+        !issueQueues(port).io.issue.decoded.isStore &&
+        issueQueues(port).io.issue.psrc2 =/= 0
+      val sharedReadConflict = storeDataQueue.io.readValid && lsuNeedsSource2
+      val operandConsumed = issueOperandValid(port) && io.issueReady(port)
+      val operandSlotAvailable = !issueOperandValid(port) || operandConsumed
+      val operandCaptureReady = operandSlotAvailable && !sharedReadConflict
+      issueQueues(port).io.issueReady := !io.flush && operandCaptureReady
 
       when(io.flush) {
         issueOperandValid(port) := False
       }.otherwise {
-        when(operandReady) {
-          issueOperandValid(port) := issueQueues(port).io.issueValid
-          when(issueQueues(port).io.issueValid) {
-            issueOperandUop(port) := issueQueues(port).io.issue
-            issueOperandSource1(port) := prf.io.readData(port * 2)
-            issueOperandSource2(port) := prf.io.readData(port * 2 + 1)
-          }
+        // Consuming the current operand and capturing the next IQ entry are
+        // separate events. A Store-data PRF conflict may prevent refill, but
+        // must never replay an operand already accepted by the AGU.
+        when(operandConsumed) {
+          issueOperandValid(port) := False
+        }
+        when(issueQueues(port).io.issueValid && issueQueues(port).io.issueReady) {
+          issueOperandValid(port) := True
+          issueOperandUop(port) := issueQueues(port).io.issue
+          issueOperandSource1(port) := operandReadData(port * 2)
+          issueOperandSource2(port) := Mux(
+            issueQueues(port).io.issue.decoded.isStore ||
+              issueQueues(port).io.issue.psrc2 === 0,
+            B(0, config.xlen bits),
+            operandReadData(port * 2 + 1)
+          )
         }
       }
     } else {
@@ -202,8 +320,8 @@ final class OooBackend(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommi
           issueOperandValid(port) := issueAddressValid(addressPort)
           when(issueAddressValid(addressPort)) {
             issueOperandUop(port) := issueAddressUop(addressPort)
-            issueOperandSource1(port) := prf.io.readData(port * 2)
-            issueOperandSource2(port) := prf.io.readData(port * 2 + 1)
+            issueOperandSource1(port) := operandReadData(port * 2)
+            issueOperandSource2(port) := operandReadData(port * 2 + 1)
           }
         }
         when(addressReady) {
@@ -221,11 +339,18 @@ final class OooBackend(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommi
     io.issueSource2(port) := issueOperandSource2(port)
     // Flush has priority over every IQ state update, so its combinational
     // value need not sit on the same-cycle wakeup-to-select timing path.
-    issueQueues(port).io.wakeupValid := rob.io.completionWakeupCandidateValid
+    issueQueues(port).io.wakeupValid := earlyWakeupValid
     for (write <- 0 until config.writebackWidth) {
-      issueQueues(port).io.wakeupPdst(write) := rob.io.completionWakeupPdst(write)
+      issueQueues(port).io.wakeupPdst(write) := earlyWakeupPdst(write)
     }
   }
+
+  io.storeDataValid := storeDataQueue.io.readValid && !io.flush
+  io.storeDataRobPointer := storeDataQueue.io.readRobPointer
+  io.storeDataStoreQueueIndex := storeDataQueue.io.readStoreQueueIndex
+  io.storeData := prf.io.readData(loadStorePort * 2 + 1)
+  io.loadStoreIssueOccupancy := issueQueues(loadStorePort).io.occupancy
+  io.storeDataOccupancy := storeDataQueue.io.occupancy
 
   rob.io.completionValid := io.completionValid
   rob.io.completion := io.completion
