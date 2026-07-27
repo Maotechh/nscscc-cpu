@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "iteration": "20260727-1735-retirement-state-timing",
+  "base_commit": "eec818de9a094495a5dd38dfd35b16c9b0c5fcb0",
+  "branch": "dev-OoOE",
+  "change": "register retirement-driven FreeList and predictor updates",
+  "architecture": {
+    "rename_width": 4,
+    "issue_width": 4,
+    "writeback_width": 5,
+    "commit_width": 3,
+    "cache_line_bytes": 64
+  },
+  "gates": {
+    "targeted_scala": {"executed": 8, "passed": 8, "failed": 0},
+    "full_scala": {"executed": 130, "passed": 130, "failed": 0},
+    "python": {"executed": 362, "passed": 362, "failed": 0},
+    "scalafmt": "passed",
+    "lint": "passed_with_locked_warnings",
+    "port_check": "passed",
+    "yosys_check": "passed",
+    "publish_check": "passed",
+    "standalone_vivado_synthesis": "passed",
+    "full_soc_implementation": "pending",
+    "remote_perf20": "pending"
+  },
+  "rtl_sha256": "0ec54fa65e5179a78d82845fc6e722e768dc3637eb8d426c1aad1a4d64d854a6",
+  "standalone_synth_wns_ns": 0.359,
+  "baseline_full_soc_wns_ns": -0.515509,
+  "baseline_perf20_seconds": 2.06902887,
+  "claim": "local_gates_and_standalone_synthesis_only"
+}
+

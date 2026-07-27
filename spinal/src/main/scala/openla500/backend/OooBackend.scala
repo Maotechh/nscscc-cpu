@@ -370,14 +370,29 @@ final class OooBackend(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommi
   io.commit := rob.io.commit
   io.recoveryValid := rob.io.recoveryValid
   io.recovery := rob.io.recovery
+  // Physical-register reclamation is not architecturally visible in the
+  // retirement cycle.  Register it here so the three-wide ROB prefix does not
+  // drive the distant free-list write enables directly.  A recovery is
+  // reported one cycle before the backend flush, so the free list deliberately
+  // consumes this registered batch even when that following flush is asserted.
+  val retiredFreeValid = Reg(Bits(config.commitWidth bits)) init (
+    B(0, config.commitWidth bits)
+  )
+  val retiredFreePdst = Vec.fill(config.commitWidth)(
+    Reg(UInt(config.physicalRegIndexWidth bits)) init (
+      U(0, config.physicalRegIndexWidth bits)
+    )
+  )
   for (lane <- 0 until config.commitWidth) {
     val commitsDestination = rob.io.commitValid(lane) && rob.io.commit(lane).retired &&
       rob.io.commit(lane).writesGpr && rob.io.commit(lane).rd =/= 0
     registerMap.io.commitValid(lane) := commitsDestination
-    freeList.io.commitFreeValid(lane) := commitsDestination
     registerMap.io.commitArch(lane) := rob.io.commit(lane).rd
     registerMap.io.commitPdst(lane) := rob.io.commit(lane).pdst
-    freeList.io.commitFreePdst(lane) := rob.io.commit(lane).oldPdst
+    retiredFreeValid(lane) := commitsDestination && !io.flush
+    retiredFreePdst(lane) := rob.io.commit(lane).oldPdst
+    freeList.io.commitFreeValid(lane) := retiredFreeValid(lane)
+    freeList.io.commitFreePdst(lane) := retiredFreePdst(lane)
   }
 
   registerMap.io.flush := io.flush

@@ -152,6 +152,20 @@ final class OooBankedFetchPredictor(
     for (entry <- 0 until rasDepth) {
       speculativeRas(entry) := architecturalRas(entry)
     }
+    // A registered retirement update can intentionally arrive in the same
+    // cycle as the redirect caused by that branch.  Recover to the state after
+    // this architectural push/pop, matching the GHR merge above.
+    when(io.commitRasPush && !io.commitRasPop) {
+      when(architecturalRasCount =/= U(rasDepth, rasCountWidth bits)) {
+        speculativeRas(architecturalRasCount(rasIndexWidth - 1 downto 0)) :=
+          io.commitReturnAddress
+        speculativeRasCount := architecturalRasCount + 1
+      }
+    }.elsewhen(io.commitRasPop && !io.commitRasPush) {
+      when(architecturalRasCount =/= 0) {
+        speculativeRasCount := architecturalRasCount - 1
+      }
+    }
   }
 
   val lookupFire = io.lookupValid && !invalidating

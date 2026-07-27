@@ -185,14 +185,36 @@ final class OooCore(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommit) 
   val predictorCommit = backend.io.commit(predictorUpdateLane)
   val predictorIsCall = predictorCommit.predictorType === OooPredictedBranchType.call
   val predictorIsReturn = predictorCommit.predictorType === OooPredictedBranchType.ret
-  frontend.io.predictorUpdateValid := committedBranch.orR
-  frontend.io.predictorUpdatePc := predictorCommit.pc
-  frontend.io.predictorUpdateTaken := predictorCommit.branchTaken
-  frontend.io.predictorUpdateTarget := predictorCommit.branchTarget
-  frontend.io.predictorUpdateType := predictorCommit.predictorType
-  frontend.io.predictorUpdateMetadata := predictorCommit.predictorMetadata
-  frontend.io.predictorUpdateIsCall := predictorIsCall
-  frontend.io.predictorUpdateIsReturn := predictorIsReturn
+  // Predictor training is retirement state, but it does not need to update in
+  // the ROB decision cycle.  This register bank removes the three-wide commit
+  // prefix from the BTB/PHT/RAS write network.  A mispredicted branch therefore
+  // trains in the following redirect cycle; the predictor explicitly merges
+  // that update into its recovered architectural history.
+  val retiredPredictorUpdateValid = RegInit(False)
+  val retiredPredictorUpdatePc = Reg(UInt(config.xlen bits)) init (0)
+  val retiredPredictorUpdateTaken = RegInit(False)
+  val retiredPredictorUpdateTarget = Reg(UInt(config.xlen bits)) init (0)
+  val retiredPredictorUpdateType =
+    Reg(UInt(OooPredictedBranchType.Width bits)) init (OooPredictedBranchType.direct)
+  val retiredPredictorUpdateMetadata = Reg(Bits(16 bits)) init (0)
+  val retiredPredictorUpdateIsCall = RegInit(False)
+  val retiredPredictorUpdateIsReturn = RegInit(False)
+  retiredPredictorUpdateValid := committedBranch.orR && !internalRedirectValid
+  retiredPredictorUpdatePc := predictorCommit.pc
+  retiredPredictorUpdateTaken := predictorCommit.branchTaken
+  retiredPredictorUpdateTarget := predictorCommit.branchTarget
+  retiredPredictorUpdateType := predictorCommit.predictorType
+  retiredPredictorUpdateMetadata := predictorCommit.predictorMetadata
+  retiredPredictorUpdateIsCall := predictorIsCall
+  retiredPredictorUpdateIsReturn := predictorIsReturn
+  frontend.io.predictorUpdateValid := retiredPredictorUpdateValid
+  frontend.io.predictorUpdatePc := retiredPredictorUpdatePc
+  frontend.io.predictorUpdateTaken := retiredPredictorUpdateTaken
+  frontend.io.predictorUpdateTarget := retiredPredictorUpdateTarget
+  frontend.io.predictorUpdateType := retiredPredictorUpdateType
+  frontend.io.predictorUpdateMetadata := retiredPredictorUpdateMetadata
+  frontend.io.predictorUpdateIsCall := retiredPredictorUpdateIsCall
+  frontend.io.predictorUpdateIsReturn := retiredPredictorUpdateIsReturn
   frontend.io.privilege := io.privilege
   frontend.io.interruptPending := io.interruptPending
   decodeRenameBuffer.io.flush := internalRedirectValid

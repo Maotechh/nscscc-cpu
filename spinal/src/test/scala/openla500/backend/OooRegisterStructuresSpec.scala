@@ -251,6 +251,51 @@ class OooRegisterStructuresSpec extends AnyFunSuite {
       }
   }
 
+  test("free list applies a delayed retirement batch during recovery flush") {
+    val config = OooCoreConfig.FourIssueThreeCommit
+    SimConfig.withVerilator
+      .workspacePath("target/sim-workspace-ooo-free-list")
+      .compile(new OooFreeList(config))
+      .doSim("ooo-free-list-delayed-commit-flush", 0x4653) { dut =>
+        dut.clockDomain.forkStimulus(period = 10)
+        clearFreeListInputs(dut, config)
+        dut.clockDomain.assertReset()
+        dut.clockDomain.waitSampling(2)
+        dut.clockDomain.deassertReset()
+        freeListSample(dut)
+
+        // p1..p3 become architectural mappings.
+        dut.io.allocateValid #= 7
+        dut.io.allocateAccept #= true
+        checkAllocation(dut, Seq(1, 2, 3))
+        freeListSample(dut)
+        dut.io.allocateValid #= 0
+        dut.io.allocateAccept #= false
+        dut.io.commitFreeValid #= 7
+        freeListSample(dut)
+
+        // p4 commits as the replacement for p1 while p5/p6 remain speculative.
+        // Its registered retirement batch arrives together with recovery.
+        dut.io.commitFreeValid #= 0
+        dut.io.allocateValid #= 7
+        dut.io.allocateAccept #= true
+        checkAllocation(dut, Seq(4, 5, 6))
+        freeListSample(dut)
+        dut.io.allocateValid #= 0
+        dut.io.allocateAccept #= false
+        dut.io.commitFreeValid #= 1
+        dut.io.commitFreePdst(0) #= 1
+        dut.io.flush #= true
+        freeListSample(dut)
+
+        dut.io.commitFreeValid #= 0
+        dut.io.commitFreePdst(0) #= 0
+        dut.io.flush #= false
+        dut.io.allocateValid #= 7
+        checkAllocation(dut, Seq(5, 6, 7))
+      }
+  }
+
   test("free list recycles committed registers across pointer wrap") {
     val config = OooCoreConfig.FourIssueThreeCommit
     SimConfig.withVerilator
