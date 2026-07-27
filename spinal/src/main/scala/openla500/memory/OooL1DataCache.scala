@@ -59,14 +59,21 @@ final class OooL1DataCache(config: OooCoreConfig = OooCoreConfig.FourIssueThreeC
   private def storeLineData(address: UInt, writeData: Bits): Bits =
     writeData.resize(OooCacheContract.LineBits) |<< wordShift(address)
 
+  private def lineWordByteShift(address: UInt): UInt =
+    (address(offsetWidth - 1 downto 2) ## U(0, 2 bits)).asUInt
+
   private def storeLineByteMask(address: UInt, byteMask: Bits): Bits =
-    byteMask.resize(OooCacheContract.LineBytes) |<< address(offsetWidth - 1 downto 0)
+    // byteMask is already aligned within its 32-bit word by the LSQ.
+    byteMask.resize(OooCacheContract.LineBytes) |<< lineWordByteShift(address)
 
   private def storeBeatIndex(address: UInt): UInt =
     address(offsetWidth - 1 downto 3)
 
   private def beatWordShift(address: UInt): UInt =
     (address(2 downto 2) ## U(0, 5 bits)).asUInt
+
+  private def beatWordByteShift(address: UInt): UInt =
+    (address(2 downto 2) ## U(0, 2 bits)).asUInt
 
   private def storeBeatBitMask(address: UInt, byteMask: Bits): Bits = {
     val wordMask = Bits(config.xlen bits)
@@ -432,7 +439,7 @@ final class OooL1DataCache(config: OooCoreConfig = OooCoreConfig.FourIssueThreeC
       sameCycleStore,
       priorStoredByteMask |
         (pendingStoreByteMask.resize(OooCacheContract.BeatBytes) |<<
-          pendingStoreAddress(2 downto 0)),
+          beatWordByteShift(pendingStoreAddress)),
       priorStoredByteMask
     )
     val storedBitMask = Bits(OooCacheContract.BeatBits bits)

@@ -559,6 +559,98 @@ class OooL1DataCacheSpec extends AnyFunSuite {
       }
   }
 
+  test("L1D preserves aligned byte masks written before refill data arrives") {
+    SimConfig.withVerilator
+      .workspacePath("target/sim-workspace-ooo-l1d")
+      .compile(new OooL1DataCacheProbe(config))
+      .doSim("ooo-l1d-store-before-refill-byte-offset", 0x4c39) { dut =>
+        dut.clockDomain.forkStimulus(period = 10)
+        clearInputs(dut)
+        dut.clockDomain.assertReset()
+        dut.clockDomain.waitSampling(2)
+        dut.clockDomain.deassertReset()
+        dut.clockDomain.waitSampling(70)
+        sleep(1)
+
+        setRequest(
+          dut,
+          0x100,
+          isWrite = true,
+          data = 0x3,
+          mask = 0x1,
+          robPointer = 1,
+          pdst = 0
+        )
+        assert(dut.io.requestReady.toBoolean)
+        sample(dut)
+        dut.io.requestValid #= false
+        while (!dut.io.lineReadValid.toBoolean) { sample(dut) }
+        assert(dut.io.lineRead.lineAddress.toBigInt == 0x100)
+        dut.io.lineReadReady #= true
+        sample(dut)
+        dut.io.lineReadReady #= false
+
+        setRequest(
+          dut,
+          0x101,
+          isWrite = true,
+          data = 0x300,
+          mask = 0x2,
+          robPointer = 2,
+          pdst = 0
+        )
+        sleep(1)
+        assert(dut.io.requestReady.toBoolean)
+        sample(dut)
+        dut.io.requestValid #= false
+        sample(dut)
+
+        setRequest(
+          dut,
+          0x102,
+          isWrite = true,
+          data = 0x30000,
+          mask = 0x4,
+          robPointer = 3,
+          pdst = 0
+        )
+        sleep(1)
+        assert(dut.io.requestReady.toBoolean)
+        sample(dut)
+        dut.io.requestValid #= false
+
+        for (beat <- 0 until OooCacheContract.BeatsPerLine) {
+          dut.io.lineReadBeatValid #= true
+          dut.io.lineReadBeat.mshrId #= 0
+          dut.io.lineReadBeat.beat #= beat
+          dut.io.lineReadBeat.data #= 0
+          dut.io.lineReadBeat.last #= beat == OooCacheContract.BeatsPerLine - 1
+          dut.io.lineReadBeat.error #= false
+          sleep(1)
+          assert(dut.io.lineReadBeatReady.toBoolean)
+          sample(dut)
+        }
+        dut.io.lineReadBeatValid #= false
+        while (!dut.io.requestReady.toBoolean) { sample(dut) }
+
+        setRequest(
+          dut,
+          0x100,
+          isWrite = false,
+          data = 0,
+          mask = 0xf,
+          robPointer = 4,
+          pdst = 9
+        )
+        sample(dut)
+        dut.io.requestValid #= false
+        sample(dut)
+        assert(dut.io.responseValid.toBoolean)
+        assert(dut.io.response.robPointer.toBigInt == 4)
+        assert(dut.io.response.data.toBigInt == BigInt("00030303", 16))
+      }
+  }
+
   test("L1D serves a hit while an unrelated miss waits below the cache") {
     SimConfig.withVerilator
       .workspacePath("target/sim-workspace-ooo-l1d")
