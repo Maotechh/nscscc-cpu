@@ -62,3 +62,22 @@ Vivado 2023.2、`xc7a200tfbg676-2`、10 ns 时钟、`general.maxThreads=8` 综�
   窄寄存边界。
 
 功能通过、板测通过和时序闭合始终是三项独立结论。
+
+## 精确提交的完整 SoC 结果
+
+提交 `26925beb9bbe70ae3312da39e39fc7fefbc3e133` 推送后，使用 Vivado 2023.2、
+官方 `perf20` profile 和 100 MHz 目标完成了锁定的完整 SoC implementation：
+
+- bitstream 成功，DRC 0 error；
+- setup WNS/TNS 为 `-0.170742/-8.018137 ns`，122 个 failing endpoints；
+- hold WNS 为 `+0.051 ns`；
+- `.fpgajob` 为 `D:\fpga-eval-artifacts\26925be-perf20-tlb-walk-result-100mhz-v1.fpgajob`，
+  SHA-256 `47B24F2AA04320FF7324F8CE9C993D1018C54A063D57D0489128FB1BE7921D42`；
+- timing summary SHA-256
+  `73FE5822C07F76F8B2BDAA0023A3F3E55B4667C2CA0997EC428DC5C08F4647D3`。
+
+原主 TLB 到 exception 的最差路径已经消失。新的最差 CPU 路径从 L1I response
+predecode 寄存器出发，经 response-level prediction correction 和 predictor flush，到
+speculative RAS restore；数据延迟 `9.801 ns`，logic/route 分别为 `3.074/6.727 ns`。
+因此本轮改善有效但尚未闭合，且不能提交远端板测。下一轮按 ysyx 的寄存
+`fixRedirect` 边界隔离这条恢复路径。

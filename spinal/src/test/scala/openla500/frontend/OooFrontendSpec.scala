@@ -565,6 +565,9 @@ class OooFrontendSpec extends AnyFunSuite {
         dut.io.cacheRequestReady #= false
         dut.io.cacheResponseValid #= false
         assert(dut.io.cacheKill.toBoolean)
+        // Predictor history/RAS restore is deliberately isolated from response predecode.  No
+        // corrected lookup may start until that registered restore has completed.
+        assert(!dut.io.translationRequest.valid.toBoolean)
         sample(dut)
         assert(!dut.io.cacheKill.toBoolean)
         assert(dut.io.fetchPc.toBigInt == branchTarget)
@@ -647,6 +650,11 @@ class OooFrontendSpec extends AnyFunSuite {
         clearPredecode(dut)
         assert(dut.io.fetchPc.toBigInt == branchTarget)
         assert(dut.io.occupancy.toBigInt == 2)
+
+        // The uncached drain obligation is independent of predictor recovery.  As with a cached
+        // handoff, hold the corrected lookup until the registered GHR/RAS restore has completed.
+        assert(!dut.io.translationRequest.valid.toBoolean)
+        sample(dut)
 
         dut.io.translationRequest.ready #= true
         sample(dut)

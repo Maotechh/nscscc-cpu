@@ -96,6 +96,7 @@ final class OooFrontend(config: OooCoreConfig = OooCoreConfig.FourIssueThreeComm
   val translatedException = Reg(OooExceptionMeta())
   val cacheOutstanding = RegInit(False)
   val cacheDropPending = RegInit(False)
+  val predictionCorrectionFlushPending = RegInit(False)
   val translationPc = Reg(UInt(config.xlen bits)) init (U(config.resetVector, config.xlen bits))
   val cachePc = Reg(UInt(config.xlen bits)) init (U(config.resetVector, config.xlen bits))
   val predictionPendingValid = RegInit(False)
@@ -196,7 +197,7 @@ final class OooFrontend(config: OooCoreConfig = OooCoreConfig.FourIssueThreeComm
   val freeSlots = U(config.instructionBufferEntries, countWidth bits) - count
   io.translationRequest.valid := !translationOutstanding && !translationDropPending &&
     !translatedRequestValid && !translatedExceptionValid && !io.redirectValid &&
-    freeSlots >= config.fetchWidth
+    !predictionCorrectionFlushPending && freeSlots >= config.fetchWidth
   io.translationRequest.virtualAddress := nextFetchPc
   io.translationRequest.isWrite := False
   val translationRequestFire = io.translationRequest.valid && io.translationRequest.ready
@@ -263,7 +264,11 @@ final class OooFrontend(config: OooCoreConfig = OooCoreConfig.FourIssueThreeComm
   targetPredictor.io.speculativeRasPop := predictorSpeculativeUpdateValid &&
     predictorSpeculativeRasPop
   targetPredictor.io.speculativeReturnAddress := predictorSpeculativeReturnAddress
-  targetPredictor.io.flush := io.redirectValid || predictionCorrectionOnResponse
+  // FixBranch correction is response-predecode work.  Delay only its predictor-state restore,
+  // matching ysyx's registered FixBranch redirect, so the wide RAS/GHR recovery enables do not
+  // sit in the cache-response timing cone.  Hold lookup for that restore cycle; the corrected PC
+  // is already installed, and the following lookup therefore observes recovered history.
+  targetPredictor.io.flush := io.redirectValid || predictionCorrectionFlushPending
 
   val groupBase = cachePc &
     U(((BigInt(1) << config.xlen) - 1) ^ (fetchGroupBytes - 1), config.xlen bits)
@@ -347,6 +352,7 @@ final class OooFrontend(config: OooCoreConfig = OooCoreConfig.FourIssueThreeComm
     !responsePredictedTaken
   )
   predictionCorrectionOnResponse := responseFire && !responsePredictionMatchesRequest
+  predictionCorrectionFlushPending := predictionCorrectionOnResponse
 
   val responseLearnMask = Bits(config.fetchWidth bits)
   for (lane <- 0 until config.fetchWidth) {
