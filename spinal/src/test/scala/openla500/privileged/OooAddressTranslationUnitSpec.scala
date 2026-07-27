@@ -252,7 +252,7 @@ class OooAddressTranslationUnitSpec extends AnyFunSuite {
         var instructionSeen = false
         var dataSeen = false
         var arbitrationCycles = 0
-        while (!(instructionSeen && dataSeen) && arbitrationCycles < 24) {
+        while (!(instructionSeen && dataSeen) && arbitrationCycles < 28) {
           sample(dut)
           arbitrationCycles += 1
           if (dut.io.instructionResponse.valid.toBoolean) {
@@ -273,7 +273,7 @@ class OooAddressTranslationUnitSpec extends AnyFunSuite {
           }
         }
         assert(instructionSeen && dataSeen)
-        assert(arbitrationCycles >= 9)
+        assert(arbitrationCycles >= 10)
         sample(dut)
 
         assert(translateInstruction(dut, instructionAddress) == 1)
@@ -287,7 +287,7 @@ class OooAddressTranslationUnitSpec extends AnyFunSuite {
         dut.io.tlbInvalidateOperation #= 0
         sample(dut)
         dut.io.tlbInvalidateValid #= false
-        assert(translateInstruction(dut, instructionAddress) >= 9)
+        assert(translateInstruction(dut, instructionAddress) >= 10)
         assert(dut.io.instructionResponse.exception.valid.toBoolean)
         assert(dut.io.instructionResponse.exception.ecode.toBigInt == 0x3f)
         sample(dut)
@@ -306,7 +306,7 @@ class OooAddressTranslationUnitSpec extends AnyFunSuite {
           low0Flags = tlbLow(0) & 0xff,
           low1Flags = tlbLow(0) & 0xff
         )
-        assert(translateInstruction(dut, instructionAddress) >= 9)
+        assert(translateInstruction(dut, instructionAddress) >= 10)
         assert(!dut.io.instructionResponse.exception.valid.toBoolean)
         assert(
           dut.io.instructionResponse.physicalAddress.toBigInt ==

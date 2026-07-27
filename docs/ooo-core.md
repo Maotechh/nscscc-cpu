@@ -6,7 +6,7 @@
 
 当前官方顶层已经实例化 `openla500.core.OooCoreSystem(OooCoreConfig.FourIssueThreeCommit)`。旧 `SpinalCoreBackend` 和 `openla500.pipeline` 不再参与生成；保留下来的少量 `OpenLa500*` leaf 模块仅供仍被 OoO 核复用的 ALU、乘除法、CSR、TLB 或独立合同测试使用。
 
-当前本地验证候选（2026-07-27，生成 RTL SHA-256 `3b4adddff81c8978bbefdcfe38c44792a34fa8437dfd8db85a641bb181cc4263`）如下：
+当前本地验证候选（2026-07-27，生成 RTL SHA-256 `924d9cad749c5d5ace575fa9d6534ca642b0c5105672e1b262f40ad8bcc34fd2`）如下：
 
 | 检查 | 结果 |
 | --- | --- |
@@ -18,7 +18,9 @@
 | 当前精确 RTL 的 chiplab `func/func_lab19` | DiffTest pass，`END by Syscall` 并到达 end PC；139,668 instructions / 552,247 clocks / IPC 0.252909 |
 | 当前精确 RTL 的 Vivado 2023.2 | standalone 100 MHz WNS `+0.419 ns`；待提交后执行锁定的完整 SoC `perf20@100MHz` 构建 |
 
-Vivado 独立 DRC 报告仍有无约束顶层 I/O 的 NSTD-1/UCIO-1 critical warning；这是未提供板级 XDC 的 standalone 综合，不是 RTL elaboration 或 synthesis error。在 standalone 100 MHz（10 ns）时钟约束下，所有时序约束已经满足：WNS `+0.419 ns`，TNS `0 ns`，失败端点为 0。该结果不含官方 SoC、板级 XDC、placement 和 routing，不能据此声称完整设计已经在板上闭合 100 MHz。最新已提交版本 `bd4fb1b` 的 100 MHz 完整 SoC implementation 已生成 bitstream 且 DRC 0 error，但 WNS/TNS 为 `-0.413678/-71.815697 ns`，所以它不是时序闭合基线。当前 cache 边界候选尚未产生完整 SoC routed DCP。
+Vivado 独立 DRC 报告仍有无约束顶层 I/O 的 NSTD-1/UCIO-1 critical warning；这是未提供板级 XDC 的 standalone 综合，不是 RTL elaboration 或 synthesis error。在 standalone 100 MHz（10 ns）时钟约束下，所有时序约束已经满足：WNS `+0.419 ns`，TNS `0 ns`，失败端点为 0。该结果不含官方 SoC、板级 XDC、placement 和 routing，不能据此声称完整设计已经在板上闭合 100 MHz。提交 `47f1573e` 的 cache 边界版本已完成锁定的完整 SoC bitstream 且 DRC 0 error，WNS/TNS 从 `bd4fb1b` 的 `-0.413678/-71.815697 ns` 改善为 `-0.374067/-13.675565 ns`，但仍有 179 个 setup failing endpoints，所以它不是时序闭合基线。当前 TLB 结果寄存候选尚未产生新的完整 SoC routed DCP。
+
+`47f1573e` 的锁定包是 `D:\fpga-eval-artifacts\47f1573-perf20-cache-boundary-100mhz-v1.fpgajob`，SHA-256 为 `397A699DF4551756AC2D12921BCC5AB6588647D6A8301DD15CAB62A589389C5C`。其最差路径从主 TLB entry bank 到 `exception_badVAddrValid`，10.050 ns 数据延迟中 7.839 ns（78%）为布线；当前候选参照 ysyx `MainTLB` 的 `sWalk -> sEnd` 边界，把主表 walk 结果先寄存后再生成翻译和异常响应，micro-TLB hit 快路径不变。
 
 完整顶层 lint 有 853 条审计项，类别只有 `UNUSEDSIGNAL` 和 `CMPCONST`，精确签名为 `5c7dc1c4b5d8261b216d5a2222fef205d17d133ad9175ad18efc188e3985e836`。大部分来自统一 uop/commit/cache/translation Bundle 在具体路径中只消费部分字段、综合时关闭的 DiffTest 状态输入，以及官方 debug/兼容端口必须保留。Vivado 在综合时会裁剪这些字段，保留的窄状态读端口仍用于 `valid/requestSent/translationDone` 等易变控制。它们不是“以后会用”的功能预留；能在 Scala 结构层安全删除的字段应继续删除，但跨模块固定 Bundle 中的未消费字段由生成器保留更清晰。`reference/core-top-lint-waivers.json` 同时锁定 RTL SHA-256、warning 数量、类别和签名哈希，先运行无抑制审计，再只对完全匹配的签名执行 clean closure。它不是允许新增 warning 的全局开关。
 
@@ -231,5 +233,6 @@ Vivado standalone 综合（PowerShell）：
 | 紧凑年龄顺序 IQ | 534,497 cycles，`END by Syscall` | `+0.359 ns` | 直接 tag compare、年龄选择后一次 payload 索引；物理槽位中间版为 `-0.044 ns`，紧凑版修复 `0.403 ns`，代价为 +999 LUT/-121 FF；本地 126/126、362/362 和 DiffTest 通过；完整 SoC WNS `-0.584979 ns` |
 | LSQ 已选 load payload 寄存及 completion 冲突修复 | 按新策略待真实 `perf20` | 前一生成版本 `+0.359 ns` | 宽不可变 payload 在选择边界寄存，AGU 同拍旁路保持延迟；load response/store completion 冲突时 store 下一拍重试；本地 127/127、362/362、完整 SoC bitcount PASS |
 | L2 write priority、弹性 refill 输出与延迟 cached FixBranch kill | 552,247 cycles，`END by Syscall` | `+0.419 ns` | 本地 130/130、362/362 和 DiffTest 通过；比 534,497 clocks 退化 3.32%，只有完整 SoC 100 MHz route 闭合才值得保留 |
+| 主 TLB walk 结果寄存化 | 552,247 cycles，`END by Syscall` | `+0.419 ns` | 参照 ysyx `sWalk -> sEnd`，主表 miss 增加一拍但 micro-TLB hit 不变；本地 130/130、362/362、DiffTest 通过，standalone top 20 已无 TLB，完整 SoC route 待精确提交验证 |
 
-这些试验说明：响应级异步大表或单纯扩容会用很大的面积/时序代价换取很小的周期收益；同步 banked 状态、按固定/可变延迟分类的窄 tag 唤醒、紧凑 IQ 和真实并发 MSHR 才能保留寄存边界。ALU/MUL 提前唤醒和 Store 地址/数据解耦已经实现，L1D 也能在目标 beat 到达时提前返回。下一决定性门禁是当前 cache 边界候选的 100 MHz SoC placement/routing：若 WNS 非负，再做三次真实 `perf20`；若仍为负，则以 routed top paths 设计更窄的寄存边界，避免接受 3.32% 周期退化。WNS 是否非负与板测是否通过必须分别报告，在结果出来前不能把正 standalone WNS 或负 WNS 下的板测通过描述为完整时序闭合。
+这些试验说明：响应级异步大表或单纯扩容会用很大的面积/时序代价换取很小的周期收益；同步 banked 状态、按固定/可变延迟分类的窄 tag 唤醒、紧凑 IQ 和真实并发 MSHR 才能保留寄存边界。ALU/MUL 提前唤醒和 Store 地址/数据解耦已经实现，L1D 也能在目标 beat 到达时提前返回。cache 边界提交把完整 SoC WNS/TNS 改善到 `-0.374067/-13.675565 ns`，但仍未闭合；下一决定性门禁是当前 TLB 结果寄存候选的 100 MHz SoC placement/routing。若 WNS 非负，再做三次真实 `perf20`；若仍为负，则继续按 routed top paths 设计更窄的寄存边界。WNS 是否非负与板测是否通过必须分别报告，在结果出来前不能把正 standalone WNS 或负 WNS 下的板测通过描述为完整时序闭合。

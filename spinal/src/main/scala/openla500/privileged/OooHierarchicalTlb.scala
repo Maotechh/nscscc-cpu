@@ -259,9 +259,21 @@ final class OooHierarchicalTlb(microEntries: Int = 4, walkEntriesPerCycle: Int =
     val walkSlice = RegInit(U(0, 3 bits))
     val preferData = RegInit(False)
 
+    // Register the main-TLB slice result before it reaches translation and exception logic.
+    // This mirrors the MainTLB sWalk/sEnd boundary in ysyx: a micro-TLB miss pays one rare
+    // extra cycle, while the common micro-TLB-hit path remains unchanged.
+    val walkResponsePending = RegInit(False)
+    val walkResponseOwnerData = Reg(Bool())
+    val walkResponseFound = Reg(Bool())
+    val walkResponseIndex = Reg(UInt(5 bits))
+    val walkResponseEntry = Reg(OooTlbEntryState())
+    val walkResponseVppn = Reg(Bits(19 bits))
+    val walkResponseOddPage = Reg(Bool())
+
     val instructionNeedsWalk = instructionWalkPending || instructionMicroMiss
     val dataNeedsWalk = dataWalkPending || dataMicroMiss
-    val startWalk = !walkActive && !mutation && (instructionNeedsWalk || dataNeedsWalk)
+    val startWalk = !walkActive && !walkResponsePending && !mutation &&
+      (instructionNeedsWalk || dataNeedsWalk)
     val startOwnerData = dataNeedsWalk && (!instructionNeedsWalk || preferData)
     when(startWalk) {
       walkActive := True
@@ -294,13 +306,24 @@ final class OooHierarchicalTlb(microEntries: Int = 4, walkEntriesPerCycle: Int =
     val walkEntry = walkEntries(walkLane)
     val walkDone = walkActive && (walkMatch.orR || walkSlice === U(7, 3 bits))
 
+    walkResponsePending := False
     when(walkActive && !walkDone) { walkSlice := walkSlice + 1 }
     when(walkDone) {
       walkActive := False
-      when(walkOwnerData) {
+      walkResponsePending := True
+      walkResponseOwnerData := walkOwnerData
+      walkResponseFound := walkMatch.orR
+      walkResponseIndex := walkIndex
+      walkResponseEntry := walkEntry
+      walkResponseVppn := walkVppn
+      walkResponseOddPage := walkOddPage
+    }
+
+    when(walkResponsePending) {
+      when(walkResponseOwnerData) {
         dataWalkPending := False
-        when(walkMatch.orR) {
-          dataMicro(dataFillPointer) := walkEntry
+        when(walkResponseFound) {
+          dataMicro(dataFillPointer) := walkResponseEntry
           dataMicroValid(dataFillPointer) := True
           dataFillPointer := dataFillPointer + 1
           dataNegativeValid := False
@@ -311,8 +334,8 @@ final class OooHierarchicalTlb(microEntries: Int = 4, walkEntriesPerCycle: Int =
         }
       }.otherwise {
         instructionWalkPending := False
-        when(walkMatch.orR) {
-          instructionMicro(instructionFillPointer) := walkEntry
+        when(walkResponseFound) {
+          instructionMicro(instructionFillPointer) := walkResponseEntry
           instructionMicroValid(instructionFillPointer) := True
           instructionFillPointer := instructionFillPointer + 1
           instructionNegativeValid := False
@@ -325,24 +348,28 @@ final class OooHierarchicalTlb(microEntries: Int = 4, walkEntriesPerCycle: Int =
     }
 
     io.instructionResponse.valid :=
-      instructionQuickResponse || (walkDone && !walkOwnerData)
+      instructionQuickResponse || (walkResponsePending && !walkResponseOwnerData)
     driveResult(
       io.instructionResponse.payload,
-      Mux(instructionQuickResponse, instructionMicroMatch.orR, walkMatch.orR),
-      Mux(instructionQuickResponse, instructionMicroIndex.resize(5), walkIndex),
-      Mux(instructionQuickResponse, instructionMicro(instructionMicroIndex), walkEntry),
-      Mux(instructionQuickResponse, instructionVppn, walkVppn),
-      Mux(instructionQuickResponse, instructionOddPage, walkOddPage)
+      Mux(instructionQuickResponse, instructionMicroMatch.orR, walkResponseFound),
+      Mux(instructionQuickResponse, instructionMicroIndex.resize(5), walkResponseIndex),
+      Mux(
+        instructionQuickResponse,
+        instructionMicro(instructionMicroIndex),
+        walkResponseEntry
+      ),
+      Mux(instructionQuickResponse, instructionVppn, walkResponseVppn),
+      Mux(instructionQuickResponse, instructionOddPage, walkResponseOddPage)
     )
 
-    io.dataResponse.valid := dataQuickResponse || (walkDone && walkOwnerData)
+    io.dataResponse.valid := dataQuickResponse || (walkResponsePending && walkResponseOwnerData)
     driveResult(
       io.dataResponse.payload,
-      Mux(dataQuickResponse, dataMicroMatch.orR, walkMatch.orR),
-      Mux(dataQuickResponse, dataMicroIndex.resize(5), walkIndex),
-      Mux(dataQuickResponse, dataMicro(dataMicroIndex), walkEntry),
-      Mux(dataQuickResponse, dataVppn, walkVppn),
-      Mux(dataQuickResponse, dataOddPage, walkOddPage)
+      Mux(dataQuickResponse, dataMicroMatch.orR, walkResponseFound),
+      Mux(dataQuickResponse, dataMicroIndex.resize(5), walkResponseIndex),
+      Mux(dataQuickResponse, dataMicro(dataMicroIndex), walkResponseEntry),
+      Mux(dataQuickResponse, dataVppn, walkResponseVppn),
+      Mux(dataQuickResponse, dataOddPage, walkResponseOddPage)
     )
 
     when(mutation) {
@@ -355,6 +382,7 @@ final class OooHierarchicalTlb(microEntries: Int = 4, walkEntriesPerCycle: Int =
       dataProbePending := False
       dataWalkPending := False
       walkActive := False
+      walkResponsePending := False
     }
   }
 }
