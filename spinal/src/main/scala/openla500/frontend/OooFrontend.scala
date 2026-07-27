@@ -224,16 +224,22 @@ final class OooFrontend(config: OooCoreConfig = OooCoreConfig.FourIssueThreeComm
   val cacheRequestBaseValid = translatedRequestValid &&
     (!cacheOutstanding || responseFire || droppedResponseFire) && !io.redirectValid &&
     cacheRequestCapacityAvailable
-  io.cacheRequestValid := cacheRequestBaseValid && !translatedUncached &&
-    !predictionCorrectionOnResponse
+  io.cacheRequestValid := cacheRequestBaseValid && !translatedUncached
   io.cacheUncachedRequestValid := cacheRequestBaseValid && translatedUncached
   io.cacheRequest.virtualAddress := translationPc
   io.cacheRequest.physicalAddress := translatedPhysicalAddress
   io.cacheRequest.uncached := translatedUncached
-  val requestFire = (io.cacheRequestValid || io.cacheUncachedRequestValid) &&
-    io.cacheRequestReady
-  io.cacheKill := io.redirectValid && cacheOutstanding
-  val predictorSpeculativeUpdateValid = RegNext(requestFire) init (False)
+  val cachedRequestFire = io.cacheRequestValid && io.cacheRequestReady
+  val uncachedRequestFire = io.cacheUncachedRequestValid && io.cacheRequestReady
+  val requestFire = cachedRequestFire || uncachedRequestFire
+  val correctionKillsCachedRequest = predictionCorrectionOnResponse && cachedRequestFire
+  // The cache-array lookup is synchronous, so canceling the just-accepted wrong-path request on
+  // the following cycle still prevents both a hit response and a miss allocation.  Registering
+  // this pulse also keeps response predecode out of the L1I response-register enable cone.
+  val cachedCorrectionKillPending = RegNext(correctionKillsCachedRequest) init (False)
+  io.cacheKill := (io.redirectValid && cacheOutstanding) || cachedCorrectionKillPending
+  val predictorSpeculativeUpdateValid =
+    RegNext(requestFire && !predictionCorrectionOnResponse) init (False)
   val predictorSpeculativeHistoryValid = Reg(Bool()) init (False)
   val predictorSpeculativeHistoryTaken = Reg(Bool()) init (False)
   val predictorSpeculativeRasPush = Reg(Bool()) init (False)
@@ -516,8 +522,11 @@ final class OooFrontend(config: OooCoreConfig = OooCoreConfig.FourIssueThreeComm
       )
     }
     when(responseFire) {
-      cacheOutstanding := requestFire
-      cacheDropPending := predictionCorrectionOnResponse && requestFire
+      // A cached wrong-path handoff is accepted to keep response decode out of the L1I lookup
+      // enable, then canceled at the L1 boundary.  Uncached AXI requests cannot be canceled and
+      // therefore retain the response-drain protocol.
+      cacheOutstanding := requestFire && !correctionKillsCachedRequest
+      cacheDropPending := predictionCorrectionOnResponse && uncachedRequestFire
       when(predictionCorrectionOnResponse) {
         nextFetchPc := Mux(
           responsePredictedTaken,

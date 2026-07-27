@@ -168,6 +168,25 @@ class OooL1InstructionCacheSpec extends AnyFunSuite {
         sleep(1)
         assert(dut.io.requestReady.toBoolean)
 
+        // A prediction correction may arrive with an already translated next-group request.
+        // Accept it to keep kill out of the lookup enable, then abort before allocating a miss.
+        dut.io.requestValid #= true
+        dut.io.request.virtualAddress #= 0x1c000040
+        dut.io.request.physicalAddress #= 0x40
+        dut.io.request.uncached #= false
+        dut.io.kill #= true
+        sleep(1)
+        assert(dut.io.requestReady.toBoolean)
+        sample(dut)
+        dut.io.requestValid #= false
+        dut.io.kill #= false
+        for (_ <- 0 until 3) {
+          sample(dut)
+          assert(!dut.io.responseValid.toBoolean)
+          assert(!dut.io.lineReadValid.toBoolean)
+        }
+        assert(dut.io.requestReady.toBoolean)
+
         acceptRequest(dut, virtualAddress = 0x1c000130, physicalAddress = 0x130)
         refill(
           dut,

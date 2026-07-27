@@ -149,12 +149,12 @@ final class OooL1InstructionCache(
     refillResponseSent && !refillReplayPending && !requestKilled && !io.request.uncached &&
     lineAddress(io.request.physicalAddress) === lineAddress(request.physicalAddress)
   io.requestReady := (idleRequestReady || refillSameLineReady) &&
-    !invalidateRequest && !io.kill
+    !invalidateRequest
   val requestFire = io.requestValid && io.requestReady
   val refillRequestFire = requestFire && refillSameLineReady
   when(requestFire) {
     request := io.request
-    requestKilled := False
+    requestKilled := io.kill
     when(refillRequestFire) {
       refillResponseSent := False
     }.otherwise {
@@ -163,7 +163,10 @@ final class OooL1InstructionCache(
       state := OooL1InstructionCacheState.lookup
     }
   }
-  when((io.kill || newInvalidate) && state =/= OooL1InstructionCacheState.idle) {
+  when(
+    (io.kill || newInvalidate) &&
+      (state =/= OooL1InstructionCacheState.idle || requestFire)
+  ) {
     requestKilled := True
   }
 
@@ -175,15 +178,15 @@ final class OooL1InstructionCache(
     io.lineReadBeat.mshrId === 0
 
   when(state === OooL1InstructionCacheState.lookup && cacheArray.io.responseValid) {
-    when(cacheArray.io.hit) {
-      when(!requestKilled && !io.kill) {
-        responseValid := True
-        writeResponse(
-          request,
-          selectFetchGroup(cacheArray.io.hitData, request.physicalAddress),
-          False
-        )
-      }
+    when(requestKilled || io.kill || newInvalidate) {
+      state := OooL1InstructionCacheState.idle
+    }.elsewhen(cacheArray.io.hit) {
+      responseValid := True
+      writeResponse(
+        request,
+        selectFetchGroup(cacheArray.io.hitData, request.physicalAddress),
+        False
+      )
       state := OooL1InstructionCacheState.idle
     }.otherwise {
       victimWay := cacheArray.io.victimWay

@@ -513,7 +513,7 @@ class OooFrontendSpec extends AnyFunSuite {
       }
   }
 
-  test("FixBranch blocks a same-cycle stale cache handoff before issuing the corrected group") {
+  test("FixBranch kills a stale cached handoff at its synchronous lookup response") {
     SimConfig.withVerilator
       .workspacePath("target/sim-workspace-ooo-frontend")
       .compile(new OooFrontend(config))
@@ -540,8 +540,8 @@ class OooFrontendSpec extends AnyFunSuite {
         sample(dut)
         dut.io.translationResponse.valid #= false
 
-        // The stale sequential request is accepted on the same edge that FixBranch discovers the
-        // direct branch. It must be drained rather than allowed into the instruction buffer.
+        // Keep response predecode out of the L1I request enable: accept the already translated
+        // sequential request, then cancel it when its synchronous lookup response is available.
         dut.io.cacheRequestReady #= true
         dut.io.cacheResponseValid #= true
         dut.io.cacheResponse.virtualAddress #= base
@@ -558,15 +558,19 @@ class OooFrontendSpec extends AnyFunSuite {
           staticTaken = true
         )
         sleep(1)
-        assert(!dut.io.cacheRequestValid.toBoolean)
+        assert(dut.io.cacheRequestValid.toBoolean)
+        assert(dut.io.cacheRequest.virtualAddress.toBigInt == sequentialPc)
+        assert(!dut.io.cacheKill.toBoolean)
         sample(dut)
         dut.io.cacheRequestReady #= false
         dut.io.cacheResponseValid #= false
+        assert(dut.io.cacheKill.toBoolean)
         sample(dut)
+        assert(!dut.io.cacheKill.toBoolean)
         assert(dut.io.fetchPc.toBigInt == branchTarget)
         assert(dut.io.occupancy.toBigInt == 2)
 
-        // Translate the corrected target without waiting for a poisoned L1I response.
+        // The canceled cached request has no response-drain obligation.
         dut.io.translationRequest.ready #= true
         sample(dut)
         dut.io.translationRequest.ready #= false

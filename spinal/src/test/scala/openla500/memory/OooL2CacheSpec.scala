@@ -60,9 +60,16 @@ class OooL2CacheSpec extends AnyFunSuite {
         dut.io.write.data #= line
         dut.io.write.byteMask #= (BigInt(1) << OooCacheContract.LineBytes) - 1
         dut.io.write.mshrId #= 2
+        dut.io.readValid #= true
+        dut.io.read.lineAddress #= address + OooCacheContract.LineBytes
+        dut.io.read.mshrId #= 1
+        sleep(1)
+        assert(dut.io.writeReady.toBoolean)
+        assert(!dut.io.readReady.toBoolean)
         while (!dut.io.writeReady.toBoolean) { dut.clockDomain.waitSampling() }
         dut.clockDomain.waitSampling()
         dut.io.writeValid #= false
+        dut.io.readValid #= false
 
         var writeWait = 0
         while (!dut.io.memoryWriteValid.toBoolean && writeWait < 8) {
@@ -86,15 +93,21 @@ class OooL2CacheSpec extends AnyFunSuite {
         dut.io.read.lineAddress #= address
         dut.io.read.mshrId #= 3
         dut.io.read.criticalBeat #= 5
+        sleep(1)
         while (!dut.io.readReady.toBoolean) { dut.clockDomain.waitSampling() }
+        assert(dut.io.readReady.toBoolean)
         dut.clockDomain.waitSampling()
+        sleep(1)
         dut.io.readValid #= false
 
         var firstBeatWait = 0
         while (!dut.io.readBeatValid.toBoolean && firstBeatWait < 8) {
           dut.clockDomain.waitSampling()
+          sleep(1)
           firstBeatWait += 1
         }
+        assert(dut.io.readBeatValid.toBoolean)
+        assert(!dut.io.readBeatReady.toBoolean)
         for (_ <- 0 until 2) {
           sleep(1)
           assert(dut.io.readBeatValid.toBoolean)
@@ -221,28 +234,38 @@ class OooL2CacheSpec extends AnyFunSuite {
         val beats = (0 until OooCacheContract.BeatsPerLine).map { beat =>
           BigInt("abcd000000000000", 16) + beat
         }
-        for (beat <- beats.indices) {
-          dut.io.memoryReadBeatValid #= true
-          dut.io.memoryReadBeat.mshrId #= 2
+        // The empty elastic slot accepts the critical beat even while L1 is stalled.
+        dut.io.readBeatReady #= false
+        dut.io.memoryReadBeatValid #= true
+        dut.io.memoryReadBeat.mshrId #= 2
+        dut.io.memoryReadBeat.beat #= 0
+        dut.io.memoryReadBeat.data #= beats(0)
+        dut.io.memoryReadBeat.last #= false
+        sleep(1)
+        assert(dut.io.memoryReadBeatReady.toBoolean)
+        assert(!dut.io.readBeatValid.toBoolean)
+        dut.clockDomain.waitSampling()
+        sleep(1)
+        assert(dut.io.readBeatValid.toBoolean)
+        assert(dut.io.readBeat.beat.toBigInt == 0)
+        assert(dut.io.readBeat.data.toBigInt == beats(0))
+        assert(!dut.io.memoryReadBeatReady.toBoolean)
+
+        for (_ <- 0 until 2) {
+          dut.clockDomain.waitSampling()
+          sleep(1)
+          assert(dut.io.readBeatValid.toBoolean)
+          assert(dut.io.readBeat.beat.toBigInt == 0)
+          assert(dut.io.readBeat.data.toBigInt == beats(0))
+          assert(!dut.io.memoryReadBeatReady.toBoolean)
+        }
+
+        // Pop the buffered beat and replace it on the same edge, then sustain one beat/cycle.
+        dut.io.readBeatReady #= true
+        for (beat <- 1 until beats.size) {
           dut.io.memoryReadBeat.beat #= beat
           dut.io.memoryReadBeat.data #= beats(beat)
           dut.io.memoryReadBeat.last #= beat == beats.size - 1
-          if (beat == 3) {
-            dut.io.readBeatReady #= false
-            sleep(1)
-            assert(!dut.io.memoryReadBeatReady.toBoolean)
-            assert(dut.io.readBeatValid.toBoolean)
-            assert(dut.io.readBeat.beat.toBigInt == beat)
-            for (_ <- 0 until 2) {
-              dut.clockDomain.waitSampling()
-              sleep(1)
-              assert(!dut.io.memoryReadBeatReady.toBoolean)
-              assert(dut.io.readBeatValid.toBoolean)
-              assert(dut.io.readBeat.beat.toBigInt == beat)
-              assert(dut.io.readBeat.data.toBigInt == beats(beat))
-            }
-            dut.io.readBeatReady #= true
-          }
           sleep(1)
           assert(dut.io.memoryReadBeatReady.toBoolean)
           dut.clockDomain.waitSampling()

@@ -127,20 +127,18 @@ final class OooSharedCacheHierarchy(
   io.dataResponse := l1d.io.response
   when(io.uncachedDataResponseValid) { io.dataResponse := io.uncachedDataResponse }
 
-  val dataWritePending = l1d.io.lineWriteValid
-
   l2.io.writeValid := l1d.io.lineWriteValid
   l2.io.write := l1d.io.lineWrite
   l1d.io.lineWriteReady := l2.io.writeReady
 
-  readMshrs.io.instructionReadValid := l1i.io.lineReadValid && !dataWritePending
+  readMshrs.io.instructionReadValid := l1i.io.lineReadValid
   readMshrs.io.instructionRead := l1i.io.lineRead
   l1i.io.lineReadReady := readMshrs.io.instructionReadReady
   l1i.io.lineReadBeatValid := readMshrs.io.instructionReadBeatValid
   l1i.io.lineReadBeat := readMshrs.io.instructionReadBeat
   readMshrs.io.instructionReadBeatReady := l1i.io.lineReadBeatReady
 
-  readMshrs.io.dataReadValid := l1d.io.lineReadValid && !dataWritePending
+  readMshrs.io.dataReadValid := l1d.io.lineReadValid
   readMshrs.io.dataRead := l1d.io.lineRead
   l1d.io.lineReadReady := readMshrs.io.dataReadReady
   l1d.io.lineReadBeatValid := readMshrs.io.dataReadBeatValid
