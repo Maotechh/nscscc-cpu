@@ -412,6 +412,11 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
   val requestBuffer = Reg(OooCacheRequest(config))
   val requestBufferLoadIndex = Reg(UInt(config.loadQueueIndexWidth bits))
   val requestBufferStoreIndex = Reg(UInt(config.storeQueueIndexWidth bits))
+  // Cache readiness includes tag/MSHR arbitration. Keep that long cone out of the
+  // dynamically indexed store-entry clear network: acceptance advances the ordered
+  // head immediately, while this sidecar retires the accepted slot one cycle later.
+  val acceptedStoreValid = RegInit(False)
+  val acceptedStoreIndex = Reg(UInt(config.storeQueueIndexWidth bits))
   val requestCapture = !io.flush && !requestBufferValid &&
     (storeRequest || cacheLoadCandidate)
   io.dataRequestValid := requestBufferValid && !io.flush
@@ -616,6 +621,13 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
     when(dataRequestFire) {
       requestBufferValid := False
     }
+    when(acceptedStoreValid) {
+      acceptedStoreValid := False
+    }
+    when(storeRequestFire) {
+      acceptedStoreValid := True
+      acceptedStoreIndex := requestBufferStoreIndex
+    }
     completionValid := generatedCompletionValid
     // Validity, not payload clock-enables, defines whether this register is
     // observable. Sampling every cycle prevents the deep forwarding predicate
@@ -633,7 +645,8 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
       loads(io.commit(lane).loadQueueIndex).robPointer === io.commit(lane).robPointer
     loadReleaseValid(lane) := !io.flush && loadCommitMatch
   }
-  storeReleaseValid(0) := !io.flush && (storeRequestFire || failedScRelease)
+  val failedScReleaseFire = failedScRelease && !acceptedStoreValid
+  storeReleaseValid(0) := !io.flush && (acceptedStoreValid || failedScReleaseFire)
   io.releaseLoadValid := loadReleaseValid
   io.releaseStoreValid := storeReleaseValid
 
@@ -781,18 +794,23 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
     when(forwardFire) {
       loads(loadHead).completed := True
     }
-    when(storeRequestFire || failedScRelease) {
-      val releaseIndex = Mux(
-        storeRequestFire,
-        requestBufferStoreIndex,
-        storeHead
-      )
-      stores(releaseIndex).valid := False
-      stores(releaseIndex).addressReady := False
-      stores(releaseIndex).dataReady := False
-      stores(releaseIndex).completed := False
-      stores(releaseIndex).committed := False
-      stores(releaseIndex).translationDone := False
+    when(acceptedStoreValid) {
+      stores(acceptedStoreIndex).valid := False
+      stores(acceptedStoreIndex).addressReady := False
+      stores(acceptedStoreIndex).dataReady := False
+      stores(acceptedStoreIndex).completed := False
+      stores(acceptedStoreIndex).committed := False
+      stores(acceptedStoreIndex).translationDone := False
+    }
+    when(failedScReleaseFire) {
+      stores(storeHead).valid := False
+      stores(storeHead).addressReady := False
+      stores(storeHead).dataReady := False
+      stores(storeHead).completed := False
+      stores(storeHead).committed := False
+      stores(storeHead).translationDone := False
+    }
+    when(storeRequestFire || failedScReleaseFire) {
       storeHead := storeHead + 1
     }
   }

@@ -600,9 +600,12 @@ class OooLoadStoreQueueSpec extends AnyFunSuite {
 
         dut.io.dataRequestReady #= true
         sleep(1)
-        assert(dut.io.releaseStoreValid.toBigInt == 1)
+        assert(dut.io.releaseStoreValid.toBigInt == 0)
         sample(dut)
         assert(!dut.io.dataRequestValid.toBoolean)
+        assert(dut.io.releaseStoreValid.toBigInt == 1)
+        sample(dut)
+        assert(dut.io.releaseStoreValid.toBigInt == 0)
       }
   }
 
