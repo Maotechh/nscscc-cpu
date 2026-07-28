@@ -386,6 +386,7 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
   requestCandidate.writeData := B(0, config.xlen bits)
   requestCandidate.uncached := headLoadState.uncached
   requestCandidate.robPointer := scheduledLoad.robPointer
+  requestCandidate.recoveryEpoch := scheduledLoad.recoveryEpoch
   requestCandidate.pdst := scheduledLoad.pdst
   when(storeRequest) {
     requestCandidate.virtualAddress := headStore.virtualAddress
@@ -400,6 +401,7 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
     )
     requestCandidate.uncached := headStore.uncached
     requestCandidate.robPointer := headStore.robPointer
+    requestCandidate.recoveryEpoch := headStore.recoveryEpoch
     requestCandidate.pdst := U(0, config.physicalRegIndexWidth bits)
   }
 
@@ -421,7 +423,8 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
   val responseLoadMatch = Bits(config.loadQueueEntries bits)
   for (entry <- 0 until config.loadQueueEntries) {
     responseLoadMatch(entry) := loads(entry).valid && loads(entry).requestSent &&
-      !loads(entry).completed && io.dataResponse.robPointer === loads(entry).robPointer
+      !loads(entry).completed && io.dataResponse.robPointer === loads(entry).robPointer &&
+      io.dataResponse.recoveryEpoch === loads(entry).recoveryEpoch
   }
   val responseLoadValid = responseLoadMatch.orR
   val responseLoadIndex = OHToUInt(OHMasking.first(responseLoadMatch))

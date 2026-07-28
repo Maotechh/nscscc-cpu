@@ -64,6 +64,7 @@ class OooDataCacheHierarchySpec extends AnyFunSuite {
     dut.io.request.writeData #= 0
     dut.io.request.uncached #= false
     dut.io.request.robPointer #= 0
+    dut.io.request.recoveryEpoch #= 0
     dut.io.request.pdst #= 0
     dut.io.memoryReadReady #= false
     dut.io.memoryReadBeatValid #= false
@@ -93,7 +94,8 @@ class OooDataCacheHierarchySpec extends AnyFunSuite {
       data: BigInt,
       mask: BigInt,
       robPointer: BigInt,
-      pdst: BigInt
+      pdst: BigInt,
+      recoveryEpoch: BigInt = 0
   ): Unit = {
     dut.io.requestValid #= false
     dut.io.request.virtualAddress #= address
@@ -104,6 +106,7 @@ class OooDataCacheHierarchySpec extends AnyFunSuite {
     dut.io.request.writeData #= data
     dut.io.request.uncached #= false
     dut.io.request.robPointer #= robPointer
+    dut.io.request.recoveryEpoch #= recoveryEpoch
     dut.io.request.pdst #= pdst
     sleep(1)
 

@@ -83,7 +83,6 @@ final class OooAxiLineBridge(
   val writeSize = Reg(Bits(3 bits)) init (B(2, 3 bits))
   val writeData = Reg(Bits(OooCacheContract.LineBits bits))
   val writeMask = Reg(Bits(OooCacheContract.LineBytes bits))
-  val dataWriteContext = Reg(OooCacheRequest(config))
   val writeAddressValid = RegInit(False)
   val writeBeatIndex = Reg(UInt(axiWordIndexWidth bits)) init (0)
   val writeResponsePending = RegInit(False)
@@ -255,6 +254,7 @@ final class OooAxiLineBridge(
     }.otherwise {
       dataResponseValid := True
       dataResponse.robPointer := dataReadContext.robPointer
+      dataResponse.recoveryEpoch := dataReadContext.recoveryEpoch
       dataResponse.pdst := dataReadContext.pdst
       dataResponse.data := io.axi.r.payload.data
       dataResponse.error := io.axi.r.payload.response.orR ||
@@ -284,7 +284,6 @@ final class OooAxiLineBridge(
     writeSize := io.uncachedDataRequest.size
     writeData := io.uncachedDataRequest.writeData.resize(OooCacheContract.LineBits)
     writeMask := io.uncachedDataRequest.byteMask.resize(OooCacheContract.LineBytes)
-    dataWriteContext := io.uncachedDataRequest
     writeAddressValid := True
     writeBeatIndex := 0
     writeResponsePending := False

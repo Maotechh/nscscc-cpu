@@ -39,6 +39,7 @@ class OooAxiLineBridgeSpec extends AnyFunSuite {
     dut.io.uncachedDataRequest.writeData #= 0
     dut.io.uncachedDataRequest.uncached #= true
     dut.io.uncachedDataRequest.robPointer #= 0
+    dut.io.uncachedDataRequest.recoveryEpoch #= 0
     dut.io.uncachedDataRequest.pdst #= 0
     dut.io.axi.ar.ready #= false
     dut.io.axi.r.valid #= false
@@ -334,6 +335,7 @@ class OooAxiLineBridgeSpec extends AnyFunSuite {
         dut.io.uncachedDataRequest.physicalAddress #= BigInt("1fe00101", 16)
         dut.io.uncachedDataRequest.size #= 0
         dut.io.uncachedDataRequest.robPointer #= 17
+        dut.io.uncachedDataRequest.recoveryEpoch #= 29
         dut.io.uncachedDataRequest.pdst #= 23
         sleep(1)
         assert(dut.io.uncachedDataRequestReady.toBoolean)
@@ -357,6 +359,7 @@ class OooAxiLineBridgeSpec extends AnyFunSuite {
         dut.io.axi.r.valid #= false
         assert(dut.io.uncachedDataResponseValid.toBoolean)
         assert(dut.io.uncachedDataResponse.robPointer.toBigInt == 17)
+        assert(dut.io.uncachedDataResponse.recoveryEpoch.toBigInt == 29)
         assert(dut.io.uncachedDataResponse.pdst.toBigInt == 23)
         assert(dut.io.uncachedDataResponse.data.toBigInt == BigInt("00005a00", 16))
 

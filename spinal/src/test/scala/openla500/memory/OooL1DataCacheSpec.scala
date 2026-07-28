@@ -60,6 +60,7 @@ class OooL1DataCacheSpec extends AnyFunSuite {
     dut.io.request.writeData #= 0
     dut.io.request.uncached #= false
     dut.io.request.robPointer #= 0
+    dut.io.request.recoveryEpoch #= 0
     dut.io.request.pdst #= 0
     dut.io.lineReadReady #= false
     dut.io.lineReadBeatValid #= false
@@ -84,7 +85,8 @@ class OooL1DataCacheSpec extends AnyFunSuite {
       data: BigInt,
       mask: BigInt,
       robPointer: BigInt,
-      pdst: BigInt
+      pdst: BigInt,
+      recoveryEpoch: BigInt = 0
   ): Unit = {
     dut.io.requestValid #= true
     dut.io.request.virtualAddress #= address
@@ -95,6 +97,7 @@ class OooL1DataCacheSpec extends AnyFunSuite {
     dut.io.request.writeData #= data
     dut.io.request.uncached #= false
     dut.io.request.robPointer #= robPointer
+    dut.io.request.recoveryEpoch #= recoveryEpoch
     dut.io.request.pdst #= pdst
   }
 
@@ -244,7 +247,16 @@ class OooL1DataCacheSpec extends AnyFunSuite {
         dut.clockDomain.waitSampling(70)
         sleep(1)
 
-        setRequest(dut, 0x12c, isWrite = false, data = 0, mask = 0xf, robPointer = 7, pdst = 12)
+        setRequest(
+          dut,
+          0x12c,
+          isWrite = false,
+          data = 0,
+          mask = 0xf,
+          robPointer = 7,
+          pdst = 12,
+          recoveryEpoch = 11
+        )
         sample(dut)
         dut.io.requestValid #= false
         while (!dut.io.lineReadValid.toBoolean) { sample(dut) }
@@ -271,6 +283,7 @@ class OooL1DataCacheSpec extends AnyFunSuite {
         }
         assert(dut.io.responseValid.toBoolean)
         assert(dut.io.response.robPointer.toBigInt == 7)
+        assert(dut.io.response.recoveryEpoch.toBigInt == 11)
         assert(dut.io.response.pdst.toBigInt == 12)
         assert(dut.io.response.data.toBigInt == BigInt("11223344", 16))
         sample(dut)

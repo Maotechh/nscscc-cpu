@@ -6,25 +6,27 @@
 
 当前官方顶层已经实例化 `openla500.core.OooCoreSystem(OooCoreConfig.FourIssueThreeCommit)`。旧 `SpinalCoreBackend` 和 `openla500.pipeline` 不再参与生成；保留下来的少量 `OpenLa500*` leaf 模块仅供仍被 OoO 核复用的 ALU、乘除法、CSR、TLB 或独立合同测试使用。
 
-当前本地验证候选（2026-07-28，生成 RTL SHA-256 `855f2c8173027d3c4a8e4f651bb6179afa576af25f780d9db5ee2f10d5bb827a`）如下：
+当前本地验证候选（2026-07-28，生成 RTL SHA-256 `433720b1a3d2b10018b858aef10d14ca75ada631e4718bb605c9f411349a698d`）如下：
 
 | 检查 | 结果 |
 | --- | --- |
-| Scala/Spinal/Verilator | 36 suites，130 tests，130 passed，0 failed，0 aborted |
+| Scala/Spinal/Verilator | 36 suites，131 tests，131 passed，0 failed，0 aborted |
 | Python repository gates | 362 tests，362 passed，0 failed/error |
 | core_top package/port contract | pass，49 ports，17 inputs，32 outputs，`TLBNUM=32` |
-| Verilator complete-top lint | pass，853 条精确签名审计后 closure 为 0 warning/error |
+| Verilator complete-top lint | pass，844 条精确签名审计后 closure 为 0 warning/error |
 | Yosys 结构检查 | pass，Yosys 0.33，无 warning/skip |
-| 当前精确 RTL 的 chiplab `func/func_lab19` | DiffTest pass，`END by Syscall` 并到达 end PC；139,670 instructions / 555,322 clocks / IPC 0.251512 |
-| 当前精确 RTL 的 Vivado 2023.2 | standalone 100 MHz WNS `+0.419 ns`；待精确提交后执行锁定的完整 SoC `perf20@100MHz` 构建 |
+| 当前精确 RTL 的 chiplab `perf/quick_sort` | 固定延迟及随机 AXI 延迟 seed `5570815`、`20260728`、`8675309` 均 `quick sort PASS!` |
+| 当前精确 RTL 的 Vivado 2023.2 | standalone 100 MHz WNS `+0.279 ns`；待精确提交后执行锁定的完整 SoC `perf20@100MHz` 构建 |
 
-Vivado 独立 DRC 报告仍有无约束顶层 I/O 的 NSTD-1/UCIO-1 critical warning；这是未提供板级 XDC 的 standalone 综合，不是 RTL elaboration 或 synthesis error。在 standalone 100 MHz（10 ns）时钟约束下，所有时序约束已经满足：WNS `+0.419 ns`，TNS `0 ns`，失败端点为 0。该结果不含官方 SoC、板级 XDC、placement 和 routing，不能据此声称完整设计已经在板上闭合 100 MHz。提交 `26925beb9bbe70ae3312da39e39fc7fefbc3e133` 的 TLB 结果寄存版本已经完成锁定的完整 SoC bitstream 且 DRC 0 error，WNS/TNS 从 `47f1573e` 的 `-0.374067/-13.675565 ns` 改善为 `-0.170742/-8.018137 ns`，setup failing endpoints 从 179 降到 122，hold WNS 为 `+0.051 ns`；它仍不是时序闭合基线。
+Vivado 独立 DRC 报告仍有无约束顶层 I/O 的 NSTD-1/UCIO-1 critical warning；这是未提供板级 XDC 的 standalone 综合，不是 RTL elaboration 或 synthesis error。在 standalone 100 MHz（10 ns）时钟约束下，所有时序约束已经满足：WNS `+0.279 ns`，TNS `0 ns`，失败端点为 0。该结果不含官方 SoC 和板级 XDC，不能据此声称完整设计已经在板上闭合 100 MHz。提交 `26925beb9bbe70ae3312da39e39fc7fefbc3e133` 的 TLB 结果寄存版本已经完成锁定的完整 SoC bitstream 且 DRC 0 error，WNS/TNS 从 `47f1573e` 的 `-0.374067/-13.675565 ns` 改善为 `-0.170742/-8.018137 ns`，setup failing endpoints 从 179 降到 122，hold WNS 为 `+0.051 ns`；它仍不是时序闭合基线。
+
+上一提交 `e68b4929050953b5d8e5cfeae92cb8a888684896` 的锁定完整 SoC 已在 100 MHz 下闭合，WNS `+0.015294 ns`、TNS `0 ns`、DRC 0 error；三次真实 `perf20` 均为 19/20，唯一失败项是 `quick_sort`。本轮定位到恢复后身份复用缺陷：已被 flush 的 load 可以留下一个已接受的 cache miss，而 cache response 过去只携带 ROB pointer；当 ROB/LDQ 槽位复用时，旧响应可能误完成新 load。本轮把 8-bit `recoveryEpoch` 贯穿 LSQ、L1D、MSHR 和 AXI uncached read response，并要求 pointer 与 epoch 同时匹配。完整 SoC route 和三次真实 `perf20` 尚未执行，不能把本地 quicksort 通过直接写成板测通过。
 
 `26925be` 的锁定包是 `D:\fpga-eval-artifacts\26925be-perf20-tlb-walk-result-100mhz-v1.fpgajob`，SHA-256 为 `47B24F2AA04320FF7324F8CE9C993D1018C54A063D57D0489128FB1BE7921D42`。原主 TLB 路径已经消失；新的最差路径从 L1I response predecode 出发，经 response-level prediction correction 和 predictor flush 到 speculative RAS restore，数据延迟 `9.801 ns`，其中布线 `6.727 ns`（68.6%）。当前候选参照 ysyx 的寄存 `fixRedirect` 边界，把该恢复延迟一拍并暂停恢复拍的新 lookup，避免用旧 speculative GHR/RAS 发起请求。
 
-完整顶层 lint 有 853 条审计项，类别只有 `UNUSEDSIGNAL` 和 `CMPCONST`，精确签名为 `5c7dc1c4b5d8261b216d5a2222fef205d17d133ad9175ad18efc188e3985e836`。大部分来自统一 uop/commit/cache/translation Bundle 在具体路径中只消费部分字段、综合时关闭的 DiffTest 状态输入，以及官方 debug/兼容端口必须保留。Vivado 在综合时会裁剪这些字段，保留的窄状态读端口仍用于 `valid/requestSent/translationDone` 等易变控制。它们不是“以后会用”的功能预留；能在 Scala 结构层安全删除的字段应继续删除，但跨模块固定 Bundle 中的未消费字段由生成器保留更清晰。`reference/core-top-lint-waivers.json` 同时锁定 RTL SHA-256、warning 数量、类别和签名哈希，先运行无抑制审计，再只对完全匹配的签名执行 clean closure。它不是允许新增 warning 的全局开关。
+完整顶层 lint 有 844 条审计项，类别只有 `UNUSEDSIGNAL` 和 `CMPCONST`，精确签名为 `7409078ee929b223fb36ca0d905444e7b6d9933e78ecfbda4a846a21925c290e`。大部分来自统一 uop/commit/cache/translation Bundle 在具体路径中只消费部分字段、综合时关闭的 DiffTest 状态输入，以及官方 debug/兼容端口必须保留。Vivado 在综合时会裁剪这些字段，保留的窄状态读端口仍用于 `valid/requestSent/translationDone` 等易变控制。它们不是“以后会用”的功能预留；能在 Scala 结构层安全删除的字段应继续删除，但跨模块固定 Bundle 中的未消费字段由生成器保留更清晰。`reference/core-top-lint-waivers.json` 同时锁定 RTL SHA-256、warning 数量、类别和签名哈希，先运行无抑制审计，再只对完全匹配的签名执行 clean closure。它不是允许新增 warning 的全局开关。
 
-综合资源（`xc7a200tfbg676-2`，flatten hierarchy rebuilt）：72,315 LUT、39,679 FF、58 RAMB36、16 RAMB18、4 DSP。其中 ROB 为 28,143 LUT / 5,718 FF，LSQ 为 2,066 LUT / 2,212 FF，四个 IQ 合计 6,074 LUT / 7,326 FF。IQ 以年龄顺序紧凑保存八项，唤醒标签直接比较 resident entry，oldest-ready 后只做一次 payload 索引；中间项发射时搬移所有年轻项，并把同拍 wake 合入搬移后的 ready bit。ROB payload 使用同步 bank 预取，retirement hot control 与大 payload 分离。ALU 和固定延迟 MUL 使用窄 tag 提前唤醒，MUL 数据在 PRF operand 边界转发；可变延迟 DIV 只经 ROB 寄存写回唤醒，避免 raw divider tag 直接进入 IQ oldest-ready 选择。Store 地址进入 LSU IQ，Store 数据进入独立 8-entry queue，二者按 ROB/STQ identity 在 LSQ 汇合。LSQ 选择 load 时同时寄存不可变 payload，后续翻译、store-order 和 forwarding 不再第二次经过宽 `loads(loadHead)` 选择；AGU 同拍旁路避免增加正常 load 延迟。当前 standalone 100 MHz WNS/TNS/失败端点为 `+0.419 ns / 0 ns / 0`。最终 8 线程综合证据的 `timing.rpt` SHA-256 为 `75567b9ce3aa15d0af5ac6215055cc82c91e3044ec6715de1210af546039005b`，`utilization.rpt` SHA-256 为 `359fd1a64d1fd395202cfd9c471fa0b5173d248fe1058d9b18670be050348ba8`，DRC SHA-256 为 `2b1387985eeb6dff6576ef38fccc7a0e6fb1c57b62d7ddc2de6124dc683970ae`，DCP SHA-256 为 `f8f364259a6ae34b70a828ffc81c7856b9b2416038e191ac1fa82495bc5eb778`。
+综合资源（`xc7a200tfbg676-2`，flatten hierarchy rebuilt）：72,689 LUT、39,794 FF、58 RAMB36、16 RAMB18、4 DSP。其中 ROB 为 28,222 LUT / 5,719 FF，LSQ 为 2,027 LUT / 2,225 FF，四个 IQ 合计 6,073 LUT / 7,326 FF。IQ 以年龄顺序紧凑保存八项，唤醒标签直接比较 resident entry，oldest-ready 后只做一次 payload 索引；中间项发射时搬移所有年轻项，并把同拍 wake 合入搬移后的 ready bit。ROB payload 使用同步 bank 预取，retirement hot control 与大 payload 分离。ALU 和固定延迟 MUL 使用窄 tag 提前唤醒，MUL 数据在 PRF operand 边界转发；可变延迟 DIV 只经 ROB 寄存写回唤醒，避免 raw divider tag 直接进入 IQ oldest-ready 选择。Store 地址进入 LSU IQ，Store 数据进入独立 8-entry queue，二者按 ROB/STQ identity 在 LSQ 汇合。LSQ 选择 load 时同时寄存不可变 payload，后续翻译、store-order 和 forwarding 不再第二次经过宽 `loads(loadHead)` 选择；AGU 同拍旁路避免增加正常 load 延迟。当前 standalone 100 MHz WNS/TNS/失败端点为 `+0.279 ns / 0 ns / 0`。最终 8 线程综合证据的 `timing.rpt` SHA-256 为 `E0641970EC9DC6EB4295BBAB88C98632A97B083A4976467D8BFB8906FEEC7CC8`，`utilization.rpt` SHA-256 为 `4BD35D2C088412061ECF461DD1B60F65DE8505CA54B1F9A53CB99CFB6155DF3B`，DRC SHA-256 为 `05F6897CE9B3430B3535EC4CE8C79EBA8BAE712A8755B9442B9DE4AC92E3CE92`，DCP SHA-256 为 `7146EA826AEAE4EF83B67D04DC70C6130C8A5369783FF7DB1CD1728CBCB862F1`。
 
 已提交的 LSQ 时序版本 `7ada9ba51e7e69b5e6c95a45dcf1984a4114a022` 完成了官方完整 SoC implementation：100 MHz WNS `-0.535200 ns`、TNS `-95.344513 ns`、90,110 slice LUT、55,281 registers、DRC 0 error、bitstream 成功。它比 banked MSHR 提交 `40a3b53` 的 `-0.977163/-1228.851318 ns` 继续改善，但仍未闭合。最差 CPU 路径变为 `recoveryEpoch_reg[1]` 经 ROB wakeup 和 IQ oldest-ready 选择到 `issueAddressUop_1.decoded.immediate`，10.386 ns 数据路径中 84.5% 为布线。锁定 package SHA-256 为 `a02b2b72ba0d3ab53a4cc80f6a1baf6d2328684b2796e467b45329572070101b`，包内全部 artifact 哈希已逐项验证。远端 `func58` Job `20260725-210149-13a43932` 仍在 programming 阶段因实验箱 `There is no current hw_target` 结束为 `infra_error`，没有 programming/VIO/DUT 结论。
 
@@ -208,7 +210,7 @@ Vivado standalone 综合（PowerShell）：
 3. 任何宽度/队列/line geometry 改动都必须同时更新 `OooCoreConfig` 的 require、对应 directed test、官方仿真和 Vivado 资源/时序记录；不能只改生成参数。
 4. 先验证功能，再看时序。当前 standalone 100 MHz WNS 为正；不能用综合约束屏蔽真实路径，也不能把 standalone synthesis 扩大为 complete-SoC timing closure。远程评测直接使用 `perf20`，只有 `perf20` 暴露功能问题时才回到 `func58`；三次真实测试尚未执行，不能把本地仿真收益当作 FPGA 性能结论。
 5. 官方 `func_lab19` 通过不等于 full random、Linux、FPGA 或比赛性能全部通过。每轮性能结论要记录实际 workload、时钟、seed、commit 和报告哈希。
-6. 当前候选已通过功能、端口、Yosys、synthesis 和 standalone 100 MHz timing；下一轮性能或时序修改必须重新跑 Scala 全量测试、官方 DiffTest 和 Vivado，而不是只比较 RTL 文本。当前候选的官方计数为 555,322 clocks，standalone Vivado WNS 为 `+0.419 ns`。Vivado 主机策略固定为 `general.maxThreads=8`，没有显式设置并发数的 `launch_runs` 默认使用 `-jobs 4`。
+6. 当前候选已通过功能、端口、Yosys、quicksort 固定/随机 AXI 延迟仿真、synthesis 和 standalone 100 MHz timing；下一轮性能或时序修改必须重新跑 Scala 全量测试、官方程序仿真和 Vivado，而不是只比较 RTL 文本。当前候选的 quicksort 随机延迟计数范围为 `0x312b1f..0x312c4b` SoC clocks，standalone Vivado WNS 为 `+0.279 ns`。Vivado 主机策略固定为 `general.maxThreads=8`，没有显式设置并发数的 `launch_runs` 默认使用 `-jobs 4`。
 
 ## 优化试验记录
 
@@ -235,5 +237,6 @@ Vivado standalone 综合（PowerShell）：
 | L2 write priority、弹性 refill 输出与延迟 cached FixBranch kill | 552,247 cycles，`END by Syscall` | `+0.419 ns` | 本地 130/130、362/362 和 DiffTest 通过；比 534,497 clocks 退化 3.32%，只有完整 SoC 100 MHz route 闭合才值得保留 |
 | 主 TLB walk 结果寄存化 | 552,247 cycles，`END by Syscall` | `+0.419 ns` | 参照 ysyx `sWalk -> sEnd`，主表 miss 增加一拍但 micro-TLB hit 不变；完整 SoC WNS/TNS 改善为 `-0.170742/-8.018137 ns`，原 TLB 路径消失，仍未闭合 |
 | response-level FixBranch/RAS 恢复寄存化 | 555,322 cycles，`END by Syscall` | `+0.419 ns` | 参照 ysyx 寄存 `fixRedirect`；恢复拍暂停 lookup，避免使用旧 speculative GHR/RAS；本地 130/130、362/362、DiffTest 通过，代价为 +3,075 cycles（0.557%），完整 SoC route 决定是否保留 |
+| cache response 携带 recovery epoch | quicksort 固定延迟和三组随机 AXI 延迟均 PASS | `+0.279 ns` | pointer+epoch 拒绝 flush 后遗留的旧响应，修复 ROB/LDQ 槽位复用误完成；本地 131/131、362/362、lint/Yosys/publish 通过，完整 SoC route 与三次真实 `perf20` 待执行 |
 
 这些试验说明：响应级异步大表或单纯扩容会用很大的面积/时序代价换取很小的周期收益；同步 banked 状态、按固定/可变延迟分类的窄 tag 唤醒、紧凑 IQ 和真实并发 MSHR 才能保留寄存边界。ALU/MUL 提前唤醒和 Store 地址/数据解耦已经实现，L1D 也能在目标 beat 到达时提前返回。TLB 结果寄存提交把完整 SoC WNS/TNS 改善到 `-0.170742/-8.018137 ns`，但仍未闭合；下一决定性门禁是当前 FixBranch/RAS 恢复寄存候选的 100 MHz SoC placement/routing。若 WNS 非负，再做三次真实 `perf20`；若仍为负，则继续按 routed top paths 设计更窄的寄存边界。WNS 是否非负与板测是否通过必须分别报告，在结果出来前不能把正 standalone WNS 或负 WNS 下的板测通过描述为完整时序闭合。

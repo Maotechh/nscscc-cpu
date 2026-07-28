@@ -24,6 +24,7 @@ final case class OooL1DataMshrWaiter(config: OooCoreConfig) extends Bundle {
   val mshrId = UInt(log2Up(config.mshrEntries) bits)
   val physicalAddress = UInt(config.xlen bits)
   val robPointer = UInt(config.robPointerWidth bits)
+  val recoveryEpoch = UInt(config.recoveryEpochWidth bits)
   val pdst = UInt(config.physicalRegIndexWidth bits)
 }
 
@@ -33,5 +34,6 @@ final case class OooL1DataLookupRequest(config: OooCoreConfig) extends Bundle {
   val byteMask = Bits(config.xlen / 8 bits)
   val writeData = Bits(config.xlen bits)
   val robPointer = UInt(config.robPointerWidth bits)
+  val recoveryEpoch = UInt(config.recoveryEpochWidth bits)
   val pdst = UInt(config.physicalRegIndexWidth bits)
 }

@@ -108,6 +108,7 @@ class OooLoadStoreQueueSpec extends AnyFunSuite {
     dut.io.flush #= false
     for (lane <- 0 until config.renameWidth) {
       dut.io.allocate(lane).robPointer #= 0
+      dut.io.allocate(lane).recoveryEpoch #= 0
       dut.io.allocate(lane).isLoad #= false
       dut.io.allocate(lane).isStore #= false
       dut.io.allocate(lane).loadQueueIndex #= 0
@@ -119,6 +120,7 @@ class OooLoadStoreQueueSpec extends AnyFunSuite {
     dut.io.agu.byteMask #= 0xf
     dut.io.agu.writeData #= 0
     dut.io.agu.uop.robPointer #= 0
+    dut.io.agu.uop.recoveryEpoch #= 0
     dut.io.agu.uop.pdst #= 0
     dut.io.agu.uop.loadQueueIndex #= 0
     dut.io.agu.uop.storeQueueIndex #= 0
@@ -138,6 +140,7 @@ class OooLoadStoreQueueSpec extends AnyFunSuite {
       dut.io.commit(lane).exception.valid #= false
     }
     dut.io.dataResponse.robPointer #= 0
+    dut.io.dataResponse.recoveryEpoch #= 0
     dut.io.dataResponse.pdst #= 0
     dut.io.dataResponse.data #= 0
     dut.io.dataResponse.error #= false
@@ -449,6 +452,91 @@ class OooLoadStoreQueueSpec extends AnyFunSuite {
         }
         assert(dut.io.completionValid.toBoolean)
         assert(dut.io.completion.robPointer.toBigInt == 10)
+      }
+  }
+
+  test("a cache response from an old recovery epoch cannot complete a recycled ROB pointer") {
+    SimConfig.withVerilator
+      .workspacePath("target/sim-workspace-ooo-lsq")
+      .compile(new OooLoadStoreQueueProbe(config))
+      .doSim("ooo-lsq-cache-response-epoch", 0x4c5c) { dut =>
+        dut.clockDomain.forkStimulus(period = 10)
+        clearInputs(dut)
+        dut.clockDomain.assertReset()
+        dut.clockDomain.waitSampling(2)
+        dut.clockDomain.deassertReset()
+        sample(dut)
+
+        dut.io.allocateValid #= 1
+        dut.io.allocate(0).robPointer #= 9
+        dut.io.allocate(0).recoveryEpoch #= 3
+        dut.io.allocate(0).isLoad #= true
+        dut.io.allocate(0).loadQueueIndex #= 0
+        sample(dut)
+        dut.io.allocateValid #= 0
+
+        setLoadAgu(dut, pointer = 9, address = 0x100, loadIndex = 0, pdst = 7)
+        dut.io.agu.uop.recoveryEpoch #= 3
+        sample(dut)
+        dut.io.aguValid #= false
+        dut.io.dataRequestReady #= true
+        var oldRequestWait = 0
+        while (!dut.io.dataRequestValid.toBoolean && oldRequestWait < 12) {
+          sample(dut)
+          oldRequestWait += 1
+        }
+        assert(dut.io.dataRequestValid.toBoolean)
+        assert(dut.io.dataRequest.recoveryEpoch.toBigInt == 3)
+        sample(dut)
+        dut.io.dataRequestReady #= false
+
+        // The cache cannot cancel this accepted miss when recovery discards the load.
+        dut.io.flush #= true
+        sample(dut)
+        dut.io.flush #= false
+
+        // Recovery can recycle both the LQ slot and full ROB pointer before DDR returns.
+        dut.io.allocateValid #= 1
+        dut.io.allocate(0).robPointer #= 9
+        dut.io.allocate(0).recoveryEpoch #= 4
+        dut.io.allocate(0).isLoad #= true
+        dut.io.allocate(0).loadQueueIndex #= 0
+        sample(dut)
+        dut.io.allocateValid #= 0
+
+        setLoadAgu(dut, pointer = 9, address = 0x200, loadIndex = 0, pdst = 8)
+        dut.io.agu.uop.recoveryEpoch #= 4
+        sample(dut)
+        dut.io.aguValid #= false
+        dut.io.dataRequestReady #= true
+        var newRequestWait = 0
+        while (!dut.io.dataRequestValid.toBoolean && newRequestWait < 12) {
+          sample(dut)
+          newRequestWait += 1
+        }
+        assert(dut.io.dataRequestValid.toBoolean)
+        assert(dut.io.dataRequest.recoveryEpoch.toBigInt == 4)
+        sample(dut)
+        dut.io.dataRequestReady #= false
+
+        dut.io.dataResponseValid #= true
+        dut.io.dataResponse.robPointer #= 9
+        dut.io.dataResponse.recoveryEpoch #= 3
+        dut.io.dataResponse.data #= BigInt("11111111", 16)
+        sample(dut)
+        dut.io.dataResponseValid #= false
+        assert(!dut.io.completionValid.toBoolean)
+
+        dut.io.dataResponseValid #= true
+        dut.io.dataResponse.recoveryEpoch #= 4
+        dut.io.dataResponse.data #= BigInt("22222222", 16)
+        sample(dut)
+        dut.io.dataResponseValid #= false
+        assert(dut.io.completionValid.toBoolean)
+        assert(dut.io.completion.robPointer.toBigInt == 9)
+        assert(dut.io.completion.recoveryEpoch.toBigInt == 4)
+        assert(dut.io.completion.pdst.toBigInt == 8)
+        assert(dut.io.completion.data.toBigInt == BigInt("22222222", 16))
       }
   }
 

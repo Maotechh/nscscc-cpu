@@ -109,6 +109,7 @@ class OooSharedCacheHierarchySpec extends AnyFunSuite {
     dut.io.dataRequest.writeData #= 0
     dut.io.dataRequest.uncached #= false
     dut.io.dataRequest.robPointer #= 0
+    dut.io.dataRequest.recoveryEpoch #= 0
     dut.io.dataRequest.pdst #= 0
     dut.io.uncachedInstructionRequestReady #= false
     dut.io.uncachedInstructionResponseValid #= false
@@ -126,6 +127,7 @@ class OooSharedCacheHierarchySpec extends AnyFunSuite {
     dut.io.uncachedDataRequestReady #= false
     dut.io.uncachedDataResponseValid #= false
     dut.io.uncachedDataResponse.robPointer #= 0
+    dut.io.uncachedDataResponse.recoveryEpoch #= 0
     dut.io.uncachedDataResponse.pdst #= 0
     dut.io.uncachedDataResponse.data #= 0
     dut.io.uncachedDataResponse.error #= false
@@ -370,6 +372,7 @@ class OooSharedCacheHierarchySpec extends AnyFunSuite {
         dut.io.dataRequest.physicalAddress #= BigInt("1fe00104", 16)
         dut.io.dataRequest.uncached #= true
         dut.io.dataRequest.robPointer #= 9
+        dut.io.dataRequest.recoveryEpoch #= 31
         dut.io.dataRequest.pdst #= 13
         dut.io.uncachedDataRequestReady #= true
         sleep(1)
@@ -383,10 +386,12 @@ class OooSharedCacheHierarchySpec extends AnyFunSuite {
 
         dut.io.uncachedDataResponseValid #= true
         dut.io.uncachedDataResponse.robPointer #= 9
+        dut.io.uncachedDataResponse.recoveryEpoch #= 31
         dut.io.uncachedDataResponse.pdst #= 13
         dut.io.uncachedDataResponse.data #= BigInt("89abcdef", 16)
         sleep(1)
         assert(dut.io.dataResponseValid.toBoolean)
+        assert(dut.io.dataResponse.recoveryEpoch.toBigInt == 31)
         assert(dut.io.dataResponse.data.toBigInt == BigInt("89abcdef", 16))
       }
   }

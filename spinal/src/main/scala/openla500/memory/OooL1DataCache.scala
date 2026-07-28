@@ -272,6 +272,7 @@ final class OooL1DataCache(config: OooCoreConfig = OooCoreConfig.FourIssueThreeC
     lookupRequest.byteMask := io.request.byteMask
     lookupRequest.writeData := io.request.writeData
     lookupRequest.robPointer := io.request.robPointer
+    lookupRequest.recoveryEpoch := io.request.recoveryEpoch
     lookupRequest.pdst := io.request.pdst
     lookupMshrId := freeMissId
     lookupWaiterId := freeWaiterId
@@ -281,6 +282,7 @@ final class OooL1DataCache(config: OooCoreConfig = OooCoreConfig.FourIssueThreeC
     waiters(freeWaiterId).mshrId := lineMatchId
     waiters(freeWaiterId).physicalAddress := io.request.physicalAddress
     waiters(freeWaiterId).robPointer := io.request.robPointer
+    waiters(freeWaiterId).recoveryEpoch := io.request.recoveryEpoch
     waiters(freeWaiterId).pdst := io.request.pdst
   }
   when(pendingStoreApply) {
@@ -355,6 +357,7 @@ final class OooL1DataCache(config: OooCoreConfig = OooCoreConfig.FourIssueThreeC
         waiters(lookupWaiterId).mshrId := lookupMshrId
         waiters(lookupWaiterId).physicalAddress := lookupRequest.physicalAddress
         waiters(lookupWaiterId).robPointer := lookupRequest.robPointer
+        waiters(lookupWaiterId).recoveryEpoch := lookupRequest.recoveryEpoch
         waiters(lookupWaiterId).pdst := lookupRequest.pdst
       }
     }
@@ -512,12 +515,14 @@ final class OooL1DataCache(config: OooCoreConfig = OooCoreConfig.FourIssueThreeC
   when(lookupHitLoad) {
     responseValid := True
     response.robPointer := lookupRequest.robPointer
+    response.recoveryEpoch := lookupRequest.recoveryEpoch
     response.pdst := lookupRequest.pdst
     response.data := selectWord(cacheArray.io.hitData, lookupRequest.physicalAddress)
     response.error := False
   }.elsewhen(waiterResponseFire) {
     responseValid := True
     response.robPointer := waiters(responseWaiterId).robPointer
+    response.recoveryEpoch := waiters(responseWaiterId).recoveryEpoch
     response.pdst := waiters(responseWaiterId).pdst
     response.data := selectBeatWord(responseBeat, waiters(responseWaiterId).physicalAddress)
     response.error := misses(responseMshrId).refillError
