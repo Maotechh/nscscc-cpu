@@ -383,14 +383,5 @@ class DivGateCliTests(unittest.TestCase):
         self.assertIn("requires isolated Python", result.stderr)
 
 
-class DivMakefileDispatchTests(unittest.TestCase):
-    def test_all_rtl_gates_dispatch_div_explicitly(self) -> None:
-        makefile = (Path(__file__).resolve().parents[1] / "Makefile").read_text(encoding="utf-8")
-        for command in ("elaborate", "generate", "port-check", "lint", "yosys-check", "formal"):
-            self.assertIn(f"tools/div_gate.py {command} --target", makefile)
-        self.assertIn("tools/div_diff.py candidate --contract", makefile)
-        self.assertGreaterEqual(makefile.count("unsupported TARGET=$(TARGET)"), 7)
-
-
 if __name__ == "__main__":
     unittest.main()

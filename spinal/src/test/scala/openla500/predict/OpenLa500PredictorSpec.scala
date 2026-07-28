@@ -2,6 +2,7 @@ package openla500.predict
 
 import java.nio.file.Paths
 import openla500.config.CoreConfig
+import openla500.core.OooCoreConfig
 import org.scalatest.funsuite.AnyFunSuite
 import spinal.core._
 import spinal.core.sim._
@@ -232,6 +233,68 @@ class OpenLa500PredictorSpec extends AnyFunSuite {
         update(collisionPc, pop = true, add = true)
         update(returnTargetSource, push = true)
         expectHit(collisionPc, returnTargetSource + 4)
+      }
+  }
+
+  test("banked predictor preserves a retiring RAS push across same-cycle flush") {
+    val config = OooCoreConfig.FourIssueThreeCommit
+    SimConfig.withVerilator
+      .workspacePath("target/sim-workspace-ooo-banked-predictor")
+      .compile(new OooBankedFetchPredictor(config))
+      .doSim("ooo-banked-predictor-commit-flush", 0x52415346) { dut =>
+        dut.clockDomain.forkStimulus(period = 10)
+        dut.io.lookupValid #= false
+        dut.io.lookupPc #= 0
+        dut.io.btbUpdateValid #= false
+        dut.io.btbUpdatePc #= 0
+        dut.io.btbUpdateTarget #= 0
+        dut.io.btbUpdateType #= 1
+        dut.io.btbUpdateDirectionTrained #= false
+        dut.io.phtUpdateValid #= false
+        dut.io.phtUpdatePc #= 0
+        dut.io.phtUpdateIndex #= 0
+        dut.io.phtUpdateOldState #= 0
+        dut.io.phtUpdateOldValid #= false
+        dut.io.phtUpdateTaken #= false
+        dut.io.speculativeHistoryValid #= false
+        dut.io.speculativeHistoryTaken #= false
+        dut.io.speculativeRasPush #= false
+        dut.io.speculativeRasPop #= false
+        dut.io.speculativeReturnAddress #= 0
+        dut.io.commitRasPush #= false
+        dut.io.commitRasPop #= false
+        dut.io.commitReturnAddress #= 0
+        dut.io.flush #= false
+        dut.clockDomain.assertReset()
+        dut.clockDomain.waitSampling(2)
+        dut.clockDomain.deassertReset()
+        dut.clockDomain.waitSampling(132)
+
+        val returnPc = BigInt("1c004000", 16)
+        val fallbackTarget = BigInt("1c008000", 16)
+        val committedReturnAddress = BigInt("1c00c004", 16)
+        dut.io.btbUpdatePc #= returnPc
+        dut.io.btbUpdateTarget #= fallbackTarget
+        dut.io.btbUpdateType #= 3
+        dut.io.btbUpdateValid #= true
+        dut.clockDomain.waitSampling()
+        dut.io.btbUpdateValid #= false
+
+        dut.io.commitRasPush #= true
+        dut.io.commitReturnAddress #= committedReturnAddress
+        dut.io.flush #= true
+        dut.clockDomain.waitSampling()
+        dut.io.commitRasPush #= false
+        dut.io.flush #= false
+
+        dut.io.lookupPc #= returnPc
+        dut.io.lookupValid #= true
+        dut.clockDomain.waitSampling()
+        dut.io.lookupValid #= false
+        sleep(1)
+        assert(dut.io.responseValid.toBoolean)
+        assert(dut.io.prediction(0).hit.toBoolean)
+        assert(dut.io.prediction(0).target.toBigInt == committedReturnAddress)
       }
   }
 }

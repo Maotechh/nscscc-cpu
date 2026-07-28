@@ -1,13 +1,12 @@
-# Reference 说明
+# Reference 数据
 
-本目录只保存版本锁、来源清单、依赖哈希和小型 manifest，不保存 chiplab、Linux、工具链、波形或生成工程。
+本目录保存可复现生成和官方兼容检查需要的锁定数据：
 
-- 官方 chiplab reference 必须位于仓库外的 Linux 文件系统，或位于被忽略的 `.work/`。
-- 每次验证只使用 `manifest.lock` 的固定 commit，并在独立副本中 overlay DUT。
-- `golden-rtl-files.lock` 是 candidate 导出的显式 allowlist；它不是完整功能通过证明。
-- `scala-dependencies.lock.json` 锁定专用 SBT boot、Coursier 和 Ivy 缓存内全部 JAR、POM、XML 和 properties。缓存位于仓库外，默认目录由 `manifest.lock` 的 `scala_cache_dir` 指定。
-- `make scala-cache-bootstrap` 只用于显式 bootstrap/update-lock PR。它拒绝复用或删除已有缓存目录，并会联网解析依赖；普通 `make scala-check` 必须离线运行且不得更新 lock。
-- bootstrap 是 TOFU 内容锁：后续离线运行只验证列入 lock 的依赖 artifact 字节保持一致，不证明首次下载内容的上游真实性。
-- Scala gate 锁定已列出的 launcher、JDK/Verilator 核心文件和 host 工具；系统头文件、glibc、动态链接器及 GCC 内部执行闭包尚未全部锁定，因此不得称为完整 hermetic toolchain。
-- openLA500/chiplab 来源使用木兰宽松许可证第 2 版。引入参考源码时必须保留原许可证和版权声明。
-- `a158aa8` 只是 golden candidate。在固定官方环境中通过所需 gate 前不得称为 golden truth。
+* `manifest.lock`：上游 commit、工具版本和外部环境锁。
+* `core-top.ports.json`：官方 `core_top` 的 49 端口及 `TLBNUM=32` 合同。
+* `golden-rtl-files.lock`：历史 golden RTL 来源 allowlist，仅供独立 leaf differential gate 使用。
+* `scala-dependencies.lock.json`：Scala/SBT 依赖内容锁。
+* `component-contracts/`：仍保留的 ALU、cache、mul/div 等独立 leaf 合同。
+* `component-replacements/core-top.json`：生成顶层的替换哈希；逻辑目标为 `rtl/mycpu_top.v`，实际文件由 `make generate-core` 生成且不加入 Git。
+
+旧标量流水线的 payload layout、stage contract 和 active mixed-overlay 数据已经删除，不再是 OoO 核的生成或验收输入。

@@ -8,7 +8,7 @@ import spinal.core._
   * remain combinational from the current request, while translated tags use the captured address,
   * exactly matching the active golden module.
   */
-final class OpenLa500AddrTrans extends Component {
+final class OpenLa500AddrTrans(managementSearchEnabled: Boolean = false) extends Component {
   val io = new Bundle {
     val clk = in Bool ()
     val asid = in Bits (10 bits)
@@ -41,6 +41,10 @@ final class OpenLa500AddrTrans extends Component {
     val data_tlb_d = out Bool ()
     val data_tlb_mat = out Bits (2 bits)
     val data_tlb_plv = out Bits (2 bits)
+
+    val management_search_vppn = managementSearchEnabled generate in Bits (19 bits)
+    val management_search_found = managementSearchEnabled generate out Bool ()
+    val management_search_index = managementSearchEnabled generate out Bits (5 bits)
 
     val tlbfill_en = in Bool ()
     val tlbwr_en = in Bool ()
@@ -77,7 +81,8 @@ final class OpenLa500AddrTrans extends Component {
 
   private val tlb = new OpenLa500TlbEntry(
     definitionName = "openla500_tlb_entry_impl",
-    exposeInstructionIndex = false
+    exposeInstructionIndex = false,
+    exposeManagementSearch = managementSearchEnabled
   )
   tlb.io.clk := io.clk
   tlb.io.s0_fetch := io.inst_fetch
@@ -125,6 +130,12 @@ final class OpenLa500AddrTrans extends Component {
   io.data_tlb_d := tlb.io.s1_d
   io.data_tlb_mat := tlb.io.s1_mat
   io.data_tlb_plv := tlb.io.s1_plv
+  if (managementSearchEnabled) {
+    tlb.io.management_vppn := io.management_search_vppn
+    tlb.io.management_asid := io.asid
+    io.management_search_found := tlb.io.management_found
+    io.management_search_index := tlb.io.management_index
+  }
 
   io.tlbehi_out := tlb.io.r_vppn ## B(0, 13 bits)
   io.tlbelo0_out := B(0, 4 bits) ## tlb.io.r_ppn0 ## B(0, 1 bits) ## tlb.io.r_g ##

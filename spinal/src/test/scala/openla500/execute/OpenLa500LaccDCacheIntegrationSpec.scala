@@ -93,7 +93,7 @@ private final class OpenLa500LaccDCacheIntegrationTop extends Component {
   dcache.io.ret_data := io.retData
   dcache.io.wr_rdy := io.wrReady
 
-  // These assignments intentionally mirror SpinalCoreBackend.scala.
+  // These assignments intentionally mirror the legacy LACC/cache integration contract.
   lacc.io.memoryRequest.ready := dcache.io.addr_ok
   lacc.io.memoryResponse.valid := lacc.io.request.valid && dcache.io.data_ok
   lacc.io.memoryResponse.payload.data := dcache.io.rdata

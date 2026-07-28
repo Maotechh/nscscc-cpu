@@ -38,12 +38,7 @@ class CoreConfigSpec extends AnyFunSuite {
     assert(CoreConfig.Supported.forall(_.debugEnabled))
     assert(CoreConfig.Supported.forall(_.isa == IsaFeatures()))
 
-    val defaultTop = CoreTopCompatConfig()
-    val laccTop = CoreTopCompatConfig(laccEnabled = true)
-    assert(defaultTop.backendConfig == CoreConfig.LockedWithDiffTest)
-    assert(!defaultTop.backendConfig.laccEnabled)
-    assert(laccTop.backendConfig == CoreConfig.LockedWithLaccAndDiffTest)
-    assert(laccTop.backendConfig.laccEnabled)
+    assert(CoreTopCompatConfig().tlbEntries == 32)
   }
 
   test("unsupported configuration changes fail closed") {

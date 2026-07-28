@@ -1,15 +1,11 @@
 package openla500.compat
 
-import openla500.config.CoreConfig
+import openla500.core.{OooCoreConfig, OooCoreSystem}
 import spinal.core._
 
 /** Locked compatibility boundary for the chiplab core_top interface. */
-final case class CoreTopCompatConfig(tlbEntries: Int = 32, laccEnabled: Boolean = false) {
+final case class CoreTopCompatConfig(tlbEntries: Int = 32) {
   require(tlbEntries == 32, "only the locked TLBNUM=32 configuration is currently verified")
-
-  val backendConfig: CoreConfig =
-    (if (laccEnabled) CoreConfig.LockedWithLaccAndDiffTest else CoreConfig.LockedWithDiffTest)
-      .copy(tlbEntries = tlbEntries)
 }
 
 final class CoreTopCompat(config: CoreTopCompatConfig = CoreTopCompatConfig()) extends Component {
@@ -100,12 +96,12 @@ final class CoreTopCompat(config: CoreTopCompatConfig = CoreTopCompatConfig()) e
   )
 
   val backendArea = new ClockingArea(coreClockDomain) {
-    val core = new SpinalCoreBackend(config.backendConfig)
+    val core = new OooCoreSystem(OooCoreConfig.FourIssueThreeCommit)
   }
   val core = backendArea.core
 
   core.io.aclk := coreClockDomain.clock
-  core.io.aresetn := !coreClockDomain.reset
+  core.io.reset := coreClockDomain.reset
   core.io.intrpt := io.intrpt
   core.io.axi.ar.ready := io.arready
   core.io.axi.r.payload.id := io.rid
@@ -118,9 +114,9 @@ final class CoreTopCompat(config: CoreTopCompatConfig = CoreTopCompatConfig()) e
   core.io.axi.b.payload.id := io.bid
   core.io.axi.b.payload.response := io.bresp
   core.io.axi.b.valid := io.bvalid
-  core.io.break_point := io.break_point
-  core.io.infor_flag := io.infor_flag
-  core.io.reg_num := io.reg_num
+  core.io.breakPoint := io.break_point
+  core.io.informationSelect := io.infor_flag
+  core.io.registerNumber := io.reg_num
 
   io.arid := core.io.axi.ar.payload.id
   io.araddr := core.io.axi.ar.payload.address
@@ -147,11 +143,11 @@ final class CoreTopCompat(config: CoreTopCompatConfig = CoreTopCompatConfig()) e
   io.wlast := core.io.axi.w.payload.last
   io.wvalid := core.io.axi.w.valid
   io.bready := core.io.axi.b.ready
-  io.ws_valid := core.io.ws_valid
-  io.rf_rdata := core.io.rf_rdata
-  io.debug0_wb_pc := core.io.debug0_wb_pc
-  io.debug0_wb_rf_wen := core.io.debug0_wb_rf_wen
-  io.debug0_wb_rf_wnum := core.io.debug0_wb_rf_wnum
-  io.debug0_wb_rf_wdata := core.io.debug0_wb_rf_wdata
-  io.debug0_wb_inst := core.io.debug0_wb_inst
+  io.ws_valid := core.io.writebackValid
+  io.rf_rdata := core.io.registerReadData
+  io.debug0_wb_pc := core.io.debugPc
+  io.debug0_wb_rf_wen := core.io.debugGprWriteMask
+  io.debug0_wb_rf_wnum := core.io.debugGprIndex
+  io.debug0_wb_rf_wdata := core.io.debugGprData
+  io.debug0_wb_inst := core.io.debugInstruction
 }

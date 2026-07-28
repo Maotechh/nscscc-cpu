@@ -12,6 +12,7 @@ obj/
 *.str
 
 # Vivado generated
+/.Xil/
 xilinx_ip/*/gen/
 *.dcp
 *.xci
@@ -34,3 +35,5 @@ __pycache__/
 /logs/refactor/**/waveforms/
 
 jsfa.pdf
+
+.vscode/

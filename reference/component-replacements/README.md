@@ -1,6 +1,3 @@
-# Active Spinal CPU Overlay
+# CPU RTL 发布绑定
 
-The only committed CPU RTL is the reproducible SpinalHDL output `rtl/mycpu_top.v`.
-`core-top.json` and `active-reachable.json` bind that exact blob to the locked
-`a158aa8` target. Historical leaf replacement RTL and mixed-overlay manifests
-were removed after the self-contained top became the only synthesis input.
+`core-top.json` 将生成的 CPU RTL 哈希绑定到锁定的官方 `rtl/mycpu_top.v` 逻辑目标。`make generate-core` 的权威输出是 `build/core_top/package/rtl/mycpu_top.v`，并创建未追踪的 `rtl/mycpu_top.v` 镜像；新版本必须通过 `make publish-check` 更新并核对哈希。不再维护旧 leaf/mixed-overlay replacement 集合。

@@ -1,0 +1,9 @@
+{"command":"cd spinal && sbt -batch 'testOnly openla500.backend.OooRegisterStructuresSpec openla500.predict.OpenLa500PredictorSpec'","exit_code":0,"summary":"2 suites, 8/8 passed"}
+{"command":"cd spinal && sbt -batch scalafmtCheckAll","exit_code":0,"summary":"format check passed"}
+{"command":"make test","exit_code":0,"summary":"36 suites, 130/130 passed"}
+{"command":"make generate-core","exit_code":0,"summary":"generated and published deterministic core_top RTL"}
+{"command":"make lint","exit_code":0,"summary":"853 locked CMPCONST/UNUSEDSIGNAL warnings; signature matched"}
+{"command":"make python-test","exit_code":0,"summary":"362/362 passed"}
+{"command":"make port-check yosys-check publish-check","exit_code":0,"summary":"all three gates passed"}
+{"command":"D:/Xilinx/Vivado/2023.2/bin/vivado.bat -mode batch -source tools/ooo_core_top_synth.tcl -tclargs build/core_top/package/rtl/mycpu_top.v build/vivado/core_top","exit_code":0,"summary":"Vivado 2023.2 standalone synthesis passed; 100 MHz WNS +0.359 ns"}
+

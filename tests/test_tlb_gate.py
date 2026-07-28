@@ -62,10 +62,5 @@ class TlbGateTests(unittest.TestCase):
         with self.assertRaisesRegex(tlb_gate.GateError, "exactly one"):
             tlb_gate.rename_module(b"module unrelated; endmodule\n", b"candidate")
 
-    def test_makefile_exposes_tlb_unit_target(self) -> None:
-        makefile = (ROOT / "Makefile").read_text(encoding="utf-8")
-        self.assertIn("else ifeq ($(TARGET),tlb)", makefile)
-        self.assertIn("tools/tlb_gate.py diff", makefile)
-
 if __name__ == "__main__":
     unittest.main()

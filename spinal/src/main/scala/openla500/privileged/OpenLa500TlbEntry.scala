@@ -10,7 +10,8 @@ import spinal.core._
   */
 final class OpenLa500TlbEntry(
     definitionName: String = "tlb_entry",
-    exposeInstructionIndex: Boolean = true
+    exposeInstructionIndex: Boolean = true,
+    exposeManagementSearch: Boolean = false
 ) extends Component {
   setDefinitionName(definitionName)
 
@@ -42,6 +43,11 @@ final class OpenLa500TlbEntry(
     val s1_d = out Bool ()
     val s1_mat = out Bits (2 bits)
     val s1_plv = out Bits (2 bits)
+
+    val management_vppn = exposeManagementSearch generate in Bits (19 bits)
+    val management_asid = exposeManagementSearch generate in Bits (10 bits)
+    val management_found = exposeManagementSearch generate out Bool ()
+    val management_index = exposeManagementSearch generate out Bits (5 bits)
 
     val we = in Bool ()
     val w_index = in UInt (5 bits)
@@ -213,6 +219,20 @@ final class OpenLa500TlbEntry(
   io.s1_d := Mux(odd1, state.dirty1(index1), state.dirty0(index1))
   io.s1_mat := Mux(odd1, state.mat1(index1), state.mat0(index1))
   io.s1_plv := Mux(odd1, state.plv1(index1), state.plv0(index1))
+
+  if (exposeManagementSearch) {
+    val managementMatch = Bits(32 bits)
+    for (index <- 0 until 32) {
+      managementMatch(index) := state.enabled(index) &&
+        pageMatches(index, io.management_vppn) &&
+        (io.management_asid === state.asid(index) || state.global(index))
+    }
+    val managementIndex = (0 until 32)
+      .map(index => Mux(managementMatch(index), U(index, 5 bits), U(0, 5 bits)))
+      .reduce(_ | _)
+    io.management_found := managementMatch.orR
+    io.management_index := managementIndex.asBits
+  }
 
   io.r_vppn := state.vppn(io.r_index)
   io.r_asid := state.asid(io.r_index)

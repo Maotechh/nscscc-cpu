@@ -817,10 +817,10 @@ def validate_generated_lint_annotations(text: str, source: str) -> None:
             key = (match.group(1), match.group(2))
             counts[key] = counts.get(key, 0) + 1
     expected = {
-        ("off", "DECLFILENAME"): 21,
-        ("on", "DECLFILENAME"): 21,
-        ("off", "UNUSEDSIGNAL"): 37,
-        ("on", "UNUSEDSIGNAL"): 37,
+        ("off", "DECLFILENAME"): 42,
+        ("on", "DECLFILENAME"): 42,
+        ("off", "UNUSEDSIGNAL"): 7,
+        ("on", "UNUSEDSIGNAL"): 7,
     }
     if counts != expected:
         raise RefactorError(
@@ -861,7 +861,10 @@ def validate_generated_lint_annotations(text: str, source: str) -> None:
                 and lines[index + 1].strip() == "`endif"
                 and parsed[index + 2] is not None
                 and parsed[index + 2].groups() == ("off", "DECLFILENAME")
-                and re.match(r"^\s*module\s+ChiplabDiffTestBlackBox\b", lines[index + 3])
+                and re.match(
+                    r"^\s*module\s+Chiplab(?:MultiCommit)?DiffTestBlackBox(?:_\d+)?\b",
+                    lines[index + 3],
+                )
             ):
                 special_off += 1
                 continue
@@ -889,7 +892,7 @@ def validate_generated_lint_annotations(text: str, source: str) -> None:
                 f"generated core_top UNUSEDSIGNAL annotation is unbalanced: {source}"
             )
 
-    if normal_unused != 36 or special_off != 1 or special_on != 1:
+    if normal_unused != 6 or special_off != 1 or special_on != 1:
         raise RefactorError(
             f"generated core_top lint annotation scopes differ: {source}"
         )

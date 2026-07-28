@@ -24,10 +24,6 @@ HDL_SUFFIXES = frozenset({".v", ".vh", ".sv", ".svh"})
 PUBLISHED_RTL = "rtl/mycpu_top.v"
 ALLOWED_TESTBENCH_HDL = frozenset(
     {
-        "tests/regfile_diff_tb.sv",
-        "tests/rtl/exe_stage_lockstep.sv",
-        "tests/rtl/id_stage_lockstep.sv",
-        "tests/rtl/if_stage_lockstep.sv",
         "tests/rtl/lacc_core_lockstep.sv",
         "tests/rtl/perf_counter_lockstep.sv",
     }

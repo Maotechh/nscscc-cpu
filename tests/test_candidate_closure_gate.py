@@ -60,7 +60,7 @@ class CandidateClosureGateTest(unittest.TestCase):
             rtl = root / "rtl" / "mycpu_top.v"
             rtl.parent.mkdir()
             rtl.write_text("module core_top; endmodule\n", encoding="utf-8")
-            testbench = root / "tests" / "rtl" / "if_stage_lockstep.sv"
+            testbench = root / "tests" / "rtl" / "lacc_core_lockstep.sv"
             testbench.parent.mkdir(parents=True)
             testbench.write_text("module tb; endmodule\n", encoding="utf-8")
             out = root / "report.json"

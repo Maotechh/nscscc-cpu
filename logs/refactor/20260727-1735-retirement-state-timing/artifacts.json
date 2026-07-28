@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "tracked": {
+    "rtl/mycpu_top.v": {
+      "sha256": "0ec54fa65e5179a78d82845fc6e722e768dc3637eb8d426c1aad1a4d64d854a6",
+      "bytes": 4886706
+    }
+  },
+  "external_ignored_build_artifacts": {
+    "build/vivado/core_top/timing.rpt": "edf98c7c7be1d6ad027a1363de7792c548a53fde56fba5193e850b8348caefe0",
+    "build/vivado/core_top/utilization.rpt": "46369929b6f725883ec12edc913c888d1d07b47ffc2ce37126984e9a45368253",
+    "build/vivado/core_top/drc.rpt": "69265aadf79444fecfe3fca0d77c6f725df4e9dbb02107b200709d43f9d895b6",
+    "build/vivado/core_top/ooo_core_top_synth.dcp": "5a65c41b561b88ebe8c53e1e9851b822716b967f3e4b09a11487485af4e6eb22"
+  },
+  "remote_package": null,
+  "remote_results": []
+}
+
