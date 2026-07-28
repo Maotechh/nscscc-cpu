@@ -56,6 +56,7 @@ final class OooBackend(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommi
   val lsqAllocator = new OooLsqAllocator(config)
   val prf = new OooPhysicalRegisterFile(config)
   val dispatchQueue = new OooDispatchQueue(config)
+  val dispatchWindow = new OooDispatchWindow(config)
   val router = new OooDispatchRouter(config)
   val issueQueues = (0 until config.executionWidth).map(index => new OooIssueQueue(config, index))
   val storeDataQueue = new OooStoreDataQueue(config)
@@ -107,41 +108,44 @@ final class OooBackend(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommi
 
   dispatchQueue.io.enqueueValid := io.renameValid
   dispatchQueue.io.enqueue := dispatchInput
-  router.io.inputValid := dispatchQueue.io.dequeueValid
+  dispatchWindow.io.inputValid := dispatchQueue.io.dequeueValid
+  dispatchWindow.io.input := dispatchQueue.io.dequeue
+  dispatchQueue.io.dequeueReady := dispatchWindow.io.inputReady
+  router.io.inputValid := dispatchWindow.io.outputValid
   for (lane <- 0 until config.dispatchWidth) {
-    router.io.input(lane).decoded := dispatchQueue.io.dequeue(lane).decoded
-    router.io.input(lane).pdst := dispatchQueue.io.dequeue(lane).pdst
-    router.io.input(lane).oldPdst := dispatchQueue.io.dequeue(lane).oldPdst
-    router.io.input(lane).psrc1 := dispatchQueue.io.dequeue(lane).psrc1
-    router.io.input(lane).psrc2 := dispatchQueue.io.dequeue(lane).psrc2
+    router.io.input(lane).decoded := dispatchWindow.io.output(lane).decoded
+    router.io.input(lane).pdst := dispatchWindow.io.output(lane).pdst
+    router.io.input(lane).oldPdst := dispatchWindow.io.output(lane).oldPdst
+    router.io.input(lane).psrc1 := dispatchWindow.io.output(lane).psrc1
+    router.io.input(lane).psrc2 := dispatchWindow.io.output(lane).psrc2
     val dispatchSource1Ready = Bool()
     val dispatchSource2Ready = Bool()
     dispatchSource1Ready :=
-      registerMap.io.physicalReady(dispatchQueue.io.dequeue(lane).psrc1)
+      registerMap.io.physicalReady(dispatchWindow.io.output(lane).psrc1)
     dispatchSource2Ready :=
-      registerMap.io.physicalReady(dispatchQueue.io.dequeue(lane).psrc2)
+      registerMap.io.physicalReady(dispatchWindow.io.output(lane).psrc2)
     // A uop entering an IQ on the registered writeback edge must observe the
     // same bypass as a uop already resident in the IQ on the raw-completion edge.
     for (write <- 0 until config.writebackWidth) {
       when(
         rob.io.completionWakeupValid(write) &&
-          rob.io.completionWakeupPdst(write) === dispatchQueue.io.dequeue(lane).psrc1
+          rob.io.completionWakeupPdst(write) === dispatchWindow.io.output(lane).psrc1
       ) {
         dispatchSource1Ready := True
       }
       when(
         rob.io.completionWakeupValid(write) &&
-          rob.io.completionWakeupPdst(write) === dispatchQueue.io.dequeue(lane).psrc2
+          rob.io.completionWakeupPdst(write) === dispatchWindow.io.output(lane).psrc2
       ) {
         dispatchSource2Ready := True
       }
     }
     router.io.input(lane).source1Ready := dispatchSource1Ready
     router.io.input(lane).source2Ready := dispatchSource2Ready
-    router.io.input(lane).robPointer := dispatchQueue.io.dequeue(lane).robPointer
-    router.io.input(lane).recoveryEpoch := dispatchQueue.io.dequeue(lane).recoveryEpoch
-    router.io.input(lane).loadQueueIndex := dispatchQueue.io.dequeue(lane).loadQueueIndex
-    router.io.input(lane).storeQueueIndex := dispatchQueue.io.dequeue(lane).storeQueueIndex
+    router.io.input(lane).robPointer := dispatchWindow.io.output(lane).robPointer
+    router.io.input(lane).recoveryEpoch := dispatchWindow.io.output(lane).recoveryEpoch
+    router.io.input(lane).loadQueueIndex := dispatchWindow.io.output(lane).loadQueueIndex
+    router.io.input(lane).storeQueueIndex := dispatchWindow.io.output(lane).storeQueueIndex
   }
   router.io.flush := io.flush
   val lsuDispatchIsStore = router.io.portValid(loadStorePort) &&
@@ -157,7 +161,8 @@ final class OooBackend(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommi
       router.io.portReady(port) := issueQueues(port).io.enqueueReady
     }
   }
-  dispatchQueue.io.dequeueReady := router.io.inputReady
+  dispatchWindow.io.outputReady := router.io.inputReady
+  dispatchWindow.io.flush := io.flush
 
   // Gate each half with the peer's ready.  The router keeps portValid asserted
   // under backpressure, so driving either queue directly would enqueue the

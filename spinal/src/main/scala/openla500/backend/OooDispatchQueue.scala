@@ -68,3 +68,116 @@ final class OooDispatchQueue(
 
   io.occupancy := count
 }
+
+/** Compact registered window between the circular dispatch queue and port routing.
+  *
+  * The circular queue may require a head-dependent mux to expose its oldest entries. This window
+  * keeps the router inputs on direct register outputs while still refilling every slot vacated by
+  * the in-order dispatch prefix in the same cycle.
+  */
+final class OooDispatchWindow(
+    config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommit
+) extends Component {
+  private val width = config.dispatchWidth
+  private val countWidth = log2Up(width + 1)
+  require(width == 3, "the fixed OoO backend has a three-wide dispatch window")
+
+  val io = new Bundle {
+    val inputValid = in Bits (width bits)
+    val input = in Vec (OooRenamedUop(config), width)
+    val inputReady = out Bits (width bits)
+
+    val outputValid = out Bits (width bits)
+    val output = out Vec (OooRenamedUop(config), width)
+    val outputReady = in Bits (width bits)
+
+    val flush = in Bool ()
+  }
+
+  val entries = Vec.fill(width)(Reg(OooRenamedUop(config)))
+  val count = Reg(UInt(countWidth bits)) init (0)
+
+  for (lane <- 0 until width) {
+    io.outputValid(lane) := !io.flush && count > U(lane, countWidth bits)
+    io.output(lane) := entries(lane)
+  }
+
+  // OooDispatchRouter only accepts an in-order prefix. Decode that prefix explicitly so the
+  // router-ready path does not cross a population count before reaching every payload CE.
+  val outputFire = io.outputValid & io.outputReady
+  val outputCount = UInt(countWidth bits)
+  outputCount := 0
+  when(outputFire(0)) { outputCount := 1 }
+  when(outputFire(1)) { outputCount := 2 }
+  when(outputFire(2)) { outputCount := 3 }
+  val remainingCount = count - outputCount
+  val availableCount = U(width, countWidth bits) - remainingCount
+  for (lane <- 0 until width) {
+    io.inputReady(lane) := !io.flush && availableCount > U(lane, countWidth bits)
+  }
+  val inputCount = CountOne(io.inputValid & io.inputReady)
+  val nextCount = remainingCount + inputCount
+
+  when(io.flush) {
+    count := 0
+  }.otherwise {
+    count := nextCount
+  }
+
+  // The payload table is deliberately explicit. Invalid tail entries may be overwritten; count
+  // alone defines validity. This keeps input-valid/count arithmetic out of the wide payload write
+  // enables while preserving every survivor and appending queue entries in program order.
+  switch(count) {
+    is(0) {
+      entries(0) := io.input(0)
+      entries(1) := io.input(1)
+      entries(2) := io.input(2)
+    }
+    is(1) {
+      when(outputCount === 0) {
+        entries(1) := io.input(0)
+        entries(2) := io.input(1)
+      }.otherwise {
+        entries(0) := io.input(0)
+        entries(1) := io.input(1)
+        entries(2) := io.input(2)
+      }
+    }
+    is(2) {
+      switch(outputCount) {
+        is(0) {
+          entries(2) := io.input(0)
+        }
+        is(1) {
+          entries(0) := entries(1)
+          entries(1) := io.input(0)
+          entries(2) := io.input(1)
+        }
+        default {
+          entries(0) := io.input(0)
+          entries(1) := io.input(1)
+          entries(2) := io.input(2)
+        }
+      }
+    }
+    default {
+      switch(outputCount) {
+        is(1) {
+          entries(0) := entries(1)
+          entries(1) := entries(2)
+          entries(2) := io.input(0)
+        }
+        is(2) {
+          entries(0) := entries(2)
+          entries(1) := io.input(0)
+          entries(2) := io.input(1)
+        }
+        is(3) {
+          entries(0) := io.input(0)
+          entries(1) := io.input(1)
+          entries(2) := io.input(2)
+        }
+      }
+    }
+  }
+}
