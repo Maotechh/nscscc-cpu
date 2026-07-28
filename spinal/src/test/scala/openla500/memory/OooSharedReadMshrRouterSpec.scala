@@ -109,17 +109,18 @@ class OooSharedReadMshrRouterSpec extends AnyFunSuite {
             dut.io.instructionRead.criticalBeat #= globalId + 1
           }
           sleep(1)
-          assert(dut.io.lowerReadValid.toBoolean)
-          assert(dut.io.lowerRead.lineAddress.toBigInt == address)
-          assert(dut.io.lowerRead.mshrId.toBigInt == globalId)
-          assert(dut.io.lowerRead.criticalBeat.toBigInt == globalId + 1)
           assert(
             if (isData) dut.io.dataReadReady.toBoolean
             else dut.io.instructionReadReady.toBoolean
           )
           sample(dut)
+          assert(dut.io.lowerReadValid.toBoolean)
+          assert(dut.io.lowerRead.lineAddress.toBigInt == address)
+          assert(dut.io.lowerRead.mshrId.toBigInt == globalId)
+          assert(dut.io.lowerRead.criticalBeat.toBigInt == globalId + 1)
           dut.io.dataReadValid #= false
           dut.io.instructionReadValid #= false
+          sample(dut)
           assert(dut.io.activeCount.toBigInt == globalId + 1)
         }
 
@@ -169,6 +170,62 @@ class OooSharedReadMshrRouterSpec extends AnyFunSuite {
           assert(dut.io.activeCount.toBigInt == config.mshrEntries - released - 1)
         }
         dut.io.lowerReadBeatValid #= false
+      }
+  }
+
+  test("registered queue accepts two requests without a combinational L2 ready path") {
+    SimConfig.withVerilator
+      .workspacePath("target/sim-workspace-ooo-shared-read-mshr-queue")
+      .compile(new OooSharedReadMshrRouterProbe(config))
+      .doSim("ooo-shared-read-mshr-queue", 0x51a7) { dut =>
+        dut.clockDomain.forkStimulus(period = 10)
+        clearInputs(dut)
+        dut.io.lowerReadReady #= false
+        dut.clockDomain.assertReset()
+        dut.clockDomain.waitSampling(2)
+        dut.clockDomain.deassertReset()
+        sample(dut)
+
+        dut.io.dataReadValid #= true
+        dut.io.dataRead.lineAddress #= 0x4000
+        dut.io.dataRead.mshrId #= 2
+        dut.io.dataRead.criticalBeat #= 3
+        sleep(1)
+        assert(dut.io.dataReadReady.toBoolean)
+        sample(dut)
+        dut.io.dataReadValid #= false
+        assert(dut.io.lowerReadValid.toBoolean)
+        assert(dut.io.lowerRead.lineAddress.toBigInt == 0x4000)
+        assert(dut.io.lowerRead.mshrId.toBigInt == 0)
+
+        dut.io.instructionReadValid #= true
+        dut.io.instructionRead.lineAddress #= 0x5000
+        dut.io.instructionRead.mshrId #= 1
+        dut.io.instructionRead.criticalBeat #= 5
+        sleep(1)
+        assert(dut.io.instructionReadReady.toBoolean)
+        sample(dut)
+        dut.io.instructionReadValid #= false
+        assert(dut.io.lowerReadValid.toBoolean)
+        assert(dut.io.lowerRead.lineAddress.toBigInt == 0x4000)
+
+        dut.io.dataReadValid #= true
+        dut.io.dataRead.lineAddress #= 0x6000
+        sleep(1)
+        assert(!dut.io.dataReadReady.toBoolean)
+        assert(dut.io.lowerRead.lineAddress.toBigInt == 0x4000)
+
+        dut.io.lowerReadReady #= true
+        sample(dut)
+        assert(dut.io.lowerReadValid.toBoolean)
+        assert(dut.io.lowerRead.lineAddress.toBigInt == 0x5000)
+        assert(dut.io.lowerRead.mshrId.toBigInt == 1)
+        assert(dut.io.dataReadReady.toBoolean)
+        sample(dut)
+        dut.io.dataReadValid #= false
+        assert(dut.io.lowerReadValid.toBoolean)
+        assert(dut.io.lowerRead.lineAddress.toBigInt == 0x6000)
+        assert(dut.io.lowerRead.mshrId.toBigInt == 2)
       }
   }
 }
