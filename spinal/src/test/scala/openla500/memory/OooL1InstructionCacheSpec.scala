@@ -137,7 +137,8 @@ class OooL1InstructionCacheSpec extends AnyFunSuite {
       dut: OooL1InstructionCacheProbe,
       virtualAddress: BigInt,
       firstInstruction: Int,
-      forbidLineRead: Boolean = false
+      forbidLineRead: Boolean = false,
+      expectedDirectBranchTarget: Option[BigInt] = None
   ): Unit = {
     var cycles = 0
     while (!dut.io.responseValid.toBoolean && cycles < 24) {
@@ -150,6 +151,13 @@ class OooL1InstructionCacheSpec extends AnyFunSuite {
     assert(!dut.io.response.error.toBoolean)
     for (lane <- 0 until config.fetchWidth) {
       assert(dut.io.response.instructions(lane).toBigInt == firstInstruction + lane)
+    }
+    expectedDirectBranchTarget.foreach { target =>
+      assert(dut.io.response.predecode(0).valid.toBoolean)
+      assert(dut.io.response.predecode(0).branchType.toBigInt == 1)
+      assert(dut.io.response.predecode(0).target.toBigInt == target)
+      assert(dut.io.response.predecode(0).staticTaken.toBoolean)
+      assert(!dut.io.response.predecode(0).indirect.toBoolean)
     }
     sample(dut)
   }
@@ -201,6 +209,24 @@ class OooL1InstructionCacheSpec extends AnyFunSuite {
           virtualAddress = 0x1c000110,
           firstInstruction = 104,
           forbidLineRead = true
+        )
+
+        // Populate the other way of the same set with a direct branch.  A subsequent hit must
+        // select the matching way's instruction and its independently predecoded branch facts.
+        acceptRequest(dut, virtualAddress = 0x1c001100, physicalAddress = 0x1100)
+        refill(
+          dut,
+          expectedLineAddress = 0x1100,
+          firstInstruction = 0x50000000,
+          expectedResponseFirstInstruction = Some(0x50000000)
+        )
+        acceptRequest(dut, virtualAddress = 0x1c001100, physicalAddress = 0x1100)
+        expectGroup(
+          dut,
+          virtualAddress = 0x1c001100,
+          firstInstruction = 0x50000000,
+          forbidLineRead = true,
+          expectedDirectBranchTarget = Some(0x1c001100)
         )
 
         acceptRequest(dut, virtualAddress = 0x1c000240, physicalAddress = 0x240)

@@ -61,6 +61,7 @@ final class OooCoreSystem(
     val committedCsrWriteMask = RegNext(core.io.csrWriteMask) init (False)
     val committedErtnValid = RegNext(core.io.ertnValid) init (False)
     val committedTlbSearchValid = RegNext(core.io.tlbSearchValid) init (False)
+    val committedTlbSearchVppn = RegNext(csr.io.vppn_out) init (B(0, 19 bits))
     val committedTlbReadValid = RegNext(core.io.tlbReadValid) init (False)
     val committedTlbWriteValid = RegNext(core.io.tlbWriteValid) init (False)
     val committedTlbFillValid = RegNext(core.io.tlbFillValid) init (False)
@@ -219,7 +220,7 @@ final class OooCoreSystem(
     addressTranslation.io.tlbInvalidateVpn := committedTlbInvalidateVpn
     addressTranslation.io.tlbInvalidateOperation := committedTlbInvalidateOperation
     addressTranslation.io.tlbSearchValid := committedTlbSearchValid
-    addressTranslation.io.tlbSearchVppn := csr.io.vppn_out
+    addressTranslation.io.tlbSearchVppn := committedTlbSearchVppn
 
     csr.io.tlbsrch_en := addressTranslation.io.tlbSearchResponseValid
     csr.io.tlbsrch_found := addressTranslation.io.tlbSearchFound

@@ -52,20 +52,21 @@ final class OooL1InstructionCache(
     group
   }
 
-  private def writeResponse(
+  private def driveResponse(
+      output: OooInstructionCacheResponse,
       context: OooInstructionCacheRequest,
       group: Vec[Bits],
       error: Bool
   ): Unit = {
     val groupBase = context.virtualAddress &
       U(((BigInt(1) << config.xlen) - 1) ^ (fetchGroupBytes - 1), config.xlen bits)
-    response.virtualAddress := context.virtualAddress
-    response.physicalAddress := context.physicalAddress
-    response.error := error
+    output.virtualAddress := context.virtualAddress
+    output.physicalAddress := context.physicalAddress
+    output.error := error
     for (lane <- 0 until config.fetchWidth) {
-      response.instructions(lane) := group(lane)
+      output.instructions(lane) := group(lane)
       OooFetchPredecoder.drive(
-        response.predecode(lane),
+        output.predecode(lane),
         config,
         groupBase + U(lane * 4, config.xlen bits),
         group(lane)
@@ -120,6 +121,25 @@ final class OooL1InstructionCache(
   responseValid := False
   io.responseValid := responseValid
   io.response := response
+
+  // Compute each way's response in parallel with the tag comparison.  The hit way then selects
+  // between already decoded candidates instead of serializing tag compare, line selection and
+  // branch-target addition on the L1I response-register input.
+  val hitResponseByWay = Vec(OooInstructionCacheResponse(config), geometry.ways)
+  for (way <- 0 until geometry.ways) {
+    driveResponse(
+      hitResponseByWay(way),
+      request,
+      selectFetchGroup(cacheArray.io.wayData(way), request.physicalAddress),
+      False
+    )
+  }
+
+  private def writeResponse(
+      context: OooInstructionCacheRequest,
+      group: Vec[Bits],
+      error: Bool
+  ): Unit = driveResponse(response, context, group, error)
 
   val newInvalidate = io.invalidate && !invalidateSeen
   when(io.invalidate) { invalidateSeen := True }.otherwise { invalidateSeen := False }
@@ -182,11 +202,7 @@ final class OooL1InstructionCache(
       state := OooL1InstructionCacheState.idle
     }.elsewhen(cacheArray.io.hit) {
       responseValid := True
-      writeResponse(
-        request,
-        selectFetchGroup(cacheArray.io.hitData, request.physicalAddress),
-        False
-      )
+      response := hitResponseByWay(cacheArray.io.hitWay)
       state := OooL1InstructionCacheState.idle
     }.otherwise {
       victimWay := cacheArray.io.victimWay

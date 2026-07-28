@@ -23,6 +23,7 @@ final class OooCacheArray(
     val hit = out Bool ()
     val hitWay = out UInt (wayWidth bits)
     val hitData = out Bits (OooCacheContract.LineBits bits)
+    val wayData = out Vec (Bits(OooCacheContract.LineBits bits), geometry.ways)
     val victimWay = out UInt (wayWidth bits)
     val victimValid = out Bool ()
     val victimDirty = out Bool ()
@@ -152,6 +153,7 @@ final class OooCacheArray(
   io.hit := hitMask.orR
   io.hitWay := hitWay
   io.hitData := dataRead(hitWay)
+  io.wayData := dataRead
   io.victimWay := victimWay
   io.victimValid := tagRead(victimWay)(1)
   io.victimDirty := tagRead(victimWay)(0)
