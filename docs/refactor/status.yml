@@ -1,0 +1,117 @@
+schema_version: 1
+updated_at: "2026-07-28T21:31:48+08:00"
+branch: dev-OoOE
+
+baseline:
+  rtl_commit: da71fd32e0db3d13f1964895bbafeb5d2e5af412
+  commit_subject: "timing(frontend): parallelize L1I predecode by way"
+  remote_ref: origin/dev-OoOE
+  generated_rtl: rtl/mycpu_top.v
+  generated_rtl_sha256: 14874c00bf2a4632ac9792da2234286d4f1ac05140df03b7db90b784d00074f0
+  handwritten_verilog: false
+  official_top: openla500.core.OooCoreSystem
+  config: openla500.core.OooCoreConfig.FourIssueThreeCommit
+
+local_gates:
+  scala:
+    suites: 37
+    passed: 133
+    failed: 0
+  python:
+    passed: 362
+    failed: 0
+  port_contract: passed
+  yosys_structure: passed
+  verilator_lint:
+    status: passed
+    reviewed_warnings: 849
+    categories:
+      - CMPCONST
+      - UNUSEDSIGNAL
+  publication_consistency: passed
+  standalone_vivado_100mhz:
+    status: passed
+    wns_ns: 0.419
+    tns_ns: 0.0
+    failing_endpoints: 0
+
+complete_soc:
+  tool: "Vivado 2023.2"
+  part: xc7a200tfbg676-2
+  profile: perf20
+  target_cpu_mhz: 100
+  actual_cpu_mhz: 100.0
+  implementation: complete
+  write_bitstream: complete
+  timing_met: true
+  wns_ns: 0.036678
+  tns_ns: 0.0
+  whs_ns: 0.049
+  ths_ns: 0.0
+  drc_errors: 0
+  drc_warnings: 26
+  build_elapsed_seconds: 2852.6
+  package_sha256: bfe51c269e939588698f1f1de52f73bfa74f0d34904c7cdaa594296e243f99fa
+
+board_evaluation:
+  profile: perf20
+  package_reused_for_all_runs: true
+  all_programming_passed: true
+  all_rows_passed: true
+  all_artifact_hashes_verified: true
+  runs:
+    - job_id: 20260728-125651-a8fa17a8
+      soc_count: 74446749
+      cpu_count: 74351436
+      seconds_at_100mhz: 0.74446749
+    - job_id: 20260728-130020-6b290214
+      soc_count: 74467075
+      cpu_count: 74372266
+      seconds_at_100mhz: 0.74467075
+    - job_id: 20260728-130312-ddaf3a7a
+      soc_count: 74446699
+      cpu_count: 74351622
+      seconds_at_100mhz: 0.74446699
+  decisive_min_soc_count: 74446699
+  decisive_seconds_at_100mhz: 0.74446699
+
+performance_reference:
+  commit: 724b808959957c27fc64bda36b8c5cb828f51c8b
+  decisive_min_soc_count: 73826502
+  delta_soc_count: 620197
+  regression_percent: 0.84
+  conclusion: "Timing-closure baseline, not a performance improvement."
+
+portable_evidence:
+  iteration_log: logs/refactor/20260728-l1i-parallel-predecode-timing/iteration.md
+  original_scalar_performance_baseline: baseline.txt
+  original_scalar_baseline_role: "Historical competition baseline only; it is not the current RTL checkout or timing baseline."
+  locked_reference: reference/manifest.lock
+  generated_rtl_hash_ledger: reference/component-replacements/core-top.json
+  lint_ledger: reference/core-top-lint-waivers.json
+  external_result_layout: "${FPGA_CLIENT_HOME}/results/<job_id>"
+  note: "The .fpgajob and fetched board artifacts are generated evidence and are not required in the Git checkout. Rebuild from rtl_commit or refetch by job_id."
+
+reproduce:
+  local_commands:
+    - make scala
+    - make test
+    - make python-test
+    - make generate-core
+    - make port-check
+    - make lint
+    - make yosys-check
+    - make publish-check
+  remote_client_min_version: 0.2.2
+  remote_build_template: "${FPGA_CLIENT_HOME}/cmd/clientctl.cmd build perf20 team-cpu <commit40> <output.fpgajob> 100"
+  remote_submit_template: "${FPGA_CLIENT_HOME}/cmd/clientctl.cmd submit-wait <package.fpgajob> <stable-idempotency-key> 8"
+
+handoff:
+  active_vivado_or_board_job: false
+  next_priority: "Recover the 0.84% cycle regression without losing nonnegative complete-SoC WNS."
+  timing_risk: "The setup margin is only 0.036678 ns; every RTL change requires a new complete-SoC implementation."
+  current_worst_cpu_path: "ROB stagedPdst fanout to issue-queue payload clock enable; 9.582 ns data path, 8.153 ns routing."
+  suspected_cycle_costs:
+    - "d4e1a04 registered shared-L2 miss requests"
+    - "d82be71 registered scheduler input window"
+  stop_state: "Optimization intentionally stopped after establishing the 100 MHz closure baseline."
