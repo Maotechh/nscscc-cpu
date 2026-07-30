@@ -103,6 +103,23 @@ final class OooBankedFetchPredictor(
     }
   }
 
+  val stageBtbUpdateValid = RegNext(io.btbUpdateValid) init (False)
+  val stageBtbUpdatePc = RegNext(io.btbUpdatePc) init (0)
+  val stageBtbUpdateTarget = RegNext(io.btbUpdateTarget) init (0)
+  val stageBtbUpdateType = RegNext(io.btbUpdateType) init (OooPredictedBranchType.conditional)
+  val stageBtbUpdateDirectionTrained = RegNext(io.btbUpdateDirectionTrained) init (False)
+
+  val stagePhtUpdateValid = RegNext(io.phtUpdateValid) init (False)
+  val stagePhtUpdatePc = RegNext(io.phtUpdatePc) init (0)
+  val stagePhtUpdateIndex = RegNext(io.phtUpdateIndex) init (0)
+  val stagePhtUpdateOldState = RegNext(io.phtUpdateOldState) init (0)
+  val stagePhtUpdateOldValid = RegNext(io.phtUpdateOldValid) init (False)
+  val stagePhtUpdateTaken = RegNext(io.phtUpdateTaken) init (False)
+
+  val stageCommitRasPush = RegNext(io.commitRasPush) init (False)
+  val stageCommitRasPop = RegNext(io.commitRasPop) init (False)
+  val stageCommitReturnAddress = RegNext(io.commitReturnAddress) init (0)
+
   val speculativeGhr = Reg(Bits(historyWidth bits)) init (0)
   val architecturalGhr = Reg(Bits(historyWidth bits)) init (0)
 
@@ -120,13 +137,13 @@ final class OooBankedFetchPredictor(
       io.speculativeHistoryTaken.asBits
   }
 
-  when(io.commitRasPush && !io.commitRasPop) {
+  when(stageCommitRasPush && !stageCommitRasPop) {
     when(architecturalRasCount =/= U(rasDepth, rasCountWidth bits)) {
       architecturalRas(architecturalRasCount(rasIndexWidth - 1 downto 0)) :=
-        io.commitReturnAddress
+        stageCommitReturnAddress
       architecturalRasCount := architecturalRasCount + 1
     }
-  }.elsewhen(io.commitRasPop && !io.commitRasPush) {
+  }.elsewhen(stageCommitRasPop && !stageCommitRasPush) {
     when(architecturalRasCount =/= 0) {
       architecturalRasCount := architecturalRasCount - 1
     }
@@ -179,42 +196,38 @@ final class OooBankedFetchPredictor(
   }
   io.responseValid := RegNext(lookupFire) init (False)
 
-  val btbUpdateBank = io.btbUpdatePc(fetchGroupOffsetWidth - 1 downto 2)
-  val btbUpdateRow = io.btbUpdatePc(
+  val btbUpdateBank = stageBtbUpdatePc(fetchGroupOffsetWidth - 1 downto 2)
+  val btbUpdateRow = stageBtbUpdatePc(
     fetchGroupOffsetWidth + btbRowWidth - 1 downto fetchGroupOffsetWidth
   )
-  val btbUpdateTag = io
-    .btbUpdatePc(
-      config.xlen - 1 downto fetchGroupOffsetWidth + btbRowWidth
-    )
-    .asBits
+  val btbUpdateTag = stageBtbUpdatePc(
+    config.xlen - 1 downto fetchGroupOffsetWidth + btbRowWidth
+  ).asBits
   val btbUpdateEntry = B(0, btbEntryWidth bits)
   btbUpdateEntry(btbTargetLsb + config.xlen - 1 downto btbTargetLsb) :=
-    io.btbUpdateTarget.asBits
+    stageBtbUpdateTarget.asBits
   btbUpdateEntry(
     btbTypeLsb + OooPredictedBranchType.Width - 1 downto btbTypeLsb
-  ) := io.btbUpdateType.asBits
+  ) := stageBtbUpdateType.asBits
   btbUpdateEntry(btbTagLsb + btbTagWidth - 1 downto btbTagLsb) := btbUpdateTag
   btbUpdateEntry(btbValidBit) := True
-  btbUpdateEntry(btbDirectionTrainedBit) := io.btbUpdateDirectionTrained
+  btbUpdateEntry(btbDirectionTrainedBit) := stageBtbUpdateDirectionTrained
 
-  val phtUpdateBank = io.phtUpdatePc(fetchGroupOffsetWidth - 1 downto 2)
+  val phtUpdateBank = stagePhtUpdatePc(fetchGroupOffsetWidth - 1 downto 2)
   val phtNextState = UInt(2 bits)
-  // An untrained BTB entry uses BTFNT, so stale power-up PHT data is never observed. Its first
-  // precise update installs a weak state directly and removes the 1024-cycle PHT reset sweep.
-  phtNextState := Mux(io.phtUpdateTaken, U(2, 2 bits), U(1, 2 bits))
-  when(io.phtUpdateOldValid && io.phtUpdateTaken && io.phtUpdateOldState =/= 3) {
-    phtNextState := io.phtUpdateOldState + 1
-  }.elsewhen(io.phtUpdateOldValid && !io.phtUpdateTaken && io.phtUpdateOldState =/= 0) {
-    phtNextState := io.phtUpdateOldState - 1
-  }.elsewhen(io.phtUpdateOldValid) {
-    phtNextState := io.phtUpdateOldState
+  phtNextState := Mux(stagePhtUpdateTaken, U(2, 2 bits), U(1, 2 bits))
+  when(stagePhtUpdateOldValid && stagePhtUpdateTaken && stagePhtUpdateOldState =/= 3) {
+    phtNextState := stagePhtUpdateOldState + 1
+  }.elsewhen(stagePhtUpdateOldValid && !stagePhtUpdateTaken && stagePhtUpdateOldState =/= 0) {
+    phtNextState := stagePhtUpdateOldState - 1
+  }.elsewhen(stagePhtUpdateOldValid) {
+    phtNextState := stagePhtUpdateOldState
   }
 
   val btbRead = Vec(Bits(btbEntryWidth bits), config.fetchWidth)
   val phtRead = Vec(Bits(2 bits), config.fetchWidth)
   for (bank <- 0 until config.fetchWidth) {
-    val btbWrite = io.btbUpdateValid &&
+    val btbWrite = stageBtbUpdateValid &&
       btbUpdateBank === U(bank, bankWidth bits) && !invalidating
     btbBanks(bank).write(
       address = Mux(invalidating, invalidateRow, btbUpdateRow),
@@ -226,10 +239,10 @@ final class OooBankedFetchPredictor(
       enable = lookupFire
     )
 
-    val phtWrite = io.phtUpdateValid &&
+    val phtWrite = stagePhtUpdateValid &&
       phtUpdateBank === U(bank, bankWidth bits)
     phtBanks(bank).write(
-      address = io.phtUpdateIndex,
+      address = stagePhtUpdateIndex,
       data = phtNextState.asBits,
       enable = phtWrite
     )
