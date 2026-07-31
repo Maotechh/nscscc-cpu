@@ -96,7 +96,7 @@ final class CoreTopCompat(config: CoreTopCompatConfig = CoreTopCompatConfig()) e
   )
 
   val backendArea = new ClockingArea(coreClockDomain) {
-    val core = new OooCoreSystem(OooCoreConfig.FourIssueThreeCommit)
+    val core = new OooCoreSystem(OooCoreConfig.LargeWindowConfig)
   }
   val core = backendArea.core
 

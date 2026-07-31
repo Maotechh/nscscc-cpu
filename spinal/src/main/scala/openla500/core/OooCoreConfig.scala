@@ -133,4 +133,14 @@ object OooCoreConfig {
   )
 
   val FourIssueThreeCommit: OooCoreConfig = OooCoreConfig()
+
+  val LargeWindowConfig: OooCoreConfig = OooCoreConfig(
+    robEntries = 64,
+    issueQueueEntriesPerPort = 16,
+    loadQueueEntries = 16,
+    storeQueueEntries = 16,
+    mshrEntries = 8,
+    instructionBufferEntries = 16,
+    dispatchQueueEntries = 16
+  )
 }
