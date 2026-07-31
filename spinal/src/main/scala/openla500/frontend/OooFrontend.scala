@@ -287,7 +287,7 @@ final class OooFrontend(config: OooCoreConfig = OooCoreConfig.FourIssueThreeComm
     val dynamicPredictionHit = cachePrediction(lane).hit && predecode.valid &&
       cachePrediction(lane).branchType === predecode.branchType && targetMatches
     responseDynamicPredictionHit(lane) := dynamicPredictionHit
-    val fallbackTaken = cachePrediction(lane).fallbackTaken
+    val fallbackTaken = predecode.staticTaken
     val dynamicTaken = predecode.branchType =/= OooPredictedBranchType.conditional || Mux(
       cachePrediction(lane).phtValid,
       cachePrediction(lane).phtState(1),

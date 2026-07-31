@@ -123,7 +123,7 @@ final class OooBankedFetchPredictor(
 
   private val bimodalEntries = 64
   private val bimodalIndexWidth = log2Up(bimodalEntries)
-  val bimodalTable = Vec.fill(bimodalEntries)(Reg(UInt(2 bits)) init (1))
+  val bimodalTable = Vec.fill(bimodalEntries)(Reg(UInt(2 bits)) init (0))
   val bimodalUpdateIdx = io.phtUpdatePc(2 + bimodalIndexWidth - 1 downto 2)
   val bimodalOldState = bimodalTable(bimodalUpdateIdx)
   when(io.phtUpdateValid && io.phtUpdateTaken && bimodalOldState =/= 3) {
