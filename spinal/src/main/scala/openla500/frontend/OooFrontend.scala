@@ -109,18 +109,21 @@ final class OooFrontend(config: OooCoreConfig = OooCoreConfig.FourIssueThreeComm
     pendingPrediction(lane).phtState.init(1)
     pendingPrediction(lane).phtIndex.init(0)
     pendingPrediction(lane).target.init(0)
+    pendingPrediction(lane).fallbackTaken.init(False)
     translatedPrediction(lane).hit.init(False)
     translatedPrediction(lane).phtValid.init(False)
     translatedPrediction(lane).branchType.init(OooPredictedBranchType.conditional)
     translatedPrediction(lane).phtState.init(1)
     translatedPrediction(lane).phtIndex.init(0)
     translatedPrediction(lane).target.init(0)
+    translatedPrediction(lane).fallbackTaken.init(False)
     cachePrediction(lane).hit.init(False)
     cachePrediction(lane).phtValid.init(False)
     cachePrediction(lane).branchType.init(OooPredictedBranchType.conditional)
     cachePrediction(lane).phtState.init(1)
     cachePrediction(lane).phtIndex.init(0)
     cachePrediction(lane).target.init(0)
+    cachePrediction(lane).fallbackTaken.init(False)
   }
   val cachePredictedTaken = RegInit(False)
   val cachePredictedLane = Reg(UInt(config.fetchSlotWidth bits)) init (0)
@@ -144,6 +147,7 @@ final class OooFrontend(config: OooCoreConfig = OooCoreConfig.FourIssueThreeComm
       predictionForTranslation(lane).phtState := 1
       predictionForTranslation(lane).phtIndex := 0
       predictionForTranslation(lane).target := 0
+      predictionForTranslation(lane).fallbackTaken := False
     }
     when(targetPredictor.io.responseValid) {
       predictionForTranslation(lane) := targetPredictor.io.prediction(lane)
@@ -159,12 +163,11 @@ final class OooFrontend(config: OooCoreConfig = OooCoreConfig.FourIssueThreeComm
   earlierTranslatedPredictionTaken(0) := False
   for (lane <- 0 until config.fetchWidth) {
     val lanePc = translatedGroupBase + U(lane * 4, config.xlen bits)
-    val coldConditionalTaken = translatedPrediction(lane).target < lanePc
     val laneTaken = translatedPrediction(lane).branchType =/=
       OooPredictedBranchType.conditional || Mux(
         translatedPrediction(lane).phtValid,
         translatedPrediction(lane).phtState(1),
-        coldConditionalTaken
+        translatedPrediction(lane).fallbackTaken
       )
     translatedPredictionTaken(lane) := translatedPrediction(lane).hit &&
       laneTaken &&
@@ -284,9 +287,7 @@ final class OooFrontend(config: OooCoreConfig = OooCoreConfig.FourIssueThreeComm
     val dynamicPredictionHit = cachePrediction(lane).hit && predecode.valid &&
       cachePrediction(lane).branchType === predecode.branchType && targetMatches
     responseDynamicPredictionHit(lane) := dynamicPredictionHit
-    // A cold BTB miss does not identify a stable branch location yet. Preserve BTFNT for that
-    // first encounter; the carried PHT state is trained at commit and becomes active with the BTB.
-    val fallbackTaken = predecode.staticTaken
+    val fallbackTaken = cachePrediction(lane).fallbackTaken
     val dynamicTaken = predecode.branchType =/= OooPredictedBranchType.conditional || Mux(
       cachePrediction(lane).phtValid,
       cachePrediction(lane).phtState(1),

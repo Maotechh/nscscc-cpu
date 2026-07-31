@@ -19,6 +19,7 @@ final case class OooBankedFetchPrediction(config: OooCoreConfig) extends Bundle 
   val phtState = UInt(2 bits)
   val phtIndex = UInt(10 bits)
   val target = UInt(config.xlen bits)
+  val fallbackTaken = Bool()
 }
 
 /** Four-bank synchronous BTB/PHT with speculative and architectural history state.
@@ -120,6 +121,17 @@ final class OooBankedFetchPredictor(
   val stageCommitRasPop = RegNext(io.commitRasPop) init (False)
   val stageCommitReturnAddress = RegNext(io.commitReturnAddress) init (0)
 
+  private val bimodalEntries = 64
+  private val bimodalIndexWidth = log2Up(bimodalEntries)
+  val bimodalTable = Vec.fill(bimodalEntries)(Reg(UInt(2 bits)) init (1))
+  val bimodalUpdateIdx = io.phtUpdatePc(2 + bimodalIndexWidth - 1 downto 2)
+  val bimodalOldState = bimodalTable(bimodalUpdateIdx)
+  when(io.phtUpdateValid && io.phtUpdateTaken && bimodalOldState =/= 3) {
+    bimodalTable(bimodalUpdateIdx) := bimodalOldState + 1
+  }.elsewhen(io.phtUpdateValid && !io.phtUpdateTaken && bimodalOldState =/= 0) {
+    bimodalTable(bimodalUpdateIdx) := bimodalOldState - 1
+  }
+
   val speculativeGhr = Reg(Bits(historyWidth bits)) init (0)
   val architecturalGhr = Reg(Bits(historyWidth bits)) init (0)
 
@@ -190,9 +202,11 @@ final class OooBankedFetchPredictor(
     io.lookupPc(fetchGroupOffsetWidth + 4 downto fetchGroupOffsetWidth)
   val capturedTag = Reg(Bits(btbTagWidth bits)) init (0)
   val capturedPhtIndex = Reg(UInt(phtRowWidth bits)) init (0)
+  val capturedLookupPc = Reg(UInt(config.xlen bits)) init (0)
   when(lookupFire) {
     capturedTag := lookupTag
     capturedPhtIndex := lookupPhtIndex.asUInt
+    capturedLookupPc := io.lookupPc
   }
   io.responseValid := RegNext(lookupFire) init (False)
 
@@ -262,6 +276,9 @@ final class OooBankedFetchPredictor(
     io.prediction(bank).phtIndex := capturedPhtIndex
     io.prediction(bank).target :=
       btbRead(bank)(btbTargetLsb + config.xlen - 1 downto btbTargetLsb).asUInt
+    val lanePc = capturedLookupPc + U(bank * 4, config.xlen bits)
+    io.prediction(bank).fallbackTaken := io.responseValid &&
+      bimodalTable(lanePc(2 + bimodalIndexWidth - 1 downto 2))(1)
     when(
       io.prediction(bank).branchType === OooPredictedBranchType.ret &&
         speculativeRasCount =/= 0
