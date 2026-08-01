@@ -3,9 +3,9 @@
   "gate": "core-top-lint",
   "target": "core-top-compat",
   "environment_profile": "locked",
-  "rtl_sha256": "fa104aced938eeede83eb971bd500a49f7db4415b723360c7e8206601159c30b",
-  "warning_count": 741,
-  "warning_signature_sha256": "9be64d6bc0842cef5f787ae4b1a92a153d9ce7b0def13ef30a4e524d55dc083d",
+ "rtl_sha256": "d972ddf8e07e9232ae5a11d32259f2cbc4e7e2520b92fe155fa728ca2b5a6a04",
+ "warning_count": 737,
+ "warning_signature_sha256": "b4e8e033f0bbe57f0cbc2da990e431f95777284477c6ed44cfb4aff8e1362e0f",
   "approved_categories": ["CMPCONST", "UNUSEDSIGNAL"],
   "reason": "The complete fixed-width OoO top exposes typed commit, debug, cache and translation records across internal boundaries. Vivado and functional gates cover those records; this exact Verilator signature is locked to the published RTL and must be regenerated when the design changes."
 }

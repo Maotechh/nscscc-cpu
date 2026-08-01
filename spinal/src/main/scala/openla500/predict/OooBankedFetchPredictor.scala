@@ -124,11 +124,11 @@ final class OooBankedFetchPredictor(
   private val bimodalEntries = 64
   private val bimodalIndexWidth = log2Up(bimodalEntries)
   val bimodalTable = Vec.fill(bimodalEntries)(Reg(UInt(2 bits)) init (0))
-  val bimodalUpdateIdx = io.phtUpdatePc(2 + bimodalIndexWidth - 1 downto 2)
+  val bimodalUpdateIdx = stagePhtUpdatePc(2 + bimodalIndexWidth - 1 downto 2)
   val bimodalOldState = bimodalTable(bimodalUpdateIdx)
-  when(io.phtUpdateValid && io.phtUpdateTaken && bimodalOldState =/= 3) {
+  when(stagePhtUpdateValid && stagePhtUpdateTaken && bimodalOldState =/= 3) {
     bimodalTable(bimodalUpdateIdx) := bimodalOldState + 1
-  }.elsewhen(io.phtUpdateValid && !io.phtUpdateTaken && bimodalOldState =/= 0) {
+  }.elsewhen(stagePhtUpdateValid && !stagePhtUpdateTaken && bimodalOldState =/= 0) {
     bimodalTable(bimodalUpdateIdx) := bimodalOldState - 1
   }
 
@@ -279,12 +279,14 @@ final class OooBankedFetchPredictor(
     val lanePc = capturedLookupPc + U(bank * 4, config.xlen bits)
     io.prediction(bank).fallbackTaken := io.responseValid &&
       bimodalTable(lanePc(2 + bimodalIndexWidth - 1 downto 2))(1)
-    when(
-      io.prediction(bank).branchType === OooPredictedBranchType.ret &&
-        speculativeRasCount =/= 0
-    ) {
-      io.prediction(bank).target :=
-        speculativeRas(speculativeRasCount(rasIndexWidth - 1 downto 0) - 1)
+    when(io.prediction(bank).branchType === OooPredictedBranchType.ret) {
+      when(speculativeRasCount =/= 0) {
+        io.prediction(bank).target :=
+          speculativeRas(speculativeRasCount(rasIndexWidth - 1 downto 0) - 1)
+      }.elsewhen(architecturalRasCount =/= 0) {
+        io.prediction(bank).target :=
+          architecturalRas(architecturalRasCount(rasIndexWidth - 1 downto 0) - 1)
+      }
     }
   }
 }
