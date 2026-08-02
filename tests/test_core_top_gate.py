@@ -530,6 +530,116 @@ class CoreTopStaticGateTests(unittest.TestCase):
         self.assertFalse(summary["locked_manifest_asserted"])
         self.assertEqual(summary["warnings"], ["%Warning-UNUSEDSIGNAL: /tmp/core_top.v:1:1: evidence"])
 
+    def _refresh_metadata_args(self, root: Path) -> SimpleNamespace:
+        args = self._args(root, "metadata-refresh")
+        args.verilator = str(Path(sys.executable).resolve())
+        args.replacement_spec = root / "core-top.json"
+        args.replacement_spec.write_text(
+            json.dumps(
+                {
+                    "schema_version": 1,
+                    "replacements": [
+                        {
+                            "target": core_top_gate.PUBLISHED_TARGET,
+                            "source": core_top_gate.PUBLISHED_SOURCE,
+                            "base_sha256": contract()["sources"]["team_golden"][
+                                "raw_sha256"
+                            ],
+                            "replacement_sha256": "0" * 64,
+                        }
+                    ],
+                }
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+        args.lint_waivers = root / "lint-waivers.json"
+        args.lint_waivers.write_text(
+            json.dumps(
+                {
+                    "schema_version": 1,
+                    "gate": "core-top-lint",
+                    "target": core_top_gate.TARGET,
+                    "environment_profile": "locked",
+                    "rtl_sha256": "0" * 64,
+                    "warning_count": 1,
+                    "warning_signature_sha256": "0" * 64,
+                    "approved_categories": core_top_gate.APPROVED_LINT_CATEGORIES,
+                    "reason": "unit-test reviewed categories",
+                }
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+        return args
+
+    @staticmethod
+    def _refresh_lint_result(warning_output: str):
+        def fake_command(argv, *, cwd, timeout):
+            return {
+                "argv": argv,
+                "returncode": 0 if "--version" in argv else 1,
+                "stdout": "Verilator 5.020 locked\n" if "--version" in argv else warning_output,
+                "timed_out": False,
+                "elapsed_seconds": 0.01,
+            }
+
+        return fake_command
+
+    def test_refresh_metadata_uses_locked_unsuppressed_warning_audit(self) -> None:
+        warning_output = (
+            "%Warning-CMPCONST: /tmp/core_top.v:1:1: Comparison is constant\n"
+            "%Warning-UNUSEDSIGNAL: /tmp/core_top.v:2:1: Signal is not used: 'fixture'\n"
+            "%Error: Exiting due to 2 warning(s)\n"
+        )
+        with tempfile.TemporaryDirectory() as temporary:
+            args = self._refresh_metadata_args(Path(temporary))
+            with mock.patch.object(
+                core_top_gate, "checked_tool", return_value=Path(sys.executable).resolve()
+            ), mock.patch.object(
+                core_top_gate,
+                "run_command",
+                side_effect=self._refresh_lint_result(warning_output),
+            ):
+                summary = core_top_gate.refresh_metadata_gate(args)
+            replacement = json.loads(args.replacement_spec.read_text(encoding="utf-8"))
+            waiver = json.loads(args.lint_waivers.read_text(encoding="utf-8"))
+            rtl_hash = core_top_gate.sha256_file(args.rtl)
+            signature_hash = core_top_gate.warning_signature_sha256(
+                core_top_gate.warning_signatures(warning_output)
+            )
+            self.assertTrue((args.out_dir / "lint-audit.json").is_file())
+        self.assertEqual("pass", summary["status"])
+        self.assertEqual(
+            rtl_hash, replacement["replacements"][0]["replacement_sha256"]
+        )
+        self.assertEqual(rtl_hash, waiver["rtl_sha256"])
+        self.assertEqual(2, waiver["warning_count"])
+        self.assertEqual(signature_hash, waiver["warning_signature_sha256"])
+
+    def test_refresh_metadata_rejects_new_warning_category_without_writes(self) -> None:
+        warning_output = (
+            "%Warning-LATCH: /tmp/core_top.v:1:1: Latch inferred\n"
+            "%Error: Exiting due to 1 warning(s)\n"
+        )
+        with tempfile.TemporaryDirectory() as temporary:
+            args = self._refresh_metadata_args(Path(temporary))
+            replacement_before = args.replacement_spec.read_bytes()
+            waiver_before = args.lint_waivers.read_bytes()
+            with mock.patch.object(
+                core_top_gate, "checked_tool", return_value=Path(sys.executable).resolve()
+            ), mock.patch.object(
+                core_top_gate,
+                "run_command",
+                side_effect=self._refresh_lint_result(warning_output),
+            ):
+                with self.assertRaisesRegex(
+                    core_top_gate.CoreTopGateError, "not eligible for metadata refresh"
+                ):
+                    core_top_gate.refresh_metadata_gate(args)
+            self.assertEqual(replacement_before, args.replacement_spec.read_bytes())
+            self.assertEqual(waiver_before, args.lint_waivers.read_bytes())
+
     def test_makefile_defaults_to_locked_strict_zero_lint(self) -> None:
         makefile = (REPOSITORY_ROOT / "Makefile").read_text(encoding="utf-8")
         self.assertIn("CORE_TOP_LINT_PROFILE ?= locked", makefile)

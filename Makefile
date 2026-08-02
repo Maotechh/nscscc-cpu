@@ -6,6 +6,8 @@ VIVADO_HOME ?= D:/Xilinx/Vivado/2023.2
 VIVADO ?= $(VIVADO_HOME)/bin/vivado.bat
 CORE_TOP_LINT_PROFILE ?= locked
 CORE_TOP_LINT_WAIVERS ?= reference/core-top-lint-waivers.json
+CORE_TOP_REPLACEMENT_SPEC ?= reference/component-replacements/core-top.json
+CORE_TOP_VERILATOR ?=
 OUT_DIR ?= build
 CORE_TOP_RAW_DIR ?= $(OUT_DIR)/core_top/raw
 CORE_TOP_PACKAGE_DIR ?= $(OUT_DIR)/core_top/package
@@ -13,7 +15,7 @@ CORE_TOP_RAW_RTL ?= $(CORE_TOP_RAW_DIR)/core_top.v
 CORE_TOP_RTL ?= $(CORE_TOP_PACKAGE_DIR)/rtl/mycpu_top.v
 CORE_TOP_SYNTH_DIR ?= $(OUT_DIR)/vivado/core_top
 
-.PHONY: all scala test python-test generate-raw package-core generate-core generate port-check lint yosys-check publish-check vivado-synth clean
+.PHONY: all scala test python-test generate-raw package-core generate-core generate refresh-metadata port-check lint yosys-check publish-check vivado-synth clean
 
 all: scala test generate-core python-test
 
@@ -42,6 +44,10 @@ generate-core: package-core
 
 generate: generate-core
 
+refresh-metadata: generate-core
+	rm -rf "$(OUT_DIR)/core_top/metadata-refresh"
+	$(PYTHON) -I tools/core_top_gate.py refresh-metadata --repo-root . --manifest reference/manifest.lock --ports reference/core-top.ports.json --rtl "$(CORE_TOP_RTL)" --replacement-spec "$(CORE_TOP_REPLACEMENT_SPEC)" --lint-waivers "$(CORE_TOP_LINT_WAIVERS)" --out-dir "$(OUT_DIR)/core_top/metadata-refresh" $(if $(CORE_TOP_VERILATOR),--verilator "$(CORE_TOP_VERILATOR)",)
+
 port-check: generate-core
 	rm -rf "$(OUT_DIR)/core_top/port-check"
 	$(PYTHON) -I tools/core_top_gate.py port-check --repo-root . --manifest reference/manifest.lock --ports reference/core-top.ports.json --rtl "$(CORE_TOP_RTL)" --out-dir "$(OUT_DIR)/core_top/port-check"
@@ -56,7 +62,7 @@ yosys-check: generate-core
 
 publish-check: generate-core
 	rm -rf "$(OUT_DIR)/core_top/publish-check"
-	$(PYTHON) -I tools/core_top_gate.py publish-check --repo-root . --manifest reference/manifest.lock --ports reference/core-top.ports.json --rtl "$(CORE_TOP_RTL)" --tracked-rtl rtl/mycpu_top.v --replacement-spec reference/component-replacements/core-top.json --out-dir "$(OUT_DIR)/core_top/publish-check"
+	$(PYTHON) -I tools/core_top_gate.py publish-check --repo-root . --manifest reference/manifest.lock --ports reference/core-top.ports.json --rtl "$(CORE_TOP_RTL)" --tracked-rtl rtl/mycpu_top.v --replacement-spec "$(CORE_TOP_REPLACEMENT_SPEC)" --out-dir "$(OUT_DIR)/core_top/publish-check"
 
 vivado-synth: generate-core
 	rm -rf "$(CORE_TOP_SYNTH_DIR)"
