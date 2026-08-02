@@ -62,5 +62,5 @@ messages in the partial log are therefore not an acceptance result.
 5. Write an iteration receipt and accept or reject the experiment from the
    measured result.
 
-Until those steps are complete, use
-`auto-iteration/cpu-accepted-20260802` as the release-quality campaign result.
+Until those steps are complete, use commit `234ea8c` within this branch as the
+release-quality campaign result rather than the WIP branch head.

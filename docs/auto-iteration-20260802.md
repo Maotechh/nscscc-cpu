@@ -50,16 +50,18 @@ records a 2.1367x board-measured speedup.
 The perf build reported advisory WNS `-0.676437 ns`. The board measurements
 were stable, but this is not a strict timing-closure claim.
 
-## Branches and Integration
+## Branch and Integration
 
-Intermediate states are published separately under `auto-iteration/` branches.
-The large-window branch is evidence for a rejected experiment and must not be
-treated as a release candidate. This branch is the accepted campaign handoff.
+The single `opencode-auto-iteration-20260802` branch preserves the complete
+iteration history. The large-window commits are evidence for a rejected
+experiment and were subsequently reverted; they must not be treated as a
+release candidate. Commit `234ea8c` is the accepted campaign handoff point.
 
 The accepted history was based on `main`, while the repository's `dev` history
 has diverged. Integration into either branch requires an explicit review or
 cherry-pick; no automatic merge was performed.
 
-Iteration 008 is not part of this accepted branch. Its incomplete L1D early
-restart experiment is preserved on
-`auto-iteration/cpu-wip-iter008-20260802` with a separate status document.
+The branch head also preserves the incomplete iteration 008 L1D early-restart
+experiment. It is explicitly documented as WIP in
+`docs/iteration-008-wip-20260802.md` and does not change the accepted-point
+designation above.
