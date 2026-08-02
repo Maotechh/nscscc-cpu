@@ -15,6 +15,7 @@ final case class OooStoreQueueEntry(config: OooCoreConfig) extends Bundle {
   val committed = Bool()
   val robPointer = UInt(config.robPointerWidth bits)
   val recoveryEpoch = UInt(config.recoveryEpochWidth bits)
+  val memoryEpoch = UInt(config.memoryEpochWidth bits)
   val virtualAddress = UInt(config.xlen bits)
   val physicalAddress = UInt(config.xlen bits)
   val translationDone = Bool()
@@ -35,6 +36,7 @@ final case class OooLoadQueueEntry(config: OooCoreConfig) extends Bundle {
   val completed = Bool()
   val robPointer = UInt(config.robPointerWidth bits)
   val recoveryEpoch = UInt(config.recoveryEpochWidth bits)
+  val memoryEpoch = UInt(config.memoryEpochWidth bits)
   val pdst = UInt(config.physicalRegIndexWidth bits)
   val writesPdst = Bool()
   val virtualAddress = UInt(config.xlen bits)
@@ -53,6 +55,7 @@ final case class OooLoadQueueEntry(config: OooCoreConfig) extends Bundle {
 final case class OooScheduledLoad(config: OooCoreConfig) extends Bundle {
   val robPointer = UInt(config.robPointerWidth bits)
   val recoveryEpoch = UInt(config.recoveryEpochWidth bits)
+  val memoryEpoch = UInt(config.memoryEpochWidth bits)
   val pdst = UInt(config.physicalRegIndexWidth bits)
   val writesPdst = Bool()
   val virtualAddress = UInt(config.xlen bits)
@@ -158,6 +161,7 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
     val releaseLoadValid = out Bits (config.commitWidth bits)
     val releaseStoreValid = out Bits (config.commitWidth bits)
     val storeDrainBusy = out Bool ()
+    val committedMemoryEpoch = in UInt (config.memoryEpochWidth bits)
     val orderingRobPointer = in UInt (config.robPointerWidth bits)
     val olderStorePending = out Bool ()
     val flush = in Bool ()
@@ -230,6 +234,7 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
       val selectedLoad = loads(selectedLoadHead)
       scheduledLoad.robPointer := selectedLoad.robPointer
       scheduledLoad.recoveryEpoch := selectedLoad.recoveryEpoch
+      scheduledLoad.memoryEpoch := selectedLoad.memoryEpoch
       scheduledLoad.pdst := selectedLoad.pdst
       scheduledLoad.writesPdst := selectedLoad.writesPdst
       scheduledLoad.virtualAddress := selectedLoad.virtualAddress
@@ -248,6 +253,7 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
       ) {
         scheduledLoad.robPointer := io.agu.uop.robPointer
         scheduledLoad.recoveryEpoch := io.agu.uop.recoveryEpoch
+        scheduledLoad.memoryEpoch := selectedLoad.memoryEpoch
         scheduledLoad.pdst := io.agu.uop.pdst
         scheduledLoad.writesPdst := io.agu.uop.pdst =/= 0
         scheduledLoad.virtualAddress := io.agu.virtualAddress
@@ -299,7 +305,8 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
   val headLoadState = loads(loadHead)
   val loadHeadReady = scheduledLoadValid && headLoadState.valid &&
     headLoadState.robPointer === scheduledLoad.robPointer && headLoadState.addressReady &&
-    !headLoadState.requestSent && !headLoadState.completed
+    !headLoadState.requestSent && !headLoadState.completed &&
+    scheduledLoad.memoryEpoch === io.committedMemoryEpoch
 
   val unknownOlderStore = Bits(config.storeQueueEntries bits)
   val partialOverlapStore = Bits(config.storeQueueEntries bits)
@@ -329,7 +336,7 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
   val cacheLoadCandidate = cacheLoadBase && headLoadState.translationDone
   val storeRequest = headStore.valid && headStore.addressReady && headStore.dataReady &&
     headStore.translationDone && headStore.completed && headStore.committed &&
-    (!headStore.isSc || headStore.scSuccess)
+    headStore.memoryEpoch === io.committedMemoryEpoch && (!headStore.isSc || headStore.scSuccess)
   val failedScRelease = headStore.valid && headStore.addressReady &&
     headStore.translationDone && headStore.completed && headStore.committed &&
     headStore.isSc && !headStore.scSuccess
@@ -700,6 +707,7 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
         stores(index).scSuccess := False
         stores(index).robPointer := io.allocate(lane).robPointer
         stores(index).recoveryEpoch := io.allocate(lane).recoveryEpoch
+        stores(index).memoryEpoch := io.allocate(lane).memoryEpoch
       }
       when(io.allocateValid(lane) && io.allocate(lane).isLoad) {
         val index = io.allocate(lane).loadQueueIndex
@@ -710,6 +718,7 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
         loads(index).translationDone := False
         loads(index).robPointer := io.allocate(lane).robPointer
         loads(index).recoveryEpoch := io.allocate(lane).recoveryEpoch
+        loads(index).memoryEpoch := io.allocate(lane).memoryEpoch
       }
     }
 

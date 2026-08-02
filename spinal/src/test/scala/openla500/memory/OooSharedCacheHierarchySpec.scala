@@ -35,13 +35,19 @@ private final class OooSharedCacheHierarchyProbe(config: OooCoreConfig) extends 
     val memoryReadBeat = in(OooLineReadBeat(config))
     val memoryReadBeatReady = out Bool ()
     val memoryWriteValid = out Bool ()
-    val memoryWrite = out(OooLineWriteRequest(config))
+    val memoryWriteLineAddress = out UInt (config.xlen bits)
+    val memoryWriteDataWords = out Vec (Bits(32 bits), OooCacheContract.LineBytes / 4)
     val memoryWriteReady = in Bool ()
     val invalidate = in Bool ()
     val dataInvalidate = in Bool ()
     val dataWritebackInvalidate = in Bool ()
     val level2Invalidate = in Bool ()
     val invalidateBusy = out Bool ()
+    val barrierDrain = in Bool ()
+    val instructionBarrierMaintenanceStart = in Bool ()
+    val instructionBarrierMaintenanceReady = out Bool ()
+    val instructionBarrierMaintenanceDone = out Bool ()
+    val idle = out Bool ()
   }
   noIoPrefix()
 
@@ -67,6 +73,9 @@ private final class OooSharedCacheHierarchyProbe(config: OooCoreConfig) extends 
   hierarchy.io.dataInvalidate := io.dataInvalidate
   hierarchy.io.dataWritebackInvalidate := io.dataWritebackInvalidate
   hierarchy.io.level2Invalidate := io.level2Invalidate
+  hierarchy.io.barrierDrain := io.barrierDrain
+  hierarchy.io.instructionBarrierMaintenanceStart :=
+    io.instructionBarrierMaintenanceStart
 
   io.instructionRequestReady := hierarchy.io.instructionRequestReady
   io.instructionResponseValid := hierarchy.io.instructionResponseValid
@@ -82,8 +91,16 @@ private final class OooSharedCacheHierarchyProbe(config: OooCoreConfig) extends 
   io.memoryRead := hierarchy.io.memoryRead
   io.memoryReadBeatReady := hierarchy.io.memoryReadBeatReady
   io.memoryWriteValid := hierarchy.io.memoryWriteValid
-  io.memoryWrite := hierarchy.io.memoryWrite
+  io.memoryWriteLineAddress := hierarchy.io.memoryWrite.lineAddress
+  for (word <- 0 until OooCacheContract.LineBytes / 4) {
+    io.memoryWriteDataWords(word) :=
+      hierarchy.io.memoryWrite.data(word * 32 + 31 downto word * 32)
+  }
   io.invalidateBusy := hierarchy.io.invalidateBusy
+  io.instructionBarrierMaintenanceReady :=
+    hierarchy.io.instructionBarrierMaintenanceReady
+  io.instructionBarrierMaintenanceDone := hierarchy.io.instructionBarrierMaintenanceDone
+  io.idle := hierarchy.io.idle
 }
 
 class OooSharedCacheHierarchySpec extends AnyFunSuite {
@@ -143,6 +160,8 @@ class OooSharedCacheHierarchySpec extends AnyFunSuite {
     dut.io.dataInvalidate #= false
     dut.io.dataWritebackInvalidate #= false
     dut.io.level2Invalidate #= false
+    dut.io.barrierDrain #= false
+    dut.io.instructionBarrierMaintenanceStart #= false
   }
 
   private def instructionBeat(firstInstruction: Int, beat: Int): BigInt = {
@@ -393,6 +412,211 @@ class OooSharedCacheHierarchySpec extends AnyFunSuite {
         assert(dut.io.dataResponseValid.toBoolean)
         assert(dut.io.dataResponse.recoveryEpoch.toBigInt == 31)
         assert(dut.io.dataResponse.data.toBigInt == BigInt("89abcdef", 16))
+      }
+  }
+
+  test("barrier drain ignores a held unaccepted instruction request") {
+    SimConfig.withVerilator
+      .workspacePath("target/sim-workspace-ooo-shared-cache")
+      .compile(new OooSharedCacheHierarchyProbe(config))
+      .doSim("ooo-shared-cache-barrier-held-instruction", 0x4c76) { dut =>
+        dut.clockDomain.forkStimulus(period = 10)
+        clearInputs(dut)
+        dut.clockDomain.assertReset()
+        dut.clockDomain.waitSampling(2)
+        dut.clockDomain.deassertReset()
+
+        var initializationCycles = 0
+        while (!dut.io.idle.toBoolean && initializationCycles < 2048) {
+          sample(dut)
+          initializationCycles += 1
+        }
+        assert(dut.io.idle.toBoolean)
+
+        // This is the frontend state seen after a DBAR reaches the ROB head:
+        // ready is withdrawn, so the next speculative fetch remains valid at
+        // the hierarchy boundary until the barrier's PC+4 refetch flushes it.
+        dut.io.barrierDrain #= true
+        dut.io.instructionRequestValid #= true
+        dut.io.instructionRequest.virtualAddress #= BigInt("1c001000", 16)
+        dut.io.instructionRequest.physicalAddress #= 0x1000
+        for (_ <- 0 until 4) {
+          sample(dut)
+          assert(!dut.io.instructionRequestReady.toBoolean)
+        }
+        assert(dut.io.idle.toBoolean)
+
+        // Reopening ingress makes the same held request real work again.  It
+        // must be accepted and keep the hierarchy non-idle while its miss is
+        // outstanding.
+        dut.io.barrierDrain #= false
+        sleep(1)
+        assert(dut.io.instructionRequestReady.toBoolean)
+        sample(dut)
+        dut.io.instructionRequestValid #= false
+        for (_ <- 0 until 4) {
+          sample(dut)
+          assert(!dut.io.idle.toBoolean)
+        }
+        assert(dut.io.memoryReadValid.toBoolean)
+      }
+  }
+
+  test("IBAR writes back modified code, invalidates L2 and L1I, then refills fresh instructions") {
+    SimConfig.withVerilator
+      .workspacePath("target/sim-workspace-ooo-shared-cache")
+      .compile(new OooSharedCacheHierarchyProbe(config))
+      .doSim("ooo-shared-cache-ibar-self-modifying-code", 0x4c75) { dut =>
+        dut.clockDomain.forkStimulus(period = 10)
+        clearInputs(dut)
+        dut.clockDomain.assertReset()
+        dut.clockDomain.waitSampling(2)
+        dut.clockDomain.deassertReset()
+
+        var initializationCycles = 0
+        while (!dut.io.idle.toBoolean && initializationCycles < 2048) {
+          sample(dut)
+          initializationCycles += 1
+        }
+        assert(dut.io.idle.toBoolean)
+
+        val oldInstruction = BigInt("11111111", 16)
+        val newInstruction = BigInt("22222222", 16)
+        var backingLine = oldInstruction
+        for (word <- 1 until OooCacheContract.LineBytes / 4) {
+          backingLine |= BigInt(0x100 + word) << (word * 32)
+        }
+        val beatMask = (BigInt(1) << OooCacheContract.BeatBits) - 1
+
+        def requestInstruction(): Unit = {
+          dut.io.instructionRequestValid #= true
+          dut.io.instructionRequest.virtualAddress #= BigInt("1c001000", 16)
+          dut.io.instructionRequest.physicalAddress #= 0x1000
+          var readyWait = 0
+          var accepted = false
+          while (!accepted && readyWait < 32) {
+            sleep(1)
+            accepted = dut.io.instructionRequestReady.toBoolean
+            sample(dut)
+            readyWait += 1
+          }
+          assert(accepted)
+          dut.io.instructionRequestValid #= false
+        }
+
+        def serviceMemoryRead(line: BigInt): Option[BigInt] = {
+          var observedInstruction = Option.empty[BigInt]
+          var requestWait = 0
+          while (!dut.io.memoryReadValid.toBoolean && requestWait < 64) {
+            sample(dut)
+            requestWait += 1
+          }
+          assert(dut.io.memoryReadValid.toBoolean)
+          assert(dut.io.memoryRead.lineAddress.toBigInt == 0x1000)
+          val mshrId = dut.io.memoryRead.mshrId.toBigInt
+          dut.io.memoryReadReady #= true
+          sample(dut)
+          dut.io.memoryReadReady #= false
+          for (beat <- 0 until OooCacheContract.BeatsPerLine) {
+            dut.io.memoryReadBeatValid #= true
+            dut.io.memoryReadBeat.mshrId #= mshrId
+            dut.io.memoryReadBeat.beat #= beat
+            dut.io.memoryReadBeat.data #= (line >> (beat * OooCacheContract.BeatBits)) & beatMask
+            dut.io.memoryReadBeat.last #= beat == OooCacheContract.BeatsPerLine - 1
+            while (!dut.io.memoryReadBeatReady.toBoolean) { sample(dut) }
+            sample(dut)
+            if (dut.io.instructionResponseValid.toBoolean) {
+              observedInstruction = Some(dut.io.instructionResponse.instructions(0).toBigInt)
+            }
+          }
+          dut.io.memoryReadBeatValid #= false
+          observedInstruction
+        }
+
+        requestInstruction()
+        var oldInstructionObserved = serviceMemoryRead(backingLine)
+        var oldResponseWait = 0
+        while (oldInstructionObserved.isEmpty && oldResponseWait < 64) {
+          sample(dut)
+          if (dut.io.instructionResponseValid.toBoolean) {
+            oldInstructionObserved = Some(dut.io.instructionResponse.instructions(0).toBigInt)
+          }
+          oldResponseWait += 1
+        }
+        assert(oldInstructionObserved.contains(oldInstruction))
+
+        dut.io.dataRequestValid #= true
+        dut.io.dataRequest.virtualAddress #= 0x1000
+        dut.io.dataRequest.physicalAddress #= 0x1000
+        dut.io.dataRequest.isWrite #= true
+        dut.io.dataRequest.writeData #= newInstruction
+        dut.io.dataRequest.byteMask #= 0xf
+        var storeReadyWait = 0
+        while (!dut.io.dataRequestReady.toBoolean && storeReadyWait < 64) {
+          sample(dut)
+          storeReadyWait += 1
+        }
+        assert(dut.io.dataRequestReady.toBoolean)
+        sample(dut)
+        dut.io.dataRequestValid #= false
+
+        var storeIdleWait = 0
+        while (!dut.io.idle.toBoolean && storeIdleWait < 256) {
+          sample(dut)
+          storeIdleWait += 1
+        }
+        assert(dut.io.idle.toBoolean)
+
+        dut.io.barrierDrain #= true
+        sleep(1)
+        assert(dut.io.instructionBarrierMaintenanceReady.toBoolean)
+        dut.io.instructionBarrierMaintenanceStart #= true
+        sample(dut)
+        dut.io.instructionBarrierMaintenanceStart #= false
+
+        var sawWriteback = false
+        var maintenanceCycles = 0
+        while (!dut.io.instructionBarrierMaintenanceDone.toBoolean && maintenanceCycles < 5000) {
+          sleep(1)
+          if (dut.io.memoryWriteValid.toBoolean) {
+            assert(dut.io.memoryWriteLineAddress.toBigInt == 0x1000)
+            backingLine = 0
+            for (word <- 0 until OooCacheContract.LineBytes / 4) {
+              backingLine |= dut.io.memoryWriteDataWords(word).toBigInt << (word * 32)
+            }
+            sawWriteback = true
+            dut.io.memoryWriteReady #= true
+          } else {
+            dut.io.memoryWriteReady #= false
+          }
+          sample(dut)
+          maintenanceCycles += 1
+        }
+        assert(dut.io.instructionBarrierMaintenanceDone.toBoolean)
+        assert(sawWriteback)
+        assert((backingLine & BigInt("ffffffff", 16)) == newInstruction)
+        sample(dut)
+        dut.io.memoryWriteReady #= false
+        dut.io.barrierDrain #= false
+
+        var postMaintenanceIdleWait = 0
+        while (!dut.io.idle.toBoolean && postMaintenanceIdleWait < 64) {
+          sample(dut)
+          postMaintenanceIdleWait += 1
+        }
+        assert(dut.io.idle.toBoolean)
+
+        requestInstruction()
+        var freshInstructionObserved = serviceMemoryRead(backingLine)
+        var freshResponseWait = 0
+        while (freshInstructionObserved.isEmpty && freshResponseWait < 64) {
+          sample(dut)
+          if (dut.io.instructionResponseValid.toBoolean) {
+            freshInstructionObserved = Some(dut.io.instructionResponse.instructions(0).toBigInt)
+          }
+          freshResponseWait += 1
+        }
+        assert(freshInstructionObserved.contains(newInstruction))
       }
   }
 }

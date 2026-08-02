@@ -4,7 +4,8 @@ import openla500.core._
 import spinal.core._
 
 object OooSharedCacheMaintenanceState extends SpinalEnum {
-  val idle, kickDataL1, waitDataL1, kickDataL2, waitDataL2 = newElement()
+  val idle, kickDataL1, waitDataL1, kickDataL2, waitDataL2, kickInstructionL1,
+    waitInstructionL1 = newElement()
 }
 
 /** Private L1I/L1D hierarchy sharing one nonblocking 64-byte-line L2 cache.
@@ -58,6 +59,11 @@ final class OooSharedCacheHierarchy(
     val dataWritebackInvalidate = in Bool ()
     val level2Invalidate = in Bool ()
     val invalidateBusy = out Bool ()
+    val barrierDrain = in Bool ()
+    val instructionBarrierMaintenanceStart = in Bool ()
+    val instructionBarrierMaintenanceReady = out Bool ()
+    val instructionBarrierMaintenanceDone = out Bool ()
+    val idle = out Bool ()
   }
 
   val l1i = new OooL1InstructionCache(config)
@@ -65,11 +71,19 @@ final class OooSharedCacheHierarchy(
   val readMshrs = new OooSharedReadMshrRouter(config)
   val l2 = new OooL2Cache(config)
   val maintenanceState = RegInit(OooSharedCacheMaintenanceState.idle)
+  val maintenanceIncludesInstruction = RegInit(False)
   val maintenanceSeen = RegInit(False)
   val newDataWritebackInvalidate = io.dataWritebackInvalidate && !maintenanceSeen
   when(io.dataWritebackInvalidate) { maintenanceSeen := True }
     .otherwise { maintenanceSeen := False }
   when(newDataWritebackInvalidate && maintenanceState === OooSharedCacheMaintenanceState.idle) {
+    maintenanceIncludesInstruction := False
+    maintenanceState := OooSharedCacheMaintenanceState.kickDataL1
+  }
+  val instructionBarrierMaintenanceFire = io.instructionBarrierMaintenanceStart &&
+    io.instructionBarrierMaintenanceReady
+  when(instructionBarrierMaintenanceFire) {
+    maintenanceIncludesInstruction := True
     maintenanceState := OooSharedCacheMaintenanceState.kickDataL1
   }
   when(maintenanceState === OooSharedCacheMaintenanceState.kickDataL1) {
@@ -88,17 +102,31 @@ final class OooSharedCacheHierarchy(
     maintenanceState === OooSharedCacheMaintenanceState.waitDataL2 &&
       !l2.io.invalidateBusy
   ) {
+    maintenanceState := Mux(
+      maintenanceIncludesInstruction,
+      OooSharedCacheMaintenanceState.kickInstructionL1,
+      OooSharedCacheMaintenanceState.idle
+    )
+  }
+  when(maintenanceState === OooSharedCacheMaintenanceState.kickInstructionL1) {
+    maintenanceState := OooSharedCacheMaintenanceState.waitInstructionL1
+  }
+  val instructionBarrierMaintenanceDone =
+    maintenanceState === OooSharedCacheMaintenanceState.waitInstructionL1 &&
+      !l1i.io.invalidateBusy
+  when(instructionBarrierMaintenanceDone) {
+    maintenanceIncludesInstruction := False
     maintenanceState := OooSharedCacheMaintenanceState.idle
   }
   val hierarchyMaintenanceBusy = l1i.io.invalidateBusy || l1d.io.invalidateBusy ||
     l2.io.invalidateBusy || maintenanceState =/= OooSharedCacheMaintenanceState.idle
 
-  l1i.io.requestValid := io.instructionRequestValid
+  l1i.io.requestValid := io.instructionRequestValid && !io.barrierDrain
   l1i.io.request := io.instructionRequest
   io.uncachedInstructionRequestValid := io.instructionUncachedRequestValid &&
-    !hierarchyMaintenanceBusy
+    !hierarchyMaintenanceBusy && !io.barrierDrain
   io.uncachedInstructionRequest := io.instructionRequest
-  io.instructionRequestReady := !hierarchyMaintenanceBusy && Mux(
+  io.instructionRequestReady := !hierarchyMaintenanceBusy && !io.barrierDrain && Mux(
     io.instructionRequest.uncached,
     io.uncachedInstructionRequestReady,
     l1i.io.requestReady
@@ -166,7 +194,8 @@ final class OooSharedCacheHierarchy(
   // An I-cache maintenance operation must also evict the shared copy.  Otherwise an uncached
   // self-modifying-code store is followed by an L1I miss that simply reloads the stale L2 line.
   // L1D remains untouched because dropping a dirty private line would lose architectural data.
-  l1i.io.invalidate := io.invalidate
+  l1i.io.invalidate := io.invalidate ||
+    maintenanceState === OooSharedCacheMaintenanceState.kickInstructionL1
   l1d.io.invalidate := io.dataInvalidate
   l1d.io.writebackInvalidate := maintenanceState ===
     OooSharedCacheMaintenanceState.kickDataL1
@@ -174,4 +203,22 @@ final class OooSharedCacheHierarchy(
     OooSharedCacheMaintenanceState.kickDataL2
   l2.io.invalidate := io.invalidate || io.dataInvalidate || io.level2Invalidate
   io.invalidateBusy := hierarchyMaintenanceBusy
+  io.instructionBarrierMaintenanceReady :=
+    maintenanceState === OooSharedCacheMaintenanceState.idle &&
+      !hierarchyMaintenanceBusy && !newDataWritebackInvalidate &&
+      !io.invalidate && !io.dataInvalidate && !io.level2Invalidate
+  io.instructionBarrierMaintenanceDone := instructionBarrierMaintenanceDone
+  // A barrier deliberately backpressures the frontend before waiting for the
+  // hierarchy to drain.  The frontend must keep an unaccepted request valid,
+  // so that boundary payload is not outstanding cache work while barrierDrain
+  // prevents it from entering either instruction path.
+  val instructionIngressIdle = io.barrierDrain ||
+    (!io.instructionRequestValid && !io.instructionUncachedRequestValid)
+  val idleNow = l1i.io.idle && l1d.io.idle && readMshrs.io.idle && l2.io.idle &&
+    maintenanceState === OooSharedCacheMaintenanceState.idle &&
+    instructionIngressIdle &&
+    !io.dataRequestValid && !io.instructionBarrierMaintenanceStart &&
+    !io.invalidate && !io.dataInvalidate && !io.dataWritebackInvalidate &&
+    !io.level2Invalidate
+  io.idle := RegNext(idleNow) init (False)
 }

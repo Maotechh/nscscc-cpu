@@ -73,6 +73,7 @@ class OooCoreIntegrationSpec extends AnyFunSuite {
     dut.io.memoryReadBeat.last #= false
     dut.io.memoryReadBeat.error #= false
     dut.io.memoryWriteReady #= true
+    dut.io.memoryBusIdle #= true
     dut.io.systemReadData #= 0
     dut.io.timer #= 0
     dut.io.timerId #= 0

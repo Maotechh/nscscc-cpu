@@ -67,6 +67,9 @@ private final class OooExecutionClusterProbe(config: OooCoreConfig) extends Comp
     B(0, execution.io.loadStoreCompletion.getBitsWidth bits)
   )
   execution.io.olderStorePending := False
+  execution.io.memorySubsystemIdle := True
+  execution.io.instructionBarrierMaintenanceReady := True
+  execution.io.instructionBarrierMaintenanceDone := False
   execution.io.cacheTranslationRequest.ready := True
   execution.io.cacheTranslationResponse.valid := False
   execution.io.cacheTranslationResponse.payload.assignFromBits(
@@ -144,6 +147,9 @@ private final class OooDivideCompletionCollisionProbe(config: OooCoreConfig) ext
     B(0, execution.io.loadStoreCompletion.getBitsWidth bits)
   )
   execution.io.olderStorePending := False
+  execution.io.memorySubsystemIdle := True
+  execution.io.instructionBarrierMaintenanceReady := True
+  execution.io.instructionBarrierMaintenanceDone := False
   execution.io.cacheTranslationRequest.ready := True
   execution.io.cacheTranslationResponse.valid := False
   execution.io.cacheTranslationResponse.payload.assignFromBits(
@@ -220,6 +226,9 @@ private final class OooMultiplyWakeupProbe(config: OooCoreConfig) extends Compon
     B(0, execution.io.loadStoreCompletion.getBitsWidth bits)
   )
   execution.io.olderStorePending := False
+  execution.io.memorySubsystemIdle := True
+  execution.io.instructionBarrierMaintenanceReady := True
+  execution.io.instructionBarrierMaintenanceDone := False
   execution.io.cacheTranslationRequest.ready := True
   execution.io.cacheTranslationResponse.valid := False
   execution.io.cacheTranslationResponse.payload.assignFromBits(
@@ -231,6 +240,88 @@ private final class OooMultiplyWakeupProbe(config: OooCoreConfig) extends Compon
   io.completionValid := execution.io.completionValid(config.executionWidth)
   io.completionPdst := execution.io.completion(config.executionWidth).pdst
   io.completionData := execution.io.completion(config.executionWidth).data
+}
+
+private final class OooBarrierExecutionProbe(config: OooCoreConfig) extends Component {
+  private val csrPort = config.executionPorts.indexWhere(_.capabilities.contains(OooFuKind.Csr))
+
+  val io = new Bundle {
+    val instruction = in Bits (32 bits)
+    val issueValid = in Bool ()
+    val olderStorePending = in Bool ()
+    val memorySubsystemIdle = in Bool ()
+    val maintenanceReady = in Bool ()
+    val maintenanceDone = in Bool ()
+    val flush = in Bool ()
+    val issueReady = out Bool ()
+    val barrierActive = out Bool ()
+    val barrierRobPointer = out UInt (config.robPointerWidth bits)
+    val maintenanceStart = out Bool ()
+    val completionValid = out Bool ()
+    val completionRobPointer = out UInt (config.robPointerWidth bits)
+    val completionRecoveryEpoch = out UInt (config.recoveryEpochWidth bits)
+  }
+  noIoPrefix()
+
+  val decoder = new OooLa32rDecoder(config)
+  decoder.io.pc := U(config.resetVector, config.xlen bits)
+  decoder.io.instruction := io.instruction
+  decoder.io.fetchSlot := 0
+  decoder.io.predictedTaken := False
+  decoder.io.predictedTarget := U(config.resetVector + 4, config.xlen bits)
+  decoder.io.predictorMetadata := 0
+  decoder.io.fetchException.assignFromBits(B(0, decoder.io.fetchException.getBitsWidth bits))
+  decoder.io.privilege := 0
+  decoder.io.interruptPending := False
+
+  val execution = new OooExecutionCluster(config)
+  execution.io.issueValid := 0
+  execution.io.issueValid(csrPort) := io.issueValid
+  for (port <- 0 until config.executionWidth) {
+    if (port == csrPort) {
+      execution.io.issue(port).decoded := decoder.io.decoded
+      execution.io.issue(port).pdst := 0
+      execution.io.issue(port).oldPdst := 0
+      execution.io.issue(port).psrc1 := 0
+      execution.io.issue(port).psrc2 := 0
+      execution.io.issue(port).source1Ready := True
+      execution.io.issue(port).source2Ready := True
+      execution.io.issue(port).robPointer := 11
+      execution.io.issue(port).recoveryEpoch := 7
+      execution.io.issue(port).loadQueueIndex := 0
+      execution.io.issue(port).storeQueueIndex := 0
+    } else {
+      execution.io.issue(port).assignFromBits(B(0, execution.io.issue(port).getBitsWidth bits))
+    }
+    execution.io.source1(port) := 0
+    execution.io.source2(port) := 0
+  }
+  execution.io.flush := io.flush
+  execution.io.systemReadData := 0
+  execution.io.timer := 0
+  execution.io.timerId := 0
+  execution.io.aguReady := True
+  execution.io.loadStoreCompletionValid := False
+  execution.io.loadStoreCompletion.assignFromBits(
+    B(0, execution.io.loadStoreCompletion.getBitsWidth bits)
+  )
+  execution.io.olderStorePending := io.olderStorePending
+  execution.io.memorySubsystemIdle := io.memorySubsystemIdle
+  execution.io.instructionBarrierMaintenanceReady := io.maintenanceReady
+  execution.io.instructionBarrierMaintenanceDone := io.maintenanceDone
+  execution.io.cacheTranslationRequest.ready := True
+  execution.io.cacheTranslationResponse.valid := False
+  execution.io.cacheTranslationResponse.payload.assignFromBits(
+    B(0, execution.io.cacheTranslationResponse.payload.getBitsWidth bits)
+  )
+
+  io.issueReady := execution.io.issueReady(csrPort)
+  io.barrierActive := execution.io.barrierActive
+  io.barrierRobPointer := execution.io.barrierRobPointer
+  io.maintenanceStart := execution.io.instructionBarrierMaintenanceStart
+  io.completionValid := execution.io.completionValid(csrPort)
+  io.completionRobPointer := execution.io.completion(csrPort).robPointer
+  io.completionRecoveryEpoch := execution.io.completion(csrPort).recoveryEpoch
 }
 
 class OooExecutionClusterSpec extends AnyFunSuite {
@@ -380,6 +471,116 @@ class OooExecutionClusterSpec extends AnyFunSuite {
         assert(dut.io.completionValid.toBoolean)
         assert(dut.io.completionPdst.toBigInt == 10)
         assert(dut.io.completionData.toBigInt == 63)
+      }
+  }
+
+  test("DBAR waits for two quiescent observations before completing") {
+    SimConfig.withVerilator
+      .workspacePath("target/sim-workspace-ooo-execution-cluster")
+      .compile(new OooBarrierExecutionProbe(config))
+      .doSim("ooo-dbar-quiescent", 0x4c62) { dut =>
+        dut.clockDomain.forkStimulus(period = 10)
+        dut.io.instruction #= BigInt("38720000", 16)
+        dut.io.issueValid #= false
+        dut.io.olderStorePending #= true
+        dut.io.memorySubsystemIdle #= false
+        dut.io.maintenanceReady #= true
+        dut.io.maintenanceDone #= false
+        dut.io.flush #= false
+        dut.clockDomain.assertReset()
+        dut.clockDomain.waitSampling(2)
+        dut.clockDomain.deassertReset()
+
+        dut.io.issueValid #= true
+        sleep(1)
+        assert(dut.io.issueReady.toBoolean)
+        dut.clockDomain.waitSampling()
+        sleep(1)
+        dut.io.issueValid #= false
+        assert(dut.io.barrierActive.toBoolean)
+        assert(dut.io.barrierRobPointer.toBigInt == 11)
+
+        dut.clockDomain.waitSampling(3)
+        sleep(1)
+        assert(!dut.io.completionValid.toBoolean)
+        dut.io.olderStorePending #= false
+        dut.clockDomain.waitSampling(2)
+        sleep(1)
+        assert(!dut.io.completionValid.toBoolean)
+
+        dut.io.memorySubsystemIdle #= true
+        dut.clockDomain.waitSampling()
+        sleep(1)
+        assert(!dut.io.completionValid.toBoolean)
+        dut.clockDomain.waitSampling()
+        sleep(1)
+        assert(dut.io.completionValid.toBoolean)
+        assert(dut.io.completionRobPointer.toBigInt == 11)
+        assert(dut.io.completionRecoveryEpoch.toBigInt == 7)
+        assert(!dut.io.maintenanceStart.toBoolean)
+      }
+  }
+
+  test("IBAR waits for maintenance and drops completion after a maintenance-time flush") {
+    SimConfig.withVerilator
+      .workspacePath("target/sim-workspace-ooo-execution-cluster")
+      .compile(new OooBarrierExecutionProbe(config))
+      .doSim("ooo-ibar-maintenance-flush", 0x4c63) { dut =>
+        dut.clockDomain.forkStimulus(period = 10)
+        dut.io.instruction #= BigInt("38728000", 16)
+        dut.io.issueValid #= false
+        dut.io.olderStorePending #= false
+        dut.io.memorySubsystemIdle #= true
+        dut.io.maintenanceReady #= true
+        dut.io.maintenanceDone #= false
+        dut.io.flush #= false
+        dut.clockDomain.assertReset()
+        dut.clockDomain.waitSampling(2)
+        dut.clockDomain.deassertReset()
+
+        def startBarrier(): Unit = {
+          dut.io.issueValid #= true
+          dut.clockDomain.waitSampling()
+          sleep(1)
+          dut.io.issueValid #= false
+          dut.clockDomain.waitSampling(2)
+          sleep(1)
+          assert(dut.io.maintenanceStart.toBoolean)
+          dut.clockDomain.waitSampling()
+          sleep(1)
+          assert(!dut.io.maintenanceStart.toBoolean)
+        }
+
+        startBarrier()
+        dut.clockDomain.waitSampling(3)
+        sleep(1)
+        assert(!dut.io.completionValid.toBoolean)
+        dut.io.maintenanceDone #= true
+        dut.clockDomain.waitSampling()
+        dut.io.maintenanceDone #= false
+        dut.clockDomain.waitSampling()
+        sleep(1)
+        assert(!dut.io.completionValid.toBoolean)
+        dut.clockDomain.waitSampling()
+        sleep(1)
+        assert(dut.io.completionValid.toBoolean)
+
+        dut.clockDomain.waitSampling()
+        startBarrier()
+        dut.io.flush #= true
+        dut.clockDomain.waitSampling()
+        dut.io.flush #= false
+        sleep(1)
+        assert(dut.io.barrierActive.toBoolean)
+        dut.io.maintenanceDone #= true
+        dut.clockDomain.waitSampling()
+        dut.io.maintenanceDone #= false
+        for (_ <- 0 until 4) {
+          dut.clockDomain.waitSampling()
+          sleep(1)
+          assert(!dut.io.completionValid.toBoolean)
+        }
+        assert(!dut.io.barrierActive.toBoolean)
       }
   }
 }

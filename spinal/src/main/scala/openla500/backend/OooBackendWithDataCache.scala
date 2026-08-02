@@ -96,6 +96,7 @@ final class OooBackendWithDataCache(
     val dataCacheWritebackInvalidate = in Bool ()
     val level2CacheInvalidate = in Bool ()
     val cacheInvalidateBusy = out Bool ()
+    val memoryBusIdle = in Bool ()
     val flush = in Bool ()
   }
 
@@ -140,6 +141,16 @@ final class OooBackendWithDataCache(
   io.dataTranslationResponse.ready := backend.io.translationResponse.ready
   backend.io.reservationValid := io.reservationValid
   backend.io.reservationLineAddress := io.reservationLineAddress
+
+  backend.io.memorySubsystemIdle :=
+    backend.io.barrierActive && cacheHierarchy.io.idle && io.memoryBusIdle
+  cacheHierarchy.io.barrierDrain := backend.io.barrierActive
+  cacheHierarchy.io.instructionBarrierMaintenanceStart :=
+    backend.io.instructionBarrierMaintenanceStart
+  backend.io.instructionBarrierMaintenanceReady :=
+    cacheHierarchy.io.instructionBarrierMaintenanceReady
+  backend.io.instructionBarrierMaintenanceDone :=
+    cacheHierarchy.io.instructionBarrierMaintenanceDone
 
   io.memoryReadValid := cacheHierarchy.io.memoryReadValid
   io.memoryRead := cacheHierarchy.io.memoryRead

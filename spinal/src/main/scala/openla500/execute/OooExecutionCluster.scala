@@ -163,6 +163,11 @@ object OooCacheTranslationState extends SpinalEnum {
   val idle, request, response, dropResponse = newElement()
 }
 
+object OooBarrierState extends SpinalEnum {
+  val idle, drain, startMaintenance, waitMaintenance, postDrain, complete,
+    dropMaintenance, dropPostDrain = newElement()
+}
+
 final class OooExecutionCluster(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommit)
     extends Component {
   private val multiplyPort =
@@ -193,6 +198,12 @@ final class OooExecutionCluster(config: OooCoreConfig = OooCoreConfig.FourIssueT
     val loadStoreCompletionValid = in Bool ()
     val loadStoreCompletion = in(OooCompletion(config))
     val olderStorePending = in Bool ()
+    val memorySubsystemIdle = in Bool ()
+    val barrierActive = out Bool ()
+    val barrierRobPointer = out UInt (config.robPointerWidth bits)
+    val instructionBarrierMaintenanceStart = out Bool ()
+    val instructionBarrierMaintenanceReady = in Bool ()
+    val instructionBarrierMaintenanceDone = in Bool ()
     val cacheTranslationRequest = master(Stream(OooTranslationRequest(config)))
     val cacheTranslationResponse = slave(Stream(OooTranslationResponse(config)))
     val completionValid = out Bits (config.writebackWidth bits)
@@ -246,6 +257,148 @@ final class OooExecutionCluster(config: OooCoreConfig = OooCoreConfig.FourIssueT
     io.source1(csrPort)(13 downto 0).asUInt + U(0x00b0, 14 bits),
     csrDecoded.csrAddress
   )
+
+  val barrierState = RegInit(OooBarrierState.idle)
+  val barrierUop = Reg(OooRenamedUop(config))
+  val barrierIsInstruction = RegInit(False)
+  val barrierIdleObserved = RegInit(False)
+  val csrIsBarrier = OooFuType.isBarrier(csrDecoded.fuType)
+  val barrierAccept = io.issueValid(csrPort) && io.issueReady(csrPort) && csrIsBarrier
+  val barrierQuiescent = !io.olderStorePending && io.memorySubsystemIdle
+  val maintenanceFire = io.instructionBarrierMaintenanceStart &&
+    io.instructionBarrierMaintenanceReady
+
+  // Active denotes a captured barrier token.  Keeping acceptance out of this
+  // signal lets the LSQ query the incoming ROB pointer on the capture cycle
+  // without feeding its result back through issue readiness.
+  io.barrierActive := barrierState =/= OooBarrierState.idle
+  io.barrierRobPointer := Mux(
+    barrierState === OooBarrierState.idle,
+    io.issue(csrPort).robPointer,
+    barrierUop.robPointer
+  )
+  io.instructionBarrierMaintenanceStart :=
+    barrierState === OooBarrierState.startMaintenance && !io.flush
+
+  when(barrierAccept) {
+    barrierUop := io.issue(csrPort)
+    barrierIsInstruction :=
+      csrDecoded.systemOperation === OooSystemOp.instructionBarrier
+    barrierIdleObserved := False
+    barrierState := OooBarrierState.drain
+  }
+  when(barrierState === OooBarrierState.drain) {
+    when(barrierQuiescent) {
+      when(barrierIdleObserved) {
+        barrierIdleObserved := False
+        barrierState := Mux(
+          barrierIsInstruction,
+          OooBarrierState.startMaintenance,
+          OooBarrierState.complete
+        )
+      }.otherwise {
+        barrierIdleObserved := True
+      }
+    }.otherwise {
+      barrierIdleObserved := False
+    }
+  }
+  when(barrierState === OooBarrierState.startMaintenance && maintenanceFire) {
+    barrierState := OooBarrierState.waitMaintenance
+  }
+  when(
+    barrierState === OooBarrierState.waitMaintenance &&
+      io.instructionBarrierMaintenanceDone
+  ) {
+    barrierIdleObserved := False
+    barrierState := OooBarrierState.postDrain
+  }
+  when(barrierState === OooBarrierState.postDrain) {
+    when(barrierQuiescent) {
+      when(barrierIdleObserved) {
+        barrierIdleObserved := False
+        barrierState := OooBarrierState.complete
+      }.otherwise {
+        barrierIdleObserved := True
+      }
+    }.otherwise {
+      barrierIdleObserved := False
+    }
+  }
+  when(barrierState === OooBarrierState.complete) {
+    barrierState := OooBarrierState.idle
+  }
+  when(
+    barrierState === OooBarrierState.dropMaintenance &&
+      io.instructionBarrierMaintenanceDone
+  ) {
+    barrierIdleObserved := False
+    barrierState := OooBarrierState.dropPostDrain
+  }
+  when(barrierState === OooBarrierState.dropPostDrain) {
+    when(io.memorySubsystemIdle) {
+      when(barrierIdleObserved) {
+        barrierIdleObserved := False
+        barrierState := OooBarrierState.idle
+      }.otherwise {
+        barrierIdleObserved := True
+      }
+    }.otherwise {
+      barrierIdleObserved := False
+    }
+  }
+  when(io.flush) {
+    barrierIdleObserved := False
+    switch(barrierState) {
+      is(OooBarrierState.startMaintenance) {
+        barrierState := Mux(
+          maintenanceFire,
+          OooBarrierState.dropMaintenance,
+          OooBarrierState.idle
+        )
+      }
+      is(OooBarrierState.waitMaintenance) {
+        barrierState := Mux(
+          io.instructionBarrierMaintenanceDone,
+          OooBarrierState.dropPostDrain,
+          OooBarrierState.dropMaintenance
+        )
+      }
+      is(OooBarrierState.postDrain) {
+        barrierState := OooBarrierState.dropPostDrain
+      }
+      is(OooBarrierState.dropMaintenance) {
+        when(io.instructionBarrierMaintenanceDone) {
+          barrierState := OooBarrierState.dropPostDrain
+        }
+      }
+      is(OooBarrierState.dropPostDrain) {
+        barrierState := OooBarrierState.dropPostDrain
+      }
+      default {
+        barrierState := OooBarrierState.idle
+      }
+    }
+  }
+
+  val barrierCompletionValid = barrierState === OooBarrierState.complete && !io.flush
+  val barrierCompletion = OooCompletion(config)
+  barrierCompletion.robPointer := barrierUop.robPointer
+  barrierCompletion.recoveryEpoch := barrierUop.recoveryEpoch
+  barrierCompletion.pdst := barrierUop.pdst
+  barrierCompletion.writesPdst := False
+  barrierCompletion.data := 0
+  barrierCompletion.sideEffectData := 0
+  barrierCompletion.exception.valid := False
+  barrierCompletion.exception.ecode := 0
+  barrierCompletion.exception.esubcode := 0
+  barrierCompletion.exception.badVAddrValid := False
+  barrierCompletion.exception.badVAddr := 0
+  barrierCompletion.exception.tlbRefill := False
+  barrierCompletion.branchResolved := False
+  barrierCompletion.branchTaken := False
+  barrierCompletion.branchTarget := 0
+  barrierCompletion.branchMispredict := False
 
   val lsuDecoded = io.issue(loadStorePort).decoded
   val lsuAddress = io.source1(loadStorePort).asUInt + lsuDecoded.immediate.asUInt
@@ -305,7 +458,8 @@ final class OooExecutionCluster(config: OooCoreConfig = OooCoreConfig.FourIssueT
     } else {
       False
     }
-    val direct = !isMultiply && !isDivide && !usesAgu && !requiresCacheTranslation
+    val isBarrier = OooFuType.isBarrier(decoded.fuType)
+    val direct = !isMultiply && !isDivide && !usesAgu && !requiresCacheTranslation && !isBarrier
     if (port == dividePort) {
       // The divider result and direct ALU result share this writeback lane.
       // Hold a direct issue for one cycle when an older divide completes so
@@ -329,6 +483,8 @@ final class OooExecutionCluster(config: OooCoreConfig = OooCoreConfig.FourIssueT
             !io.loadStoreCompletionValid
           )
         )
+    } else if (port == csrPort) {
+      io.issueReady(port) := !io.flush && barrierState === OooBarrierState.idle
     } else {
       io.issueReady(port) := !io.flush
     }
@@ -491,6 +647,10 @@ final class OooExecutionCluster(config: OooCoreConfig = OooCoreConfig.FourIssueT
       io.completionValid(port) := directCompletionValid(port) || divider.io.completionValid
       io.completion(port) := directCompletion(port)
       when(divider.io.completionValid) { io.completion(port) := divider.io.completion }
+    } else if (port == csrPort) {
+      io.completionValid(port) := directCompletionValid(port) || barrierCompletionValid
+      io.completion(port) := directCompletion(port)
+      when(barrierCompletionValid) { io.completion(port) := barrierCompletion }
     } else {
       io.completionValid(port) := directCompletionValid(port)
       io.completion(port) := directCompletion(port)

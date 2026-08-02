@@ -136,9 +136,8 @@ final class OooCommitAdapter(config: OooCoreConfig = OooCoreConfig.FourIssueThre
         io.refetchValid := True
       }
       when(
-        io.commit(lane).systemOperation === OooSystemOp.instructionBarrier ||
-          (io.commit(lane).systemOperation === OooSystemOp.cacheOperation &&
-            io.commit(lane).rd(2 downto 0) === 0)
+        io.commit(lane).systemOperation === OooSystemOp.cacheOperation &&
+          io.commit(lane).rd(2 downto 0) === 0
       ) {
         io.cacheInvalidateValid := True
       }

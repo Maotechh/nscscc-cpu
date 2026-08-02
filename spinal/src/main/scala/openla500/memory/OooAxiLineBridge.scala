@@ -44,6 +44,7 @@ final class OooAxiLineBridge(
     val uncachedDataResponse = out(OooCacheResponse(config))
 
     val axi = master(Axi3Compat())
+    val idle = out Bool ()
   }
 
   val instructionReadKind = U(1, 2 bits)
@@ -96,19 +97,41 @@ final class OooAxiLineBridge(
 
   val lineBusy = lineArValid || lineActive.asBits.orR
   val busIdle = !readActive && !writeActive && !readOutputValid && !lineBusy
-  val startUncachedData = busIdle && io.uncachedDataRequestValid
+  val idleNow = busIdle && !instructionResponseValid && !dataResponseValid &&
+    !io.memoryReadValid && !io.memoryWriteValid &&
+    !io.uncachedInstructionRequestValid && !io.uncachedDataRequestValid &&
+    !io.axi.r.valid && !io.axi.b.valid
+  io.idle := RegNext(idleNow) init (False)
+  // A newly contending cached request wins once; a registered wait bit then gives uncached
+  // traffic the next idle slot.  Cached ready therefore depends only on registered bridge state,
+  // keeping frontend/LSQ request-valid logic out of the L2 MSHR state-update cone without
+  // allowing either traffic class to starve.
+  val cachedTrafficPending = io.memoryReadValid || io.memoryWriteValid
+  val uncachedTrafficPending = io.uncachedDataRequestValid ||
+    io.uncachedInstructionRequestValid
+  val uncachedWait = RegInit(False)
+  val uncachedOwnsIdleSlot = uncachedWait || !cachedTrafficPending
+  val startUncachedData = busIdle && uncachedOwnsIdleSlot &&
+    io.uncachedDataRequestValid
   val startUncachedDataRead = startUncachedData && !io.uncachedDataRequest.isWrite
   val startUncachedDataWrite = startUncachedData && io.uncachedDataRequest.isWrite
-  val startUncachedInstruction = busIdle && !io.uncachedDataRequestValid &&
+  val startUncachedInstruction = busIdle && uncachedOwnsIdleSlot &&
+    !io.uncachedDataRequestValid &&
     io.uncachedInstructionRequestValid
   io.uncachedDataRequestReady := startUncachedDataRead ||
     (writeIsUncachedData && writeResponsePending && io.axi.b.valid)
   io.uncachedInstructionRequestReady := startUncachedInstruction
   io.memoryReadReady := !readActive && !writeActive && !lineArValid &&
-    !lineActive(io.memoryRead.mshrId) && !io.uncachedDataRequestValid &&
-    !io.uncachedInstructionRequestValid
-  io.memoryWriteReady := busIdle && !io.memoryReadValid &&
-    !io.uncachedDataRequestValid && !io.uncachedInstructionRequestValid
+    !lineActive(io.memoryRead.mshrId) && !uncachedWait
+  io.memoryWriteReady := busIdle && !io.memoryReadValid && !uncachedWait
+  val uncachedStart = startUncachedData || startUncachedInstruction
+  when(busIdle) {
+    when(uncachedStart || !uncachedTrafficPending) {
+      uncachedWait := False
+    }.elsewhen(cachedTrafficPending) {
+      uncachedWait := True
+    }
+  }
   val readRequestFire = io.memoryReadValid && io.memoryReadReady
   val writeRequestFire = io.memoryWriteValid && io.memoryWriteReady
 

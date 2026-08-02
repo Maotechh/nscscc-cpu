@@ -145,7 +145,7 @@ class OooCommitAdapterSpec extends AnyFunSuite {
         dut.io.systemOperation(2) #= 15
         sleep(1)
         assert(dut.io.refetchValid.toBoolean)
-        assert(dut.io.cacheInvalidateValid.toBoolean)
+        assert(!dut.io.cacheInvalidateValid.toBoolean)
 
         dut.io.systemOperation(2) #= 17
         dut.io.rd(2) #= 0

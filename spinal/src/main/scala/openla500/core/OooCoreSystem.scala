@@ -245,6 +245,7 @@ final class OooCoreSystem(
     axiBridge.io.memoryWriteValid := core.io.memoryWriteValid
     axiBridge.io.memoryWrite := core.io.memoryWrite
     core.io.memoryWriteReady := axiBridge.io.memoryWriteReady
+    core.io.memoryBusIdle := axiBridge.io.idle
     axiBridge.io.uncachedInstructionRequestValid :=
       core.io.uncachedInstructionRequestValid
     axiBridge.io.uncachedInstructionRequest := core.io.uncachedInstructionRequest

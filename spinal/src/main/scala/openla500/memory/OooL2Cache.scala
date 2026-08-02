@@ -68,6 +68,7 @@ final class OooL2Cache(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommi
     val invalidate = in Bool ()
     val writebackInvalidate = in Bool ()
     val invalidateBusy = out Bool ()
+    val idle = out Bool ()
   }
 
   val cacheArray = new OooCacheArray(geometry)
@@ -462,4 +463,9 @@ final class OooL2Cache(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommi
 
   io.invalidateBusy := cacheArray.io.invalidateBusy || maintenanceRequest ||
     state =/= OooL2CacheState.normal
+  val idleNow = state === OooL2CacheState.normal && !normalBusy &&
+    !maintenanceRequest && !cacheArray.io.invalidateBusy &&
+    !refillOutputValid && !hitOutputValid && !hitCaptureValid &&
+    !io.readValid && !io.writeValid && !io.invalidate && !io.writebackInvalidate
+  io.idle := RegNext(idleNow) init (False)
 }

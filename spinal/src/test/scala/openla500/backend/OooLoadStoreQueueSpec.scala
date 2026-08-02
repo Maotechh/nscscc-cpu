@@ -25,6 +25,7 @@ private final class OooLoadStoreQueueProbe(config: OooCoreConfig) extends Compon
     val translationFault = in Bool ()
     val translationEcode = in UInt (6 bits)
     val translationResponseEnable = in Bool ()
+    val translationUncached = in Bool ()
     val translationRequestValid = out Bool ()
     val reservationValid = in Bool ()
     val reservationLineAddress = in Bits (28 bits)
@@ -33,6 +34,7 @@ private final class OooLoadStoreQueueProbe(config: OooCoreConfig) extends Compon
     val releaseLoadValid = out Bits (config.commitWidth bits)
     val releaseStoreValid = out Bits (config.commitWidth bits)
     val storeDrainBusy = out Bool ()
+    val committedMemoryEpoch = in UInt (config.memoryEpochWidth bits)
     val flush = in Bool ()
   }
   noIoPrefix()
@@ -69,7 +71,7 @@ private final class OooLoadStoreQueueProbe(config: OooCoreConfig) extends Compon
   lsq.io.translationResponse.valid := translationValid && io.translationResponseEnable
   lsq.io.translationResponse.virtualAddress := translationAddress
   lsq.io.translationResponse.physicalAddress := translationAddress
-  lsq.io.translationResponse.uncached := False
+  lsq.io.translationResponse.uncached := io.translationUncached
   lsq.io.translationResponse.exception.valid := io.translationFault
   lsq.io.translationResponse.exception.ecode := io.translationEcode
   lsq.io.translationResponse.exception.esubcode := 0
@@ -78,6 +80,7 @@ private final class OooLoadStoreQueueProbe(config: OooCoreConfig) extends Compon
   lsq.io.translationResponse.exception.tlbRefill := False
   lsq.io.reservationValid := io.reservationValid
   lsq.io.reservationLineAddress := io.reservationLineAddress
+  lsq.io.committedMemoryEpoch := io.committedMemoryEpoch
   lsq.io.orderingRobPointer := 0
 
   io.aguReady := lsq.io.aguReady
@@ -103,12 +106,15 @@ class OooLoadStoreQueueSpec extends AnyFunSuite {
     dut.io.translationFault #= false
     dut.io.translationEcode #= 0
     dut.io.translationResponseEnable #= true
+    dut.io.translationUncached #= false
     dut.io.reservationValid #= false
     dut.io.reservationLineAddress #= 0
+    dut.io.committedMemoryEpoch #= 0
     dut.io.flush #= false
     for (lane <- 0 until config.renameWidth) {
       dut.io.allocate(lane).robPointer #= 0
       dut.io.allocate(lane).recoveryEpoch #= 0
+      dut.io.allocate(lane).memoryEpoch #= 0
       dut.io.allocate(lane).isLoad #= false
       dut.io.allocate(lane).isStore #= false
       dut.io.allocate(lane).loadQueueIndex #= 0
@@ -193,6 +199,101 @@ class OooLoadStoreQueueSpec extends AnyFunSuite {
     dut.io.agu.uop.decoded.isLoad #= true
     dut.io.agu.uop.decoded.isLl #= isLl
     dut.io.agu.uop.decoded.writesGpr #= true
+  }
+
+  test("memory epoch blocks cached, uncached, and committed-store requests") {
+    val compiled = SimConfig.withVerilator
+      .workspacePath("target/sim-workspace-ooo-lsq")
+      .compile(new OooLoadStoreQueueProbe(config))
+
+    for ((uncached, name, seed) <- Seq(
+        (false, "cached-load", 0x4c70),
+        (true, "uncached-load", 0x4c71)
+      )) {
+      compiled.doSim(s"ooo-lsq-memory-epoch-$name", seed) { dut =>
+        dut.clockDomain.forkStimulus(period = 10)
+        clearInputs(dut)
+        dut.io.translationUncached #= uncached
+        dut.clockDomain.assertReset()
+        dut.clockDomain.waitSampling(2)
+        dut.clockDomain.deassertReset()
+        sample(dut)
+
+        dut.io.allocateValid #= 1
+        dut.io.allocate(0).robPointer #= 4
+        dut.io.allocate(0).memoryEpoch #= 1
+        dut.io.allocate(0).isLoad #= true
+        dut.io.allocate(0).loadQueueIndex #= 0
+        sample(dut)
+        dut.io.allocateValid #= 0
+        setLoadAgu(dut, pointer = 4, address = 0x400, loadIndex = 0)
+        sample(dut)
+        dut.io.aguValid #= false
+
+        for (_ <- 0 until 6) {
+          sample(dut)
+          assert(!dut.io.dataRequestValid.toBoolean)
+          assert(!dut.io.translationRequestValid.toBoolean)
+        }
+
+        dut.io.committedMemoryEpoch #= 1
+        var waitCycles = 0
+        while (!dut.io.dataRequestValid.toBoolean && waitCycles < 16) {
+          sample(dut)
+          waitCycles += 1
+        }
+        assert(dut.io.dataRequestValid.toBoolean)
+        assert(dut.io.dataRequest.robPointer.toBigInt == 4)
+        assert(dut.io.dataRequest.uncached.toBoolean == uncached)
+      }
+    }
+
+    compiled.doSim("ooo-lsq-memory-epoch-committed-store", 0x4c72) { dut =>
+      dut.clockDomain.forkStimulus(period = 10)
+      clearInputs(dut)
+      dut.clockDomain.assertReset()
+      dut.clockDomain.waitSampling(2)
+      dut.clockDomain.deassertReset()
+      sample(dut)
+
+      dut.io.allocateValid #= 1
+      dut.io.allocate(0).robPointer #= 5
+      dut.io.allocate(0).memoryEpoch #= 1
+      dut.io.allocate(0).isStore #= true
+      dut.io.allocate(0).storeQueueIndex #= 0
+      sample(dut)
+      dut.io.allocateValid #= 0
+      setStoreAgu(dut, pointer = 5, address = 0x500, data = 0x12345678)
+      sample(dut)
+      dut.io.aguValid #= false
+
+      var completionWait = 0
+      while (!dut.io.completionValid.toBoolean && completionWait < 16) {
+        sample(dut)
+        completionWait += 1
+      }
+      assert(dut.io.completionValid.toBoolean)
+      dut.io.commitValid #= 1
+      dut.io.commit(0).robPointer #= 5
+      dut.io.commit(0).isStore #= true
+      dut.io.commit(0).storeQueueIndex #= 0
+      sample(dut)
+      dut.io.commitValid #= 0
+
+      for (_ <- 0 until 4) {
+        sample(dut)
+        assert(!dut.io.dataRequestValid.toBoolean)
+      }
+      dut.io.committedMemoryEpoch #= 1
+      var requestWait = 0
+      while (!dut.io.dataRequestValid.toBoolean && requestWait < 12) {
+        sample(dut)
+        requestWait += 1
+      }
+      assert(dut.io.dataRequestValid.toBoolean)
+      assert(dut.io.dataRequest.isWrite.toBoolean)
+      assert(dut.io.dataRequest.robPointer.toBigInt == 5)
+    }
   }
 
   test("recycled load slots initialize and advance the circular scheduling base") {

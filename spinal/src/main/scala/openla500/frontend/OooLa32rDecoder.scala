@@ -524,6 +524,7 @@ final class OooLa32rDecoder(config: OooCoreConfig = OooCoreConfig.FourIssueThree
     fuType := OooFuType.loadStore
   }
   when(privilegedInstruction) { fuType := OooFuType.serial }
+  when(any(instDbar, instIbar)) { fuType := OooFuType.barrier }
 
   io.decoded.pc := io.pc
   io.decoded.instruction := instruction

@@ -44,6 +44,7 @@ class OooDispatchQueueSpec extends AnyFunSuite {
       dut.io.enqueue(lane).source1Ready #= true
       dut.io.enqueue(lane).source2Ready #= true
       dut.io.enqueue(lane).robPointer #= 0
+      dut.io.enqueue(lane).recoveryEpoch #= 0
       dut.io.enqueue(lane).loadQueueIndex #= 0
       dut.io.enqueue(lane).storeQueueIndex #= 0
       dut.io.enqueue(lane).decoded.fuType #= 0

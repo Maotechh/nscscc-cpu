@@ -122,6 +122,12 @@ final case class OooCoreConfig(
   val robIndexWidth: Int = log2Up(robEntries)
   val robPointerWidth: Int = robIndexWidth + 1
   val recoveryEpochWidth: Int = 8
+  val memoryEpochWidth: Int = 8
+  require(robEntries <= 32, "the memory epoch proof assumes at most 32 live ROB entries")
+  require(
+    robEntries < (1 << (memoryEpochWidth - 1)),
+    "the memory epoch must distinguish every live ROB entry across wraparound"
+  )
   val loadQueueIndexWidth: Int = log2Up(loadQueueEntries)
   val storeQueueIndexWidth: Int = log2Up(storeQueueEntries)
   val fetchSlotWidth: Int = log2Up(fetchWidth)

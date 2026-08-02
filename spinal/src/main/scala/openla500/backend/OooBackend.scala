@@ -2,6 +2,7 @@ package openla500.backend
 
 import openla500.core._
 import spinal.core._
+import spinal.lib._
 
 final class OooBackend(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommit)
     extends Component {
@@ -39,6 +40,8 @@ final class OooBackend(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommi
     val memoryAllocate = out Vec (OooLsqAllocate(config), config.renameWidth)
     val releaseLoadValid = in Bits (config.commitWidth bits)
     val releaseStoreValid = in Bits (config.commitWidth bits)
+    val committedMemoryEpoch = out UInt (config.memoryEpochWidth bits)
+    val speculativeMemoryEpoch = out UInt (config.memoryEpochWidth bits)
 
     val debugReadAddress = in UInt (config.archRegIndexWidth bits)
     val debugReadData = out Bits (config.xlen bits)
@@ -71,8 +74,11 @@ final class OooBackend(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommi
   val recoveryEpoch = Reg(UInt(config.recoveryEpochWidth bits)) init (0)
   when(io.flush) { recoveryEpoch := recoveryEpoch + 1 }
   rob.io.currentEpoch := recoveryEpoch
+  val committedMemoryEpoch = Reg(UInt(config.memoryEpochWidth bits)) init (0)
+  val speculativeMemoryEpoch = Reg(UInt(config.memoryEpochWidth bits)) init (0)
 
   val renamedInput = Vec(OooRenamedUop(config), config.renameWidth)
+  val renamedMemoryEpoch = Vec(UInt(config.memoryEpochWidth bits), config.renameWidth)
   val dispatchInput = Vec(OooRenamedUop(config), config.renameWidth)
   for (lane <- 0 until config.renameWidth) {
     val writesPhysicalDestination =
@@ -90,6 +96,18 @@ final class OooBackend(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommi
     renamedInput(lane).source2Ready := registerMap.io.renameSource2Ready(lane)
     renamedInput(lane).robPointer := rob.io.allocatedPointer(lane)
     renamedInput(lane).recoveryEpoch := recoveryEpoch
+    if (lane == 0) {
+      renamedMemoryEpoch(lane) := speculativeMemoryEpoch
+    } else {
+      val precedingBarrier = Bits(lane bits)
+      for (preceding <- 0 until lane) {
+        precedingBarrier(preceding) := io.renameValid(preceding) &&
+          (io.rename(preceding).systemOperation === OooSystemOp.dataBarrier ||
+            io.rename(preceding).systemOperation === OooSystemOp.instructionBarrier)
+      }
+      renamedMemoryEpoch(lane) := speculativeMemoryEpoch +
+        CountOne(precedingBarrier).resize(config.memoryEpochWidth)
+    }
     renamedInput(lane).loadQueueIndex := lsqAllocator.io.allocateLoadIndex(lane)
     renamedInput(lane).storeQueueIndex := lsqAllocator.io.allocateStoreIndex(lane)
 
@@ -126,15 +144,17 @@ final class OooBackend(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommi
       registerMap.io.physicalReady(dispatchWindow.io.output(lane).psrc2)
     // A uop entering an IQ on the registered writeback edge must observe the
     // same bypass as a uop already resident in the IQ on the raw-completion edge.
+    // IQ flush has priority over enqueue, so keep the global flush signal out
+    // of this candidate-data path just as the resident-IQ wakeup path does.
     for (write <- 0 until config.writebackWidth) {
       when(
-        rob.io.completionWakeupValid(write) &&
+        rob.io.completionWakeupCandidateValid(write) &&
           rob.io.completionWakeupPdst(write) === dispatchWindow.io.output(lane).psrc1
       ) {
         dispatchSource1Ready := True
       }
       when(
-        rob.io.completionWakeupValid(write) &&
+        rob.io.completionWakeupCandidateValid(write) &&
           rob.io.completionWakeupPdst(write) === dispatchWindow.io.output(lane).psrc2
       ) {
         dispatchSource2Ready := True
@@ -147,7 +167,6 @@ final class OooBackend(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommi
     router.io.input(lane).loadQueueIndex := dispatchWindow.io.output(lane).loadQueueIndex
     router.io.input(lane).storeQueueIndex := dispatchWindow.io.output(lane).storeQueueIndex
   }
-  router.io.flush := io.flush
   val lsuDispatchIsStore = router.io.portValid(loadStorePort) &&
     router.io.portInput(loadStorePort).decoded.isStore
   for (port <- 0 until config.executionWidth) {
@@ -193,6 +212,33 @@ final class OooBackend(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommi
   accepted := Mux(acceptAll, io.renameValid, B(0, config.renameWidth bits))
   io.renameReady := Mux(resourcesReady, allLanes, B(0, config.renameWidth bits))
 
+  val acceptedBarrier = Bits(config.renameWidth bits)
+  for (lane <- 0 until config.renameWidth) {
+    acceptedBarrier(lane) := accepted(lane) &&
+      (io.rename(lane).systemOperation === OooSystemOp.dataBarrier ||
+        io.rename(lane).systemOperation === OooSystemOp.instructionBarrier)
+  }
+  val acceptedBarrierCount = CountOne(acceptedBarrier).resize(config.memoryEpochWidth)
+
+  val committedBarrier = Bits(config.commitWidth bits)
+  for (lane <- 0 until config.commitWidth) {
+    committedBarrier(lane) := rob.io.commitValid(lane) && rob.io.commit(lane).retired &&
+      (rob.io.commit(lane).systemOperation === OooSystemOp.dataBarrier ||
+        rob.io.commit(lane).systemOperation === OooSystemOp.instructionBarrier)
+  }
+  val committedBarrierCount = CountOne(committedBarrier).resize(config.memoryEpochWidth)
+  val nextCommittedMemoryEpoch = committedMemoryEpoch + committedBarrierCount
+  when(committedBarrier.orR) {
+    committedMemoryEpoch := nextCommittedMemoryEpoch
+  }
+  when(io.flush) {
+    speculativeMemoryEpoch := nextCommittedMemoryEpoch
+  }.elsewhen(acceptedBarrier.orR) {
+    speculativeMemoryEpoch := speculativeMemoryEpoch + acceptedBarrierCount
+  }
+  io.committedMemoryEpoch := committedMemoryEpoch
+  io.speculativeMemoryEpoch := speculativeMemoryEpoch
+
   registerMap.io.renameValid := accepted
   for (lane <- 0 until config.renameWidth) {
     registerMap.io.renameSource1(lane) := io.rename(lane).rs1
@@ -218,6 +264,7 @@ final class OooBackend(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommi
       (renamedInput(lane).decoded.isLoad || renamedInput(lane).decoded.isStore)
     io.memoryAllocate(lane).robPointer := renamedInput(lane).robPointer
     io.memoryAllocate(lane).recoveryEpoch := renamedInput(lane).recoveryEpoch
+    io.memoryAllocate(lane).memoryEpoch := renamedMemoryEpoch(lane)
     io.memoryAllocate(lane).isLoad := renamedInput(lane).decoded.isLoad
     io.memoryAllocate(lane).isStore := renamedInput(lane).decoded.isStore
     io.memoryAllocate(lane).loadQueueIndex := renamedInput(lane).loadQueueIndex

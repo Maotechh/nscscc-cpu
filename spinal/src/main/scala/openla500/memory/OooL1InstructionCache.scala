@@ -91,6 +91,7 @@ final class OooL1InstructionCache(
 
     val invalidate = in Bool ()
     val invalidateBusy = out Bool ()
+    val idle = out Bool ()
   }
 
   val cacheArray = new OooCacheArray(geometry)
@@ -289,4 +290,8 @@ final class OooL1InstructionCache(
   }
 
   io.invalidateBusy := cacheArray.io.invalidateBusy || invalidateRequest
+  val idleNow = state === OooL1InstructionCacheState.idle && !invalidateRequest &&
+    !cacheArray.io.invalidateBusy && !responseValid && !io.requestValid &&
+    !io.invalidate
+  io.idle := RegNext(idleNow) init (False)
 }
