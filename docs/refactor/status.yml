@@ -1,6 +1,18 @@
 schema_version: 1
-updated_at: "2026-07-28T21:31:48+08:00"
-branch: dev-OoOE
+updated_at: "2026-08-03T01:42:41+08:00"
+branch: dev/ECHO
+
+current_candidate:
+  source_commit: 2301dde1ee0622e27b2bbaaf609942b56ca5f764
+  base_commit: d9bab16ef46540eb3348b0781afc4d0949f28adc
+  source_state: "committed Scala/SpinalHDL candidate with generated RTL and version metadata"
+  pre_documentation_source_status_sha256: 6b0e07dac5b3e3c21be32d8da7ce6c9aada9e8f26380670ecca075f7bd36b0e9
+  generated_rtl_sha256: d667c7e3740a95e54863b3758c8343daf932905f5e2aa4e1877dade44d2a60bc
+  chiplab_commit: 68c20a539e2be8a05300e714296f5fda8373ee80
+  mycpu_gitlink: aa3bde1f3e720e71c2c78d6b81930d797b810149
+  dbar_ibar_semantics: satisfied
+  linux_acceptance: not_satisfied
+  board_evaluation: not_run
 
 baseline:
   rtl_commit: da71fd32e0db3d13f1964895bbafeb5d2e5af412
@@ -15,16 +27,16 @@ baseline:
 local_gates:
   scala:
     suites: 37
-    passed: 133
+    passed: 140
     failed: 0
   python:
-    passed: 362
+    passed: 364
     failed: 0
   port_contract: passed
   yosys_structure: passed
   verilator_lint:
     status: passed
-    reviewed_warnings: 849
+    reviewed_warnings: 880
     categories:
       - CMPCONST
       - UNUSEDSIGNAL
@@ -36,6 +48,9 @@ local_gates:
     failing_endpoints: 0
 
 complete_soc:
+  source_commit: 2301dde1ee0622e27b2bbaaf609942b56ca5f764
+  generated_rtl_sha256: d667c7e3740a95e54863b3758c8343daf932905f5e2aa4e1877dade44d2a60bc
+  chiplab_commit: 68c20a539e2be8a05300e714296f5fda8373ee80
   tool: "Vivado 2023.2"
   part: xc7a200tfbg676-2
   profile: perf20
@@ -44,16 +59,43 @@ complete_soc:
   implementation: complete
   write_bitstream: complete
   timing_met: true
-  wns_ns: 0.036678
+  wns_ns: 0.026
   tns_ns: 0.0
-  whs_ns: 0.049
+  whs_ns: 0.051
   ths_ns: 0.0
   drc_errors: 0
   drc_warnings: 26
-  build_elapsed_seconds: 2852.6
-  package_sha256: bfe51c269e939588698f1f1de52f73bfa74f0d34904c7cdaa594296e243f99fa
+  build_elapsed_seconds: 1732
+  bitstream_sha256: 5e21422e2a9a74e15158e0a84ef6f3c2630bbdc4b34f0bd59f2f878614f240be
+  probes_sha256: 3e36db904e602bae47d72e9f8b54a553903de4ccf5ff72ce88942c87280dfcdb
+
+dbar_ibar_validation:
+  status: satisfied
+  memory_epoch_width: 8
+  scala_tests: "37 suites / 140 tests passed"
+  python_tests: "364/364 passed"
+  func_advance_axi_seeds:
+    - seed: 5570815
+      cycles: 18047
+    - seed: 1
+      cycles: 18018
+    - seed: 20260802
+      cycles: 17976
+  func_lab19:
+    seed: 5570815
+    cycles: 565868
+  linux_verilator:
+    limit_ns: 5000000
+    cycles: 2499995
+    instructions: 1224741
+    last_commit_pc: 0xa07a9b58
+    milestone: "Linux 5.14 early console; memory PFN sizing printed, no shell"
+    uart_sha256: d7687f23400a842fbf393e1400ea154b56fedd98abc834a6545d4688735cf405
 
 board_evaluation:
+  applies_to_commit: da71fd32e0db3d13f1964895bbafeb5d2e5af412
+  current_candidate_status: not_run
+  current_candidate_reason: "Candidate commit is attributable; board package and jobs are pending."
   profile: perf20
   package_reused_for_all_runs: true
   all_programming_passed: true
@@ -83,7 +125,7 @@ performance_reference:
   conclusion: "Timing-closure baseline, not a performance improvement."
 
 portable_evidence:
-  iteration_log: logs/refactor/20260728-l1i-parallel-predecode-timing/iteration.md
+  iteration_log: logs/refactor/20260803-dbar-ibar-linux-semantics/iteration.md
   original_scalar_performance_baseline: baseline.txt
   original_scalar_baseline_role: "Historical competition baseline only; it is not the current RTL checkout or timing baseline."
   locked_reference: reference/manifest.lock
@@ -108,10 +150,7 @@ reproduce:
 
 handoff:
   active_vivado_or_board_job: false
-  next_priority: "Recover the 0.84% cycle regression without losing nonnegative complete-SoC WNS."
-  timing_risk: "The setup margin is only 0.036678 ns; every RTL change requires a new complete-SoC implementation."
-  current_worst_cpu_path: "ROB stagedPdst fanout to issue-queue payload clock enable; 9.582 ns data path, 8.153 ns routing."
-  suspected_cycle_costs:
-    - "d4e1a04 registered shared-L2 miss requests"
-    - "d82be71 registered scheduler input window"
-  stop_state: "Optimization intentionally stopped after establishing the 100 MHz closure baseline."
+  next_priority: "Package commit 2301dde1ee0622e27b2bbaaf609942b56ca5f764, then run func58, Linux progress, and perf20 on the team board before starting CACOP work."
+  timing_risk: "The complete-SoC setup margin is only 0.026 ns; every RTL change requires a new complete-SoC implementation."
+  current_worst_cpu_path: "stagedPdst_1_reg[3] to issueQueues_3 predictedTarget register; 9.448 ns data path (1.635 ns logic, 7.813 ns routing), 11 logic levels."
+  stop_state: "DBAR/IBAR local semantic and 100 MHz SoC gates pass; attributable candidate is ready for board packaging."
