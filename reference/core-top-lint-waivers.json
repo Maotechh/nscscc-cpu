@@ -1,11 +1,14 @@
 {
-  "schema_version": 1,
-  "gate": "core-top-lint",
-  "target": "core-top-compat",
+  "approved_categories": [
+    "CMPCONST",
+    "UNUSEDSIGNAL"
+  ],
   "environment_profile": "locked",
-  "rtl_sha256": "14874c00bf2a4632ac9792da2234286d4f1ac05140df03b7db90b784d00074f0",
-  "warning_count": 849,
-  "warning_signature_sha256": "218a2d03db8147e7b83823d25583764bff818dda6e06b638804a35b50af15f88",
-  "approved_categories": ["CMPCONST", "UNUSEDSIGNAL"],
-  "reason": "The complete fixed-width OoO top exposes typed commit, debug, cache and translation records across internal boundaries. Vivado and functional gates cover those records; this exact Verilator signature is locked to the published RTL and must be regenerated when the design changes."
+  "gate": "core-top-lint",
+  "reason": "The complete fixed-width OoO top exposes typed commit, debug, cache and translation records across internal boundaries. Vivado and functional gates cover those records; this exact Verilator signature is locked to the published RTL and must be regenerated when the design changes.",
+  "rtl_sha256": "d667c7e3740a95e54863b3758c8343daf932905f5e2aa4e1877dade44d2a60bc",
+  "schema_version": 1,
+  "target": "core-top-compat",
+  "warning_count": 880,
+  "warning_signature_sha256": "8160bbbba0794492b5d1a358b12bdea70d5ad48bac5ad5c0787eac188cef461b"
 }
