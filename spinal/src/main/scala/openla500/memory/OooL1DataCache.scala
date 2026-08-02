@@ -9,11 +9,13 @@ object OooL1DataCacheState extends SpinalEnum {
       maintenanceWriteback, maintenanceInvalidate = newElement()
 }
 
-/** Blocking reference controller for the 64-byte L1D data/tag arrays.
+/** 64-byte L1 data cache with early load restart during refill.
   *
-  * The line interface already carries an MSHR id and accepts out-of-order refill beats. The first
-  * integration uses id zero and one outstanding miss; the protocol can be widened to the four-entry
-  * MSHR table without changing the cache-line geometry or refill/writeback payloads.
+  * A load miss responds as soon as the 8-byte beat containing the requested word has returned;
+  * a following load to the line being refilled may then take ownership without waiting for
+  * installation. Store requests and loads to a different line remain blocked until install. The
+  * line interface carries an MSHR id and accepts out-of-order refill beats; the first integration
+  * uses id zero and one outstanding miss.
   */
 final class OooL1DataCache(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommit)
     extends Component {
@@ -91,6 +93,8 @@ final class OooL1DataCache(config: OooCoreConfig = OooCoreConfig.FourIssueThreeC
   )
   val refillMask = Reg(Bits(OooCacheContract.BeatsPerLine bits)) init (0)
   val refillError = RegInit(False)
+  val refillResponseSent = RegInit(False)
+  val refillReplayPending = RegInit(False)
   val maintenanceIndex = Reg(UInt(indexWidth bits)) init (0)
   val maintenanceWay = Reg(UInt(wayWidth bits)) init (0)
 
@@ -146,14 +150,25 @@ final class OooL1DataCache(config: OooCoreConfig = OooCoreConfig.FourIssueThreeC
   cacheArray.io.maintenanceReadIndex := maintenanceIndex
   cacheArray.io.maintenanceReadWay := maintenanceWay
 
-  io.requestReady := state === OooL1DataCacheState.idle && cacheArray.io.lookupReady &&
+  val idleRequestReady = state === OooL1DataCacheState.idle &&
+    cacheArray.io.lookupReady
+  val refillSameLineReady = state === OooL1DataCacheState.refillData &&
+    refillResponseSent && !refillReplayPending && !request.isWrite && !io.request.isWrite &&
+    !io.request.uncached &&
+    lineAddress(io.request.physicalAddress) === lineAddress(request.physicalAddress)
+  io.requestReady := (idleRequestReady || refillSameLineReady) &&
     !invalidateRequest && !writebackInvalidateRequest && !io.request.uncached
   val requestFire = io.requestValid && io.requestReady
+  val refillRequestFire = requestFire && refillSameLineReady
   when(requestFire) {
     request := io.request
-    cacheArray.io.lookupValid := True
-    cacheArray.io.lookupAddress := io.request.physicalAddress
-    state := OooL1DataCacheState.lookup
+    when(refillRequestFire) {
+      refillResponseSent := False
+    }.otherwise {
+      cacheArray.io.lookupValid := True
+      cacheArray.io.lookupAddress := io.request.physicalAddress
+      state := OooL1DataCacheState.lookup
+    }
   }
 
   io.lineReadValid := state === OooL1DataCacheState.refillRequest
@@ -206,19 +221,64 @@ final class OooL1DataCache(config: OooCoreConfig = OooCoreConfig.FourIssueThreeC
   when(state === OooL1DataCacheState.refillRequest && io.lineReadReady) {
     refillMask := 0
     refillError := False
+    refillResponseSent := False
     state := OooL1DataCacheState.refillData
   }
 
   val refillBeatFire = io.lineReadBeatValid && io.lineReadBeatReady
+  val refillLineWithAcceptedBeat = Bits(OooCacheContract.LineBits bits)
+  for (beat <- 0 until OooCacheContract.BeatsPerLine) {
+    refillLineWithAcceptedBeat(
+      beat * OooCacheContract.BeatBits + OooCacheContract.BeatBits - 1 downto
+        beat * OooCacheContract.BeatBits
+    ) := Mux(
+      refillBeatFire && io.lineReadBeat.beat === beat,
+      io.lineReadBeat.data,
+      refillBeats(beat)
+    )
+  }
+  val requestedBeat =
+    request.physicalAddress(offsetWidth - 1 downto log2Up(OooCacheContract.BeatBytes))
+  val requestedBeatMask = UIntToOh(requestedBeat, OooCacheContract.BeatsPerLine)
+  val acceptedBeatMask = Mux(
+    refillBeatFire,
+    UIntToOh(io.lineReadBeat.beat, OooCacheContract.BeatsPerLine),
+    B(0, OooCacheContract.BeatsPerLine bits)
+  )
+  val refillMaskWithAcceptedBeat = refillMask | acceptedBeatMask
+  val refillRequestBeat =
+    io.request.physicalAddress(offsetWidth - 1 downto log2Up(OooCacheContract.BeatBytes))
+  val refillRequestBeatMask = UIntToOh(refillRequestBeat, OooCacheContract.BeatsPerLine)
+  val refillRequestWordReady =
+    (refillMaskWithAcceptedBeat & refillRequestBeatMask) === refillRequestBeatMask
+  when(refillReplayPending) {
+    refillReplayPending := False
+    responseValid := True
+    response.robPointer := request.robPointer
+    response.pdst := request.pdst
+    response.data := selectWord(refillLine, request.physicalAddress)
+    response.error := refillError
+    refillResponseSent := True
+  }
   when(refillBeatFire) {
     refillBeats(io.lineReadBeat.beat) := io.lineReadBeat.data
     refillError := refillError || io.lineReadBeat.error
-    val nextMask = refillMask | UIntToOh(
-      io.lineReadBeat.beat,
-      OooCacheContract.BeatsPerLine
-    )
-    refillMask := nextMask
-    when(nextMask.andR) { state := OooL1DataCacheState.install }
+    refillMask := refillMaskWithAcceptedBeat
+    val requestedWordReady =
+      (refillMaskWithAcceptedBeat & requestedBeatMask) === requestedBeatMask
+    when(requestedWordReady && !refillResponseSent && !request.isWrite) {
+      responseValid := True
+      response.robPointer := request.robPointer
+      response.pdst := request.pdst
+      response.data := selectWord(refillLineWithAcceptedBeat, request.physicalAddress)
+      response.error := refillError || io.lineReadBeat.error
+      refillResponseSent := True
+    }
+    when(refillMaskWithAcceptedBeat.andR) { state := OooL1DataCacheState.install }
+  }
+  when(refillRequestFire && refillRequestWordReady) {
+    refillReplayPending := True
+    refillResponseSent := True
   }
 
   when(state === OooL1DataCacheState.install) {
@@ -227,7 +287,7 @@ final class OooL1DataCache(config: OooCoreConfig = OooCoreConfig.FourIssueThreeC
     cacheArray.io.writeData := Mux(request.isWrite, installedLine, refillLine)
     cacheArray.io.writeEntryValid := True
     cacheArray.io.writeDirty := request.isWrite
-    when(!request.isWrite) {
+    when(!request.isWrite && !refillResponseSent) {
       responseValid := True
       response.robPointer := request.robPointer
       response.pdst := request.pdst

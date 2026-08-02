@@ -5,6 +5,14 @@ import org.scalatest.funsuite.AnyFunSuite
 import spinal.core._
 import spinal.core.sim._
 
+private final case class HierarchyEarlyResponse(
+    valid: Boolean,
+    robPointer: BigInt,
+    pdst: BigInt,
+    data: BigInt,
+    error: Boolean
+)
+
 private final class OooDataCacheHierarchyProbe(config: OooCoreConfig) extends Component {
   val io = new Bundle {
     val requestValid = in Bool ()
@@ -121,7 +129,7 @@ class OooDataCacheHierarchySpec extends AnyFunSuite {
       dut: OooDataCacheHierarchyProbe,
       expectedAddress: BigInt,
       beatData: Int => BigInt
-  ): Unit = {
+  ): HierarchyEarlyResponse = {
     var cycles = 0
     while (!dut.io.memoryReadValid.toBoolean && cycles < 30) {
       sample(dut)
@@ -141,6 +149,8 @@ class OooDataCacheHierarchySpec extends AnyFunSuite {
     sample(dut)
     dut.io.memoryReadReady #= false
 
+    var seen = false
+    var response = HierarchyEarlyResponse(false, 0, 0, 0, false)
     for (beat <- 0 until OooCacheContract.BeatsPerLine) {
       dut.io.memoryReadBeatValid #= true
       dut.io.memoryReadBeat.mshrId #= 0
@@ -151,8 +161,35 @@ class OooDataCacheHierarchySpec extends AnyFunSuite {
       sleep(1)
       assert(dut.io.memoryReadBeatReady.toBoolean)
       sample(dut)
+      if (dut.io.responseValid.toBoolean && !seen) {
+        seen = true
+        response = HierarchyEarlyResponse(
+          valid = true,
+          robPointer = dut.io.response.robPointer.toBigInt,
+          pdst = dut.io.response.pdst.toBigInt,
+          data = dut.io.response.data.toBigInt,
+          error = dut.io.response.error.toBoolean
+        )
+      }
     }
     dut.io.memoryReadBeatValid #= false
+
+    var drain = 0
+    while (!seen && drain < 8) {
+      if (dut.io.responseValid.toBoolean) {
+        seen = true
+        response = HierarchyEarlyResponse(
+          valid = true,
+          robPointer = dut.io.response.robPointer.toBigInt,
+          pdst = dut.io.response.pdst.toBigInt,
+          data = dut.io.response.data.toBigInt,
+          error = dut.io.response.error.toBoolean
+        )
+      }
+      sample(dut)
+      drain += 1
+    }
+    response
   }
 
   private def expectResponse(
@@ -184,12 +221,16 @@ class OooDataCacheHierarchySpec extends AnyFunSuite {
       robPointer: BigInt
   ): Unit = {
     acceptRequest(dut, address, isWrite = false, 0, 0xf, robPointer, pdst = 7)
-    serviceMemoryRefill(
+    val early = serviceMemoryRefill(
       dut,
       address & ~BigInt(OooCacheContract.LineBytes - 1),
       beat => base + beat
     )
-    expectResponse(dut, base & BigInt("ffffffff", 16), robPointer, pdst = 7)
+    assert(early.valid)
+    assert(early.data == (base & BigInt("ffffffff", 16)))
+    assert(early.robPointer == robPointer)
+    assert(early.pdst == 7)
+    assert(!early.error)
   }
 
   test("L1D and L2 form a coherent 64-byte writeback hierarchy") {
@@ -251,13 +292,16 @@ class OooDataCacheHierarchySpec extends AnyFunSuite {
         dut.io.memoryWriteReady #= true
         sample(dut)
         dut.io.memoryWriteReady #= false
-        serviceMemoryRefill(dut, 0x2100, beat => BigInt("3333000000000000", 16) + beat)
-        expectResponse(
+        val earlyEvict = serviceMemoryRefill(
           dut,
-          BigInt(0),
-          robPointer = 6,
-          pdst = 7
+          0x2100,
+          beat => BigInt("3333000000000000", 16) + beat
         )
+        assert(earlyEvict.valid)
+        assert(earlyEvict.data == BigInt(0))
+        assert(earlyEvict.robPointer == 6)
+        assert(earlyEvict.pdst == 7)
+        assert(!earlyEvict.error)
         loadFromMemory(dut, 0x3100, BigInt("4444000000000000", 16), robPointer = 7)
 
         acceptRequest(dut, 0x0100, isWrite = false, 0, 0xf, robPointer = 8, pdst = 10)

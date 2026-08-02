@@ -47,6 +47,14 @@ private final class OooL1DataCacheProbe(config: OooCoreConfig) extends Component
   io.invalidateBusy := cache.io.invalidateBusy
 }
 
+private final case class EarlyResponse(
+    valid: Boolean,
+    robPointer: BigInt,
+    pdst: BigInt,
+    data: BigInt,
+    error: Boolean
+)
+
 class OooL1DataCacheSpec extends AnyFunSuite {
   private val config = OooCoreConfig.FourIssueThreeCommit
 
@@ -98,11 +106,7 @@ class OooL1DataCacheSpec extends AnyFunSuite {
     dut.io.request.pdst #= pdst
   }
 
-  private def refillLine(
-      dut: OooL1DataCacheProbe,
-      expectedAddress: BigInt,
-      beatData: Int => BigInt
-  ): Unit = {
+  private def startRefill(dut: OooL1DataCacheProbe, expectedAddress: BigInt): Unit = {
     dut.io.lineReadReady #= false
     var waitCycles = 0
     while (!dut.io.lineReadValid.toBoolean && waitCycles < 6) {
@@ -110,27 +114,58 @@ class OooL1DataCacheSpec extends AnyFunSuite {
       waitCycles += 1
     }
     assert(dut.io.lineReadValid.toBoolean)
-    val address = dut.io.lineRead.lineAddress.toBigInt
-    assert(address == expectedAddress)
+    assert(dut.io.lineRead.lineAddress.toBigInt == expectedAddress)
     dut.io.lineReadReady #= true
     sleep(1)
     assert(dut.io.lineReadValid.toBoolean)
     sample(dut)
     dut.io.lineReadReady #= false
+  }
 
-    for (beat <- 0 until OooCacheContract.BeatsPerLine) {
-      dut.io.lineReadBeatValid #= true
-      dut.io.lineReadBeat.mshrId #= 0
-      dut.io.lineReadBeat.beat #= beat
-      dut.io.lineReadBeat.data #= beatData(beat)
-      dut.io.lineReadBeat.last #= beat == OooCacheContract.BeatsPerLine - 1
-      dut.io.lineReadBeat.error #= false
-      sleep(1)
-      assert(dut.io.lineReadBeatReady.toBoolean)
-      sample(dut)
-    }
-    dut.io.lineReadBeatValid #= false
+  private def driveBeat(
+      dut: OooL1DataCacheProbe,
+      beat: Int,
+      data: BigInt,
+      last: Boolean
+  ): Unit = {
+    dut.io.lineReadBeatValid #= true
+    dut.io.lineReadBeat.mshrId #= 0
+    dut.io.lineReadBeat.beat #= beat
+    dut.io.lineReadBeat.data #= data
+    dut.io.lineReadBeat.last #= last
+    dut.io.lineReadBeat.error #= false
+    sleep(1)
+    assert(dut.io.lineReadBeatReady.toBoolean)
     sample(dut)
+    dut.io.lineReadBeatValid #= false
+  }
+
+  private def captureResponse(dut: OooL1DataCacheProbe): EarlyResponse =
+    EarlyResponse(
+      valid = true,
+      robPointer = dut.io.response.robPointer.toBigInt,
+      pdst = dut.io.response.pdst.toBigInt,
+      data = dut.io.response.data.toBigInt,
+      error = dut.io.response.error.toBoolean
+    )
+
+  private def refillLine(
+      dut: OooL1DataCacheProbe,
+      expectedAddress: BigInt,
+      beatData: Int => BigInt
+  ): EarlyResponse = {
+    startRefill(dut, expectedAddress)
+    var seen = false
+    var response = EarlyResponse(false, 0, 0, 0, false)
+    for (beat <- 0 until OooCacheContract.BeatsPerLine) {
+      driveBeat(dut, beat, beatData(beat), beat == OooCacheContract.BeatsPerLine - 1)
+      if (dut.io.responseValid.toBoolean && !seen) {
+        seen = true
+        response = captureResponse(dut)
+      }
+    }
+    sample(dut)
+    response
   }
 
   test("L1D invalidates, refills eight beats, hits, and merges byte stores") {
@@ -156,15 +191,15 @@ class OooL1DataCacheSpec extends AnyFunSuite {
         dut.io.requestValid #= false
         assert(!dut.io.lineReadValid.toBoolean)
 
-        refillLine(
+        val early = refillLine(
           dut,
           expectedAddress = 0x100,
           beat => if (beat == 1) BigInt("1122334455667788", 16) else BigInt(beat + 1)
         )
-        assert(dut.io.responseValid.toBoolean)
-        assert(dut.io.response.robPointer.toBigInt == 3)
-        assert(dut.io.response.pdst.toBigInt == 9)
-        assert(dut.io.response.data.toBigInt == BigInt("11223344", 16))
+        assert(early.valid)
+        assert(early.robPointer == 3)
+        assert(early.pdst == 9)
+        assert(early.data == BigInt("11223344", 16))
         sample(dut)
         assert(!dut.io.responseValid.toBoolean)
 
@@ -247,8 +282,9 @@ class OooL1DataCacheSpec extends AnyFunSuite {
           assert(dut.io.requestReady.toBoolean)
           sample(dut)
           dut.io.requestValid #= false
-          refillLine(dut, address & ~BigInt(0x3f), beat => fill + beat)
-          assert(dut.io.responseValid.toBoolean)
+          val early = refillLine(dut, address & ~BigInt(0x3f), beat => fill + beat)
+          assert(early.valid)
+          assert(early.robPointer == pointer)
           sample(dut)
         }
 
@@ -304,6 +340,149 @@ class OooL1DataCacheSpec extends AnyFunSuite {
         dut.io.lineWriteReady #= false
         assert(dut.io.lineReadValid.toBoolean)
         assert(dut.io.lineRead.lineAddress.toBigInt == 0x3100)
+      }
+  }
+
+  test("L1D replays a same-line load accepted during refill after its beat arrived") {
+    SimConfig.withVerilator
+      .workspacePath("target/sim-workspace-ooo-l1d")
+      .compile(new OooL1DataCacheProbe(config))
+      .doSim("ooo-l1d-early-restart-replay", 0x4c34) { dut =>
+        dut.clockDomain.forkStimulus(period = 10)
+        clearInputs(dut)
+        dut.clockDomain.assertReset()
+        dut.clockDomain.waitSampling(2)
+        dut.clockDomain.deassertReset()
+        dut.clockDomain.waitSampling(70)
+        sleep(1)
+
+        setRequest(dut, 0x10c, isWrite = false, data = 0, mask = 0xf, robPointer = 3, pdst = 9)
+        sleep(1)
+        assert(dut.io.requestReady.toBoolean)
+        sample(dut)
+        dut.io.requestValid #= false
+
+        startRefill(dut, 0x100)
+        driveBeat(dut, 0, 1, last = false)
+        driveBeat(dut, 1, BigInt("1122334455667788", 16), last = false)
+        assert(dut.io.responseValid.toBoolean)
+        assert(dut.io.response.robPointer.toBigInt == 3)
+        sample(dut)
+        assert(!dut.io.responseValid.toBoolean)
+
+        setRequest(dut, 0x108, isWrite = false, data = 0, mask = 0xf, robPointer = 4, pdst = 10)
+        sleep(1)
+        assert(dut.io.requestReady.toBoolean)
+        sample(dut)
+        dut.io.requestValid #= false
+        sample(dut)
+        assert(dut.io.responseValid.toBoolean)
+        assert(dut.io.response.robPointer.toBigInt == 4)
+        assert(dut.io.response.data.toBigInt == BigInt("55667788", 16))
+        sample(dut)
+        assert(!dut.io.responseValid.toBoolean)
+
+        for (beat <- 2 until OooCacheContract.BeatsPerLine) {
+          driveBeat(dut, beat, beat + 0x100, last = beat == OooCacheContract.BeatsPerLine - 1)
+        }
+        sample(dut)
+        assert(!dut.io.responseValid.toBoolean)
+      }
+  }
+
+  test("L1D early-responds a same-line load accepted mid-refill while its beat is in flight") {
+    SimConfig.withVerilator
+      .workspacePath("target/sim-workspace-ooo-l1d")
+      .compile(new OooL1DataCacheProbe(config))
+      .doSim("ooo-l1d-early-restart-inflight", 0x4c35) { dut =>
+        dut.clockDomain.forkStimulus(period = 10)
+        clearInputs(dut)
+        dut.clockDomain.assertReset()
+        dut.clockDomain.waitSampling(2)
+        dut.clockDomain.deassertReset()
+        dut.clockDomain.waitSampling(70)
+        sleep(1)
+
+        setRequest(dut, 0x10c, isWrite = false, data = 0, mask = 0xf, robPointer = 3, pdst = 9)
+        sleep(1)
+        assert(dut.io.requestReady.toBoolean)
+        sample(dut)
+        dut.io.requestValid #= false
+
+        startRefill(dut, 0x100)
+        driveBeat(dut, 0, 1, last = false)
+        driveBeat(dut, 1, BigInt("1122334455667788", 16), last = false)
+        assert(dut.io.responseValid.toBoolean)
+        assert(dut.io.response.robPointer.toBigInt == 3)
+        sample(dut)
+        assert(!dut.io.responseValid.toBoolean)
+
+        setRequest(dut, 0x114, isWrite = false, data = 0, mask = 0xf, robPointer = 4, pdst = 10)
+        sleep(1)
+        assert(dut.io.requestReady.toBoolean)
+        sample(dut)
+        dut.io.requestValid #= false
+        assert(!dut.io.responseValid.toBoolean)
+
+        driveBeat(dut, 2, BigInt("99aabbccddeeff00", 16), last = false)
+        assert(dut.io.responseValid.toBoolean)
+        assert(dut.io.response.robPointer.toBigInt == 4)
+        assert(dut.io.response.data.toBigInt == BigInt("99aabbcc", 16))
+        sample(dut)
+        assert(!dut.io.responseValid.toBoolean)
+
+        for (beat <- 3 until OooCacheContract.BeatsPerLine) {
+          driveBeat(dut, beat, beat + 0x200, last = beat == OooCacheContract.BeatsPerLine - 1)
+        }
+        sample(dut)
+        assert(!dut.io.responseValid.toBoolean)
+      }
+  }
+
+  test("L1D blocks stores and different-line loads while refilling") {
+    SimConfig.withVerilator
+      .workspacePath("target/sim-workspace-ooo-l1d")
+      .compile(new OooL1DataCacheProbe(config))
+      .doSim("ooo-l1d-early-restart-blocked", 0x4c36) { dut =>
+        dut.clockDomain.forkStimulus(period = 10)
+        clearInputs(dut)
+        dut.clockDomain.assertReset()
+        dut.clockDomain.waitSampling(2)
+        dut.clockDomain.deassertReset()
+        dut.clockDomain.waitSampling(70)
+        sleep(1)
+
+        setRequest(dut, 0x10c, isWrite = false, data = 0, mask = 0xf, robPointer = 3, pdst = 9)
+        sleep(1)
+        assert(dut.io.requestReady.toBoolean)
+        sample(dut)
+        dut.io.requestValid #= false
+
+        startRefill(dut, 0x100)
+        driveBeat(dut, 0, 1, last = false)
+        driveBeat(dut, 1, BigInt("1122334455667788", 16), last = false)
+        assert(dut.io.responseValid.toBoolean)
+        assert(dut.io.response.robPointer.toBigInt == 3)
+        sample(dut)
+        assert(!dut.io.responseValid.toBoolean)
+
+        setRequest(dut, 0x100, isWrite = true, data = 0x1234, mask = 0xf, robPointer = 5, pdst = 0)
+        sleep(1)
+        assert(!dut.io.requestReady.toBoolean)
+        sample(dut)
+        dut.io.requestValid #= false
+
+        setRequest(dut, 0x5000, isWrite = false, data = 0, mask = 0xf, robPointer = 6, pdst = 11)
+        sleep(1)
+        assert(!dut.io.requestReady.toBoolean)
+        sample(dut)
+        dut.io.requestValid #= false
+
+        for (beat <- 2 until OooCacheContract.BeatsPerLine) {
+          driveBeat(dut, beat, beat + 0x300, last = beat == OooCacheContract.BeatsPerLine - 1)
+        }
+        sample(dut)
+        assert(!dut.io.responseValid.toBoolean)
       }
   }
 }
