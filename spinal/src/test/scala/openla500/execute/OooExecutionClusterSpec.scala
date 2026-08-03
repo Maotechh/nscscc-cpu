@@ -282,6 +282,7 @@ private final class OooBarrierExecutionProbe(config: OooCoreConfig) extends Comp
   val io = new Bundle {
     val instruction = in Bits (32 bits)
     val issueValid = in Bool ()
+    val pdst = in UInt (config.physicalRegIndexWidth bits)
     val olderStorePending = in Bool ()
     val memorySubsystemIdle = in Bool ()
     val maintenanceReady = in Bool ()
@@ -294,6 +295,8 @@ private final class OooBarrierExecutionProbe(config: OooCoreConfig) extends Comp
     val completionValid = out Bool ()
     val completionRobPointer = out UInt (config.robPointerWidth bits)
     val completionRecoveryEpoch = out UInt (config.recoveryEpochWidth bits)
+    val directWakeupValid = out Bool ()
+    val directWakeupPdst = out UInt (config.physicalRegIndexWidth bits)
   }
   noIoPrefix()
 
@@ -314,7 +317,7 @@ private final class OooBarrierExecutionProbe(config: OooCoreConfig) extends Comp
   for (port <- 0 until config.executionWidth) {
     if (port == csrPort) {
       execution.io.issue(port).decoded := decoder.io.decoded
-      execution.io.issue(port).pdst := 0
+      execution.io.issue(port).pdst := io.pdst
       execution.io.issue(port).oldPdst := 0
       execution.io.issue(port).psrc1 := 0
       execution.io.issue(port).psrc2 := 0
@@ -361,6 +364,8 @@ private final class OooBarrierExecutionProbe(config: OooCoreConfig) extends Comp
   io.completionValid := execution.io.completionValid(csrPort)
   io.completionRobPointer := execution.io.completion(csrPort).robPointer
   io.completionRecoveryEpoch := execution.io.completion(csrPort).recoveryEpoch
+  io.directWakeupValid := execution.io.directWakeupValid(csrPort)
+  io.directWakeupPdst := execution.io.directWakeupPdst(csrPort)
 }
 
 private final class OooCacopExecutionProbe(config: OooCoreConfig) extends Component {
@@ -747,6 +752,7 @@ class OooExecutionClusterSpec extends AnyFunSuite {
         dut.clockDomain.forkStimulus(period = 10)
         dut.io.instruction #= BigInt("38720000", 16)
         dut.io.issueValid #= false
+        dut.io.pdst #= 0
         dut.io.olderStorePending #= true
         dut.io.memorySubsystemIdle #= false
         dut.io.maintenanceReady #= true
@@ -786,6 +792,51 @@ class OooExecutionClusterSpec extends AnyFunSuite {
       }
   }
 
+  test("a P0 producer cannot wake before a busy barrier accepts it") {
+    SimConfig.withVerilator
+      .workspacePath("target/sim-workspace-ooo-execution-cluster")
+      .compile(new OooBarrierExecutionProbe(config))
+      .doSim("ooo-p0-accept-before-wakeup", 0x4c76) { dut =>
+        dut.clockDomain.forkStimulus(period = 10)
+        dut.io.instruction #= BigInt("38720000", 16) // dbar
+        dut.io.issueValid #= false
+        dut.io.pdst #= 0
+        dut.io.olderStorePending #= true
+        dut.io.memorySubsystemIdle #= false
+        dut.io.maintenanceReady #= true
+        dut.io.maintenanceDone #= false
+        dut.io.flush #= false
+        dut.clockDomain.assertReset()
+        dut.clockDomain.waitSampling(2)
+        dut.clockDomain.deassertReset()
+
+        dut.io.issueValid #= true
+        sleep(1)
+        assert(dut.io.issueReady.toBoolean)
+        dut.clockDomain.waitSampling()
+        dut.io.issueValid #= false
+        sleep(1)
+        assert(dut.io.barrierActive.toBoolean)
+
+        dut.io.instruction #= BigInt("039b658c", 16) // ori r12, r12, imm
+        dut.io.pdst #= 17
+        dut.io.issueValid #= true
+        sleep(1)
+        assert(!dut.io.issueReady.toBoolean)
+        assert(!dut.io.directWakeupValid.toBoolean)
+        assert(!dut.io.completionValid.toBoolean)
+
+        dut.clockDomain.waitSampling(2)
+        sleep(1)
+        assert(!dut.io.issueReady.toBoolean)
+        assert(!dut.io.directWakeupValid.toBoolean)
+
+        dut.io.flush #= true
+        sleep(1)
+        assert(!dut.io.directWakeupValid.toBoolean)
+      }
+  }
+
   test("IBAR waits for maintenance and drops completion after a maintenance-time flush") {
     SimConfig.withVerilator
       .workspacePath("target/sim-workspace-ooo-execution-cluster")
@@ -794,6 +845,7 @@ class OooExecutionClusterSpec extends AnyFunSuite {
         dut.clockDomain.forkStimulus(period = 10)
         dut.io.instruction #= BigInt("38728000", 16)
         dut.io.issueValid #= false
+        dut.io.pdst #= 0
         dut.io.olderStorePending #= false
         dut.io.memorySubsystemIdle #= true
         dut.io.maintenanceReady #= true

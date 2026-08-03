@@ -632,18 +632,18 @@ final class OooExecutionCluster(config: OooCoreConfig = OooCoreConfig.FourIssueT
     directCompletion(port).branchTaken := branchTaken
     directCompletion(port).branchTarget := resolvedTarget
     directCompletion(port).branchMispredict := branchMispredict
-    // Only one-cycle operations and the fixed-latency multiplier may wake on
-    // issue. Keep flush out of this narrow event: IQ flush has priority over
-    // ready-bit updates. The shared DIV lane still suppresses a direct wake
-    // while its older divide completion owns the lane.
+    // Only one-cycle operations and the fixed-latency multiplier may wake when
+    // the issue port accepts them. Keep flush out of this narrow event: IQ
+    // flush has priority over ready-bit updates. The shared DIV lane still
+    // suppresses a direct wake while its older divide completion owns the lane.
     val singleCycleWake = if (port == dividePort) {
-      io.issueValid(port) && direct && !divider.io.completionValid &&
+      fire && direct && !divider.io.completionValid &&
       directCompletion(port).writesPdst
     } else {
-      io.issueValid(port) && direct && directCompletion(port).writesPdst
+      fire && direct && directCompletion(port).writesPdst
     }
     val fixedLatencyWake = if (port == multiplyPort) {
-      io.issueValid(port) && (direct || isMultiply) && directCompletion(port).writesPdst
+      fire && (direct || isMultiply) && directCompletion(port).writesPdst
     } else {
       singleCycleWake
     }
