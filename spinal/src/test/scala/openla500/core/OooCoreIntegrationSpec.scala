@@ -295,4 +295,70 @@ class OooCoreIntegrationSpec extends AnyFunSuite {
         assert(dut.io.instructionTranslationRequest.virtualAddress.toBigInt != exceptionEntry)
       }
   }
+
+  test("an interrupt pending in a self branch loop reaches precise exception recovery") {
+    SimConfig.withVerilator
+      .workspacePath("target/sim-workspace-ooo-core-interrupt-loop")
+      .compile(new OooCore(config))
+      .doSim("ooo-core-interrupt-loop", 0x4c72) { dut =>
+        dut.clockDomain.forkStimulus(period = 10)
+        clearInputs(dut)
+        dut.clockDomain.assertReset()
+        dut.clockDomain.waitSampling(2)
+        dut.clockDomain.deassertReset()
+        sample(dut)
+
+        fork {
+          while (true) {
+            while (!dut.io.instructionTranslationRequest.valid.toBoolean) {
+              sample(dut)
+            }
+            val address = dut.io.instructionTranslationRequest.virtualAddress.toBigInt
+            dut.io.instructionTranslationRequest.ready #= true
+            sample(dut)
+            dut.io.instructionTranslationRequest.ready #= false
+            dut.io.instructionTranslationResponse.virtualAddress #= address
+            dut.io.instructionTranslationResponse.physicalAddress #= address
+            dut.io.instructionTranslationResponse.valid #= true
+            while (!dut.io.instructionTranslationResponse.ready.toBoolean) {
+              sample(dut)
+            }
+            sample(dut)
+            dut.io.instructionTranslationResponse.valid #= false
+          }
+        }
+
+        val instructions = IndexedSeq.fill(16)(branchToSelf)
+        refillInstructionLine(
+          dut,
+          config.resetVector,
+          instructions,
+          waitForInitialization = true
+        )
+
+        var branchSeen = false
+        var branchWait = 0
+        while (!branchSeen && branchWait < 100) {
+          sample(dut)
+          val mask = dut.io.commitValid.toBigInt
+          for (lane <- 0 until config.commitWidth if (mask & (BigInt(1) << lane)) != 0) {
+            branchSeen ||= dut.io.commit(lane).pc.toBigInt == config.resetVector
+          }
+          branchWait += 1
+        }
+        assert(branchSeen)
+
+        dut.io.interruptPending #= true
+        var recoveryWait = 0
+        while (!dut.io.recoveryValid.toBoolean && recoveryWait < 120) {
+          sample(dut)
+          recoveryWait += 1
+        }
+        assert(dut.io.recoveryValid.toBoolean)
+        assert(dut.io.recovery.cause.toBigInt == 2)
+        assert(dut.io.recovery.exception.valid.toBoolean)
+        assert(dut.io.recovery.exception.ecode.toBigInt == 0)
+        assert(dut.io.recovery.pc.toBigInt == config.resetVector)
+      }
+  }
 }

@@ -16,6 +16,7 @@ final class OooAxiLineBridge(
 ) extends Component {
   private val axiWordsPerLine = OooCacheContract.LineBytes / 4
   private val axiWordIndexWidth = log2Up(axiWordsPerLine)
+  private val resetDrainQuietCycles = 256
 
   require(axiWordsPerLine == 16)
 
@@ -87,6 +88,21 @@ final class OooAxiLineBridge(
   val writeBeatIndex = Reg(UInt(axiWordIndexWidth bits)) init (0)
   val writeResponsePending = RegInit(False)
 
+  // A CPU-only reset does not reset the system side of the board's AXI CDC. Responses from the
+  // previous run can therefore remain in its R/B FIFOs. Drain them before issuing a request that
+  // could reuse the same four-bit AXI ID.
+  val resetDrainActive = RegInit(True)
+  val resetDrainQuiet = Reg(UInt(log2Up(resetDrainQuietCycles) bits)) init (0)
+  when(resetDrainActive) {
+    when(io.axi.r.valid || io.axi.b.valid) {
+      resetDrainQuiet := 0
+    }.elsewhen(resetDrainQuiet === resetDrainQuietCycles - 1) {
+      resetDrainActive := False
+    }.otherwise {
+      resetDrainQuiet := resetDrainQuiet + 1
+    }
+  }
+
   instructionResponseValid := False
   dataResponseValid := False
   io.uncachedInstructionResponseValid := instructionResponseValid
@@ -95,7 +111,7 @@ final class OooAxiLineBridge(
   io.uncachedDataResponse := dataResponse
 
   val lineBusy = lineArValid || lineActive.asBits.orR
-  val busIdle = !readActive && !writeActive && !readOutputValid && !lineBusy
+  val busIdle = !resetDrainActive && !readActive && !writeActive && !readOutputValid && !lineBusy
   val startUncachedData = busIdle && io.uncachedDataRequestValid
   val startUncachedDataRead = startUncachedData && !io.uncachedDataRequest.isWrite
   val startUncachedDataWrite = startUncachedData && io.uncachedDataRequest.isWrite
@@ -104,7 +120,7 @@ final class OooAxiLineBridge(
   io.uncachedDataRequestReady := startUncachedDataRead ||
     (writeIsUncachedData && writeResponsePending && io.axi.b.valid)
   io.uncachedInstructionRequestReady := startUncachedInstruction
-  io.memoryReadReady := !readActive && !writeActive && !lineArValid &&
+  io.memoryReadReady := !resetDrainActive && !readActive && !writeActive && !lineArValid &&
     !lineActive(io.memoryRead.mshrId) && !io.uncachedDataRequestValid &&
     !io.uncachedInstructionRequestValid
   io.memoryWriteReady := busIdle && !io.memoryReadValid &&
@@ -155,7 +171,7 @@ final class OooAxiLineBridge(
   }
 
   val uncachedAr = readAddressValid
-  io.axi.ar.valid := uncachedAr || lineArValid
+  io.axi.ar.valid := !resetDrainActive && (uncachedAr || lineArValid)
   io.axi.ar.payload.id := B"2'b01" ## lineArMshrId.asBits
   io.axi.ar.payload.address := lineArAddress.asBits
   io.axi.ar.payload.len := B(axiWordsPerLine - 1, 8 bits)
@@ -198,9 +214,9 @@ final class OooAxiLineBridge(
   val lineResponseReady = lineResponse && lineActive(lineResponseId) &&
     (!lineHalf(lineResponseId) || secondWordReady)
   val uncachedResponseReady = !lineResponse && readActive && !readAddressValid
-  io.axi.r.ready := lineResponseReady || uncachedResponseReady
+  io.axi.r.ready := resetDrainActive || lineResponseReady || uncachedResponseReady
   val readWordFire = io.axi.r.valid && io.axi.r.ready
-  when(readWordFire) {
+  when(readWordFire && !resetDrainActive) {
     when(lineResponse) {
       val responseError = io.axi.r.payload.response.orR
       when(!lineHalf(lineResponseId)) {
@@ -289,7 +305,7 @@ final class OooAxiLineBridge(
     writeResponsePending := False
   }
 
-  io.axi.aw.valid := writeAddressValid
+  io.axi.aw.valid := !resetDrainActive && writeAddressValid
   io.axi.aw.payload.id := Mux(writeIsUncachedData, B(3, 4 bits), B(1, 4 bits))
   io.axi.aw.payload.address := writeAddress.asBits
   io.axi.aw.payload.len := Mux(
@@ -306,7 +322,8 @@ final class OooAxiLineBridge(
 
   val writeDataShift = (writeBeatIndex ## U(0, 5 bits)).asUInt
   val writeMaskShift = (writeBeatIndex ## U(0, 2 bits)).asUInt
-  io.axi.w.valid := writeActive && !writeAddressValid && !writeResponsePending
+  io.axi.w.valid := !resetDrainActive && writeActive && !writeAddressValid &&
+    !writeResponsePending
   io.axi.w.payload.id := Mux(writeIsUncachedData, B(3, 4 bits), B(1, 4 bits))
   io.axi.w.payload.data := (writeData |>> writeDataShift)(31 downto 0)
   io.axi.w.payload.byteMask := (writeMask |>> writeMaskShift)(3 downto 0)
@@ -319,8 +336,8 @@ final class OooAxiLineBridge(
     }
   }
 
-  io.axi.b.ready := writeResponsePending
-  when(io.axi.b.valid && io.axi.b.ready) {
+  io.axi.b.ready := resetDrainActive || writeResponsePending
+  when(io.axi.b.valid && io.axi.b.ready && !resetDrainActive) {
     writeResponsePending := False
     writeActive := False
   }

@@ -15,6 +15,15 @@ class OooAxiLineBridgeSpec extends AnyFunSuite {
     sleep(1)
   }
 
+  private def waitForResetDrain(dut: OooAxiLineBridge): Unit = {
+    var cycles = 0
+    while (!dut.io.memoryReadReady.toBoolean && cycles < 512) {
+      sample(dut)
+      cycles += 1
+    }
+    assert(dut.io.memoryReadReady.toBoolean)
+  }
+
   private def clearInputs(dut: OooAxiLineBridge): Unit = {
     dut.io.memoryReadValid #= false
     dut.io.memoryRead.lineAddress #= 0
@@ -64,7 +73,7 @@ class OooAxiLineBridgeSpec extends AnyFunSuite {
         dut.clockDomain.assertReset()
         dut.clockDomain.waitSampling(2)
         dut.clockDomain.deassertReset()
-        sample(dut)
+        waitForResetDrain(dut)
 
         dut.io.memoryReadValid #= true
         dut.io.memoryRead.lineAddress #= 0x4000
@@ -136,7 +145,7 @@ class OooAxiLineBridgeSpec extends AnyFunSuite {
         dut.clockDomain.assertReset()
         dut.clockDomain.waitSampling(2)
         dut.clockDomain.deassertReset()
-        sample(dut)
+        waitForResetDrain(dut)
 
         for (id <- 0 until config.mshrEntries) {
           dut.io.memoryReadValid #= true
@@ -225,7 +234,7 @@ class OooAxiLineBridgeSpec extends AnyFunSuite {
         dut.clockDomain.assertReset()
         dut.clockDomain.waitSampling(2)
         dut.clockDomain.deassertReset()
-        sample(dut)
+        waitForResetDrain(dut)
 
         val words = (0 until 16).map(index => BigInt("a5000000", 16) | index)
         val line =
@@ -276,7 +285,7 @@ class OooAxiLineBridgeSpec extends AnyFunSuite {
         dut.clockDomain.assertReset()
         dut.clockDomain.waitSampling(2)
         dut.clockDomain.deassertReset()
-        sample(dut)
+        waitForResetDrain(dut)
 
         dut.io.uncachedInstructionRequestValid #= true
         dut.io.uncachedInstructionRequest.virtualAddress #= BigInt("1c00100c", 16)
@@ -329,7 +338,7 @@ class OooAxiLineBridgeSpec extends AnyFunSuite {
         dut.clockDomain.assertReset()
         dut.clockDomain.waitSampling(2)
         dut.clockDomain.deassertReset()
-        sample(dut)
+        waitForResetDrain(dut)
 
         dut.io.uncachedDataRequestValid #= true
         dut.io.uncachedDataRequest.physicalAddress #= BigInt("1fe00101", 16)
@@ -401,6 +410,182 @@ class OooAxiLineBridgeSpec extends AnyFunSuite {
         sample(dut)
         dut.io.uncachedDataRequestValid #= false
         dut.io.axi.b.valid #= false
+      }
+  }
+
+  test("CPU-only reset drains a stale cached read before reusing its AXI ID") {
+    SimConfig.withVerilator
+      .workspacePath("target/sim-workspace-ooo-axi-reset-cached-read")
+      .compile(new OooAxiLineBridge(config))
+      .doSim("ooo-axi-reset-cached-read", 0x4c70) { dut =>
+        dut.clockDomain.forkStimulus(period = 10)
+        clearInputs(dut)
+        dut.clockDomain.assertReset()
+        dut.clockDomain.waitSampling(2)
+        dut.io.axi.r.valid #= true
+        dut.io.axi.r.payload.id #= 4
+        for (word <- 0 until 8) {
+          dut.io.axi.r.payload.data #= 0x100 + word
+          dut.io.axi.r.payload.last #= false
+          sleep(1)
+          assert(dut.io.axi.r.ready.toBoolean)
+          sample(dut)
+        }
+        dut.clockDomain.deassertReset()
+        for (word <- 8 until 16) {
+          dut.io.axi.r.payload.data #= 0x100 + word
+          dut.io.axi.r.payload.last #= word == 15
+          sleep(1)
+          assert(dut.io.axi.r.ready.toBoolean)
+          sample(dut)
+        }
+        dut.io.axi.r.valid #= false
+        assert(!dut.io.memoryReadBeatValid.toBoolean)
+
+        var drainCycles = 0
+        while (!dut.io.memoryReadReady.toBoolean && drainCycles < 512) {
+          sample(dut)
+          drainCycles += 1
+        }
+        assert(dut.io.memoryReadReady.toBoolean)
+        assert(drainCycles > 0)
+
+        dut.io.memoryReadValid #= true
+        dut.io.memoryRead.lineAddress #= 0x8000
+        dut.io.memoryRead.mshrId #= 0
+        sample(dut)
+        dut.io.memoryReadValid #= false
+        assert(dut.io.axi.ar.valid.toBoolean)
+        assert(dut.io.axi.ar.payload.id.toBigInt == 4)
+        dut.io.axi.ar.ready #= true
+        sample(dut)
+        dut.io.axi.ar.ready #= false
+
+        var returnedBeats = 0
+        fork {
+          while (returnedBeats < OooCacheContract.BeatsPerLine) {
+            sample(dut)
+            if (dut.io.memoryReadBeatValid.toBoolean) {
+              assert(dut.io.memoryReadBeat.data.toBigInt >= BigInt("20100000200", 16))
+              returnedBeats += 1
+            }
+          }
+        }
+        for (word <- 0 until 16) {
+          dut.io.axi.r.valid #= true
+          dut.io.axi.r.payload.id #= 4
+          dut.io.axi.r.payload.data #= 0x200 + word
+          dut.io.axi.r.payload.last #= word == 15
+          sleep(1)
+          assert(dut.io.axi.r.ready.toBoolean)
+          sample(dut)
+        }
+        dut.io.axi.r.valid #= false
+        while (returnedBeats < OooCacheContract.BeatsPerLine) { sample(dut) }
+      }
+  }
+
+  test("CPU-only reset drains stale uncached read and write responses") {
+    SimConfig.withVerilator
+      .workspacePath("target/sim-workspace-ooo-axi-reset-uncached")
+      .compile(new OooAxiLineBridge(config))
+      .doSim("ooo-axi-reset-uncached", 0x4c71) { dut =>
+        dut.clockDomain.forkStimulus(period = 10)
+        clearInputs(dut)
+        dut.clockDomain.assertReset()
+        dut.clockDomain.waitSampling(2)
+        dut.io.axi.r.valid #= true
+        dut.io.axi.r.payload.id #= 3
+        dut.io.axi.r.payload.data #= BigInt("deadbeef", 16)
+        dut.io.axi.r.payload.last #= true
+        sleep(1)
+        assert(dut.io.axi.r.ready.toBoolean)
+        sample(dut)
+        dut.clockDomain.deassertReset()
+        dut.io.axi.r.valid #= false
+        assert(!dut.io.uncachedDataResponseValid.toBoolean)
+
+        dut.io.axi.b.valid #= true
+        dut.io.axi.b.payload.id #= 3
+        sleep(1)
+        assert(dut.io.axi.b.ready.toBoolean)
+        sample(dut)
+        dut.io.axi.b.valid #= false
+
+        dut.io.uncachedDataRequestValid #= true
+        dut.io.uncachedDataRequest.physicalAddress #= 0x2000
+        dut.io.uncachedDataRequest.robPointer #= 11
+        dut.io.uncachedDataRequest.recoveryEpoch #= 12
+        dut.io.uncachedDataRequest.pdst #= 5
+        var drainCycles = 0
+        while (!dut.io.uncachedDataRequestReady.toBoolean && drainCycles < 512) {
+          sample(dut)
+          drainCycles += 1
+        }
+        assert(dut.io.uncachedDataRequestReady.toBoolean)
+        assert(drainCycles > 0)
+        sample(dut)
+        dut.io.uncachedDataRequestValid #= false
+        dut.io.axi.ar.ready #= true
+        sample(dut)
+        dut.io.axi.ar.ready #= false
+        dut.io.axi.r.valid #= true
+        dut.io.axi.r.payload.id #= 3
+        dut.io.axi.r.payload.data #= BigInt("12345678", 16)
+        dut.io.axi.r.payload.last #= true
+        sleep(1)
+        assert(dut.io.axi.r.ready.toBoolean)
+        sample(dut)
+        dut.io.axi.r.valid #= false
+        assert(dut.io.uncachedDataResponseValid.toBoolean)
+        assert(dut.io.uncachedDataResponse.robPointer.toBigInt == 11)
+        assert(dut.io.uncachedDataResponse.data.toBigInt == BigInt("12345678", 16))
+      }
+  }
+
+  test("a late stale response restarts the CPU-only reset quiet window") {
+    SimConfig.withVerilator
+      .workspacePath("target/sim-workspace-ooo-axi-reset-late-response")
+      .compile {
+        val bridge = new OooAxiLineBridge(config)
+        bridge.resetDrainActive.simPublic()
+        bridge.resetDrainQuiet.simPublic()
+        bridge
+      }
+      .doSim("ooo-axi-reset-late-response", 0x4c73) { dut =>
+        dut.clockDomain.forkStimulus(period = 10)
+        clearInputs(dut)
+        dut.clockDomain.assertReset()
+        dut.clockDomain.waitSampling(2)
+        dut.clockDomain.deassertReset()
+
+        while (dut.resetDrainQuiet.toBigInt < 254) {
+          assert(dut.resetDrainActive.toBoolean)
+          sample(dut)
+        }
+        assert(dut.resetDrainActive.toBoolean)
+        assert(dut.resetDrainQuiet.toBigInt == 254)
+
+        dut.io.axi.r.valid #= true
+        dut.io.axi.r.payload.id #= 4
+        dut.io.axi.r.payload.data #= BigInt("feedcafe", 16)
+        dut.io.axi.r.payload.last #= true
+        sleep(1)
+        assert(dut.io.axi.r.ready.toBoolean)
+        sample(dut)
+        dut.io.axi.r.valid #= false
+        assert(!dut.io.memoryReadBeatValid.toBoolean)
+        assert(dut.resetDrainActive.toBoolean)
+        assert(dut.resetDrainQuiet.toBigInt == 0)
+
+        var restartedQuietCycles = 0
+        while (dut.resetDrainActive.toBoolean && restartedQuietCycles < 512) {
+          sample(dut)
+          restartedQuietCycles += 1
+        }
+        assert(restartedQuietCycles == 256)
+        assert(!dut.resetDrainActive.toBoolean)
+        assert(dut.io.memoryReadReady.toBoolean)
       }
   }
 }
