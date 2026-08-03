@@ -187,6 +187,20 @@ final case class OooCommitRecord(config: OooCoreConfig) extends Bundle {
   val sideEffectData = Bits(config.xlen bits)
 }
 
+/** Memory metadata sampled from the LSQ for one retiring instruction.
+  *
+  * This is an observation-only path for the simulator-owned DiffTest adapter. The instruction
+  * masks follow Chiplab's DifftestLoadEvent and DifftestStoreEvent contracts.
+  */
+final case class OooMemoryCommitObservation(config: OooCoreConfig) extends Bundle {
+  val loadInstructionMask = Bits(8 bits)
+  val storeInstructionMask = Bits(8 bits)
+  val physicalAddress = UInt(config.xlen bits)
+  val virtualAddress = UInt(config.xlen bits)
+  val storeData = Bits(config.xlen bits)
+  val storeByteMask = Bits(config.xlen / 8 bits)
+}
+
 final case class OooRobAllocate(config: OooCoreConfig) extends Bundle {
   val uop = OooRenamedUop(config)
 }

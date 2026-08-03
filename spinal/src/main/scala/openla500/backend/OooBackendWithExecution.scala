@@ -32,6 +32,7 @@ final class OooBackendWithExecution(
     val debugReadData = out Bits (config.xlen bits)
     val commitValid = out Bits (config.commitWidth bits)
     val commit = out Vec (OooCommitRecord(config), config.commitWidth)
+    val commitMemory = out Vec (OooMemoryCommitObservation(config), config.commitWidth)
     val recoveryValid = out Bool ()
     val recovery = out(OooRecoveryRequest(config))
     val debugCommitValid = out Bool ()
@@ -192,6 +193,7 @@ final class OooBackendWithExecution(
   backend.io.resultForwardData := execution.io.completion(config.executionWidth).data
   io.commitValid := backend.io.commitValid
   io.commit := backend.io.commit
+  io.commitMemory := loadStoreQueue.io.commitObservation
   io.recoveryValid := backend.io.recoveryValid
   io.recovery := backend.io.recovery
 

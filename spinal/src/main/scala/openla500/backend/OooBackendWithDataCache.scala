@@ -59,6 +59,7 @@ final class OooBackendWithDataCache(
 
     val commitValid = out Bits (config.commitWidth bits)
     val commit = out Vec (OooCommitRecord(config), config.commitWidth)
+    val commitMemory = out Vec (OooMemoryCommitObservation(config), config.commitWidth)
     val recoveryValid = out Bool ()
     val recovery = out(OooRecoveryRequest(config))
     val debugCommitValid = out Bool ()
@@ -172,6 +173,7 @@ final class OooBackendWithDataCache(
 
   io.commitValid := backend.io.commitValid
   io.commit := backend.io.commit
+  io.commitMemory := backend.io.commitMemory
   io.recoveryValid := backend.io.recoveryValid
   io.recovery := backend.io.recovery
   io.debugCommitValid := backend.io.debugCommitValid

@@ -33,6 +33,7 @@ private final class OooLoadStoreQueueProbe(config: OooCoreConfig) extends Compon
     val completion = out(OooCompletion(config))
     val releaseLoadValid = out Bits (config.commitWidth bits)
     val releaseStoreValid = out Bits (config.commitWidth bits)
+    val commitMemory = out Vec (OooMemoryCommitObservation(config), config.commitWidth)
     val storeDrainBusy = out Bool ()
     val committedMemoryEpoch = in UInt (config.memoryEpochWidth bits)
     val flush = in Bool ()
@@ -90,6 +91,7 @@ private final class OooLoadStoreQueueProbe(config: OooCoreConfig) extends Compon
   io.completion := lsq.io.completion
   io.releaseLoadValid := lsq.io.releaseLoadValid
   io.releaseStoreValid := lsq.io.releaseStoreValid
+  io.commitMemory := lsq.io.commitObservation
   io.storeDrainBusy := lsq.io.storeDrainBusy
 }
 
@@ -143,6 +145,7 @@ class OooLoadStoreQueueSpec extends AnyFunSuite {
       dut.io.commit(lane).isStore #= false
       dut.io.commit(lane).loadQueueIndex #= 0
       dut.io.commit(lane).storeQueueIndex #= 0
+      dut.io.commit(lane).retired #= false
       dut.io.commit(lane).exception.valid #= false
     }
     dut.io.dataResponse.robPointer #= 0
@@ -150,6 +153,94 @@ class OooLoadStoreQueueSpec extends AnyFunSuite {
     dut.io.dataResponse.pdst #= 0
     dut.io.dataResponse.data #= 0
     dut.io.dataResponse.error #= false
+  }
+
+  test("retirement observation reports Chiplab load and store events") {
+    SimConfig.withVerilator
+      .workspacePath("target/sim-workspace-ooo-lsq")
+      .compile(new OooLoadStoreQueueProbe(config))
+      .doSim("ooo-lsq-commit-memory-observation", 0x4c76) { dut =>
+        dut.clockDomain.forkStimulus(period = 10)
+        clearInputs(dut)
+        dut.clockDomain.assertReset()
+        dut.clockDomain.waitSampling(2)
+        dut.clockDomain.deassertReset()
+        sample(dut)
+
+        dut.io.allocateValid #= 1
+        dut.io.allocate(0).robPointer #= 5
+        dut.io.allocate(0).isLoad #= true
+        dut.io.allocate(0).loadQueueIndex #= 0
+        sample(dut)
+        dut.io.allocateValid #= 0
+        setLoadAgu(dut, pointer = 5, address = 0x1fe001e5L, loadIndex = 0)
+        dut.io.agu.size #= 0
+        dut.io.agu.byteMask #= 2
+        dut.io.agu.uop.decoded.memorySignExtend #= true
+        sample(dut)
+        dut.io.aguValid #= false
+        dut.clockDomain.waitSampling(3)
+
+        dut.io.commitValid #= 1
+        dut.io.commit(0).robPointer #= 5
+        dut.io.commit(0).retired #= true
+        dut.io.commit(0).isLoad #= true
+        dut.io.commit(0).loadQueueIndex #= 0
+        sleep(1)
+        assert(dut.io.commitMemory(0).loadInstructionMask.toBigInt == 1)
+        assert(dut.io.commitMemory(0).physicalAddress.toBigInt == 0x1fe001e5L)
+        assert(dut.io.commitMemory(0).virtualAddress.toBigInt == 0x1fe001e5L)
+
+        dut.io.commit(0).exception.valid #= true
+        sleep(1)
+        assert(dut.io.commitMemory(0).loadInstructionMask.toBigInt == 0)
+        dut.io.commit(0).exception.valid #= false
+        dut.io.flush #= true
+        sleep(1)
+        assert(dut.io.commitMemory(0).loadInstructionMask.toBigInt == 0)
+        dut.io.flush #= false
+        dut.io.commit(0).robPointer #= 6
+        sleep(1)
+        assert(dut.io.commitMemory(0).loadInstructionMask.toBigInt == 0)
+
+        dut.io.commit(0).robPointer #= 5
+        sample(dut)
+        dut.io.commitValid #= 0
+        dut.io.commit(0).retired #= false
+        dut.io.commit(0).isLoad #= false
+
+        dut.io.allocateValid #= 1
+        dut.io.allocate(0).robPointer #= 7
+        dut.io.allocate(0).isLoad #= false
+        dut.io.allocate(0).isStore #= true
+        dut.io.allocate(0).storeQueueIndex #= 0
+        sample(dut)
+        dut.io.allocateValid #= 0
+        setStoreAgu(
+          dut,
+          pointer = 7,
+          address = 0x101,
+          data = BigInt("aabbccdd", 16),
+          storeIndex = 0
+        )
+        dut.io.agu.size #= 0
+        dut.io.agu.byteMask #= 2
+        sample(dut)
+        dut.io.aguValid #= false
+        dut.clockDomain.waitSampling(3)
+
+        dut.io.commitValid #= 1
+        dut.io.commit(0).robPointer #= 7
+        dut.io.commit(0).retired #= true
+        dut.io.commit(0).isStore #= true
+        dut.io.commit(0).storeQueueIndex #= 0
+        sleep(1)
+        assert(dut.io.commitMemory(0).storeInstructionMask.toBigInt == 1)
+        assert(dut.io.commitMemory(0).physicalAddress.toBigInt == 0x101)
+        assert(dut.io.commitMemory(0).virtualAddress.toBigInt == 0x101)
+        assert(dut.io.commitMemory(0).storeData.toBigInt == 0x0000dd00)
+        assert(dut.io.commitMemory(0).storeByteMask.toBigInt == 2)
+      }
   }
 
   private def sample(dut: OooLoadStoreQueueProbe): Unit = {

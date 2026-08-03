@@ -292,6 +292,7 @@ final class OooCoreSystem(
     val diffCommit = Vec(CommitEvent(), config.commitWidth)
     for (lane <- 0 until config.commitWidth) {
       val record = core.io.commit(lane)
+      val memory = core.io.commitMemory(lane)
       val event = diffCommit(lane)
       event.pc := record.pc
       event.instruction := record.instruction
@@ -328,14 +329,14 @@ final class OooCoreSystem(
       when(record.systemOperation === OooSystemOp.counterHigh) {
         event.timer(63 downto 32) := record.result.asUInt
       }
-      event.load.instructionMask := B(0, 8 bits)
-      event.load.pAddr := 0
-      event.load.vAddr := 0
-      event.store.instructionMask := B(0, 8 bits)
-      event.store.pAddr := 0
-      event.store.vAddr := 0
-      event.store.data := 0
-      event.store.byteMask := 0
+      event.load.instructionMask := memory.loadInstructionMask
+      event.load.pAddr := memory.physicalAddress
+      event.load.vAddr := memory.virtualAddress
+      event.store.instructionMask := memory.storeInstructionMask
+      event.store.pAddr := memory.physicalAddress
+      event.store.vAddr := memory.virtualAddress
+      event.store.data := memory.storeData
+      event.store.byteMask := memory.storeByteMask
       event.tlbFill.valid := record.retired && record.systemOperation === OooSystemOp.tlbFill
       event.tlbFill.index := csr.io.rand_index.asUInt
     }

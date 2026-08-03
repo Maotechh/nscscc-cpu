@@ -160,6 +160,7 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
     val completion = out(OooCompletion(config))
     val releaseLoadValid = out Bits (config.commitWidth bits)
     val releaseStoreValid = out Bits (config.commitWidth bits)
+    val commitObservation = out Vec (OooMemoryCommitObservation(config), config.commitWidth)
     val storeDrainBusy = out Bool ()
     val committedMemoryEpoch = in UInt (config.memoryEpochWidth bits)
     val orderingRobPointer = in UInt (config.robPointerWidth bits)
@@ -647,10 +648,64 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
   loadReleaseValid := B(0, config.commitWidth bits)
   storeReleaseValid := B(0, config.commitWidth bits)
   for (lane <- 0 until config.commitWidth) {
+    val observation = io.commitObservation(lane)
+    val loadEntry = loads(io.commit(lane).loadQueueIndex)
+    val storeEntry = stores(io.commit(lane).storeQueueIndex)
     val loadCommitMatch = io.commitValid(lane) && io.commit(lane).isLoad &&
-      loads(io.commit(lane).loadQueueIndex).valid &&
-      loads(io.commit(lane).loadQueueIndex).robPointer === io.commit(lane).robPointer
+      loadEntry.valid && loadEntry.robPointer === io.commit(lane).robPointer
+    val storeCommitMatch = io.commitValid(lane) && io.commit(lane).isStore &&
+      storeEntry.valid && storeEntry.robPointer === io.commit(lane).robPointer
     loadReleaseValid(lane) := !io.flush && loadCommitMatch
+
+    observation.loadInstructionMask := B(0, 8 bits)
+    observation.storeInstructionMask := B(0, 8 bits)
+    observation.physicalAddress := U(0, config.xlen bits)
+    observation.virtualAddress := U(0, config.xlen bits)
+    observation.storeData := B(0, config.xlen bits)
+    observation.storeByteMask := B(0, config.xlen / 8 bits)
+
+    val observationValid = !io.flush && io.commit(lane).retired &&
+      !io.commit(lane).exception.valid
+    when(observationValid && loadCommitMatch) {
+      observation.physicalAddress := loadEntry.physicalAddress
+      observation.virtualAddress := loadEntry.virtualAddress
+      when(loadEntry.isLl) {
+        observation.loadInstructionMask(5) := True
+      }.elsewhen(loadEntry.size === B(2, 3 bits)) {
+        observation.loadInstructionMask(4) := True
+      }.elsewhen(loadEntry.size === B(1, 3 bits)) {
+        when(loadEntry.signExtend) {
+          observation.loadInstructionMask(2) := True
+        }.otherwise {
+          observation.loadInstructionMask(3) := True
+        }
+      }.otherwise {
+        when(loadEntry.signExtend) {
+          observation.loadInstructionMask(0) := True
+        }.otherwise {
+          observation.loadInstructionMask(1) := True
+        }
+      }
+    }
+    when(observationValid && storeCommitMatch) {
+      observation.physicalAddress := storeEntry.physicalAddress
+      observation.virtualAddress := storeEntry.virtualAddress
+      observation.storeData := formatStore(
+        storeEntry.writeData,
+        storeEntry.virtualAddress,
+        storeEntry.size
+      )
+      observation.storeByteMask := storeEntry.byteMask
+      when(storeEntry.isSc) {
+        observation.storeInstructionMask(3) := storeEntry.scSuccess
+      }.elsewhen(storeEntry.size === B(2, 3 bits)) {
+        observation.storeInstructionMask(2) := True
+      }.elsewhen(storeEntry.size === B(1, 3 bits)) {
+        observation.storeInstructionMask(1) := True
+      }.otherwise {
+        observation.storeInstructionMask(0) := True
+      }
+    }
   }
   val failedScReleaseFire = failedScRelease && !acceptedStoreValid
   storeReleaseValid(0) := !io.flush && (acceptedStoreValid || failedScReleaseFire)
