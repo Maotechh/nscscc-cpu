@@ -1,5 +1,12 @@
 # DBAR/IBAR Linux semantics closure
 
+Platform migration, complete-system-reset compatibility, the independent CSR
+timer reset fix, and the c398 board function result are recorded separately in
+`logs/integration/20260803-chiplab-c398-compatibility/`. This iteration owns the
+memory-barrier implementation and Linux semantic evidence only; shared
+candidate results must not be interpreted as proving that DBAR/IBAR caused or
+fixed a Chiplab compatibility symptom.
+
 ## Candidate identity
 
 - Active branch: `dev/ECHO`
