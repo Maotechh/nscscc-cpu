@@ -1,5 +1,5 @@
 schema_version: 1
-updated_at: "2026-08-04T05:49:23+08:00"
+updated_at: "2026-08-04T06:45:00+08:00"
 branch: dev/ECHO
 
 current_candidate:
@@ -15,7 +15,7 @@ current_candidate:
   llsc_platform_semantics: satisfied_single_core_noncoherent
   mmio_axi_recovery: satisfied_local
   linux_acceptance: not_satisfied
-  board_evaluation: not_run
+  board_evaluation: func58_and_perf20_passed
 
 architecture_closure:
   memory_epoch_width: 8
@@ -144,19 +144,85 @@ complete_soc:
   routed_dcp_sha256: 26a3b5be86e1b8be39308d3fcad90b3c6f4c379dcd3fc98b1eb22f31eaa150d7
   archive: Stable_Backup/cpu_60fba481888a_chiplab_c398d274812f_perf_100mhz_20260804-054923_candidate
 
+complete_soc_func:
+  source_commit: e26ccfa823e81c41f1191365fdcf8f89395b1248
+  implementation_commit: 60fba481888a8f7e5a2f0ba0b76c91422a117309
+  generated_rtl_sha256: 137657aa0c594334568cc386571d13aa9cdc828c8fc45c56ed421be15912c209
+  chiplab_commit: c398d274812f164d387146fa7d8f612a4a1296d9
+  tool: "Vivado 2023.2"
+  part: xc7a200tfbg676-2
+  profile: func
+  requested_cpu_mhz: platform_default
+  actual_cpu_mhz: 32.726797
+  actual_sys_mhz: 100.0
+  actual_ddr_mhz: 200.0
+  implementation: complete
+  write_bitstream: complete
+  timing_met: true
+  wns_ns: 0.978
+  whs_ns: 0.052
+  drc_errors: 0
+  bitstream_sha256: 30c8543f99e69e0d312d630a67ffc589590eb82197821d82bcd96b6a1a5b3289
+  probes_sha256: 3e36db904e602bae47d72e9f8b54a553903de4ccf5ff72ce88942c87280dfcdb
+  routed_dcp_sha256: a109133a9489ef80bd3136636fc38303ac1a9ef566b2f3c3fd4aa54cb66db8be
+  archive: Stable_Backup/cpu_e26ccfa823e8_chiplab_c398d274812f_func_20260804-061935_candidate
+
+team_board_func:
+  status: passed_58_of_58
+  job_id: 20260803-223955-1ceb232c
+  profile: func58
+  source_commit: e26ccfa823e81c41f1191365fdcf8f89395b1248
+  implementation_commit: 60fba481888a8f7e5a2f0ba0b76c91422a117309
+  chiplab_commit: c398d274812f164d387146fa7d8f612a4a1296d9
+  board_protocol: nscscc-system-reset-v1
+  actual_cpu_mhz: 32.726797
+  seeds: [F0, FF, A5]
+  final_num_data: 0x3A00003A
+  package_sha256: 4d3ebd3754f165d0af4c2e37e33e54bc67f9f5d7619c8a4467025d549cc30687
+  board_summary_sha256: 30e6ce8c36736bad30ff414e0021023e87e547eb702300e0f1100141da43aa1b
+  func_vio_sha256: 76fc3c7b522750ed2dd7336fa2a9bc121691fb216dbbaf0bc82b017ce761f977
+  programming_summary_sha256: 783bb11dcf94cf6f7d672173bf6c62a9af467589d03e268a07b5ce78b3f6cee4
+  vivado_metrics_sha256: 06863a6a86388293ccce08987687caad57ddf75cfcdfdb138fef363468d4f395
+
+team_board_perf:
+  status: passed_20_of_20
+  job_id: 20260803-220447-d9b5b478
+  profile: perf20
+  source_commit: 60fba481888a8f7e5a2f0ba0b76c91422a117309
+  chiplab_commit: c398d274812f164d387146fa7d8f612a4a1296d9
+  board_protocol: nscscc-system-reset-v1
+  actual_cpu_mhz: 100.0
+  package_sha256: 36c1e997335b9785ace7b78c645a689918b243d1c8f6c8ed9e4cff11b29ead37
+  perf_vio_sha256: 9e86d7f50b7ad74466a9846b11e31e29285042411b8b6b31bcf96eab4ed31823
+  selected_soc_count_total: 79537915
+  selected_cpu_count_total: 79524833
+  main_control:
+    source_commit: d9bab16ef46540eb3348b0781afc4d0949f28adc
+    job_id: 20260803-221038-4ad4237a
+    package_sha256: acb5fb7352a332000b237d6bd0cbc7b212bfe42d234cb548d79a7f44f0e7e7c7
+    perf_vio_sha256: e65a18e203e5b8be8af1a06257aa3c7594379da69862d91ca6ec55f6504337f6
+    selected_soc_count_total: 79537886
+    selected_cpu_count_total: 79525432
+  delta_vs_main:
+    soc_count: 29
+    soc_percent: 0.000036
+    cpu_count: -599
+    cpu_percent: -0.000753
+  interpretation: "No measurable ordinary-path performance regression; the delta is board-run variation, not an optimization claim."
+
 historical_board_baseline:
   applies_to_commit: da71fd32e0db3d13f1964895bbafeb5d2e5af412
   profile: perf20
   decisive_min_soc_count: 74446699
   decisive_seconds_at_100mhz: 0.74446699
-  current_candidate_status: not_run
+  current_candidate_status: passed_on_current_c398_flow
 
 acceptance:
   local_architecture_and_soc: satisfied
   official_ci: not_run
-  team_board: not_run
+  team_board: func58_and_perf20_passed
   linux_shell: not_satisfied
-  next_priority: "Package the 100 MHz candidate, then run board perf and obtain U-Boot/PMON and Linux shell evidence. Build a separate func bitstream only when func board validation is scheduled."
+  next_priority: "Obtain U-Boot/PMON, Linux boot, Buildroot shell, and required system-operation evidence on the team board."
   timing_risk: "Setup margin is 0.044 ns; every RTL change requires a fresh complete-SoC implementation."
 
 reproduce:
