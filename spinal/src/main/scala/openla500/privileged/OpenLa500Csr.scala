@@ -243,12 +243,7 @@ final class OpenLa500Csr(diffTestEnabled: Boolean = false, tlbNum: Int = 32) ext
     }
 
     when(io.reset) {
-      estat(1 downto 0) := 0
-      estat(10) := False
-      estat(12) := False
-      estat(15 downto 13) := 0
-      estat(21 downto 16) := 0
-      estat(31) := False
+      estat := 0
       timerEnabled := False
     }.otherwise {
       when(ticlrWrite && io.wr_data(0)) {
@@ -369,11 +364,13 @@ final class OpenLa500Csr(diffTestEnabled: Boolean = false, tlbNum: Int = 32) ext
     when(write(Address.Save3)) { save3 := io.wr_data }
     when(io.reset) { tid := 0 }.elsewhen(write(Address.Tid)) { tid := io.wr_data }
 
-    when(io.reset) { tcfg(0) := False }.elsewhen(tcfgWrite) {
+    when(io.reset) { tcfg := 0 }.elsewhen(tcfgWrite) {
       tcfg := io.wr_data
     }
     when(io.reset) { cntc := 0 }.elsewhen(write(Address.Cntc)) { cntc := io.wr_data }
-    when(tcfgWrite) {
+    when(io.reset) {
+      tval := 0
+    }.elsewhen(tcfgWrite) {
       tval := io.wr_data(31 downto 2) ## B(0, 2 bits)
     }.elsewhen(timerEnabled) {
       when(tval =/= B(0, 32 bits)) {

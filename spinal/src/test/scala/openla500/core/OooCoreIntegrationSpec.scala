@@ -296,4 +296,88 @@ class OooCoreIntegrationSpec extends AnyFunSuite {
         assert(dut.io.instructionTranslationRequest.virtualAddress.toBigInt != exceptionEntry)
       }
   }
+
+  test("a level timer interrupt enters the ROB from a predicted self loop") {
+    SimConfig.withVerilator
+      .workspacePath("target/sim-workspace-ooo-core-interrupt")
+      .compile(new OooCore(config))
+      .doSim("ooo-core-timer-interrupt", 0x49) { dut =>
+        val exceptionEntry = BigInt("1c008000", 16)
+        dut.clockDomain.forkStimulus(period = 10)
+        clearInputs(dut)
+        dut.io.exceptionEntryTarget #= exceptionEntry
+        dut.clockDomain.assertReset()
+        dut.clockDomain.waitSampling(2)
+        dut.clockDomain.deassertReset()
+        sample(dut)
+
+        fork {
+          while (true) {
+            while (!dut.io.instructionTranslationRequest.valid.toBoolean) {
+              sample(dut)
+            }
+            val address = dut.io.instructionTranslationRequest.virtualAddress.toBigInt
+            dut.io.instructionTranslationRequest.ready #= true
+            sample(dut)
+            dut.io.instructionTranslationRequest.ready #= false
+            dut.io.instructionTranslationResponse.virtualAddress #= address
+            dut.io.instructionTranslationResponse.physicalAddress #= address
+            dut.io.instructionTranslationResponse.valid #= true
+            while (!dut.io.instructionTranslationResponse.ready.toBoolean) {
+              sample(dut)
+            }
+            sample(dut)
+            dut.io.instructionTranslationResponse.valid #= false
+          }
+        }
+
+        val instructions = IndexedSeq.fill(16)(branchToSelf)
+        refillInstructionLine(
+          dut,
+          config.resetVector,
+          instructions,
+          waitForInitialization = true
+        )
+
+        var branchCommitted = false
+        var warmupCycles = 0
+        while (!branchCommitted && warmupCycles < 120) {
+          sample(dut)
+          for (
+            lane <- 0 until config.commitWidth
+            if (dut.io.commitValid.toBigInt & (BigInt(1) << lane)) != 0
+          ) {
+            branchCommitted ||= dut.io.commit(lane).pc.toBigInt == config.resetVector
+          }
+          warmupCycles += 1
+        }
+        assert(branchCommitted)
+
+        dut.io.interruptPending #= true
+        var recoveryCycles = 0
+        while (!dut.io.recoveryValid.toBoolean && recoveryCycles < 120) {
+          sample(dut)
+          recoveryCycles += 1
+        }
+        assert(dut.io.recoveryValid.toBoolean)
+        assert(dut.io.recovery.cause.toBigInt == 2)
+        assert(dut.io.recovery.exception.valid.toBoolean)
+        assert(dut.io.recovery.exception.ecode.toBigInt == 0)
+        assert(dut.io.exceptionValid.toBoolean)
+        assert(dut.io.exception.ecode.toBigInt == 0)
+        assert(dut.io.exceptionPc.toBigInt == config.resetVector)
+
+        dut.io.interruptPending #= false
+        sample(dut)
+        var redirectCycles = 0
+        while (
+          !dut.io.instructionTranslationRequest.valid.toBoolean && redirectCycles < 40
+        ) {
+          sample(dut)
+          redirectCycles += 1
+        }
+        assert(dut.io.instructionTranslationRequest.valid.toBoolean)
+        assert(dut.io.instructionTranslationRequest.virtualAddress.toBigInt == exceptionEntry)
+      }
+  }
 }
