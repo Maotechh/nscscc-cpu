@@ -17,7 +17,7 @@ CORE_TOP_SYNTH_DIR ?= $(OUT_DIR)/vivado/core_top
 
 .PHONY: all scala test python-test generate-raw package-core generate-core generate refresh-metadata port-check lint yosys-check publish-check vivado-synth clean
 
-all: scala test generate-core python-test
+all: scala test refresh-metadata python-test
 
 scala:
 	cd spinal && $(SBT) -batch 'Compile / compile' 'Test / compile'
