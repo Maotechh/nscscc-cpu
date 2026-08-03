@@ -46,7 +46,7 @@ final class OooCoreSystem(
     val core = new OooCore(config)
     // Keep the CSR diff views in the generated design.  The view is wrapped by a conditional
     // chiplab DPI shell, so it is inert in synthesis and available to the official simulator.
-    val csr = new OpenLa500Csr(diffTestEnabled = true, tlbNum = 32)
+    val csr = new OpenLa500Csr(config = config, diffTestEnabled = true, tlbNum = 32)
     val addressTranslation = new OooAddressTranslationUnit(config)
     val axiBridge = new OooAxiLineBridge(config)
     val idleController = new OooIdleController(config)
@@ -75,7 +75,9 @@ final class OooCoreSystem(
     val committedReservationBitValue = RegNext(core.io.reservationBitValue) init (False)
     val committedReservationAddressSet = RegNext(core.io.reservationAddressSet) init (False)
     val committedReservationLineAddress =
-      RegNext(core.io.reservationLineAddressUpdate) init (B(0, 28 bits))
+      RegNext(core.io.reservationLineAddressUpdate) init (
+        B(0, config.reservationAddressWidth bits)
+      )
     val committedCacheInvalidateValid = RegNext(core.io.cacheInvalidateValid) init (False)
     val committedDataCacheInvalidateValid = RegNext(core.io.dataCacheInvalidateValid) init (False)
     val committedDataCacheWritebackInvalidateValid =

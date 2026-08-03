@@ -1,5 +1,6 @@
 package openla500.privileged
 
+import openla500.core._
 import spinal.core._
 
 /** Cycle-compatible owner of the active a158aa8 CSR state.
@@ -9,7 +10,11 @@ import spinal.core._
   * golden RTL also have partial reset here; this module does not manufacture values for undefined
   * legacy bits.
   */
-final class OpenLa500Csr(diffTestEnabled: Boolean = false, tlbNum: Int = 32) extends Component {
+final class OpenLa500Csr(
+    config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommit,
+    diffTestEnabled: Boolean = false,
+    tlbNum: Int = 32
+) extends Component {
   require(tlbNum == 32, "the locked openLA500 contract requires TLBNUM=32")
 
   val io = new Bundle {
@@ -39,11 +44,11 @@ final class OpenLa500Csr(diffTestEnabled: Boolean = false, tlbNum: Int = 32) ext
     val excp_tlb_vppn = in Bits (19 bits)
     val llbit_in = in Bool ()
     val llbit_set_in = in Bool ()
-    val lladdr_in = in Bits (28 bits)
+    val lladdr_in = in Bits (config.reservationAddressWidth bits)
     val lladdr_set_in = in Bool ()
     val llbit_out = out Bool ()
     val vppn_out = out Bits (19 bits)
-    val lladdr_out = out Bits (28 bits)
+    val lladdr_out = out Bits (config.reservationAddressWidth bits)
     val eentry_out = out Bits (32 bits)
     val era_out = out Bits (32 bits)
     val tlbrentry_out = out Bits (32 bits)
@@ -176,16 +181,10 @@ final class OpenLa500Csr(diffTestEnabled: Boolean = false, tlbNum: Int = 32) ext
     val pgdh = Reg(Bits(32 bits))
     val brk = Reg(Bits(32 bits))
     val disableCache = Reg(Bits(32 bits))
-    val cpucfg1 = Reg(Bits(32 bits))
-    val cpucfg2 = Reg(Bits(32 bits))
-    val cpucfg10 = Reg(Bits(32 bits))
-    val cpucfg11 = Reg(Bits(32 bits))
-    val cpucfg12 = Reg(Bits(32 bits))
-    val cpucfg13 = Reg(Bits(32 bits))
     val timerEnabled = Reg(Bool())
     val timer64 = Reg(UInt(64 bits))
     val llbit = Reg(Bool())
-    val lladdr = Reg(Bits(28 bits))
+    val lladdr = Reg(Bits(config.reservationAddressWidth bits))
 
     // These reserved bits are physical legacy flops that are never written. Explicit self-hold
     // preserves that behavior without inventing reset values and documents that they are not gaps.
@@ -404,14 +403,6 @@ final class OpenLa500Csr(diffTestEnabled: Boolean = false, tlbNum: Int = 32) ext
     when(write(Address.Brk)) { brk := io.wr_data }
     when(io.reset) { disableCache := 0 }
     when(write(Address.DisableCache)) { disableCache := io.wr_data }
-    when(io.reset) {
-      cpucfg1 := B(0x0001f1f4L, 32 bits)
-      cpucfg2 := 0
-      cpucfg10 := B(0x00000005L, 32 bits)
-      cpucfg11 := B(0x04080001L, 32 bits)
-      cpucfg12 := B(0x04080001L, 32 bits)
-      cpucfg13 := 0
-    }
   }
 
   import Address._
@@ -446,12 +437,12 @@ final class OpenLa500Csr(diffTestEnabled: Boolean = false, tlbNum: Int = 32) ext
     is(Tlbrentry) { io.rd_data := logic.tlbrentry }
     is(Dmw0) { io.rd_data := logic.dmw0 }
     is(Dmw1) { io.rd_data := logic.dmw1 }
-    is(Cpucfg1) { io.rd_data := logic.cpucfg1 }
-    is(Cpucfg2) { io.rd_data := logic.cpucfg2 }
-    is(Cpucfg10) { io.rd_data := logic.cpucfg10 }
-    is(Cpucfg11) { io.rd_data := logic.cpucfg11 }
-    is(Cpucfg12) { io.rd_data := logic.cpucfg12 }
-    is(Cpucfg13) { io.rd_data := logic.cpucfg13 }
+    is(Cpucfg1) { io.rd_data := B(OooCpuConfig.value(config, 1), 32 bits) }
+    is(Cpucfg2) { io.rd_data := B(OooCpuConfig.value(config, 2), 32 bits) }
+    is(Cpucfg10) { io.rd_data := B(OooCpuConfig.value(config, 16), 32 bits) }
+    is(Cpucfg11) { io.rd_data := B(OooCpuConfig.value(config, 17), 32 bits) }
+    is(Cpucfg12) { io.rd_data := B(OooCpuConfig.value(config, 18), 32 bits) }
+    is(Cpucfg13) { io.rd_data := B(OooCpuConfig.value(config, 19), 32 bits) }
   }
 
   io.has_int := ((logic.ectl(12 downto 0) & logic.estat(12 downto 0)).orR) && logic.crmd(2)

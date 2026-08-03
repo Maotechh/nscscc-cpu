@@ -264,6 +264,58 @@ class OooFrontendSpec extends AnyFunSuite {
       }
   }
 
+  test("instruction read errors report ADEF and a same-cycle interrupt has priority") {
+    val compiled = SimConfig.withVerilator
+      .workspacePath("target/sim-workspace-ooo-frontend-read-error")
+      .compile(new OooFrontend(config))
+
+    for ((interruptPending, expectedEcode, seed) <- Seq(
+        (false, 8, 0x4c68),
+        (true, 0, 0x4c69)
+      )) {
+      compiled.doSim(s"ooo-frontend-read-error-interrupt-$interruptPending", seed) { dut =>
+        dut.clockDomain.forkStimulus(period = 10)
+        clearInputs(dut)
+        dut.clockDomain.assertReset()
+        dut.clockDomain.waitSampling(2)
+        dut.clockDomain.deassertReset()
+        sample(dut)
+
+        val pc = config.resetVector
+        acceptFetch(dut, pc)
+        dut.io.interruptPending #= interruptPending
+        clearPredecode(dut)
+        dut.io.cacheResponseValid #= true
+        dut.io.cacheResponse.virtualAddress #= pc
+        dut.io.cacheResponse.physicalAddress #= pc
+        for (lane <- 0 until config.fetchWidth) {
+          dut.io.cacheResponse.instructions(lane) #= BigInt("00100000", 16)
+        }
+        dut.io.cacheResponse.error #= true
+        sample(dut)
+        dut.io.cacheResponseValid #= false
+
+        assert(dut.io.decodeValid.toBigInt == 7)
+        for (lane <- 0 until config.decodeWidth) {
+          val laneTakesInterrupt = interruptPending && lane == 0
+          assert(dut.io.decoded(lane).exception.valid.toBoolean)
+          assert(
+            dut.io.decoded(lane).exception.ecode.toBigInt ==
+              (if (laneTakesInterrupt) expectedEcode else 8)
+          )
+          assert(dut.io.decoded(lane).exception.esubcode.toBigInt == 0)
+          assert(
+            dut.io.decoded(lane).exception.badVAddrValid.toBoolean == !laneTakesInterrupt
+          )
+          if (!laneTakesInterrupt) {
+            assert(dut.io.decoded(lane).exception.badVAddr.toBigInt == pc + lane * 4)
+          }
+          assert(!dut.io.decoded(lane).exception.tlbRefill.toBoolean)
+        }
+      }
+    }
+  }
+
   test("a pretranslated group waits for four free instruction-buffer slots") {
     val capacityConfig = config.copy(instructionBufferEntries = 8)
     SimConfig.withVerilator

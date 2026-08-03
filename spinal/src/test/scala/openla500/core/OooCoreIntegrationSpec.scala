@@ -18,6 +18,10 @@ class OooCoreIntegrationSpec extends AnyFunSuite {
   private def addiW(rd: Int, immediate: Int): BigInt =
     BigInt("02800000", 16) | (BigInt(immediate & 0xfff) << 10) | rd
 
+  private def addiW(rd: Int, rj: Int, immediate: Int): BigInt =
+    BigInt("02800000", 16) | (BigInt(immediate & 0xfff) << 10) |
+      (BigInt(rj) << 5) | rd
+
   private def branchToSelf: BigInt = BigInt("50000000", 16)
 
   private def clearInputs(dut: OooCore): Unit = {
@@ -220,6 +224,80 @@ class OooCoreIntegrationSpec extends AnyFunSuite {
           branchWait += 1
         }
         assert(branchCommits >= 2)
+      }
+  }
+
+  test("CPUCFG consumes a just-produced index and retires its configured value") {
+    SimConfig.withVerilator
+      .workspacePath("target/sim-workspace-ooo-core-cpucfg")
+      .compile(new OooCore(config))
+      .doSim("ooo-core-cpucfg-dependency", 0x4351) { dut =>
+        dut.clockDomain.forkStimulus(period = 10)
+        clearInputs(dut)
+        dut.io.systemReadData #= BigInt("0000001d", 16)
+        dut.clockDomain.assertReset()
+        dut.clockDomain.waitSampling(2)
+        dut.clockDomain.deassertReset()
+        sample(dut)
+
+        fork {
+          while (true) {
+            while (!dut.io.instructionTranslationRequest.valid.toBoolean) {
+              sample(dut)
+            }
+            val address = dut.io.instructionTranslationRequest.virtualAddress.toBigInt
+            dut.io.instructionTranslationRequest.ready #= true
+            sample(dut)
+            dut.io.instructionTranslationRequest.ready #= false
+            dut.io.instructionTranslationResponse.virtualAddress #= address
+            dut.io.instructionTranslationResponse.physicalAddress #= address
+            dut.io.instructionTranslationResponse.valid #= true
+            while (!dut.io.instructionTranslationResponse.ready.toBoolean) {
+              sample(dut)
+            }
+            sample(dut)
+            dut.io.instructionTranslationResponse.valid #= false
+          }
+        }
+
+        val program = IndexedSeq(
+          BigInt("0380400c", 16),
+          BigInt("00006d91", 16),
+          addiW(rd = 18, rj = 17, immediate = 1)
+        )
+        val instructions = program ++ IndexedSeq.fill(13)(branchToSelf)
+        refillInstructionLine(
+          dut,
+          config.resetVector,
+          instructions,
+          waitForInitialization = true
+        )
+
+        val committed = mutable.LinkedHashMap.empty[BigInt, BigInt]
+        var sawCpuCfgRead = false
+        var cycles = 0
+        while (committed.size < program.size && cycles < 160) {
+          sleep(1)
+          if (dut.io.systemReadValid.toBoolean) {
+            sawCpuCfgRead = true
+            assert(dut.io.systemReadAddress.toBigInt == 0xc0)
+          }
+          val mask = dut.io.commitValid.toBigInt
+          for (lane <- 0 until config.commitWidth if (mask & (BigInt(1) << lane)) != 0) {
+            val pc = dut.io.commit(lane).pc.toBigInt
+            val index = ((pc - config.resetVector) / 4).toInt
+            if (index >= 0 && index < program.size) {
+              assert(dut.io.commit(lane).instruction.toBigInt == program(index))
+              committed(pc) = dut.io.commit(lane).result.toBigInt
+            }
+          }
+          dut.clockDomain.waitSampling()
+          cycles += 1
+        }
+
+        assert(sawCpuCfgRead)
+        assert(committed.keys.toSeq == (0 until program.size).map(config.resetVector + _ * 4))
+        assert(committed.values.toSeq == Seq(BigInt(16), BigInt(0x1d), BigInt(0x1e)))
       }
   }
 

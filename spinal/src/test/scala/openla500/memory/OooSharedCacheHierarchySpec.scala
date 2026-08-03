@@ -52,6 +52,7 @@ private final class OooSharedCacheHierarchyProbe(config: OooCoreConfig) extends 
   noIoPrefix()
 
   val hierarchy = new OooSharedCacheHierarchy(config)
+  hierarchy.cachedDataResponseValid.simPublic()
   hierarchy.io.instructionRequestValid := io.instructionRequestValid && !io.instructionRequest.uncached
   hierarchy.io.instructionUncachedRequestValid :=
     io.instructionRequestValid && io.instructionRequest.uncached
@@ -76,6 +77,11 @@ private final class OooSharedCacheHierarchyProbe(config: OooCoreConfig) extends 
   hierarchy.io.barrierDrain := io.barrierDrain
   hierarchy.io.instructionBarrierMaintenanceStart :=
     io.instructionBarrierMaintenanceStart
+  hierarchy.io.cacheMaintenanceRequest.valid := False
+  hierarchy.io.cacheMaintenanceRequest.payload.assignFromBits(
+    B(0, hierarchy.io.cacheMaintenanceRequest.payload.getBitsWidth bits)
+  )
+  hierarchy.io.cacheMaintenanceResponse.ready := True
 
   io.instructionRequestReady := hierarchy.io.instructionRequestReady
   io.instructionResponseValid := hierarchy.io.instructionResponseValid
@@ -412,6 +418,253 @@ class OooSharedCacheHierarchySpec extends AnyFunSuite {
         assert(dut.io.dataResponseValid.toBoolean)
         assert(dut.io.dataResponse.recoveryEpoch.toBigInt == 31)
         assert(dut.io.dataResponse.data.toBigInt == BigInt("89abcdef", 16))
+      }
+  }
+
+  test("simultaneous cached and uncached data responses are both delivered") {
+    SimConfig.withVerilator
+      .workspacePath("target/sim-workspace-ooo-shared-cache")
+      .compile(new OooSharedCacheHierarchyProbe(config))
+      .doSim("ooo-shared-cache-data-response-collision", 0x4c77) { dut =>
+        dut.clockDomain.forkStimulus(period = 10)
+        clearInputs(dut)
+        dut.clockDomain.assertReset()
+        dut.clockDomain.waitSampling(2)
+        dut.clockDomain.deassertReset()
+        dut.clockDomain.waitSampling(config.level2Cache.sets + 8)
+        sleep(1)
+
+        def requestCached(pointer: Int, epoch: Int, pdst: Int): Unit = {
+          dut.io.dataRequestValid #= true
+          dut.io.dataRequest.virtualAddress #= 0x408
+          dut.io.dataRequest.physicalAddress #= 0x408
+          dut.io.dataRequest.isWrite #= false
+          dut.io.dataRequest.uncached #= false
+          dut.io.dataRequest.robPointer #= pointer
+          dut.io.dataRequest.recoveryEpoch #= epoch
+          dut.io.dataRequest.pdst #= pdst
+          var readyWait = 0
+          while (!dut.io.dataRequestReady.toBoolean && readyWait < 32) {
+            sample(dut)
+            readyWait += 1
+          }
+          assert(dut.io.dataRequestReady.toBoolean)
+          sample(dut)
+          dut.io.dataRequestValid #= false
+        }
+
+        requestCached(pointer = 5, epoch = 41, pdst = 9)
+        var readWait = 0
+        while (!dut.io.memoryReadValid.toBoolean && readWait < 32) {
+          sample(dut)
+          readWait += 1
+        }
+        assert(dut.io.memoryReadValid.toBoolean)
+        dut.io.memoryReadReady #= true
+        sample(dut)
+        dut.io.memoryReadReady #= false
+
+        var firstResponseSeen = false
+        for (beat <- 0 until OooCacheContract.BeatsPerLine) {
+          dut.io.memoryReadBeatValid #= true
+          dut.io.memoryReadBeat.mshrId #= 0
+          dut.io.memoryReadBeat.beat #= beat
+          dut.io.memoryReadBeat.data #= instructionBeat(300, beat)
+          dut.io.memoryReadBeat.last #= beat == OooCacheContract.BeatsPerLine - 1
+          sleep(1)
+          assert(dut.io.memoryReadBeatReady.toBoolean)
+          sample(dut)
+          if (dut.io.dataResponseValid.toBoolean) {
+            assert(dut.io.dataResponse.robPointer.toBigInt == 5)
+            firstResponseSeen = true
+          }
+        }
+        dut.io.memoryReadBeatValid #= false
+        var responseWait = 0
+        while (!firstResponseSeen && responseWait < 32) {
+          if (dut.io.dataResponseValid.toBoolean) {
+            assert(dut.io.dataResponse.robPointer.toBigInt == 5)
+            firstResponseSeen = true
+          } else {
+            sample(dut)
+          }
+          responseWait += 1
+        }
+        assert(firstResponseSeen)
+
+        requestCached(pointer = 6, epoch = 42, pdst = 10)
+        var hitWait = 0
+        while (!dut.hierarchy.cachedDataResponseValid.toBoolean && hitWait < 16) {
+          sample(dut)
+          hitWait += 1
+        }
+        assert(dut.hierarchy.cachedDataResponseValid.toBoolean)
+        assert(dut.io.dataResponse.robPointer.toBigInt == 6)
+
+        dut.io.uncachedDataResponseValid #= true
+        dut.io.uncachedDataResponse.robPointer #= 9
+        dut.io.uncachedDataResponse.recoveryEpoch #= 43
+        dut.io.uncachedDataResponse.pdst #= 13
+        dut.io.uncachedDataResponse.data #= BigInt("89abcdef", 16)
+        sleep(1)
+        assert(dut.io.dataResponseValid.toBoolean)
+        assert(dut.io.dataResponse.robPointer.toBigInt == 9)
+        assert(dut.io.dataResponse.data.toBigInt == BigInt("89abcdef", 16))
+
+        dut.clockDomain.waitSampling()
+        dut.io.uncachedDataResponseValid #= false
+        sleep(1)
+        assert(dut.io.dataResponseValid.toBoolean)
+        assert(dut.io.dataResponse.robPointer.toBigInt == 6)
+        assert(dut.io.dataResponse.recoveryEpoch.toBigInt == 42)
+        assert(dut.io.dataResponse.pdst.toBigInt == 10)
+        assert(dut.io.dataResponse.data.toBigInt == 302)
+        sample(dut)
+        assert(!dut.io.dataResponseValid.toBoolean)
+      }
+  }
+
+  test("uncached stores write back and invalidate cached aliases before reaching memory") {
+    SimConfig.withVerilator
+      .workspacePath("target/sim-workspace-ooo-shared-cache")
+      .compile(new OooSharedCacheHierarchyProbe(config))
+      .doSim("ooo-shared-cache-uncached-store-alias", 0x4c54) { dut =>
+        dut.clockDomain.forkStimulus(period = 10)
+        clearInputs(dut)
+        dut.clockDomain.assertReset()
+        dut.clockDomain.waitSampling(2)
+        dut.clockDomain.deassertReset()
+
+        var initializationCycles = 0
+        while (!dut.io.idle.toBoolean && initializationCycles < 2048) {
+          sample(dut)
+          initializationCycles += 1
+        }
+        assert(dut.io.idle.toBoolean)
+
+        val address = BigInt("00102000", 16)
+        val oldWord = BigInt("11111111", 16)
+        val dirtyWord = BigInt("aaaaaaaa", 16)
+        val uncachedWord = BigInt("22222222", 16)
+        val beatMask = (BigInt(1) << OooCacheContract.BeatBits) - 1
+        var backingLine = oldWord
+        for (word <- 1 until OooCacheContract.LineBytes / 4) {
+          backingLine |= BigInt(0x300 + word) << (word * 32)
+        }
+
+        def requestData(isWrite: Boolean, uncached: Boolean, data: BigInt): Unit = {
+          dut.io.dataRequestValid #= true
+          dut.io.dataRequest.virtualAddress #= address
+          dut.io.dataRequest.physicalAddress #= address
+          dut.io.dataRequest.isWrite #= isWrite
+          dut.io.dataRequest.writeData #= data
+          dut.io.dataRequest.byteMask #= 0xf
+          dut.io.dataRequest.uncached #= uncached
+          var waitCycles = 0
+          while (!dut.io.dataRequestReady.toBoolean && waitCycles < 256) {
+            sample(dut)
+            waitCycles += 1
+          }
+          assert(dut.io.dataRequestReady.toBoolean)
+          sample(dut)
+          dut.io.dataRequestValid #= false
+        }
+
+        def serviceRead(line: BigInt): BigInt = {
+          var requestWait = 0
+          while (!dut.io.memoryReadValid.toBoolean && requestWait < 256) {
+            sample(dut)
+            requestWait += 1
+          }
+          assert(dut.io.memoryReadValid.toBoolean)
+          assert(dut.io.memoryRead.lineAddress.toBigInt == address)
+          val mshrId = dut.io.memoryRead.mshrId.toBigInt
+          dut.io.memoryReadReady #= true
+          sample(dut)
+          dut.io.memoryReadReady #= false
+
+          var response = Option.empty[BigInt]
+          for (beat <- 0 until OooCacheContract.BeatsPerLine) {
+            dut.io.memoryReadBeatValid #= true
+            dut.io.memoryReadBeat.mshrId #= mshrId
+            dut.io.memoryReadBeat.beat #= beat
+            dut.io.memoryReadBeat.data #=
+              (line >> (beat * OooCacheContract.BeatBits)) & beatMask
+            dut.io.memoryReadBeat.last #= beat == OooCacheContract.BeatsPerLine - 1
+            while (!dut.io.memoryReadBeatReady.toBoolean) { sample(dut) }
+            sample(dut)
+            if (dut.io.dataResponseValid.toBoolean) {
+              response = Some(dut.io.dataResponse.data.toBigInt)
+            }
+          }
+          dut.io.memoryReadBeatValid #= false
+          var responseWait = 0
+          while (response.isEmpty && responseWait < 128) {
+            sample(dut)
+            if (dut.io.dataResponseValid.toBoolean) {
+              response = Some(dut.io.dataResponse.data.toBigInt)
+            }
+            responseWait += 1
+          }
+          assert(response.nonEmpty)
+          response.get
+        }
+
+        requestData(isWrite = false, uncached = false, data = 0)
+        assert(serviceRead(backingLine) == oldWord)
+
+        requestData(isWrite = true, uncached = false, data = dirtyWord)
+        var dirtyStoreIdleWait = 0
+        while (!dut.io.idle.toBoolean && dirtyStoreIdleWait < 128) {
+          sample(dut)
+          dirtyStoreIdleWait += 1
+        }
+        assert(dut.io.idle.toBoolean)
+
+        dut.io.uncachedDataRequestReady #= false
+        requestData(isWrite = true, uncached = true, data = uncachedWord)
+        assert(!dut.io.uncachedDataRequestValid.toBoolean)
+
+        var sawWriteback = false
+        var forwardWait = 0
+        while (!dut.io.uncachedDataRequestValid.toBoolean && forwardWait < 1024) {
+          sleep(1)
+          if (dut.io.memoryWriteValid.toBoolean) {
+            assert(dut.io.memoryWriteLineAddress.toBigInt == address)
+            backingLine = 0
+            for (word <- 0 until OooCacheContract.LineBytes / 4) {
+              backingLine |= dut.io.memoryWriteDataWords(word).toBigInt << (word * 32)
+            }
+            sawWriteback = true
+            dut.io.memoryWriteReady #= true
+          } else {
+            dut.io.memoryWriteReady #= false
+          }
+          sample(dut)
+          forwardWait += 1
+        }
+        dut.io.memoryWriteReady #= false
+        assert(dut.io.uncachedDataRequestValid.toBoolean)
+        assert(sawWriteback)
+        assert((backingLine & BigInt("ffffffff", 16)) == dirtyWord)
+        assert(dut.io.uncachedDataRequest.isWrite.toBoolean)
+        assert(dut.io.uncachedDataRequest.writeData.toBigInt == uncachedWord)
+
+        dut.io.uncachedDataRequestReady #= true
+        sample(dut)
+        dut.io.uncachedDataRequestReady #= false
+        backingLine = (backingLine & ~BigInt("ffffffff", 16)) | uncachedWord
+
+        dut.io.uncachedDataResponseValid #= true
+        dut.io.uncachedDataResponse.robPointer #= dut.io.uncachedDataRequest.robPointer.toBigInt
+        dut.io.uncachedDataResponse.recoveryEpoch #=
+          dut.io.uncachedDataRequest.recoveryEpoch.toBigInt
+        dut.io.uncachedDataResponse.pdst #= dut.io.uncachedDataRequest.pdst.toBigInt
+        sample(dut)
+        dut.io.uncachedDataResponseValid #= false
+
+        requestData(isWrite = false, uncached = false, data = 0)
+        assert(serviceRead(backingLine) == uncachedWord)
       }
   }
 

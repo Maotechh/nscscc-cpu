@@ -532,9 +532,13 @@ class OooAxiLineBridgeSpec extends AnyFunSuite {
         dut.io.uncachedDataRequest.size #= 1
         dut.io.uncachedDataRequest.byteMask #= 0xc
         dut.io.uncachedDataRequest.writeData #= BigInt("abcd0000", 16)
+        dut.io.uncachedDataRequest.robPointer #= 18
+        dut.io.uncachedDataRequest.recoveryEpoch #= 30
+        dut.io.uncachedDataRequest.pdst #= 0
         sleep(1)
-        assert(!dut.io.uncachedDataRequestReady.toBoolean)
+        assert(dut.io.uncachedDataRequestReady.toBoolean)
         sample(dut)
+        dut.io.uncachedDataRequestValid #= false
 
         assert(dut.io.axi.aw.valid.toBoolean)
         assert(dut.io.axi.aw.payload.id.toBigInt == 3)
@@ -555,14 +559,59 @@ class OooAxiLineBridgeSpec extends AnyFunSuite {
         dut.io.axi.w.ready #= false
         assert(dut.io.axi.b.ready.toBoolean)
         assert(!dut.io.uncachedDataRequestReady.toBoolean)
+        assert(!dut.io.uncachedDataResponseValid.toBoolean)
         dut.io.axi.b.valid #= true
         dut.io.axi.b.payload.id #= 3
         dut.io.axi.b.payload.response #= 0
+        sample(dut)
+        dut.io.axi.b.valid #= false
+        assert(dut.io.uncachedDataResponseValid.toBoolean)
+        assert(dut.io.uncachedDataResponse.robPointer.toBigInt == 18)
+        assert(dut.io.uncachedDataResponse.recoveryEpoch.toBigInt == 30)
+        assert(!dut.io.uncachedDataResponse.error.toBoolean)
+      }
+  }
+
+  test("uncached write B errors retain the request token") {
+    SimConfig.withVerilator
+      .workspacePath("target/sim-workspace-ooo-axi-line-write-error")
+      .compile(new OooAxiLineBridgeProbe(config))
+      .doSim("ooo-axi-uncached-write-error", 0x4c69) { dut =>
+        dut.clockDomain.forkStimulus(period = 10)
+        clearInputs(dut)
+        dut.clockDomain.assertReset()
+        dut.clockDomain.waitSampling(2)
+        dut.clockDomain.deassertReset()
+        sample(dut)
+
+        dut.io.uncachedDataRequestValid #= true
+        dut.io.uncachedDataRequest.isWrite #= true
+        dut.io.uncachedDataRequest.physicalAddress #= BigInt("1fe00100", 16)
+        dut.io.uncachedDataRequest.robPointer #= 21
+        dut.io.uncachedDataRequest.recoveryEpoch #= 7
         sleep(1)
         assert(dut.io.uncachedDataRequestReady.toBoolean)
         sample(dut)
         dut.io.uncachedDataRequestValid #= false
+
+        dut.io.axi.aw.ready #= true
+        sample(dut)
+        dut.io.axi.aw.ready #= false
+        dut.io.axi.w.ready #= true
+        sample(dut)
+        dut.io.axi.w.ready #= false
+        assert(dut.io.axi.b.ready.toBoolean)
+        assert(!dut.io.uncachedDataResponseValid.toBoolean)
+
+        dut.io.axi.b.valid #= true
+        dut.io.axi.b.payload.id #= 2
+        dut.io.axi.b.payload.response #= 2
+        sample(dut)
         dut.io.axi.b.valid #= false
+        assert(dut.io.uncachedDataResponseValid.toBoolean)
+        assert(dut.io.uncachedDataResponse.robPointer.toBigInt == 21)
+        assert(dut.io.uncachedDataResponse.recoveryEpoch.toBigInt == 7)
+        assert(dut.io.uncachedDataResponse.error.toBoolean)
       }
   }
 }

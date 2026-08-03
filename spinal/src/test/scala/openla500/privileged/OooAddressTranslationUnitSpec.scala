@@ -314,4 +314,78 @@ class OooAddressTranslationUnitSpec extends AnyFunSuite {
         )
       }
   }
+
+  test("TLB validity, modify, and privilege faults report precise architectural metadata") {
+    SimConfig.withVerilator
+      .workspacePath("target/sim-workspace-ooo-address-translation-faults")
+      .compile(new OooAddressTranslationUnit(config))
+      .doSim("ooo-address-translation-faults", 0x4c68) { dut =>
+        dut.domain.forkStimulus(period = 10)
+        clearInputs(dut)
+        dut.domain.assertReset()
+        dut.domain.waitSampling(2)
+        dut.domain.deassertReset()
+        sample(dut)
+
+        dut.io.csrDa #= false
+        dut.io.csrPg #= true
+        val asid = 0x21
+        val invalidFlags = tlbLow(0, valid = false) & 0xff
+        val readOnlyFlags = tlbLow(0, dirty = false) & 0xff
+        val kernelFlags = tlbLow(0, privilege = 0) & 0xff
+        val pifAddress = BigInt("00400000", 16)
+        val pilAddress = BigInt("00800000", 16)
+        val pisAddress = BigInt("00c00000", 16)
+        val pmeAddress = BigInt("01000000", 16)
+        val instructionPpiAddress = BigInt("01400000", 16)
+        val dataPpiAddress = BigInt("01800000", 16)
+
+        writeTlb(dut, 0, pifAddress, 0x10000, 0x10001, asid, invalidFlags, invalidFlags)
+        writeTlb(dut, 1, pilAddress, 0x11000, 0x11001, asid, invalidFlags, invalidFlags)
+        writeTlb(dut, 2, pisAddress, 0x12000, 0x12001, asid, invalidFlags, invalidFlags)
+        writeTlb(dut, 3, pmeAddress, 0x13000, 0x13001, asid, readOnlyFlags, readOnlyFlags)
+        writeTlb(
+          dut,
+          4,
+          instructionPpiAddress,
+          0x14000,
+          0x14001,
+          asid,
+          kernelFlags,
+          kernelFlags
+        )
+        writeTlb(dut, 5, dataPpiAddress, 0x15000, 0x15001, asid, kernelFlags, kernelFlags)
+
+        def assertInstructionFault(address: BigInt, ecode: Int): Unit = {
+          translateInstruction(dut, address)
+          assert(dut.io.instructionResponse.exception.valid.toBoolean)
+          assert(dut.io.instructionResponse.exception.ecode.toBigInt == ecode)
+          assert(dut.io.instructionResponse.exception.esubcode.toBigInt == 0)
+          assert(dut.io.instructionResponse.exception.badVAddrValid.toBoolean)
+          assert(dut.io.instructionResponse.exception.badVAddr.toBigInt == address)
+          assert(!dut.io.instructionResponse.exception.tlbRefill.toBoolean)
+          sample(dut)
+        }
+
+        def assertDataFault(address: BigInt, isWrite: Boolean, ecode: Int): Unit = {
+          translateData(dut, address, isWrite)
+          assert(dut.io.dataResponse.exception.valid.toBoolean)
+          assert(dut.io.dataResponse.exception.ecode.toBigInt == ecode)
+          assert(dut.io.dataResponse.exception.esubcode.toBigInt == 0)
+          assert(dut.io.dataResponse.exception.badVAddrValid.toBoolean)
+          assert(dut.io.dataResponse.exception.badVAddr.toBigInt == address)
+          assert(!dut.io.dataResponse.exception.tlbRefill.toBoolean)
+          sample(dut)
+        }
+
+        assertInstructionFault(pifAddress, ecode = 3)
+        assertDataFault(pilAddress, isWrite = false, ecode = 1)
+        assertDataFault(pisAddress, isWrite = true, ecode = 2)
+        assertDataFault(pmeAddress, isWrite = true, ecode = 4)
+
+        dut.io.csrPrivilege #= 3
+        assertInstructionFault(instructionPpiAddress, ecode = 7)
+        assertDataFault(dataPpiAddress, isWrite = false, ecode = 7)
+      }
+  }
 }

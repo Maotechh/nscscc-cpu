@@ -42,6 +42,7 @@ final class OooBackend(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommi
     val releaseStoreValid = in Bits (config.commitWidth bits)
     val committedMemoryEpoch = out UInt (config.memoryEpochWidth bits)
     val speculativeMemoryEpoch = out UInt (config.memoryEpochWidth bits)
+    val robHeadPointer = out UInt (config.robPointerWidth bits)
 
     val debugReadAddress = in UInt (config.archRegIndexWidth bits)
     val debugReadData = out Bits (config.xlen bits)
@@ -103,7 +104,8 @@ final class OooBackend(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommi
       for (preceding <- 0 until lane) {
         precedingBarrier(preceding) := io.renameValid(preceding) &&
           (io.rename(preceding).systemOperation === OooSystemOp.dataBarrier ||
-            io.rename(preceding).systemOperation === OooSystemOp.instructionBarrier)
+            io.rename(preceding).systemOperation === OooSystemOp.instructionBarrier ||
+            io.rename(preceding).systemOperation === OooSystemOp.cacheOperation)
       }
       renamedMemoryEpoch(lane) := speculativeMemoryEpoch +
         CountOne(precedingBarrier).resize(config.memoryEpochWidth)
@@ -216,7 +218,8 @@ final class OooBackend(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommi
   for (lane <- 0 until config.renameWidth) {
     acceptedBarrier(lane) := accepted(lane) &&
       (io.rename(lane).systemOperation === OooSystemOp.dataBarrier ||
-        io.rename(lane).systemOperation === OooSystemOp.instructionBarrier)
+        io.rename(lane).systemOperation === OooSystemOp.instructionBarrier ||
+        io.rename(lane).systemOperation === OooSystemOp.cacheOperation)
   }
   val acceptedBarrierCount = CountOne(acceptedBarrier).resize(config.memoryEpochWidth)
 
@@ -224,7 +227,8 @@ final class OooBackend(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommi
   for (lane <- 0 until config.commitWidth) {
     committedBarrier(lane) := rob.io.commitValid(lane) && rob.io.commit(lane).retired &&
       (rob.io.commit(lane).systemOperation === OooSystemOp.dataBarrier ||
-        rob.io.commit(lane).systemOperation === OooSystemOp.instructionBarrier)
+        rob.io.commit(lane).systemOperation === OooSystemOp.instructionBarrier ||
+        rob.io.commit(lane).systemOperation === OooSystemOp.cacheOperation)
   }
   val committedBarrierCount = CountOne(committedBarrier).resize(config.memoryEpochWidth)
   val nextCommittedMemoryEpoch = committedMemoryEpoch + committedBarrierCount
@@ -238,6 +242,7 @@ final class OooBackend(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommi
   }
   io.committedMemoryEpoch := committedMemoryEpoch
   io.speculativeMemoryEpoch := speculativeMemoryEpoch
+  io.robHeadPointer := rob.io.headPointer
 
   registerMap.io.renameValid := accepted
   for (lane <- 0 until config.renameWidth) {

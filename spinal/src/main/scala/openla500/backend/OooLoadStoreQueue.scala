@@ -13,6 +13,7 @@ final case class OooStoreQueueEntry(config: OooCoreConfig) extends Bundle {
   val dataReady = Bool()
   val completed = Bool()
   val committed = Bool()
+  val requestSent = Bool()
   val robPointer = UInt(config.robPointerWidth bits)
   val recoveryEpoch = UInt(config.recoveryEpochWidth bits)
   val memoryEpoch = UInt(config.memoryEpochWidth bits)
@@ -150,7 +151,7 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
     val translationRequest = master(Stream(OooTranslationRequest(config)))
     val translationResponse = slave(Stream(OooTranslationResponse(config)))
     val reservationValid = in Bool ()
-    val reservationLineAddress = in Bits (28 bits)
+    val reservationLineAddress = in Bits (config.reservationAddressWidth bits)
     val dataRequestValid = out Bool ()
     val dataRequest = out(OooCacheRequest(config))
     val dataRequestReady = in Bool ()
@@ -163,6 +164,7 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
     val commitObservation = out Vec (OooMemoryCommitObservation(config), config.commitWidth)
     val storeDrainBusy = out Bool ()
     val committedMemoryEpoch = in UInt (config.memoryEpochWidth bits)
+    val robHeadPointer = in UInt (config.robPointerWidth bits)
     val orderingRobPointer = in UInt (config.robPointerWidth bits)
     val olderStorePending = out Bool ()
     val flush = in Bool ()
@@ -182,6 +184,7 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
     entry.dataReady.init(False)
     entry.completed.init(False)
     entry.committed.init(False)
+    entry.requestSent.init(False)
     entry.translationDone.init(False)
   }
   for (entry <- loads) {
@@ -199,7 +202,7 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
   val loadBase = Reg(UInt(config.loadQueueIndexWidth bits)) init (0)
   val drainAfterFlush = RegInit(False)
   val committedStorePresent = stores
-    .map(entry => entry.valid && entry.committed)
+    .map(entry => entry.valid && (entry.committed || (entry.uncached && entry.requestSent)))
     .reduce(_ || _)
   io.storeDrainBusy := drainAfterFlush
   io.olderStorePending := stores
@@ -335,8 +338,12 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
     forwardingCount === 1
   val cacheLoadBase = loadHeadReady && loadOrderClear && forwardingCount === 0
   val cacheLoadCandidate = cacheLoadBase && headLoadState.translationDone
+  val uncachedStoreAtHead = headStore.uncached && !headStore.completed &&
+    !headStore.requestSent && headStore.robPointer === io.robHeadPointer
+  val cachedStoreCommitted = !headStore.uncached && headStore.completed &&
+    headStore.committed
   val storeRequest = headStore.valid && headStore.addressReady && headStore.dataReady &&
-    headStore.translationDone && headStore.completed && headStore.committed &&
+    headStore.translationDone && (uncachedStoreAtHead || cachedStoreCommitted) &&
     headStore.memoryEpoch === io.committedMemoryEpoch && (!headStore.isSc || headStore.scSuccess)
   val failedScRelease = headStore.valid && headStore.addressReady &&
     headStore.translationDone && headStore.completed && headStore.committed &&
@@ -451,7 +458,17 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
   val responseLoadIsLl = loads(responseLoadIndex).isLl
   val responseLoadPhysicalAddress = loads(responseLoadIndex).physicalAddress
   val responseLoadUncached = loads(responseLoadIndex).uncached
-  val responseAccepted = io.dataResponseValid && responseLoadValid
+  val responseLoadAccepted = io.dataResponseValid && responseLoadValid
+  val responseStoreValid = headStore.valid && headStore.uncached &&
+    headStore.requestSent && !headStore.completed &&
+    io.dataResponse.robPointer === headStore.robPointer &&
+    io.dataResponse.recoveryEpoch === headStore.recoveryEpoch
+  val responseStoreAccepted = io.dataResponseValid && responseStoreValid
+  // A flush-retained uncached write is already irreversible but no longer owns
+  // a live ROB entry. Consume its B response to release the SQ slot without
+  // emitting a completion into the new recovery epoch.
+  val responseStoreArchitectural = responseStoreAccepted && !headStore.committed
+  val responseAccepted = responseLoadAccepted || responseStoreArchitectural
   val forwardFire = !io.dataResponseValid && forwardCandidate
 
   val aguTargetAvailable = Mux(
@@ -469,16 +486,20 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
   val storeDataFire = io.storeDataValid && io.storeDataReady
   val translatedScSuccess = !io.translationResponse.exception.valid &&
     !io.translationResponse.uncached && io.reservationValid &&
-    io.reservationLineAddress === io.translationResponse.physicalAddress(31 downto 4).asBits
+    io.reservationLineAddress === io.translationResponse.physicalAddress(
+      config.xlen - 1 downto config.dataCache.offsetWidth
+    ).asBits
   val translationResponseCandidate = io.translationResponse.valid && translationActive
   val translationStore = stores(translationOwnerStoreIndex)
   val translationStoreCanComplete = translationStore.dataReady ||
     (translationStore.isSc && !translatedScSuccess)
   val translationProducesCompletion = io.translationResponse.exception.valid ||
-    (translationOwnerStore && translationStoreCanComplete)
+    (translationOwnerStore && translationStoreCanComplete &&
+      (!io.translationResponse.uncached || translationStore.isSc))
   val storeCompletionCandidate = headStore.valid && headStore.addressReady &&
     headStore.translationDone && !headStore.completed &&
-    (headStore.dataReady || (headStore.isSc && !headStore.scSuccess))
+    (headStore.dataReady || (headStore.isSc && !headStore.scSuccess)) &&
+    (!headStore.uncached || headStore.isSc)
   // Cache responses cannot be backpressured here.  A simultaneously ready
   // Store must retry instead of being marked complete behind the winning Load.
   val storeCompletionFire = storeCompletionCandidate && !io.dataResponseValid &&
@@ -512,7 +533,20 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
     storeCompletionFire || translationCompletionFire || aguExceptionCompletionReady
   val generatedCompletion = OooCompletion(config)
   clearCompletion(generatedCompletion)
-  when(responseAccepted) {
+  when(responseStoreArchitectural) {
+    generatedCompletion.robPointer := headStore.robPointer
+    generatedCompletion.recoveryEpoch := headStore.recoveryEpoch
+    generatedCompletion.pdst := headStore.pdst
+    generatedCompletion.writesPdst := headStore.writesPdst
+    generatedCompletion.data := 0
+    when(io.dataResponse.error) {
+      generatedCompletion.exception.valid := True
+      generatedCompletion.exception.ecode := U(8, 6 bits)
+      generatedCompletion.exception.esubcode := U(1, 9 bits)
+      generatedCompletion.exception.badVAddrValid := True
+      generatedCompletion.exception.badVAddr := headStore.virtualAddress
+    }
+  }.elsewhen(responseLoadAccepted) {
     generatedCompletion.robPointer := responseLoadRobPointer
     generatedCompletion.recoveryEpoch := responseLoadRecoveryEpoch
     generatedCompletion.pdst := responseLoadPdst
@@ -526,6 +560,7 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
     when(io.dataResponse.error) {
       generatedCompletion.exception.valid := True
       generatedCompletion.exception.ecode := U(8, 6 bits)
+      generatedCompletion.exception.esubcode := U(1, 9 bits)
       generatedCompletion.exception.badVAddrValid := True
       generatedCompletion.exception.badVAddr := responseLoadVirtualAddress
     }
@@ -595,7 +630,7 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
   // Only LL consumes the LSQ side-effect sidecar at retirement. Keep it out of
   // the store-forwarding/completion-arbitration cone so ordinary completions do
   // not turn the entire 32-bit field into a timing-critical conditional clear.
-  when(responseAccepted && responseLoadIsLl) {
+  when(responseLoadAccepted && responseLoadIsLl) {
     generatedCompletion.sideEffectData :=
       responseLoadPhysicalAddress(31 downto 1).asBits ## responseLoadUncached.asBits
   }
@@ -604,7 +639,11 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
   val completion = Reg(OooCompletion(config))
   when(io.flush) {
     aguExceptionCompletionValid := False
-    when(requestBufferValid && !requestBuffer.isWrite) {
+    // Cached writes only enter this buffer after retirement and must survive a
+    // redirect. An uncached write has no side effect until the hierarchy
+    // accepts it, so a still-buffered request remains speculative and is
+    // discarded with the ROB entry.
+    when(requestBufferValid && (!requestBuffer.isWrite || requestBuffer.uncached)) {
       requestBufferValid := False
     }
     completionValid := False
@@ -632,7 +671,7 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
     when(acceptedStoreValid) {
       acceptedStoreValid := False
     }
-    when(storeRequestFire) {
+    when(storeRequestFire && !requestBuffer.uncached) {
       acceptedStoreValid := True
       acceptedStoreIndex := requestBufferStoreIndex
     }
@@ -709,7 +748,10 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
     }
   }
   val failedScReleaseFire = failedScRelease && !acceptedStoreValid
-  storeReleaseValid(0) := !io.flush && (acceptedStoreValid || failedScReleaseFire)
+  val uncachedStoreRelease = headStore.valid && headStore.uncached &&
+    headStore.requestSent && headStore.completed && headStore.committed
+  storeReleaseValid(0) := !io.flush &&
+    (acceptedStoreValid || failedScReleaseFire || uncachedStoreRelease)
   io.releaseLoadValid := loadReleaseValid
   io.releaseStoreValid := storeReleaseValid
 
@@ -727,12 +769,24 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
       storeHead := 0
     }
     for (entry <- stores) {
-      when(!entry.committed) {
+      val irreversibleUncachedWrite = entry.uncached && entry.requestSent
+      when(irreversibleUncachedWrite) {
+        entry.committed := True
+        when(
+          responseStoreAccepted &&
+            entry.robPointer === io.dataResponse.robPointer &&
+            entry.recoveryEpoch === io.dataResponse.recoveryEpoch
+        ) {
+          entry.completed := True
+        }
+      }
+      when(!entry.committed && !irreversibleUncachedWrite) {
         entry.valid := False
         entry.addressReady := False
         entry.dataReady := False
         entry.completed := False
         entry.committed := False
+        entry.requestSent := False
         entry.translationDone := False
       }
     }
@@ -759,6 +813,7 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
         stores(index).dataReady := False
         stores(index).completed := False
         stores(index).committed := False
+        stores(index).requestSent := False
         stores(index).translationDone := False
         stores(index).scSuccess := False
         stores(index).robPointer := io.allocate(lane).robPointer
@@ -853,8 +908,11 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
         entry.requestSent := True
       }
     }
-    when(responseAccepted) {
+    when(responseLoadAccepted) {
       loads(responseLoadIndex).completed := True
+    }
+    when(responseStoreAccepted) {
+      stores(storeHead).completed := True
     }
     when(forwardFire) {
       loads(loadHead).completed := True
@@ -865,6 +923,7 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
       stores(acceptedStoreIndex).dataReady := False
       stores(acceptedStoreIndex).completed := False
       stores(acceptedStoreIndex).committed := False
+      stores(acceptedStoreIndex).requestSent := False
       stores(acceptedStoreIndex).translationDone := False
     }
     when(failedScReleaseFire) {
@@ -873,9 +932,24 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
       stores(storeHead).dataReady := False
       stores(storeHead).completed := False
       stores(storeHead).committed := False
+      stores(storeHead).requestSent := False
       stores(storeHead).translationDone := False
     }
-    when(storeRequestFire || failedScReleaseFire) {
+    val uncachedStoreRequestFire = storeRequestFire && requestBuffer.uncached
+    when(uncachedStoreRequestFire) {
+      stores(requestBufferStoreIndex).requestSent := True
+    }
+    when(uncachedStoreRelease) {
+      stores(storeHead).valid := False
+      stores(storeHead).addressReady := False
+      stores(storeHead).dataReady := False
+      stores(storeHead).completed := False
+      stores(storeHead).committed := False
+      stores(storeHead).requestSent := False
+      stores(storeHead).translationDone := False
+    }
+    when((storeRequestFire && !requestBuffer.uncached) || failedScReleaseFire ||
+      uncachedStoreRelease) {
       storeHead := storeHead + 1
     }
   }

@@ -26,7 +26,7 @@ final class OooBackendWithDataCache(
     val dataTranslationRequest = master(Stream(OooTranslationRequest(config)))
     val dataTranslationResponse = slave(Stream(OooTranslationResponse(config)))
     val reservationValid = in Bool ()
-    val reservationLineAddress = in Bits (28 bits)
+    val reservationLineAddress = in Bits (config.reservationAddressWidth bits)
 
     val uncachedInstructionRequestValid = out Bool ()
     val uncachedInstructionRequest = out(OooInstructionCacheRequest(config))
@@ -87,7 +87,7 @@ final class OooBackendWithDataCache(
     val reservationBitSet = out Bool ()
     val reservationBitValue = out Bool ()
     val reservationAddressSet = out Bool ()
-    val reservationLineAddressUpdate = out Bits (28 bits)
+    val reservationLineAddressUpdate = out Bits (config.reservationAddressWidth bits)
     val exceptionValid = out Bool ()
     val exceptionPc = out UInt (config.xlen bits)
     val exception = out(OooExceptionMeta())
@@ -152,6 +152,18 @@ final class OooBackendWithDataCache(
     cacheHierarchy.io.instructionBarrierMaintenanceReady
   backend.io.instructionBarrierMaintenanceDone :=
     cacheHierarchy.io.instructionBarrierMaintenanceDone
+  cacheHierarchy.io.cacheMaintenanceRequest.valid :=
+    backend.io.cacheMaintenanceRequest.valid
+  cacheHierarchy.io.cacheMaintenanceRequest.payload :=
+    backend.io.cacheMaintenanceRequest.payload
+  backend.io.cacheMaintenanceRequest.ready :=
+    cacheHierarchy.io.cacheMaintenanceRequest.ready
+  backend.io.cacheMaintenanceResponse.valid :=
+    cacheHierarchy.io.cacheMaintenanceResponse.valid
+  backend.io.cacheMaintenanceResponse.payload :=
+    cacheHierarchy.io.cacheMaintenanceResponse.payload
+  cacheHierarchy.io.cacheMaintenanceResponse.ready :=
+    backend.io.cacheMaintenanceResponse.ready
 
   io.memoryReadValid := cacheHierarchy.io.memoryReadValid
   io.memoryRead := cacheHierarchy.io.memoryRead

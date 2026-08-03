@@ -207,6 +207,25 @@ class OooBackendDispatchSpec extends AnyFunSuite {
       assert(dut.io.speculativeMemoryEpoch.toBigInt == 0)
 
       dut.io.inputValid #= 7
+      dut.io.instruction(0) #= BigInt("28800000", 16)
+      dut.io.instruction(1) #= BigInt("06000001", 16)
+      dut.io.instruction(2) #= BigInt("28800000", 16)
+      sleep(1)
+      assert(dut.io.memoryAllocateValid.toBigInt == 5)
+      assert(dut.io.memoryAllocateEpoch(0).toBigInt == 0)
+      assert(dut.io.memoryAllocateEpoch(2).toBigInt == 1)
+      dut.clockDomain.waitSampling()
+      dut.io.inputValid #= 0
+      sleep(1)
+      assert(dut.io.speculativeMemoryEpoch.toBigInt == 1)
+
+      dut.io.flush #= true
+      dut.clockDomain.waitSampling()
+      dut.io.flush #= false
+      sleep(1)
+      assert(dut.io.speculativeMemoryEpoch.toBigInt == 0)
+
+      dut.io.inputValid #= 7
       dut.io.instruction(0) #= BigInt("00100000", 16)
       dut.io.instruction(1) #= BigInt("28800000", 16)
       dut.io.instruction(2) #= BigInt("38720000", 16)

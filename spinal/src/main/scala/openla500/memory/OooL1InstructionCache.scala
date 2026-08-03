@@ -6,7 +6,8 @@ import spinal.core._
 import spinal.lib._
 
 object OooL1InstructionCacheState extends SpinalEnum {
-  val idle, lookup, refillRequest, refillData, install = newElement()
+  val idle, lookup, refillRequest, refillData, install, maintenanceHitLookup,
+    maintenanceInvalidate = newElement()
 }
 
 /** Two-way 8-KiB L1 instruction cache with 64-byte lines.
@@ -90,6 +91,8 @@ final class OooL1InstructionCache(
     val lineReadBeatReady = out Bool ()
 
     val invalidate = in Bool ()
+    val maintenanceRequest = slave(Stream(OooCacheMaintenanceRequest(config)))
+    val maintenanceDone = out Bool ()
     val invalidateBusy = out Bool ()
     val idle = out Bool ()
   }
@@ -108,6 +111,11 @@ final class OooL1InstructionCache(
   val refillError = RegInit(False)
   val refillResponseSent = RegInit(False)
   val refillReplayPending = RegInit(False)
+  val maintenanceIndex = Reg(UInt(indexWidth bits)) init (0)
+  val maintenanceWay = Reg(UInt(wayWidth bits)) init (0)
+  val maintenanceDone = RegInit(False)
+  maintenanceDone := False
+  io.maintenanceDone := maintenanceDone
 
   val refillLine = Bits(OooCacheContract.LineBits bits)
   for (beat <- 0 until OooCacheContract.BeatsPerLine) {
@@ -146,7 +154,7 @@ final class OooL1InstructionCache(
   when(io.invalidate) { invalidateSeen := True }.otherwise { invalidateSeen := False }
   val invalidateRequest = invalidatePending || newInvalidate
   val startInvalidate = invalidateRequest && state === OooL1InstructionCacheState.idle &&
-    !cacheArray.io.invalidateBusy
+    !cacheArray.io.invalidateBusy && !io.maintenanceRequest.valid
   when(newInvalidate) { invalidatePending := True }
   when(startInvalidate) { invalidatePending := False }
 
@@ -170,7 +178,10 @@ final class OooL1InstructionCache(
     refillResponseSent && !refillReplayPending && !requestKilled && !io.request.uncached &&
     lineAddress(io.request.physicalAddress) === lineAddress(request.physicalAddress)
   io.requestReady := (idleRequestReady || refillSameLineReady) &&
-    !invalidateRequest
+    !invalidateRequest && !io.maintenanceRequest.valid
+  io.maintenanceRequest.ready := state === OooL1InstructionCacheState.idle &&
+    !invalidateRequest && !cacheArray.io.invalidateBusy && cacheArray.io.lookupReady
+  val maintenanceFire = io.maintenanceRequest.valid && io.maintenanceRequest.ready
   val requestFire = io.requestValid && io.requestReady
   val refillRequestFire = requestFire && refillSameLineReady
   when(requestFire) {
@@ -182,6 +193,21 @@ final class OooL1InstructionCache(
       cacheArray.io.lookupValid := True
       cacheArray.io.lookupAddress := io.request.physicalAddress
       state := OooL1InstructionCacheState.lookup
+    }
+  }
+  when(maintenanceFire) {
+    maintenanceIndex := indexOf(io.maintenanceRequest.virtualAddress)
+    maintenanceWay := io.maintenanceRequest.virtualAddress(wayWidth - 1 downto 0)
+    when(
+      io.maintenanceRequest.code(4 downto 3).asUInt ===
+        OooCacheMaintenanceMode.hit
+    ) {
+      maintenanceIndex := indexOf(io.maintenanceRequest.physicalAddress)
+      cacheArray.io.lookupValid := True
+      cacheArray.io.lookupAddress := io.maintenanceRequest.physicalAddress
+      state := OooL1InstructionCacheState.maintenanceHitLookup
+    }.otherwise {
+      state := OooL1InstructionCacheState.maintenanceInvalidate
     }
   }
   when(
@@ -208,6 +234,18 @@ final class OooL1InstructionCache(
     }.otherwise {
       victimWay := cacheArray.io.victimWay
       state := OooL1InstructionCacheState.refillRequest
+    }
+  }
+  when(
+    state === OooL1InstructionCacheState.maintenanceHitLookup &&
+      cacheArray.io.responseValid
+  ) {
+    when(cacheArray.io.hit) {
+      maintenanceWay := cacheArray.io.hitWay
+      state := OooL1InstructionCacheState.maintenanceInvalidate
+    }.otherwise {
+      maintenanceDone := True
+      state := OooL1InstructionCacheState.idle
     }
   }
 
@@ -289,9 +327,23 @@ final class OooL1InstructionCache(
     state := OooL1InstructionCacheState.idle
   }
 
-  io.invalidateBusy := cacheArray.io.invalidateBusy || invalidateRequest
+  when(state === OooL1InstructionCacheState.maintenanceInvalidate) {
+    cacheArray.io.writeValid := True
+    cacheArray.io.writeIndex := maintenanceIndex
+    cacheArray.io.writeWay := maintenanceWay
+    cacheArray.io.writeTag := 0
+    cacheArray.io.writeData := 0
+    cacheArray.io.writeEntryValid := False
+    cacheArray.io.writeDirty := False
+    maintenanceDone := True
+    state := OooL1InstructionCacheState.idle
+  }
+
+  io.invalidateBusy := cacheArray.io.invalidateBusy || invalidateRequest ||
+    state === OooL1InstructionCacheState.maintenanceHitLookup ||
+    state === OooL1InstructionCacheState.maintenanceInvalidate
   val idleNow = state === OooL1InstructionCacheState.idle && !invalidateRequest &&
     !cacheArray.io.invalidateBusy && !responseValid && !io.requestValid &&
-    !io.invalidate
+    !io.invalidate && !io.maintenanceRequest.valid && !maintenanceDone
   io.idle := RegNext(idleNow) init (False)
 }

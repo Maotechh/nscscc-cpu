@@ -29,7 +29,7 @@ private final class OooCommitAdapterProbe(config: OooCoreConfig) extends Compone
     val reservationBitSet = out Bool ()
     val reservationBitValue = out Bool ()
     val reservationAddressSet = out Bool ()
-    val reservationLineAddress = out Bits (28 bits)
+    val reservationLineAddress = out Bits (config.reservationAddressWidth bits)
   }
   noIoPrefix()
 
@@ -128,7 +128,7 @@ class OooCommitAdapterSpec extends AnyFunSuite {
         assert(dut.io.reservationBitSet.toBoolean)
         assert(dut.io.reservationBitValue.toBoolean)
         assert(dut.io.reservationAddressSet.toBoolean)
-        assert(dut.io.reservationLineAddress.toBigInt == BigInt("02345678", 16))
+        assert(dut.io.reservationLineAddress.toBigInt == BigInt("008d159e", 16))
 
         dut.io.sideEffectData(2) #= BigInt("23456781", 16)
         sleep(1)
@@ -148,29 +148,15 @@ class OooCommitAdapterSpec extends AnyFunSuite {
         assert(!dut.io.cacheInvalidateValid.toBoolean)
 
         dut.io.systemOperation(2) #= 17
-        dut.io.rd(2) #= 0
-        sleep(1)
-        assert(dut.io.refetchValid.toBoolean)
-        assert(dut.io.cacheInvalidateValid.toBoolean)
-
-        dut.io.rd(2) #= 1
-        sleep(1)
-        assert(dut.io.refetchValid.toBoolean)
-        assert(!dut.io.cacheInvalidateValid.toBoolean)
-        assert(dut.io.dataCacheInvalidateValid.toBoolean)
-        assert(!dut.io.dataCacheWritebackInvalidateValid.toBoolean)
-        assert(!dut.io.level2CacheInvalidateValid.toBoolean)
-
-        dut.io.rd(2) #= 2
-        sleep(1)
-        assert(!dut.io.cacheInvalidateValid.toBoolean)
-        assert(!dut.io.dataCacheInvalidateValid.toBoolean)
-        assert(dut.io.level2CacheInvalidateValid.toBoolean)
-
-        dut.io.rd(2) #= 9
-        sleep(1)
-        assert(!dut.io.dataCacheInvalidateValid.toBoolean)
-        assert(dut.io.dataCacheWritebackInvalidateValid.toBoolean)
+        for (code <- Seq(0, 1, 2, 9, 16, 17, 18)) {
+          dut.io.rd(2) #= code
+          sleep(1)
+          assert(dut.io.refetchValid.toBoolean)
+          assert(!dut.io.cacheInvalidateValid.toBoolean)
+          assert(!dut.io.dataCacheInvalidateValid.toBoolean)
+          assert(!dut.io.dataCacheWritebackInvalidateValid.toBoolean)
+          assert(!dut.io.level2CacheInvalidateValid.toBoolean)
+        }
 
         dut.io.systemOperation(2) #= 16
         sleep(1)

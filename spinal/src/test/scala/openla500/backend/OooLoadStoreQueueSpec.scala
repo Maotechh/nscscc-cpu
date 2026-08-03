@@ -28,7 +28,7 @@ private final class OooLoadStoreQueueProbe(config: OooCoreConfig) extends Compon
     val translationUncached = in Bool ()
     val translationRequestValid = out Bool ()
     val reservationValid = in Bool ()
-    val reservationLineAddress = in Bits (28 bits)
+    val reservationLineAddress = in Bits (config.reservationAddressWidth bits)
     val completionValid = out Bool ()
     val completion = out(OooCompletion(config))
     val releaseLoadValid = out Bits (config.commitWidth bits)
@@ -36,6 +36,7 @@ private final class OooLoadStoreQueueProbe(config: OooCoreConfig) extends Compon
     val commitMemory = out Vec (OooMemoryCommitObservation(config), config.commitWidth)
     val storeDrainBusy = out Bool ()
     val committedMemoryEpoch = in UInt (config.memoryEpochWidth bits)
+    val robHeadPointer = in UInt (config.robPointerWidth bits)
     val flush = in Bool ()
   }
   noIoPrefix()
@@ -82,6 +83,7 @@ private final class OooLoadStoreQueueProbe(config: OooCoreConfig) extends Compon
   lsq.io.reservationValid := io.reservationValid
   lsq.io.reservationLineAddress := io.reservationLineAddress
   lsq.io.committedMemoryEpoch := io.committedMemoryEpoch
+  lsq.io.robHeadPointer := io.robHeadPointer
   lsq.io.orderingRobPointer := 0
 
   io.aguReady := lsq.io.aguReady
@@ -112,6 +114,7 @@ class OooLoadStoreQueueSpec extends AnyFunSuite {
     dut.io.reservationValid #= false
     dut.io.reservationLineAddress #= 0
     dut.io.committedMemoryEpoch #= 0
+    dut.io.robHeadPointer #= 0
     dut.io.flush #= false
     for (lane <- 0 until config.renameWidth) {
       dut.io.allocate(lane).robPointer #= 0
@@ -512,6 +515,56 @@ class OooLoadStoreQueueSpec extends AnyFunSuite {
         assert(dut.io.completionValid.toBoolean)
         assert(dut.io.completion.robPointer.toBigInt == 0)
         assert(dut.io.completion.pdst.toBigInt == 8)
+      }
+  }
+
+  test("a data read error reports precise ADEM metadata") {
+    SimConfig.withVerilator
+      .workspacePath("target/sim-workspace-ooo-lsq")
+      .compile(new OooLoadStoreQueueProbe(config))
+      .doSim("ooo-lsq-load-read-error", 0x4c5c) { dut =>
+        dut.clockDomain.forkStimulus(period = 10)
+        clearInputs(dut)
+        dut.clockDomain.assertReset()
+        dut.clockDomain.waitSampling(2)
+        dut.clockDomain.deassertReset()
+        sample(dut)
+
+        val address = BigInt("1fe00110", 16)
+        dut.io.allocateValid #= 1
+        dut.io.allocate(0).robPointer #= 3
+        dut.io.allocate(0).isLoad #= true
+        dut.io.allocate(0).loadQueueIndex #= 0
+        sample(dut)
+        dut.io.allocateValid #= 0
+        setLoadAgu(dut, pointer = 3, address = address, loadIndex = 0, pdst = 9)
+        sample(dut)
+        dut.io.aguValid #= false
+
+        var requestCycles = 0
+        while (!dut.io.dataRequestValid.toBoolean && requestCycles < 16) {
+          sample(dut)
+          requestCycles += 1
+        }
+        assert(dut.io.dataRequestValid.toBoolean)
+        dut.io.dataRequestReady #= true
+        sample(dut)
+        dut.io.dataRequestReady #= false
+
+        dut.io.dataResponseValid #= true
+        dut.io.dataResponse.robPointer #= 3
+        dut.io.dataResponse.pdst #= 9
+        dut.io.dataResponse.error #= true
+        sample(dut)
+        dut.io.dataResponseValid #= false
+        assert(dut.io.completionValid.toBoolean)
+        assert(dut.io.completion.robPointer.toBigInt == 3)
+        assert(dut.io.completion.exception.valid.toBoolean)
+        assert(dut.io.completion.exception.ecode.toBigInt == 8)
+        assert(dut.io.completion.exception.esubcode.toBigInt == 1)
+        assert(dut.io.completion.exception.badVAddrValid.toBoolean)
+        assert(dut.io.completion.exception.badVAddr.toBigInt == address)
+        assert(!dut.io.completion.exception.tlbRefill.toBoolean)
       }
   }
 
@@ -1267,8 +1320,8 @@ class OooLoadStoreQueueSpec extends AnyFunSuite {
         sample(dut)
         dut.io.allocateValid #= 0
         dut.io.reservationValid #= true
-        dut.io.reservationLineAddress #= 0x99
-        setStoreAgu(dut, 0, 0x200, BigInt("11223344", 16), isSc = true, pdst = 11)
+        dut.io.reservationLineAddress #= 0x8
+        setStoreAgu(dut, 0, 0x240, BigInt("11223344", 16), isSc = true, pdst = 11)
         sample(dut)
         dut.io.aguValid #= false
 
@@ -1316,8 +1369,8 @@ class OooLoadStoreQueueSpec extends AnyFunSuite {
         sample(dut)
         dut.io.allocateValid #= 0
         dut.io.reservationValid #= true
-        dut.io.reservationLineAddress #= 0x20
-        setStoreAgu(dut, 0, 0x200, BigInt("55667788", 16), isSc = true, pdst = 12)
+        dut.io.reservationLineAddress #= 0x8
+        setStoreAgu(dut, 0, 0x23c, BigInt("55667788", 16), isSc = true, pdst = 12)
         sample(dut)
         dut.io.aguValid #= false
 
@@ -1343,6 +1396,253 @@ class OooLoadStoreQueueSpec extends AnyFunSuite {
         assert(dut.io.dataRequestValid.toBoolean)
         assert(dut.io.dataRequest.isWrite.toBoolean)
         assert(dut.io.dataRequest.writeData.toBigInt == BigInt("55667788", 16))
+      }
+  }
+
+  test("an uncached store completes only after its matching B response") {
+    SimConfig.withVerilator
+      .workspacePath("target/sim-workspace-ooo-lsq")
+      .compile(new OooLoadStoreQueueProbe(config))
+      .doSim("ooo-lsq-uncached-store-response", 0x4c58) { dut =>
+        dut.clockDomain.forkStimulus(period = 10)
+        clearInputs(dut)
+        dut.clockDomain.assertReset()
+        dut.clockDomain.waitSampling(2)
+        dut.clockDomain.deassertReset()
+        sample(dut)
+
+        dut.io.allocateValid #= 1
+        dut.io.allocate(0).robPointer #= 0
+        dut.io.allocate(0).isStore #= true
+        dut.io.allocate(0).storeQueueIndex #= 0
+        sample(dut)
+        dut.io.allocateValid #= 0
+        dut.io.translationUncached #= true
+        setStoreAgu(dut, 0, 0x1fe00100L, BigInt("12345678", 16))
+        sample(dut)
+        dut.io.aguValid #= false
+
+        var cycles = 0
+        while (!dut.io.dataRequestValid.toBoolean && cycles < 10) {
+          sample(dut)
+          cycles += 1
+        }
+        assert(dut.io.dataRequestValid.toBoolean)
+        assert(dut.io.dataRequest.uncached.toBoolean)
+        assert(!dut.io.completionValid.toBoolean)
+        dut.io.dataRequestReady #= true
+        sample(dut)
+        dut.io.dataRequestReady #= false
+        assert(!dut.io.dataRequestValid.toBoolean)
+        for (_ <- 0 until 3) {
+          sample(dut)
+          assert(!dut.io.completionValid.toBoolean)
+          assert(dut.io.releaseStoreValid.toBigInt == 0)
+        }
+
+        dut.io.dataResponseValid #= true
+        dut.io.dataResponse.robPointer #= 0
+        dut.io.dataResponse.recoveryEpoch #= 0
+        sample(dut)
+        dut.io.dataResponseValid #= false
+        assert(dut.io.completionValid.toBoolean)
+        assert(!dut.io.completion.exception.valid.toBoolean)
+
+        dut.io.commitValid #= 1
+        dut.io.commit(0).robPointer #= 0
+        dut.io.commit(0).isStore #= true
+        dut.io.commit(0).storeQueueIndex #= 0
+        dut.io.commit(0).retired #= true
+        sample(dut)
+        dut.io.commitValid #= 0
+        dut.io.commit(0).retired #= false
+        assert(dut.io.releaseStoreValid.toBigInt == 1)
+        sample(dut)
+        assert(dut.io.releaseStoreValid.toBigInt == 0)
+      }
+  }
+
+  test("an uncached store B error becomes precise ADEM") {
+    SimConfig.withVerilator
+      .workspacePath("target/sim-workspace-ooo-lsq")
+      .compile(new OooLoadStoreQueueProbe(config))
+      .doSim("ooo-lsq-uncached-store-error", 0x4c59) { dut =>
+        dut.clockDomain.forkStimulus(period = 10)
+        clearInputs(dut)
+        dut.clockDomain.assertReset()
+        dut.clockDomain.waitSampling(2)
+        dut.clockDomain.deassertReset()
+        sample(dut)
+
+        dut.io.allocateValid #= 1
+        dut.io.allocate(0).robPointer #= 0
+        dut.io.allocate(0).isStore #= true
+        dut.io.allocate(0).storeQueueIndex #= 0
+        sample(dut)
+        dut.io.allocateValid #= 0
+        dut.io.translationUncached #= true
+        setStoreAgu(dut, 0, 0x1fe00104L, BigInt("89abcdef", 16))
+        sample(dut)
+        dut.io.aguValid #= false
+        while (!dut.io.dataRequestValid.toBoolean) sample(dut)
+        dut.io.dataRequestReady #= true
+        sample(dut)
+        dut.io.dataRequestReady #= false
+
+        dut.io.dataResponseValid #= true
+        dut.io.dataResponse.robPointer #= 0
+        dut.io.dataResponse.error #= true
+        sample(dut)
+        dut.io.dataResponseValid #= false
+        assert(dut.io.completionValid.toBoolean)
+        assert(dut.io.completion.exception.valid.toBoolean)
+        assert(dut.io.completion.exception.ecode.toBigInt == 8)
+        assert(dut.io.completion.exception.esubcode.toBigInt == 1)
+        assert(dut.io.completion.exception.badVAddrValid.toBoolean)
+        assert(dut.io.completion.exception.badVAddr.toBigInt == BigInt("1fe00104", 16))
+      }
+  }
+
+  test("flush drains an irreversible uncached store without a stale completion") {
+    SimConfig.withVerilator
+      .workspacePath("target/sim-workspace-ooo-lsq")
+      .compile(new OooLoadStoreQueueProbe(config))
+      .doSim("ooo-lsq-uncached-store-flush", 0x4c5a) { dut =>
+        dut.clockDomain.forkStimulus(period = 10)
+        clearInputs(dut)
+        dut.clockDomain.assertReset()
+        dut.clockDomain.waitSampling(2)
+        dut.clockDomain.deassertReset()
+        sample(dut)
+
+        dut.io.allocateValid #= 1
+        dut.io.allocate(0).robPointer #= 0
+        dut.io.allocate(0).isStore #= true
+        dut.io.allocate(0).storeQueueIndex #= 0
+        sample(dut)
+        dut.io.allocateValid #= 0
+        dut.io.translationUncached #= true
+        setStoreAgu(dut, 0, 0x1fe00108L, BigInt("feedface", 16))
+        sample(dut)
+        dut.io.aguValid #= false
+        while (!dut.io.dataRequestValid.toBoolean) sample(dut)
+        dut.io.dataRequestReady #= true
+        sample(dut)
+        dut.io.dataRequestReady #= false
+
+        dut.io.flush #= true
+        sample(dut)
+        dut.io.flush #= false
+        assert(dut.io.storeDrainBusy.toBoolean)
+        dut.io.dataResponseValid #= true
+        dut.io.dataResponse.robPointer #= 0
+        sample(dut)
+        dut.io.dataResponseValid #= false
+        assert(!dut.io.completionValid.toBoolean)
+        var drainCycles = 0
+        while (dut.io.storeDrainBusy.toBoolean && drainCycles < 3) {
+          sample(dut)
+          assert(!dut.io.completionValid.toBoolean)
+          drainCycles += 1
+        }
+        assert(!dut.io.storeDrainBusy.toBoolean)
+      }
+  }
+
+  test("flush cancels an uncached store before the hierarchy accepts it") {
+    SimConfig.withVerilator
+      .workspacePath("target/sim-workspace-ooo-lsq")
+      .compile(new OooLoadStoreQueueProbe(config))
+      .doSim("ooo-lsq-uncached-store-preaccept-flush", 0x4c5d) { dut =>
+        dut.clockDomain.forkStimulus(period = 10)
+        clearInputs(dut)
+        dut.clockDomain.assertReset()
+        dut.clockDomain.waitSampling(2)
+        dut.clockDomain.deassertReset()
+        sample(dut)
+
+        dut.io.allocateValid #= 1
+        dut.io.allocate(0).robPointer #= 0
+        dut.io.allocate(0).isStore #= true
+        dut.io.allocate(0).storeQueueIndex #= 0
+        sample(dut)
+        dut.io.allocateValid #= 0
+        dut.io.translationUncached #= true
+        setStoreAgu(dut, 0, 0x1fe0010cL, BigInt("decafbad", 16))
+        sample(dut)
+        dut.io.aguValid #= false
+        while (!dut.io.dataRequestValid.toBoolean) sample(dut)
+        assert(!dut.io.dataRequestReady.toBoolean)
+
+        dut.io.flush #= true
+        sample(dut)
+        dut.io.flush #= false
+        dut.io.dataRequestReady #= true
+        for (_ <- 0 until 3) {
+          sample(dut)
+          assert(!dut.io.dataRequestValid.toBoolean)
+          assert(!dut.io.storeDrainBusy.toBoolean)
+          assert(!dut.io.completionValid.toBoolean)
+        }
+      }
+  }
+
+  test("uncached LL and SC do not create or consume a reservation") {
+    SimConfig.withVerilator
+      .workspacePath("target/sim-workspace-ooo-lsq")
+      .compile(new OooLoadStoreQueueProbe(config))
+      .doSim("ooo-lsq-uncached-atomic", 0x4c5b) { dut =>
+        dut.clockDomain.forkStimulus(period = 10)
+        clearInputs(dut)
+        dut.clockDomain.assertReset()
+        dut.clockDomain.waitSampling(2)
+        dut.clockDomain.deassertReset()
+        sample(dut)
+
+        dut.io.allocateValid #= 1
+        dut.io.allocate(0).robPointer #= 0
+        dut.io.allocate(0).isLoad #= true
+        dut.io.allocate(0).loadQueueIndex #= 0
+        sample(dut)
+        dut.io.allocateValid #= 0
+        dut.io.translationUncached #= true
+        setLoadAgu(dut, 0, 0x2340, isLl = true)
+        sample(dut)
+        dut.io.aguValid #= false
+        while (!dut.io.dataRequestValid.toBoolean) sample(dut)
+        dut.io.dataRequestReady #= true
+        sample(dut)
+        dut.io.dataRequestReady #= false
+        dut.io.dataResponseValid #= true
+        dut.io.dataResponse.robPointer #= 0
+        dut.io.dataResponse.pdst #= 7
+        sample(dut)
+        dut.io.dataResponseValid #= false
+        assert(dut.io.completionValid.toBoolean)
+        assert(dut.io.completion.sideEffectData.toBigInt == 0x2341)
+
+        dut.io.flush #= true
+        sample(dut)
+        dut.io.flush #= false
+        dut.io.allocateValid #= 1
+        dut.io.allocate(0).robPointer #= 1
+        dut.io.allocate(0).isStore #= true
+        dut.io.allocate(0).storeQueueIndex #= 0
+        sample(dut)
+        dut.io.allocateValid #= 0
+        dut.io.reservationValid #= true
+        dut.io.reservationLineAddress #= 0x8d
+        setStoreAgu(dut, 1, 0x2340, BigInt("11223344", 16), isSc = true, pdst = 9)
+        sample(dut)
+        dut.io.aguValid #= false
+        var cycles = 0
+        while (!dut.io.completionValid.toBoolean && cycles < 8) {
+          sample(dut)
+          cycles += 1
+        }
+        assert(dut.io.completionValid.toBoolean)
+        assert(dut.io.completion.data.toBigInt == 0)
+        assert(!dut.io.dataRequestValid.toBoolean)
       }
   }
 }

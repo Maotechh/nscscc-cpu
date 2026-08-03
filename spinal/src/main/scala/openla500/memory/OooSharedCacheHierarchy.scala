@@ -2,10 +2,14 @@ package openla500.memory
 
 import openla500.core._
 import spinal.core._
+import spinal.lib._
 
 object OooSharedCacheMaintenanceState extends SpinalEnum {
   val idle, kickDataL1, waitDataL1, kickDataL2, waitDataL2, kickInstructionL1,
-    waitInstructionL1 = newElement()
+    waitInstructionL1, kickExactInstructionL1, waitExactInstructionL1,
+    kickExactDataL1, waitExactDataL1, kickExactUnifiedL2, waitExactUnifiedL2,
+    respondExact, kickUncachedDataL1, waitUncachedDataL1, kickUncachedDataL2,
+    waitUncachedDataL2, forwardUncachedWrite = newElement()
 }
 
 /** Private L1I/L1D hierarchy sharing one nonblocking 64-byte-line L2 cache.
@@ -63,6 +67,8 @@ final class OooSharedCacheHierarchy(
     val instructionBarrierMaintenanceStart = in Bool ()
     val instructionBarrierMaintenanceReady = out Bool ()
     val instructionBarrierMaintenanceDone = out Bool ()
+    val cacheMaintenanceRequest = slave(Stream(OooCacheMaintenanceRequest(config)))
+    val cacheMaintenanceResponse = master(Stream(OooCacheMaintenanceResponse(config)))
     val idle = out Bool ()
   }
 
@@ -70,8 +76,15 @@ final class OooSharedCacheHierarchy(
   val l1d = new OooL1DataCache(config)
   val readMshrs = new OooSharedReadMshrRouter(config)
   val l2 = new OooL2Cache(config)
+  // L1D and uncached AXI responses are pulse interfaces. Preserve the L1D
+  // response when both sources complete on the same cycle while keeping the
+  // normal single-source path combinational.
+  val deferredDataResponseValid = RegInit(False)
+  val deferredDataResponse = Reg(OooCacheResponse(config))
   val maintenanceState = RegInit(OooSharedCacheMaintenanceState.idle)
   val maintenanceIncludesInstruction = RegInit(False)
+  val exactMaintenanceRequest = Reg(OooCacheMaintenanceRequest(config))
+  val uncachedWriteRequest = Reg(OooCacheRequest(config))
   val maintenanceSeen = RegInit(False)
   val newDataWritebackInvalidate = io.dataWritebackInvalidate && !maintenanceSeen
   when(io.dataWritebackInvalidate) { maintenanceSeen := True }
@@ -85,6 +98,43 @@ final class OooSharedCacheHierarchy(
   when(instructionBarrierMaintenanceFire) {
     maintenanceIncludesInstruction := True
     maintenanceState := OooSharedCacheMaintenanceState.kickDataL1
+  }
+  val exactMaintenanceReady = maintenanceState === OooSharedCacheMaintenanceState.idle &&
+    l1i.io.idle && l1d.io.idle && readMshrs.io.idle && l2.io.idle &&
+    !deferredDataResponseValid &&
+    !newDataWritebackInvalidate && !io.invalidate && !io.dataInvalidate &&
+    !io.level2Invalidate && !io.instructionBarrierMaintenanceStart
+  io.cacheMaintenanceRequest.ready := exactMaintenanceReady
+  val exactMaintenanceFire = io.cacheMaintenanceRequest.valid &&
+    io.cacheMaintenanceRequest.ready
+  when(exactMaintenanceFire) {
+    exactMaintenanceRequest := io.cacheMaintenanceRequest.payload
+    switch(io.cacheMaintenanceRequest.code(2 downto 0).asUInt) {
+      is(OooCacheMaintenanceTarget.instructionL1) {
+        maintenanceState := OooSharedCacheMaintenanceState.kickExactInstructionL1
+      }
+      is(OooCacheMaintenanceTarget.dataL1) {
+        maintenanceState := OooSharedCacheMaintenanceState.kickExactDataL1
+      }
+      is(OooCacheMaintenanceTarget.unifiedL2) {
+        maintenanceState := OooSharedCacheMaintenanceState.kickExactUnifiedL2
+      }
+      default {
+        maintenanceState := OooSharedCacheMaintenanceState.respondExact
+      }
+    }
+    when(io.cacheMaintenanceRequest.code(4 downto 3).asUInt === U(3, 2 bits)) {
+      maintenanceState := OooSharedCacheMaintenanceState.respondExact
+    }
+  }
+  val dataUncached = io.dataRequestValid && io.dataRequest.uncached
+  val uncachedWriteCaptureReady = exactMaintenanceReady &&
+    !io.cacheMaintenanceRequest.valid
+  val uncachedWriteCapture = dataUncached && io.dataRequest.isWrite &&
+    uncachedWriteCaptureReady
+  when(uncachedWriteCapture) {
+    uncachedWriteRequest := io.dataRequest
+    maintenanceState := OooSharedCacheMaintenanceState.kickUncachedDataL1
   }
   when(maintenanceState === OooSharedCacheMaintenanceState.kickDataL1) {
     maintenanceState := OooSharedCacheMaintenanceState.waitDataL1
@@ -118,6 +168,101 @@ final class OooSharedCacheHierarchy(
     maintenanceIncludesInstruction := False
     maintenanceState := OooSharedCacheMaintenanceState.idle
   }
+  l1i.io.maintenanceRequest.valid :=
+    maintenanceState === OooSharedCacheMaintenanceState.kickExactInstructionL1
+  l1i.io.maintenanceRequest.payload := exactMaintenanceRequest
+  when(l1i.io.maintenanceRequest.fire) {
+    maintenanceState := OooSharedCacheMaintenanceState.waitExactInstructionL1
+  }
+  when(
+    maintenanceState === OooSharedCacheMaintenanceState.waitExactInstructionL1 &&
+      l1i.io.maintenanceDone
+  ) {
+    maintenanceState := OooSharedCacheMaintenanceState.respondExact
+  }
+  val uncachedLineMaintenanceRequest = OooCacheMaintenanceRequest(config)
+  uncachedLineMaintenanceRequest.code := B(0x11, 5 bits)
+  uncachedLineMaintenanceRequest.virtualAddress := uncachedWriteRequest.virtualAddress
+  uncachedLineMaintenanceRequest.physicalAddress := uncachedWriteRequest.physicalAddress
+  uncachedLineMaintenanceRequest.robPointer := uncachedWriteRequest.robPointer
+  uncachedLineMaintenanceRequest.recoveryEpoch := uncachedWriteRequest.recoveryEpoch
+
+  val kickExactDataL1 =
+    maintenanceState === OooSharedCacheMaintenanceState.kickExactDataL1
+  val kickUncachedDataL1 =
+    maintenanceState === OooSharedCacheMaintenanceState.kickUncachedDataL1
+  l1d.io.maintenanceRequest.valid := kickExactDataL1 || kickUncachedDataL1
+  l1d.io.maintenanceRequest.payload := Mux(
+    kickUncachedDataL1,
+    uncachedLineMaintenanceRequest,
+    exactMaintenanceRequest
+  )
+  when(l1d.io.maintenanceRequest.fire) {
+    maintenanceState := Mux(
+      kickUncachedDataL1,
+      OooSharedCacheMaintenanceState.waitUncachedDataL1,
+      OooSharedCacheMaintenanceState.waitExactDataL1
+    )
+  }
+  when(
+    maintenanceState === OooSharedCacheMaintenanceState.waitExactDataL1 &&
+      l1d.io.maintenanceDone
+  ) {
+    maintenanceState := OooSharedCacheMaintenanceState.respondExact
+  }
+  when(
+    maintenanceState === OooSharedCacheMaintenanceState.waitUncachedDataL1 &&
+      l1d.io.maintenanceDone
+  ) {
+    maintenanceState := OooSharedCacheMaintenanceState.kickUncachedDataL2
+  }
+
+  val uncachedLevel2MaintenanceRequest = cloneOf(uncachedLineMaintenanceRequest)
+  uncachedLevel2MaintenanceRequest.code := B(0x12, 5 bits)
+  uncachedLevel2MaintenanceRequest.virtualAddress :=
+    uncachedLineMaintenanceRequest.virtualAddress
+  uncachedLevel2MaintenanceRequest.physicalAddress :=
+    uncachedLineMaintenanceRequest.physicalAddress
+  uncachedLevel2MaintenanceRequest.robPointer :=
+    uncachedLineMaintenanceRequest.robPointer
+  uncachedLevel2MaintenanceRequest.recoveryEpoch :=
+    uncachedLineMaintenanceRequest.recoveryEpoch
+  val kickExactUnifiedL2 =
+    maintenanceState === OooSharedCacheMaintenanceState.kickExactUnifiedL2
+  val kickUncachedDataL2 =
+    maintenanceState === OooSharedCacheMaintenanceState.kickUncachedDataL2
+  l2.io.maintenanceRequest.valid := kickExactUnifiedL2 || kickUncachedDataL2
+  l2.io.maintenanceRequest.payload := Mux(
+    kickUncachedDataL2,
+    uncachedLevel2MaintenanceRequest,
+    exactMaintenanceRequest
+  )
+  when(l2.io.maintenanceRequest.fire) {
+    maintenanceState := Mux(
+      kickUncachedDataL2,
+      OooSharedCacheMaintenanceState.waitUncachedDataL2,
+      OooSharedCacheMaintenanceState.waitExactUnifiedL2
+    )
+  }
+  when(
+    maintenanceState === OooSharedCacheMaintenanceState.waitExactUnifiedL2 &&
+      l2.io.maintenanceDone
+  ) {
+    maintenanceState := OooSharedCacheMaintenanceState.respondExact
+  }
+  when(
+    maintenanceState === OooSharedCacheMaintenanceState.waitUncachedDataL2 &&
+      l2.io.maintenanceDone
+  ) {
+    maintenanceState := OooSharedCacheMaintenanceState.forwardUncachedWrite
+  }
+  io.cacheMaintenanceResponse.valid :=
+    maintenanceState === OooSharedCacheMaintenanceState.respondExact
+  io.cacheMaintenanceResponse.robPointer := exactMaintenanceRequest.robPointer
+  io.cacheMaintenanceResponse.recoveryEpoch := exactMaintenanceRequest.recoveryEpoch
+  when(io.cacheMaintenanceResponse.fire) {
+    maintenanceState := OooSharedCacheMaintenanceState.idle
+  }
   val hierarchyMaintenanceBusy = l1i.io.invalidateBusy || l1d.io.invalidateBusy ||
     l2.io.invalidateBusy || maintenanceState =/= OooSharedCacheMaintenanceState.idle
 
@@ -141,19 +286,59 @@ final class OooSharedCacheHierarchy(
   }
   l1i.io.kill := io.instructionKill
 
-  val dataUncached = io.dataRequestValid && io.dataRequest.uncached
   l1d.io.requestValid := io.dataRequestValid && !io.dataRequest.uncached
   l1d.io.request := io.dataRequest
-  io.uncachedDataRequestValid := dataUncached && !hierarchyMaintenanceBusy
-  io.uncachedDataRequest := io.dataRequest
-  io.dataRequestReady := !hierarchyMaintenanceBusy && Mux(
-    io.dataRequest.uncached,
-    io.uncachedDataRequestReady,
-    l1d.io.requestReady
+  val forwardUncachedWrite =
+    maintenanceState === OooSharedCacheMaintenanceState.forwardUncachedWrite
+  io.uncachedDataRequestValid :=
+    (dataUncached && !io.dataRequest.isWrite && !hierarchyMaintenanceBusy) ||
+      forwardUncachedWrite
+  io.uncachedDataRequest := Mux(
+    forwardUncachedWrite,
+    uncachedWriteRequest,
+    io.dataRequest
   )
-  io.dataResponseValid := l1d.io.responseValid || io.uncachedDataResponseValid
+  io.dataRequestReady := Mux(
+    io.dataRequest.uncached,
+    Mux(
+      io.dataRequest.isWrite,
+      uncachedWriteCaptureReady,
+      !hierarchyMaintenanceBusy && io.uncachedDataRequestReady
+    ),
+    !hierarchyMaintenanceBusy && l1d.io.requestReady
+  )
+  when(forwardUncachedWrite && io.uncachedDataRequestReady) {
+    maintenanceState := OooSharedCacheMaintenanceState.idle
+  }
+  val cachedDataResponseValid = l1d.io.responseValid
+  val uncachedDataResponseValid = io.uncachedDataResponseValid
+  io.dataResponseValid := deferredDataResponseValid || cachedDataResponseValid ||
+    uncachedDataResponseValid
   io.dataResponse := l1d.io.response
-  when(io.uncachedDataResponseValid) { io.dataResponse := io.uncachedDataResponse }
+  when(uncachedDataResponseValid) { io.dataResponse := io.uncachedDataResponse }
+  when(deferredDataResponseValid) { io.dataResponse := deferredDataResponse }
+
+  when(deferredDataResponseValid) {
+    GenerationFlags.simulation {
+      assert(
+        !(cachedDataResponseValid && uncachedDataResponseValid),
+        "data response skid cannot accept two new responses while occupied"
+      )
+    }
+    when(cachedDataResponseValid || uncachedDataResponseValid) {
+      deferredDataResponse := Mux(
+        uncachedDataResponseValid,
+        io.uncachedDataResponse,
+        l1d.io.response
+      )
+    }.otherwise {
+      deferredDataResponseValid := False
+    }
+  }.elsewhen(cachedDataResponseValid && uncachedDataResponseValid) {
+    // Preserve existing uncached priority and defer the otherwise lost L1D pulse.
+    deferredDataResponseValid := True
+    deferredDataResponse := l1d.io.response
+  }
 
   l2.io.writeValid := l1d.io.lineWriteValid
   l2.io.write := l1d.io.lineWrite
@@ -191,9 +376,6 @@ final class OooSharedCacheHierarchy(
   io.memoryWrite := l2.io.memoryWrite
   l2.io.memoryWriteReady := io.memoryWriteReady
 
-  // An I-cache maintenance operation must also evict the shared copy.  Otherwise an uncached
-  // self-modifying-code store is followed by an L1I miss that simply reloads the stale L2 line.
-  // L1D remains untouched because dropping a dirty private line would lose architectural data.
   l1i.io.invalidate := io.invalidate ||
     maintenanceState === OooSharedCacheMaintenanceState.kickInstructionL1
   l1d.io.invalidate := io.dataInvalidate
@@ -216,8 +398,10 @@ final class OooSharedCacheHierarchy(
     (!io.instructionRequestValid && !io.instructionUncachedRequestValid)
   val idleNow = l1i.io.idle && l1d.io.idle && readMshrs.io.idle && l2.io.idle &&
     maintenanceState === OooSharedCacheMaintenanceState.idle &&
+    !deferredDataResponseValid &&
     instructionIngressIdle &&
     !io.dataRequestValid && !io.instructionBarrierMaintenanceStart &&
+    !io.cacheMaintenanceRequest.valid &&
     !io.invalidate && !io.dataInvalidate && !io.dataWritebackInvalidate &&
     !io.level2Invalidate
   io.idle := RegNext(idleNow) init (False)

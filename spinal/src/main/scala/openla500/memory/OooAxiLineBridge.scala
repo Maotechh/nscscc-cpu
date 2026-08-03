@@ -75,6 +75,7 @@ final class OooAxiLineBridge(
   val instructionResponseValid = RegInit(False)
   val instructionResponse = Reg(OooInstructionCacheResponse(config))
   val dataReadContext = Reg(OooCacheRequest(config))
+  val dataWriteContext = Reg(OooCacheRequest(config))
   val dataResponseValid = RegInit(False)
   val dataResponse = Reg(OooCacheResponse(config))
 
@@ -118,8 +119,7 @@ final class OooAxiLineBridge(
   val startUncachedInstruction = busIdle && uncachedOwnsIdleSlot &&
     !io.uncachedDataRequestValid &&
     io.uncachedInstructionRequestValid
-  io.uncachedDataRequestReady := startUncachedDataRead ||
-    (writeIsUncachedData && writeResponsePending && io.axi.b.valid)
+  io.uncachedDataRequestReady := startUncachedDataRead || startUncachedDataWrite
   io.uncachedInstructionRequestReady := startUncachedInstruction
   io.memoryReadReady := !readActive && !writeActive && !lineArValid &&
     !lineActive(io.memoryRead.mshrId) && !uncachedWait
@@ -310,6 +310,7 @@ final class OooAxiLineBridge(
     writeAddressValid := True
     writeBeatIndex := 0
     writeResponsePending := False
+    dataWriteContext := io.uncachedDataRequest
   }
 
   io.axi.aw.valid := writeAddressValid
@@ -344,6 +345,22 @@ final class OooAxiLineBridge(
 
   io.axi.b.ready := writeResponsePending
   when(io.axi.b.valid && io.axi.b.ready) {
+    when(writeIsUncachedData) {
+      dataResponseValid := True
+      dataResponse.robPointer := dataWriteContext.robPointer
+      dataResponse.recoveryEpoch := dataWriteContext.recoveryEpoch
+      dataResponse.pdst := dataWriteContext.pdst
+      dataResponse.data := B(0, config.xlen bits)
+      dataResponse.error := io.axi.b.payload.response.orR ||
+        io.axi.b.payload.id =/= B(3, 4 bits)
+    }.otherwise {
+      GenerationFlags.simulation {
+        assert(
+          io.axi.b.payload.id === B(1, 4 bits) && !io.axi.b.payload.response.orR,
+          "cached writeback AXI B response must be OKAY with ID 1"
+        )
+      }
+    }
     writeResponsePending := False
     writeActive := False
   }

@@ -67,7 +67,15 @@ final class OooDataCacheHierarchy(
 
   l1d.io.invalidate := io.invalidate
   l1d.io.writebackInvalidate := False
+  l1d.io.maintenanceRequest.valid := False
+  l1d.io.maintenanceRequest.payload.assignFromBits(
+    B(0, l1d.io.maintenanceRequest.payload.getBitsWidth bits)
+  )
   l2.io.invalidate := io.invalidate
   l2.io.writebackInvalidate := False
+  l2.io.maintenanceRequest.valid := False
+  l2.io.maintenanceRequest.payload.assignFromBits(
+    B(0, l2.io.maintenanceRequest.payload.getBitsWidth bits)
+  )
   io.invalidateBusy := l1d.io.invalidateBusy || l2.io.invalidateBusy
 }
