@@ -1,0 +1,79 @@
+schema_version: 1
+recorded_at: "2026-08-03T21:22:19+08:00"
+status: func58_passed_linux_pending
+blocking_endpoint: "administrator@10.20.213.157"
+
+shared_board_observation:
+  observed_at: "2026-08-03T21:02:00+08:00"
+  labagent_active_job: false
+  external_process_id: 9084
+  external_process_start: "2026-08-03T20:55:35+08:00"
+  external_process: "campus-serial-ls-run.py"
+  serial_port: COM7
+  kernel_commit: 19b2fbc28369522e24b3beb1c3f24ae18a7e5e87
+  bitstream: "soc_top-d9bab16-cpu40-uncore100-usb-ps2.bit"
+  action: "The teammate process exited before this candidate was uploaded; the queue and board process list were rechecked before programming."
+
+candidate:
+  cpu_commit: 8594150feb652bd3ef137995858cb9eb5f884580
+  generated_rtl_sha256: 434a16ea967b4af20c57ca91f6ed407218ccce1bbeeb4440a37e54af2567a924
+  chiplab_commit: c398d274812f164d387146fa7d8f612a4a1296d9
+  reason: "Close the c398 complete-system-reset n49 timer-interrupt failure after the architectural CSR reset fix in 1c33132."
+
+labagent:
+  required_version: 0.3.1
+  source_commit: 077daa6
+  deployment_status: installed_and_selftested
+  executable_sha256: c094cd545ddbc80caa602ed6237acc769f2f9db090b84a7db5e51607cc6c6d8c
+  rollback_backup: "D:\\fpga-lab\\backup\\before-0.3.1-20260803-211652"
+
+func58_package:
+  status: board_passed
+  profile: func58
+  build_kind: func
+  actual_cpu_mhz: 32.726797
+  actual_sys_mhz: 100.000000
+  actual_ddr_mhz: 200.000000
+  setup_wns_ns: 0.978
+  setup_tns_ns: 0.0
+  hold_wns_ns: 0.051
+  hold_ths_ns: 0.0
+  drc_errors: 0
+  drc_warnings: 24
+  bitstream_sha256: acab927b8e35ea941fc8aa4a0f4d0cf30b042221657dd798842f31045cda25b0
+  probes_sha256: 3e36db904e602bae47d72e9f8b54a553903de4ccf5ff72ce88942c87280dfcdb
+  package_path: "${WORKSPACE}/build/board-packages/cpu_8594150_c398_func/latest-func.fpgajob"
+  package_sha256: 93378d04f3fa8519ecc03c63de168f556e1366403185a4547f9a8c191bad2b6d
+  metrics_sha256: cfe3d92ec06a2a3be905484c3876e7047d9de8b8bf46a862a2ab387ace26590f
+  board_job_id: 20260803-132008-97f48faa
+  board_started_at: "2026-08-03T13:20:41.3570925Z"
+  board_finished_at: "2026-08-03T13:22:19.89708Z"
+  board_protocol: nscscc-system-reset-v1
+  board_verdict: passed
+  board_summary_sha256: 30e6ce8c36736bad30ff414e0021023e87e547eb702300e0f1100141da43aa1b
+  func_vio_sha256: 0d4a66693e581a2e92f0bb59241bdaad54b5a8a2d5c04eb69c343674057b6681
+  programming_summary_sha256: 783bb11dcf94cf6f7d672173bf6c62a9af467589d03e268a07b5ce78b3f6cee4
+  result_sha256: 9374523af22d43d54f3c8353b1abd1c170668b1cce75c3fcf3c14ebef7a00cdb
+  evidence_path: "${WORKSPACE}/build/board-results/20260803-132008-97f48faa"
+  observed_seeds:
+    - "F0 reached 3A00003A with led0=1 and led1=1."
+    - "FF reached 3A00003A with led0=1 and led1=1."
+    - "A5 reached 3A00003A with led0=1 and led1=1."
+
+follow_up_sequence:
+  - "Only after func58 closure, run the Linux progress job and retain UART plus the last committed PC."
+  - "Run serialized perf20 only from a separate 100 MHz timing-closed perf package."
+
+perf100_package:
+  status: diagnostic_not_board_candidate
+  reason: "The latest clean c398 perf implementation has negative setup slack."
+  actual_cpu_mhz: 100.000000
+  setup_wns_ns: -0.225
+  setup_timing_met: false
+  bitstream_sha256: ad8b87454664f5a42df8ed88342beae14df528faf0a970a82ed41ea1d134cf6f
+  required_before_board: "Repair and re-run a clean c398 100 MHz complete-SoC implementation with nonnegative setup and hold slack."
+
+evidence_boundary:
+  - "The earlier shared-board occupancy was infrastructure state; this later terminal job is independent board evidence."
+  - "The func package can validate function and n49 reset behavior, but its 32.726797 MHz clock is not 100 MHz evidence."
+  - "No existing da71fd3/main board result transfers to this RTL commit."
