@@ -664,8 +664,9 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
     observation.storeData := B(0, config.xlen bits)
     observation.storeByteMask := B(0, config.xlen / 8 bits)
 
-    val observationValid = !io.flush && io.commit(lane).retired &&
-      !io.commit(lane).exception.valid
+    // A redirect may flush younger work in the same cycle that older instructions retire.
+    // Those retiring memory operations remain architectural and must still be observed.
+    val observationValid = io.commit(lane).retired && !io.commit(lane).exception.valid
     when(observationValid && loadCommitMatch) {
       observation.physicalAddress := loadEntry.physicalAddress
       observation.virtualAddress := loadEntry.virtualAddress

@@ -197,7 +197,8 @@ class OooLoadStoreQueueSpec extends AnyFunSuite {
         dut.io.commit(0).exception.valid #= false
         dut.io.flush #= true
         sleep(1)
-        assert(dut.io.commitMemory(0).loadInstructionMask.toBigInt == 0)
+        assert(dut.io.commitMemory(0).loadInstructionMask.toBigInt == 1)
+        assert(dut.io.commitMemory(0).physicalAddress.toBigInt == 0x1fe001e5L)
         dut.io.flush #= false
         dut.io.commit(0).robPointer #= 6
         sleep(1)
