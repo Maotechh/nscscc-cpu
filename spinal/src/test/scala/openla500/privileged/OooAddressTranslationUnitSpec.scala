@@ -71,10 +71,11 @@ class OooAddressTranslationUnitSpec extends AnyFunSuite {
       ppn1: BigInt,
       asid: Int,
       low0Flags: BigInt = 0x13,
-      low1Flags: BigInt = 0x13
+      low1Flags: BigInt = 0x13,
+      pageSize: Int = 12
   ): Unit = {
     dut.io.csrAsid #= asid
-    dut.io.csrTlbIndex #= ((BigInt(12) << 24) | index)
+    dut.io.csrTlbIndex #= ((BigInt(pageSize) << 24) | index)
     dut.io.csrTlbEntryHigh #= ((virtualAddress >> 13) << 13)
     dut.io.csrTlbEntryLow0 #= ((ppn0 << 8) | low0Flags)
     dut.io.csrTlbEntryLow1 #= ((ppn1 << 8) | low1Flags)
@@ -386,6 +387,130 @@ class OooAddressTranslationUnitSpec extends AnyFunSuite {
         dut.io.csrPrivilege #= 3
         assertInstructionFault(instructionPpiAddress, ecode = 7)
         assertDataFault(dataPpiAddress, isWrite = false, ecode = 7)
+      }
+  }
+
+  test("PS=21 translation selects each half and concatenates PPN[19:9] with VA[20:0]") {
+    SimConfig.withVerilator
+      .workspacePath("target/sim-workspace-ooo-address-translation")
+      .compile(new OooAddressTranslationUnit(config))
+      .doSim("ooo-address-translation-ps21", 0x4c78) { dut =>
+        dut.domain.forkStimulus(period = 10)
+        clearInputs(dut)
+        dut.domain.assertReset()
+        dut.domain.waitSampling(2)
+        dut.domain.deassertReset()
+        sample(dut)
+
+        dut.io.csrDa #= false
+        dut.io.csrPg #= true
+        val asid = 0x2a
+        val evenAddress = BigInt("00401234", 16)
+        val oddAddress = evenAddress + (BigInt(1) << 21)
+        val ppn0 = BigInt("52345", 16) // PPN[9] = 1
+        val ppn1 = BigInt("1a812", 16) // PPN[9] = 0; reverse and non-contiguous
+        val evenFlags = tlbLow(0, memoryAttribute = 2, privilege = 0, dirty = true) & 0xff
+        val oddFlags = tlbLow(0, memoryAttribute = 0, privilege = 0, dirty = false) & 0xff
+
+        writeTlb(
+          dut,
+          index = 7,
+          virtualAddress = evenAddress,
+          ppn0 = ppn0,
+          ppn1 = ppn1,
+          asid = asid,
+          pageSize = 21,
+          low0Flags = evenFlags,
+          low1Flags = oddFlags
+        )
+
+        dut.io.csrTlbIndex #= 7
+        sleep(1)
+        assert(dut.io.tlbReadEntryHigh.toBigInt == ((evenAddress >> 13) << 13))
+        assert(((dut.io.tlbReadEntryLow0.toBigInt >> 8) & 0xfffff) == ppn0)
+        assert(((dut.io.tlbReadEntryLow1.toBigInt >> 8) & 0xfffff) == ppn1)
+        assert(((dut.io.tlbReadIndex.toBigInt >> 24) & 0x3f) == 21)
+        assert(dut.io.tlbReadAsid.toBigInt == asid)
+
+        def expectedPhysical(ppn: BigInt, address: BigInt): BigInt =
+          ((ppn >> 9) << 21) | (address & ((BigInt(1) << 21) - 1))
+
+        dut.io.csrPrivilege #= 0
+        translateInstruction(dut, evenAddress)
+        assert(!dut.io.instructionResponse.exception.valid.toBoolean)
+        assert(
+          dut.io.instructionResponse.physicalAddress.toBigInt ==
+            expectedPhysical(ppn0, evenAddress)
+        )
+        assert(!dut.io.instructionResponse.uncached.toBoolean)
+        sample(dut)
+
+        translateInstruction(dut, oddAddress)
+        assert(!dut.io.instructionResponse.exception.valid.toBoolean)
+        assert(
+          dut.io.instructionResponse.physicalAddress.toBigInt ==
+            expectedPhysical(ppn1, oddAddress)
+        )
+        assert(dut.io.instructionResponse.uncached.toBoolean)
+        sample(dut)
+
+        translateData(dut, evenAddress, isWrite = false)
+        assert(!dut.io.dataResponse.exception.valid.toBoolean)
+        assert(
+          dut.io.dataResponse.physicalAddress.toBigInt == expectedPhysical(ppn0, evenAddress)
+        )
+        assert(!dut.io.dataResponse.uncached.toBoolean)
+        sample(dut)
+
+        translateData(dut, oddAddress, isWrite = false)
+        assert(!dut.io.dataResponse.exception.valid.toBoolean)
+        assert(
+          dut.io.dataResponse.physicalAddress.toBigInt == expectedPhysical(ppn1, oddAddress)
+        )
+        assert(dut.io.dataResponse.uncached.toBoolean)
+        sample(dut)
+
+        translateData(dut, oddAddress, isWrite = true)
+        assert(dut.io.dataResponse.exception.valid.toBoolean)
+        assert(dut.io.dataResponse.exception.ecode.toBigInt == 4)
+        assert(dut.io.dataResponse.exception.badVAddr.toBigInt == oddAddress)
+        sample(dut)
+
+        dut.io.csrPrivilege #= 3
+        translateInstruction(dut, evenAddress)
+        assert(dut.io.instructionResponse.exception.valid.toBoolean)
+        assert(dut.io.instructionResponse.exception.ecode.toBigInt == 7)
+        assert(dut.io.instructionResponse.exception.badVAddr.toBigInt == evenAddress)
+        sample(dut)
+
+        dut.io.csrPrivilege #= 0
+        dut.io.tlbInvalidateAsid #= asid
+        dut.io.tlbInvalidateVpn #= (oddAddress >> 13)
+        dut.io.tlbInvalidateOperation #= 6
+        dut.io.tlbInvalidateValid #= true
+        sample(dut)
+        dut.io.tlbInvalidateValid #= false
+        translateData(dut, evenAddress, isWrite = false)
+        assert(dut.io.dataResponse.exception.valid.toBoolean)
+        assert(dut.io.dataResponse.exception.ecode.toBigInt == 0x3f)
+        assert(dut.io.dataResponse.exception.tlbRefill.toBoolean)
+        sample(dut)
+
+        dut.io.csrTlbIndex #= (BigInt(21) << 24)
+        dut.io.csrTlbEntryHigh #= ((evenAddress >> 13) << 13)
+        dut.io.csrTlbEntryLow0 #= ((ppn0 << 8) | evenFlags)
+        dut.io.csrTlbEntryLow1 #= ((ppn1 << 8) | oddFlags)
+        dut.io.tlbRandomIndex #= 11
+        dut.io.tlbFillValid #= true
+        sample(dut)
+        dut.io.tlbFillValid #= false
+        translateInstruction(dut, oddAddress)
+        assert(!dut.io.instructionResponse.exception.valid.toBoolean)
+        assert(
+          dut.io.instructionResponse.physicalAddress.toBigInt ==
+            expectedPhysical(ppn1, oddAddress)
+        )
+        assert(dut.io.instructionResponse.uncached.toBoolean)
       }
   }
 }

@@ -152,7 +152,7 @@ final class OooAddressTranslationUnit(
       val physicalAddress = UInt(config.xlen bits)
       physicalAddress := (lookup.ppn ## address(11 downto 0).asBits).asUInt
       when(lookup.pageSize =/= B(12, 6 bits)) {
-        physicalAddress := (lookup.ppn(19 downto 10) ## address(21 downto 0).asBits).asUInt
+        physicalAddress := (lookup.ppn(19 downto 9) ## address(20 downto 0).asBits).asUInt
       }
       physicalAddress
     }
