@@ -90,7 +90,7 @@ final case class OooCoreConfig(
     enableDirectWakeupEchoSuppression: Boolean = true,
     enableHeadCompletionCommitBypass: Boolean = true,
     enableDirectDmwPretranslation: Boolean = true,
-    enableLoadCompletionEarlyWakeup: Boolean = true,
+    enableLoadCompletionEarlyWakeup: Boolean = false,
     enableL2WriteBack: Boolean = true,
     resetVector: BigInt = BigInt("1c000000", 16),
     instructionCache: OooCacheGeometry = OooCacheGeometry(ways = 2, sets = 128, lineBytes = 64),
