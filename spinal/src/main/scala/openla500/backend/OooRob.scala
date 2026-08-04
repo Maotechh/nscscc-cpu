@@ -280,13 +280,16 @@ final class OooRob(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommit) e
     }
   }
 
+  val headCompletionBypass = Bool()
+  val headCompletionBypassResult = Bits(config.xlen bits)
   val canCommit = Vec(Bool(), config.commitWidth)
   val stopAfter = Vec(Bool(), config.commitWidth)
   for (lane <- 0 until config.commitWidth) {
     stopAfter(lane) := candidates(lane).exception.valid ||
       candidates(lane).state.serializing || candidates(lane).state.branchMispredict
     if (lane == 0) {
-      canCommit(lane) := candidates(lane).state.valid && candidates(lane).state.complete &&
+      canCommit(lane) := candidates(lane).state.valid &&
+        (candidates(lane).state.complete || headCompletionBypass) &&
         candidates(lane).state.payloadReady
     } else {
       canCommit(lane) := candidates(lane).state.valid && candidates(lane).state.complete &&
@@ -300,7 +303,15 @@ final class OooRob(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommit) e
     io.commit(lane).pdst := candidates(lane).payload.pdst
     io.commit(lane).oldPdst := candidates(lane).payload.oldPdst
     io.commit(lane).writesGpr := candidates(lane).payload.writesGpr
-    io.commit(lane).result := candidates(lane).state.result
+    if (lane == 0) {
+      io.commit(lane).result := Mux(
+        headCompletionBypass,
+        headCompletionBypassResult,
+        candidates(lane).state.result
+      )
+    } else {
+      io.commit(lane).result := candidates(lane).state.result
+    }
     io.commit(lane).systemOperation := candidates(lane).payload.systemOperation
     io.commit(lane).csrAddress := candidates(lane).payload.csrAddress
     io.commit(lane).csrWrite := candidates(lane).payload.csrWrite
@@ -433,6 +444,29 @@ final class OooRob(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommit) e
         }
       }
     }
+  }
+
+  if (config.enableHeadCompletionCommitBypass) {
+    // Only ordinary current-epoch head completions bypass the final entry.complete
+    // register. Branches, serializing/system operations, and either decoded or
+    // completion exceptions retain the existing precise retirement boundary.
+    val headCompletionBypassMask = Bits(config.writebackWidth bits)
+    for (lane <- 0 until config.writebackWidth) {
+      headCompletionBypassMask(lane) := stagedCompletionValid(lane) &&
+        stagedCompletionCurrent(lane) &&
+        stagedRobPointer(lane) === candidates(0).state.pointer &&
+        candidates(0).state.valid && !candidates(0).state.complete &&
+        !stagedException(lane).valid && !stagedBranchResolved(lane)
+    }
+    headCompletionBypass := !io.flush && candidates(0).state.payloadReady &&
+      !candidates(0).exception.valid && !candidates(0).state.serializing &&
+      !candidates(0).payload.isBranch &&
+      candidates(0).payload.systemOperation === OooSystemOp.none &&
+      headCompletionBypassMask.orR
+    headCompletionBypassResult := MuxOH(headCompletionBypassMask, stagedResult)
+  } else {
+    headCompletionBypass := False
+    headCompletionBypassResult := 0
   }
 
   when(io.flush) {

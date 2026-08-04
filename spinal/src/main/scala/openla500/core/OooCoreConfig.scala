@@ -88,6 +88,7 @@ final case class OooCoreConfig(
     enableFastStoreCompletion: Boolean = true,
     enableStoreTranslationLookahead: Boolean = true,
     enableDirectWakeupEchoSuppression: Boolean = true,
+    enableHeadCompletionCommitBypass: Boolean = true,
     enableL2WriteBack: Boolean = true,
     resetVector: BigInt = BigInt("1c000000", 16),
     instructionCache: OooCacheGeometry = OooCacheGeometry(ways = 2, sets = 128, lineBytes = 64),
