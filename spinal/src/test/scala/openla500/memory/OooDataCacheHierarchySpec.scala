@@ -290,24 +290,14 @@ class OooDataCacheHierarchySpec extends AnyFunSuite {
 
         loadFromMemory(dut, 0x1100, BigInt("2222000000000000", 16), robPointer = 5)
         acceptRequest(dut, 0x2100, isWrite = false, 0, 0xf, robPointer = 6, pdst = 7)
-        var writeCycles = 0
-        while (!dut.io.memoryWriteValid.toBoolean && writeCycles < 30) {
+        var refillWaitCycles = 0
+        while (!dut.io.memoryReadValid.toBoolean && refillWaitCycles < 30) {
+          assert(!dut.io.memoryWriteValid.toBoolean)
           sample(dut)
-          writeCycles += 1
+          refillWaitCycles += 1
         }
-        assert(dut.io.memoryWriteValid.toBoolean)
-        assert(dut.io.memoryWrite.lineAddress.toBigInt == 0x0100)
-        assert(
-          (dut.io.memoryWrite.data.toBigInt & BigInt("ffffffffffffffff", 16)) ==
-            BigInt("11110000deadbeef", 16)
-        )
-        assert(
-          dut.io.memoryWrite.byteMask.toBigInt ==
-            (BigInt(1) << OooCacheContract.LineBytes) - 1
-        )
-        dut.io.memoryWriteReady #= true
-        sample(dut)
-        dut.io.memoryWriteReady #= false
+        assert(dut.io.memoryReadValid.toBoolean)
+        assert(!dut.io.memoryWriteValid.toBoolean)
         val refillResponse =
           serviceMemoryRefill(dut, 0x2100, beat => BigInt("3333000000000000", 16) + beat)
         assert(refillResponse._1 == 0)
