@@ -23,12 +23,16 @@ private final class OooBackendDispatchProbe(config: OooCoreConfig) extends Compo
     val issueSource2 = out Vec (Bits(config.xlen bits), config.executionWidth)
     val issueReady = in Bits (config.executionWidth bits)
     val completionValid = in Bits (config.writebackWidth bits)
+    val completionLane = in UInt (log2Up(config.writebackWidth) bits)
     val completionRobPointer = in UInt (config.robPointerWidth bits)
     val completionPdst = in UInt (config.physicalRegIndexWidth bits)
     val completionWritesPdst = in Bool ()
     val completionData = in Bits (config.xlen bits)
     val directWakeupValid = in Bool ()
     val directWakeupPdst = in UInt (config.physicalRegIndexWidth bits)
+    val loadWakeupValid = in Bool ()
+    val loadWakeupPdst = in UInt (config.physicalRegIndexWidth bits)
+    val loadWakeupRecoveryEpoch = in UInt (config.recoveryEpochWidth bits)
     val multiplyWakeupValid = in Bool ()
     val multiplyWakeupPdst = in UInt (config.physicalRegIndexWidth bits)
     val multiplyForwardValid = in Bool ()
@@ -88,33 +92,38 @@ private final class OooBackendDispatchProbe(config: OooCoreConfig) extends Compo
       backend.io.directWakeupPdst(lane) := 0
     }
   }
+  backend.io.loadWakeupValid := io.loadWakeupValid
+  backend.io.loadWakeupPdst := io.loadWakeupPdst
+  backend.io.loadWakeupRecoveryEpoch := io.loadWakeupRecoveryEpoch
   backend.io.resultForwardValid := io.multiplyForwardValid
   backend.io.resultForwardPdst := io.multiplyForwardPdst
   backend.io.resultForwardData := io.multiplyForwardData
   backend.io.storeDataReady := io.storeDataReady
-  for (lane <- 1 until config.writebackWidth) {
+  for (lane <- 0 until config.writebackWidth) {
     backend.io
       .completion(lane)
       .assignFromBits(
         B(0, backend.io.completion(lane).getBitsWidth bits)
       )
   }
-  backend.io.completion(0).robPointer := io.completionRobPointer
-  backend.io.completion(0).recoveryEpoch := 0
-  backend.io.completion(0).pdst := io.completionPdst
-  backend.io.completion(0).writesPdst := io.completionWritesPdst
-  backend.io.completion(0).data := io.completionData
-  backend.io.completion(0).sideEffectData := 0
-  backend.io.completion(0).exception.valid := False
-  backend.io.completion(0).exception.ecode := 0
-  backend.io.completion(0).exception.esubcode := 0
-  backend.io.completion(0).exception.badVAddrValid := False
-  backend.io.completion(0).exception.badVAddr := 0
-  backend.io.completion(0).exception.tlbRefill := False
-  backend.io.completion(0).branchResolved := False
-  backend.io.completion(0).branchTaken := False
-  backend.io.completion(0).branchTarget := 0
-  backend.io.completion(0).branchMispredict := False
+  val completionPayload = OooCompletion(config)
+  completionPayload.robPointer := io.completionRobPointer
+  completionPayload.recoveryEpoch := 0
+  completionPayload.pdst := io.completionPdst
+  completionPayload.writesPdst := io.completionWritesPdst
+  completionPayload.data := io.completionData
+  completionPayload.sideEffectData := 0
+  completionPayload.exception.valid := False
+  completionPayload.exception.ecode := 0
+  completionPayload.exception.esubcode := 0
+  completionPayload.exception.badVAddrValid := False
+  completionPayload.exception.badVAddr := 0
+  completionPayload.exception.tlbRefill := False
+  completionPayload.branchResolved := False
+  completionPayload.branchTaken := False
+  completionPayload.branchTarget := 0
+  completionPayload.branchMispredict := False
+  backend.io.completion(io.completionLane) := completionPayload
   backend.io.releaseLoadValid := B(0, config.commitWidth bits)
   backend.io.releaseStoreValid := B(0, config.commitWidth bits)
   backend.io.debugReadAddress := 0
@@ -155,12 +164,16 @@ class OooBackendDispatchSpec extends AnyFunSuite {
     dut.io.inputValid #= 0
     dut.io.issueReady #= 0
     dut.io.completionValid #= 0
+    dut.io.completionLane #= 0
     dut.io.completionRobPointer #= 0
     dut.io.completionPdst #= 0
     dut.io.completionWritesPdst #= false
     dut.io.completionData #= 0
     dut.io.directWakeupValid #= false
     dut.io.directWakeupPdst #= 0
+    dut.io.loadWakeupValid #= false
+    dut.io.loadWakeupPdst #= 0
+    dut.io.loadWakeupRecoveryEpoch #= 0
     dut.io.multiplyWakeupValid #= false
     dut.io.multiplyWakeupPdst #= 0
     dut.io.multiplyForwardValid #= false
@@ -887,6 +900,92 @@ class OooBackendDispatchSpec extends AnyFunSuite {
                 dut.io.issuePc(port).toBigInt == secondConsumerPc
             })
           }
+        }
+    }
+  }
+
+  test("qualified LSQ load wakeup reaches a dependent through the PRF write-through") {
+    for ((earlyWake, name, seed, wakeEpoch) <- Seq(
+        (false, "registered", 0x4c70, 0),
+        (true, "early", 0x4c71, 0),
+        (true, "stale-epoch", 0x4c72, 1)
+      )) {
+      val testConfig = config.copy(enableLoadCompletionEarlyWakeup = earlyWake)
+      SimConfig.withVerilator
+        .workspacePath(s"target/sim-workspace-ooo-backend-load-wakeup-$name")
+        .compile(new OooBackendDispatchProbe(testConfig))
+        .doSim(s"ooo-backend-load-wakeup-$name", seed) { dut =>
+          dut.clockDomain.forkStimulus(period = 10)
+          clearControl(dut)
+          dut.io.issueReady #= 0xf
+          dut.clockDomain.assertReset()
+          dut.clockDomain.waitSampling(2)
+          dut.clockDomain.deassertReset()
+          dut.clockDomain.waitSampling()
+
+          val producerPc = BigInt("1c000000", 16)
+          val consumerPc = producerPc + 4
+          dut.io.inputValid #= 3
+          dut.io.pc(0) #= producerPc
+          dut.io.instruction(0) #= BigInt("2880000d", 16) // ld.w r13,r0,0
+          dut.io.pc(1) #= consumerPc
+          dut.io.instruction(1) #= BigInt("028005ae", 16) // addi.w r14,r13,1
+          dut.clockDomain.waitSampling()
+          dut.io.inputValid #= 0
+
+          var producerPdst = BigInt(0)
+          var producerRob = BigInt(0)
+          var cycles = 0
+          while (producerPdst == 0 && cycles < 24) {
+            dut.clockDomain.waitSampling()
+            sleep(1)
+            for (port <- 0 until testConfig.executionWidth) {
+              if (
+                (dut.io.issueValid.toBigInt & (BigInt(1) << port)) != 0 &&
+                  dut.io.issuePc(port).toBigInt == producerPc
+              ) {
+                producerPdst = dut.io.issuePdst(port).toBigInt
+                producerRob = dut.io.issueRobPointer(port).toBigInt
+              }
+            }
+            cycles += 1
+          }
+          assert(producerPdst != 0)
+
+          dut.io.completionValid #= BigInt(1) << loadStorePort
+          dut.io.completionLane #= loadStorePort
+          dut.io.completionRobPointer #= producerRob
+          dut.io.completionPdst #= producerPdst
+          dut.io.completionWritesPdst #= true
+          dut.io.completionData #= BigInt("12345678", 16)
+          dut.io.loadWakeupValid #= true
+          dut.io.loadWakeupPdst #= producerPdst
+          dut.io.loadWakeupRecoveryEpoch #= wakeEpoch
+          dut.clockDomain.waitSampling()
+          dut.io.completionValid #= 0
+          dut.io.loadWakeupValid #= false
+
+          var consumerIssueCycle = -1
+          for (cycle <- 1 to 5 if consumerIssueCycle < 0) {
+            dut.clockDomain.waitSampling()
+            sleep(1)
+            if ((0 until testConfig.executionWidth).exists { port =>
+                (dut.io.issueValid.toBigInt & (BigInt(1) << port)) != 0 &&
+                  dut.io.issuePc(port).toBigInt == consumerPc
+              }) {
+              consumerIssueCycle = cycle
+              val consumerPort = (0 until testConfig.executionWidth).find { port =>
+                (dut.io.issueValid.toBigInt & (BigInt(1) << port)) != 0 &&
+                  dut.io.issuePc(port).toBigInt == consumerPc
+              }.get
+              assert(dut.io.issueSource1(consumerPort).toBigInt == BigInt("12345678", 16))
+            }
+          }
+          val expectedCycle = if (earlyWake && wakeEpoch == 0) 1 else 2
+          assert(
+            consumerIssueCycle == expectedCycle,
+            s"$name expected dependent issue at $expectedCycle, got $consumerIssueCycle"
+          )
         }
     }
   }

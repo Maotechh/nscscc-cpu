@@ -38,6 +38,9 @@ private final class OooLoadStoreQueueProbe(config: OooCoreConfig) extends Compon
     val reservationLineAddress = in Bits (config.reservationAddressWidth bits)
     val completionValid = out Bool ()
     val completion = out(OooCompletion(config))
+    val loadWakeupValid = out Bool ()
+    val loadWakeupPdst = out UInt (config.physicalRegIndexWidth bits)
+    val loadWakeupRecoveryEpoch = out UInt (config.recoveryEpochWidth bits)
     val releaseLoadValid = out Bits (config.commitWidth bits)
     val releaseStoreValid = out Bits (config.commitWidth bits)
     val commitMemory = out Vec (OooMemoryCommitObservation(config), config.commitWidth)
@@ -107,6 +110,9 @@ private final class OooLoadStoreQueueProbe(config: OooCoreConfig) extends Compon
   io.dataRequest := lsq.io.dataRequest
   io.completionValid := lsq.io.completionValid
   io.completion := lsq.io.completion
+  io.loadWakeupValid := lsq.io.loadWakeupValid
+  io.loadWakeupPdst := lsq.io.loadWakeupPdst
+  io.loadWakeupRecoveryEpoch := lsq.io.loadWakeupRecoveryEpoch
   io.releaseLoadValid := lsq.io.releaseLoadValid
   io.releaseStoreValid := lsq.io.releaseStoreValid
   io.commitMemory := lsq.io.commitObservation
@@ -736,6 +742,9 @@ class OooLoadStoreQueueSpec extends AnyFunSuite {
         assert(dut.io.completionValid.toBoolean)
         assert(dut.io.completion.robPointer.toBigInt == 1)
         assert(dut.io.completion.pdst.toBigInt == 9)
+        assert(dut.io.loadWakeupValid.toBoolean)
+        assert(dut.io.loadWakeupPdst.toBigInt == 9)
+        assert(dut.io.loadWakeupRecoveryEpoch.toBigInt == 0)
 
         dut.io.dataResponse.robPointer #= 0
         dut.io.dataResponse.data #= BigInt("01010101", 16)
@@ -743,6 +752,9 @@ class OooLoadStoreQueueSpec extends AnyFunSuite {
         assert(dut.io.completionValid.toBoolean)
         assert(dut.io.completion.robPointer.toBigInt == 0)
         assert(dut.io.completion.pdst.toBigInt == 8)
+        assert(dut.io.loadWakeupValid.toBoolean)
+        assert(dut.io.loadWakeupPdst.toBigInt == 8)
+        assert(dut.io.loadWakeupRecoveryEpoch.toBigInt == 0)
       }
   }
 
@@ -793,6 +805,7 @@ class OooLoadStoreQueueSpec extends AnyFunSuite {
         assert(dut.io.completion.exception.badVAddrValid.toBoolean)
         assert(dut.io.completion.exception.badVAddr.toBigInt == address)
         assert(!dut.io.completion.exception.tlbRefill.toBoolean)
+        assert(!dut.io.loadWakeupValid.toBoolean)
       }
   }
 
@@ -1000,6 +1013,7 @@ class OooLoadStoreQueueSpec extends AnyFunSuite {
         sample(dut)
         dut.io.dataResponseValid #= false
         assert(!dut.io.completionValid.toBoolean)
+        assert(!dut.io.loadWakeupValid.toBoolean)
 
         dut.io.dataResponseValid #= true
         dut.io.dataResponse.recoveryEpoch #= 4
@@ -1011,6 +1025,9 @@ class OooLoadStoreQueueSpec extends AnyFunSuite {
         assert(dut.io.completion.recoveryEpoch.toBigInt == 4)
         assert(dut.io.completion.pdst.toBigInt == 8)
         assert(dut.io.completion.data.toBigInt == BigInt("22222222", 16))
+        assert(dut.io.loadWakeupValid.toBoolean)
+        assert(dut.io.loadWakeupPdst.toBigInt == 8)
+        assert(dut.io.loadWakeupRecoveryEpoch.toBigInt == 4)
       }
   }
 
@@ -1342,6 +1359,9 @@ class OooLoadStoreQueueSpec extends AnyFunSuite {
         assert(dut.io.completion.robPointer.toBigInt == 1)
         assert(dut.io.completion.pdst.toBigInt == 7)
         assert(dut.io.completion.data.toBigInt == BigInt("12345678", 16))
+        assert(dut.io.loadWakeupValid.toBoolean)
+        assert(dut.io.loadWakeupPdst.toBigInt == 7)
+        assert(dut.io.loadWakeupRecoveryEpoch.toBigInt == 0)
         assert(!dut.io.dataRequestValid.toBoolean)
       }
   }
@@ -2342,6 +2362,7 @@ class OooLoadStoreQueueSpec extends AnyFunSuite {
         dut.io.translationResponseEnable #= false
         dut.io.translationCancelled #= false
         assert(!dut.io.completionValid.toBoolean)
+        assert(!dut.io.loadWakeupValid.toBoolean)
         assert(!dut.io.dataRequestValid.toBoolean)
 
         var cycles = 0

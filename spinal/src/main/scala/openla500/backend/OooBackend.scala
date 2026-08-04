@@ -26,6 +26,9 @@ final class OooBackend(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommi
     val directWakeupValid = in Bits (config.executionWidth bits)
     val directWakeupPdst =
       in Vec (UInt(config.physicalRegIndexWidth bits), config.executionWidth)
+    val loadWakeupValid = in Bool ()
+    val loadWakeupPdst = in UInt (config.physicalRegIndexWidth bits)
+    val loadWakeupRecoveryEpoch = in UInt (config.recoveryEpochWidth bits)
     val resultForwardValid = in Bool ()
     val resultForwardPdst = in UInt (config.physicalRegIndexWidth bits)
     val resultForwardData = in Bits (config.xlen bits)
@@ -321,6 +324,36 @@ final class OooBackend(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommi
         selectedRegisteredWake,
         rob.io.completionWakeupPdst(write),
         io.directWakeupPdst(write)
+      )
+    } else if (write == loadStorePort) {
+      val registeredWake = rob.io.completionWakeupCandidateValid(write)
+      val loadWake = if (config.enableLoadCompletionEarlyWakeup) {
+        io.loadWakeupValid && io.loadWakeupPdst =/= 0 &&
+          io.loadWakeupRecoveryEpoch === recoveryEpoch
+      } else {
+        False
+      }
+      val selectedRegisteredWake = if (
+        config.enableDirectWakeupEchoSuppression && config.enableLoadCompletionEarlyWakeup
+      ) {
+        val previousLoadBroadcast = Reg(Bool()) init (False)
+        val registeredIsEcho = registeredWake && previousLoadBroadcast
+        val selected = registeredWake && !registeredIsEcho
+        val loadBroadcast = loadWake && !selected
+        when(io.flush) {
+          previousLoadBroadcast := False
+        }.otherwise {
+          previousLoadBroadcast := loadBroadcast
+        }
+        selected
+      } else {
+        registeredWake
+      }
+      earlyWakeupValid(write) := loadWake || selectedRegisteredWake
+      earlyWakeupPdst(write) := Mux(
+        selectedRegisteredWake,
+        rob.io.completionWakeupPdst(write),
+        io.loadWakeupPdst
       )
     } else {
       earlyWakeupValid(write) := rob.io.completionWakeupCandidateValid(write)

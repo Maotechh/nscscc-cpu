@@ -199,6 +199,9 @@ final class OooBackendWithExecution(
   backend.io.completion := execution.io.completion
   backend.io.directWakeupValid := execution.io.directWakeupValid
   backend.io.directWakeupPdst := execution.io.directWakeupPdst
+  backend.io.loadWakeupValid := loadStoreQueue.io.loadWakeupValid
+  backend.io.loadWakeupPdst := loadStoreQueue.io.loadWakeupPdst
+  backend.io.loadWakeupRecoveryEpoch := loadStoreQueue.io.loadWakeupRecoveryEpoch
   backend.io.resultForwardValid :=
     execution.io.completionValid(config.executionWidth) &&
       execution.io.completion(config.executionWidth).writesPdst

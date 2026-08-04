@@ -164,6 +164,9 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
     val dataResponse = in(OooCacheResponse(config))
     val completionValid = out Bool ()
     val completion = out(OooCompletion(config))
+    val loadWakeupValid = out Bool ()
+    val loadWakeupPdst = out UInt (config.physicalRegIndexWidth bits)
+    val loadWakeupRecoveryEpoch = out UInt (config.recoveryEpochWidth bits)
     val releaseLoadValid = out Bits (config.commitWidth bits)
     val releaseStoreValid = out Bits (config.commitWidth bits)
     val commitObservation = out Vec (OooMemoryCommitObservation(config), config.commitWidth)
@@ -603,7 +606,9 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
   val generatedCompletionValid = responseAccepted || forwardFire ||
     storeCompletionFire || translationCompletionFire || aguExceptionCompletionReady
   val generatedCompletion = OooCompletion(config)
+  val generatedCompletionIsLoad = Bool()
   clearCompletion(generatedCompletion)
+  generatedCompletionIsLoad := False
   when(responseStoreArchitectural) {
     generatedCompletion.robPointer := headStore.robPointer
     generatedCompletion.recoveryEpoch := headStore.recoveryEpoch
@@ -618,6 +623,7 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
       generatedCompletion.exception.badVAddr := headStore.virtualAddress
     }
   }.elsewhen(responseLoadAccepted) {
+    generatedCompletionIsLoad := True
     generatedCompletion.robPointer := responseLoadRobPointer
     generatedCompletion.recoveryEpoch := responseLoadRecoveryEpoch
     generatedCompletion.pdst := responseLoadPdst
@@ -636,6 +642,7 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
       generatedCompletion.exception.badVAddr := responseLoadVirtualAddress
     }
   }.elsewhen(forwardFire) {
+    generatedCompletionIsLoad := True
     generatedCompletion.robPointer := scheduledLoad.robPointer
     generatedCompletion.recoveryEpoch := scheduledLoad.recoveryEpoch
     generatedCompletion.pdst := scheduledLoad.pdst
@@ -663,6 +670,7 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
   }.elsewhen(translationCompletionFire) {
     val store = stores(translationOwnerStoreIndex)
     val load = loads(translationOwnerLoadIndex)
+    generatedCompletionIsLoad := !translationOwnerStore
     generatedCompletion.robPointer := translationOwnerRobPointer
     generatedCompletion.recoveryEpoch := translationOwnerRecoveryEpoch
     generatedCompletion.pdst := Mux(
@@ -708,6 +716,7 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
 
   val completionValid = RegInit(False)
   val completion = Reg(OooCompletion(config))
+  val completionLoadWakeup = RegInit(False)
   val translatedFastStore = translationCompletionFire && translationOwnerStore &&
     !translationStore.isSc && !io.translationResponse.cancelled &&
     !io.translationResponse.exception.valid && !io.translationResponse.uncached
@@ -756,6 +765,7 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
       requestBufferValid := False
     }
     completionValid := False
+    completionLoadWakeup := False
   }.otherwise {
     when(aguExceptionCompletionReady) {
       aguExceptionCompletionValid := False
@@ -785,6 +795,12 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
       acceptedStoreIndex := requestBufferStoreIndex
     }
     completionValid := generatedCompletionValid && !fastStoreCompletionValid
+    // responseLoadAccepted and forwardFire already include live LQ identity
+    // checks. Register that qualification before the wakeup network so the
+    // completion-to-IQ path does not asynchronously read the LQ again.
+    completionLoadWakeup := generatedCompletionValid && !fastStoreCompletionValid &&
+      generatedCompletionIsLoad && !generatedCompletion.exception.valid &&
+      generatedCompletion.writesPdst && generatedCompletion.pdst =/= 0
     // Validity, not payload clock-enables, defines whether this register is
     // observable. Sampling every cycle prevents the deep forwarding predicate
     // from being replicated onto every completion payload register.
@@ -795,6 +811,9 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
   when(fastStoreCompletionValid) {
     io.completion := fastStoreCompletion
   }
+  io.loadWakeupValid := completionValid && completionLoadWakeup
+  io.loadWakeupPdst := completion.pdst
+  io.loadWakeupRecoveryEpoch := completion.recoveryEpoch
 
   loadReleaseValid := B(0, config.commitWidth bits)
   storeReleaseValid := B(0, config.commitWidth bits)
