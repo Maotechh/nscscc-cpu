@@ -382,6 +382,7 @@ final class OooRob(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommit) e
     for (lane <- 0 until config.writebackWidth) {
       val stagedIndex = stagedRobPointer(lane)(config.robIndexWidth - 1 downto 0)
       stagedCompletionMatches(entryIndex)(lane) := stagedCompletionValid(lane) &&
+        stagedCompletionCurrent(lane) &&
         stagedIndex === U(entryIndex, config.robIndexWidth bits) &&
         entries(entryIndex).valid && !entries(entryIndex).complete &&
         entries(entryIndex).pointer.msb === stagedRobPointer(lane).msb
