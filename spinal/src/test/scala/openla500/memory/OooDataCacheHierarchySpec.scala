@@ -33,6 +33,15 @@ private final class OooDataCacheHierarchyProbe(config: OooCoreConfig) extends Co
   hierarchy.io.memoryReadBeatValid := io.memoryReadBeatValid
   hierarchy.io.memoryReadBeat := io.memoryReadBeat
   hierarchy.io.memoryWriteReady := io.memoryWriteReady
+  val memoryWriteFire = hierarchy.io.memoryWriteValid && io.memoryWriteReady
+  val memoryWriteResponseValid = RegNext(memoryWriteFire) init (False)
+  val memoryWriteResponseMshrId = Reg(UInt(log2Up(config.mshrEntries) bits))
+  when(memoryWriteFire) {
+    memoryWriteResponseMshrId := hierarchy.io.memoryWrite.mshrId
+  }
+  hierarchy.io.memoryWriteResponseValid := memoryWriteResponseValid
+  hierarchy.io.memoryWriteResponse.mshrId := memoryWriteResponseMshrId
+  hierarchy.io.memoryWriteResponse.error := False
   hierarchy.io.invalidate := io.invalidate
 
   io.requestReady := hierarchy.io.requestReady

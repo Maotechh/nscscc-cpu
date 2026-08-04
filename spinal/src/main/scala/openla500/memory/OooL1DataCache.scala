@@ -6,7 +6,7 @@ import spinal.lib._
 
 object OooL1DataCacheState extends SpinalEnum {
   val normal, maintenanceHitLookup, maintenanceLookup, maintenanceWriteback,
-    maintenanceInvalidate = newElement()
+    maintenanceWritebackWait, maintenanceInvalidate = newElement()
 }
 
 /** Nonblocking two-way L1 data cache with four miss-status entries.
@@ -119,6 +119,8 @@ final class OooL1DataCache(config: OooCoreConfig = OooCoreConfig.FourIssueThreeC
     val lineWriteValid = out Bool ()
     val lineWrite = out(OooLineWriteRequest(config))
     val lineWriteReady = in Bool ()
+    val lineWriteResponseValid = in Bool ()
+    val lineWriteResponse = in(OooLineWriteResponse(config))
 
     val invalidate = in Bool ()
     val writebackInvalidate = in Bool ()
@@ -183,11 +185,14 @@ final class OooL1DataCache(config: OooCoreConfig = OooCoreConfig.FourIssueThreeC
   val activeMissMask = Bits(config.mshrEntries bits)
   val freeMissMask = Bits(config.mshrEntries bits)
   val activeWritebackMask = Bits(config.mshrEntries bits)
+  val activeWritebackWaitMask = Bits(config.mshrEntries bits)
   for (entry <- 0 until config.mshrEntries) {
     activeMissMask(entry) := misses(entry).valid
     freeMissMask(entry) := !misses(entry).valid
     activeWritebackMask(entry) := misses(entry).valid &&
       misses(entry).state === OooL1DataMshrState.writeback
+    activeWritebackWaitMask(entry) := misses(entry).valid &&
+      misses(entry).state === OooL1DataMshrState.writebackWait
   }
   val activeWaiterMask = Bits(config.loadQueueEntries bits)
   val freeWaiterMask = Bits(config.loadQueueEntries bits)
@@ -255,7 +260,7 @@ final class OooL1DataCache(config: OooCoreConfig = OooCoreConfig.FourIssueThreeC
     misses(lineMatchId).state =/= OooL1DataMshrState.respond &&
     pendingStoreReady
   val newLookupReady = !lineMatch && !setConflictMask.orR && freeMissMask.orR &&
-    !activeWritebackMask.orR &&
+    !(activeWritebackMask | activeWritebackWaitMask).orR &&
     (io.request.isWrite || freeWaiterMask.orR) &&
     (!io.request.isWrite || pendingStoreReady) && cacheArray.io.lookupReady
   io.requestReady := commonRequestReady &&
@@ -441,7 +446,18 @@ final class OooL1DataCache(config: OooCoreConfig = OooCoreConfig.FourIssueThreeC
   }
   val lineWriteFire = io.lineWriteValid && io.lineWriteReady
   when(state === OooL1DataCacheState.normal && lineWriteFire) {
-    misses(writebackId).state := OooL1DataMshrState.readRequest
+    misses(writebackId).state := OooL1DataMshrState.writebackWait
+  }
+  when(
+    state === OooL1DataCacheState.normal && io.lineWriteResponseValid &&
+      misses(io.lineWriteResponse.mshrId).valid &&
+      misses(io.lineWriteResponse.mshrId).state === OooL1DataMshrState.writebackWait
+  ) {
+    misses(io.lineWriteResponse.mshrId).state := Mux(
+      io.lineWriteResponse.error,
+      OooL1DataMshrState.writeback,
+      OooL1DataMshrState.readRequest
+    )
   }
 
   io.lineReadValid := state === OooL1DataCacheState.normal && readRequestMask.orR
@@ -512,7 +528,8 @@ final class OooL1DataCache(config: OooCoreConfig = OooCoreConfig.FourIssueThreeC
 
   when(refillBeatFire) {
     val entry = misses(refillId)
-    entry.refillError := entry.refillError || io.lineReadBeat.error
+    val nextError = entry.refillError || io.lineReadBeat.error
+    entry.refillError := nextError
     val nextMask = entry.refillMask | UIntToOh(
       io.lineReadBeat.beat,
       OooCacheContract.BeatsPerLine
@@ -521,7 +538,15 @@ final class OooL1DataCache(config: OooCoreConfig = OooCoreConfig.FourIssueThreeC
     when(
       nextMask.andR && !(mergeStoreFire && lineMatchId === refillId)
     ) {
-      entry.state := OooL1DataMshrState.install
+      entry.state := Mux(
+        nextError,
+        Mux(
+          entry.storeByteMask.orR,
+          OooL1DataMshrState.readRequest,
+          OooL1DataMshrState.respond
+        ),
+        OooL1DataMshrState.install
+      )
     }
   }
 
@@ -624,7 +649,17 @@ final class OooL1DataCache(config: OooCoreConfig = OooCoreConfig.FourIssueThreeC
     }
   }
   when(state === OooL1DataCacheState.maintenanceWriteback && lineWriteFire) {
-    state := OooL1DataCacheState.maintenanceInvalidate
+    state := OooL1DataCacheState.maintenanceWritebackWait
+  }
+  when(
+    state === OooL1DataCacheState.maintenanceWritebackWait &&
+      io.lineWriteResponseValid
+  ) {
+    state := Mux(
+      io.lineWriteResponse.error,
+      OooL1DataCacheState.maintenanceWriteback,
+      OooL1DataCacheState.maintenanceInvalidate
+    )
   }
   when(state === OooL1DataCacheState.maintenanceInvalidate) {
     cacheArray.io.writeValid := True

@@ -307,7 +307,13 @@ final class OooL1InstructionCache(
       )
       refillResponseSent := True
     }
-    when(refillMaskWithAcceptedBeat.andR) { state := OooL1InstructionCacheState.install }
+    when(refillMaskWithAcceptedBeat.andR) {
+      state := Mux(
+        refillError || io.lineReadBeat.error,
+        OooL1InstructionCacheState.idle,
+        OooL1InstructionCacheState.install
+      )
+    }
   }
   when(refillRequestFire && refillRequestGroupReady) {
     refillReplayPending := True

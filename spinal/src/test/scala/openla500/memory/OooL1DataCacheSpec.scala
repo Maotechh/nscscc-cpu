@@ -21,6 +21,7 @@ private final class OooL1DataCacheProbe(config: OooCoreConfig) extends Component
     val lineWriteValid = out Bool ()
     val lineWrite = out(OooLineWriteRequest(config))
     val lineWriteReady = in Bool ()
+    val lineWriteResponseError = in Bool ()
     val invalidate = in Bool ()
     val maintenanceValid = in Bool ()
     val maintenanceRequest = in(OooCacheMaintenanceRequest(config))
@@ -37,6 +38,17 @@ private final class OooL1DataCacheProbe(config: OooCoreConfig) extends Component
   cache.io.lineReadBeatValid := io.lineReadBeatValid
   cache.io.lineReadBeat := io.lineReadBeat
   cache.io.lineWriteReady := io.lineWriteReady
+  val lineWriteFire = cache.io.lineWriteValid && io.lineWriteReady
+  val lineWriteResponseValid = RegNext(lineWriteFire) init (False)
+  val lineWriteResponseMshrId = Reg(UInt(log2Up(config.mshrEntries) bits))
+  val lineWriteResponseError = Reg(Bool())
+  when(lineWriteFire) {
+    lineWriteResponseMshrId := cache.io.lineWrite.mshrId
+    lineWriteResponseError := io.lineWriteResponseError
+  }
+  cache.io.lineWriteResponseValid := lineWriteResponseValid
+  cache.io.lineWriteResponse.mshrId := lineWriteResponseMshrId
+  cache.io.lineWriteResponse.error := lineWriteResponseError
   cache.io.invalidate := io.invalidate
   cache.io.writebackInvalidate := False
   cache.io.maintenanceRequest.valid := io.maintenanceValid
@@ -78,6 +90,7 @@ class OooL1DataCacheSpec extends AnyFunSuite {
     dut.io.lineReadBeat.last #= false
     dut.io.lineReadBeat.error #= false
     dut.io.lineWriteReady #= false
+    dut.io.lineWriteResponseError #= false
     dut.io.invalidate #= false
     dut.io.maintenanceValid #= false
     dut.io.maintenanceRequest.code #= 0
@@ -842,11 +855,90 @@ class OooL1DataCacheSpec extends AnyFunSuite {
           assert(dut.io.lineWrite.data.toBigInt == heldData)
         }
 
+        dut.io.lineWriteResponseError #= true
         dut.io.lineWriteReady #= true
         sample(dut)
         dut.io.lineWriteReady #= false
+        dut.io.lineWriteResponseError #= false
+        waitCycles = 0
+        while (!dut.io.lineWriteValid.toBoolean && waitCycles < 8) {
+          assert(!dut.io.lineReadValid.toBoolean)
+          sample(dut)
+          waitCycles += 1
+        }
+        assert(dut.io.lineWriteValid.toBoolean)
+        assert(dut.io.lineWrite.lineAddress.toBigInt == 0x100)
+        assert(dut.io.lineWrite.data.toBigInt == heldData)
+        dut.io.lineWriteReady #= true
+        sample(dut)
+        dut.io.lineWriteReady #= false
+        while (!dut.io.lineReadValid.toBoolean) sample(dut)
         assert(dut.io.lineReadValid.toBoolean)
         assert(dut.io.lineRead.lineAddress.toBigInt == 0x3100)
+      }
+  }
+
+  test("L1D does not install a line when any refill beat reports an error") {
+    SimConfig.withVerilator
+      .workspacePath("target/sim-workspace-ooo-l1d-refill-error")
+      .compile(new OooL1DataCacheProbe(config))
+      .doSim("ooo-l1d-refill-error", 0x4c3a) { dut =>
+        dut.clockDomain.forkStimulus(period = 10)
+        clearInputs(dut)
+        dut.clockDomain.assertReset()
+        dut.clockDomain.waitSampling(2)
+        dut.clockDomain.deassertReset()
+        dut.clockDomain.waitSampling(config.dataCache.sets + 8)
+
+        val address = BigInt(0x500)
+        setRequest(dut, address, isWrite = false, 0, 0xf, robPointer = 1, pdst = 4)
+        assert(dut.io.requestReady.toBoolean)
+        sample(dut)
+        dut.io.requestValid #= false
+        while (!dut.io.lineReadValid.toBoolean) sample(dut)
+        val mshrId = dut.io.lineRead.mshrId.toBigInt
+        dut.io.lineReadReady #= true
+        sample(dut)
+        dut.io.lineReadReady #= false
+
+        var sawErrorResponse = false
+        for (beat <- 0 until OooCacheContract.BeatsPerLine) {
+          dut.io.lineReadBeatValid #= true
+          dut.io.lineReadBeat.mshrId #= mshrId
+          dut.io.lineReadBeat.beat #= beat
+          dut.io.lineReadBeat.data #= BigInt("1234000000000000", 16) + beat
+          dut.io.lineReadBeat.last #= beat == OooCacheContract.BeatsPerLine - 1
+          dut.io.lineReadBeat.error #= beat == 0
+          assert(dut.io.lineReadBeatReady.toBoolean)
+          sample(dut)
+          if (dut.io.responseValid.toBoolean) {
+            sawErrorResponse = true
+            assert(dut.io.response.error.toBoolean)
+          }
+        }
+        dut.io.lineReadBeatValid #= false
+        dut.io.lineReadBeat.error #= false
+        for (_ <- 0 until 4) {
+          if (dut.io.responseValid.toBoolean) {
+            sawErrorResponse = true
+            assert(dut.io.response.error.toBoolean)
+          }
+          sample(dut)
+        }
+        assert(sawErrorResponse)
+
+        setRequest(dut, address, isWrite = false, 0, 0xf, robPointer = 2, pdst = 5)
+        while (!dut.io.requestReady.toBoolean) sample(dut)
+        sample(dut)
+        dut.io.requestValid #= false
+        var waitCycles = 0
+        while (!dut.io.lineReadValid.toBoolean && waitCycles < 8) {
+          assert(!dut.io.responseValid.toBoolean)
+          sample(dut)
+          waitCycles += 1
+        }
+        assert(dut.io.lineReadValid.toBoolean)
+        assert(dut.io.lineRead.lineAddress.toBigInt == address)
       }
   }
 

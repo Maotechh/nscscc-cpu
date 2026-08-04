@@ -30,6 +30,8 @@ final class OooAxiLineBridge(
     val memoryWriteValid = in Bool ()
     val memoryWrite = in(OooLineWriteRequest(config))
     val memoryWriteReady = out Bool ()
+    val memoryWriteResponseValid = out Bool ()
+    val memoryWriteResponse = out(OooLineWriteResponse(config))
 
     val uncachedInstructionRequestValid = in Bool ()
     val uncachedInstructionRequest = in(OooInstructionCacheRequest(config))
@@ -88,17 +90,24 @@ final class OooAxiLineBridge(
   val writeAddressValid = RegInit(False)
   val writeBeatIndex = Reg(UInt(axiWordIndexWidth bits)) init (0)
   val writeResponsePending = RegInit(False)
+  val writeMshrId = Reg(UInt(log2Up(config.mshrEntries) bits))
+  val memoryWriteResponseValid = RegInit(False)
+  val memoryWriteResponse = Reg(OooLineWriteResponse(config))
 
   instructionResponseValid := False
   dataResponseValid := False
+  memoryWriteResponseValid := False
   io.uncachedInstructionResponseValid := instructionResponseValid
   io.uncachedInstructionResponse := instructionResponse
   io.uncachedDataResponseValid := dataResponseValid
   io.uncachedDataResponse := dataResponse
+  io.memoryWriteResponseValid := memoryWriteResponseValid
+  io.memoryWriteResponse := memoryWriteResponse
 
   val lineBusy = lineArValid || lineActive.asBits.orR
   val busIdle = !readActive && !writeActive && !readOutputValid && !lineBusy
   val idleNow = busIdle && !instructionResponseValid && !dataResponseValid &&
+    !memoryWriteResponseValid &&
     !io.memoryReadValid && !io.memoryWriteValid &&
     !io.uncachedInstructionRequestValid && !io.uncachedDataRequestValid &&
     !io.axi.r.valid && !io.axi.b.valid
@@ -299,6 +308,7 @@ final class OooAxiLineBridge(
     writeAddressValid := True
     writeBeatIndex := 0
     writeResponsePending := False
+    writeMshrId := io.memoryWrite.mshrId
   }
   when(startUncachedDataWrite) {
     writeActive := True
@@ -354,12 +364,10 @@ final class OooAxiLineBridge(
       dataResponse.error := io.axi.b.payload.response.orR ||
         io.axi.b.payload.id =/= B(3, 4 bits)
     }.otherwise {
-      GenerationFlags.simulation {
-        assert(
-          io.axi.b.payload.id === B(1, 4 bits) && !io.axi.b.payload.response.orR,
-          "cached writeback AXI B response must be OKAY with ID 1"
-        )
-      }
+      memoryWriteResponseValid := True
+      memoryWriteResponse.mshrId := writeMshrId
+      memoryWriteResponse.error := io.axi.b.payload.response.orR ||
+        io.axi.b.payload.id =/= B(1, 4 bits)
     }
     writeResponsePending := False
     writeActive := False

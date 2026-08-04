@@ -6,7 +6,7 @@ import spinal.lib._
 
 object OooL2CacheState extends SpinalEnum {
   val normal, maintenanceHitLookup, maintenanceLookup, maintenanceWriteback,
-    maintenanceInvalidate = newElement()
+    maintenanceWritebackWait, maintenanceInvalidate = newElement()
 }
 
 /** Nonblocking 64-KiB shared L2 indexed by the hierarchy-global MSHR identity.
@@ -54,6 +54,8 @@ final class OooL2Cache(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommi
     val writeValid = in Bool ()
     val write = in(OooLineWriteRequest(config))
     val writeReady = out Bool ()
+    val writeResponseValid = out Bool ()
+    val writeResponse = out(OooLineWriteResponse(config))
 
     val memoryReadValid = out Bool ()
     val memoryRead = out(OooLineReadRequest(config))
@@ -65,6 +67,8 @@ final class OooL2Cache(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommi
     val memoryWriteValid = out Bool ()
     val memoryWrite = out(OooLineWriteRequest(config))
     val memoryWriteReady = in Bool ()
+    val memoryWriteResponseValid = in Bool ()
+    val memoryWriteResponse = in(OooLineWriteResponse(config))
 
     val invalidate = in Bool ()
     val writebackInvalidate = in Bool ()
@@ -99,6 +103,11 @@ final class OooL2Cache(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommi
   val writeWay = Reg(UInt(wayWidth bits))
   val writeVictimAddress = Reg(UInt(config.xlen bits))
   val writeVictimData = Reg(Bits(OooCacheContract.LineBits bits))
+  val writeResponseValid = RegInit(False)
+  val writeResponse = Reg(OooLineWriteResponse(config))
+  writeResponseValid := False
+  io.writeResponseValid := writeResponseValid
+  io.writeResponse := writeResponse
 
   val invalidateSeen = RegInit(False)
   val invalidatePending = RegInit(False)
@@ -335,11 +344,47 @@ final class OooL2Cache(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommi
   val memoryWriteFire = io.memoryWriteValid && io.memoryWriteReady
   when(state === OooL2CacheState.normal && memoryWriteFire) {
     when(writeState === OooL2WriteState.victimWriteback) {
-      writeState := OooL2WriteState.writeThrough
+      writeState := OooL2WriteState.victimWritebackWait
     }.elsewhen(writeState === OooL2WriteState.writeThrough) {
-      writeState := OooL2WriteState.install
+      writeState := OooL2WriteState.writeThroughWait
     }.otherwise {
-      misses(missWritebackId).state := OooL2MshrState.readRequest
+      misses(missWritebackId).state := OooL2MshrState.writebackWait
+    }
+  }
+  when(state === OooL2CacheState.normal && io.memoryWriteResponseValid) {
+    when(
+      writeState === OooL2WriteState.victimWritebackWait &&
+        io.memoryWriteResponse.mshrId === writeMshrId
+    ) {
+      when(io.memoryWriteResponse.error) {
+        writeState := OooL2WriteState.idle
+        writeResponseValid := True
+        writeResponse.mshrId := writeMshrId
+        writeResponse.error := True
+      }.otherwise {
+        writeState := OooL2WriteState.writeThrough
+      }
+    }.elsewhen(
+      writeState === OooL2WriteState.writeThroughWait &&
+        io.memoryWriteResponse.mshrId === writeMshrId
+    ) {
+      when(io.memoryWriteResponse.error) {
+        writeState := OooL2WriteState.idle
+        writeResponseValid := True
+        writeResponse.mshrId := writeMshrId
+        writeResponse.error := True
+      }.otherwise {
+        writeState := OooL2WriteState.install
+      }
+    }.elsewhen(
+      misses(io.memoryWriteResponse.mshrId).valid &&
+        misses(io.memoryWriteResponse.mshrId).state === OooL2MshrState.writebackWait
+    ) {
+      misses(io.memoryWriteResponse.mshrId).state := Mux(
+        io.memoryWriteResponse.error,
+        OooL2MshrState.writeback,
+        OooL2MshrState.readRequest
+      )
     }
   }
 
@@ -423,13 +468,20 @@ final class OooL2Cache(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommi
 
   when(memoryRefillFire) {
     val entry = misses(memoryResponseId)
-    entry.error := entry.error || io.memoryReadBeat.error
+    val nextError = entry.error || io.memoryReadBeat.error
+    entry.error := nextError
     val nextMask = entry.refillMask | UIntToOh(
       io.memoryReadBeat.beat,
       OooCacheContract.BeatsPerLine
     )
     entry.refillMask := nextMask
-    when(nextMask.andR) { entry.state := OooL2MshrState.install }
+    when(nextMask.andR) {
+      when(nextError) {
+        entry.valid := False
+      }.otherwise {
+        entry.state := OooL2MshrState.install
+      }
+    }
   }
   when(hitResponseLoad) {
     when(misses(hitResponseId).returnCount === OooCacheContract.BeatsPerLine - 1) {
@@ -461,6 +513,9 @@ final class OooL2Cache(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommi
     cacheArray.io.writeEntryValid := True
     cacheArray.io.writeDirty := False
     writeState := OooL2WriteState.idle
+    writeResponseValid := True
+    writeResponse.mshrId := writeMshrId
+    writeResponse.error := False
   }.elsewhen(missInstall) {
     cacheArray.io.writeValid := True
     cacheArray.io.writeIndex := indexOf(misses(installId).lineAddress)
@@ -488,7 +543,17 @@ final class OooL2Cache(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommi
     }
   }
   when(state === OooL2CacheState.maintenanceWriteback && memoryWriteFire) {
-    state := OooL2CacheState.maintenanceInvalidate
+    state := OooL2CacheState.maintenanceWritebackWait
+  }
+  when(
+    state === OooL2CacheState.maintenanceWritebackWait &&
+      io.memoryWriteResponseValid
+  ) {
+    state := Mux(
+      io.memoryWriteResponse.error,
+      OooL2CacheState.maintenanceWriteback,
+      OooL2CacheState.maintenanceInvalidate
+    )
   }
   when(state === OooL2CacheState.maintenanceInvalidate) {
     cacheArray.io.writeValid := True

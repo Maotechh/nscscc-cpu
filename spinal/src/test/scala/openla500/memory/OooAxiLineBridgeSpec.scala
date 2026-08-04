@@ -26,6 +26,8 @@ private final class OooAxiLineBridgeProbe(config: OooCoreConfig) extends Compone
     val memoryWriteByteMask = in Bits (OooCacheContract.LineBytes bits)
     val memoryWriteMshrId = in UInt (log2Up(config.mshrEntries) bits)
     val memoryWriteReady = out Bool ()
+    val memoryWriteResponseValid = out Bool ()
+    val memoryWriteResponse = out(OooLineWriteResponse(config))
 
     val uncachedInstructionRequestValid = in Bool ()
     val uncachedInstructionRequest = in(OooInstructionCacheRequest(config))
@@ -61,6 +63,8 @@ private final class OooAxiLineBridgeProbe(config: OooCoreConfig) extends Compone
   bridge.io.memoryWrite.byteMask := io.memoryWriteByteMask
   bridge.io.memoryWrite.mshrId := io.memoryWriteMshrId
   io.memoryWriteReady := bridge.io.memoryWriteReady
+  io.memoryWriteResponseValid := bridge.io.memoryWriteResponseValid
+  io.memoryWriteResponse := bridge.io.memoryWriteResponse
 
   bridge.io.uncachedInstructionRequestValid := io.uncachedInstructionRequestValid
   bridge.io.uncachedInstructionRequest := io.uncachedInstructionRequest
@@ -422,9 +426,56 @@ class OooAxiLineBridgeSpec extends AnyFunSuite {
         sample(dut)
         dut.io.axi.b.valid #= false
         assert(!dut.io.idle.toBoolean)
-        sample(dut)
+        var idleWait = 0
+        while (!dut.io.idle.toBoolean && idleWait < 4) {
+          sample(dut)
+          idleWait += 1
+        }
         assert(dut.io.idle.toBoolean)
         assert(dut.io.memoryWriteReady.toBoolean)
+      }
+  }
+
+  test("cached line writes report the matching AXI B error") {
+    SimConfig.withVerilator
+      .workspacePath("target/sim-workspace-ooo-axi-line-write-response")
+      .compile(new OooAxiLineBridgeProbe(config))
+      .doSim("ooo-axi-line-write-response-error", 0x4c7c) { dut =>
+        dut.clockDomain.forkStimulus(period = 10)
+        clearInputs(dut)
+        dut.clockDomain.assertReset()
+        dut.clockDomain.waitSampling(2)
+        dut.clockDomain.deassertReset()
+        sample(dut)
+
+        dut.io.memoryWriteValid #= true
+        dut.io.memoryWriteLineAddress #= 0x8400
+        dut.io.memoryWriteByteMask #= (BigInt(1) << OooCacheContract.LineBytes) - 1
+        dut.io.memoryWriteMshrId #= 3
+        sleep(1)
+        assert(dut.io.memoryWriteReady.toBoolean)
+        sample(dut)
+        dut.io.memoryWriteValid #= false
+
+        dut.io.axi.aw.ready #= true
+        sample(dut)
+        dut.io.axi.aw.ready #= false
+        dut.io.axi.w.ready #= true
+        for (_ <- 0 until OooCacheContract.LineBytes / 4) sample(dut)
+        dut.io.axi.w.ready #= false
+        assert(dut.io.axi.b.ready.toBoolean)
+        assert(!dut.io.memoryWriteResponseValid.toBoolean)
+
+        dut.io.axi.b.valid #= true
+        dut.io.axi.b.payload.id #= 1
+        dut.io.axi.b.payload.response #= 2
+        sample(dut)
+        dut.io.axi.b.valid #= false
+        assert(dut.io.memoryWriteResponseValid.toBoolean)
+        assert(dut.io.memoryWriteResponse.mshrId.toBigInt == 3)
+        assert(dut.io.memoryWriteResponse.error.toBoolean)
+        sample(dut)
+        assert(!dut.io.memoryWriteResponseValid.toBoolean)
       }
   }
 

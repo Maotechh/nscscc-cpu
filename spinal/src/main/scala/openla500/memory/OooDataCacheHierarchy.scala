@@ -29,6 +29,8 @@ final class OooDataCacheHierarchy(
     val memoryWriteValid = out Bool ()
     val memoryWrite = out(OooLineWriteRequest(config))
     val memoryWriteReady = in Bool ()
+    val memoryWriteResponseValid = in Bool ()
+    val memoryWriteResponse = in(OooLineWriteResponse(config))
 
     val invalidate = in Bool ()
     val invalidateBusy = out Bool ()
@@ -53,6 +55,8 @@ final class OooDataCacheHierarchy(
   l2.io.writeValid := l1d.io.lineWriteValid
   l2.io.write := l1d.io.lineWrite
   l1d.io.lineWriteReady := l2.io.writeReady
+  l1d.io.lineWriteResponseValid := l2.io.writeResponseValid
+  l1d.io.lineWriteResponse := l2.io.writeResponse
 
   io.memoryReadValid := l2.io.memoryReadValid
   io.memoryRead := l2.io.memoryRead
@@ -64,6 +68,8 @@ final class OooDataCacheHierarchy(
   io.memoryWriteValid := l2.io.memoryWriteValid
   io.memoryWrite := l2.io.memoryWrite
   l2.io.memoryWriteReady := io.memoryWriteReady
+  l2.io.memoryWriteResponseValid := io.memoryWriteResponseValid
+  l2.io.memoryWriteResponse := io.memoryWriteResponse
 
   l1d.io.invalidate := io.invalidate
   l1d.io.writebackInvalidate := False

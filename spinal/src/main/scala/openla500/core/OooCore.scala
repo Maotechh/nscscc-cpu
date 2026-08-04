@@ -42,6 +42,8 @@ final class OooCore(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommit) 
     val memoryWriteValid = out Bool ()
     val memoryWrite = out(OooLineWriteRequest(config))
     val memoryWriteReady = in Bool ()
+    val memoryWriteResponseValid = in Bool ()
+    val memoryWriteResponse = in(OooLineWriteResponse(config))
     val memoryBusIdle = in Bool ()
 
     val systemReadValid = out Bool ()
@@ -231,6 +233,8 @@ final class OooCore(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommit) 
   io.memoryWriteValid := backend.io.memoryWriteValid
   io.memoryWrite := backend.io.memoryWrite
   backend.io.memoryWriteReady := io.memoryWriteReady
+  backend.io.memoryWriteResponseValid := io.memoryWriteResponseValid
+  backend.io.memoryWriteResponse := io.memoryWriteResponse
   backend.io.memoryBusIdle := io.memoryBusIdle
 
   backend.io.systemReadData := io.systemReadData

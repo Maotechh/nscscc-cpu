@@ -4,7 +4,7 @@ import openla500.core._
 import spinal.core._
 
 object OooL1DataMshrState extends SpinalEnum {
-  val writeback, readRequest, refill, install, respond = newElement()
+  val writeback, writebackWait, readRequest, refill, install, respond = newElement()
 }
 
 final case class OooL1DataMshr(config: OooCoreConfig) extends Bundle {

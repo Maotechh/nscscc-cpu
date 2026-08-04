@@ -4,11 +4,12 @@ import openla500.core._
 import spinal.core._
 
 object OooL2MshrState extends SpinalEnum {
-  val writeback, readRequest, refill, install, respond = newElement()
+  val writeback, writebackWait, readRequest, refill, install, respond = newElement()
 }
 
 object OooL2WriteState extends SpinalEnum {
-  val idle, lookup, victimWriteback, writeThrough, install = newElement()
+  val idle, lookup, victimWriteback, victimWritebackWait, writeThrough,
+    writeThroughWait, install = newElement()
 }
 
 final case class OooL2Mshr(config: OooCoreConfig) extends Bundle {
