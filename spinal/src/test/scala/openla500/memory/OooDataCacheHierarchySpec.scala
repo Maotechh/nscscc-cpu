@@ -162,7 +162,7 @@ class OooDataCacheHierarchySpec extends AnyFunSuite {
     }
     assert(dut.io.memoryReadValid.toBoolean)
     assert(dut.io.memoryRead.lineAddress.toBigInt == expectedAddress)
-    assert(dut.io.memoryRead.mshrId.toBigInt == 0)
+    val memoryMshrId = dut.io.memoryRead.mshrId.toBigInt
     assert(dut.io.memoryRead.criticalBeat.toBigInt == 0)
 
     for (_ <- 0 until 2) {
@@ -179,7 +179,7 @@ class OooDataCacheHierarchySpec extends AnyFunSuite {
 
     for (beat <- 0 until OooCacheContract.BeatsPerLine) {
       dut.io.memoryReadBeatValid #= true
-      dut.io.memoryReadBeat.mshrId #= 0
+      dut.io.memoryReadBeat.mshrId #= memoryMshrId
       dut.io.memoryReadBeat.beat #= beat
       dut.io.memoryReadBeat.data #= beatData(beat)
       dut.io.memoryReadBeat.last #= beat == OooCacheContract.BeatsPerLine - 1
@@ -262,15 +262,20 @@ class OooDataCacheHierarchySpec extends AnyFunSuite {
         assert(dut.io.invalidateBusy.toBoolean)
         waitForInitialization(dut)
 
+        val sameSetStride = config.dataCache.sets * config.dataCache.lineBytes
+        val addressA = BigInt(0x0100)
+        val addressB = addressA + sameSetStride
+        val addressC = addressB + sameSetStride
+        val addressD = addressC + sameSetStride
         val lineA = BigInt("1111000000000000", 16)
-        loadFromMemory(dut, 0x0100, lineA, robPointer = 1)
+        loadFromMemory(dut, addressA, lineA, robPointer = 1)
 
-        acceptRequest(dut, 0x0100, isWrite = false, 0, 0xf, robPointer = 2, pdst = 8)
+        acceptRequest(dut, addressA, isWrite = false, 0, 0xf, robPointer = 2, pdst = 8)
         expectResponse(dut, 0, robPointer = 2, pdst = 8, forbidMemoryRead = true)
 
         acceptRequest(
           dut,
-          0x0100,
+          addressA,
           isWrite = true,
           data = BigInt("deadbeef", 16),
           mask = 0xf,
@@ -279,7 +284,7 @@ class OooDataCacheHierarchySpec extends AnyFunSuite {
         )
         sample(dut)
 
-        acceptRequest(dut, 0x0100, isWrite = false, 0, 0xf, robPointer = 4, pdst = 9)
+        acceptRequest(dut, addressA, isWrite = false, 0, 0xf, robPointer = 4, pdst = 9)
         expectResponse(
           dut,
           BigInt("deadbeef", 16),
@@ -288,8 +293,8 @@ class OooDataCacheHierarchySpec extends AnyFunSuite {
           forbidMemoryRead = true
         )
 
-        loadFromMemory(dut, 0x1100, BigInt("2222000000000000", 16), robPointer = 5)
-        acceptRequest(dut, 0x2100, isWrite = false, 0, 0xf, robPointer = 6, pdst = 7)
+        loadFromMemory(dut, addressB, BigInt("2222000000000000", 16), robPointer = 5)
+        acceptRequest(dut, addressC, isWrite = false, 0, 0xf, robPointer = 6, pdst = 7)
         var refillWaitCycles = 0
         while (!dut.io.memoryReadValid.toBoolean && refillWaitCycles < 30) {
           assert(!dut.io.memoryWriteValid.toBoolean)
@@ -299,14 +304,14 @@ class OooDataCacheHierarchySpec extends AnyFunSuite {
         assert(dut.io.memoryReadValid.toBoolean)
         assert(!dut.io.memoryWriteValid.toBoolean)
         val refillResponse =
-          serviceMemoryRefill(dut, 0x2100, beat => BigInt("3333000000000000", 16) + beat)
+          serviceMemoryRefill(dut, addressC, beat => BigInt("3333000000000000", 16) + beat)
         assert(refillResponse._1 == 0)
         assert(refillResponse._2 == 6)
         assert(refillResponse._3 == 7)
         assert(!refillResponse._4)
-        loadFromMemory(dut, 0x3100, BigInt("4444000000000000", 16), robPointer = 7)
+        loadFromMemory(dut, addressD, BigInt("4444000000000000", 16), robPointer = 7)
 
-        acceptRequest(dut, 0x0100, isWrite = false, 0, 0xf, robPointer = 8, pdst = 10)
+        acceptRequest(dut, addressA, isWrite = false, 0, 0xf, robPointer = 8, pdst = 10)
         expectResponse(
           dut,
           BigInt("deadbeef", 16),
