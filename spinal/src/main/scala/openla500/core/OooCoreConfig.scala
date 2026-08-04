@@ -85,7 +85,7 @@ final case class OooCoreConfig(
     storeQueueEntries: Int = 8,
     mshrEntries: Int = 4,
     enableDivideFastPath: Boolean = false,
-    enableFastStoreCompletion: Boolean = false,
+    enableFastStoreCompletion: Boolean = true,
     enableStoreTranslationLookahead: Boolean = true,
     enableL2WriteBack: Boolean = true,
     resetVector: BigInt = BigInt("1c000000", 16),
