@@ -84,6 +84,7 @@ final case class OooCoreConfig(
     loadQueueEntries: Int = 8,
     storeQueueEntries: Int = 8,
     mshrEntries: Int = 4,
+    enableFastStoreCompletion: Boolean = true,
     resetVector: BigInt = BigInt("1c000000", 16),
     instructionCache: OooCacheGeometry = OooCacheGeometry(ways = 2, sets = 64, lineBytes = 64),
     dataCache: OooCacheGeometry = OooCacheGeometry(ways = 2, sets = 64, lineBytes = 64),

@@ -669,6 +669,44 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
 
   val completionValid = RegInit(False)
   val completion = Reg(OooCompletion(config))
+  val translatedFastStore = translationCompletionFire && translationOwnerStore &&
+    !translationStore.isSc && !io.translationResponse.cancelled &&
+    !io.translationResponse.exception.valid && !io.translationResponse.uncached
+  val alreadyTranslatedFastStore = storeCompletionFire && !headStore.isSc
+  val fastStoreCompletionCandidate = if (config.enableFastStoreCompletion) {
+    !io.flush && (translatedFastStore || alreadyTranslatedFastStore)
+  } else {
+    False
+  }
+  // Keep the direct path compact: ordinary Stores have no destination data or
+  // exception payload. Any exceptional, SC, uncached, or collision case keeps
+  // using the fully registered completion path below.
+  val fastStoreCompletionValid = fastStoreCompletionCandidate && !completionValid
+  val fastStoreCompletion = OooCompletion(config)
+  fastStoreCompletion.robPointer := Mux(
+    translatedFastStore,
+    translationOwnerRobPointer,
+    headStore.robPointer
+  )
+  fastStoreCompletion.recoveryEpoch := Mux(
+    translatedFastStore,
+    translationOwnerRecoveryEpoch,
+    headStore.recoveryEpoch
+  )
+  fastStoreCompletion.pdst := 0
+  fastStoreCompletion.writesPdst := False
+  fastStoreCompletion.data := 0
+  fastStoreCompletion.sideEffectData := 0
+  fastStoreCompletion.exception.valid := False
+  fastStoreCompletion.exception.ecode := 0
+  fastStoreCompletion.exception.esubcode := 0
+  fastStoreCompletion.exception.badVAddrValid := False
+  fastStoreCompletion.exception.badVAddr := 0
+  fastStoreCompletion.exception.tlbRefill := False
+  fastStoreCompletion.branchResolved := False
+  fastStoreCompletion.branchTaken := False
+  fastStoreCompletion.branchTarget := 0
+  fastStoreCompletion.branchMispredict := False
   when(io.flush) {
     aguExceptionCompletionValid := False
     // Cached writes only enter this buffer after retirement and must survive a
@@ -707,14 +745,17 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
       acceptedStoreValid := True
       acceptedStoreIndex := requestBufferStoreIndex
     }
-    completionValid := generatedCompletionValid
+    completionValid := generatedCompletionValid && !fastStoreCompletionValid
     // Validity, not payload clock-enables, defines whether this register is
     // observable. Sampling every cycle prevents the deep forwarding predicate
     // from being replicated onto every completion payload register.
     completion := generatedCompletion
   }
-  io.completionValid := completionValid
+  io.completionValid := completionValid || fastStoreCompletionValid
   io.completion := completion
+  when(fastStoreCompletionValid) {
+    io.completion := fastStoreCompletion
+  }
 
   loadReleaseValid := B(0, config.commitWidth bits)
   storeReleaseValid := B(0, config.commitWidth bits)

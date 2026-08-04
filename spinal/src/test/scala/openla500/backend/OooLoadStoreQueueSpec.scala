@@ -869,6 +869,60 @@ class OooLoadStoreQueueSpec extends AnyFunSuite {
       }
   }
 
+  test("ordinary cached Store completion bypass is independently configurable") {
+    for ((enabled, name, seed) <- Seq(
+        (false, "registered", 0x4c78),
+        (true, "direct", 0x4c79)
+      )) {
+      val testConfig = config.copy(enableFastStoreCompletion = enabled)
+      SimConfig.withVerilator
+        .workspacePath(s"target/sim-workspace-ooo-lsq-store-completion-$name")
+        .compile(new OooLoadStoreQueueProbe(testConfig))
+        .doSim(s"ooo-lsq-store-completion-$name", seed) { dut =>
+          dut.clockDomain.forkStimulus(period = 10)
+          clearInputs(dut)
+          dut.io.translationResponseEnable #= false
+          dut.clockDomain.assertReset()
+          dut.clockDomain.waitSampling(2)
+          dut.clockDomain.deassertReset()
+          sample(dut)
+
+          dut.io.allocateValid #= 1
+          dut.io.allocate(0).robPointer #= 6
+          dut.io.allocate(0).isStore #= true
+          dut.io.allocate(0).storeQueueIndex #= 0
+          sample(dut)
+          dut.io.allocateValid #= 0
+
+          setStoreAgu(dut, 6, 0x180, BigInt("12345678", 16))
+          sample(dut)
+          dut.io.aguValid #= false
+          while (!dut.io.translationRequestValid.toBoolean) {
+            sample(dut)
+          }
+          sample(dut)
+
+          dut.io.translationResponseEnable #= true
+          sleep(1)
+          assert(dut.io.completionValid.toBoolean == enabled)
+          if (enabled) {
+            assert(dut.io.completion.robPointer.toBigInt == 6)
+            assert(!dut.io.completion.writesPdst.toBoolean)
+            assert(!dut.io.completion.exception.valid.toBoolean)
+          }
+
+          sample(dut)
+          dut.io.translationResponseEnable #= false
+          assert(dut.io.completionValid.toBoolean != enabled)
+          if (!enabled) {
+            assert(dut.io.completion.robPointer.toBigInt == 6)
+          }
+          sample(dut)
+          assert(!dut.io.completionValid.toBoolean)
+        }
+    }
+  }
+
   test("Store translation may finish before its independently scheduled data") {
     SimConfig.withVerilator
       .workspacePath("target/sim-workspace-ooo-lsq")
