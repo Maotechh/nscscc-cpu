@@ -385,6 +385,51 @@ class OooL1DataCacheSpec extends AnyFunSuite {
       }
   }
 
+  test("L1D readies a merged load accepted with its refill beat") {
+    SimConfig.withVerilator
+      .workspacePath("target/sim-workspace-ooo-l1d")
+      .compile(new OooL1DataCacheProbe(config))
+      .doSim("ooo-l1d-merge-refill-same-cycle", 0x4c3b) { dut =>
+        dut.clockDomain.forkStimulus(period = 10)
+        clearInputs(dut)
+        dut.clockDomain.assertReset()
+        dut.clockDomain.waitSampling(2)
+        dut.clockDomain.deassertReset()
+        dut.clockDomain.waitSampling(70)
+        sleep(1)
+
+        setRequest(dut, 0x100, isWrite = false, 0, 0xf, robPointer = 1, pdst = 8)
+        sample(dut)
+        dut.io.requestValid #= false
+        while (!dut.io.lineReadValid.toBoolean) sample(dut)
+        dut.io.lineReadReady #= true
+        sample(dut)
+        dut.io.lineReadReady #= false
+
+        setRequest(dut, 0x108, isWrite = false, 0, 0xf, robPointer = 2, pdst = 9)
+        dut.io.lineReadBeatValid #= true
+        dut.io.lineReadBeat.mshrId #= 0
+        dut.io.lineReadBeat.beat #= 1
+        dut.io.lineReadBeat.data #= BigInt("1122334455667788", 16)
+        sleep(1)
+        assert(dut.io.requestReady.toBoolean)
+        assert(dut.io.lineReadBeatReady.toBoolean)
+        sample(dut)
+        dut.io.requestValid #= false
+        dut.io.lineReadBeatValid #= false
+
+        var waitCycles = 0
+        while (!dut.io.responseValid.toBoolean && waitCycles < 3) {
+          sample(dut)
+          waitCycles += 1
+        }
+        assert(dut.io.responseValid.toBoolean)
+        assert(dut.io.response.robPointer.toBigInt == 2)
+        assert(dut.io.response.pdst.toBigInt == 9)
+        assert(dut.io.response.data.toBigInt == BigInt("55667788", 16))
+      }
+  }
+
   test("L1D line read request remains stable until lower-level acceptance") {
     SimConfig.withVerilator
       .workspacePath("target/sim-workspace-ooo-l1d")

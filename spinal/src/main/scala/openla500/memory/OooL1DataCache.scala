@@ -134,6 +134,7 @@ final class OooL1DataCache(config: OooCoreConfig = OooCoreConfig.FourIssueThreeC
   val state = RegInit(OooL1DataCacheState.normal)
   val misses = Vec.fill(config.mshrEntries)(Reg(OooL1DataMshr(config)))
   val waiters = Vec.fill(config.loadQueueEntries)(Reg(OooL1DataMshrWaiter(config)))
+  val waiterBeatReady = Vec.fill(config.loadQueueEntries)(RegInit(False))
   val refillMemories = Array.fill(OooCacheContract.BeatsPerLine)(
     Mem(Bits(OooCacheContract.BeatBits bits), config.mshrEntries)
   )
@@ -326,6 +327,10 @@ final class OooL1DataCache(config: OooCoreConfig = OooCoreConfig.FourIssueThreeC
     waiters(freeWaiterId).robPointer := io.request.robPointer
     waiters(freeWaiterId).recoveryEpoch := io.request.recoveryEpoch
     waiters(freeWaiterId).pdst := io.request.pdst
+    waiterBeatReady(freeWaiterId) :=
+      misses(lineMatchId).refillMask(refillBeatIndex(io.request.physicalAddress)) ||
+        (io.lineReadBeatValid && io.lineReadBeatReady && refillId === lineMatchId &&
+          io.lineReadBeat.beat === refillBeatIndex(io.request.physicalAddress))
   }
   when(pendingStoreApply) {
     misses(pendingStoreMshrId).storeByteMask :=
@@ -401,6 +406,7 @@ final class OooL1DataCache(config: OooCoreConfig = OooCoreConfig.FourIssueThreeC
         waiters(lookupWaiterId).robPointer := lookupRequest.robPointer
         waiters(lookupWaiterId).recoveryEpoch := lookupRequest.recoveryEpoch
         waiters(lookupWaiterId).pdst := lookupRequest.pdst
+        waiterBeatReady(lookupWaiterId) := False
       }
     }
   }
@@ -549,6 +555,14 @@ final class OooL1DataCache(config: OooCoreConfig = OooCoreConfig.FourIssueThreeC
       )
     }
   }
+  for (entry <- 0 until config.loadQueueEntries) {
+    when(
+      refillBeatFire && waiters(entry).valid && waiters(entry).mshrId === refillId &&
+        refillBeatIndex(waiters(entry).physicalAddress) === io.lineReadBeat.beat
+    ) {
+      waiterBeatReady(entry) := True
+    }
+  }
 
   val installId = selectLowest(installMask, config.mshrEntries)
   val installRefillLine = Bits(OooCacheContract.LineBits bits)
@@ -573,9 +587,7 @@ final class OooL1DataCache(config: OooCoreConfig = OooCoreConfig.FourIssueThreeC
 
   val waiterReadyMask = Bits(config.loadQueueEntries bits)
   for (entry <- 0 until config.loadQueueEntries) {
-    val waiterMshr = misses(waiters(entry).mshrId)
-    waiterReadyMask(entry) := waiters(entry).valid && waiterMshr.valid &&
-      waiterMshr.refillMask(refillBeatIndex(waiters(entry).physicalAddress))
+    waiterReadyMask(entry) := waiters(entry).valid && waiterBeatReady(entry)
   }
   val responseWaiterId = selectLowest(waiterReadyMask, config.loadQueueEntries)
   val responseMshrId = waiters(responseWaiterId).mshrId
@@ -602,6 +614,7 @@ final class OooL1DataCache(config: OooCoreConfig = OooCoreConfig.FourIssueThreeC
     response.data := selectBeatWord(responseBeat, waiters(responseWaiterId).physicalAddress)
     response.error := misses(responseMshrId).refillError
     waiters(responseWaiterId).valid := False
+    waiterBeatReady(responseWaiterId) := False
 
     val otherWaiters = Bits(config.loadQueueEntries bits)
     for (entry <- 0 until config.loadQueueEntries) {
