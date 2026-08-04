@@ -30,6 +30,7 @@ class OooCoreIntegrationSpec extends AnyFunSuite {
     dut.io.instructionTranslationResponse.virtualAddress #= 0
     dut.io.instructionTranslationResponse.physicalAddress #= 0
     dut.io.instructionTranslationResponse.uncached #= false
+    dut.io.instructionTranslationResponse.cancelled #= false
     dut.io.instructionTranslationResponse.exception.valid #= false
     dut.io.instructionTranslationResponse.exception.ecode #= 0
     dut.io.instructionTranslationResponse.exception.esubcode #= 0
@@ -41,6 +42,7 @@ class OooCoreIntegrationSpec extends AnyFunSuite {
     dut.io.dataTranslationResponse.virtualAddress #= 0
     dut.io.dataTranslationResponse.physicalAddress #= 0
     dut.io.dataTranslationResponse.uncached #= false
+    dut.io.dataTranslationResponse.cancelled #= false
     dut.io.dataTranslationResponse.exception.valid #= false
     dut.io.dataTranslationResponse.exception.ecode #= 0
     dut.io.dataTranslationResponse.exception.esubcode #= 0

@@ -84,9 +84,13 @@ final case class OooCoreConfig(
     loadQueueEntries: Int = 8,
     storeQueueEntries: Int = 8,
     mshrEntries: Int = 4,
+    enableDivideFastPath: Boolean = false,
+    enableFastStoreCompletion: Boolean = true,
+    enableStoreTranslationLookahead: Boolean = true,
+    enableL2WriteBack: Boolean = true,
     resetVector: BigInt = BigInt("1c000000", 16),
-    instructionCache: OooCacheGeometry = OooCacheGeometry(ways = 2, sets = 64, lineBytes = 64),
-    dataCache: OooCacheGeometry = OooCacheGeometry(ways = 2, sets = 64, lineBytes = 64),
+    instructionCache: OooCacheGeometry = OooCacheGeometry(ways = 2, sets = 128, lineBytes = 64),
+    dataCache: OooCacheGeometry = OooCacheGeometry(ways = 2, sets = 128, lineBytes = 64),
     level2Cache: OooCacheGeometry = OooCacheGeometry(ways = 2, sets = 512, lineBytes = 64),
     executionPorts: Vector[OooExecPortConfig] = OooCoreConfig.DefaultExecutionPorts
 ) {

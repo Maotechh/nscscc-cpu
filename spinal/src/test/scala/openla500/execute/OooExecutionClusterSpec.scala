@@ -118,12 +118,17 @@ private final class OooDivideCompletionCollisionProbe(config: OooCoreConfig) ext
     val source1 = in Bits (config.xlen bits)
     val source2 = in Bits (config.xlen bits)
     val robPointer = in UInt (config.robPointerWidth bits)
+    val recoveryEpoch = in UInt (config.recoveryEpochWidth bits)
     val pdst = in UInt (config.physicalRegIndexWidth bits)
+    val flush = in Bool ()
     val issueReady = out Bool ()
     val directWakeupValid = out Bool ()
     val directWakeupPdst = out UInt (config.physicalRegIndexWidth bits)
     val completionValid = out Bool ()
     val completionRobPointer = out UInt (config.robPointerWidth bits)
+    val completionRecoveryEpoch = out UInt (config.recoveryEpochWidth bits)
+    val completionPdst = out UInt (config.physicalRegIndexWidth bits)
+    val completionData = out Bits (config.xlen bits)
   }
   noIoPrefix()
 
@@ -151,6 +156,7 @@ private final class OooDivideCompletionCollisionProbe(config: OooCoreConfig) ext
       execution.io.issue(port).source1Ready := True
       execution.io.issue(port).source2Ready := True
       execution.io.issue(port).robPointer := io.robPointer
+      execution.io.issue(port).recoveryEpoch := io.recoveryEpoch
       execution.io.issue(port).loadQueueIndex := 0
       execution.io.issue(port).storeQueueIndex := 0
       execution.io.source1(port) := io.source1
@@ -161,7 +167,7 @@ private final class OooDivideCompletionCollisionProbe(config: OooCoreConfig) ext
       execution.io.source2(port) := 0
     }
   }
-  execution.io.flush := False
+  execution.io.flush := io.flush
   execution.io.systemReadData := 0
   execution.io.timer := 0
   execution.io.timerId := 0
@@ -190,6 +196,9 @@ private final class OooDivideCompletionCollisionProbe(config: OooCoreConfig) ext
   io.directWakeupPdst := execution.io.directWakeupPdst(dividePort)
   io.completionValid := execution.io.completionValid(dividePort)
   io.completionRobPointer := execution.io.completion(dividePort).robPointer
+  io.completionRecoveryEpoch := execution.io.completion(dividePort).recoveryEpoch
+  io.completionPdst := execution.io.completion(dividePort).pdst
+  io.completionData := execution.io.completion(dividePort).data
 }
 
 private final class OooMultiplyWakeupProbe(config: OooCoreConfig) extends Component {
@@ -282,6 +291,7 @@ private final class OooBarrierExecutionProbe(config: OooCoreConfig) extends Comp
   val io = new Bundle {
     val instruction = in Bits (32 bits)
     val issueValid = in Bool ()
+    val pdst = in UInt (config.physicalRegIndexWidth bits)
     val olderStorePending = in Bool ()
     val memorySubsystemIdle = in Bool ()
     val maintenanceReady = in Bool ()
@@ -294,6 +304,8 @@ private final class OooBarrierExecutionProbe(config: OooCoreConfig) extends Comp
     val completionValid = out Bool ()
     val completionRobPointer = out UInt (config.robPointerWidth bits)
     val completionRecoveryEpoch = out UInt (config.recoveryEpochWidth bits)
+    val directWakeupValid = out Bool ()
+    val directWakeupPdst = out UInt (config.physicalRegIndexWidth bits)
   }
   noIoPrefix()
 
@@ -314,7 +326,7 @@ private final class OooBarrierExecutionProbe(config: OooCoreConfig) extends Comp
   for (port <- 0 until config.executionWidth) {
     if (port == csrPort) {
       execution.io.issue(port).decoded := decoder.io.decoded
-      execution.io.issue(port).pdst := 0
+      execution.io.issue(port).pdst := io.pdst
       execution.io.issue(port).oldPdst := 0
       execution.io.issue(port).psrc1 := 0
       execution.io.issue(port).psrc2 := 0
@@ -361,6 +373,8 @@ private final class OooBarrierExecutionProbe(config: OooCoreConfig) extends Comp
   io.completionValid := execution.io.completionValid(csrPort)
   io.completionRobPointer := execution.io.completion(csrPort).robPointer
   io.completionRecoveryEpoch := execution.io.completion(csrPort).recoveryEpoch
+  io.directWakeupValid := execution.io.directWakeupValid(csrPort)
+  io.directWakeupPdst := execution.io.directWakeupPdst(csrPort)
 }
 
 private final class OooCacopExecutionProbe(config: OooCoreConfig) extends Component {
@@ -378,6 +392,7 @@ private final class OooCacopExecutionProbe(config: OooCoreConfig) extends Compon
     val issueReady = out Bool ()
     val translationReady = in Bool ()
     val translationResponseValid = in Bool ()
+    val translationCancelled = in Bool ()
     val translationPhysicalAddress = in UInt (config.xlen bits)
     val translationException = in(OooExceptionMeta())
     val translationRequestValid = out Bool ()
@@ -450,6 +465,7 @@ private final class OooCacopExecutionProbe(config: OooCoreConfig) extends Compon
     execution.io.cacheTranslationRequest.virtualAddress
   execution.io.cacheTranslationResponse.physicalAddress := io.translationPhysicalAddress
   execution.io.cacheTranslationResponse.uncached := False
+  execution.io.cacheTranslationResponse.cancelled := io.translationCancelled
   execution.io.cacheTranslationResponse.exception := io.translationException
   execution.io.cacheMaintenanceRequest.ready := io.maintenanceReady
   execution.io.cacheMaintenanceResponse.valid := io.maintenanceResponseValid
@@ -656,13 +672,15 @@ class OooExecutionClusterSpec extends AnyFunSuite {
         dut.io.source1 #= 0
         dut.io.source2 #= 0
         dut.io.robPointer #= 0
+        dut.io.recoveryEpoch #= 0
         dut.io.pdst #= 0
+        dut.io.flush #= false
         dut.clockDomain.assertReset()
         dut.clockDomain.waitSampling(2)
         dut.clockDomain.deassertReset()
         dut.clockDomain.waitSampling()
 
-        // div.w r15, r12, r13
+        // mod.w r15, r12, r13
         dut.io.instruction #= BigInt("0020b58f", 16)
         dut.io.source1 #= 100
         dut.io.source2 #= 3
@@ -707,6 +725,225 @@ class OooExecutionClusterSpec extends AnyFunSuite {
       }
   }
 
+  test("the active divider implements all DIV/MOD modes and flushes every iteration") {
+    SimConfig.withVerilator
+      .workspacePath("target/sim-workspace-ooo-execution-cluster")
+      .compile(
+        new OooDivideCompletionCollisionProbe(config.copy(enableDivideFastPath = false))
+      )
+      .doSim("ooo-divider-architecture-and-flush", 0x4c77) { dut =>
+        val mask = (BigInt(1) << 32) - 1
+        val signBit = BigInt(1) << 31
+        val modulus = BigInt(1) << 32
+        val divW = BigInt("00200000", 16)
+        val modW = BigInt("00208000", 16)
+        val divWu = BigInt("00210000", 16)
+        val modWu = BigInt("00218000", 16)
+        val operandFields = (BigInt(13) << 10) | (BigInt(12) << 5) | BigInt(15)
+
+        def bits32(value: BigInt): BigInt = value & mask
+        def signed32(value: BigInt): BigInt = {
+          val unsigned = bits32(value)
+          if ((unsigned & signBit) != 0) unsigned - modulus else unsigned
+        }
+        def expected(dividend: BigInt, divisor: BigInt, signed: Boolean, remainder: Boolean): BigInt = {
+          val lhs = if (signed) signed32(dividend) else bits32(dividend)
+          val rhs = if (signed) signed32(divisor) else bits32(divisor)
+          if (rhs == 0) {
+            if (remainder) bits32(dividend) else mask
+          } else if (remainder) {
+            bits32(lhs % rhs)
+          } else {
+            bits32(lhs / rhs)
+          }
+        }
+
+        dut.clockDomain.forkStimulus(period = 10)
+        dut.io.issueValid #= false
+        dut.io.instruction #= 0
+        dut.io.source1 #= 0
+        dut.io.source2 #= 0
+        dut.io.robPointer #= 0
+        dut.io.recoveryEpoch #= 0
+        dut.io.pdst #= 0
+        dut.io.flush #= false
+        dut.clockDomain.assertReset()
+        dut.clockDomain.waitSampling(2)
+        dut.clockDomain.deassertReset()
+        dut.clockDomain.waitSampling()
+
+        var nextToken = 1
+        def launch(opcode: BigInt, dividend: BigInt, divisor: BigInt): (Int, Int, Int) = {
+          val rob = nextToken & ((1 << config.robPointerWidth) - 1)
+          val epoch = nextToken & ((1 << config.recoveryEpochWidth) - 1)
+          val pdst = 1 + (nextToken % (config.physicalRegs - 1))
+          nextToken += 1
+          dut.io.instruction #= opcode | operandFields
+          dut.io.source1 #= bits32(dividend)
+          dut.io.source2 #= bits32(divisor)
+          dut.io.robPointer #= rob
+          dut.io.recoveryEpoch #= epoch
+          dut.io.pdst #= pdst
+          dut.io.issueValid #= true
+          sleep(1)
+          assert(dut.io.issueReady.toBoolean)
+          assert(!dut.io.completionValid.toBoolean)
+          dut.clockDomain.waitSampling()
+          dut.io.issueValid #= false
+          (rob, epoch, pdst)
+        }
+
+        def awaitExactlyOneCompletion(
+            token: (Int, Int, Int),
+            expectedResult: BigInt
+        ): Unit = {
+          var waited = 0
+          while (!dut.io.completionValid.toBoolean && waited < 40) {
+            dut.clockDomain.waitSampling()
+            sleep(1)
+            waited += 1
+          }
+          assert(dut.io.completionValid.toBoolean)
+          assert(dut.io.completionRobPointer.toBigInt == token._1)
+          assert(dut.io.completionRecoveryEpoch.toBigInt == token._2)
+          assert(dut.io.completionPdst.toBigInt == token._3)
+          assert(dut.io.completionData.toBigInt == expectedResult)
+          dut.clockDomain.waitSampling()
+          sleep(1)
+          assert(!dut.io.completionValid.toBoolean)
+          dut.clockDomain.waitSampling()
+          sleep(1)
+          assert(!dut.io.completionValid.toBoolean)
+        }
+
+        val directed = Seq(
+          (BigInt(100), BigInt(3)),
+          (BigInt(-100), BigInt(3)),
+          (BigInt(100), BigInt(-3)),
+          (BigInt(-100), BigInt(-3)),
+          (BigInt(0), BigInt(7)),
+          (BigInt(7), BigInt(0)),
+          (BigInt(-7), BigInt(0)),
+          (-signBit, BigInt(-1)),
+          (-signBit, BigInt(1)),
+          (mask, BigInt(1)),
+          (mask, mask),
+          (mask, BigInt(2))
+        )
+        val random = new scala.util.Random(0x4c77)
+        val randomVectors = Seq.fill(64) {
+          (BigInt(random.nextInt()) & mask, BigInt(random.nextInt()) & mask)
+        }
+        val operations = Seq(
+          (divW, true, false),
+          (modW, true, true),
+          (divWu, false, false),
+          (modWu, false, true)
+        )
+        for ((opcode, signed, remainder) <- operations; (dividend, divisor) <- directed ++ randomVectors) {
+          val token = launch(opcode, dividend, divisor)
+          awaitExactlyOneCompletion(token, expected(dividend, divisor, signed, remainder))
+        }
+
+        for (flushIteration <- 0 until 32) {
+          launch(divW, BigInt(-0x40000000), BigInt(37))
+          for (_ <- 0 until flushIteration) {
+            dut.clockDomain.waitSampling()
+            sleep(1)
+            assert(!dut.io.completionValid.toBoolean)
+          }
+          dut.io.flush #= true
+          dut.clockDomain.waitSampling()
+          dut.io.flush #= false
+          for (_ <- 0 until 3) {
+            sleep(1)
+            assert(!dut.io.completionValid.toBoolean)
+            dut.clockDomain.waitSampling()
+          }
+
+          val restartDividend = BigInt(0x70000000L + flushIteration)
+          val restartDivisor = BigInt(flushIteration + 1)
+          val restartToken = launch(modWu, restartDividend, restartDivisor)
+          awaitExactlyOneCompletion(
+            restartToken,
+            expected(restartDividend, restartDivisor, signed = false, remainder = true)
+          )
+        }
+      }
+  }
+
+  test("divider fast paths are one-cycle and independently configurable") {
+    val divW = BigInt("00200000", 16)
+    val modW = BigInt("00208000", 16)
+    val divWu = BigInt("00210000", 16)
+    val modWu = BigInt("00218000", 16)
+    val operandFields = (BigInt(13) << 10) | (BigInt(12) << 5) | BigInt(15)
+    val mask = (BigInt(1) << 32) - 1
+
+    for ((enabled, name, seed) <- Seq(
+        (false, "iterative", 0x4c7a),
+        (true, "fast", 0x4c7b)
+      )) {
+      val testConfig = config.copy(enableDivideFastPath = enabled)
+      SimConfig.withVerilator
+        .workspacePath(s"target/sim-workspace-ooo-divider-$name")
+        .compile(new OooDivideCompletionCollisionProbe(testConfig))
+        .doSim(s"ooo-divider-$name", seed) { dut =>
+          dut.clockDomain.forkStimulus(period = 10)
+          dut.io.issueValid #= false
+          dut.io.instruction #= 0
+          dut.io.source1 #= 0
+          dut.io.source2 #= 0
+          dut.io.robPointer #= 9
+          dut.io.recoveryEpoch #= 3
+          dut.io.pdst #= 17
+          dut.io.flush #= false
+          dut.clockDomain.assertReset()
+          dut.clockDomain.waitSampling(2)
+          dut.clockDomain.deassertReset()
+          dut.clockDomain.waitSampling()
+
+          def launchAndCheck(
+              opcode: BigInt,
+              dividend: BigInt,
+              divisor: BigInt,
+              expected: BigInt,
+              expectImmediate: Boolean
+          ): Unit = {
+            dut.io.instruction #= opcode | operandFields
+            dut.io.source1 #= dividend & mask
+            dut.io.source2 #= divisor & mask
+            dut.io.issueValid #= true
+            sleep(1)
+            assert(dut.io.issueReady.toBoolean)
+            dut.clockDomain.waitSampling()
+            dut.io.issueValid #= false
+            sleep(1)
+            assert(dut.io.completionValid.toBoolean == expectImmediate)
+            var waited = 0
+            while (!dut.io.completionValid.toBoolean && waited < 40) {
+              dut.clockDomain.waitSampling()
+              sleep(1)
+              waited += 1
+            }
+            assert(dut.io.completionValid.toBoolean)
+            assert(dut.io.completionData.toBigInt == (expected & mask))
+            assert(dut.io.completionRobPointer.toBigInt == 9)
+            dut.clockDomain.waitSampling()
+            sleep(1)
+            assert(!dut.io.completionValid.toBoolean)
+          }
+
+          launchAndCheck(divW, 7, 0, mask, expectImmediate = enabled)
+          launchAndCheck(modWu, BigInt("fedcba98", 16), 0, BigInt("fedcba98", 16), enabled)
+          launchAndCheck(divW, -123, -1, 123, expectImmediate = enabled)
+          launchAndCheck(modW, -123, -1, 0, expectImmediate = enabled)
+          launchAndCheck(divWu, 0, 37, 0, expectImmediate = enabled)
+          launchAndCheck(divWu, 100, 3, 33, expectImmediate = false)
+        }
+    }
+  }
+
   test("multiply wakes on issue and forwards its registered result one cycle later") {
     SimConfig.withVerilator
       .workspacePath("target/sim-workspace-ooo-execution-cluster")
@@ -747,6 +984,7 @@ class OooExecutionClusterSpec extends AnyFunSuite {
         dut.clockDomain.forkStimulus(period = 10)
         dut.io.instruction #= BigInt("38720000", 16)
         dut.io.issueValid #= false
+        dut.io.pdst #= 0
         dut.io.olderStorePending #= true
         dut.io.memorySubsystemIdle #= false
         dut.io.maintenanceReady #= true
@@ -786,6 +1024,51 @@ class OooExecutionClusterSpec extends AnyFunSuite {
       }
   }
 
+  test("a P0 producer cannot wake before a busy barrier accepts it") {
+    SimConfig.withVerilator
+      .workspacePath("target/sim-workspace-ooo-execution-cluster")
+      .compile(new OooBarrierExecutionProbe(config))
+      .doSim("ooo-p0-accept-before-wakeup", 0x4c76) { dut =>
+        dut.clockDomain.forkStimulus(period = 10)
+        dut.io.instruction #= BigInt("38720000", 16) // dbar
+        dut.io.issueValid #= false
+        dut.io.pdst #= 0
+        dut.io.olderStorePending #= true
+        dut.io.memorySubsystemIdle #= false
+        dut.io.maintenanceReady #= true
+        dut.io.maintenanceDone #= false
+        dut.io.flush #= false
+        dut.clockDomain.assertReset()
+        dut.clockDomain.waitSampling(2)
+        dut.clockDomain.deassertReset()
+
+        dut.io.issueValid #= true
+        sleep(1)
+        assert(dut.io.issueReady.toBoolean)
+        dut.clockDomain.waitSampling()
+        dut.io.issueValid #= false
+        sleep(1)
+        assert(dut.io.barrierActive.toBoolean)
+
+        dut.io.instruction #= BigInt("039b658c", 16) // ori r12, r12, imm
+        dut.io.pdst #= 17
+        dut.io.issueValid #= true
+        sleep(1)
+        assert(!dut.io.issueReady.toBoolean)
+        assert(!dut.io.directWakeupValid.toBoolean)
+        assert(!dut.io.completionValid.toBoolean)
+
+        dut.clockDomain.waitSampling(2)
+        sleep(1)
+        assert(!dut.io.issueReady.toBoolean)
+        assert(!dut.io.directWakeupValid.toBoolean)
+
+        dut.io.flush #= true
+        sleep(1)
+        assert(!dut.io.directWakeupValid.toBoolean)
+      }
+  }
+
   test("IBAR waits for maintenance and drops completion after a maintenance-time flush") {
     SimConfig.withVerilator
       .workspacePath("target/sim-workspace-ooo-execution-cluster")
@@ -794,6 +1077,7 @@ class OooExecutionClusterSpec extends AnyFunSuite {
         dut.clockDomain.forkStimulus(period = 10)
         dut.io.instruction #= BigInt("38728000", 16)
         dut.io.issueValid #= false
+        dut.io.pdst #= 0
         dut.io.olderStorePending #= false
         dut.io.memorySubsystemIdle #= true
         dut.io.maintenanceReady #= true
@@ -868,6 +1152,7 @@ class OooExecutionClusterSpec extends AnyFunSuite {
           dut.io.flush #= false
           dut.io.translationReady #= true
           dut.io.translationResponseValid #= false
+          dut.io.translationCancelled #= false
           dut.io.translationPhysicalAddress #= 0
           dut.io.translationException.valid #= false
           dut.io.translationException.ecode #= 0
@@ -964,6 +1249,18 @@ class OooExecutionClusterSpec extends AnyFunSuite {
         dut.io.translationReady #= false
         issue(code = 0x12, address = 0x127)
         while (!dut.io.translationRequestValid.toBoolean) sample()
+        dut.io.translationReady #= true
+        sample()
+        dut.io.translationReady #= false
+        dut.io.translationCancelled #= true
+        dut.io.translationResponseValid #= true
+        sample()
+        dut.io.translationResponseValid #= false
+        dut.io.translationCancelled #= false
+        sleep(1)
+        assert(dut.io.translationRequestValid.toBoolean)
+        assert(!dut.io.maintenanceValid.toBoolean)
+        assert(!dut.io.completionValid.toBoolean)
         dut.io.translationReady #= true
         sample()
         dut.io.translationResponseValid #= true

@@ -1,8 +1,78 @@
 schema_version: 1
-updated_at: "2026-08-04T06:57:24+08:00"
+updated_at: "2026-08-04T18:03:00+08:00"
 branch: dev/ECHO
 
-current_candidate:
+active_development_candidate:
+  source_commit: 9de316494fc03d746b597afb1f4f271e9762114f
+  timing_source_commit: e5212e3
+  generated_rtl_commit: 9de3164
+  generated_rtl_sha256: 00d37c5bc78fe0052cabf7e9d3ae665f31e0a7a0c238ea181ab935957b4c40c1
+  chiplab_commit: c398d274812f164d387146fa7d8f612a4a1296d9
+  source_state: "committed P1 fixes plus L1D and LSQ timing cuts; only the pre-existing deleted AGENTS.md remains dirty"
+  local_gates: passed
+  scala_verilator_tests: 177
+  python_tests: 364
+  lint_warning_count: 856
+  lint_warning_signature_sha256: 49ee79a696ad5ef217cf5e2c5cd8e7bc3b45a80a1f135eaf86fe247b56996364
+  matching_chiplab_simulation: passed_func_3_seeds_linux_clean_and_instrumented_50ms
+  matching_complete_soc: pending_combined_milestone
+  matching_board_evaluation: not_run
+  timing_hypothesis: "Registering selected-load translation at the existing scheduledLoad boundary should remove the routed dynamic loadHead PA mux without adding a load cycle. This remains unverified until matching place/route."
+
+m01_baseline:
+  evidence_scope: active_development_candidate_9de3164
+  schema: nscc-m01-v2
+  observer: simulation_only_no_dut_drives
+  generated_rtl_sha256: 00d37c5bc78fe0052cabf7e9d3ae665f31e0a7a0c238ea181ab935957b4c40c1
+  patch_sha256: 4674d050a42c2005243a63c167ce020574c90672308cd4406c1cb8c376967cfb
+  source_manifest_sha256: f00f4e38de8c4c99f3c3aa3c03e8143b01df17d4084cf15c5c496b088cfd5435
+  commit_observation_lag_cycles: 4
+  final_prepared_model:
+    func_lab19_seed_1_sha256: f8f044ff26f37ad2dcba311d3422668d05011f671374db29e75da9b11b00df86
+    linux_seed_1_sha256: 5d53230abe03ab54beb037b122896ccf7873dd7cccce7710a670898d009c113f
+  non_intrusion:
+    workload: func/func_advance
+    seed: 1
+    cycles: 15886
+    instructions: 1517
+    commit_trace_lines: 1519
+    commit_trace_sha256: a417ba89a8b415b63b0428fd88ecb56e29883b71440e673dfc920d249060fc3f
+    clean_instrumented_trace_equal: true
+    clean_instrumented_uart_equal: true
+  function_simulation:
+    func_lab19:
+      - {seed: 1, cycles: 620754, instructions: 139660, status: passed}
+      - {seed: 19557, cycles: 620572, instructions: 139657, status: passed}
+      - {seed: 5570815, cycles: 620555, instructions: 139655, status: passed}
+    func_advance:
+      - {seed: 1, cycles: 15886, instructions: 1517, status: passed}
+      - {seed: 19557, cycles: 15968, instructions: 1517, status: passed}
+      - {seed: 5570815, cycles: 15828, instructions: 1517, status: passed}
+  linux_50ms:
+    seed: 1
+    cycles: 24999995
+    instructions: 13627566
+    ipc: 0.545103
+    clean_instrumented_uart_sha256: 1cf92c30b65c33bd11499964a1b1c9f94f04802add281ad0775cb9d3b2d4a17f
+    instrumented_model_sha256: 5d53230abe03ab54beb037b122896ccf7873dd7cccce7710a670898d009c113f
+    counter_json_sha256: acb60011261ebac7a1648976196d9e9c1aa2db7bccc82eace039754c375a0d7b
+    zero_retire_loss: {recovery: 0, rob_empty: 745033, head_incomplete: 17220324, head_complete_blocked: 43657, unclassified: 0}
+    head_incomplete_detail: {store_translation: 7984219, store_completion_to_rob: 5928701, load_completion_to_rob: 962622, load_response: 590968, rob_staged_completion: 553721, issue_operand_stage: 289265, issue_address_stage: 104449, execution_dispatch_or_untracked: 234010}
+    status: passed_without_mismatch
+  func_lab19_seed_1_v2:
+    cycles: 620754
+    instructions: 139660
+    ipc: 0.224984
+    model_sha256: f8f044ff26f37ad2dcba311d3422668d05011f671374db29e75da9b11b00df86
+    counter_json_sha256: 173a51c3ffa777745ba68a461981050048f3afab270c115e07972268a93e3a42
+    zero_retire_loss: {recovery: 71, rob_empty: 160949, head_incomplete: 363488, head_complete_blocked: 2403, unclassified: 0}
+    head_incomplete_detail: {rob_staged_completion: 78419, issue_operand_stage: 48858, store_completion_to_rob: 44176, store_uncached_response: 42859, execution_dispatch_or_untracked: 34428, issue_address_stage: 24618, issue_ready_wait: 24024, load_response: 19333, load_order_or_request: 16099, divider: 12862}
+    status: passed_without_mismatch
+  invariants: passed_all_results
+  unclassified_zero_retire_cycles: 0
+  next_measurement_priority: "Split Linux Store translation and Store completion-to-ROB by ATU/LSQ/cache/AXI sub-state; keep DIV fast path as an independent microbenchmark candidate."
+
+last_fully_validated_candidate:
   source_commit: 60fba481888a8f7e5a2f0ba0b76c91422a117309
   implementation_commit: 6bbca9b
   base_commit: 80fb1cbee19a6040ae5d10f99e861ac381fbd536
@@ -17,6 +87,70 @@ current_candidate:
   linux_acceptance: not_satisfied
   board_evaluation: func58_and_perf20_passed
 
+p1_closure:
+  status: closed_on_dd469ea_matching_rtl
+  items:
+    C01: 9590512
+    C02: 93b5910
+    C03: 4ff1b99
+    C04: 6252184
+    C05: 2a3a44d
+    C06: 39fce68
+    C07: 191517f
+    C08: 189677f
+  matching_source_commit: dd469eaff61a488adebe00d5c89dd0bc7364c71e
+  matching_generated_rtl_sha256: c655a887fc423686c181a9acf8e5fe54622a2eb617f460184e6c253829b8a653
+  full_gates: passed_177_scala_verilator_364_python_locked_rtl_gates
+  function_simulation:
+    func_lab19:
+      - {seed: 1, cycles: 620754, instructions: 139660, status: passed}
+      - {seed: 19557, cycles: 620572, instructions: 139657, status: passed}
+      - {seed: 5570815, cycles: 620555, instructions: 139655, status: passed}
+    func_advance:
+      - {seed: 1, cycles: 15886, instructions: 1517, status: passed}
+      - {seed: 19557, cycles: 15968, instructions: 1517, status: passed}
+      - {seed: 5570815, cycles: 15828, instructions: 1517, status: passed}
+  linux_clean_50ms:
+    cycles: 24999995
+    instructions: 13627566
+    ipc: 0.545103
+    status: passed_without_mismatch
+  linux_random_axi_200ms:
+    - {seed: 1, cycles: 99999995, instructions: 39759420, ipc: 0.397594, status: passed_without_mismatch}
+    - {seed: 19557, cycles: 99999995, instructions: 39742725, ipc: 0.397427, status: passed_without_mismatch}
+    - {seed: 5570815, cycles: 99999995, instructions: 39719858, ipc: 0.397199, status: passed_without_mismatch}
+
+latest_timing_sample:
+  evidence_scope: historical_for_active_candidate
+  source_commit: dd469eaff61a488adebe00d5c89dd0bc7364c71e
+  generated_rtl_sha256: c655a887fc423686c181a9acf8e5fe54622a2eb617f460184e6c253829b8a653
+  profile: perf
+  target_cpu_mhz: 100
+  timing_met: false
+  wns_ns: -0.449
+  tns_ns: -30.140
+  setup_failing_endpoints: 220
+  whs_ns: 0.047
+  ths_ns: 0.0
+  drc_errors: 0
+  write_bitstream: complete_diagnostic_only
+  resources:
+    slice_luts: 89689
+    slice_lut_percent: 67.03
+    slice_registers: 53573
+    slice_register_percent: 19.90
+    block_ram_tiles: 68.5
+    block_ram_percent: 18.77
+    dsp48: 8
+  top_path:
+    startpoint: loadStoreQueue/loadHead_reg[1]_replica
+    endpoint: loadStoreQueue/completion_data_reg[11]
+    data_path_ns: 10.342
+    logic_ns: 2.836
+    route_ns: 7.506
+    route_percent: 72.6
+  archive: Stable_Backup/cpu_dd469eaff61a_chiplab_c398d274812f_perf_100mhz_20260804-154312_candidate
+
 architecture_closure:
   memory_epoch_width: 8
   cacop:
@@ -27,8 +161,8 @@ architecture_closure:
   cpucfg:
     status: satisfied
     index_16: 0x0000001d
-    index_17: 0x06060001
-    index_18: 0x06060001
+    index_17: 0x06070001
+    index_18: 0x06070001
     index_19: 0x06090001
   llsc:
     status: satisfied_single_core_noncoherent
@@ -47,11 +181,11 @@ architecture_closure:
     mechanism: one_entry_deferred_data_response
 
 local_gates:
+  evidence_scope: active_development_candidate_9de3164
   command: make cpu-check
   status: passed
   scala:
-    suites: 38
-    passed: 161
+    passed: 177
     failed: 0
   python:
     passed: 364
@@ -60,12 +194,13 @@ local_gates:
   yosys_structure: passed
   verilator_lint:
     status: passed
-    reviewed_warnings: 845
-    warning_signature_sha256: 48bc21786139a637214eb7b221a1bb6b48fd70fc4e52ec9775230bb77d33f3d7
+    reviewed_warnings: 856
+    warning_signature_sha256: 49ee79a696ad5ef217cf5e2c5cd8e7bc3b45a80a1f135eaf86fe247b56996364
     categories: [CMPCONST, UNUSEDSIGNAL]
   publication_consistency: passed
 
 chiplab_simulation:
+  evidence_scope: last_fully_validated_candidate_60fba4
   func_lab19:
     - {seed: 1, cycles: 586705, status: passed}
     - {seed: 19557, cycles: 585844, status: passed}
@@ -84,6 +219,7 @@ chiplab_simulation:
     result_log_sha256: 9cb35f4c1ac7ba5b16f801b588050315f3a0cbafdd21d3c53e4cc511f74db77c
 
 linux_verilator:
+  evidence_scope: last_fully_validated_candidate_60fba4
   clean_official_equivalent:
     limit_ns: 50000000
     cycles: 24999995
@@ -112,6 +248,7 @@ linux_verilator:
   milestone: "Linux 5.14 early console and memory initialization; no shell evidence"
 
 complete_soc:
+  evidence_scope: last_fully_validated_candidate_60fba4
   source_commit: 60fba481888a8f7e5a2f0ba0b76c91422a117309
   generated_rtl_sha256: 137657aa0c594334568cc386571d13aa9cdc828c8fc45c56ed421be15912c209
   chiplab_commit: c398d274812f164d387146fa7d8f612a4a1296d9
@@ -145,6 +282,7 @@ complete_soc:
   archive: Stable_Backup/cpu_60fba481888a_chiplab_c398d274812f_perf_100mhz_20260804-054923_stable
 
 complete_soc_func:
+  evidence_scope: last_fully_validated_candidate_60fba4
   source_commit: e26ccfa823e81c41f1191365fdcf8f89395b1248
   implementation_commit: 60fba481888a8f7e5a2f0ba0b76c91422a117309
   generated_rtl_sha256: 137657aa0c594334568cc386571d13aa9cdc828c8fc45c56ed421be15912c209
@@ -168,6 +306,7 @@ complete_soc_func:
   archive: Stable_Backup/cpu_e26ccfa823e8_chiplab_c398d274812f_func_20260804-061935_stable
 
 team_board_func:
+  evidence_scope: last_fully_validated_candidate_60fba4
   status: passed_58_of_58
   job_id: 20260803-223955-1ceb232c
   profile: func58
@@ -185,6 +324,7 @@ team_board_func:
   vivado_metrics_sha256: 06863a6a86388293ccce08987687caad57ddf75cfcdfdb138fef363468d4f395
 
 team_board_perf:
+  evidence_scope: last_fully_validated_candidate_60fba4
   status: passed_20_of_20
   job_id: 20260803-220447-d9b5b478
   profile: perf20
@@ -222,8 +362,9 @@ acceptance:
   official_ci: not_run
   team_board: func58_and_perf20_passed
   linux_shell: not_satisfied
-  next_priority: "Obtain U-Boot/PMON, Linux boot, Buildroot shell, and required system-operation evidence on the team board."
-  timing_risk: "Setup margin is 0.044 ns; every RTL change requires a fresh complete-SoC implementation."
+  next_priority: "Complete Store-path sub-counters and paired performance workloads, then select an independently A/B-tested candidate; hot development may combine timing-aware candidates into one implementation milestone."
+  timing_risk: "The latest matching P1 timing sample is WNS -0.449 ns. Hot RTL work should preserve timing-aware boundaries; combine independent candidates into one implementation, use converged builds as board milestones, and retain unconverged WNS/top-N paths as next-iteration information without a separate timing-only pass."
+  board_note: "No active-candidate board run: the available dd469ea performance bitstream has negative setup slack, no matching function bitstream exists, and board ownership was not explicitly confirmed."
 
 reproduce:
   local_commands:

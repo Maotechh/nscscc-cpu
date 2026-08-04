@@ -21,6 +21,7 @@ class OooFrontendSpec extends AnyFunSuite {
     dut.io.translationResponse.virtualAddress #= 0
     dut.io.translationResponse.physicalAddress #= 0
     dut.io.translationResponse.uncached #= false
+    dut.io.translationResponse.cancelled #= false
     dut.io.translationResponse.exception.valid #= false
     dut.io.translationResponse.exception.ecode #= 0
     dut.io.translationResponse.exception.esubcode #= 0
@@ -124,6 +125,49 @@ class OooFrontendSpec extends AnyFunSuite {
     dut.io.cacheResponse.error #= false
     sample(dut)
     dut.io.cacheResponseValid #= false
+  }
+
+  test("a cancelled translation releases the fetch owner and retries the same PC") {
+    SimConfig.withVerilator
+      .workspacePath("target/sim-workspace-ooo-frontend-translation-cancel")
+      .compile(new OooFrontend(config))
+      .doSim("ooo-frontend-translation-cancel", 0x4c7a) { dut =>
+        dut.clockDomain.forkStimulus(period = 10)
+        clearInputs(dut)
+        dut.clockDomain.assertReset()
+        dut.clockDomain.waitSampling(2)
+        dut.clockDomain.deassertReset()
+        sample(dut)
+
+        val pc = config.resetVector
+        while (!dut.io.translationRequest.valid.toBoolean) sample(dut)
+        assert(dut.io.translationRequest.virtualAddress.toBigInt == pc)
+        dut.io.translationRequest.ready #= true
+        sample(dut)
+        dut.io.translationRequest.ready #= false
+
+        dut.io.translationResponse.valid #= true
+        dut.io.translationResponse.virtualAddress #= pc
+        dut.io.translationResponse.cancelled #= true
+        sleep(1)
+        assert(dut.io.translationResponse.ready.toBoolean)
+        sample(dut)
+        dut.io.translationResponse.valid #= false
+        dut.io.translationResponse.cancelled #= false
+
+        var cycles = 0
+        while (!dut.io.translationRequest.valid.toBoolean && cycles < 8) {
+          assert(!dut.io.cacheRequestValid.toBoolean)
+          assert(!dut.io.cacheUncachedRequestValid.toBoolean)
+          assert(dut.io.occupancy.toBigInt == 0)
+          sample(dut)
+          cycles += 1
+        }
+        assert(dut.io.translationRequest.valid.toBoolean)
+        assert(dut.io.translationRequest.virtualAddress.toBigInt == pc)
+        assert(!dut.io.cacheRequestValid.toBoolean)
+        assert(!dut.io.cacheUncachedRequestValid.toBoolean)
+      }
   }
 
   private def encodeDirectBranch(opcode: Int, byteOffset: Int): BigInt = {

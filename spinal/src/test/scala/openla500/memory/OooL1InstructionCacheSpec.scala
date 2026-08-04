@@ -456,6 +456,53 @@ class OooL1InstructionCacheSpec extends AnyFunSuite {
       }
   }
 
+  test("L1I does not install a line when any refill beat reports an error") {
+    SimConfig.withVerilator
+      .workspacePath("target/sim-workspace-ooo-l1i-refill-error")
+      .compile(new OooL1InstructionCacheProbe(config))
+      .doSim("ooo-l1i-refill-error", 0x4c55) { dut =>
+        dut.clockDomain.forkStimulus(period = 10)
+        clearInputs(dut)
+        dut.clockDomain.assertReset()
+        dut.clockDomain.waitSampling(2)
+        dut.clockDomain.deassertReset()
+        dut.clockDomain.waitSampling(config.instructionCache.sets + 8)
+
+        val virtualAddress = BigInt("1c000500", 16)
+        val physicalAddress = BigInt(0x500)
+        acceptRequest(dut, virtualAddress, physicalAddress)
+        while (!dut.io.lineReadValid.toBoolean) sample(dut)
+        val mshrId = dut.io.lineRead.mshrId.toBigInt
+        dut.io.lineReadReady #= true
+        sample(dut)
+        dut.io.lineReadReady #= false
+
+        for (beat <- 0 until OooCacheContract.BeatsPerLine) {
+          dut.io.lineReadBeatValid #= true
+          dut.io.lineReadBeat.mshrId #= mshrId
+          dut.io.lineReadBeat.beat #= beat
+          dut.io.lineReadBeat.data #= instructionBeat(900, beat)
+          dut.io.lineReadBeat.last #= beat == OooCacheContract.BeatsPerLine - 1
+          dut.io.lineReadBeat.error #= beat == 3
+          assert(dut.io.lineReadBeatReady.toBoolean)
+          sample(dut)
+        }
+        dut.io.lineReadBeatValid #= false
+        dut.io.lineReadBeat.error #= false
+        sample(dut)
+
+        acceptRequest(dut, virtualAddress, physicalAddress)
+        var waitCycles = 0
+        while (!dut.io.lineReadValid.toBoolean && waitCycles < 8) {
+          assert(!dut.io.responseValid.toBoolean)
+          sample(dut)
+          waitCycles += 1
+        }
+        assert(dut.io.lineReadValid.toBoolean)
+        assert(dut.io.lineRead.lineAddress.toBigInt == physicalAddress)
+      }
+  }
+
   test("L1I CACOP modes invalidate only the selected line") {
     SimConfig.withVerilator
       .workspacePath("target/sim-workspace-ooo-l1i-maintenance")
@@ -483,13 +530,15 @@ class OooL1InstructionCacheSpec extends AnyFunSuite {
           refill(dut, address & ~BigInt(0x3f), firstInstruction, Some(firstInstruction))
         }
 
+        val setSpan = BigInt(config.instructionCache.sets * config.instructionCache.lineBytes)
         val line0 = BigInt(0x100)
-        val line1 = BigInt(0x1100)
+        val line1 = line0 + setSpan
+        val absentLine = line0 + setSpan * 2
         install(line0, 0x1000)
         install(line1, 0x2000)
 
         // A hit operation that misses is a side-effect-free completion.
-        maintain(dut, code = 0x10, virtualAddress = 0x2100, physicalAddress = 0x2100)
+        maintain(dut, code = 0x10, virtualAddress = absentLine, physicalAddress = absentLine)
         acceptRequest(dut, line1, line1)
         expectGroup(dut, line1, 0x2000, forbidLineRead = true)
 

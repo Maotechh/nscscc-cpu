@@ -211,7 +211,8 @@ final class OooFrontend(config: OooCoreConfig = OooCoreConfig.FourIssueThreeComm
   val translationResponseMatches =
     io.translationResponse.virtualAddress === translationPc
   val translationExceptionFire = translationResponseFire && translationOutstanding &&
-    !io.redirectValid && translationResponseMatches && io.translationResponse.exception.valid
+    !io.redirectValid && translationResponseMatches && !io.translationResponse.cancelled &&
+    io.translationResponse.exception.valid
   val predictionCorrectionOnResponse = Bool()
   val cacheRequestCapacityAvailable = Bool()
   // Cached requests can be killed at the L1 boundary, but an already accepted uncached AXI burst
@@ -493,7 +494,10 @@ final class OooFrontend(config: OooCoreConfig = OooCoreConfig.FourIssueThreeComm
         translationDropPending := False
       }.elsewhen(translationOutstanding) {
         translationOutstanding := False
-        when(translationResponseMatches && !io.translationResponse.exception.valid) {
+        when(io.translationResponse.cancelled) {
+          translatedRequestValid := False
+          translatedExceptionValid := False
+        }.elsewhen(translationResponseMatches && !io.translationResponse.exception.valid) {
           translatedRequestValid := True
           translatedPhysicalAddress := io.translationResponse.physicalAddress
           translatedUncached := io.translationResponse.uncached

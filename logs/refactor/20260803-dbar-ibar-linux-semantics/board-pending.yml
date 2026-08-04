@@ -1,7 +1,7 @@
 schema_version: 1
 recorded_at: "2026-08-03T21:22:19+08:00"
 status: func58_passed_linux_pending
-blocking_endpoint: "private Windows hardware host"
+blocking_endpoint: "administrator@10.20.213.157"
 
 shared_board_observation:
   observed_at: "2026-08-03T21:02:00+08:00"

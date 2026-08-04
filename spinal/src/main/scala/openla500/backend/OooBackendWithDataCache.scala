@@ -48,6 +48,8 @@ final class OooBackendWithDataCache(
     val memoryWriteValid = out Bool ()
     val memoryWrite = out(OooLineWriteRequest(config))
     val memoryWriteReady = in Bool ()
+    val memoryWriteResponseValid = in Bool ()
+    val memoryWriteResponse = in(OooLineWriteResponse(config))
 
     val systemReadValid = out Bool ()
     val systemReadAddress = out UInt (14 bits)
@@ -174,6 +176,8 @@ final class OooBackendWithDataCache(
   io.memoryWriteValid := cacheHierarchy.io.memoryWriteValid
   io.memoryWrite := cacheHierarchy.io.memoryWrite
   cacheHierarchy.io.memoryWriteReady := io.memoryWriteReady
+  cacheHierarchy.io.memoryWriteResponseValid := io.memoryWriteResponseValid
+  cacheHierarchy.io.memoryWriteResponse := io.memoryWriteResponse
 
   backend.io.systemReadData := io.systemReadData
   backend.io.timer := io.timer

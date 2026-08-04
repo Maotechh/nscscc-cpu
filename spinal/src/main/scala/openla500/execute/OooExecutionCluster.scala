@@ -101,21 +101,53 @@ final class OooDivideUnit(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCo
   val nextRemainder = Mux(trialNegative, shiftedRemainder, trial)
   val nextQuotient = (quotient(config.xlen - 2 downto 0) ## !trialNegative).asUInt
 
+  val fastDivideByZero = io.source2 === 0
+  val fastDividendZero = io.source1 === 0
+  val fastPositiveOne = io.source2 === B(1, config.xlen bits)
+  val fastNegativeOne = io.uop.decoded.mulDivSigned && io.source2.andR
+  val fastPath = if (config.enableDivideFastPath) {
+    fastDivideByZero || fastDividendZero || fastPositiveOne || fastNegativeOne
+  } else {
+    False
+  }
+  val fastQuotient = Bits(config.xlen bits)
+  fastQuotient := io.source1
+  when(fastNegativeOne) {
+    fastQuotient := (U(0, config.xlen bits) - io.source1.asUInt).asBits
+  }
+  val fastResult = Bits(config.xlen bits)
+  fastResult := Mux(io.uop.decoded.mulDivOperation(3), B(0, config.xlen bits), fastQuotient)
+  when(fastDivideByZero) {
+    fastResult := Mux(
+      io.uop.decoded.mulDivOperation(3),
+      io.source1,
+      B((BigInt(1) << config.xlen) - 1, config.xlen bits)
+    )
+  }.elsewhen(fastDividendZero) {
+    fastResult := 0
+  }
+
   completionValid := False
   when(io.flush) {
     busy := False
     completionValid := False
   }.elsewhen(io.start && !busy) {
-    busy := True
     uop := io.uop
-    divisor := source2Magnitude
-    quotient := source1Magnitude
-    remainder := U(0, config.xlen + 1 bits)
-    originalDividend := io.source1.asUInt
-    quotientNegative := io.uop.decoded.mulDivSigned && (io.source1.msb =/= io.source2.msb)
-    remainderNegative := io.uop.decoded.mulDivSigned && io.source1.msb
-    divideByZero := io.source2 === 0
-    count := U(0, count.getWidth bits)
+    when(fastPath) {
+      busy := False
+      result := fastResult
+      completionValid := True
+    }.otherwise {
+      busy := True
+      divisor := source2Magnitude
+      quotient := source1Magnitude
+      remainder := U(0, config.xlen + 1 bits)
+      originalDividend := io.source1.asUInt
+      quotientNegative := io.uop.decoded.mulDivSigned && (io.source1.msb =/= io.source2.msb)
+      remainderNegative := io.uop.decoded.mulDivSigned && io.source1.msb
+      divideByZero := io.source2 === 0
+      count := U(0, count.getWidth bits)
+    }
   }.elsewhen(busy) {
     quotient := nextQuotient
     remainder := nextRemainder
@@ -366,13 +398,17 @@ final class OooExecutionCluster(config: OooCoreConfig = OooCoreConfig.FourIssueT
   when(
     barrierState === OooBarrierState.translationResponse && translationResponseFire
   ) {
-    barrierPhysicalAddress := io.cacheTranslationResponse.physicalAddress
-    barrierException := io.cacheTranslationResponse.exception
-    barrierState := Mux(
-      io.cacheTranslationResponse.exception.valid,
-      OooBarrierState.complete,
-      OooBarrierState.startCacheMaintenance
-    )
+    when(io.cacheTranslationResponse.cancelled) {
+      barrierState := OooBarrierState.translationRequest
+    }.otherwise {
+      barrierPhysicalAddress := io.cacheTranslationResponse.physicalAddress
+      barrierException := io.cacheTranslationResponse.exception
+      barrierState := Mux(
+        io.cacheTranslationResponse.exception.valid,
+        OooBarrierState.complete,
+        OooBarrierState.startCacheMaintenance
+      )
+    }
   }
   when(
     barrierState === OooBarrierState.startInstructionMaintenance &&
@@ -632,18 +668,18 @@ final class OooExecutionCluster(config: OooCoreConfig = OooCoreConfig.FourIssueT
     directCompletion(port).branchTaken := branchTaken
     directCompletion(port).branchTarget := resolvedTarget
     directCompletion(port).branchMispredict := branchMispredict
-    // Only one-cycle operations and the fixed-latency multiplier may wake on
-    // issue. Keep flush out of this narrow event: IQ flush has priority over
-    // ready-bit updates. The shared DIV lane still suppresses a direct wake
-    // while its older divide completion owns the lane.
+    // Only one-cycle operations and the fixed-latency multiplier may wake when
+    // the issue port accepts them. Keep flush out of this narrow event: IQ
+    // flush has priority over ready-bit updates. The shared DIV lane still
+    // suppresses a direct wake while its older divide completion owns the lane.
     val singleCycleWake = if (port == dividePort) {
-      io.issueValid(port) && direct && !divider.io.completionValid &&
+      fire && direct && !divider.io.completionValid &&
       directCompletion(port).writesPdst
     } else {
-      io.issueValid(port) && direct && directCompletion(port).writesPdst
+      fire && direct && directCompletion(port).writesPdst
     }
     val fixedLatencyWake = if (port == multiplyPort) {
-      io.issueValid(port) && (direct || isMultiply) && directCompletion(port).writesPdst
+      fire && (direct || isMultiply) && directCompletion(port).writesPdst
     } else {
       singleCycleWake
     }

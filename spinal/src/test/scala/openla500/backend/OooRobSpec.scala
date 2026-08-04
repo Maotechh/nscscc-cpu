@@ -440,4 +440,91 @@ class OooRobSpec extends AnyFunSuite {
         assert(dut.io.empty.toBoolean)
       }
   }
+
+  test("ROB rejects an old-epoch completion after the full pointer identity wraps") {
+    val config = OooCoreConfig.FourIssueThreeCommit
+    SimConfig.withVerilator
+      .workspacePath("target/sim-workspace-ooo-rob")
+      .compile(new OooRobProbe(config))
+      .doSim("ooo-rob-full-pointer-wrap-epoch-qualification", 0x4f4f4c) { dut =>
+        def sample(): Unit = {
+          dut.clockDomain.waitSampling()
+          sleep(1)
+        }
+
+        def allocateOne(expectedPointer: Int, pc: Int): Unit = {
+          dut.io.allocatePc(0) #= pc
+          dut.io.allocateValid #= 1
+          dut.io.allocateAccept #= true
+          sleep(1)
+          assert(dut.io.allocateReady.toBoolean)
+          assert(dut.io.allocatedPointer(0).toBigInt == expectedPointer)
+          sample()
+          dut.io.allocateValid #= 0
+          dut.io.allocateAccept #= false
+          assert(dut.io.occupancy.toBigInt == 1)
+        }
+
+        def completeAndCommit(pointer: Int, epoch: Int): Unit = {
+          dut.io.completionRobPointer(0) #= pointer
+          dut.io.completionRecoveryEpoch(0) #= epoch
+          dut.io.completionValid #= 1
+          sample()
+          dut.io.completionValid #= 0
+          sample()
+          assert((dut.io.commitValid.toBigInt & 1) == 1)
+          assert(dut.io.commitPc(0).toBigInt == pointer)
+          sample()
+          assert(dut.io.occupancy.toBigInt == 0)
+        }
+
+        dut.clockDomain.forkStimulus(period = 10)
+        initialize(dut, config)
+        dut.clockDomain.assertReset()
+        dut.clockDomain.waitSampling(2)
+        dut.clockDomain.deassertReset()
+        sample()
+
+        // Preserve pointer 0 as an old-epoch completion identity, then flush it.
+        allocateOne(expectedPointer = 0, pc = 0)
+        dut.io.flush #= true
+        sample()
+        dut.io.flush #= false
+        assert(dut.io.empty.toBoolean)
+
+        // Retire pointers 1..63 so both index and generation return to pointer 0.
+        dut.io.currentEpoch #= 1
+        for (pointer <- 1 until (1 << config.robPointerWidth)) {
+          allocateOne(expectedPointer = pointer, pc = pointer)
+          completeAndCommit(pointer = pointer, epoch = 1)
+        }
+
+        allocateOne(expectedPointer = 0, pc = 0x100)
+        dut.io.completionRobPointer(0) #= 0
+        dut.io.completionRecoveryEpoch(0) #= 0
+        dut.io.completionWritesPdst #= 1
+        dut.io.completionValid #= 1
+        sample()
+        dut.io.completionValid #= 0
+        assert(dut.io.completionWakeupCandidateValid.toBigInt == 0)
+        assert(dut.io.completionWakeupValid.toBigInt == 0)
+
+        for (_ <- 0 until 4) {
+          sample()
+          assert(dut.io.completionWakeupCandidateValid.toBigInt == 0)
+          assert(dut.io.completionWakeupValid.toBigInt == 0)
+          assert(dut.io.commitValid.toBigInt == 0)
+          assert(dut.io.occupancy.toBigInt == 1)
+        }
+
+        dut.io.completionRecoveryEpoch(0) #= 1
+        dut.io.completionWritesPdst #= 0
+        dut.io.completionValid #= 1
+        sample()
+        dut.io.completionValid #= 0
+        sample()
+        assert((dut.io.commitValid.toBigInt & 1) == 1)
+        assert(dut.io.commitPc(0).toBigInt == 0x100)
+      }
+  }
 }

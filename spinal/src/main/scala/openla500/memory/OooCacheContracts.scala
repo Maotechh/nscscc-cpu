@@ -102,6 +102,11 @@ final case class OooLineWriteRequest(config: OooCoreConfig) extends Bundle {
   val mshrId = UInt(log2Up(config.mshrEntries) bits)
 }
 
+final case class OooLineWriteResponse(config: OooCoreConfig) extends Bundle {
+  val mshrId = UInt(log2Up(config.mshrEntries) bits)
+  val error = Bool()
+}
+
 final class OooMshrTable(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommit)
     extends Component {
   private val idWidth = log2Up(config.mshrEntries)
