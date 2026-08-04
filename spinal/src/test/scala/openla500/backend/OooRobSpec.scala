@@ -216,7 +216,7 @@ class OooRobSpec extends AnyFunSuite {
       }
   }
 
-  test("ROB commits three completed entries in order") {
+  test("ROB retains three-wide commit after a head completion bypass") {
     val config = OooCoreConfig.FourIssueThreeCommit
     SimConfig.withVerilator
       .workspacePath("target/sim-workspace-ooo-rob")
@@ -246,28 +246,36 @@ class OooRobSpec extends AnyFunSuite {
         sample()
         assert(dut.io.occupancy.toBigInt == 3)
 
+        dut.io.allocatePc(0) #= 3
+        dut.io.allocateValid #= 1
+        sleep(1)
+        assert(dut.io.allocatedPointer(0).toBigInt == 3)
+        sample()
+        assert(dut.io.occupancy.toBigInt == 4)
+
         dut.io.allocateValid #= 0
         dut.io.allocateAccept #= false
-        dut.io.completionRobPointer(2) #= 2
-        dut.io.completionValid #= 4
-        sleep(1)
+        dut.io.completionRobPointer(0) #= 1
+        dut.io.completionRobPointer(1) #= 2
+        dut.io.completionRobPointer(2) #= 3
+        dut.io.completionValid #= 7
+        sample()
         assert(dut.io.commitValid.toBigInt == 0)
+        dut.io.completionValid #= 0
         sample()
         assert(dut.io.commitValid.toBigInt == 0)
 
         dut.io.completionRobPointer(0) #= 0
-        dut.io.completionRobPointer(1) #= 1
-        dut.io.completionValid #= 3
-        sleep(1)
-        assert(dut.io.commitValid.toBigInt == 0)
+        dut.io.completionValid #= 1
         sample()
-        assert(dut.io.commitValid.toBigInt == 1)
+        assert(dut.io.commitValid.toBigInt == 7)
         assert(dut.io.commitPc(0).toBigInt == 0)
+        assert(dut.io.commitPc(1).toBigInt == 1)
+        assert(dut.io.commitPc(2).toBigInt == 2)
         dut.io.completionValid #= 0
         sample()
-        assert(dut.io.commitValid.toBigInt == 3)
-        assert(dut.io.commitPc(0).toBigInt == 1)
-        assert(dut.io.commitPc(1).toBigInt == 2)
+        assert(dut.io.commitValid.toBigInt == 1)
+        assert(dut.io.commitPc(0).toBigInt == 3)
 
         sample()
         assert(dut.io.occupancy.toBigInt == 0)
