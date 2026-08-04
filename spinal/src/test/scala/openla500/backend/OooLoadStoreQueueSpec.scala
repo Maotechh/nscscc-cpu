@@ -923,6 +923,57 @@ class OooLoadStoreQueueSpec extends AnyFunSuite {
     }
   }
 
+  test("idle translation bandwidth can look ahead past the untranslated Store head") {
+    for ((enabled, name, seed) <- Seq(
+        (false, "head-only", 0x4c7a),
+        (true, "lookahead", 0x4c7b)
+      )) {
+      val testConfig = config.copy(
+        enableFastStoreCompletion = false,
+        enableStoreTranslationLookahead = enabled
+      )
+      SimConfig.withVerilator
+        .workspacePath(s"target/sim-workspace-ooo-lsq-store-translation-$name")
+        .compile(new OooLoadStoreQueueProbe(testConfig))
+        .doSim(s"ooo-lsq-store-translation-$name", seed) { dut =>
+          dut.clockDomain.forkStimulus(period = 10)
+          clearInputs(dut)
+          dut.clockDomain.assertReset()
+          dut.clockDomain.waitSampling(2)
+          dut.clockDomain.deassertReset()
+          sample(dut)
+
+          dut.io.allocateValid #= 3
+          dut.io.allocate(0).robPointer #= 6
+          dut.io.allocate(0).isStore #= true
+          dut.io.allocate(0).storeQueueIndex #= 0
+          dut.io.allocate(1).robPointer #= 7
+          dut.io.allocate(1).isStore #= true
+          dut.io.allocate(1).storeQueueIndex #= 1
+          sample(dut)
+          dut.io.allocateValid #= 0
+
+          setStoreAgu(dut, 6, 0x180, BigInt("11111111", 16), storeIndex = 0)
+          sample(dut)
+          setStoreAgu(dut, 7, 0x280, BigInt("22222222", 16), storeIndex = 1)
+          sample(dut)
+          dut.io.aguValid #= false
+
+          var sawLookahead = false
+          for (_ <- 0 until 12) {
+            if (
+              dut.io.translationRequestValid.toBoolean &&
+              dut.io.translationRequestAddress.toBigInt == 0x280
+            ) {
+              sawLookahead = true
+            }
+            sample(dut)
+          }
+          assert(sawLookahead == enabled)
+        }
+    }
+  }
+
   test("Store translation may finish before its independently scheduled data") {
     SimConfig.withVerilator
       .workspacePath("target/sim-workspace-ooo-lsq")

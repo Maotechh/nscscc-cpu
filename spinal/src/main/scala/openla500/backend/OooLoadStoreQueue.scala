@@ -390,17 +390,38 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
   val translationOwnerRecoveryEpoch = Reg(UInt(config.recoveryEpochWidth bits))
   val translationOwnerLoadIndex = Reg(UInt(config.loadQueueIndexWidth bits))
   val translationOwnerStoreIndex = Reg(UInt(config.storeQueueIndexWidth bits))
-  val storeNeedsTranslation = headStore.valid && headStore.addressReady &&
+  val headStoreNeedsTranslation = headStore.valid && headStore.addressReady &&
     !headStore.translationDone
   // Translation has no memory side effect, so overlap it with the unresolved-store window.
   // Store ordering and forwarding are still checked before a translated load reaches D-cache.
   val loadNeedsTranslation = loadHeadReady && !scheduledLoad.translationDone
-  val selectStoreTranslation = storeNeedsTranslation
+  val pendingStoreTranslations = Bits(config.storeQueueEntries bits)
+  for (entry <- 0 until config.storeQueueEntries) {
+    pendingStoreTranslations(entry) := stores(entry).valid && stores(entry).addressReady &&
+      !stores(entry).translationDone
+  }
+  val rotatedPendingStoreTranslations =
+    ((pendingStoreTranslations ## pendingStoreTranslations) |>> storeHead)
+      .resize(config.storeQueueEntries)
+  val storeTranslationOffset = OHToUInt(OHMasking.first(rotatedPendingStoreTranslations))
+  val lookaheadStoreIndex = (storeHead + storeTranslationOffset).resized
+  val lookaheadStoreNeedsTranslation = if (config.enableStoreTranslationLookahead) {
+    !headStoreNeedsTranslation && !loadNeedsTranslation && pendingStoreTranslations.orR
+  } else {
+    False
+  }
+  val selectStoreTranslation = headStoreNeedsTranslation || lookaheadStoreNeedsTranslation
+  val storeTranslationIndex = Mux(
+    headStoreNeedsTranslation,
+    storeHead,
+    lookaheadStoreIndex
+  )
+  val selectedStoreTranslation = stores(storeTranslationIndex)
   io.translationRequest.valid := !io.flush && !translationActive && !translationCancelPending &&
-    (storeNeedsTranslation || loadNeedsTranslation)
+    (selectStoreTranslation || loadNeedsTranslation)
   io.translationRequest.virtualAddress := Mux(
     selectStoreTranslation,
-    headStore.virtualAddress,
+    selectedStoreTranslation.virtualAddress,
     scheduledLoad.virtualAddress
   )
   io.translationRequest.isWrite := selectStoreTranslation
@@ -410,16 +431,16 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
     translationOwnerStore := selectStoreTranslation
     translationOwnerRobPointer := Mux(
       selectStoreTranslation,
-      headStore.robPointer,
+      selectedStoreTranslation.robPointer,
       scheduledLoad.robPointer
     )
     translationOwnerRecoveryEpoch := Mux(
       selectStoreTranslation,
-      headStore.recoveryEpoch,
+      selectedStoreTranslation.recoveryEpoch,
       scheduledLoad.recoveryEpoch
     )
     translationOwnerLoadIndex := loadHead
-    translationOwnerStoreIndex := storeHead
+    translationOwnerStoreIndex := storeTranslationIndex
   }
 
   val requestCandidate = OooCacheRequest(config)
