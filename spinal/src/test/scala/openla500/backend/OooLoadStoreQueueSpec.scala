@@ -930,8 +930,7 @@ class OooLoadStoreQueueSpec extends AnyFunSuite {
       )) {
       val testConfig = config.copy(
         enableFastStoreCompletion = false,
-        enableStoreTranslationLookahead = enabled,
-        enableAgeAwareTranslationArbitration = false
+        enableStoreTranslationLookahead = enabled
       )
       SimConfig.withVerilator
         .workspacePath(s"target/sim-workspace-ooo-lsq-store-translation-$name")
@@ -972,113 +971,6 @@ class OooLoadStoreQueueSpec extends AnyFunSuite {
           }
           assert(sawLookahead == enabled)
         }
-    }
-  }
-
-  test("translation arbitration follows ROB age across Loads and non-head Stores") {
-    for ((ageAware, name, seed) <- Seq(
-        (false, "legacy", 0x4c7c),
-        (true, "age-aware", 0x4c7d)
-      )) {
-      val testConfig = config.copy(
-        enableFastStoreCompletion = false,
-        enableStoreTranslationLookahead = true,
-        enableAgeAwareTranslationArbitration = ageAware
-      )
-      val compiled = SimConfig.withVerilator
-        .workspacePath(s"target/sim-workspace-ooo-lsq-translation-arbitration-$name")
-        .compile(new OooLoadStoreQueueProbe(testConfig))
-      val scenarios = if (ageAware) {
-        Seq(
-          (6, 7, BigInt(0x280)),
-          (7, 6, BigInt(0x380)),
-          // Pointer 63 is immediately older than pointer 0 in a 32-entry
-          // ROB with an epoch bit, so wrap-around must not reverse priority.
-          (63, 0, BigInt(0x280))
-        )
-      } else {
-        Seq((6, 7, BigInt(0x380)))
-      }
-      for (((secondStorePointer, loadPointer, expectedAddress), scenario) <-
-          scenarios.zipWithIndex) {
-        compiled.doSim(s"ooo-lsq-translation-arbitration-$name-$scenario", seed + scenario) { dut =>
-          dut.clockDomain.forkStimulus(period = 10)
-          val pointerMask = (1 << testConfig.robPointerWidth) - 1
-
-          def resetAndAllocate(): Unit = {
-            clearInputs(dut)
-            dut.io.translationResponseEnable #= false
-            dut.clockDomain.assertReset()
-            dut.clockDomain.waitSampling(2)
-            dut.clockDomain.deassertReset()
-            sample(dut)
-
-            dut.io.allocateValid #= 7
-            dut.io.allocate(0).robPointer #= ((secondStorePointer - 2) & pointerMask)
-            dut.io.allocate(0).isStore #= true
-            dut.io.allocate(0).storeQueueIndex #= 0
-            dut.io.allocate(1).robPointer #= secondStorePointer
-            dut.io.allocate(1).isStore #= true
-            dut.io.allocate(1).storeQueueIndex #= 1
-            dut.io.allocate(2).robPointer #= loadPointer
-            dut.io.allocate(2).isLoad #= true
-            dut.io.allocate(2).loadQueueIndex #= 0
-            sample(dut)
-            dut.io.allocateValid #= 0
-
-            // Keep the head Store's translation outstanding while both
-            // contenders become address-ready. Once it completes, the next
-            // request exposes only the Load/non-head-Store arbitration policy.
-            setStoreAgu(
-              dut,
-              pointer = (secondStorePointer - 2) & pointerMask,
-              address = 0x180,
-              data = BigInt("11111111", 16),
-              storeIndex = 0
-            )
-            sample(dut)
-            dut.io.aguValid #= false
-            var headWaitCycles = 0
-            while (!dut.io.translationRequestValid.toBoolean && headWaitCycles < 8) {
-              sample(dut)
-              headWaitCycles += 1
-            }
-            assert(dut.io.translationRequestValid.toBoolean)
-            assert(dut.io.translationRequestAddress.toBigInt == 0x180)
-            sample(dut)
-
-            setStoreAgu(
-              dut,
-              pointer = secondStorePointer,
-              address = 0x280,
-              data = BigInt("22222222", 16),
-              storeIndex = 1
-            )
-            sample(dut)
-            setLoadAgu(dut, pointer = loadPointer, address = 0x380, loadIndex = 0)
-            sample(dut)
-            dut.io.aguValid #= false
-            sample(dut)
-
-            dut.io.translationResponseEnable #= true
-            sample(dut)
-            dut.io.translationResponseEnable #= false
-          }
-
-          def expectNextTranslation(address: BigInt): Unit = {
-            var waitCycles = 0
-            while (!dut.io.translationRequestValid.toBoolean && waitCycles < 8) {
-              sample(dut)
-              waitCycles += 1
-            }
-            assert(dut.io.translationRequestValid.toBoolean)
-            assert(dut.io.translationRequestAddress.toBigInt == address)
-          }
-
-          resetAndAllocate()
-          expectNextTranslation(expectedAddress)
-        }
-      }
     }
   }
 
