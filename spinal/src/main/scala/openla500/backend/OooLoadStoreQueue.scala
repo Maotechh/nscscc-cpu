@@ -520,7 +520,6 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
   // emitting a completion into the new recovery epoch.
   val responseStoreArchitectural = responseStoreAccepted && !headStore.committed
   val responseAccepted = responseLoadAccepted || responseStoreArchitectural
-  val forwardFire = !io.dataResponseValid && forwardCandidate
 
   val aguTargetAvailable = Mux(
     io.agu.isWrite,
@@ -553,10 +552,12 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
     headStore.translationDone && !headStore.completed &&
     (headStore.dataReady || (headStore.isSc && !headStore.scSuccess)) &&
     (!headStore.uncached || headStore.isSc)
-  // Cache responses cannot be backpressured here.  A simultaneously ready
-  // Store must retry instead of being marked complete behind the winning Load.
-  val storeCompletionFire = storeCompletionCandidate && !io.dataResponseValid &&
-    !forwardCandidate
+  // Cache responses cannot be backpressured. After those, complete the older
+  // Store before a younger forwarded Load. Besides preserving age priority,
+  // this keeps the deep forwarding/alias predicate out of the direct Store-to-ROB path.
+  val storeCompletionFire = storeCompletionCandidate && !io.dataResponseValid
+  val forwardFire = forwardCandidate && !io.dataResponseValid &&
+    !storeCompletionCandidate
   val baseCompletionBusy = io.dataResponseValid || forwardCandidate ||
     storeCompletionCandidate
   io.translationResponse.ready := translationCancelPending ||

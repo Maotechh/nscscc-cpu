@@ -1132,6 +1132,61 @@ class OooLoadStoreQueueSpec extends AnyFunSuite {
       }
   }
 
+  test("an older Store completion wins a collision with younger Load forwarding") {
+    SimConfig.withVerilator
+      .workspacePath("target/sim-workspace-ooo-lsq")
+      .compile(new OooLoadStoreQueueProbe(config))
+      .doSim("ooo-lsq-store-forwarding-completion-priority", 0x4c7c) { dut =>
+        dut.clockDomain.forkStimulus(period = 10)
+        clearInputs(dut)
+        dut.clockDomain.assertReset()
+        dut.clockDomain.waitSampling(2)
+        dut.clockDomain.deassertReset()
+        sample(dut)
+
+        dut.io.allocateValid #= 3
+        dut.io.allocate(0).robPointer #= 0
+        dut.io.allocate(0).isStore #= true
+        dut.io.allocate(0).storeQueueIndex #= 0
+        dut.io.allocate(1).robPointer #= 1
+        dut.io.allocate(1).isLoad #= true
+        dut.io.allocate(1).loadQueueIndex #= 0
+        sample(dut)
+        dut.io.allocateValid #= 0
+
+        dut.io.storeDataEnable #= false
+        setStoreAgu(dut, 0, 0x200, BigInt("12345678", 16))
+        sample(dut)
+        dut.io.aguValid #= false
+        sample(dut)
+
+        setLoadAgu(dut, 1, 0x200)
+        sample(dut)
+        dut.io.aguValid #= false
+        sample(dut)
+
+        dut.io.storeDataEnable #= true
+        setStoreAgu(dut, 0, 0x200, BigInt("12345678", 16))
+        sample(dut)
+        dut.io.aguValid #= false
+
+        assert(dut.io.completionValid.toBoolean)
+        assert(dut.io.completion.robPointer.toBigInt == 0)
+        assert(!dut.io.completion.writesPdst.toBoolean)
+        sample(dut)
+        // Forwarded Loads use the registered completion path. The cycle after
+        // the direct Store completion therefore remains empty before the Load appears.
+        assert(!dut.io.completionValid.toBoolean)
+        sample(dut)
+        assert(dut.io.completionValid.toBoolean)
+        assert(dut.io.completion.robPointer.toBigInt == 1)
+        assert(dut.io.completion.pdst.toBigInt == 7)
+        assert(dut.io.completion.data.toBigInt == BigInt("12345678", 16))
+        sample(dut)
+        assert(!dut.io.completionValid.toBoolean)
+      }
+  }
+
   test("physical synonyms forward only after both Store and Load translations complete") {
     SimConfig.withVerilator
       .workspacePath("target/sim-workspace-ooo-lsq")
