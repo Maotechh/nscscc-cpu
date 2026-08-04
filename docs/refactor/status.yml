@@ -161,7 +161,7 @@ architecture_closure:
   cpucfg:
     status: satisfied
     index_16: 0x0000001d
-    index_17: 0x06060001
+    index_17: 0x06070001
     index_18: 0x06060001
     index_19: 0x06090001
   llsc:

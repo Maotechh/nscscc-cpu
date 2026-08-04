@@ -530,13 +530,15 @@ class OooL1InstructionCacheSpec extends AnyFunSuite {
           refill(dut, address & ~BigInt(0x3f), firstInstruction, Some(firstInstruction))
         }
 
+        val setSpan = BigInt(config.instructionCache.sets * config.instructionCache.lineBytes)
         val line0 = BigInt(0x100)
-        val line1 = BigInt(0x1100)
+        val line1 = line0 + setSpan
+        val absentLine = line0 + setSpan * 2
         install(line0, 0x1000)
         install(line1, 0x2000)
 
         // A hit operation that misses is a side-effect-free completion.
-        maintain(dut, code = 0x10, virtualAddress = 0x2100, physicalAddress = 0x2100)
+        maintain(dut, code = 0x10, virtualAddress = absentLine, physicalAddress = absentLine)
         acceptRequest(dut, line1, line1)
         expectGroup(dut, line1, 0x2000, forbidLineRead = true)
 

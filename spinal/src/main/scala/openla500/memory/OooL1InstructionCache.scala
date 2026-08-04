@@ -10,7 +10,7 @@ object OooL1InstructionCacheState extends SpinalEnum {
     maintenanceInvalidate = newElement()
 }
 
-/** Two-way 8-KiB L1 instruction cache with 64-byte lines.
+/** Set-associative L1 instruction cache with 64-byte lines.
   *
   * A killed request is allowed to finish its refill so a redirect back to the same line can hit,
   * but no response is emitted for the stale fetch group. Once the requested 16-byte group has
@@ -28,7 +28,6 @@ final class OooL1InstructionCache(
   private val fetchGroupBytes = fetchGroupBits / 8
   private val fetchGroupOffsetWidth = log2Up(fetchGroupBytes)
 
-  require(geometry.capacityBytes == 8 * 1024)
   require(geometry.lineBytes == OooCacheContract.LineBytes)
   require(fetchGroupBytes == 16)
   require(geometry.lineBytes % fetchGroupBytes == 0)
