@@ -797,6 +797,100 @@ class OooBackendDispatchSpec extends AnyFunSuite {
       }
   }
 
+  test("a successfully broadcast direct wake does not cover the next direct tag") {
+    for ((suppressEcho, name, seed) <- Seq(
+        (false, "legacy", 0x4c61),
+        (true, "suppress-echo", 0x4c62)
+      )) {
+      val testConfig = config.copy(enableDirectWakeupEchoSuppression = suppressEcho)
+      SimConfig.withVerilator
+        .workspacePath(s"target/sim-workspace-ooo-backend-direct-echo-$name")
+        .compile(new OooBackendDispatchProbe(testConfig))
+        .doSim(s"ooo-backend-direct-echo-$name", seed) { dut =>
+          dut.clockDomain.forkStimulus(period = 10)
+          clearControl(dut)
+          dut.io.issueReady #= 0xf
+          dut.clockDomain.assertReset()
+          dut.clockDomain.waitSampling(2)
+          dut.clockDomain.deassertReset()
+          dut.clockDomain.waitSampling()
+
+          val basePc = BigInt("1c000000", 16)
+          val firstProducerPc = basePc
+          val secondProducerPc = basePc + 4
+          val secondConsumerPc = basePc + 8
+          dut.io.inputValid #= 7
+          dut.io.pc(0) #= firstProducerPc
+          dut.io.instruction(0) #= BigInt("0280040d", 16) // addi.w r13,r0,1
+          dut.io.pc(1) #= secondProducerPc
+          dut.io.instruction(1) #= BigInt("0280080f", 16) // addi.w r15,r0,2
+          dut.io.pc(2) #= secondConsumerPc
+          dut.io.instruction(2) #= BigInt("028005f0", 16) // addi.w r16,r15,1
+          dut.clockDomain.waitSampling()
+          dut.io.inputValid #= 0
+
+          var firstPdst = BigInt(0)
+          var firstPointer = BigInt(0)
+          var secondPdst = BigInt(0)
+          var secondPointer = BigInt(0)
+          for (_ <- 0 until 16 if firstPdst == 0 || secondPdst == 0) {
+            dut.clockDomain.waitSampling()
+            sleep(1)
+            val mask = dut.io.issueValid.toBigInt
+            for (port <- 0 until testConfig.executionWidth) {
+              if ((mask & (BigInt(1) << port)) != 0) {
+                val pc = dut.io.issuePc(port).toBigInt
+                if (pc == firstProducerPc) {
+                  firstPdst = dut.io.issuePdst(port).toBigInt
+                  firstPointer = dut.io.issueRobPointer(port).toBigInt
+                }
+                if (pc == secondProducerPc) {
+                  secondPdst = dut.io.issuePdst(port).toBigInt
+                  secondPointer = dut.io.issueRobPointer(port).toBigInt
+                }
+              }
+            }
+          }
+          assert(firstPdst != 0)
+          assert(secondPdst != 0)
+
+          dut.io.completionValid #= 1
+          dut.io.completionRobPointer #= firstPointer
+          dut.io.completionPdst #= firstPdst
+          dut.io.completionWritesPdst #= true
+          dut.io.completionData #= BigInt("11111111", 16)
+          dut.io.directWakeupValid #= true
+          dut.io.directWakeupPdst #= firstPdst
+          dut.clockDomain.waitSampling()
+
+          dut.io.completionRobPointer #= secondPointer
+          dut.io.completionPdst #= secondPdst
+          dut.io.completionData #= BigInt("22222222", 16)
+          dut.io.directWakeupPdst #= secondPdst
+          dut.clockDomain.waitSampling()
+          dut.io.completionValid #= 0
+          dut.io.directWakeupValid #= false
+
+          dut.clockDomain.waitSampling()
+          sleep(1)
+          val issuedOnFirstOpportunity = (0 until testConfig.executionWidth).exists { port =>
+            (dut.io.issueValid.toBigInt & (BigInt(1) << port)) != 0 &&
+              dut.io.issuePc(port).toBigInt == secondConsumerPc
+          }
+          assert(issuedOnFirstOpportunity == suppressEcho)
+
+          if (!suppressEcho) {
+            dut.clockDomain.waitSampling()
+            sleep(1)
+            assert((0 until testConfig.executionWidth).exists { port =>
+              (dut.io.issueValid.toBigInt & (BigInt(1) << port)) != 0 &&
+                dut.io.issuePc(port).toBigInt == secondConsumerPc
+            })
+          }
+        }
+    }
+  }
+
   test("multiply issue wakes a dependant into the next-cycle result forward") {
     SimConfig.withVerilator
       .workspacePath("target/sim-workspace-ooo-backend-dispatch")

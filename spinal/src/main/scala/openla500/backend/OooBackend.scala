@@ -298,9 +298,27 @@ final class OooBackend(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommi
       // event and deliberately excludes the global flush signal from select.
       val registeredWake = rob.io.completionWakeupCandidateValid(write)
       val directWake = io.directWakeupValid(write) && io.directWakeupPdst(write) =/= 0
-      earlyWakeupValid(write) := directWake || registeredWake
+      val selectedRegisteredWake = if (config.enableDirectWakeupEchoSuppression) {
+        // A direct producer already woke every resident/enqueued IQ consumer.
+        // Suppress only that producer's next-cycle registered echo, freeing the
+        // lane for a new direct tag. A first-time DIV/other registered wake keeps
+        // priority, and its covered direct tag returns through ROB one cycle later.
+        val previousDirectBroadcast = Reg(Bool()) init (False)
+        val registeredIsEcho = registeredWake && previousDirectBroadcast
+        val selected = registeredWake && !registeredIsEcho
+        val directBroadcast = directWake && !selected
+        when(io.flush) {
+          previousDirectBroadcast := False
+        }.otherwise {
+          previousDirectBroadcast := directBroadcast
+        }
+        selected
+      } else {
+        registeredWake
+      }
+      earlyWakeupValid(write) := directWake || selectedRegisteredWake
       earlyWakeupPdst(write) := Mux(
-        registeredWake,
+        selectedRegisteredWake,
         rob.io.completionWakeupPdst(write),
         io.directWakeupPdst(write)
       )
