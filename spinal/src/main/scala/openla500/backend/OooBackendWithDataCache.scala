@@ -25,6 +25,8 @@ final class OooBackendWithDataCache(
 
     val dataTranslationRequest = master(Stream(OooTranslationRequest(config)))
     val dataTranslationResponse = slave(Stream(OooTranslationResponse(config)))
+    val dataDirectAccess = in Bool ()
+    val dataDirectUncached = in Bool ()
     val reservationValid = in Bool ()
     val reservationLineAddress = in Bits (config.reservationAddressWidth bits)
 
@@ -140,6 +142,8 @@ final class OooBackendWithDataCache(
   backend.io.translationResponse.valid := io.dataTranslationResponse.valid
   backend.io.translationResponse.payload := io.dataTranslationResponse.payload
   io.dataTranslationResponse.ready := backend.io.translationResponse.ready
+  backend.io.dataDirectAccess := io.dataDirectAccess
+  backend.io.dataDirectUncached := io.dataDirectUncached
   backend.io.reservationValid := io.reservationValid
   backend.io.reservationLineAddress := io.reservationLineAddress
 

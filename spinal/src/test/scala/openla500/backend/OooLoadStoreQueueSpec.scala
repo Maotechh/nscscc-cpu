@@ -26,11 +26,16 @@ private final class OooLoadStoreQueueProbe(config: OooCoreConfig) extends Compon
     val translationEcode = in UInt (6 bits)
     val translationResponseEnable = in Bool ()
     val translationUncached = in Bool ()
+    val dataDirectAccess = in Bool ()
+    val dataDirectUncached = in Bool ()
     val translationRequestValid = out Bool ()
     val reservationValid = in Bool ()
     val reservationLineAddress = in Bits (config.reservationAddressWidth bits)
     val completionValid = out Bool ()
     val completion = out(OooCompletion(config))
+    val loadWakeupValid = out Bool ()
+    val loadWakeupPdst = out UInt (config.physicalRegIndexWidth bits)
+    val loadWakeupData = out Bits (config.xlen bits)
     val releaseLoadValid = out Bits (config.commitWidth bits)
     val releaseStoreValid = out Bits (config.commitWidth bits)
     val commitMemory = out Vec (OooMemoryCommitObservation(config), config.commitWidth)
@@ -57,6 +62,8 @@ private final class OooLoadStoreQueueProbe(config: OooCoreConfig) extends Compon
   lsq.io.dataRequestReady := io.dataRequestReady
   lsq.io.dataResponseValid := io.dataResponseValid
   lsq.io.dataResponse := io.dataResponse
+  lsq.io.dataDirectAccess := io.dataDirectAccess
+  lsq.io.dataDirectUncached := io.dataDirectUncached
   lsq.io.flush := io.flush
   lsq.io.translationRequest.ready := !translationValid ||
     (lsq.io.translationResponse.valid && lsq.io.translationResponse.ready)
@@ -91,6 +98,9 @@ private final class OooLoadStoreQueueProbe(config: OooCoreConfig) extends Compon
   io.dataRequest := lsq.io.dataRequest
   io.completionValid := lsq.io.completionValid
   io.completion := lsq.io.completion
+  io.loadWakeupValid := lsq.io.loadWakeupValid
+  io.loadWakeupPdst := lsq.io.loadWakeupPdst
+  io.loadWakeupData := lsq.io.loadWakeupData
   io.releaseLoadValid := lsq.io.releaseLoadValid
   io.releaseStoreValid := lsq.io.releaseStoreValid
   io.commitMemory := lsq.io.commitObservation
@@ -111,6 +121,8 @@ class OooLoadStoreQueueSpec extends AnyFunSuite {
     dut.io.translationEcode #= 0
     dut.io.translationResponseEnable #= true
     dut.io.translationUncached #= false
+    dut.io.dataDirectAccess #= false
+    dut.io.dataDirectUncached #= false
     dut.io.reservationValid #= false
     dut.io.reservationLineAddress #= 0
     dut.io.committedMemoryEpoch #= 0
@@ -294,6 +306,113 @@ class OooLoadStoreQueueSpec extends AnyFunSuite {
     dut.io.agu.uop.decoded.isLoad #= true
     dut.io.agu.uop.decoded.isLl #= isLl
     dut.io.agu.uop.decoded.writesGpr #= true
+  }
+
+  test("direct-mode Load bypasses translation and forwards the raw cache response") {
+    SimConfig.withVerilator
+      .workspacePath("target/sim-workspace-ooo-lsq")
+      .compile(new OooLoadStoreQueueProbe(config))
+      .doSim("ooo-lsq-direct-load-wakeup", 0x4c5e) { dut =>
+        dut.clockDomain.forkStimulus(period = 10)
+        clearInputs(dut)
+        dut.clockDomain.assertReset()
+        dut.clockDomain.waitSampling(2)
+        dut.clockDomain.deassertReset()
+        sample(dut)
+
+        dut.io.dataDirectAccess #= true
+        dut.io.allocateValid #= 1
+        dut.io.allocate(0).robPointer #= 6
+        dut.io.allocate(0).recoveryEpoch #= 2
+        dut.io.allocate(0).isLoad #= true
+        dut.io.allocate(0).loadQueueIndex #= 0
+        sample(dut)
+        dut.io.allocateValid #= 0
+
+        setLoadAgu(dut, pointer = 6, address = 0x12345678L, loadIndex = 0, pdst = 11)
+        dut.io.agu.uop.recoveryEpoch #= 2
+        sample(dut)
+        dut.io.aguValid #= false
+
+        var requestWait = 0
+        while (!dut.io.dataRequestValid.toBoolean && requestWait < 8) {
+          assert(!dut.io.translationRequestValid.toBoolean)
+          sample(dut)
+          requestWait += 1
+        }
+        assert(dut.io.dataRequestValid.toBoolean)
+        assert(!dut.io.translationRequestValid.toBoolean)
+        assert(dut.io.dataRequest.virtualAddress.toBigInt == BigInt("12345678", 16))
+        assert(dut.io.dataRequest.physicalAddress.toBigInt == BigInt("12345678", 16))
+        assert(!dut.io.dataRequest.uncached.toBoolean)
+
+        dut.io.dataRequestReady #= true
+        sample(dut)
+        dut.io.dataRequestReady #= false
+        dut.io.dataResponseValid #= true
+        dut.io.dataResponse.robPointer #= 6
+        dut.io.dataResponse.recoveryEpoch #= 2
+        dut.io.dataResponse.data #= BigInt("89abcdef", 16)
+        sleep(1)
+        assert(!dut.io.loadWakeupValid.toBoolean)
+        assert(!dut.io.completionValid.toBoolean)
+
+        sample(dut)
+        dut.io.dataResponseValid #= false
+        assert(dut.io.loadWakeupValid.toBoolean)
+        assert(dut.io.loadWakeupPdst.toBigInt == 11)
+        assert(dut.io.loadWakeupData.toBigInt == BigInt("89abcdef", 16))
+        assert(dut.io.completionValid.toBoolean)
+        assert(dut.io.completion.data.toBigInt == BigInt("89abcdef", 16))
+      }
+  }
+
+  test("paged and faulting Loads never use the direct wakeup path") {
+    SimConfig.withVerilator
+      .workspacePath("target/sim-workspace-ooo-lsq")
+      .compile(new OooLoadStoreQueueProbe(config))
+      .doSim("ooo-lsq-paged-load-wakeup-guard", 0x4c5f) { dut =>
+        dut.clockDomain.forkStimulus(period = 10)
+        clearInputs(dut)
+        dut.clockDomain.assertReset()
+        dut.clockDomain.waitSampling(2)
+        dut.clockDomain.deassertReset()
+        sample(dut)
+
+        dut.io.translationResponseEnable #= false
+        dut.io.allocateValid #= 1
+        dut.io.allocate(0).robPointer #= 7
+        dut.io.allocate(0).isLoad #= true
+        dut.io.allocate(0).loadQueueIndex #= 0
+        sample(dut)
+        dut.io.allocateValid #= 0
+        setLoadAgu(dut, pointer = 7, address = 0x4000, loadIndex = 0, pdst = 12)
+        sample(dut)
+        dut.io.aguValid #= false
+        var translationWait = 0
+        while (!dut.io.translationRequestValid.toBoolean && translationWait < 8) {
+          sample(dut)
+          translationWait += 1
+        }
+        assert(dut.io.translationRequestValid.toBoolean)
+        assert(!dut.io.dataRequestValid.toBoolean)
+        assert(!dut.io.loadWakeupValid.toBoolean)
+
+        dut.io.translationResponseEnable #= true
+        while (!dut.io.dataRequestValid.toBoolean) sample(dut)
+        dut.io.dataRequestReady #= true
+        sample(dut)
+        dut.io.dataRequestReady #= false
+        dut.io.dataResponseValid #= true
+        dut.io.dataResponse.robPointer #= 7
+        dut.io.dataResponse.error #= true
+        sleep(1)
+        assert(!dut.io.loadWakeupValid.toBoolean)
+        sample(dut)
+        dut.io.dataResponseValid #= false
+        assert(dut.io.completionValid.toBoolean)
+        assert(dut.io.completion.exception.valid.toBoolean)
+      }
   }
 
   test("memory epoch blocks cached, uncached, and committed-store requests") {
@@ -769,6 +888,8 @@ class OooLoadStoreQueueSpec extends AnyFunSuite {
         dut.io.dataResponse.robPointer #= 9
         dut.io.dataResponse.recoveryEpoch #= 3
         dut.io.dataResponse.data #= BigInt("11111111", 16)
+        sleep(1)
+        assert(!dut.io.loadWakeupValid.toBoolean)
         sample(dut)
         dut.io.dataResponseValid #= false
         assert(!dut.io.completionValid.toBoolean)
@@ -776,8 +897,12 @@ class OooLoadStoreQueueSpec extends AnyFunSuite {
         dut.io.dataResponseValid #= true
         dut.io.dataResponse.recoveryEpoch #= 4
         dut.io.dataResponse.data #= BigInt("22222222", 16)
+        sleep(1)
+        assert(!dut.io.loadWakeupValid.toBoolean)
         sample(dut)
         dut.io.dataResponseValid #= false
+        assert(dut.io.loadWakeupValid.toBoolean)
+        assert(dut.io.loadWakeupPdst.toBigInt == 8)
         assert(dut.io.completionValid.toBoolean)
         assert(dut.io.completion.robPointer.toBigInt == 9)
         assert(dut.io.completion.recoveryEpoch.toBigInt == 4)

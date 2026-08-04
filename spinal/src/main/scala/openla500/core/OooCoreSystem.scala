@@ -107,6 +107,8 @@ final class OooCoreSystem(
     val translationDisableCache = RegNext(csr.io.disable_cache_out) init (False)
 
     core.io.privilege := translationPrivilege
+    core.io.dataDirectAccess := translationDa || !translationPg
+    core.io.dataDirectUncached := translationDisableCache || translationDataMat === 0
     core.io.interruptPending := csr.io.has_int
     core.io.debugReadAddress := io.registerNumber.asUInt
     csr.io.rd_addr := core.io.systemReadAddress.asBits

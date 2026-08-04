@@ -29,6 +29,9 @@ final class OooBackend(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommi
     val resultForwardValid = in Bool ()
     val resultForwardPdst = in UInt (config.physicalRegIndexWidth bits)
     val resultForwardData = in Bits (config.xlen bits)
+    val loadWakeupValid = in Bool ()
+    val loadWakeupPdst = in UInt (config.physicalRegIndexWidth bits)
+    val loadWakeupData = in Bits (config.xlen bits)
     val storeDataValid = out Bool ()
     val storeDataRobPointer = out UInt (config.robPointerWidth bits)
     val storeDataStoreQueueIndex = out UInt (config.storeQueueIndexWidth bits)
@@ -77,6 +80,57 @@ final class OooBackend(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommi
   rob.io.currentEpoch := recoveryEpoch
   val committedMemoryEpoch = Reg(UInt(config.memoryEpochWidth bits)) init (0)
   val speculativeMemoryEpoch = Reg(UInt(config.memoryEpochWidth bits)) init (0)
+
+  // Raw Loads reuse the existing LSU writeback lane. The precise ROB wakeup
+  // follows the registered LSQ result by one cycle, so a single narrow tag
+  // register identifies its idempotent replay. SC, exceptional completions and
+  // Loads that lost an earlier collision never enter this register.
+  val earlyLoadPreviousValid = RegInit(False)
+  val earlyLoadPreviousPdst = Reg(UInt(config.physicalRegIndexWidth bits)) init (0)
+  val lsuRegisteredWake = rob.io.completionWakeupValid(loadStorePort)
+  val lsuRegisteredPdst = rob.io.completionWakeupPdst(loadStorePort)
+  val lsuRegisteredAlreadyWritten = lsuRegisteredWake && lsuRegisteredPdst =/= 0 &&
+    earlyLoadPreviousValid && lsuRegisteredPdst === earlyLoadPreviousPdst
+  val rawLoadCandidate = io.loadWakeupValid && io.loadWakeupPdst =/= 0
+  val rawLoadCanWrite = rawLoadCandidate &&
+    (!lsuRegisteredWake || lsuRegisteredAlreadyWritten)
+
+  when(io.flush) {
+    earlyLoadPreviousValid := False
+  }.otherwise {
+    earlyLoadPreviousValid := rawLoadCanWrite
+    when(rawLoadCanWrite) {
+      earlyLoadPreviousPdst := io.loadWakeupPdst
+    }
+  }
+
+  // Merge the raw Load tag into the fixed five-lane wakeup fabric. Data uses
+  // the matching LSU PRF write port below; IQs only see this narrow tag bus.
+  val earlyWakeupValid = Bits(config.writebackWidth bits)
+  val earlyWakeupPdst = Vec(UInt(config.physicalRegIndexWidth bits), config.writebackWidth)
+  for (write <- 0 until config.writebackWidth) {
+    if (write < config.executionWidth && write != loadStorePort) {
+      val registeredWake = rob.io.completionWakeupCandidateValid(write)
+      val directWake = io.directWakeupValid(write) && io.directWakeupPdst(write) =/= 0
+      earlyWakeupValid(write) := directWake || registeredWake
+      earlyWakeupPdst(write) := Mux(
+        registeredWake,
+        rob.io.completionWakeupPdst(write),
+        io.directWakeupPdst(write)
+      )
+    } else if (write == loadStorePort) {
+      earlyWakeupValid(write) := rawLoadCanWrite ||
+        rob.io.completionWakeupCandidateValid(write)
+      earlyWakeupPdst(write) := Mux(
+        rawLoadCanWrite,
+        io.loadWakeupPdst,
+        rob.io.completionWakeupPdst(write)
+      )
+    } else {
+      earlyWakeupValid(write) := rob.io.completionWakeupCandidateValid(write)
+      earlyWakeupPdst(write) := rob.io.completionWakeupPdst(write)
+    }
+  }
 
   val renamedInput = Vec(OooRenamedUop(config), config.renameWidth)
   val renamedMemoryEpoch = Vec(UInt(config.memoryEpochWidth bits), config.renameWidth)
@@ -150,14 +204,14 @@ final class OooBackend(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommi
     // of this candidate-data path just as the resident-IQ wakeup path does.
     for (write <- 0 until config.writebackWidth) {
       when(
-        rob.io.completionWakeupCandidateValid(write) &&
-          rob.io.completionWakeupPdst(write) === dispatchWindow.io.output(lane).psrc1
+        earlyWakeupValid(write) &&
+          earlyWakeupPdst(write) === dispatchWindow.io.output(lane).psrc1
       ) {
         dispatchSource1Ready := True
       }
       when(
-        rob.io.completionWakeupCandidateValid(write) &&
-          rob.io.completionWakeupPdst(write) === dispatchWindow.io.output(lane).psrc2
+        earlyWakeupValid(write) &&
+          earlyWakeupPdst(write) === dispatchWindow.io.output(lane).psrc2
       ) {
         dispatchSource2Ready := True
       }
@@ -191,9 +245,9 @@ final class OooBackend(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommi
   storeDataQueue.io.enqueueValid := lsuDispatchIsStore &&
     issueQueues(loadStorePort).io.enqueueReady
   storeDataQueue.io.enqueue := router.io.portInput(loadStorePort)
-  storeDataQueue.io.wakeupValid := rob.io.completionWakeupValid
+  storeDataQueue.io.wakeupValid := earlyWakeupValid
   for (write <- 0 until config.writebackWidth) {
-    storeDataQueue.io.wakeupPdst(write) := rob.io.completionWakeupPdst(write)
+    storeDataQueue.io.wakeupPdst(write) := earlyWakeupPdst(write)
   }
   storeDataQueue.io.readReady := io.storeDataReady && !io.flush
   storeDataQueue.io.flush := io.flush
@@ -279,26 +333,6 @@ final class OooBackend(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommi
   // Direct results bypass the variable-latency completion mux with a narrow
   // valid/tag event.  The consumer reaches the PRF bypass together with the
   // qualified writeback data; MUL, DIV and LSU keep the registered ROB wakeup.
-  val earlyWakeupValid = Bits(config.writebackWidth bits)
-  val earlyWakeupPdst = Vec(UInt(config.physicalRegIndexWidth bits), config.writebackWidth)
-  for (write <- 0 until config.writebackWidth) {
-    if (write < config.executionWidth && write != loadStorePort) {
-      // IQ flush has priority over wakeup state updates, so this is a candidate
-      // event and deliberately excludes the global flush signal from select.
-      val registeredWake = rob.io.completionWakeupCandidateValid(write)
-      val directWake = io.directWakeupValid(write) && io.directWakeupPdst(write) =/= 0
-      earlyWakeupValid(write) := directWake || registeredWake
-      earlyWakeupPdst(write) := Mux(
-        registeredWake,
-        rob.io.completionWakeupPdst(write),
-        io.directWakeupPdst(write)
-      )
-    } else {
-      earlyWakeupValid(write) := rob.io.completionWakeupCandidateValid(write)
-      earlyWakeupPdst(write) := rob.io.completionWakeupPdst(write)
-    }
-  }
-
   // A multiply wakes dependants when it enters the fixed-latency pipe.  Its
   // registered result is available one cycle later, exactly when the selected
   // consumer reads the PRF.  Keep this data path out of the IQ: only the tag
@@ -413,12 +447,30 @@ final class OooBackend(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommi
   rob.io.completionValid := io.completionValid
   rob.io.completion := io.completion
   for (write <- 0 until config.writebackWidth) {
-    prf.io.writeValid(write) := rob.io.completionWakeupValid(write)
-    prf.io.write(write).pdst := rob.io.completionWakeupPdst(write)
-    prf.io.write(write).data := rob.io.completionWakeupData(write)
-    registerMap.io.writebackValid(write) :=
-      rob.io.completionWakeupValid(write)
-    registerMap.io.writebackPdst(write) := rob.io.completionWakeupPdst(write)
+    if (write == loadStorePort) {
+      // A successful raw Load reuses the existing LSU writeback lane. The
+      // registered LSU completion reaching this lane is either empty or the
+      // idempotent completion of the previously early-written Load.
+      prf.io.writeValid(write) := rawLoadCanWrite || rob.io.completionWakeupValid(write)
+      prf.io.write(write).pdst := Mux(
+        rawLoadCanWrite,
+        io.loadWakeupPdst,
+        rob.io.completionWakeupPdst(write)
+      )
+      prf.io.write(write).data := Mux(
+        rawLoadCanWrite,
+        io.loadWakeupData,
+        rob.io.completionWakeupData(write)
+      )
+      registerMap.io.writebackValid(write) := prf.io.writeValid(write)
+      registerMap.io.writebackPdst(write) := prf.io.write(write).pdst
+    } else {
+      prf.io.writeValid(write) := rob.io.completionWakeupValid(write)
+      prf.io.write(write).pdst := rob.io.completionWakeupPdst(write)
+      prf.io.write(write).data := rob.io.completionWakeupData(write)
+      registerMap.io.writebackValid(write) := rob.io.completionWakeupValid(write)
+      registerMap.io.writebackPdst(write) := rob.io.completionWakeupPdst(write)
+    }
   }
   prf.io.debugReadAddress := registerMap.io.architecturalMappings(io.debugReadAddress)
   io.debugReadData := prf.io.debugReadData

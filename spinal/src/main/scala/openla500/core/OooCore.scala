@@ -19,6 +19,8 @@ final class OooCore(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommit) 
     val instructionTranslationResponse = slave(Stream(OooTranslationResponse(config)))
     val dataTranslationRequest = master(Stream(OooTranslationRequest(config)))
     val dataTranslationResponse = slave(Stream(OooTranslationResponse(config)))
+    val dataDirectAccess = in Bool ()
+    val dataDirectUncached = in Bool ()
     val reservationValid = in Bool ()
     val reservationLineAddress = in Bits (config.reservationAddressWidth bits)
 
@@ -119,6 +121,8 @@ final class OooCore(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommit) 
   backend.io.dataTranslationResponse.valid := io.dataTranslationResponse.valid
   backend.io.dataTranslationResponse.payload := io.dataTranslationResponse.payload
   io.dataTranslationResponse.ready := backend.io.dataTranslationResponse.ready
+  backend.io.dataDirectAccess := io.dataDirectAccess
+  backend.io.dataDirectUncached := io.dataDirectUncached
   backend.io.reservationValid := io.reservationValid
   backend.io.reservationLineAddress := io.reservationLineAddress
 

@@ -21,6 +21,8 @@ final class OooBackendWithExecution(
     val dataResponse = in(OooCacheResponse(config))
     val translationRequest = master(Stream(OooTranslationRequest(config)))
     val translationResponse = slave(Stream(OooTranslationResponse(config)))
+    val dataDirectAccess = in Bool ()
+    val dataDirectUncached = in Bool ()
     val reservationValid = in Bool ()
     val reservationLineAddress = in Bits (config.reservationAddressWidth bits)
     val systemReadValid = out Bool ()
@@ -133,6 +135,8 @@ final class OooBackendWithExecution(
   loadStoreQueue.io.dataRequestReady := io.dataRequestReady
   loadStoreQueue.io.dataResponseValid := io.dataResponseValid
   loadStoreQueue.io.dataResponse := io.dataResponse
+  loadStoreQueue.io.dataDirectAccess := io.dataDirectAccess
+  loadStoreQueue.io.dataDirectUncached := io.dataDirectUncached
   val translationOwnerValid = RegInit(False)
   val translationOwnerCacheOperation = RegInit(False)
   val selectCacheTranslation = execution.io.cacheTranslationRequest.valid &&
@@ -200,6 +204,9 @@ final class OooBackendWithExecution(
       execution.io.completion(config.executionWidth).writesPdst
   backend.io.resultForwardPdst := execution.io.completion(config.executionWidth).pdst
   backend.io.resultForwardData := execution.io.completion(config.executionWidth).data
+  backend.io.loadWakeupValid := loadStoreQueue.io.loadWakeupValid
+  backend.io.loadWakeupPdst := loadStoreQueue.io.loadWakeupPdst
+  backend.io.loadWakeupData := loadStoreQueue.io.loadWakeupData
   io.commitValid := backend.io.commitValid
   io.commit := backend.io.commit
   io.commitMemory := loadStoreQueue.io.commitObservation

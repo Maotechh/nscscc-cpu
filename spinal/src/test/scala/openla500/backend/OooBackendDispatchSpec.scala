@@ -34,6 +34,9 @@ private final class OooBackendDispatchProbe(config: OooCoreConfig) extends Compo
     val multiplyForwardValid = in Bool ()
     val multiplyForwardPdst = in UInt (config.physicalRegIndexWidth bits)
     val multiplyForwardData = in Bits (config.xlen bits)
+    val loadWakeupValid = in Bool ()
+    val loadWakeupPdst = in UInt (config.physicalRegIndexWidth bits)
+    val loadWakeupData = in Bits (config.xlen bits)
     val storeDataReady = in Bool ()
     val storeDataValid = out Bool ()
     val storeDataRobPointer = out UInt (config.robPointerWidth bits)
@@ -91,6 +94,9 @@ private final class OooBackendDispatchProbe(config: OooCoreConfig) extends Compo
   backend.io.resultForwardValid := io.multiplyForwardValid
   backend.io.resultForwardPdst := io.multiplyForwardPdst
   backend.io.resultForwardData := io.multiplyForwardData
+  backend.io.loadWakeupValid := io.loadWakeupValid
+  backend.io.loadWakeupPdst := io.loadWakeupPdst
+  backend.io.loadWakeupData := io.loadWakeupData
   backend.io.storeDataReady := io.storeDataReady
   for (lane <- 1 until config.writebackWidth) {
     backend.io
@@ -166,6 +172,9 @@ class OooBackendDispatchSpec extends AnyFunSuite {
     dut.io.multiplyForwardValid #= false
     dut.io.multiplyForwardPdst #= 0
     dut.io.multiplyForwardData #= 0
+    dut.io.loadWakeupValid #= false
+    dut.io.loadWakeupPdst #= 0
+    dut.io.loadWakeupData #= 0
     dut.io.storeDataReady #= true
     dut.io.flush #= false
     for (lane <- 0 until config.renameWidth) {
@@ -908,6 +917,78 @@ class OooBackendDispatchSpec extends AnyFunSuite {
           }
         }
         assert(!dependentIssued)
+      }
+  }
+
+  test("a raw Load response wakes and forwards before registered completion") {
+    SimConfig.withVerilator
+      .workspacePath("target/sim-workspace-ooo-backend-dispatch")
+      .compile(new OooBackendDispatchProbe(config))
+      .doSim("ooo-backend-early-load-wakeup", 0x4c49) { dut =>
+        dut.clockDomain.forkStimulus(period = 10)
+        clearControl(dut)
+        dut.io.issueReady #= 0xf
+        dut.clockDomain.assertReset()
+        dut.clockDomain.waitSampling(2)
+        dut.clockDomain.deassertReset()
+        dut.clockDomain.waitSampling()
+
+        val producerPc = BigInt("1c000000", 16)
+        val consumerPc = producerPc + 4
+        dut.io.inputValid #= 3
+        dut.io.pc(0) #= producerPc
+        dut.io.instruction(0) #= BigInt("2880000d", 16) // ld.w r13,r0,0
+        dut.io.pc(1) #= consumerPc
+        dut.io.instruction(1) #= BigInt("028005ae", 16) // addi.w r14,r13,1
+        dut.clockDomain.waitSampling()
+        dut.io.inputValid #= 0
+
+        var producerPdst = BigInt(0)
+        var producerSeen = false
+        var cycles = 0
+        while (!producerSeen && cycles < 20) {
+          dut.clockDomain.waitSampling()
+          sleep(1)
+          val mask = dut.io.issueValid.toBigInt
+          for (port <- 0 until config.executionWidth) {
+            if (
+              (mask & (BigInt(1) << port)) != 0 &&
+              dut.io.issuePc(port).toBigInt == producerPc
+            ) {
+              producerSeen = true
+              producerPdst = dut.io.issuePdst(port).toBigInt
+            }
+          }
+          cycles += 1
+        }
+        assert(producerSeen)
+        assert(producerPdst != 0)
+
+        val loadData = BigInt("13579bdf", 16)
+        dut.io.loadWakeupValid #= true
+        dut.io.loadWakeupPdst #= producerPdst
+        dut.io.loadWakeupData #= loadData
+        dut.clockDomain.waitSampling()
+        dut.io.loadWakeupValid #= false
+
+        var consumerData = Option.empty[BigInt]
+        cycles = 0
+        while (consumerData.isEmpty && cycles < 12) {
+          dut.clockDomain.waitSampling()
+          sleep(1)
+          val mask = dut.io.issueValid.toBigInt
+          for (port <- 0 until config.executionWidth) {
+            if (
+              (mask & (BigInt(1) << port)) != 0 &&
+              dut.io.issuePc(port).toBigInt == consumerPc
+            ) {
+              consumerData = Some(dut.io.issueSource1(port).toBigInt)
+            }
+          }
+          cycles += 1
+        }
+        assert(consumerData.contains(loadData))
+        assert(dut.io.completionValid.toBigInt == 0)
       }
   }
 

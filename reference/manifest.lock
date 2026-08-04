@@ -6,7 +6,7 @@ contest_release_url=https://www.nscscc.com/?p=901
 
 chiplab_repo=https://gitee.com/loongson-edu/chiplab.git
 chiplab_branch=chiplab_diff
-chiplab_commit=a2e11b38bc5c85abb4408a8e0c0f5ce903c7ba31
+chiplab_commit=c398d274812f164d387146fa7d8f612a4a1296d9
 chiplab_mycpu_gitlink=aa3bde1f3e720e71c2c78d6b81930d797b810149
 
 openla500_repo=https://gitee.com/loongson-edu/open-la500.git

@@ -150,6 +150,8 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
     val commit = in Vec (OooCommitRecord(config), config.commitWidth)
     val translationRequest = master(Stream(OooTranslationRequest(config)))
     val translationResponse = slave(Stream(OooTranslationResponse(config)))
+    val dataDirectAccess = in Bool ()
+    val dataDirectUncached = in Bool ()
     val reservationValid = in Bool ()
     val reservationLineAddress = in Bits (config.reservationAddressWidth bits)
     val dataRequestValid = out Bool ()
@@ -159,6 +161,9 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
     val dataResponse = in(OooCacheResponse(config))
     val completionValid = out Bool ()
     val completion = out(OooCompletion(config))
+    val loadWakeupValid = out Bool ()
+    val loadWakeupPdst = out UInt (config.physicalRegIndexWidth bits)
+    val loadWakeupData = out Bits (config.xlen bits)
     val releaseLoadValid = out Bits (config.commitWidth bits)
     val releaseStoreValid = out Bits (config.commitWidth bits)
     val commitObservation = out Vec (OooMemoryCommitObservation(config), config.commitWidth)
@@ -337,7 +342,9 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
   val forwardCandidate = loadHeadReady && !scheduledLoad.isLl && loadOrderClear &&
     forwardingCount === 1
   val cacheLoadBase = loadHeadReady && loadOrderClear && forwardingCount === 0
-  val cacheLoadCandidate = cacheLoadBase && headLoadState.translationDone
+  val directLoadAddress = io.dataDirectAccess && !headLoadState.translationDone
+  val cacheLoadCandidate = cacheLoadBase &&
+    (headLoadState.translationDone || directLoadAddress)
   val uncachedStoreAtHead = headStore.uncached && !headStore.completed &&
     !headStore.requestSent && headStore.robPointer === io.robHeadPointer
   val cachedStoreCommitted = !headStore.uncached && headStore.completed &&
@@ -364,7 +371,8 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
     !headStore.translationDone
   // Translation has no memory side effect, so overlap it with the unresolved-store window.
   // Store ordering and forwarding are still checked before a translated load reaches D-cache.
-  val loadNeedsTranslation = loadHeadReady && !headLoadState.translationDone
+  val loadNeedsTranslation = loadHeadReady && !headLoadState.translationDone &&
+    !io.dataDirectAccess
   val selectStoreTranslation = storeNeedsTranslation
   io.translationRequest.valid := !io.flush && !translationActive && !translationCancelPending &&
     (storeNeedsTranslation || loadNeedsTranslation)
@@ -394,12 +402,20 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
 
   val requestCandidate = OooCacheRequest(config)
   requestCandidate.virtualAddress := scheduledLoad.virtualAddress
-  requestCandidate.physicalAddress := headLoadState.physicalAddress
+  requestCandidate.physicalAddress := Mux(
+    directLoadAddress,
+    scheduledLoad.virtualAddress,
+    headLoadState.physicalAddress
+  )
   requestCandidate.isWrite := False
   requestCandidate.size := scheduledLoad.size
   requestCandidate.byteMask := scheduledLoad.byteMask
   requestCandidate.writeData := B(0, config.xlen bits)
-  requestCandidate.uncached := headLoadState.uncached
+  requestCandidate.uncached := Mux(
+    directLoadAddress,
+    io.dataDirectUncached,
+    headLoadState.uncached
+  )
   requestCandidate.robPointer := scheduledLoad.robPointer
   requestCandidate.recoveryEpoch := scheduledLoad.recoveryEpoch
   requestCandidate.pdst := scheduledLoad.pdst
@@ -637,6 +653,7 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
 
   val completionValid = RegInit(False)
   val completion = Reg(OooCompletion(config))
+  val completionLoadWakeupValid = RegInit(False)
   when(io.flush) {
     aguExceptionCompletionValid := False
     // Cached writes only enter this buffer after retirement and must survive a
@@ -647,6 +664,7 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
       requestBufferValid := False
     }
     completionValid := False
+    completionLoadWakeupValid := False
   }.otherwise {
     when(aguExceptionCompletionReady) {
       aguExceptionCompletionValid := False
@@ -664,6 +682,11 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
       requestBuffer := requestCandidate
       requestBufferLoadIndex := loadHead
       requestBufferStoreIndex := storeHead
+      when(cacheLoadCandidate && !storeRequest && directLoadAddress) {
+        loads(loadHead).physicalAddress := scheduledLoad.virtualAddress
+        loads(loadHead).uncached := io.dataDirectUncached
+        loads(loadHead).translationDone := True
+      }
     }
     when(dataRequestFire) {
       requestBufferValid := False
@@ -676,6 +699,8 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
       acceptedStoreIndex := requestBufferStoreIndex
     }
     completionValid := generatedCompletionValid
+    completionLoadWakeupValid := (responseLoadAccepted || forwardFire) &&
+      generatedCompletion.writesPdst && !generatedCompletion.exception.valid
     // Validity, not payload clock-enables, defines whether this register is
     // observable. Sampling every cycle prevents the deep forwarding predicate
     // from being replicated onto every completion payload register.
@@ -683,6 +708,12 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
   }
   io.completionValid := completionValid
   io.completion := completion
+  // The LSQ completion register cuts the deep overlap/arbitration cone before
+  // the tag fans out to the IQs. This remains one cycle earlier than the ROB
+  // wakeup while keeping the cache-response path out of issue selection.
+  io.loadWakeupValid := completionLoadWakeupValid && !io.flush
+  io.loadWakeupPdst := completion.pdst
+  io.loadWakeupData := completion.data
 
   loadReleaseValid := B(0, config.commitWidth bits)
   storeReleaseValid := B(0, config.commitWidth bits)
