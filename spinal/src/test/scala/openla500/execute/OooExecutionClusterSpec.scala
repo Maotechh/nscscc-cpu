@@ -728,7 +728,9 @@ class OooExecutionClusterSpec extends AnyFunSuite {
   test("the active divider implements all DIV/MOD modes and flushes every iteration") {
     SimConfig.withVerilator
       .workspacePath("target/sim-workspace-ooo-execution-cluster")
-      .compile(new OooDivideCompletionCollisionProbe(config))
+      .compile(
+        new OooDivideCompletionCollisionProbe(config.copy(enableDivideFastPath = false))
+      )
       .doSim("ooo-divider-architecture-and-flush", 0x4c77) { dut =>
         val mask = (BigInt(1) << 32) - 1
         val signBit = BigInt(1) << 31
@@ -868,6 +870,78 @@ class OooExecutionClusterSpec extends AnyFunSuite {
           )
         }
       }
+  }
+
+  test("divider fast paths are one-cycle and independently configurable") {
+    val divW = BigInt("00200000", 16)
+    val modW = BigInt("00208000", 16)
+    val divWu = BigInt("00210000", 16)
+    val modWu = BigInt("00218000", 16)
+    val operandFields = (BigInt(13) << 10) | (BigInt(12) << 5) | BigInt(15)
+    val mask = (BigInt(1) << 32) - 1
+
+    for ((enabled, name, seed) <- Seq(
+        (false, "iterative", 0x4c7a),
+        (true, "fast", 0x4c7b)
+      )) {
+      val testConfig = config.copy(enableDivideFastPath = enabled)
+      SimConfig.withVerilator
+        .workspacePath(s"target/sim-workspace-ooo-divider-$name")
+        .compile(new OooDivideCompletionCollisionProbe(testConfig))
+        .doSim(s"ooo-divider-$name", seed) { dut =>
+          dut.clockDomain.forkStimulus(period = 10)
+          dut.io.issueValid #= false
+          dut.io.instruction #= 0
+          dut.io.source1 #= 0
+          dut.io.source2 #= 0
+          dut.io.robPointer #= 9
+          dut.io.recoveryEpoch #= 3
+          dut.io.pdst #= 17
+          dut.io.flush #= false
+          dut.clockDomain.assertReset()
+          dut.clockDomain.waitSampling(2)
+          dut.clockDomain.deassertReset()
+          dut.clockDomain.waitSampling()
+
+          def launchAndCheck(
+              opcode: BigInt,
+              dividend: BigInt,
+              divisor: BigInt,
+              expected: BigInt,
+              expectImmediate: Boolean
+          ): Unit = {
+            dut.io.instruction #= opcode | operandFields
+            dut.io.source1 #= dividend & mask
+            dut.io.source2 #= divisor & mask
+            dut.io.issueValid #= true
+            sleep(1)
+            assert(dut.io.issueReady.toBoolean)
+            dut.clockDomain.waitSampling()
+            dut.io.issueValid #= false
+            sleep(1)
+            assert(dut.io.completionValid.toBoolean == expectImmediate)
+            var waited = 0
+            while (!dut.io.completionValid.toBoolean && waited < 40) {
+              dut.clockDomain.waitSampling()
+              sleep(1)
+              waited += 1
+            }
+            assert(dut.io.completionValid.toBoolean)
+            assert(dut.io.completionData.toBigInt == (expected & mask))
+            assert(dut.io.completionRobPointer.toBigInt == 9)
+            dut.clockDomain.waitSampling()
+            sleep(1)
+            assert(!dut.io.completionValid.toBoolean)
+          }
+
+          launchAndCheck(divW, 7, 0, mask, expectImmediate = enabled)
+          launchAndCheck(modWu, BigInt("fedcba98", 16), 0, BigInt("fedcba98", 16), enabled)
+          launchAndCheck(divW, -123, -1, 123, expectImmediate = enabled)
+          launchAndCheck(modW, -123, -1, 0, expectImmediate = enabled)
+          launchAndCheck(divWu, 0, 37, 0, expectImmediate = enabled)
+          launchAndCheck(divWu, 100, 3, 33, expectImmediate = false)
+        }
+    }
   }
 
   test("multiply wakes on issue and forwards its registered result one cycle later") {
