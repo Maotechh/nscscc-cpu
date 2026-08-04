@@ -316,6 +316,7 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
   val partialOverlapStore = Bits(config.storeQueueEntries bits)
   val pendingDataStore = Bits(config.storeQueueEntries bits)
   val forwardingStore = Bits(config.storeQueueEntries bits)
+  val olderUncachedStore = Bits(config.storeQueueEntries bits)
   for (entry <- 0 until config.storeQueueEntries) {
     val store = stores(entry)
     val older = store.valid && isOlder(store.robPointer, scheduledLoad.robPointer)
@@ -328,20 +329,36 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
     val overlap = (store.byteMask & scheduledLoad.byteMask).orR
     val covers = (store.byteMask & scheduledLoad.byteMask) === scheduledLoad.byteMask
     unknownOlderStore(entry) := older && (!store.addressReady || !store.translationDone)
+    olderUncachedStore(entry) := older && store.translationDone && store.uncached &&
+      !store.completed
     partialOverlapStore(entry) := older && physicalAddressesKnown && sameWord && overlap && !covers
     pendingDataStore(entry) := older && physicalAddressesKnown && sameWord && overlap &&
       !store.dataReady
     forwardingStore(entry) := older && physicalAddressesKnown && store.dataReady && sameWord && covers
   }
 
+  val olderLoadOrderBlock = Bits(config.loadQueueEntries bits)
+  for (entry <- 0 until config.loadQueueEntries) {
+    val load = loads(entry)
+    val older = load.valid && isOlder(load.robPointer, scheduledLoad.robPointer)
+    // Cached requests may overlap once translated. SUC requests retain the
+    // order token until their response completes.
+    olderLoadOrderBlock(entry) := older && !load.completed &&
+      (!load.addressReady || !load.translationDone || load.uncached)
+  }
+
   val forwardingCount = CountOne(forwardingStore)
   val forwardingId = OHToUInt(OHMasking.first(forwardingStore))
-  val loadOrderClear = !unknownOlderStore.orR && !partialOverlapStore.orR &&
-    !pendingDataStore.orR
-  val forwardCandidate = loadHeadReady && !scheduledLoad.isLl && loadOrderClear &&
+  val loadOrderClear = !unknownOlderStore.orR && !olderUncachedStore.orR &&
+    !olderLoadOrderBlock.orR && !partialOverlapStore.orR && !pendingDataStore.orR
+  val forwardCandidate = loadHeadReady && headLoadState.translationDone &&
+    !headLoadState.uncached && !scheduledLoad.isLl && loadOrderClear &&
     forwardingCount === 1
   val cacheLoadBase = loadHeadReady && loadOrderClear && forwardingCount === 0
-  val cacheLoadCandidate = cacheLoadBase && headLoadState.translationDone
+  val loadAtRequiredOrderPoint = !headLoadState.uncached ||
+    scheduledLoad.robPointer === io.robHeadPointer
+  val cacheLoadCandidate = cacheLoadBase && headLoadState.translationDone &&
+    loadAtRequiredOrderPoint
   val uncachedStoreAtHead = headStore.uncached && !headStore.completed &&
     !headStore.requestSent && headStore.robPointer === io.robHeadPointer
   val cachedStoreCommitted = !headStore.uncached && headStore.completed &&

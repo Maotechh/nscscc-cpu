@@ -329,6 +329,7 @@ class OooLoadStoreQueueSpec extends AnyFunSuite {
         dut.io.allocate(0).memoryEpoch #= 1
         dut.io.allocate(0).isLoad #= true
         dut.io.allocate(0).loadQueueIndex #= 0
+        dut.io.robHeadPointer #= 4
         sample(dut)
         dut.io.allocateValid #= 0
         setLoadAgu(dut, pointer = 4, address = 0x400, loadIndex = 0)
@@ -1179,6 +1180,117 @@ class OooLoadStoreQueueSpec extends AnyFunSuite {
         assert(!dut.io.dataRequest.isWrite.toBoolean)
         assert(dut.io.dataRequest.physicalAddress.toBigInt == 0x9000)
       }
+  }
+
+  test("an older SUC Store orders younger cached and SUC Loads through its response") {
+    val compiled = SimConfig.withVerilator
+      .workspacePath("target/sim-workspace-ooo-lsq")
+      .compile(new OooLoadStoreQueueProbe(config))
+
+    for ((youngerUncached, name, seed) <- Seq(
+        (false, "cached", 0x4c7b),
+        (true, "suc", 0x4c7c)
+      )) {
+      compiled.doSim(s"ooo-lsq-suc-store-orders-$name-load", seed) { dut =>
+        dut.clockDomain.forkStimulus(period = 10)
+        clearInputs(dut)
+        dut.io.translationResponseEnable #= false
+        dut.clockDomain.assertReset()
+        dut.clockDomain.waitSampling(2)
+        dut.clockDomain.deassertReset()
+        sample(dut)
+
+        // Pointer 0 models a delayed older instruction. The Store and Load are
+        // already in the window, but neither may escape the SUC order domain.
+        dut.io.robHeadPointer #= 0
+        dut.io.allocateValid #= 3
+        dut.io.allocate(0).robPointer #= 1
+        dut.io.allocate(0).isStore #= true
+        dut.io.allocate(0).storeQueueIndex #= 0
+        dut.io.allocate(1).robPointer #= 2
+        dut.io.allocate(1).isLoad #= true
+        dut.io.allocate(1).loadQueueIndex #= 0
+        sample(dut)
+        dut.io.allocateValid #= 0
+
+        setStoreAgu(dut, 1, 0x5000, BigInt("a5a55a5a", 16))
+        sample(dut)
+        dut.io.aguValid #= false
+        while (!dut.io.translationRequestValid.toBoolean) sample(dut)
+        assert(dut.io.translationRequestAddress.toBigInt == 0x5000)
+        sample(dut)
+
+        setLoadAgu(dut, 2, 0x6000)
+        sample(dut)
+        dut.io.aguValid #= false
+        for (_ <- 0 until 3) {
+          assert(!dut.io.dataRequestValid.toBoolean)
+          sample(dut)
+        }
+
+        dut.io.translationUncached #= true
+        dut.io.translationResponseEnable #= true
+        sample(dut)
+        dut.io.translationResponseEnable #= false
+        while (!dut.io.translationRequestValid.toBoolean) sample(dut)
+        assert(dut.io.translationRequestAddress.toBigInt == 0x6000)
+        sample(dut)
+
+        dut.io.translationUncached #= youngerUncached
+        dut.io.translationResponseEnable #= true
+        sample(dut)
+        dut.io.translationResponseEnable #= false
+        for (_ <- 0 until 4) {
+          assert(!dut.io.dataRequestValid.toBoolean)
+          sample(dut)
+        }
+
+        dut.io.robHeadPointer #= 1
+        dut.io.dataRequestReady #= true
+        var storeRequestWait = 0
+        while (!dut.io.dataRequestValid.toBoolean && storeRequestWait < 10) {
+          sample(dut)
+          storeRequestWait += 1
+        }
+        assert(dut.io.dataRequestValid.toBoolean)
+        assert(dut.io.dataRequest.isWrite.toBoolean)
+        assert(dut.io.dataRequest.uncached.toBoolean)
+        assert(dut.io.dataRequest.robPointer.toBigInt == 1)
+        sample(dut)
+        dut.io.dataRequestReady #= false
+
+        for (_ <- 0 until 4) {
+          assert(!dut.io.dataRequestValid.toBoolean)
+          sample(dut)
+        }
+
+        dut.io.dataResponseValid #= true
+        dut.io.dataResponse.robPointer #= 1
+        dut.io.dataResponse.recoveryEpoch #= 0
+        sample(dut)
+        dut.io.dataResponseValid #= false
+        assert(dut.io.completionValid.toBoolean)
+        assert(dut.io.completion.robPointer.toBigInt == 1)
+
+        if (youngerUncached) {
+          for (_ <- 0 until 3) {
+            assert(!dut.io.dataRequestValid.toBoolean)
+            sample(dut)
+          }
+          dut.io.robHeadPointer #= 2
+        }
+
+        var loadRequestWait = 0
+        while (!dut.io.dataRequestValid.toBoolean && loadRequestWait < 10) {
+          sample(dut)
+          loadRequestWait += 1
+        }
+        assert(dut.io.dataRequestValid.toBoolean)
+        assert(!dut.io.dataRequest.isWrite.toBoolean)
+        assert(dut.io.dataRequest.uncached.toBoolean == youngerUncached)
+        assert(dut.io.dataRequest.robPointer.toBigInt == 2)
+      }
+    }
   }
 
   test("unknown older stores block loads and stale cache responses are rejected") {
