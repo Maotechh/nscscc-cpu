@@ -87,7 +87,7 @@ final case class OooCoreConfig(
     enableDivideFastPath: Boolean = false,
     enableFastStoreCompletion: Boolean = true,
     enableStoreTranslationLookahead: Boolean = true,
-    enableL2WriteBack: Boolean = false,
+    enableL2WriteBack: Boolean = true,
     resetVector: BigInt = BigInt("1c000000", 16),
     instructionCache: OooCacheGeometry = OooCacheGeometry(ways = 2, sets = 64, lineBytes = 64),
     dataCache: OooCacheGeometry = OooCacheGeometry(ways = 2, sets = 64, lineBytes = 64),
