@@ -151,28 +151,56 @@ final class OooFrontend(config: OooCoreConfig = OooCoreConfig.FourIssueThreeComm
     }
   }
 
-  val translatedGroupBase = translationPc &
+  io.translationResponse.ready := !translatedRequestValid && !translatedExceptionValid &&
+    (translationOutstanding || translationDropPending)
+  val translationResponseFire = io.translationResponse.valid && io.translationResponse.ready
+  // A delayed response must belong to the request currently held by the frontend.  This
+  // protects the virtual-PC tag from being paired with a physical address from a stale request
+  // after a redirect or a translator response race.
+  val translationResponseMatches =
+    io.translationResponse.virtualAddress === translationPc
+  val translationResponseBypassValid = if (config.enableFrontendTranslationResponseBypass) {
+    translationResponseFire && translationOutstanding && translationResponseMatches &&
+      !io.translationResponse.cancelled && !io.translationResponse.exception.valid &&
+      !io.redirectValid
+  } else {
+    False
+  }
+  val requestTranslationPc = Mux(
+    translationResponseBypassValid,
+    io.translationResponse.virtualAddress,
+    translationPc
+  )
+  val requestPrediction = Vec(OooBankedFetchPrediction(config), config.fetchWidth)
+  for (lane <- 0 until config.fetchWidth) {
+    requestPrediction(lane) := translatedPrediction(lane)
+    when(translationResponseBypassValid) {
+      requestPrediction(lane) := predictionForTranslation(lane)
+    }
+  }
+
+  val translatedGroupBase = requestTranslationPc &
     U(((BigInt(1) << config.xlen) - 1) ^ (fetchGroupBytes - 1), config.xlen bits)
-  val translatedFirstSlot = translationPc(fetchGroupOffsetWidth - 1 downto 2)
+  val translatedFirstSlot = requestTranslationPc(fetchGroupOffsetWidth - 1 downto 2)
   val translatedPredictionTaken = Vec(Bool(), config.fetchWidth)
   val translatedConditionalSeen = Vec(Bool(), config.fetchWidth)
   val earlierTranslatedPredictionTaken = Vec(Bool(), config.fetchWidth + 1)
   earlierTranslatedPredictionTaken(0) := False
   for (lane <- 0 until config.fetchWidth) {
     val lanePc = translatedGroupBase + U(lane * 4, config.xlen bits)
-    val coldConditionalTaken = translatedPrediction(lane).target < lanePc
-    val laneTaken = translatedPrediction(lane).branchType =/=
+    val coldConditionalTaken = requestPrediction(lane).target < lanePc
+    val laneTaken = requestPrediction(lane).branchType =/=
       OooPredictedBranchType.conditional || Mux(
-        translatedPrediction(lane).phtValid,
-        translatedPrediction(lane).phtState(1),
+        requestPrediction(lane).phtValid,
+        requestPrediction(lane).phtState(1),
         coldConditionalTaken
       )
-    translatedPredictionTaken(lane) := translatedPrediction(lane).hit &&
+    translatedPredictionTaken(lane) := requestPrediction(lane).hit &&
       laneTaken &&
       U(lane, config.fetchSlotWidth bits) >= translatedFirstSlot &&
       !earlierTranslatedPredictionTaken(lane)
-    translatedConditionalSeen(lane) := translatedPrediction(lane).hit &&
-      translatedPrediction(lane).branchType === OooPredictedBranchType.conditional &&
+    translatedConditionalSeen(lane) := requestPrediction(lane).hit &&
+      requestPrediction(lane).branchType === OooPredictedBranchType.conditional &&
       U(lane, config.fetchSlotWidth bits) >= translatedFirstSlot &&
       !earlierTranslatedPredictionTaken(lane)
     earlierTranslatedPredictionTaken(lane + 1) :=
@@ -188,8 +216,8 @@ final class OooFrontend(config: OooCoreConfig = OooCoreConfig.FourIssueThreeComm
   for (lane <- (0 until config.fetchWidth).reverse) {
     when(translatedPredictionTaken(lane)) {
       requestPredictedPc := translatedGroupBase + lane * 4
-      requestPredictedTarget := translatedPrediction(lane).target
-      requestPredictedType := translatedPrediction(lane).branchType
+      requestPredictedTarget := requestPrediction(lane).target
+      requestPredictedType := requestPrediction(lane).branchType
     }
   }
   val requestHistoryValid = translatedConditionalSeen.asBits.orR
@@ -202,14 +230,6 @@ final class OooFrontend(config: OooCoreConfig = OooCoreConfig.FourIssueThreeComm
   io.translationRequest.isWrite := False
   val translationRequestFire = io.translationRequest.valid && io.translationRequest.ready
   targetPredictor.io.lookupValid := translationRequestFire
-  io.translationResponse.ready := !translatedRequestValid && !translatedExceptionValid &&
-    (translationOutstanding || translationDropPending)
-  val translationResponseFire = io.translationResponse.valid && io.translationResponse.ready
-  // A delayed response must belong to the request currently held by the frontend.  This
-  // protects the virtual-PC tag from being paired with a physical address from a stale request
-  // after a redirect or a translator response race.
-  val translationResponseMatches =
-    io.translationResponse.virtualAddress === translationPc
   val translationExceptionFire = translationResponseFire && translationOutstanding &&
     !io.redirectValid && translationResponseMatches && !io.translationResponse.cancelled &&
     io.translationResponse.exception.valid
@@ -223,14 +243,23 @@ final class OooFrontend(config: OooCoreConfig = OooCoreConfig.FourIssueThreeComm
   val droppedResponseFire = io.cacheResponseValid && cacheOutstanding && cacheDropPending &&
     !io.redirectValid && cacheResponseMatches
 
-  val cacheRequestBaseValid = translatedRequestValid &&
+  val cacheRequestBaseValid = (translatedRequestValid || translationResponseBypassValid) &&
     (!cacheOutstanding || responseFire || droppedResponseFire) && !io.redirectValid &&
     cacheRequestCapacityAvailable
-  io.cacheRequestValid := cacheRequestBaseValid && !translatedUncached
-  io.cacheUncachedRequestValid := cacheRequestBaseValid && translatedUncached
-  io.cacheRequest.virtualAddress := translationPc
-  io.cacheRequest.physicalAddress := translatedPhysicalAddress
-  io.cacheRequest.uncached := translatedUncached
+  val requestUncached = Mux(
+    translationResponseBypassValid,
+    io.translationResponse.uncached,
+    translatedUncached
+  )
+  io.cacheRequestValid := cacheRequestBaseValid && !requestUncached
+  io.cacheUncachedRequestValid := cacheRequestBaseValid && requestUncached
+  io.cacheRequest.virtualAddress := requestTranslationPc
+  io.cacheRequest.physicalAddress := Mux(
+    translationResponseBypassValid,
+    io.translationResponse.physicalAddress,
+    translatedPhysicalAddress
+  )
+  io.cacheRequest.uncached := requestUncached
   val cachedRequestFire = io.cacheRequestValid && io.cacheRequestReady
   val uncachedRequestFire = io.cacheUncachedRequestValid && io.cacheRequestReady
   val requestFire = cachedRequestFire || uncachedRequestFire
@@ -518,12 +547,12 @@ final class OooFrontend(config: OooCoreConfig = OooCoreConfig.FourIssueThreeComm
       translatedRequestValid := False
       cacheOutstanding := True
       cacheDropPending := False
-      cachePc := translationPc
+      cachePc := requestTranslationPc
       cachePredictedTaken := requestPredictedTaken
       cachePredictedLane := requestPredictedPc(fetchGroupOffsetWidth - 1 downto 2)
       cachePredictedTarget := requestPredictedTarget
       for (lane <- 0 until config.fetchWidth) {
-        cachePrediction(lane) := translatedPrediction(lane)
+        cachePrediction(lane) := requestPrediction(lane)
       }
       nextFetchPc := Mux(
         requestPredictedTaken,

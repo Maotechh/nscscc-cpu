@@ -170,6 +170,73 @@ class OooFrontendSpec extends AnyFunSuite {
       }
   }
 
+  test("a valid translation response hands directly to an available instruction cache") {
+    SimConfig.withVerilator
+      .workspacePath("target/sim-workspace-ooo-frontend-translation-response-bypass")
+      .compile(new OooFrontend(config))
+      .doSim("ooo-frontend-translation-response-bypass", 0x4c7b) { dut =>
+        dut.clockDomain.forkStimulus(period = 10)
+        clearInputs(dut)
+        dut.clockDomain.assertReset()
+        dut.clockDomain.waitSampling(2)
+        dut.clockDomain.deassertReset()
+        sample(dut)
+
+        val firstPc = config.resetVector
+        val secondPc = firstPc + config.fetchWidth * 4
+        while (!dut.io.translationRequest.valid.toBoolean) sample(dut)
+        assert(dut.io.translationRequest.virtualAddress.toBigInt == firstPc)
+        dut.io.translationRequest.ready #= true
+        sample(dut)
+        dut.io.translationRequest.ready #= false
+
+        dut.io.cacheRequestReady #= true
+        dut.io.translationResponse.valid #= true
+        dut.io.translationResponse.virtualAddress #= firstPc
+        dut.io.translationResponse.physicalAddress #= 0x1000
+        sleep(1)
+        assert(dut.io.translationResponse.ready.toBoolean)
+        assert(dut.io.cacheRequestValid.toBoolean)
+        assert(dut.io.cacheRequest.virtualAddress.toBigInt == firstPc)
+        assert(dut.io.cacheRequest.physicalAddress.toBigInt == 0x1000)
+        sample(dut)
+        dut.io.translationResponse.valid #= false
+        dut.io.cacheRequestReady #= false
+
+        assert(dut.io.translationRequest.valid.toBoolean)
+        assert(dut.io.translationRequest.virtualAddress.toBigInt == secondPc)
+        dut.io.translationRequest.ready #= true
+        sample(dut)
+        dut.io.translationRequest.ready #= false
+
+        // The next translated group may replace the prior cache request in the same cycle that
+        // the prior hit response returns.  This is the steady-state two-cycle turnover case.
+        dut.io.cacheRequestReady #= true
+        dut.io.cacheResponseValid #= true
+        dut.io.cacheResponse.virtualAddress #= firstPc
+        dut.io.cacheResponse.physicalAddress #= 0x1000
+        for (lane <- 0 until config.fetchWidth) {
+          dut.io.cacheResponse.instructions(lane) #= BigInt("00100000", 16) | (lane + 1)
+        }
+        dut.io.translationResponse.valid #= true
+        dut.io.translationResponse.virtualAddress #= secondPc
+        dut.io.translationResponse.physicalAddress #= 0x1010
+        sleep(1)
+        assert(dut.io.translationResponse.ready.toBoolean)
+        assert(dut.io.cacheRequestValid.toBoolean)
+        assert(dut.io.cacheRequest.virtualAddress.toBigInt == secondPc)
+        assert(dut.io.cacheRequest.physicalAddress.toBigInt == 0x1010)
+        sample(dut)
+        dut.io.cacheResponseValid #= false
+        dut.io.translationResponse.valid #= false
+        dut.io.cacheRequestReady #= false
+
+        assert(dut.io.occupancy.toBigInt == config.fetchWidth)
+        assert(dut.io.translationRequest.valid.toBoolean)
+        assert(dut.io.translationRequest.virtualAddress.toBigInt == secondPc + config.fetchWidth * 4)
+      }
+  }
+
   private def encodeDirectBranch(opcode: Int, byteOffset: Int): BigInt = {
     require((byteOffset & 3) == 0)
     val encoded = (byteOffset >> 2) & ((1 << 26) - 1)
