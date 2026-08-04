@@ -9,6 +9,11 @@ import scala.language.reflectiveCalls
 class OooL2CacheSpec extends AnyFunSuite {
   private val config = OooCoreConfig.FourIssueThreeCommit
 
+  private def sample(dut: OooL2Cache): Unit = {
+    dut.clockDomain.waitSampling()
+    sleep(1)
+  }
+
   private def clearInputs(dut: OooL2Cache): Unit = {
     dut.io.readValid #= false
     dut.io.read.lineAddress #= 0
@@ -30,6 +35,12 @@ class OooL2CacheSpec extends AnyFunSuite {
     dut.io.memoryWriteReady #= false
     dut.io.invalidate #= false
     dut.io.writebackInvalidate #= false
+    dut.io.maintenanceRequest.valid #= false
+    dut.io.maintenanceRequest.code #= 0
+    dut.io.maintenanceRequest.virtualAddress #= 0
+    dut.io.maintenanceRequest.physicalAddress #= 0
+    dut.io.maintenanceRequest.robPointer #= 0
+    dut.io.maintenanceRequest.recoveryEpoch #= 0
   }
 
   test("an L1D writeback is written through and retained as a clean L2 hit") {
@@ -373,5 +384,122 @@ class OooL2CacheSpec extends AnyFunSuite {
         }
         dut.io.memoryReadBeatValid #= false
       }
+  }
+
+  test("L2 CACOP modes preserve unrelated lines and Hit miss has no side effect") {
+    val compiled = SimConfig.withVerilator
+      .workspacePath("target/sim-workspace-ooo-l2-maintenance")
+      .compile(new OooL2Cache(config))
+
+    for ((mode, seed) <- Seq(0 -> 0x4c65, 1 -> 0x4c66, 2 -> 0x4c67)) {
+      compiled.doSim(s"ooo-l2-exact-maintenance-$mode", seed) { dut =>
+        dut.clockDomain.forkStimulus(period = 10)
+        SimTimeout(10000)
+        clearInputs(dut)
+        dut.clockDomain.assertReset()
+        dut.clockDomain.waitSampling(2)
+        dut.clockDomain.deassertReset()
+        dut.clockDomain.waitSampling(config.level2Cache.sets + 4)
+
+        def waitUntil(condition: => Boolean, clue: String, maxCycles: Int = 64): Unit = {
+          var cycles = 0
+          while (!condition && cycles < maxCycles) {
+            sample(dut)
+            cycles += 1
+          }
+          assert(condition, clue)
+        }
+
+        def install(address: BigInt, pattern: BigInt): Unit = {
+          dut.io.writeValid #= true
+          dut.io.write.lineAddress #= address
+          dut.io.write.data #= pattern
+          dut.io.write.byteMask #= (BigInt(1) << OooCacheContract.LineBytes) - 1
+          dut.io.write.mshrId #= 0
+          sleep(1)
+          waitUntil(dut.io.writeReady.toBoolean, s"L2 write for 0x${address.toString(16)} was not accepted")
+          sample(dut)
+          dut.io.writeValid #= false
+          waitUntil(
+            dut.io.memoryWriteValid.toBoolean,
+            s"L2 write-through for 0x${address.toString(16)} was not issued"
+          )
+          assert(dut.io.memoryWrite.lineAddress.toBigInt == address)
+          dut.io.memoryWriteReady #= true
+          sample(dut)
+          dut.io.memoryWriteReady #= false
+          waitUntil(
+            dut.io.maintenanceRequest.ready.toBoolean,
+            s"L2 did not become idle after installing 0x${address.toString(16)}"
+          )
+        }
+
+        def maintain(code: Int, virtualAddress: BigInt, physicalAddress: BigInt): Unit = {
+          waitUntil(dut.io.maintenanceRequest.ready.toBoolean, s"CACOP 0x${code.toHexString} was not accepted")
+          dut.io.maintenanceRequest.valid #= true
+          dut.io.maintenanceRequest.code #= code
+          dut.io.maintenanceRequest.virtualAddress #= virtualAddress
+          dut.io.maintenanceRequest.physicalAddress #= physicalAddress
+          sleep(1)
+          sample(dut)
+          dut.io.maintenanceRequest.valid #= false
+          waitUntil(dut.io.maintenanceDone.toBoolean, s"CACOP 0x${code.toHexString} did not complete", 16)
+          sample(dut)
+        }
+
+        def expectHit(address: BigInt): Unit = {
+          dut.io.readValid #= true
+          dut.io.read.lineAddress #= address
+          dut.io.read.mshrId #= 1
+          dut.io.read.criticalBeat #= 0
+          sleep(1)
+          waitUntil(dut.io.readReady.toBoolean, s"L2 hit lookup for 0x${address.toString(16)} was not accepted")
+          sample(dut)
+          dut.io.readValid #= false
+          for (beat <- 0 until OooCacheContract.BeatsPerLine) {
+            var cycles = 0
+            while (!dut.io.readBeatValid.toBoolean && cycles < 8) {
+              assert(!dut.io.memoryReadValid.toBoolean)
+              sample(dut)
+              cycles += 1
+            }
+            assert(dut.io.readBeatValid.toBoolean)
+            assert(dut.io.readBeat.beat.toBigInt == beat)
+            sample(dut)
+          }
+        }
+
+        val line0 = BigInt(0x100)
+        val line1 = BigInt(0x8100)
+        install(line0, BigInt(1))
+        install(line1, BigInt(2))
+
+        // Hit-on-address miss must complete without touching either resident line.
+        maintain(0x12, 0x10100, 0x10100)
+        expectHit(line1)
+
+        val code = (mode << 3) | 2
+        val virtualAddress = if (mode == 1) line0 else line0
+        val physicalAddress = if (mode == 2) line0 else BigInt(0)
+        maintain(code, virtualAddress, physicalAddress)
+        expectHit(line1)
+
+        dut.io.readValid #= true
+        dut.io.read.lineAddress #= line0
+        dut.io.read.mshrId #= 2
+        dut.io.read.criticalBeat #= 0
+        sleep(1)
+        waitUntil(dut.io.readReady.toBoolean, "invalidated L2 line lookup was not accepted")
+        sample(dut)
+        dut.io.readValid #= false
+        var cycles = 0
+        while (!dut.io.memoryReadValid.toBoolean && cycles < 8) {
+          sample(dut)
+          cycles += 1
+        }
+        assert(dut.io.memoryReadValid.toBoolean)
+        assert(dut.io.memoryRead.lineAddress.toBigInt == line0)
+      }
+    }
   }
 }

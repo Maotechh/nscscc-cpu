@@ -22,7 +22,7 @@ final class OooBackendWithExecution(
     val translationRequest = master(Stream(OooTranslationRequest(config)))
     val translationResponse = slave(Stream(OooTranslationResponse(config)))
     val reservationValid = in Bool ()
-    val reservationLineAddress = in Bits (28 bits)
+    val reservationLineAddress = in Bits (config.reservationAddressWidth bits)
     val systemReadValid = out Bool ()
     val systemReadAddress = out UInt (14 bits)
     val systemReadData = in Bits (config.xlen bits)
@@ -32,6 +32,7 @@ final class OooBackendWithExecution(
     val debugReadData = out Bits (config.xlen bits)
     val commitValid = out Bits (config.commitWidth bits)
     val commit = out Vec (OooCommitRecord(config), config.commitWidth)
+    val commitMemory = out Vec (OooMemoryCommitObservation(config), config.commitWidth)
     val recoveryValid = out Bool ()
     val recovery = out(OooRecoveryRequest(config))
     val debugCommitValid = out Bool ()
@@ -59,10 +60,17 @@ final class OooBackendWithExecution(
     val reservationBitSet = out Bool ()
     val reservationBitValue = out Bool ()
     val reservationAddressSet = out Bool ()
-    val reservationLineAddressUpdate = out Bits (28 bits)
+    val reservationLineAddressUpdate = out Bits (config.reservationAddressWidth bits)
     val exceptionValid = out Bool ()
     val exceptionPc = out UInt (config.xlen bits)
     val exception = out(OooExceptionMeta())
+    val memorySubsystemIdle = in Bool ()
+    val barrierActive = out Bool ()
+    val instructionBarrierMaintenanceStart = out Bool ()
+    val instructionBarrierMaintenanceReady = in Bool ()
+    val instructionBarrierMaintenanceDone = in Bool ()
+    val cacheMaintenanceRequest = master(Stream(OooCacheMaintenanceRequest(config)))
+    val cacheMaintenanceResponse = slave(Stream(OooCacheMaintenanceResponse(config)))
     val flush = in Bool ()
   }
 
@@ -91,6 +99,8 @@ final class OooBackendWithExecution(
   )
   loadStoreQueue.io.allocateValid := backend.io.memoryAllocateValid
   loadStoreQueue.io.allocate := backend.io.memoryAllocate
+  loadStoreQueue.io.committedMemoryEpoch := backend.io.committedMemoryEpoch
+  loadStoreQueue.io.robHeadPointer := backend.io.robHeadPointer
   loadStoreQueue.io.storeDataValid := backend.io.storeDataValid
   loadStoreQueue.io.storeDataRobPointer := backend.io.storeDataRobPointer
   loadStoreQueue.io.storeDataStoreQueueIndex := backend.io.storeDataStoreQueueIndex
@@ -104,7 +114,11 @@ final class OooBackendWithExecution(
   backend.io.issueReady := execution.io.issueReady
   private val loadStorePort =
     config.executionPorts.indexWhere(_.capabilities.contains(OooFuKind.LoadStore))
-  loadStoreQueue.io.orderingRobPointer := backend.io.issue(loadStorePort).robPointer
+  loadStoreQueue.io.orderingRobPointer := Mux(
+    execution.io.barrierActive,
+    execution.io.barrierRobPointer,
+    backend.io.issue(loadStorePort).robPointer
+  )
 
   execution.io.aguReady := loadStoreQueue.io.aguReady
   execution.io.loadStoreCompletionValid := loadStoreQueue.io.completionValid
@@ -157,6 +171,19 @@ final class OooBackendWithExecution(
   loadStoreQueue.io.reservationValid := io.reservationValid
   loadStoreQueue.io.reservationLineAddress := io.reservationLineAddress
   execution.io.olderStorePending := loadStoreQueue.io.olderStorePending
+  execution.io.memorySubsystemIdle := io.memorySubsystemIdle
+  io.barrierActive := execution.io.barrierActive
+  io.instructionBarrierMaintenanceStart :=
+    execution.io.instructionBarrierMaintenanceStart
+  execution.io.instructionBarrierMaintenanceReady :=
+    io.instructionBarrierMaintenanceReady
+  execution.io.instructionBarrierMaintenanceDone := io.instructionBarrierMaintenanceDone
+  io.cacheMaintenanceRequest.valid := execution.io.cacheMaintenanceRequest.valid
+  io.cacheMaintenanceRequest.payload := execution.io.cacheMaintenanceRequest.payload
+  execution.io.cacheMaintenanceRequest.ready := io.cacheMaintenanceRequest.ready
+  execution.io.cacheMaintenanceResponse.valid := io.cacheMaintenanceResponse.valid
+  execution.io.cacheMaintenanceResponse.payload := io.cacheMaintenanceResponse.payload
+  io.cacheMaintenanceResponse.ready := execution.io.cacheMaintenanceResponse.ready
   io.dataRequestValid := loadStoreQueue.io.dataRequestValid
   io.dataRequest := loadStoreQueue.io.dataRequest
   io.systemReadValid := execution.io.systemReadValid
@@ -175,6 +202,7 @@ final class OooBackendWithExecution(
   backend.io.resultForwardData := execution.io.completion(config.executionWidth).data
   io.commitValid := backend.io.commitValid
   io.commit := backend.io.commit
+  io.commitMemory := loadStoreQueue.io.commitObservation
   io.recoveryValid := backend.io.recoveryValid
   io.recovery := backend.io.recovery
 

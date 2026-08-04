@@ -20,6 +20,10 @@ private final class OooL1InstructionCacheProbe(config: OooCoreConfig) extends Co
     val lineReadBeat = in(OooLineReadBeat(config))
     val lineReadBeatReady = out Bool ()
     val invalidate = in Bool ()
+    val maintenanceValid = in Bool ()
+    val maintenanceRequest = in(OooCacheMaintenanceRequest(config))
+    val maintenanceReady = out Bool ()
+    val maintenanceDone = out Bool ()
     val invalidateBusy = out Bool ()
   }
   noIoPrefix()
@@ -32,6 +36,8 @@ private final class OooL1InstructionCacheProbe(config: OooCoreConfig) extends Co
   cache.io.lineReadBeatValid := io.lineReadBeatValid
   cache.io.lineReadBeat := io.lineReadBeat
   cache.io.invalidate := io.invalidate
+  cache.io.maintenanceRequest.valid := io.maintenanceValid
+  cache.io.maintenanceRequest.payload := io.maintenanceRequest
 
   io.requestReady := cache.io.requestReady
   io.responseValid := cache.io.responseValid
@@ -40,6 +46,8 @@ private final class OooL1InstructionCacheProbe(config: OooCoreConfig) extends Co
   io.lineRead := cache.io.lineRead
   io.lineReadBeatReady := cache.io.lineReadBeatReady
   io.invalidateBusy := cache.io.invalidateBusy
+  io.maintenanceReady := cache.io.maintenanceRequest.ready
+  io.maintenanceDone := cache.io.maintenanceDone
 }
 
 class OooL1InstructionCacheSpec extends AnyFunSuite {
@@ -64,6 +72,39 @@ class OooL1InstructionCacheSpec extends AnyFunSuite {
     dut.io.lineReadBeat.last #= false
     dut.io.lineReadBeat.error #= false
     dut.io.invalidate #= false
+    dut.io.maintenanceValid #= false
+    dut.io.maintenanceRequest.code #= 0
+    dut.io.maintenanceRequest.virtualAddress #= 0
+    dut.io.maintenanceRequest.physicalAddress #= 0
+    dut.io.maintenanceRequest.robPointer #= 0
+    dut.io.maintenanceRequest.recoveryEpoch #= 0
+  }
+
+  private def maintain(
+      dut: OooL1InstructionCacheProbe,
+      code: Int,
+      virtualAddress: BigInt,
+      physicalAddress: BigInt
+  ): Unit = {
+    var cycles = 0
+    while (!dut.io.maintenanceReady.toBoolean && cycles < 80) {
+      sample(dut)
+      cycles += 1
+    }
+    assert(dut.io.maintenanceReady.toBoolean)
+    dut.io.maintenanceValid #= true
+    dut.io.maintenanceRequest.code #= code
+    dut.io.maintenanceRequest.virtualAddress #= virtualAddress
+    dut.io.maintenanceRequest.physicalAddress #= physicalAddress
+    sample(dut)
+    dut.io.maintenanceValid #= false
+    cycles = 0
+    while (!dut.io.maintenanceDone.toBoolean && cycles < 16) {
+      sample(dut)
+      cycles += 1
+    }
+    assert(dut.io.maintenanceDone.toBoolean)
+    sample(dut)
   }
 
   private def acceptRequest(
@@ -412,6 +453,61 @@ class OooL1InstructionCacheSpec extends AnyFunSuite {
         dut.io.lineReadBeatValid #= false
         sample(dut)
         assert(dut.io.requestReady.toBoolean)
+      }
+  }
+
+  test("L1I CACOP modes invalidate only the selected line") {
+    SimConfig.withVerilator
+      .workspacePath("target/sim-workspace-ooo-l1i-maintenance")
+      .compile(new OooL1InstructionCacheProbe(config))
+      .doSim("ooo-l1i-exact-maintenance", 0x4c54) { dut =>
+        dut.clockDomain.forkStimulus(period = 10)
+        clearInputs(dut)
+        dut.clockDomain.assertReset()
+        dut.clockDomain.waitSampling(2)
+        dut.clockDomain.deassertReset()
+        dut.clockDomain.waitSampling(config.instructionCache.sets + 8)
+
+        def install(address: BigInt, firstInstruction: Int): Unit = {
+          acceptRequest(dut, address, address)
+          refill(dut, address & ~BigInt(0x3f), firstInstruction, Some(firstInstruction))
+        }
+        def expectMissAndRefill(address: BigInt, firstInstruction: Int): Unit = {
+          acceptRequest(dut, address, address)
+          var cycles = 0
+          while (!dut.io.lineReadValid.toBoolean && cycles < 16) {
+            sample(dut)
+            cycles += 1
+          }
+          assert(dut.io.lineReadValid.toBoolean)
+          refill(dut, address & ~BigInt(0x3f), firstInstruction, Some(firstInstruction))
+        }
+
+        val line0 = BigInt(0x100)
+        val line1 = BigInt(0x1100)
+        install(line0, 0x1000)
+        install(line1, 0x2000)
+
+        // A hit operation that misses is a side-effect-free completion.
+        maintain(dut, code = 0x10, virtualAddress = 0x2100, physicalAddress = 0x2100)
+        acceptRequest(dut, line1, line1)
+        expectGroup(dut, line1, 0x2000, forbidLineRead = true)
+
+        // Store Tag and Index select the way from VA bit zero and the set from VA index bits.
+        maintain(dut, code = 0x00, virtualAddress = line0, physicalAddress = 0)
+        acceptRequest(dut, line1, line1)
+        expectGroup(dut, line1, 0x2000, forbidLineRead = true)
+        expectMissAndRefill(line0, 0x3000)
+
+        maintain(dut, code = 0x08, virtualAddress = line0 + 1, physicalAddress = 0)
+        acceptRequest(dut, line0, line0)
+        expectGroup(dut, line0, 0x3000, forbidLineRead = true)
+        expectMissAndRefill(line1, 0x4000)
+
+        maintain(dut, code = 0x10, virtualAddress = line0, physicalAddress = line0)
+        acceptRequest(dut, line1, line1)
+        expectGroup(dut, line1, 0x4000, forbidLineRead = true)
+        expectMissAndRefill(line0, 0x5000)
       }
   }
 }

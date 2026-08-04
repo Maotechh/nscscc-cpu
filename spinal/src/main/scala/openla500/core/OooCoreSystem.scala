@@ -46,7 +46,7 @@ final class OooCoreSystem(
     val core = new OooCore(config)
     // Keep the CSR diff views in the generated design.  The view is wrapped by a conditional
     // chiplab DPI shell, so it is inert in synthesis and available to the official simulator.
-    val csr = new OpenLa500Csr(diffTestEnabled = true, tlbNum = 32)
+    val csr = new OpenLa500Csr(config = config, diffTestEnabled = true, tlbNum = 32)
     val addressTranslation = new OooAddressTranslationUnit(config)
     val axiBridge = new OooAxiLineBridge(config)
     val idleController = new OooIdleController(config)
@@ -75,7 +75,9 @@ final class OooCoreSystem(
     val committedReservationBitValue = RegNext(core.io.reservationBitValue) init (False)
     val committedReservationAddressSet = RegNext(core.io.reservationAddressSet) init (False)
     val committedReservationLineAddress =
-      RegNext(core.io.reservationLineAddressUpdate) init (B(0, 28 bits))
+      RegNext(core.io.reservationLineAddressUpdate) init (
+        B(0, config.reservationAddressWidth bits)
+      )
     val committedCacheInvalidateValid = RegNext(core.io.cacheInvalidateValid) init (False)
     val committedDataCacheInvalidateValid = RegNext(core.io.dataCacheInvalidateValid) init (False)
     val committedDataCacheWritebackInvalidateValid =
@@ -245,6 +247,7 @@ final class OooCoreSystem(
     axiBridge.io.memoryWriteValid := core.io.memoryWriteValid
     axiBridge.io.memoryWrite := core.io.memoryWrite
     core.io.memoryWriteReady := axiBridge.io.memoryWriteReady
+    core.io.memoryBusIdle := axiBridge.io.idle
     axiBridge.io.uncachedInstructionRequestValid :=
       core.io.uncachedInstructionRequestValid
     axiBridge.io.uncachedInstructionRequest := core.io.uncachedInstructionRequest
@@ -291,6 +294,7 @@ final class OooCoreSystem(
     val diffCommit = Vec(CommitEvent(), config.commitWidth)
     for (lane <- 0 until config.commitWidth) {
       val record = core.io.commit(lane)
+      val memory = core.io.commitMemory(lane)
       val event = diffCommit(lane)
       event.pc := record.pc
       event.instruction := record.instruction
@@ -327,14 +331,14 @@ final class OooCoreSystem(
       when(record.systemOperation === OooSystemOp.counterHigh) {
         event.timer(63 downto 32) := record.result.asUInt
       }
-      event.load.instructionMask := B(0, 8 bits)
-      event.load.pAddr := 0
-      event.load.vAddr := 0
-      event.store.instructionMask := B(0, 8 bits)
-      event.store.pAddr := 0
-      event.store.vAddr := 0
-      event.store.data := 0
-      event.store.byteMask := 0
+      event.load.instructionMask := memory.loadInstructionMask
+      event.load.pAddr := memory.physicalAddress
+      event.load.vAddr := memory.virtualAddress
+      event.store.instructionMask := memory.storeInstructionMask
+      event.store.pAddr := memory.physicalAddress
+      event.store.vAddr := memory.virtualAddress
+      event.store.data := memory.storeData
+      event.store.byteMask := memory.storeByteMask
       event.tlbFill.valid := record.retired && record.systemOperation === OooSystemOp.tlbFill
       event.tlbFill.index := csr.io.rand_index.asUInt
     }

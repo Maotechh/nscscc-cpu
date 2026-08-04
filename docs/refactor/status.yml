@@ -1,117 +1,234 @@
 schema_version: 1
-updated_at: "2026-07-28T21:31:48+08:00"
-branch: dev-OoOE
+updated_at: "2026-08-04T06:57:24+08:00"
+branch: dev/ECHO
 
-baseline:
-  rtl_commit: da71fd32e0db3d13f1964895bbafeb5d2e5af412
-  commit_subject: "timing(frontend): parallelize L1I predecode by way"
-  remote_ref: origin/dev-OoOE
-  generated_rtl: rtl/mycpu_top.v
-  generated_rtl_sha256: 14874c00bf2a4632ac9792da2234286d4f1ac05140df03b7db90b784d00074f0
-  handwritten_verilog: false
-  official_top: openla500.core.OooCoreSystem
-  config: openla500.core.OooCoreConfig.FourIssueThreeCommit
+current_candidate:
+  source_commit: 60fba481888a8f7e5a2f0ba0b76c91422a117309
+  implementation_commit: 6bbca9b
+  base_commit: 80fb1cbee19a6040ae5d10f99e861ac381fbd536
+  source_state: "committed Scala/SpinalHDL with generated RTL and refreshed publication metadata"
+  generated_rtl_sha256: 137657aa0c594334568cc386571d13aa9cdc828c8fc45c56ed421be15912c209
+  chiplab_commit: c398d274812f164d387146fa7d8f612a4a1296d9
+  dbar_ibar_semantics: satisfied
+  cacop_semantics: satisfied
+  cpucfg_geometry: satisfied
+  llsc_platform_semantics: satisfied_single_core_noncoherent
+  mmio_axi_recovery: satisfied_local
+  linux_acceptance: not_satisfied
+  board_evaluation: func58_and_perf20_passed
+
+architecture_closure:
+  memory_epoch_width: 8
+  cacop:
+    status: satisfied
+    operations: [store_tag, index_writeback_invalidate, hit_writeback_invalidate]
+    caches: [l1i, l1d, l2]
+    hit_translation_exceptions: precise
+  cpucfg:
+    status: satisfied
+    index_16: 0x0000001d
+    index_17: 0x06060001
+    index_18: 0x06060001
+    index_19: 0x06090001
+  llsc:
+    status: satisfied_single_core_noncoherent
+    reservation_line_bytes: 64
+    uncached_ll_establishes_reservation: false
+    uncached_sc_writes_memory: false
+    external_coherent_invalidation: unsupported_by_platform
+  mmio_axi:
+    status: satisfied_local
+    uncached_store_completion: axi_b_response
+    uncached_error_exception: ADEM
+    response_id_checked: true
+    cached_writeback_error_policy: simulation_assertion
+  cached_uncached_response_collision:
+    status: fixed
+    mechanism: one_entry_deferred_data_response
 
 local_gates:
+  command: make cpu-check
+  status: passed
   scala:
-    suites: 37
-    passed: 133
+    suites: 38
+    passed: 161
     failed: 0
   python:
-    passed: 362
+    passed: 364
     failed: 0
   port_contract: passed
   yosys_structure: passed
   verilator_lint:
     status: passed
-    reviewed_warnings: 849
-    categories:
-      - CMPCONST
-      - UNUSEDSIGNAL
+    reviewed_warnings: 845
+    warning_signature_sha256: 48bc21786139a637214eb7b221a1bb6b48fd70fc4e52ec9775230bb77d33f3d7
+    categories: [CMPCONST, UNUSEDSIGNAL]
   publication_consistency: passed
-  standalone_vivado_100mhz:
-    status: passed
-    wns_ns: 0.419
-    tns_ns: 0.0
-    failing_endpoints: 0
+
+chiplab_simulation:
+  func_lab19:
+    - {seed: 1, cycles: 586705, status: passed}
+    - {seed: 19557, cycles: 585844, status: passed}
+    - {seed: 5570815, cycles: 585047, status: passed}
+  func_advance:
+    - {seed: 1, cycles: 15108, status: passed}
+    - {seed: 19557, cycles: 15087, status: passed}
+    - {seed: 5570815, cycles: 15059, status: passed}
+  perf20:
+    status: passed_20_of_20
+    total_cpu_cycles: 83234731
+    immediate_baseline_cycles: 83234678
+    delta_cycles: 53
+    regression_percent: 0.000064
+    previous_candidate_cycles: 83234731
+    result_log_sha256: 9cb35f4c1ac7ba5b16f801b588050315f3a0cbafdd21d3c53e4cc511f74db77c
+
+linux_verilator:
+  clean_official_equivalent:
+    limit_ns: 50000000
+    cycles: 24999995
+    instructions: 13924596
+    status: passed_without_mismatch
+    log_sha256: c499a6ce328effe88bc676968752e95c89968cd26dc5e6906d7d5b3d758720af
+  patched_random_axi:
+    - seed: 1
+      limit_ns: 200000000
+      cycles: 99999995
+      instructions: 41695962
+      status: passed_without_mismatch
+      log_sha256: 0ee1ee4a8e93d7bacbbd1959e61abfa68f83824b5b50846d946771027ab466db
+    - seed: 19557
+      limit_ns: 200000000
+      cycles: 99999995
+      instructions: 41695981
+      status: passed_without_mismatch
+      log_sha256: 62caabb239f25f209f8bb99fdbd04b803d63ba2ea6a2afe9278f519dd1f8f9a1
+    - seed: 5570815
+      limit_ns: 200000000
+      cycles: 99999995
+      instructions: 41692624
+      status: passed_without_mismatch
+      log_sha256: 5032e8d451a0a38051008b84a8f2c34b210e3a5a4619a51b0181f7eb827258b8
+  milestone: "Linux 5.14 early console and memory initialization; no shell evidence"
 
 complete_soc:
+  source_commit: 60fba481888a8f7e5a2f0ba0b76c91422a117309
+  generated_rtl_sha256: 137657aa0c594334568cc386571d13aa9cdc828c8fc45c56ed421be15912c209
+  chiplab_commit: c398d274812f164d387146fa7d8f612a4a1296d9
   tool: "Vivado 2023.2"
   part: xc7a200tfbg676-2
-  profile: perf20
+  profile: perf
   target_cpu_mhz: 100
   actual_cpu_mhz: 100.0
+  actual_sys_mhz: 100.0
+  actual_ddr_mhz: 200.0
   implementation: complete
   write_bitstream: complete
   timing_met: true
-  wns_ns: 0.036678
+  wns_ns: 0.044
   tns_ns: 0.0
-  whs_ns: 0.049
+  whs_ns: 0.050
   ths_ns: 0.0
   drc_errors: 0
-  drc_warnings: 26
-  build_elapsed_seconds: 2852.6
-  package_sha256: bfe51c269e939588698f1f1de52f73bfa74f0d34904c7cdaa594296e243f99fa
+  drc_warnings: 27
+  build_elapsed_seconds: 1795
+  resources:
+    slice_luts: 88967
+    slice_registers: 53697
+    block_ram_tiles: 65.5
+    ramb36: 57
+    ramb18: 17
+    dsp48: 8
+  bitstream_sha256: 6302203cd181748ce5a703312843b5ae80c824b8c94c150151eca05a2e191986
+  probes_sha256: 3e36db904e602bae47d72e9f8b54a553903de4ccf5ff72ce88942c87280dfcdb
+  routed_dcp_sha256: 26a3b5be86e1b8be39308d3fcad90b3c6f4c379dcd3fc98b1eb22f31eaa150d7
+  archive: Stable_Backup/cpu_60fba481888a_chiplab_c398d274812f_perf_100mhz_20260804-054923_stable
 
-board_evaluation:
+complete_soc_func:
+  source_commit: e26ccfa823e81c41f1191365fdcf8f89395b1248
+  implementation_commit: 60fba481888a8f7e5a2f0ba0b76c91422a117309
+  generated_rtl_sha256: 137657aa0c594334568cc386571d13aa9cdc828c8fc45c56ed421be15912c209
+  chiplab_commit: c398d274812f164d387146fa7d8f612a4a1296d9
+  tool: "Vivado 2023.2"
+  part: xc7a200tfbg676-2
+  profile: func
+  requested_cpu_mhz: platform_default
+  actual_cpu_mhz: 32.726797
+  actual_sys_mhz: 100.0
+  actual_ddr_mhz: 200.0
+  implementation: complete
+  write_bitstream: complete
+  timing_met: true
+  wns_ns: 0.978
+  whs_ns: 0.052
+  drc_errors: 0
+  bitstream_sha256: 30c8543f99e69e0d312d630a67ffc589590eb82197821d82bcd96b6a1a5b3289
+  probes_sha256: 3e36db904e602bae47d72e9f8b54a553903de4ccf5ff72ce88942c87280dfcdb
+  routed_dcp_sha256: a109133a9489ef80bd3136636fc38303ac1a9ef566b2f3c3fd4aa54cb66db8be
+  archive: Stable_Backup/cpu_e26ccfa823e8_chiplab_c398d274812f_func_20260804-061935_stable
+
+team_board_func:
+  status: passed_58_of_58
+  job_id: 20260803-223955-1ceb232c
+  profile: func58
+  source_commit: e26ccfa823e81c41f1191365fdcf8f89395b1248
+  implementation_commit: 60fba481888a8f7e5a2f0ba0b76c91422a117309
+  chiplab_commit: c398d274812f164d387146fa7d8f612a4a1296d9
+  board_protocol: nscscc-system-reset-v1
+  actual_cpu_mhz: 32.726797
+  seeds: [F0, FF, A5]
+  final_num_data: 0x3A00003A
+  package_sha256: 4d3ebd3754f165d0af4c2e37e33e54bc67f9f5d7619c8a4467025d549cc30687
+  board_summary_sha256: 30e6ce8c36736bad30ff414e0021023e87e547eb702300e0f1100141da43aa1b
+  func_vio_sha256: 76fc3c7b522750ed2dd7336fa2a9bc121691fb216dbbaf0bc82b017ce761f977
+  programming_summary_sha256: 783bb11dcf94cf6f7d672173bf6c62a9af467589d03e268a07b5ce78b3f6cee4
+  vivado_metrics_sha256: 06863a6a86388293ccce08987687caad57ddf75cfcdfdb138fef363468d4f395
+
+team_board_perf:
+  status: passed_20_of_20
+  job_id: 20260803-220447-d9b5b478
   profile: perf20
-  package_reused_for_all_runs: true
-  all_programming_passed: true
-  all_rows_passed: true
-  all_artifact_hashes_verified: true
-  runs:
-    - job_id: 20260728-125651-a8fa17a8
-      soc_count: 74446749
-      cpu_count: 74351436
-      seconds_at_100mhz: 0.74446749
-    - job_id: 20260728-130020-6b290214
-      soc_count: 74467075
-      cpu_count: 74372266
-      seconds_at_100mhz: 0.74467075
-    - job_id: 20260728-130312-ddaf3a7a
-      soc_count: 74446699
-      cpu_count: 74351622
-      seconds_at_100mhz: 0.74446699
+  source_commit: 60fba481888a8f7e5a2f0ba0b76c91422a117309
+  chiplab_commit: c398d274812f164d387146fa7d8f612a4a1296d9
+  board_protocol: nscscc-system-reset-v1
+  actual_cpu_mhz: 100.0
+  package_sha256: 36c1e997335b9785ace7b78c645a689918b243d1c8f6c8ed9e4cff11b29ead37
+  perf_vio_sha256: 9e86d7f50b7ad74466a9846b11e31e29285042411b8b6b31bcf96eab4ed31823
+  selected_soc_count_total: 79537915
+  selected_cpu_count_total: 79524833
+  main_control:
+    source_commit: d9bab16ef46540eb3348b0781afc4d0949f28adc
+    job_id: 20260803-221038-4ad4237a
+    package_sha256: acb5fb7352a332000b237d6bd0cbc7b212bfe42d234cb548d79a7f44f0e7e7c7
+    perf_vio_sha256: e65a18e203e5b8be8af1a06257aa3c7594379da69862d91ca6ec55f6504337f6
+    selected_soc_count_total: 79537886
+    selected_cpu_count_total: 79525432
+  delta_vs_main:
+    soc_count: 29
+    soc_percent: 0.000036
+    cpu_count: -599
+    cpu_percent: -0.000753
+  interpretation: "No measurable ordinary-path performance regression; the delta is board-run variation, not an optimization claim."
+
+historical_board_baseline:
+  applies_to_commit: da71fd32e0db3d13f1964895bbafeb5d2e5af412
+  profile: perf20
   decisive_min_soc_count: 74446699
   decisive_seconds_at_100mhz: 0.74446699
+  current_candidate_status: passed_on_current_c398_flow
 
-performance_reference:
-  commit: 724b808959957c27fc64bda36b8c5cb828f51c8b
-  decisive_min_soc_count: 73826502
-  delta_soc_count: 620197
-  regression_percent: 0.84
-  conclusion: "Timing-closure baseline, not a performance improvement."
-
-portable_evidence:
-  iteration_log: logs/refactor/20260728-l1i-parallel-predecode-timing/iteration.md
-  original_scalar_performance_baseline: baseline.txt
-  original_scalar_baseline_role: "Historical competition baseline only; it is not the current RTL checkout or timing baseline."
-  locked_reference: reference/manifest.lock
-  generated_rtl_hash_ledger: reference/component-replacements/core-top.json
-  lint_ledger: reference/core-top-lint-waivers.json
-  external_result_layout: "${FPGA_CLIENT_HOME}/results/<job_id>"
-  note: "The .fpgajob and fetched board artifacts are generated evidence and are not required in the Git checkout. Rebuild from rtl_commit or refetch by job_id."
+acceptance:
+  local_architecture_and_soc: satisfied
+  official_ci: not_run
+  team_board: func58_and_perf20_passed
+  linux_shell: not_satisfied
+  next_priority: "Obtain U-Boot/PMON, Linux boot, Buildroot shell, and required system-operation evidence on the team board."
+  timing_risk: "Setup margin is 0.044 ns; every RTL change requires a fresh complete-SoC implementation."
 
 reproduce:
   local_commands:
-    - make scala
-    - make test
-    - make python-test
-    - make generate-core
-    - make port-check
-    - make lint
-    - make yosys-check
-    - make publish-check
-  remote_client_min_version: 0.2.2
-  remote_build_template: "${FPGA_CLIENT_HOME}/cmd/clientctl.cmd build perf20 team-cpu <commit40> <output.fpgajob> 100"
-  remote_submit_template: "${FPGA_CLIENT_HOME}/cmd/clientctl.cmd submit-wait <package.fpgajob> <stable-idempotency-key> 8"
-
-handoff:
-  active_vivado_or_board_job: false
-  next_priority: "Recover the 0.84% cycle regression without losing nonnegative complete-SoC WNS."
-  timing_risk: "The setup margin is only 0.036678 ns; every RTL change requires a new complete-SoC implementation."
-  current_worst_cpu_path: "ROB stagedPdst fanout to issue-queue payload clock enable; 9.582 ns data path, 8.153 ns routing."
-  suspected_cycle_costs:
-    - "d4e1a04 registered shared-L2 miss requests"
-    - "d82be71 registered scheduler input window"
-  stop_state: "Optimization intentionally stopped after establishing the 100 MHz closure baseline."
+    - make cpu-check
+    - make sim RUN_SOFTWARE=func/func_lab19
+    - make sim RUN_SOFTWARE=func/func_advance
+    - make soc-impl PERF_CPU_MHZ=100 SOC_ARCHIVE_CLASS=candidate
+  locked_reference: reference/manifest.lock

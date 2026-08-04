@@ -520,10 +520,11 @@ final class OooLa32rDecoder(config: OooCoreConfig = OooCoreConfig.FourIssueThree
   when(any(instMulW, instMulhW, instMulhWu)) { fuType := OooFuType.multiply }
   when(any(instDivW, instDivWu, instModW, instModWu)) { fuType := OooFuType.divide }
   when(csrInstruction) { fuType := OooFuType.csr }
-  when(any(loadOperation, storeOperation, validCacop, instPreload)) {
+  when(any(loadOperation, storeOperation, instPreload)) {
     fuType := OooFuType.loadStore
   }
   when(privilegedInstruction) { fuType := OooFuType.serial }
+  when(any(instDbar, instIbar, validCacop)) { fuType := OooFuType.barrier }
 
   io.decoded.pc := io.pc
   io.decoded.instruction := instruction

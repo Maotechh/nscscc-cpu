@@ -20,7 +20,7 @@ final class OooCore(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommit) 
     val dataTranslationRequest = master(Stream(OooTranslationRequest(config)))
     val dataTranslationResponse = slave(Stream(OooTranslationResponse(config)))
     val reservationValid = in Bool ()
-    val reservationLineAddress = in Bits (28 bits)
+    val reservationLineAddress = in Bits (config.reservationAddressWidth bits)
 
     val uncachedInstructionRequestValid = out Bool ()
     val uncachedInstructionRequest = out(OooInstructionCacheRequest(config))
@@ -42,6 +42,7 @@ final class OooCore(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommit) 
     val memoryWriteValid = out Bool ()
     val memoryWrite = out(OooLineWriteRequest(config))
     val memoryWriteReady = in Bool ()
+    val memoryBusIdle = in Bool ()
 
     val systemReadValid = out Bool ()
     val systemReadAddress = out UInt (14 bits)
@@ -60,6 +61,7 @@ final class OooCore(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommit) 
 
     val commitValid = out Bits (config.commitWidth bits)
     val commit = out Vec (OooCommitRecord(config), config.commitWidth)
+    val commitMemory = out Vec (OooMemoryCommitObservation(config), config.commitWidth)
     val recoveryValid = out Bool ()
     val recovery = out(OooRecoveryRequest(config))
     val debugCommitValid = out Bool ()
@@ -87,7 +89,7 @@ final class OooCore(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommit) 
     val reservationBitSet = out Bool ()
     val reservationBitValue = out Bool ()
     val reservationAddressSet = out Bool ()
-    val reservationLineAddressUpdate = out Bits (28 bits)
+    val reservationLineAddressUpdate = out Bits (config.reservationAddressWidth bits)
     val exceptionValid = out Bool ()
     val exceptionPc = out UInt (config.xlen bits)
     val exception = out(OooExceptionMeta())
@@ -229,6 +231,7 @@ final class OooCore(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommit) 
   io.memoryWriteValid := backend.io.memoryWriteValid
   io.memoryWrite := backend.io.memoryWrite
   backend.io.memoryWriteReady := io.memoryWriteReady
+  backend.io.memoryBusIdle := io.memoryBusIdle
 
   backend.io.systemReadData := io.systemReadData
   backend.io.timer := io.timer
@@ -244,6 +247,7 @@ final class OooCore(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommit) 
     backend.io.commitValid
   )
   io.commit := backend.io.commit
+  io.commitMemory := backend.io.commitMemory
   io.recoveryValid := backend.io.recoveryValid && !internalRedirectValid
   io.recovery := backend.io.recovery
   io.debugCommitValid := backend.io.debugCommitValid

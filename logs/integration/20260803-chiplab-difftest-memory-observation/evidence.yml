@@ -1,0 +1,68 @@
+schema_version: 1
+recorded_at: "2026-08-03T22:23:50+08:00"
+scope: chiplab_difftest_memory_observation
+separate_from: logs/refactor/20260803-dbar-ibar-linux-semantics
+
+platform:
+  chiplab_commit: c398d274812f164d387146fa7d8f612a4a1296d9
+  chiplab_branch: nscscc2026
+  tracked_test_change: sims/verilator/run_prog/config-software.mak
+  tracked_test_change_class: retained_variable_test_configuration
+  simulator_source_modified: false
+
+cpu:
+  pre_fix_commit: 8594150feb652bd3ef137995858cb9eb5f884580
+  fix_commit: 79c0045923e2a1cc9da2cf07fc5478f9f622e69b
+  generated_rtl_sha256: 8938858750255431d0bd24f90d314332a57ebdc4c64fa3b0c0220c087fe132fc
+  public_port_count: 49
+
+failure:
+  workload: linux
+  axi_seed: 5570815
+  cycles: 654
+  instructions: 16
+  pc: 0x1c00003c
+  physical_address: 0x1fe001e5
+  dut_t2: 0x00000060
+  reference_t2: 0x00000000
+  root_cause: CPU hardwired Chiplab DiffTest memory events to zero
+  log_path: "${WORKSPACE}/build/logs/cpu-8594150-c398-linux-5ms-seed5570815.log"
+  log_sha256: 531864147f215421719c5ffed09ba2d9c199fe72676feecec4d4953b2b41e322
+
+verification:
+  lsq_suite: 18_of_18_passed
+  python_suite: 364_of_364_passed
+  locked_metadata_gate: passed
+  locked_port_gate: passed_49_ports
+  locked_lint_gate: passed_no_new_waiver
+  locked_yosys_gate: passed
+  locked_publication_gate: passed
+
+func_regression:
+  workload: func/func_lab19
+  axi_seed: 5570815
+  verdict: passed
+  end: reached_test_end_pc_and_syscall
+  difftest: enabled_no_mismatch
+  cycles: 565868
+  instructions: 139658
+  ipc: 0.246803
+
+linux_post_fix:
+  workload: linux
+  axi_seed: 5570815
+  time_limit_ns: 5000000
+  terminated_at_ns: 5000004
+  verdict: time_limit_no_difftest_mismatch
+  cycles: 2499995
+  instructions: 1224741
+  ipc: 0.489897
+  last_sampled_dut_pc: 0xa07a9b58
+  uart_milestone: Linux CPU probing and early physical-memory initialization
+  log_path: "${WORKSPACE}/build/logs/cpu-79c0045-c398-linux-difftest-memory-seed5570815.log"
+  log_sha256: 2205d79271ce7cdba1d2479f82ae471bb13553f6cc4e7a9ba84d5df2158d44cd
+
+claim_boundary:
+  - "The original PC 0x1c00003c DiffTest failure is closed."
+  - "The change repairs simulation observation; it does not alter architectural load/store behavior."
+  - "A time-limited early Linux milestone is not Linux shell, complete-SoC, or board acceptance."

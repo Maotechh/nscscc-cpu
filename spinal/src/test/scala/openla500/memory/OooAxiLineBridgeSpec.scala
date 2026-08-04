@@ -1,31 +1,118 @@
 package openla500.memory
 
+import openla500.compat.Axi3Compat
 import openla500.core._
 import org.scalatest.funsuite.AnyFunSuite
+import spinal.core._
 import spinal.core.sim._
+import spinal.lib._
 
 import scala.collection.mutable.ArrayBuffer
 import scala.language.reflectiveCalls
+import scala.util.Random
+
+private final class OooAxiLineBridgeProbe(config: OooCoreConfig) extends Component {
+  val io = new Bundle {
+    val memoryReadValid = in Bool ()
+    val memoryRead = in(OooLineReadRequest(config))
+    val memoryReadReady = out Bool ()
+    val memoryReadBeatValid = out Bool ()
+    val memoryReadBeat = out(OooLineReadBeat(config))
+    val memoryReadBeatReady = in Bool ()
+
+    val memoryWriteValid = in Bool ()
+    val memoryWriteLineAddress = in UInt (config.xlen bits)
+    val memoryWriteDataWords = in Vec (Bits(32 bits), OooCacheContract.LineBytes / 4)
+    val memoryWriteByteMask = in Bits (OooCacheContract.LineBytes bits)
+    val memoryWriteMshrId = in UInt (log2Up(config.mshrEntries) bits)
+    val memoryWriteReady = out Bool ()
+
+    val uncachedInstructionRequestValid = in Bool ()
+    val uncachedInstructionRequest = in(OooInstructionCacheRequest(config))
+    val uncachedInstructionRequestReady = out Bool ()
+    val uncachedInstructionResponseValid = out Bool ()
+    val uncachedInstructionResponse = out(OooInstructionCacheResponse(config))
+
+    val uncachedDataRequestValid = in Bool ()
+    val uncachedDataRequest = in(OooCacheRequest(config))
+    val uncachedDataRequestReady = out Bool ()
+    val uncachedDataResponseValid = out Bool ()
+    val uncachedDataResponse = out(OooCacheResponse(config))
+
+    val axi = master(Axi3Compat())
+    val idle = out Bool ()
+  }
+  noIoPrefix()
+
+  val bridge = new OooAxiLineBridge(config)
+  bridge.io.memoryReadValid := io.memoryReadValid
+  bridge.io.memoryRead := io.memoryRead
+  io.memoryReadReady := bridge.io.memoryReadReady
+  io.memoryReadBeatValid := bridge.io.memoryReadBeatValid
+  io.memoryReadBeat := bridge.io.memoryReadBeat
+  bridge.io.memoryReadBeatReady := io.memoryReadBeatReady
+
+  bridge.io.memoryWriteValid := io.memoryWriteValid
+  bridge.io.memoryWrite.lineAddress := io.memoryWriteLineAddress
+  for (word <- 0 until OooCacheContract.LineBytes / 4) {
+    bridge.io.memoryWrite.data(word * 32 + 31 downto word * 32) :=
+      io.memoryWriteDataWords(word)
+  }
+  bridge.io.memoryWrite.byteMask := io.memoryWriteByteMask
+  bridge.io.memoryWrite.mshrId := io.memoryWriteMshrId
+  io.memoryWriteReady := bridge.io.memoryWriteReady
+
+  bridge.io.uncachedInstructionRequestValid := io.uncachedInstructionRequestValid
+  bridge.io.uncachedInstructionRequest := io.uncachedInstructionRequest
+  io.uncachedInstructionRequestReady := bridge.io.uncachedInstructionRequestReady
+  io.uncachedInstructionResponseValid := bridge.io.uncachedInstructionResponseValid
+  io.uncachedInstructionResponse := bridge.io.uncachedInstructionResponse
+
+  bridge.io.uncachedDataRequestValid := io.uncachedDataRequestValid
+  bridge.io.uncachedDataRequest := io.uncachedDataRequest
+  io.uncachedDataRequestReady := bridge.io.uncachedDataRequestReady
+  io.uncachedDataResponseValid := bridge.io.uncachedDataResponseValid
+  io.uncachedDataResponse := bridge.io.uncachedDataResponse
+
+  io.axi.ar.valid := bridge.io.axi.ar.valid
+  io.axi.ar.payload := bridge.io.axi.ar.payload
+  bridge.io.axi.ar.ready := io.axi.ar.ready
+  bridge.io.axi.r.valid := io.axi.r.valid
+  bridge.io.axi.r.payload := io.axi.r.payload
+  io.axi.r.ready := bridge.io.axi.r.ready
+  io.axi.aw.valid := bridge.io.axi.aw.valid
+  io.axi.aw.payload := bridge.io.axi.aw.payload
+  bridge.io.axi.aw.ready := io.axi.aw.ready
+  io.axi.w.valid := bridge.io.axi.w.valid
+  io.axi.w.payload := bridge.io.axi.w.payload
+  bridge.io.axi.w.ready := io.axi.w.ready
+  bridge.io.axi.b.valid := io.axi.b.valid
+  bridge.io.axi.b.payload := io.axi.b.payload
+  io.axi.b.ready := bridge.io.axi.b.ready
+  io.idle := bridge.io.idle
+}
 
 class OooAxiLineBridgeSpec extends AnyFunSuite {
   private val config = OooCoreConfig.FourIssueThreeCommit
 
-  private def sample(dut: OooAxiLineBridge): Unit = {
+  private def sample(dut: OooAxiLineBridgeProbe): Unit = {
     dut.clockDomain.waitSampling()
     sleep(1)
   }
 
-  private def clearInputs(dut: OooAxiLineBridge): Unit = {
+  private def clearInputs(dut: OooAxiLineBridgeProbe): Unit = {
     dut.io.memoryReadValid #= false
     dut.io.memoryRead.lineAddress #= 0
     dut.io.memoryRead.mshrId #= 0
     dut.io.memoryRead.criticalBeat #= 0
     dut.io.memoryReadBeatReady #= true
     dut.io.memoryWriteValid #= false
-    dut.io.memoryWrite.lineAddress #= 0
-    dut.io.memoryWrite.data #= 0
-    dut.io.memoryWrite.byteMask #= 0
-    dut.io.memoryWrite.mshrId #= 0
+    dut.io.memoryWriteLineAddress #= 0
+    for (word <- 0 until OooCacheContract.LineBytes / 4) {
+      dut.io.memoryWriteDataWords(word) #= 0
+    }
+    dut.io.memoryWriteByteMask #= 0
+    dut.io.memoryWriteMshrId #= 0
     dut.io.uncachedInstructionRequestValid #= false
     dut.io.uncachedInstructionRequest.virtualAddress #= 0
     dut.io.uncachedInstructionRequest.physicalAddress #= 0
@@ -54,10 +141,60 @@ class OooAxiLineBridgeSpec extends AnyFunSuite {
     dut.io.axi.b.payload.response #= 0
   }
 
+  test("cached writes take priority over simultaneous uncached requests") {
+    SimConfig.withVerilator
+      .workspacePath("target/sim-workspace-ooo-axi-line-write")
+      .compile(new OooAxiLineBridgeProbe(config))
+      .doSim("ooo-axi-cached-write-priority", 0x4c6a) { dut =>
+        dut.clockDomain.forkStimulus(period = 10)
+        clearInputs(dut)
+        dut.clockDomain.assertReset()
+        dut.clockDomain.waitSampling(2)
+        dut.clockDomain.deassertReset()
+        sample(dut)
+
+        dut.io.memoryWriteValid #= true
+        dut.io.memoryWriteLineAddress #= 0x9000
+        dut.io.memoryWriteByteMask #= (BigInt(1) << OooCacheContract.LineBytes) - 1
+        dut.io.uncachedDataRequestValid #= true
+        dut.io.uncachedDataRequest.physicalAddress #= BigInt("1fe00100", 16)
+        dut.io.uncachedInstructionRequestValid #= true
+        dut.io.uncachedInstructionRequest.virtualAddress #= BigInt("1c001000", 16)
+        dut.io.uncachedInstructionRequest.physicalAddress #= 0x1000
+        sleep(1)
+
+        assert(dut.io.memoryWriteReady.toBoolean)
+        assert(!dut.io.uncachedDataRequestReady.toBoolean)
+        assert(!dut.io.uncachedInstructionRequestReady.toBoolean)
+        sample(dut)
+        dut.io.memoryWriteValid #= false
+        dut.io.uncachedInstructionRequestValid #= false
+
+        assert(dut.io.axi.aw.valid.toBoolean)
+        assert(dut.io.axi.aw.payload.address.toBigInt == 0x9000)
+        assert(dut.io.axi.aw.payload.id.toBigInt == 1)
+        dut.io.axi.aw.ready #= true
+        sample(dut)
+        dut.io.axi.aw.ready #= false
+        dut.io.axi.w.ready #= true
+        for (_ <- 0 until OooCacheContract.LineBytes / 4) { sample(dut) }
+        dut.io.axi.w.ready #= false
+
+        assert(dut.io.axi.b.ready.toBoolean)
+        dut.io.memoryWriteValid #= true
+        dut.io.axi.b.valid #= true
+        sample(dut)
+        dut.io.axi.b.valid #= false
+        sleep(1)
+        assert(dut.io.uncachedDataRequestReady.toBoolean)
+        assert(!dut.io.memoryWriteReady.toBoolean)
+      }
+  }
+
   test("critical-word-first line reads use AXI wrapping and return eight internal beats") {
     SimConfig.withVerilator
       .workspacePath("target/sim-workspace-ooo-axi-line-read")
-      .compile(new OooAxiLineBridge(config))
+      .compile(new OooAxiLineBridgeProbe(config))
       .doSim("ooo-axi-line-read", 0x4c64) { dut =>
         dut.clockDomain.forkStimulus(period = 10)
         clearInputs(dut)
@@ -129,7 +266,7 @@ class OooAxiLineBridgeSpec extends AnyFunSuite {
   test("four cached line reads keep independent state under interleaved AXI responses") {
     SimConfig.withVerilator
       .workspacePath("target/sim-workspace-ooo-axi-line-read")
-      .compile(new OooAxiLineBridge(config))
+      .compile(new OooAxiLineBridgeProbe(config))
       .doSim("ooo-axi-four-interleaved-line-reads", 0x4c69) { dut =>
         dut.clockDomain.forkStimulus(period = 10)
         clearInputs(dut)
@@ -218,7 +355,7 @@ class OooAxiLineBridgeSpec extends AnyFunSuite {
   test("64-byte line writes split data and byte masks into sixteen AXI words") {
     SimConfig.withVerilator
       .workspacePath("target/sim-workspace-ooo-axi-line-write")
-      .compile(new OooAxiLineBridge(config))
+      .compile(new OooAxiLineBridgeProbe(config))
       .doSim("ooo-axi-line-write", 0x4c65) { dut =>
         dut.clockDomain.forkStimulus(period = 10)
         clearInputs(dut)
@@ -226,42 +363,67 @@ class OooAxiLineBridgeSpec extends AnyFunSuite {
         dut.clockDomain.waitSampling(2)
         dut.clockDomain.deassertReset()
         sample(dut)
+        assert(dut.io.idle.toBoolean)
 
         val words = (0 until 16).map(index => BigInt("a5000000", 16) | index)
         val line =
           words.zipWithIndex.map { case (word, index) => word << (index * 32) }.reduce(_ | _)
         val masks = (0 until 16).map(index => BigInt(index & 0xf) << (index * 4)).reduce(_ | _)
         dut.io.memoryWriteValid #= true
-        dut.io.memoryWrite.lineAddress #= 0x8000
-        dut.io.memoryWrite.data #= line
-        dut.io.memoryWrite.byteMask #= masks
-        dut.io.memoryWrite.mshrId #= 2
+        dut.io.memoryWriteLineAddress #= 0x8000
+        for (word <- 0 until OooCacheContract.LineBytes / 4) {
+          dut.io.memoryWriteDataWords(word) #= (line >> (word * 32)) & BigInt("ffffffff", 16)
+        }
+        dut.io.memoryWriteByteMask #= masks
+        dut.io.memoryWriteMshrId #= 2
         sleep(1)
         assert(dut.io.memoryWriteReady.toBoolean)
         sample(dut)
         dut.io.memoryWriteValid #= false
+        assert(!dut.io.idle.toBoolean)
 
         assert(dut.io.axi.aw.valid.toBoolean)
         assert(dut.io.axi.aw.payload.address.toBigInt == 0x8000)
         assert(dut.io.axi.aw.payload.len.toBigInt == 15)
+        for (_ <- 0 until 3) {
+          sample(dut)
+          assert(dut.io.axi.aw.valid.toBoolean)
+          assert(!dut.io.idle.toBoolean)
+        }
         dut.io.axi.aw.ready #= true
         sample(dut)
         dut.io.axi.aw.ready #= false
 
-        dut.io.axi.w.ready #= true
+        val random = new Random(0x4c65)
         for (word <- 0 until 16) {
+          dut.io.axi.w.ready #= false
+          for (_ <- 0 until random.nextInt(4)) {
+            sample(dut)
+            assert(dut.io.axi.w.valid.toBoolean)
+            assert(!dut.io.idle.toBoolean)
+          }
+          dut.io.axi.w.ready #= true
           sleep(1)
           assert(dut.io.axi.w.valid.toBoolean)
           assert(dut.io.axi.w.payload.data.toBigInt == words(word))
           assert(dut.io.axi.w.payload.byteMask.toBigInt == (word & 0xf))
           assert(dut.io.axi.w.payload.last.toBoolean == (word == 15))
+          assert(!dut.io.idle.toBoolean)
           sample(dut)
         }
         dut.io.axi.w.ready #= false
         assert(dut.io.axi.b.ready.toBoolean)
+        for (_ <- 0 until 7) {
+          sample(dut)
+          assert(dut.io.axi.b.ready.toBoolean)
+          assert(!dut.io.idle.toBoolean)
+        }
         dut.io.axi.b.valid #= true
         sample(dut)
         dut.io.axi.b.valid #= false
+        assert(!dut.io.idle.toBoolean)
+        sample(dut)
+        assert(dut.io.idle.toBoolean)
         assert(dut.io.memoryWriteReady.toBoolean)
       }
   }
@@ -269,7 +431,7 @@ class OooAxiLineBridgeSpec extends AnyFunSuite {
   test("uncached instruction fetches use one aligned four-word AXI burst") {
     SimConfig.withVerilator
       .workspacePath("target/sim-workspace-ooo-axi-line-read")
-      .compile(new OooAxiLineBridge(config))
+      .compile(new OooAxiLineBridgeProbe(config))
       .doSim("ooo-axi-uncached-instruction-read", 0x4c67) { dut =>
         dut.clockDomain.forkStimulus(period = 10)
         clearInputs(dut)
@@ -322,7 +484,7 @@ class OooAxiLineBridgeSpec extends AnyFunSuite {
   test("uncached data accesses preserve size and wait for the write response") {
     SimConfig.withVerilator
       .workspacePath("target/sim-workspace-ooo-axi-line-write")
-      .compile(new OooAxiLineBridge(config))
+      .compile(new OooAxiLineBridgeProbe(config))
       .doSim("ooo-axi-uncached-data", 0x4c68) { dut =>
         dut.clockDomain.forkStimulus(period = 10)
         clearInputs(dut)
@@ -370,9 +532,13 @@ class OooAxiLineBridgeSpec extends AnyFunSuite {
         dut.io.uncachedDataRequest.size #= 1
         dut.io.uncachedDataRequest.byteMask #= 0xc
         dut.io.uncachedDataRequest.writeData #= BigInt("abcd0000", 16)
+        dut.io.uncachedDataRequest.robPointer #= 18
+        dut.io.uncachedDataRequest.recoveryEpoch #= 30
+        dut.io.uncachedDataRequest.pdst #= 0
         sleep(1)
-        assert(!dut.io.uncachedDataRequestReady.toBoolean)
+        assert(dut.io.uncachedDataRequestReady.toBoolean)
         sample(dut)
+        dut.io.uncachedDataRequestValid #= false
 
         assert(dut.io.axi.aw.valid.toBoolean)
         assert(dut.io.axi.aw.payload.id.toBigInt == 3)
@@ -393,14 +559,59 @@ class OooAxiLineBridgeSpec extends AnyFunSuite {
         dut.io.axi.w.ready #= false
         assert(dut.io.axi.b.ready.toBoolean)
         assert(!dut.io.uncachedDataRequestReady.toBoolean)
+        assert(!dut.io.uncachedDataResponseValid.toBoolean)
         dut.io.axi.b.valid #= true
         dut.io.axi.b.payload.id #= 3
         dut.io.axi.b.payload.response #= 0
+        sample(dut)
+        dut.io.axi.b.valid #= false
+        assert(dut.io.uncachedDataResponseValid.toBoolean)
+        assert(dut.io.uncachedDataResponse.robPointer.toBigInt == 18)
+        assert(dut.io.uncachedDataResponse.recoveryEpoch.toBigInt == 30)
+        assert(!dut.io.uncachedDataResponse.error.toBoolean)
+      }
+  }
+
+  test("uncached write B errors retain the request token") {
+    SimConfig.withVerilator
+      .workspacePath("target/sim-workspace-ooo-axi-line-write-error")
+      .compile(new OooAxiLineBridgeProbe(config))
+      .doSim("ooo-axi-uncached-write-error", 0x4c69) { dut =>
+        dut.clockDomain.forkStimulus(period = 10)
+        clearInputs(dut)
+        dut.clockDomain.assertReset()
+        dut.clockDomain.waitSampling(2)
+        dut.clockDomain.deassertReset()
+        sample(dut)
+
+        dut.io.uncachedDataRequestValid #= true
+        dut.io.uncachedDataRequest.isWrite #= true
+        dut.io.uncachedDataRequest.physicalAddress #= BigInt("1fe00100", 16)
+        dut.io.uncachedDataRequest.robPointer #= 21
+        dut.io.uncachedDataRequest.recoveryEpoch #= 7
         sleep(1)
         assert(dut.io.uncachedDataRequestReady.toBoolean)
         sample(dut)
         dut.io.uncachedDataRequestValid #= false
+
+        dut.io.axi.aw.ready #= true
+        sample(dut)
+        dut.io.axi.aw.ready #= false
+        dut.io.axi.w.ready #= true
+        sample(dut)
+        dut.io.axi.w.ready #= false
+        assert(dut.io.axi.b.ready.toBoolean)
+        assert(!dut.io.uncachedDataResponseValid.toBoolean)
+
+        dut.io.axi.b.valid #= true
+        dut.io.axi.b.payload.id #= 2
+        dut.io.axi.b.payload.response #= 2
+        sample(dut)
         dut.io.axi.b.valid #= false
+        assert(dut.io.uncachedDataResponseValid.toBoolean)
+        assert(dut.io.uncachedDataResponse.robPointer.toBigInt == 21)
+        assert(dut.io.uncachedDataResponse.recoveryEpoch.toBigInt == 7)
+        assert(dut.io.uncachedDataResponse.error.toBoolean)
       }
   }
 }

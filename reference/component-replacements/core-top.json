@@ -1,11 +1,11 @@
 {
-  "schema_version": 1,
   "replacements": [
     {
-      "target": "rtl/mycpu_top.v",
-      "source": "rtl/mycpu_top.v",
       "base_sha256": "ff286f559dbc9131349c9fb8c842110569d231b6a34e76ded172c403d8f90afa",
-      "replacement_sha256": "14874c00bf2a4632ac9792da2234286d4f1ac05140df03b7db90b784d00074f0"
+      "replacement_sha256": "137657aa0c594334568cc386571d13aa9cdc828c8fc45c56ed421be15912c209",
+      "source": "rtl/mycpu_top.v",
+      "target": "rtl/mycpu_top.v"
     }
-  ]
+  ],
+  "schema_version": 1
 }

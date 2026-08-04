@@ -22,6 +22,10 @@ private final class OooL1DataCacheProbe(config: OooCoreConfig) extends Component
     val lineWrite = out(OooLineWriteRequest(config))
     val lineWriteReady = in Bool ()
     val invalidate = in Bool ()
+    val maintenanceValid = in Bool ()
+    val maintenanceRequest = in(OooCacheMaintenanceRequest(config))
+    val maintenanceReady = out Bool ()
+    val maintenanceDone = out Bool ()
     val invalidateBusy = out Bool ()
   }
   noIoPrefix()
@@ -35,6 +39,8 @@ private final class OooL1DataCacheProbe(config: OooCoreConfig) extends Component
   cache.io.lineWriteReady := io.lineWriteReady
   cache.io.invalidate := io.invalidate
   cache.io.writebackInvalidate := False
+  cache.io.maintenanceRequest.valid := io.maintenanceValid
+  cache.io.maintenanceRequest.payload := io.maintenanceRequest
 
   io.requestReady := cache.io.requestReady
   io.responseValid := cache.io.responseValid
@@ -45,6 +51,8 @@ private final class OooL1DataCacheProbe(config: OooCoreConfig) extends Component
   io.lineWriteValid := cache.io.lineWriteValid
   io.lineWrite := cache.io.lineWrite
   io.invalidateBusy := cache.io.invalidateBusy
+  io.maintenanceReady := cache.io.maintenanceRequest.ready
+  io.maintenanceDone := cache.io.maintenanceDone
 }
 
 class OooL1DataCacheSpec extends AnyFunSuite {
@@ -71,6 +79,12 @@ class OooL1DataCacheSpec extends AnyFunSuite {
     dut.io.lineReadBeat.error #= false
     dut.io.lineWriteReady #= false
     dut.io.invalidate #= false
+    dut.io.maintenanceValid #= false
+    dut.io.maintenanceRequest.code #= 0
+    dut.io.maintenanceRequest.virtualAddress #= 0
+    dut.io.maintenanceRequest.physicalAddress #= 0
+    dut.io.maintenanceRequest.robPointer #= 0
+    dut.io.maintenanceRequest.recoveryEpoch #= 0
   }
 
   private def sample(dut: OooL1DataCacheProbe): Unit = {
@@ -166,6 +180,53 @@ class OooL1DataCacheSpec extends AnyFunSuite {
     }
     assert(dut.io.requestReady.toBoolean)
     response.get
+  }
+
+  private def maintain(
+      dut: OooL1DataCacheProbe,
+      code: Int,
+      virtualAddress: BigInt,
+      physicalAddress: BigInt,
+      expectedWritebackAddress: Option[BigInt]
+  ): Unit = {
+    var cycles = 0
+    while (!dut.io.maintenanceReady.toBoolean && cycles < 80) {
+      sample(dut)
+      cycles += 1
+    }
+    assert(dut.io.maintenanceReady.toBoolean)
+    dut.io.maintenanceValid #= true
+    dut.io.maintenanceRequest.code #= code
+    dut.io.maintenanceRequest.virtualAddress #= virtualAddress
+    dut.io.maintenanceRequest.physicalAddress #= physicalAddress
+    sample(dut)
+    dut.io.maintenanceValid #= false
+
+    expectedWritebackAddress.foreach { expected =>
+      cycles = 0
+      while (!dut.io.lineWriteValid.toBoolean && cycles < 16) {
+        sample(dut)
+        cycles += 1
+      }
+      assert(dut.io.lineWriteValid.toBoolean)
+      assert(dut.io.lineWrite.lineAddress.toBigInt == expected)
+      val heldData = dut.io.lineWrite.data.toBigInt
+      sample(dut)
+      assert(dut.io.lineWriteValid.toBoolean)
+      assert(dut.io.lineWrite.data.toBigInt == heldData)
+      dut.io.lineWriteReady #= true
+      sample(dut)
+      dut.io.lineWriteReady #= false
+    }
+
+    cycles = 0
+    while (!dut.io.maintenanceDone.toBoolean && cycles < 16) {
+      if (expectedWritebackAddress.isEmpty) assert(!dut.io.lineWriteValid.toBoolean)
+      sample(dut)
+      cycles += 1
+    }
+    assert(dut.io.maintenanceDone.toBoolean)
+    sample(dut)
   }
 
   test("L1D invalidates, refills eight beats, hits, and merges byte stores") {
@@ -786,6 +847,73 @@ class OooL1DataCacheSpec extends AnyFunSuite {
         dut.io.lineWriteReady #= false
         assert(dut.io.lineReadValid.toBoolean)
         assert(dut.io.lineRead.lineAddress.toBigInt == 0x3100)
+      }
+  }
+
+  test("L1D CACOP preserves dirty data for Index and Hit operations") {
+    SimConfig.withVerilator
+      .workspacePath("target/sim-workspace-ooo-l1d-maintenance")
+      .compile(new OooL1DataCacheProbe(config))
+      .doSim("ooo-l1d-exact-maintenance", 0x4c39) { dut =>
+        dut.clockDomain.forkStimulus(period = 10)
+        clearInputs(dut)
+        dut.clockDomain.assertReset()
+        dut.clockDomain.waitSampling(2)
+        dut.clockDomain.deassertReset()
+        dut.clockDomain.waitSampling(config.dataCache.sets + 8)
+
+        var pointer = BigInt(1)
+        def install(address: BigInt, base: BigInt): Unit = {
+          setRequest(dut, address, isWrite = false, 0, 0xf, pointer, 4)
+          while (!dut.io.requestReady.toBoolean) sample(dut)
+          sample(dut)
+          dut.io.requestValid #= false
+          val response = refillLine(dut, address & ~BigInt(0x3f), beat => base + beat)
+          assert(response._1 == pointer)
+          pointer += 1
+          sample(dut)
+        }
+        def dirty(address: BigInt, data: BigInt): Unit = {
+          setRequest(dut, address, isWrite = true, data, 0xf, pointer, 0)
+          while (!dut.io.requestReady.toBoolean) sample(dut)
+          sample(dut)
+          dut.io.requestValid #= false
+          sample(dut)
+          pointer += 1
+        }
+        def expectHit(address: BigInt): Unit = {
+          setRequest(dut, address, isWrite = false, 0, 0xf, pointer, 5)
+          while (!dut.io.requestReady.toBoolean) sample(dut)
+          sample(dut)
+          dut.io.requestValid #= false
+          sample(dut)
+          assert(dut.io.responseValid.toBoolean)
+          assert(!dut.io.lineReadValid.toBoolean)
+          pointer += 1
+          sample(dut)
+        }
+
+        val line0 = BigInt(0x100)
+        val line1 = BigInt(0x1100)
+        install(line0, BigInt("1000000000000000", 16))
+        install(line1, BigInt("2000000000000000", 16))
+
+        dirty(line0, BigInt("deadbeef", 16))
+        maintain(dut, 0x01, line0, 0, expectedWritebackAddress = None)
+        expectHit(line1)
+        install(line0, BigInt("3000000000000000", 16))
+
+        dirty(line0, BigInt("cafebabe", 16))
+        maintain(dut, 0x09, line0, 0, expectedWritebackAddress = Some(line0))
+        expectHit(line1)
+        install(line0, BigInt("4000000000000000", 16))
+
+        dirty(line0, BigInt("0badf00d", 16))
+        maintain(dut, 0x11, 0x2100, 0x2100, expectedWritebackAddress = None)
+        expectHit(line0)
+        maintain(dut, 0x11, line0, line0, expectedWritebackAddress = Some(line0))
+        expectHit(line1)
+        install(line0, BigInt("5000000000000000", 16))
       }
   }
 }

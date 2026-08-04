@@ -13,6 +13,9 @@ object OooFuType {
   def csr: UInt = U(4, Width bits)
   def loadStore: UInt = U(5, Width bits)
   def serial: UInt = U(6, Width bits)
+  def barrier: UInt = U(8, Width bits)
+
+  def isBarrier(fuType: UInt): Bool = fuType(Width - 1)
 }
 
 object OooRecoveryCause {
@@ -184,6 +187,20 @@ final case class OooCommitRecord(config: OooCoreConfig) extends Bundle {
   val sideEffectData = Bits(config.xlen bits)
 }
 
+/** Memory metadata sampled from the LSQ for one retiring instruction.
+  *
+  * This is an observation-only path for the simulator-owned DiffTest adapter. The instruction
+  * masks follow Chiplab's DifftestLoadEvent and DifftestStoreEvent contracts.
+  */
+final case class OooMemoryCommitObservation(config: OooCoreConfig) extends Bundle {
+  val loadInstructionMask = Bits(8 bits)
+  val storeInstructionMask = Bits(8 bits)
+  val physicalAddress = UInt(config.xlen bits)
+  val virtualAddress = UInt(config.xlen bits)
+  val storeData = Bits(config.xlen bits)
+  val storeByteMask = Bits(config.xlen / 8 bits)
+}
+
 final case class OooRobAllocate(config: OooCoreConfig) extends Bundle {
   val uop = OooRenamedUop(config)
 }
@@ -192,6 +209,7 @@ final case class OooRobAllocate(config: OooCoreConfig) extends Bundle {
 final case class OooLsqAllocate(config: OooCoreConfig) extends Bundle {
   val robPointer = UInt(config.robPointerWidth bits)
   val recoveryEpoch = UInt(config.recoveryEpochWidth bits)
+  val memoryEpoch = UInt(config.memoryEpochWidth bits)
   val isLoad = Bool()
   val isStore = Bool()
   val loadQueueIndex = UInt(config.loadQueueIndexWidth bits)

@@ -14,6 +14,33 @@ object OooCacheContract {
   val BeatIndexWidth = log2Up(BeatsPerLine)
 }
 
+object OooCacheMaintenanceTarget {
+  def instructionL1: UInt = U(0, 3 bits)
+  def dataL1: UInt = U(1, 3 bits)
+  def unifiedL2: UInt = U(2, 3 bits)
+}
+
+object OooCacheMaintenanceMode {
+  def storeTag: UInt = U(0, 2 bits)
+  def index: UInt = U(1, 2 bits)
+  def hit: UInt = U(2, 2 bits)
+}
+
+/** One architected CACOP operation after decode and optional address translation. */
+final case class OooCacheMaintenanceRequest(config: OooCoreConfig) extends Bundle {
+  val code = Bits(5 bits)
+  val virtualAddress = UInt(config.xlen bits)
+  val physicalAddress = UInt(config.xlen bits)
+  val robPointer = UInt(config.robPointerWidth bits)
+  val recoveryEpoch = UInt(config.recoveryEpochWidth bits)
+}
+
+/** Completion token for an accepted CACOP operation. */
+final case class OooCacheMaintenanceResponse(config: OooCoreConfig) extends Bundle {
+  val robPointer = UInt(config.robPointerWidth bits)
+  val recoveryEpoch = UInt(config.recoveryEpochWidth bits)
+}
+
 final case class OooCacheRequest(config: OooCoreConfig) extends Bundle {
   val virtualAddress = UInt(config.xlen bits)
   val physicalAddress = UInt(config.xlen bits)

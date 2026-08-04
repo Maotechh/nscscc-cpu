@@ -122,6 +122,49 @@ final class OooHierarchicalTlb(microEntries: Int = 4, walkEntriesPerCycle: Int =
         Mux(found, Mux(odd, entry.privilege1, entry.privilege0), B(0, 2 bits))
     }
 
+    private def driveMicroResult(
+        result: OooTlbLookupResult,
+        matches: Bits,
+        entries: Vec[OooTlbEntryState],
+        vppn: Bits,
+        oddPage: Bool
+    ): Unit = {
+      val odd = Vec(Bool(), microEntries)
+      for (index <- 0 until microEntries) {
+        odd(index) := Mux(entries(index).pageSize === B(12, 6 bits), oddPage, vppn(8))
+      }
+
+      result.found := matches.orR
+      result.index := (0 until microEntries)
+        .map(index => B(index, 5 bits).andMask(matches(index)))
+        .reduce(_ | _)
+        .asUInt
+      result.pageSize := (0 until microEntries)
+        .map(index => entries(index).pageSize.andMask(matches(index)))
+        .reduce(_ | _)
+      result.ppn := (0 until microEntries)
+        .map(index => Mux(odd(index), entries(index).ppn1, entries(index).ppn0)
+          .andMask(matches(index)))
+        .reduce(_ | _)
+      result.valid := (0 until microEntries)
+        .map(index => matches(index) && Mux(odd(index), entries(index).valid1, entries(index).valid0))
+        .reduce(_ || _)
+      result.dirty := (0 until microEntries)
+        .map(index => matches(index) && Mux(odd(index), entries(index).dirty1, entries(index).dirty0))
+        .reduce(_ || _)
+      result.memoryAttribute := (0 until microEntries)
+        .map(index => Mux(
+          odd(index),
+          entries(index).memoryAttribute1,
+          entries(index).memoryAttribute0
+        ).andMask(matches(index)))
+        .reduce(_ | _)
+      result.privilege := (0 until microEntries)
+        .map(index => Mux(odd(index), entries(index).privilege1, entries(index).privilege0)
+          .andMask(matches(index)))
+        .reduce(_ | _)
+    }
+
     val mutation = io.writeValid || io.invalidateValid
     for (index <- 0 until 32) {
       val entry = entryAt(index)
@@ -223,12 +266,6 @@ final class OooHierarchicalTlb(microEntries: Int = 4, walkEntriesPerCycle: Int =
       dataMicroMatch(index) := dataMicroValid(index) &&
         entryMatches(dataMicro(index), dataVppn, dataAsid)
     }
-    val instructionMicroIndex = (0 until microEntries)
-      .map(index => Mux(instructionMicroMatch(index), U(index, 2 bits), U(0, 2 bits)))
-      .reduce(_ | _)
-    val dataMicroIndex = (0 until microEntries)
-      .map(index => Mux(dataMicroMatch(index), U(index, 2 bits), U(0, 2 bits)))
-      .reduce(_ | _)
     val instructionNegativeHit = instructionNegativeValid &&
       instructionNegativeVppn === instructionVppn && instructionNegativeAsid === instructionAsid
     val dataNegativeHit = dataNegativeValid && dataNegativeVppn === dataVppn &&
@@ -347,30 +384,41 @@ final class OooHierarchicalTlb(microEntries: Int = 4, walkEntriesPerCycle: Int =
       }
     }
 
+    val instructionMicroResult = OooTlbLookupResult()
+    driveMicroResult(
+      instructionMicroResult,
+      instructionMicroMatch,
+      instructionMicro,
+      instructionVppn,
+      instructionOddPage
+    )
+    val instructionWalkResult = OooTlbLookupResult()
+    driveResult(
+      instructionWalkResult,
+      walkResponseFound,
+      walkResponseIndex,
+      walkResponseEntry,
+      walkResponseVppn,
+      walkResponseOddPage
+    )
     io.instructionResponse.valid :=
       instructionQuickResponse || (walkResponsePending && !walkResponseOwnerData)
-    driveResult(
-      io.instructionResponse.payload,
-      Mux(instructionQuickResponse, instructionMicroMatch.orR, walkResponseFound),
-      Mux(instructionQuickResponse, instructionMicroIndex.resize(5), walkResponseIndex),
-      Mux(
-        instructionQuickResponse,
-        instructionMicro(instructionMicroIndex),
-        walkResponseEntry
-      ),
-      Mux(instructionQuickResponse, instructionVppn, walkResponseVppn),
-      Mux(instructionQuickResponse, instructionOddPage, walkResponseOddPage)
-    )
+    io.instructionResponse.payload :=
+      Mux(instructionProbePending, instructionMicroResult, instructionWalkResult)
 
-    io.dataResponse.valid := dataQuickResponse || (walkResponsePending && walkResponseOwnerData)
+    val dataMicroResult = OooTlbLookupResult()
+    driveMicroResult(dataMicroResult, dataMicroMatch, dataMicro, dataVppn, dataOddPage)
+    val dataWalkResult = OooTlbLookupResult()
     driveResult(
-      io.dataResponse.payload,
-      Mux(dataQuickResponse, dataMicroMatch.orR, walkResponseFound),
-      Mux(dataQuickResponse, dataMicroIndex.resize(5), walkResponseIndex),
-      Mux(dataQuickResponse, dataMicro(dataMicroIndex), walkResponseEntry),
-      Mux(dataQuickResponse, dataVppn, walkResponseVppn),
-      Mux(dataQuickResponse, dataOddPage, walkResponseOddPage)
+      dataWalkResult,
+      walkResponseFound,
+      walkResponseIndex,
+      walkResponseEntry,
+      walkResponseVppn,
+      walkResponseOddPage
     )
+    io.dataResponse.valid := dataQuickResponse || (walkResponsePending && walkResponseOwnerData)
+    io.dataResponse.payload := Mux(dataProbePending, dataMicroResult, dataWalkResult)
 
     when(mutation) {
       instructionMicroValid := 0

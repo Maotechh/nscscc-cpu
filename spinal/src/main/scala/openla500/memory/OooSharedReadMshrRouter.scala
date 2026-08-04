@@ -50,6 +50,7 @@ final class OooSharedReadMshrRouter(
     val lowerReadBeatReady = out Bool ()
 
     val activeCount = out UInt (countWidth bits)
+    val idle = out Bool ()
   }
 
   val valid = Vec.fill(config.mshrEntries)(Reg(Bool()) init (False))
@@ -129,4 +130,7 @@ final class OooSharedReadMshrRouter(
   when(responseFire && io.lowerReadBeat.last) { valid(responseId) := False }
 
   io.activeCount := CountOne(valid.asBits)
+  val idleNow = !valid.asBits.orR && requestCount === 0 &&
+    !io.lowerReadBeatValid && !io.instructionReadValid && !io.dataReadValid
+  io.idle := RegNext(idleNow) init (False)
 }

@@ -35,7 +35,7 @@ final class OooCommitAdapter(config: OooCoreConfig = OooCoreConfig.FourIssueThre
     val reservationBitSet = out Bool ()
     val reservationBitValue = out Bool ()
     val reservationAddressSet = out Bool ()
-    val reservationLineAddress = out Bits (28 bits)
+    val reservationLineAddress = out Bits (config.reservationAddressWidth bits)
     val exceptionValid = out Bool ()
     val exceptionPc = out UInt (config.xlen bits)
     val exception = out(OooExceptionMeta())
@@ -119,7 +119,9 @@ final class OooCommitAdapter(config: OooCoreConfig = OooCoreConfig.FourIssueThre
         io.reservationBitSet := True
         io.reservationBitValue := !io.commit(lane).sideEffectData(0)
         io.reservationAddressSet := !io.commit(lane).sideEffectData(0)
-        io.reservationLineAddress := io.commit(lane).sideEffectData(31 downto 4)
+        io.reservationLineAddress := io.commit(lane).sideEffectData(
+          config.xlen - 1 downto config.dataCache.offsetWidth
+        )
         io.refetchValid := True
       }
       when(io.commit(lane).systemOperation === OooSystemOp.storeConditional) {
@@ -134,33 +136,6 @@ final class OooCommitAdapter(config: OooCoreConfig = OooCoreConfig.FourIssueThre
           io.commit(lane).systemOperation === OooSystemOp.preload
       ) {
         io.refetchValid := True
-      }
-      when(
-        io.commit(lane).systemOperation === OooSystemOp.instructionBarrier ||
-          (io.commit(lane).systemOperation === OooSystemOp.cacheOperation &&
-            io.commit(lane).rd(2 downto 0) === 0)
-      ) {
-        io.cacheInvalidateValid := True
-      }
-      when(
-        io.commit(lane).systemOperation === OooSystemOp.cacheOperation &&
-          io.commit(lane).rd(2 downto 0) === 1 &&
-          io.commit(lane).rd(4 downto 3) === 0
-      ) {
-        io.dataCacheInvalidateValid := True
-      }
-      when(
-        io.commit(lane).systemOperation === OooSystemOp.cacheOperation &&
-          io.commit(lane).rd(2 downto 0) === 1 &&
-          io.commit(lane).rd(4 downto 3) =/= 0
-      ) {
-        io.dataCacheWritebackInvalidateValid := True
-      }
-      when(
-        io.commit(lane).systemOperation === OooSystemOp.cacheOperation &&
-          io.commit(lane).rd(2 downto 0) === 2
-      ) {
-        io.level2CacheInvalidateValid := True
       }
       when(io.commit(lane).csrWrite) { io.refetchValid := True }
     }

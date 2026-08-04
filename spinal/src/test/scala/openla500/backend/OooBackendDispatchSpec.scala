@@ -41,6 +41,10 @@ private final class OooBackendDispatchProbe(config: OooCoreConfig) extends Compo
     val storeData = out Bits (config.xlen bits)
     val loadStoreIssueOccupancy = out UInt (log2Up(config.issueQueueEntriesPerPort + 1) bits)
     val storeDataOccupancy = out UInt (log2Up(config.storeQueueEntries + 1) bits)
+    val memoryAllocateValid = out Bits (config.renameWidth bits)
+    val memoryAllocateEpoch = out Vec (UInt(config.memoryEpochWidth bits), config.renameWidth)
+    val committedMemoryEpoch = out UInt (config.memoryEpochWidth bits)
+    val speculativeMemoryEpoch = out UInt (config.memoryEpochWidth bits)
     val flush = in Bool ()
   }
   noIoPrefix()
@@ -126,6 +130,12 @@ private final class OooBackendDispatchProbe(config: OooCoreConfig) extends Compo
     config.executionPorts.indexWhere(_.capabilities.contains(OooFuKind.LoadStore))
   io.loadStoreIssueOccupancy := backend.io.loadStoreIssueOccupancy
   io.storeDataOccupancy := backend.io.storeDataOccupancy
+  io.memoryAllocateValid := backend.io.memoryAllocateValid
+  io.committedMemoryEpoch := backend.io.committedMemoryEpoch
+  io.speculativeMemoryEpoch := backend.io.speculativeMemoryEpoch
+  for (lane <- 0 until config.renameWidth) {
+    io.memoryAllocateEpoch(lane) := backend.io.memoryAllocate(lane).memoryEpoch
+  }
   for (port <- 0 until config.executionWidth) {
     io.issuePc(port) := backend.io.issue(port).decoded.pc
     io.issuePdst(port) := backend.io.issue(port).pdst
@@ -161,6 +171,118 @@ class OooBackendDispatchSpec extends AnyFunSuite {
     for (lane <- 0 until config.renameWidth) {
       dut.io.pc(lane) #= 0
       dut.io.instruction(lane) #= 0
+    }
+  }
+
+  test("memory epoch follows rename lane order, rollback, and eight-bit wrap") {
+    val compiled = SimConfig.withVerilator
+      .workspacePath("target/sim-workspace-ooo-backend-dispatch")
+      .compile(new OooBackendDispatchProbe(config))
+
+    compiled.doSim("ooo-memory-epoch-lanes-rollback", 0x4c73) { dut =>
+      dut.clockDomain.forkStimulus(period = 10)
+      clearControl(dut)
+      dut.clockDomain.assertReset()
+      dut.clockDomain.waitSampling(2)
+      dut.clockDomain.deassertReset()
+
+      dut.io.inputValid #= 7
+      dut.io.instruction(0) #= BigInt("28800000", 16)
+      dut.io.instruction(1) #= BigInt("38720000", 16)
+      dut.io.instruction(2) #= BigInt("28800000", 16)
+      sleep(1)
+      assert(dut.io.memoryAllocateValid.toBigInt == 5)
+      assert(dut.io.memoryAllocateEpoch(0).toBigInt == 0)
+      assert(dut.io.memoryAllocateEpoch(2).toBigInt == 1)
+      dut.clockDomain.waitSampling()
+      dut.io.inputValid #= 0
+      sleep(1)
+      assert(dut.io.speculativeMemoryEpoch.toBigInt == 1)
+      assert(dut.io.committedMemoryEpoch.toBigInt == 0)
+
+      dut.io.flush #= true
+      dut.clockDomain.waitSampling()
+      dut.io.flush #= false
+      sleep(1)
+      assert(dut.io.speculativeMemoryEpoch.toBigInt == 0)
+
+      dut.io.inputValid #= 7
+      dut.io.instruction(0) #= BigInt("28800000", 16)
+      dut.io.instruction(1) #= BigInt("06000001", 16)
+      dut.io.instruction(2) #= BigInt("28800000", 16)
+      sleep(1)
+      assert(dut.io.memoryAllocateValid.toBigInt == 5)
+      assert(dut.io.memoryAllocateEpoch(0).toBigInt == 0)
+      assert(dut.io.memoryAllocateEpoch(2).toBigInt == 1)
+      dut.clockDomain.waitSampling()
+      dut.io.inputValid #= 0
+      sleep(1)
+      assert(dut.io.speculativeMemoryEpoch.toBigInt == 1)
+
+      dut.io.flush #= true
+      dut.clockDomain.waitSampling()
+      dut.io.flush #= false
+      sleep(1)
+      assert(dut.io.speculativeMemoryEpoch.toBigInt == 0)
+
+      dut.io.inputValid #= 7
+      dut.io.instruction(0) #= BigInt("00100000", 16)
+      dut.io.instruction(1) #= BigInt("28800000", 16)
+      dut.io.instruction(2) #= BigInt("38720000", 16)
+      sleep(1)
+      assert(dut.io.memoryAllocateValid.toBigInt == 2)
+      assert(dut.io.memoryAllocateEpoch(1).toBigInt == 0)
+      dut.clockDomain.waitSampling()
+      dut.io.inputValid #= 0
+      sleep(1)
+      assert(dut.io.speculativeMemoryEpoch.toBigInt == 1)
+
+      dut.io.flush #= true
+      dut.clockDomain.waitSampling()
+      dut.io.flush #= false
+      sleep(1)
+      assert(dut.io.speculativeMemoryEpoch.toBigInt == 0)
+
+      dut.io.inputValid #= 7
+      dut.io.instruction(0) #= BigInt("38720000", 16)
+      dut.io.instruction(1) #= BigInt("38728000", 16)
+      dut.io.instruction(2) #= BigInt("28800000", 16)
+      sleep(1)
+      assert(dut.io.memoryAllocateValid.toBigInt == 4)
+      assert(dut.io.memoryAllocateEpoch(2).toBigInt == 2)
+    }
+
+    compiled.doSim("ooo-memory-epoch-wrap", 0x4c74) { dut =>
+      dut.clockDomain.forkStimulus(period = 10)
+      clearControl(dut)
+      dut.io.issueReady #= 0xf
+      dut.clockDomain.assertReset()
+      dut.clockDomain.waitSampling(2)
+      dut.clockDomain.deassertReset()
+
+      for (iteration <- 0 until 256) {
+        dut.io.inputValid #= 1
+        dut.io.instruction(0) #= BigInt("38720000", 16)
+        dut.clockDomain.waitSampling()
+        dut.io.inputValid #= 0
+
+        dut.io.completionValid #= 1
+        dut.io.completionRobPointer #= (iteration % (config.robEntries * 2))
+        dut.io.completionPdst #= 0
+        dut.io.completionWritesPdst #= false
+        dut.clockDomain.waitSampling()
+        dut.io.completionValid #= 0
+
+        val expected = (iteration + 1) & 0xff
+        var waitCycles = 0
+        while (dut.io.committedMemoryEpoch.toBigInt != expected && waitCycles < 12) {
+          dut.clockDomain.waitSampling()
+          sleep(1)
+          waitCycles += 1
+        }
+        assert(dut.io.committedMemoryEpoch.toBigInt == expected)
+        assert(dut.io.speculativeMemoryEpoch.toBigInt == expected)
+      }
     }
   }
 

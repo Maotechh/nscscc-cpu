@@ -73,7 +73,7 @@ final class OooStoreDataQueue(
 
   val enqueueReadyReg = RegInit(True)
   enqueueReadyReg := CountOne(slotValid.asBits) < U(entryCount - 1)
-  io.enqueueReady := !io.flush && enqueueReadyReg
+  io.enqueueReady := enqueueReadyReg
   val enqueue = io.enqueueValid && io.enqueueReady
   val enqueueSlot = selectLowest(~slotValid.asBits)
   val enqueueWake = io.wakeupValid.asBools

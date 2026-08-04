@@ -1,0 +1,59 @@
+schema_version: 1
+recorded_at: "2026-08-03T21:40:51+08:00"
+scope: chiplab_platform_cpu_compatibility
+separate_from: logs/refactor/20260803-dbar-ibar-linux-semantics
+
+platform:
+  ci_template_commit: 6915882af5c8d3a0c856f570cb914920a3e5ff99
+  chiplab_commit: c398d274812f164d387146fa7d8f612a4a1296d9
+  chiplab_branch: nscscc2026
+  local_path: "${WORKSPACE}/chiplab"
+  mycpu_gitlink: aa3bde1f3e720e71c2c78d6b81930d797b810149
+  tracked_platform_status_after_test: clean
+
+toolchains:
+  location: "${WORKSPACE}/chiplab/toolchains"
+  layout: official_manual
+  gcc_version: "LoongArch GNU toolchain LA32 v2.0 / gcc-8.3.0"
+  gcc_sha256: f29812336f8f0cedfd55a56f834ec9a88178d3bfb31fd67e105342aa8ed2ef7c
+  nemu_sha256: 3fa8ddd5c1b11d378caade5a6ab2b428c669c14d0925e2c79e155a767a995a89
+  qemu_sha256: a21bba8032e132ca447261415b6f13ac71ebf53f94a2369c5921f51a00a06758
+  picolibc_sha256: 2a601edbbca47f45cacc860b6314072e1c5738ea05dcc1b58f89a65fd743f0c5
+
+cpu:
+  pre_fix_commit: 2301dde1ee0622e27b2bbaaf609942b56ca5f764
+  reset_fix_commit: 1c331323e77bd927c61390f07d629efe098da1dd
+  tested_behavioral_commit: 8594150feb652bd3ef137995858cb9eb5f884580
+  generated_rtl_sha256: 434a16ea967b4af20c57ca91f6ed407218ccce1bbeeb4440a37e54af2567a924
+
+local_simulation:
+  workload: func/func_lab19
+  axi_seed: 5570815
+  verdict: passed
+  end: reached_test_end_pc_and_syscall
+  difftest: enabled_no_mismatch
+  total_cycles: 565868
+  total_instructions: 139658
+  log_path: "${WORKSPACE}/build/logs/chiplab-c398-func_lab19-seed5570815.log"
+  log_sha256: 2aa7d282ddfe4679647999d23b39d8c18909301ee692a9e76702eb3174357fc6
+
+board_function:
+  verdict: passed
+  actual_cpu_mhz: 32.726797
+  package_sha256: 93378d04f3fa8519ecc03c63de168f556e1366403185a4547f9a8c191bad2b6d
+  job_id: 20260803-132008-97f48faa
+  result_sha256: 9374523af22d43d54f3c8353b1abd1c170668b1cce75c3fcf3c14ebef7a00cdb
+  seeds:
+    F0: 3A00003A
+    FF: 3A00003A
+    A5: 3A00003A
+
+remaining:
+  perf100_setup_wns_ns: -0.225
+  perf100_board_status: blocked_until_timing_closes
+  linux_status: pending
+
+claim_boundary:
+  - "The latest evidence validates the combined candidate; it does not attribute compatibility to DBAR/IBAR."
+  - "The timer-state reset change is an architectural fix, not a c398-only workaround."
+  - "The function result is neither 100 MHz performance evidence nor Linux acceptance."

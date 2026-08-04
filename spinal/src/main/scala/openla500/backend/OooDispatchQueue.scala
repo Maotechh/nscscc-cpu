@@ -38,10 +38,10 @@ final class OooDispatchQueue(
   }
   val enqueueCount = enqueuePrefix(config.renameWidth)
   val freeSlots = U(config.dispatchQueueEntries, countWidth bits) - count
-  io.enqueueReady := !io.flush && freeSlots >= enqueueCount
+  io.enqueueReady := freeSlots >= enqueueCount
 
   for (lane <- 0 until config.dispatchWidth) {
-    io.dequeueValid(lane) := !io.flush && count > U(lane, countWidth bits)
+    io.dequeueValid(lane) := count > U(lane, countWidth bits)
     val source = (head + U(lane, pointerWidth bits)).resized
     io.dequeue(lane) := entries(source)
   }
@@ -98,7 +98,7 @@ final class OooDispatchWindow(
   val count = Reg(UInt(countWidth bits)) init (0)
 
   for (lane <- 0 until width) {
-    io.outputValid(lane) := !io.flush && count > U(lane, countWidth bits)
+    io.outputValid(lane) := count > U(lane, countWidth bits)
     io.output(lane) := entries(lane)
   }
 
@@ -113,7 +113,7 @@ final class OooDispatchWindow(
   val remainingCount = count - outputCount
   val availableCount = U(width, countWidth bits) - remainingCount
   for (lane <- 0 until width) {
-    io.inputReady(lane) := !io.flush && availableCount > U(lane, countWidth bits)
+    io.inputReady(lane) := availableCount > U(lane, countWidth bits)
   }
   val inputCount = CountOne(io.inputValid & io.inputReady)
   val nextCount = remainingCount + inputCount

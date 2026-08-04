@@ -27,6 +27,7 @@ EXPECTED_INPUT_COUNT = 17
 EXPECTED_OUTPUT_COUNT = 32
 PUBLISHED_TARGET = "rtl/mycpu_top.v"
 PUBLISHED_SOURCE = "rtl/mycpu_top.v"
+APPROVED_LINT_CATEGORIES = ["CMPCONST", "UNUSEDSIGNAL"]
 ALLOWED_CONTRACT_KEYS = {
     "schema_version",
     "module",
@@ -1014,7 +1015,7 @@ def lint_waiver_metadata(path: Path, profile: str, rtl_sha256: str) -> dict[str,
         or re.fullmatch(r"[0-9a-f]{64}", signature_hash) is None
     ):
         raise CoreTopGateError("lint waiver warning signature hash is invalid")
-    if categories != ["CMPCONST", "UNUSEDSIGNAL"]:
+    if categories != APPROVED_LINT_CATEGORIES:
         raise CoreTopGateError("lint waiver approved categories differ from the reviewed set")
     if not isinstance(document.get("reason"), str) or not document["reason"].strip():
         raise CoreTopGateError("lint waiver reason must be non-empty")
@@ -1334,6 +1335,158 @@ def lint_gate(args: argparse.Namespace) -> dict[str, Any]:
     return summary
 
 
+def refresh_metadata_gate(args: argparse.Namespace) -> dict[str, Any]:
+    """Refresh version-bound publication metadata from a locked lint audit."""
+
+    try:
+        audit = lint_gate(args)
+    except CoreTopGateError:
+        out_dir = getattr(args, "_validated_out_dir", None)
+        summary_path = out_dir / "summary.json" if isinstance(out_dir, Path) else None
+        if summary_path is None or not summary_path.is_file():
+            raise
+        audit = load_json_strict(summary_path)
+
+    out_dir = getattr(args, "_validated_out_dir", None)
+    if not isinstance(out_dir, Path):
+        raise CoreTopGateError("metadata refresh did not establish a lint audit directory")
+    write_json(out_dir / "lint-audit.json", audit)
+
+    identity = _require_dict(audit.get("input"), "lint audit input")
+    verilator = _require_dict(audit.get("verilator"), "lint audit Verilator result")
+    signatures = _require_list(audit.get("warning_signatures"), "lint warning signatures")
+    categories = sorted(
+        {
+            str(_require_dict(item, f"warning signature[{index}]").get("category", ""))
+            for index, item in enumerate(signatures)
+        }
+    )
+    unexpected_errors = _require_list(
+        audit.get("unexpected_errors"), "lint unexpected errors"
+    )
+    skips = _require_list(audit.get("skip_markers"), "lint skip markers")
+    rtl_hash = str(identity.get("complete_rtl_sha256", ""))
+    signature_hash = str(audit.get("warning_signature_sha256", ""))
+    if (
+        audit.get("gate") != "core-top-lint"
+        or audit.get("environment_profile") != "locked"
+        or not identity.get("stable")
+        or re.fullmatch(r"[0-9a-f]{64}", rtl_hash) is None
+        or re.fullmatch(r"[0-9a-f]{64}", signature_hash) is None
+        or not signatures
+        or categories != APPROVED_LINT_CATEGORIES
+        or unexpected_errors
+        or skips
+        or verilator.get("timed_out")
+        or verilator.get("returncode") not in (0, 1)
+    ):
+        raise CoreTopGateError(
+            "locked lint audit is not eligible for metadata refresh; "
+            "review new categories, errors, skips, or tool drift"
+        )
+
+    rtl = checked_regular_file(args.rtl, "published package RTL")
+    if sha256_file(rtl) != rtl_hash:
+        raise CoreTopGateError("published package RTL changed after the lint audit")
+
+    ports_path = checked_regular_file(args.ports, "ports contract")
+    contract = load_port_contract(ports_path)
+    expected_base = str(contract["sources"]["team_golden"]["raw_sha256"])
+
+    replacement_path = checked_regular_file(args.replacement_spec, "replacement spec")
+    replacement = load_json_strict(replacement_path)
+    if (
+        set(replacement) != {"schema_version", "replacements"}
+        or replacement.get("schema_version") != 1
+    ):
+        raise CoreTopGateError("replacement spec root schema differs")
+    replacement_entries = _require_list(
+        replacement.get("replacements"), "replacement spec entries"
+    )
+    matching_entries: list[dict[str, Any]] = []
+    for index, raw in enumerate(replacement_entries):
+        entry = _require_dict(raw, f"replacement[{index}]")
+        if set(entry) != {"target", "source", "base_sha256", "replacement_sha256"}:
+            raise CoreTopGateError(f"replacement[{index}] schema differs")
+        if entry.get("target") == PUBLISHED_TARGET:
+            matching_entries.append(entry)
+    if len(matching_entries) != 1:
+        raise CoreTopGateError(
+            f"replacement spec must contain exactly one {PUBLISHED_TARGET} entry"
+        )
+    replacement_entry = matching_entries[0]
+    if (
+        replacement_entry.get("source") != PUBLISHED_SOURCE
+        or replacement_entry.get("base_sha256") != expected_base
+    ):
+        raise CoreTopGateError("core_top replacement source or locked base hash differs")
+
+    waiver_path = checked_regular_file(args.lint_waivers, "core-top lint waiver")
+    waiver = load_json_strict(waiver_path)
+    expected_waiver_keys = {
+        "schema_version",
+        "gate",
+        "target",
+        "environment_profile",
+        "rtl_sha256",
+        "warning_count",
+        "warning_signature_sha256",
+        "approved_categories",
+        "reason",
+    }
+    if (
+        set(waiver) != expected_waiver_keys
+        or waiver.get("schema_version") != 1
+        or waiver.get("gate") != "core-top-lint"
+        or waiver.get("target") != TARGET
+        or waiver.get("environment_profile") != "locked"
+        or waiver.get("approved_categories") != APPROVED_LINT_CATEGORIES
+        or not isinstance(waiver.get("reason"), str)
+        or not str(waiver.get("reason", "")).strip()
+    ):
+        raise CoreTopGateError("core-top lint waiver schema or reviewed policy differs")
+
+    previous = {
+        "replacement_sha256": replacement_entry.get("replacement_sha256"),
+        "rtl_sha256": waiver.get("rtl_sha256"),
+        "warning_count": waiver.get("warning_count"),
+        "warning_signature_sha256": waiver.get("warning_signature_sha256"),
+    }
+    replacement_entry["replacement_sha256"] = rtl_hash
+    waiver["rtl_sha256"] = rtl_hash
+    waiver["warning_count"] = len(signatures)
+    waiver["warning_signature_sha256"] = signature_hash
+
+    if sha256_file(rtl) != rtl_hash:
+        raise CoreTopGateError("published package RTL changed before metadata publication")
+    write_json(replacement_path, replacement)
+    write_json(waiver_path, waiver)
+
+    current = {
+        "replacement_sha256": rtl_hash,
+        "rtl_sha256": rtl_hash,
+        "warning_count": len(signatures),
+        "warning_signature_sha256": signature_hash,
+    }
+    summary = {
+        "schema_version": 1,
+        "gate": "core-top-refresh-metadata",
+        "target": TARGET,
+        "status": "pass",
+        "generated_at": now_iso(),
+        "environment_profile": "locked",
+        "lint_audit": str(out_dir / "lint-audit.json"),
+        "approved_categories": APPROVED_LINT_CATEGORIES,
+        "replacement_spec": str(replacement_path),
+        "lint_waivers": str(waiver_path),
+        "previous": previous,
+        "current": current,
+        "provenance": gate_provenance(args),
+    }
+    write_json(out_dir / "summary.json", summary)
+    return summary
+
+
 def yosys_check_gate(args: argparse.Namespace) -> dict[str, Any]:
     out_dir, rtl, _, values, identity = prepare_complete_rtl(args, "yosys-check")
     script = (
@@ -1397,6 +1550,11 @@ def build_parser() -> argparse.ArgumentParser:
     lint.add_argument("--verilator")
     lint.add_argument("--environment-profile", choices=("locked", "local"), default="locked")
     lint.add_argument("--waivers", type=Path)
+    refresh = subparsers.add_parser("refresh-metadata")
+    add_common(refresh, rtl=True)
+    refresh.add_argument("--verilator")
+    refresh.add_argument("--replacement-spec", type=Path, required=True)
+    refresh.add_argument("--lint-waivers", type=Path, required=True)
     yosys = subparsers.add_parser("yosys-check")
     add_common(yosys, rtl=True)
     yosys.add_argument("--yosys")
@@ -1445,6 +1603,7 @@ def main(argv: list[str] | None = None) -> int:
         "publish-check": publish_check_gate,
         "port-check": port_check_gate,
         "lint": lint_gate,
+        "refresh-metadata": refresh_metadata_gate,
         "yosys-check": yosys_check_gate,
     }
     try:

@@ -127,7 +127,9 @@ final class OooIssueQueue(
   // cannot overrun the remaining slot.
   val enqueueReadyReg = Reg(Bool()) init (True)
   enqueueReadyReg := count < U(config.issueQueueEntriesPerPort - 1, count.getWidth bits)
-  io.enqueueReady := !io.flush && enqueueReadyReg
+  // Ready/valid are candidate handshakes during recovery.  The sequential
+  // flush branches below have priority over every enqueue/dequeue update.
+  io.enqueueReady := enqueueReadyReg
   val enqueueFire = io.enqueueValid && io.enqueueReady
   val enqueueIndex = UInt(log2Up(config.issueQueueEntriesPerPort) bits)
   enqueueIndex := count.resized
@@ -206,7 +208,8 @@ final class OooDispatchRouter(config: OooCoreConfig = OooCoreConfig.FourIssueThr
       case OooFuKind.Multiply  => uop.decoded.fuType === OooFuType.multiply
       case OooFuKind.Divide    => uop.decoded.fuType === OooFuType.divide
       case OooFuKind.Csr       => uop.decoded.fuType === OooFuType.csr
-      case OooFuKind.Serial    => uop.decoded.fuType === OooFuType.serial
+      case OooFuKind.Serial    =>
+        uop.decoded.fuType === OooFuType.serial || OooFuType.isBarrier(uop.decoded.fuType)
       case OooFuKind.LoadStore => uop.decoded.fuType === OooFuType.loadStore
     }
     acceptedKinds.reduce(_ || _)
@@ -228,7 +231,6 @@ final class OooDispatchRouter(config: OooCoreConfig = OooCoreConfig.FourIssueThr
     val portReady = in Bits (config.executionWidth bits)
     val portValid = out Bits (config.executionWidth bits)
     val portInput = out Vec (OooRenamedUop(config), config.executionWidth)
-    val flush = in Bool ()
   }
 
   val portUsed = Vec(Bits(config.executionWidth bits), config.dispatchWidth + 1)
@@ -244,11 +246,11 @@ final class OooDispatchRouter(config: OooCoreConfig = OooCoreConfig.FourIssueThr
     }
     val available = capable & ~portUsed(lane)
     choices(lane) := B(0, config.executionWidth bits)
-    when(!io.flush && laneOpen(lane) && available.orR) {
+    when(laneOpen(lane) && available.orR) {
       choices(lane) := UIntToOh(selectLowest(available), config.executionWidth)
     }
     portUsed(lane + 1) := portUsed(lane) | choices(lane)
-    io.inputReady(lane) := !io.flush && laneOpen(lane) && available.orR
+    io.inputReady(lane) := laneOpen(lane) && available.orR
     laneOpen(lane + 1) := laneOpen(lane) && (!io.inputValid(lane) || available.orR)
   }
 

@@ -2,6 +2,7 @@ package openla500.execute
 
 import openla500.backend._
 import openla500.core._
+import openla500.memory._
 import openla500.privileged._
 import spinal.core._
 import spinal.lib._
@@ -159,8 +160,12 @@ final class OooDivideUnit(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCo
   io.completion.branchMispredict := False
 }
 
-object OooCacheTranslationState extends SpinalEnum {
-  val idle, request, response, dropResponse = newElement()
+object OooBarrierState extends SpinalEnum {
+  val idle, drain, translationRequest, translationResponse,
+    startInstructionMaintenance, waitInstructionMaintenance,
+    startCacheMaintenance, waitCacheMaintenance, postDrain, complete,
+    dropTranslationResponse, dropInstructionMaintenance, dropCacheMaintenance,
+    dropPostDrain = newElement()
 }
 
 final class OooExecutionCluster(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommit)
@@ -193,6 +198,14 @@ final class OooExecutionCluster(config: OooCoreConfig = OooCoreConfig.FourIssueT
     val loadStoreCompletionValid = in Bool ()
     val loadStoreCompletion = in(OooCompletion(config))
     val olderStorePending = in Bool ()
+    val memorySubsystemIdle = in Bool ()
+    val barrierActive = out Bool ()
+    val barrierRobPointer = out UInt (config.robPointerWidth bits)
+    val instructionBarrierMaintenanceStart = out Bool ()
+    val instructionBarrierMaintenanceReady = in Bool ()
+    val instructionBarrierMaintenanceDone = in Bool ()
+    val cacheMaintenanceRequest = master(Stream(OooCacheMaintenanceRequest(config)))
+    val cacheMaintenanceResponse = slave(Stream(OooCacheMaintenanceResponse(config)))
     val cacheTranslationRequest = master(Stream(OooTranslationRequest(config)))
     val cacheTranslationResponse = slave(Stream(OooTranslationResponse(config)))
     val completionValid = out Bits (config.writebackWidth bits)
@@ -247,39 +260,284 @@ final class OooExecutionCluster(config: OooCoreConfig = OooCoreConfig.FourIssueT
     csrDecoded.csrAddress
   )
 
-  val lsuDecoded = io.issue(loadStorePort).decoded
-  val lsuAddress = io.source1(loadStorePort).asUInt + lsuDecoded.immediate.asUInt
-  val cacheTranslationRequired = lsuDecoded.isCacheOperation &&
-    lsuDecoded.rd(4 downto 3) === 2
-  val cacheTranslationState = RegInit(OooCacheTranslationState.idle)
-  val cacheTranslationUop = Reg(OooRenamedUop(config))
-  val cacheTranslationAddress = Reg(UInt(config.xlen bits))
+  val barrierState = RegInit(OooBarrierState.idle)
+  val barrierUop = Reg(OooRenamedUop(config))
+  val barrierIsInstruction = RegInit(False)
+  val barrierIsCache = RegInit(False)
+  val barrierVirtualAddress = Reg(UInt(config.xlen bits))
+  val barrierPhysicalAddress = Reg(UInt(config.xlen bits))
+  val barrierException = Reg(OooExceptionMeta())
+  val barrierIdleObserved = RegInit(False)
+  val csrIsBarrier = OooFuType.isBarrier(csrDecoded.fuType)
+  val barrierAccept = io.issueValid(csrPort) && io.issueReady(csrPort) && csrIsBarrier
+  val barrierQuiescent = !io.olderStorePending && io.memorySubsystemIdle
+  val barrierCacheTarget = barrierUop.decoded.rd(2 downto 0)
+  val barrierCacheTargetDefined =
+    barrierCacheTarget === OooCacheMaintenanceTarget.instructionL1 ||
+      barrierCacheTarget === OooCacheMaintenanceTarget.dataL1 ||
+      barrierCacheTarget === OooCacheMaintenanceTarget.unifiedL2
+  val instructionMaintenanceFire = io.instructionBarrierMaintenanceStart &&
+    io.instructionBarrierMaintenanceReady
+  val cacheMaintenanceFire = io.cacheMaintenanceRequest.valid &&
+    io.cacheMaintenanceRequest.ready
+  val cacheMaintenanceResponseFire = io.cacheMaintenanceResponse.valid &&
+    io.cacheMaintenanceResponse.ready
+  val translationRequestFire = io.cacheTranslationRequest.valid &&
+    io.cacheTranslationRequest.ready
+  val translationResponseFire = io.cacheTranslationResponse.valid &&
+    io.cacheTranslationResponse.ready
+
+  // Active denotes a captured barrier token.  Keeping acceptance out of this
+  // signal lets the LSQ query the incoming ROB pointer on the capture cycle
+  // without feeding its result back through issue readiness.
+  io.barrierActive := barrierState =/= OooBarrierState.idle
+  io.barrierRobPointer := Mux(
+    barrierState === OooBarrierState.idle,
+    io.issue(csrPort).robPointer,
+    barrierUop.robPointer
+  )
+  io.instructionBarrierMaintenanceStart :=
+    barrierState === OooBarrierState.startInstructionMaintenance && !io.flush
+  io.cacheMaintenanceRequest.valid :=
+    barrierState === OooBarrierState.startCacheMaintenance && !io.flush
+  io.cacheMaintenanceRequest.code := barrierUop.decoded.rd.asBits
+  io.cacheMaintenanceRequest.virtualAddress := barrierVirtualAddress
+  io.cacheMaintenanceRequest.physicalAddress := barrierPhysicalAddress
+  io.cacheMaintenanceRequest.robPointer := barrierUop.robPointer
+  io.cacheMaintenanceRequest.recoveryEpoch := barrierUop.recoveryEpoch
+  io.cacheMaintenanceResponse.ready :=
+    barrierState === OooBarrierState.waitCacheMaintenance ||
+      barrierState === OooBarrierState.dropCacheMaintenance
 
   io.cacheTranslationRequest.valid :=
-    cacheTranslationState === OooCacheTranslationState.request && !io.flush
-  io.cacheTranslationRequest.virtualAddress := cacheTranslationAddress
+    barrierState === OooBarrierState.translationRequest && !io.flush
+  io.cacheTranslationRequest.virtualAddress := barrierVirtualAddress
   io.cacheTranslationRequest.isWrite := False
   io.cacheTranslationResponse.ready :=
-    cacheTranslationState === OooCacheTranslationState.dropResponse ||
-      (cacheTranslationState === OooCacheTranslationState.response &&
-        (io.flush || !io.loadStoreCompletionValid))
-  val cacheTranslationResponseFire =
-    io.cacheTranslationResponse.valid && io.cacheTranslationResponse.ready
-  val cacheTranslationCompletionValid =
-    cacheTranslationState === OooCacheTranslationState.response &&
-      cacheTranslationResponseFire && !io.flush
-  val cacheTranslationCompletion = OooCompletion(config)
-  cacheTranslationCompletion.robPointer := cacheTranslationUop.robPointer
-  cacheTranslationCompletion.recoveryEpoch := cacheTranslationUop.recoveryEpoch
-  cacheTranslationCompletion.pdst := cacheTranslationUop.pdst
-  cacheTranslationCompletion.writesPdst := False
-  cacheTranslationCompletion.data := 0
-  cacheTranslationCompletion.sideEffectData := 0
-  cacheTranslationCompletion.exception := io.cacheTranslationResponse.exception
-  cacheTranslationCompletion.branchResolved := False
-  cacheTranslationCompletion.branchTaken := False
-  cacheTranslationCompletion.branchTarget := 0
-  cacheTranslationCompletion.branchMispredict := False
+    barrierState === OooBarrierState.translationResponse ||
+      barrierState === OooBarrierState.dropTranslationResponse
+
+  when(barrierAccept) {
+    barrierUop := io.issue(csrPort)
+    barrierIsInstruction :=
+      csrDecoded.systemOperation === OooSystemOp.instructionBarrier
+    barrierIsCache := csrDecoded.systemOperation === OooSystemOp.cacheOperation
+    barrierVirtualAddress := io.source1(csrPort).asUInt + csrDecoded.immediate.asUInt
+    barrierPhysicalAddress := 0
+    barrierException.valid := False
+    barrierException.ecode := 0
+    barrierException.esubcode := 0
+    barrierException.badVAddrValid := False
+    barrierException.badVAddr := 0
+    barrierException.tlbRefill := False
+    barrierIdleObserved := False
+    barrierState := OooBarrierState.drain
+  }
+  when(barrierState === OooBarrierState.drain) {
+    when(barrierQuiescent) {
+      when(barrierIdleObserved) {
+        barrierIdleObserved := False
+        when(barrierIsCache) {
+          barrierState := Mux(
+            barrierUop.decoded.rd(4 downto 3) === OooCacheMaintenanceMode.hit &&
+              barrierCacheTargetDefined,
+            OooBarrierState.translationRequest,
+            OooBarrierState.startCacheMaintenance
+          )
+        }.otherwise {
+          barrierState := Mux(
+            barrierIsInstruction,
+            OooBarrierState.startInstructionMaintenance,
+            OooBarrierState.complete
+          )
+        }
+      }.otherwise {
+        barrierIdleObserved := True
+      }
+    }.otherwise {
+      barrierIdleObserved := False
+    }
+  }
+  when(
+    barrierState === OooBarrierState.translationRequest && translationRequestFire
+  ) {
+    barrierState := OooBarrierState.translationResponse
+  }
+  when(
+    barrierState === OooBarrierState.translationResponse && translationResponseFire
+  ) {
+    barrierPhysicalAddress := io.cacheTranslationResponse.physicalAddress
+    barrierException := io.cacheTranslationResponse.exception
+    barrierState := Mux(
+      io.cacheTranslationResponse.exception.valid,
+      OooBarrierState.complete,
+      OooBarrierState.startCacheMaintenance
+    )
+  }
+  when(
+    barrierState === OooBarrierState.startInstructionMaintenance &&
+      instructionMaintenanceFire
+  ) {
+    barrierState := OooBarrierState.waitInstructionMaintenance
+  }
+  when(
+    barrierState === OooBarrierState.waitInstructionMaintenance &&
+      io.instructionBarrierMaintenanceDone
+  ) {
+    barrierIdleObserved := False
+    barrierState := OooBarrierState.postDrain
+  }
+  when(
+    barrierState === OooBarrierState.startCacheMaintenance && cacheMaintenanceFire
+  ) {
+    barrierState := OooBarrierState.waitCacheMaintenance
+  }
+  when(
+    barrierState === OooBarrierState.waitCacheMaintenance &&
+      cacheMaintenanceResponseFire
+  ) {
+    GenerationFlags.simulation {
+      assert(
+        io.cacheMaintenanceResponse.robPointer === barrierUop.robPointer &&
+          io.cacheMaintenanceResponse.recoveryEpoch === barrierUop.recoveryEpoch,
+        "CACOP completion token must match the captured ROB entry"
+      )
+    }
+    barrierIdleObserved := False
+    barrierState := OooBarrierState.postDrain
+  }
+  when(barrierState === OooBarrierState.postDrain) {
+    when(barrierQuiescent) {
+      when(barrierIdleObserved) {
+        barrierIdleObserved := False
+        barrierState := OooBarrierState.complete
+      }.otherwise {
+        barrierIdleObserved := True
+      }
+    }.otherwise {
+      barrierIdleObserved := False
+    }
+  }
+  when(barrierState === OooBarrierState.complete) {
+    barrierState := OooBarrierState.idle
+  }
+  when(
+    barrierState === OooBarrierState.dropInstructionMaintenance &&
+      io.instructionBarrierMaintenanceDone
+  ) {
+    barrierIdleObserved := False
+    barrierState := OooBarrierState.dropPostDrain
+  }
+  when(
+    barrierState === OooBarrierState.dropCacheMaintenance &&
+      cacheMaintenanceResponseFire
+  ) {
+    barrierIdleObserved := False
+    barrierState := OooBarrierState.dropPostDrain
+  }
+  when(
+    barrierState === OooBarrierState.dropTranslationResponse && translationResponseFire
+  ) {
+    barrierState := OooBarrierState.idle
+  }
+  when(barrierState === OooBarrierState.dropPostDrain) {
+    when(io.memorySubsystemIdle) {
+      when(barrierIdleObserved) {
+        barrierIdleObserved := False
+        barrierState := OooBarrierState.idle
+      }.otherwise {
+        barrierIdleObserved := True
+      }
+    }.otherwise {
+      barrierIdleObserved := False
+    }
+  }
+  when(io.flush) {
+    barrierIdleObserved := False
+    switch(barrierState) {
+      is(OooBarrierState.translationRequest) {
+        barrierState := Mux(
+          translationRequestFire,
+          OooBarrierState.dropTranslationResponse,
+          OooBarrierState.idle
+        )
+      }
+      is(OooBarrierState.translationResponse) {
+        barrierState := Mux(
+          translationResponseFire,
+          OooBarrierState.idle,
+          OooBarrierState.dropTranslationResponse
+        )
+      }
+      is(OooBarrierState.startInstructionMaintenance) {
+        barrierState := Mux(
+          instructionMaintenanceFire,
+          OooBarrierState.dropInstructionMaintenance,
+          OooBarrierState.idle
+        )
+      }
+      is(OooBarrierState.waitInstructionMaintenance) {
+        barrierState := Mux(
+          io.instructionBarrierMaintenanceDone,
+          OooBarrierState.dropPostDrain,
+          OooBarrierState.dropInstructionMaintenance
+        )
+      }
+      is(OooBarrierState.startCacheMaintenance) {
+        barrierState := Mux(
+          cacheMaintenanceFire,
+          OooBarrierState.dropCacheMaintenance,
+          OooBarrierState.idle
+        )
+      }
+      is(OooBarrierState.waitCacheMaintenance) {
+        barrierState := Mux(
+          cacheMaintenanceResponseFire,
+          OooBarrierState.dropPostDrain,
+          OooBarrierState.dropCacheMaintenance
+        )
+      }
+      is(OooBarrierState.postDrain) {
+        barrierState := OooBarrierState.dropPostDrain
+      }
+      is(OooBarrierState.dropInstructionMaintenance) {
+        when(io.instructionBarrierMaintenanceDone) {
+          barrierState := OooBarrierState.dropPostDrain
+        }
+      }
+      is(OooBarrierState.dropCacheMaintenance) {
+        when(cacheMaintenanceResponseFire) {
+          barrierState := OooBarrierState.dropPostDrain
+        }
+      }
+      is(OooBarrierState.dropTranslationResponse) {
+        when(translationResponseFire) { barrierState := OooBarrierState.idle }
+      }
+      is(OooBarrierState.dropPostDrain) {
+        barrierState := OooBarrierState.dropPostDrain
+      }
+      default {
+        barrierState := OooBarrierState.idle
+      }
+    }
+  }
+
+  val barrierCompletionValid = barrierState === OooBarrierState.complete && !io.flush
+  val barrierCompletion = OooCompletion(config)
+  barrierCompletion.robPointer := barrierUop.robPointer
+  barrierCompletion.recoveryEpoch := barrierUop.recoveryEpoch
+  barrierCompletion.pdst := barrierUop.pdst
+  barrierCompletion.writesPdst := False
+  barrierCompletion.data := 0
+  barrierCompletion.sideEffectData := 0
+  barrierCompletion.exception := barrierException
+  barrierCompletion.branchResolved := False
+  barrierCompletion.branchTaken := False
+  barrierCompletion.branchTarget := 0
+  barrierCompletion.branchMispredict := False
+
+  val lsuDecoded = io.issue(loadStorePort).decoded
+  val lsuAddress = io.source1(loadStorePort).asUInt + lsuDecoded.immediate.asUInt
 
   val directCompletionValid = Bits(config.executionWidth bits)
   val directCompletion = Vec(OooCompletion(config), config.executionWidth)
@@ -300,12 +558,8 @@ final class OooExecutionCluster(config: OooCoreConfig = OooCoreConfig.FourIssueT
     val isDivide = decoded.fuType === OooFuType.divide
     val usesAgu = decoded.fuType === OooFuType.loadStore &&
       (decoded.isLoad || decoded.isStore)
-    val requiresCacheTranslation = if (port == loadStorePort) {
-      cacheTranslationRequired
-    } else {
-      False
-    }
-    val direct = !isMultiply && !isDivide && !usesAgu && !requiresCacheTranslation
+    val isBarrier = OooFuType.isBarrier(decoded.fuType)
+    val direct = !isMultiply && !isDivide && !usesAgu && !isBarrier
     if (port == dividePort) {
       // The divider result and direct ALU result share this writeback lane.
       // Hold a direct issue for one cycle when an older divide completes so
@@ -316,19 +570,13 @@ final class OooExecutionCluster(config: OooCoreConfig = OooCoreConfig.FourIssueT
         !divider.io.completionValid
       )
     } else if (port == loadStorePort) {
-      // A cache hint has the LSU FU type but owns no LSQ entry. Complete it locally, while
-      // preserving the only LSU completion lane for an older memory response.
-      io.issueReady(port) := !io.flush &&
-        cacheTranslationState === OooCacheTranslationState.idle && Mux(
-          usesAgu,
-          io.aguReady,
-          Mux(
-            decoded.isCacheOperation,
-            !io.olderStorePending &&
-              (requiresCacheTranslation || !io.loadStoreCompletionValid),
-            !io.loadStoreCompletionValid
-          )
-        )
+      io.issueReady(port) := !io.flush && Mux(
+        usesAgu,
+        io.aguReady,
+        !io.loadStoreCompletionValid
+      )
+    } else if (port == csrPort) {
+      io.issueReady(port) := !io.flush && barrierState === OooBarrierState.idle
     } else {
       io.issueReady(port) := !io.flush
     }
@@ -403,42 +651,6 @@ final class OooExecutionCluster(config: OooCoreConfig = OooCoreConfig.FourIssueT
     io.directWakeupPdst(port) := directCompletion(port).pdst
   }
 
-  val cacheTranslationAccept = io.issueValid(loadStorePort) &&
-    io.issueReady(loadStorePort) && cacheTranslationRequired
-  when(cacheTranslationAccept) {
-    cacheTranslationUop := io.issue(loadStorePort)
-    cacheTranslationAddress := lsuAddress
-    cacheTranslationState := OooCacheTranslationState.request
-  }
-  when(
-    cacheTranslationState === OooCacheTranslationState.request &&
-      io.cacheTranslationRequest.ready
-  ) {
-    cacheTranslationState := OooCacheTranslationState.response
-  }
-  when(
-    cacheTranslationState === OooCacheTranslationState.response &&
-      cacheTranslationResponseFire
-  ) {
-    cacheTranslationState := OooCacheTranslationState.idle
-  }
-  when(
-    cacheTranslationState === OooCacheTranslationState.dropResponse &&
-      cacheTranslationResponseFire
-  ) {
-    cacheTranslationState := OooCacheTranslationState.idle
-  }
-  when(io.flush) {
-    when(cacheTranslationState === OooCacheTranslationState.request) {
-      cacheTranslationState := OooCacheTranslationState.idle
-    }.elsewhen(
-      cacheTranslationState === OooCacheTranslationState.response &&
-        !cacheTranslationResponseFire
-    ) {
-      cacheTranslationState := OooCacheTranslationState.dropResponse
-    }
-  }
-
   val addressLow = lsuAddress(1 downto 0)
   val byteMask = (B(1, 4 bits) |<< addressLow).resize(4)
   val halfMask = Mux(addressLow(1), B"1100", B"0011")
@@ -480,17 +692,17 @@ final class OooExecutionCluster(config: OooCoreConfig = OooCoreConfig.FourIssueT
 
   for (port <- 0 until config.executionWidth) {
     if (port == loadStorePort) {
-      io.completionValid(port) := io.loadStoreCompletionValid ||
-        cacheTranslationCompletionValid || directCompletionValid(port)
+      io.completionValid(port) := io.loadStoreCompletionValid || directCompletionValid(port)
       io.completion(port) := directCompletion(port)
-      when(cacheTranslationCompletionValid) {
-        io.completion(port) := cacheTranslationCompletion
-      }
       when(io.loadStoreCompletionValid) { io.completion(port) := io.loadStoreCompletion }
     } else if (port == dividePort) {
       io.completionValid(port) := directCompletionValid(port) || divider.io.completionValid
       io.completion(port) := directCompletion(port)
       when(divider.io.completionValid) { io.completion(port) := divider.io.completion }
+    } else if (port == csrPort) {
+      io.completionValid(port) := directCompletionValid(port) || barrierCompletionValid
+      io.completion(port) := directCompletion(port)
+      when(barrierCompletionValid) { io.completion(port) := barrierCompletion }
     } else {
       io.completionValid(port) := directCompletionValid(port)
       io.completion(port) := directCompletion(port)

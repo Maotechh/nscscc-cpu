@@ -30,11 +30,35 @@ final case class OooCacheGeometry(ways: Int, sets: Int, lineBytes: Int) {
   require(isPowerOfTwo(sets), "cache sets must be a positive power of two")
   require(isPowerOfTwo(lineBytes), "cache-line bytes must be a positive power of two")
   require(lineBytes >= 16, "the OoO memory hierarchy requires at least a 16-byte line")
+  require(ways - 1 <= 0xffff, "CPUCFG cache ways field is only 16 bits")
+  require(log2Up(sets) <= 0xff, "CPUCFG cache sets field is only 8 bits")
+  require(log2Up(lineBytes) <= 0x7f, "CPUCFG cache line-size field is only 7 bits")
 
   val capacityBytes: Int = ways * sets * lineBytes
   val indexWidth: Int = log2Up(sets)
   val offsetWidth: Int = log2Up(lineBytes)
   val tagWidth: Int = 32 - indexWidth - offsetWidth
+}
+
+/** LoongArch CPUCFG values implemented by this configured core. */
+object OooCpuConfig {
+  private def cacheGeometry(geometry: OooCacheGeometry): BigInt =
+    BigInt(geometry.ways - 1) |
+      (BigInt(log2Up(geometry.sets)) << 16) |
+      (BigInt(log2Up(geometry.lineBytes)) << 24)
+
+  def value(config: OooCoreConfig, index: Int): BigInt = index match {
+    case 1 =>
+      val addressBitsEncoding = BigInt(config.xlen - 1)
+      BigInt(1) | BigInt(1 << 2) |
+        (addressBitsEncoding << 4) | (addressBitsEncoding << 12)
+    case 2 => BigInt(0)
+    case 16 => BigInt(0x1d)
+    case 17 => cacheGeometry(config.instructionCache)
+    case 18 => cacheGeometry(config.dataCache)
+    case 19 => cacheGeometry(config.level2Cache)
+    case _ => BigInt(0)
+  }
 }
 
 /** Elaboration-time contract for the new out-of-order backend.
@@ -122,6 +146,13 @@ final case class OooCoreConfig(
   val robIndexWidth: Int = log2Up(robEntries)
   val robPointerWidth: Int = robIndexWidth + 1
   val recoveryEpochWidth: Int = 8
+  val memoryEpochWidth: Int = 8
+  val reservationAddressWidth: Int = xlen - dataCache.offsetWidth
+  require(robEntries <= 32, "the memory epoch proof assumes at most 32 live ROB entries")
+  require(
+    robEntries < (1 << (memoryEpochWidth - 1)),
+    "the memory epoch must distinguish every live ROB entry across wraparound"
+  )
   val loadQueueIndexWidth: Int = log2Up(loadQueueEntries)
   val storeQueueIndexWidth: Int = log2Up(storeQueueEntries)
   val fetchSlotWidth: Int = log2Up(fetchWidth)

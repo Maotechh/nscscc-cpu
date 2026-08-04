@@ -5,7 +5,8 @@ import spinal.core._
 import spinal.lib._
 
 object OooL2CacheState extends SpinalEnum {
-  val normal, maintenanceLookup, maintenanceWriteback, maintenanceInvalidate = newElement()
+  val normal, maintenanceHitLookup, maintenanceLookup, maintenanceWriteback,
+    maintenanceInvalidate = newElement()
 }
 
 /** Nonblocking 64-KiB shared L2 indexed by the hierarchy-global MSHR identity.
@@ -67,7 +68,10 @@ final class OooL2Cache(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommi
 
     val invalidate = in Bool ()
     val writebackInvalidate = in Bool ()
+    val maintenanceRequest = slave(Stream(OooCacheMaintenanceRequest(config)))
+    val maintenanceDone = out Bool ()
     val invalidateBusy = out Bool ()
+    val idle = out Bool ()
   }
 
   val cacheArray = new OooCacheArray(geometry)
@@ -104,6 +108,11 @@ final class OooL2Cache(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommi
   val maintenanceWay = Reg(UInt(wayWidth bits)) init (0)
   val maintenanceVictimAddress = Reg(UInt(config.xlen bits))
   val maintenanceVictimData = Reg(Bits(OooCacheContract.LineBits bits))
+  val maintenanceMode = Reg(UInt(2 bits)) init (0)
+  val exactMaintenance = RegInit(False)
+  val maintenanceDone = RegInit(False)
+  maintenanceDone := False
+  io.maintenanceDone := maintenanceDone
 
   val newInvalidate = io.invalidate && !invalidateSeen
   when(io.invalidate) { invalidateSeen := True }.otherwise { invalidateSeen := False }
@@ -122,13 +131,17 @@ final class OooL2Cache(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommi
   val maintenanceRequest = invalidatePending || newInvalidate ||
     writebackInvalidatePending || newWritebackInvalidate
   val startInvalidate = (invalidatePending || newInvalidate) && !normalBusy &&
-    state === OooL2CacheState.normal && !cacheArray.io.invalidateBusy
+    state === OooL2CacheState.normal && !cacheArray.io.invalidateBusy &&
+    !io.maintenanceRequest.valid
   val startWritebackInvalidate = (writebackInvalidatePending || newWritebackInvalidate) &&
     !normalBusy && state === OooL2CacheState.normal &&
-    !(invalidatePending || newInvalidate) && !cacheArray.io.invalidateBusy
+    !(invalidatePending || newInvalidate) && !cacheArray.io.invalidateBusy &&
+    !io.maintenanceRequest.valid
   when(startInvalidate) { invalidatePending := False }
   when(startWritebackInvalidate) {
     writebackInvalidatePending := False
+    exactMaintenance := False
+    maintenanceMode := OooCacheMaintenanceMode.index
     maintenanceIndex := 0
     maintenanceWay := 0
     state := OooL2CacheState.maintenanceLookup
@@ -161,7 +174,7 @@ final class OooL2Cache(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommi
   val canStartLookup = state === OooL2CacheState.normal && !maintenanceRequest &&
     !cacheArray.io.invalidateBusy && !lookupPending && !installMask.orR &&
     !missWritebackMask.orR && writeState =/= OooL2WriteState.install &&
-    cacheArray.io.lookupReady
+    cacheArray.io.lookupReady && !io.maintenanceRequest.valid
 
   // A dirty L1D eviction has priority over a read lookup.  The write decision is intentionally
   // independent of readValid: otherwise the L1D state crosses the shared MSHR router and returns
@@ -172,6 +185,11 @@ final class OooL2Cache(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommi
   io.readReady := canStartLookup && !writeFire && !misses(io.read.mshrId).valid &&
     !readSetConflict.orR && !writeContextConflictsRead
   val readFire = io.readValid && io.readReady
+  io.maintenanceRequest.ready := state === OooL2CacheState.normal &&
+    !normalBusy && !maintenanceRequest && !cacheArray.io.invalidateBusy &&
+    cacheArray.io.lookupReady
+  val exactMaintenanceFire = io.maintenanceRequest.valid &&
+    io.maintenanceRequest.ready
 
   cacheArray.io.lookupValid := readFire || writeFire
   cacheArray.io.lookupAddress := Mux(readFire, io.read.lineAddress, io.write.lineAddress)
@@ -186,6 +204,24 @@ final class OooL2Cache(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommi
   cacheArray.io.maintenanceReadValid := state === OooL2CacheState.maintenanceLookup
   cacheArray.io.maintenanceReadIndex := maintenanceIndex
   cacheArray.io.maintenanceReadWay := maintenanceWay
+
+  when(exactMaintenanceFire) {
+    exactMaintenance := True
+    maintenanceMode := io.maintenanceRequest.code(4 downto 3).asUInt
+    maintenanceIndex := indexOf(io.maintenanceRequest.virtualAddress)
+    maintenanceWay := io.maintenanceRequest.virtualAddress(wayWidth - 1 downto 0)
+    when(
+      io.maintenanceRequest.code(4 downto 3).asUInt ===
+        OooCacheMaintenanceMode.hit
+    ) {
+      maintenanceIndex := indexOf(io.maintenanceRequest.physicalAddress)
+      cacheArray.io.lookupValid := True
+      cacheArray.io.lookupAddress := io.maintenanceRequest.physicalAddress
+      state := OooL2CacheState.maintenanceHitLookup
+    }.otherwise {
+      state := OooL2CacheState.maintenanceLookup
+    }
+  }
 
   when(readFire) {
     lookupPending := True
@@ -239,6 +275,19 @@ final class OooL2Cache(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommi
           missVictimData := cacheArray.io.victimData
         }
       }
+    }
+  }
+  when(
+    state === OooL2CacheState.maintenanceHitLookup &&
+      cacheArray.io.responseValid
+  ) {
+    when(cacheArray.io.hit) {
+      maintenanceWay := cacheArray.io.hitWay
+      state := OooL2CacheState.maintenanceLookup
+    }.otherwise {
+      maintenanceDone := True
+      exactMaintenance := False
+      state := OooL2CacheState.normal
     }
   }
 
@@ -427,7 +476,10 @@ final class OooL2Cache(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommi
     state === OooL2CacheState.maintenanceLookup &&
       cacheArray.io.maintenanceResponseValid
   ) {
-    when(cacheArray.io.maintenanceEntryValid && cacheArray.io.maintenanceEntryDirty) {
+    when(
+      maintenanceMode =/= OooCacheMaintenanceMode.storeTag &&
+        cacheArray.io.maintenanceEntryValid && cacheArray.io.maintenanceEntryDirty
+    ) {
       maintenanceVictimAddress := cacheArray.io.maintenanceEntryAddress
       maintenanceVictimData := cacheArray.io.maintenanceEntryData
       state := OooL2CacheState.maintenanceWriteback
@@ -446,7 +498,11 @@ final class OooL2Cache(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommi
     cacheArray.io.writeData := 0
     cacheArray.io.writeEntryValid := False
     cacheArray.io.writeDirty := False
-    when(maintenanceWay === U(geometry.ways - 1, wayWidth bits)) {
+    when(exactMaintenance) {
+      exactMaintenance := False
+      maintenanceDone := True
+      state := OooL2CacheState.normal
+    }.elsewhen(maintenanceWay === U(geometry.ways - 1, wayWidth bits)) {
       maintenanceWay := 0
       when(maintenanceIndex === U(geometry.sets - 1, indexWidth bits)) {
         state := OooL2CacheState.normal
@@ -462,4 +518,10 @@ final class OooL2Cache(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommi
 
   io.invalidateBusy := cacheArray.io.invalidateBusy || maintenanceRequest ||
     state =/= OooL2CacheState.normal
+  val idleNow = state === OooL2CacheState.normal && !normalBusy &&
+    !maintenanceRequest && !cacheArray.io.invalidateBusy &&
+    !refillOutputValid && !hitOutputValid && !hitCaptureValid &&
+    !io.readValid && !io.writeValid && !io.invalidate && !io.writebackInvalidate &&
+    !io.maintenanceRequest.valid && !maintenanceDone
+  io.idle := RegNext(idleNow) init (False)
 }
