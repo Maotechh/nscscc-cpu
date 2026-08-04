@@ -25,6 +25,8 @@ final class OooBackendWithDataCache(
 
     val dataTranslationRequest = master(Stream(OooTranslationRequest(config)))
     val dataTranslationResponse = slave(Stream(OooTranslationResponse(config)))
+    val dataTranslationBypassAddress = out UInt (config.xlen bits)
+    val dataTranslationBypass = in(OooTranslationBypass(config))
     val reservationValid = in Bool ()
     val reservationLineAddress = in Bits (config.reservationAddressWidth bits)
 
@@ -142,6 +144,8 @@ final class OooBackendWithDataCache(
   backend.io.translationResponse.valid := io.dataTranslationResponse.valid
   backend.io.translationResponse.payload := io.dataTranslationResponse.payload
   io.dataTranslationResponse.ready := backend.io.translationResponse.ready
+  io.dataTranslationBypassAddress := backend.io.translationBypassAddress
+  backend.io.translationBypass := io.dataTranslationBypass
   backend.io.reservationValid := io.reservationValid
   backend.io.reservationLineAddress := io.reservationLineAddress
 

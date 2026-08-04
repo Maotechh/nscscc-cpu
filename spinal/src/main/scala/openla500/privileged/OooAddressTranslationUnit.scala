@@ -18,6 +18,12 @@ final case class OooTranslationResponse(config: OooCoreConfig) extends Bundle {
   val exception = OooExceptionMeta()
 }
 
+final case class OooTranslationBypass(config: OooCoreConfig) extends Bundle {
+  val eligible = Bool()
+  val physicalAddress = UInt(config.xlen bits)
+  val uncached = Bool()
+}
+
 final case class OooTranslationContext(config: OooCoreConfig) extends Bundle {
   val virtualAddress = UInt(config.xlen bits)
   val isWrite = Bool()
@@ -40,6 +46,8 @@ final class OooAddressTranslationUnit(
     val instructionResponse = master(Stream(OooTranslationResponse(config)))
     val dataRequest = slave(Stream(OooTranslationRequest(config)))
     val dataResponse = master(Stream(OooTranslationResponse(config)))
+    val dataBypassAddress = in UInt (config.xlen bits)
+    val dataBypass = out(OooTranslationBypass(config))
 
     val csrAsid = in Bits (10 bits)
     val csrDa = in Bool ()
@@ -158,6 +166,22 @@ final class OooAddressTranslationUnit(
       }
       physicalAddress
     }
+
+    val dataBypassDmw0 = dmwEnabled(io.dataBypassAddress, io.csrDmw0)
+    val dataBypassDmw1 = dmwEnabled(io.dataBypassAddress, io.csrDmw1)
+    val dataBypassTranslate = pagingMode && !dataBypassDmw0 && !dataBypassDmw1
+    val dataBypassMemoryAttribute = Mux(
+      dataBypassDmw0,
+      io.csrDmw0(5 downto 4),
+      Mux(dataBypassDmw1, io.csrDmw1(5 downto 4), io.dataMat)
+    )
+    io.dataBypass.eligible := !dataBypassTranslate
+    io.dataBypass.physicalAddress := bypassPhysicalAddress(
+      io.dataBypassAddress,
+      dataBypassDmw0,
+      dataBypassDmw1
+    )
+    io.dataBypass.uncached := io.disableCache || dataBypassMemoryAttribute === 0
 
     val instructionContext = Reg(OooTranslationContext(config))
     val instructionSearchPending = RegInit(False)

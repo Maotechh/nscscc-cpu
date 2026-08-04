@@ -23,6 +23,7 @@ class OooAddressTranslationUnitSpec extends AnyFunSuite {
     dut.io.dataRequest.virtualAddress #= 0
     dut.io.dataRequest.isWrite #= false
     dut.io.dataResponse.ready #= true
+    dut.io.dataBypassAddress #= 0
     dut.io.csrAsid #= 0
     dut.io.csrDa #= true
     dut.io.csrPg #= false
@@ -123,6 +124,65 @@ class OooAddressTranslationUnitSpec extends AnyFunSuite {
     }
     assert(dut.io.dataResponse.valid.toBoolean)
     cycles
+  }
+
+  test("data bypass preview exactly covers direct and permitted DMW modes") {
+    SimConfig.withVerilator
+      .workspacePath("target/sim-workspace-ooo-address-translation-preview")
+      .compile(new OooAddressTranslationUnit(config))
+      .doSim("ooo-address-translation-preview", 0x4c7a) { dut =>
+        dut.domain.forkStimulus(period = 10)
+        clearInputs(dut)
+        dut.domain.assertReset()
+        dut.domain.waitSampling(2)
+        dut.domain.deassertReset()
+        sample(dut)
+
+        dut.io.dataBypassAddress #= 0x1c001234
+        sleep(1)
+        assert(dut.io.dataBypass.eligible.toBoolean)
+        assert(dut.io.dataBypass.physicalAddress.toBigInt == 0x1c001234)
+        assert(!dut.io.dataBypass.uncached.toBoolean)
+
+        dut.io.dataMat #= 0
+        sleep(1)
+        assert(dut.io.dataBypass.uncached.toBoolean)
+        dut.io.dataMat #= 1
+        dut.io.disableCache #= true
+        sleep(1)
+        assert(dut.io.dataBypass.uncached.toBoolean)
+        dut.io.disableCache #= false
+
+        val dmw0 = (BigInt(4) << 29) | (BigInt(1) << 25) | (BigInt(1) << 4) | 1
+        dut.io.csrDa #= false
+        dut.io.csrPg #= true
+        dut.io.csrDmw0 #= dmw0
+        dut.io.dataBypassAddress #= 0x80001234L
+        sleep(1)
+        assert(dut.io.dataBypass.eligible.toBoolean)
+        assert(dut.io.dataBypass.physicalAddress.toBigInt == 0x20001234)
+        assert(!dut.io.dataBypass.uncached.toBoolean)
+
+        dut.io.csrPrivilege #= 3
+        sleep(1)
+        assert(!dut.io.dataBypass.eligible.toBoolean)
+        dut.io.csrDmw0 #= (dmw0 | 8)
+        sleep(1)
+        assert(dut.io.dataBypass.eligible.toBoolean)
+
+        val dmw1 = (BigInt(5) << 29) | (BigInt(2) << 25) | 8
+        dut.io.csrDmw0 #= 0
+        dut.io.csrDmw1 #= dmw1
+        dut.io.dataBypassAddress #= 0xa0001234L
+        sleep(1)
+        assert(dut.io.dataBypass.eligible.toBoolean)
+        assert(dut.io.dataBypass.physicalAddress.toBigInt == 0x40001234)
+        assert(dut.io.dataBypass.uncached.toBoolean)
+
+        dut.io.dataBypassAddress #= 0x40001234
+        sleep(1)
+        assert(!dut.io.dataBypass.eligible.toBoolean)
+      }
   }
 
   test("direct, DMW, and TLB-refill instruction translations are precise") {

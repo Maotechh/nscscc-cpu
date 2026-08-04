@@ -182,6 +182,8 @@ final class OooCoreSystem(
     core.io.dataTranslationResponse.valid := addressTranslation.io.dataResponse.valid
     core.io.dataTranslationResponse.payload := addressTranslation.io.dataResponse.payload
     addressTranslation.io.dataResponse.ready := core.io.dataTranslationResponse.ready
+    addressTranslation.io.dataBypassAddress := core.io.dataTranslationBypassAddress
+    core.io.dataTranslationBypass := addressTranslation.io.dataBypass
     core.io.reservationValid := csr.io.llbit_out
     core.io.reservationLineAddress := csr.io.lladdr_out
 

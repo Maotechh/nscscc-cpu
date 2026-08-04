@@ -31,6 +31,9 @@ private final class OooLoadStoreQueueProbe(config: OooCoreConfig) extends Compon
     val translationPhysicalAddress = in UInt (config.xlen bits)
     val translationRequestValid = out Bool ()
     val translationRequestAddress = out UInt (config.xlen bits)
+    val translationBypassEligible = in Bool ()
+    val translationBypassPhysicalAddress = in UInt (config.xlen bits)
+    val translationBypassUncached = in Bool ()
     val reservationValid = in Bool ()
     val reservationLineAddress = in Bits (config.reservationAddressWidth bits)
     val completionValid = out Bool ()
@@ -89,6 +92,9 @@ private final class OooLoadStoreQueueProbe(config: OooCoreConfig) extends Compon
   lsq.io.translationResponse.exception.badVAddrValid := io.translationFault
   lsq.io.translationResponse.exception.badVAddr := translationAddress
   lsq.io.translationResponse.exception.tlbRefill := False
+  lsq.io.translationBypass.eligible := io.translationBypassEligible
+  lsq.io.translationBypass.physicalAddress := io.translationBypassPhysicalAddress
+  lsq.io.translationBypass.uncached := io.translationBypassUncached
   lsq.io.reservationValid := io.reservationValid
   lsq.io.reservationLineAddress := io.reservationLineAddress
   lsq.io.committedMemoryEpoch := io.committedMemoryEpoch
@@ -124,6 +130,9 @@ class OooLoadStoreQueueSpec extends AnyFunSuite {
     dut.io.translationCancelled #= false
     dut.io.translationPhysicalAddressEnable #= false
     dut.io.translationPhysicalAddress #= 0
+    dut.io.translationBypassEligible #= false
+    dut.io.translationBypassPhysicalAddress #= 0
+    dut.io.translationBypassUncached #= false
     dut.io.reservationValid #= false
     dut.io.reservationLineAddress #= 0
     dut.io.committedMemoryEpoch #= 0
@@ -307,6 +316,211 @@ class OooLoadStoreQueueSpec extends AnyFunSuite {
     dut.io.agu.uop.decoded.isLoad #= true
     dut.io.agu.uop.decoded.isLl #= isLl
     dut.io.agu.uop.decoded.writesGpr #= true
+  }
+
+  test("direct and DMW preview translates Load, Store, and SC before owner allocation") {
+    val compiled = SimConfig.withVerilator
+      .workspacePath("target/sim-workspace-ooo-lsq-translation-bypass")
+      .compile(new OooLoadStoreQueueProbe(config))
+
+    compiled.doSim("ooo-lsq-translation-bypass-load", 0x4c7b) { dut =>
+      dut.clockDomain.forkStimulus(period = 10)
+      SimTimeout(2000)
+      clearInputs(dut)
+      dut.io.translationResponseEnable #= false
+      dut.io.translationBypassEligible #= true
+      dut.io.translationBypassPhysicalAddress #= 0x20000400
+      dut.clockDomain.assertReset()
+      dut.clockDomain.waitSampling(2)
+      dut.clockDomain.deassertReset()
+      sample(dut)
+
+      dut.io.allocateValid #= 1
+      dut.io.allocate(0).robPointer #= 4
+      dut.io.allocate(0).isLoad #= true
+      dut.io.allocate(0).loadQueueIndex #= 0
+      dut.io.robHeadPointer #= 4
+      sample(dut)
+      dut.io.allocateValid #= 0
+      setLoadAgu(dut, pointer = 4, address = 0x80000400L, loadIndex = 0)
+      sleep(1)
+      assert(dut.io.aguReady.toBoolean)
+      sample(dut)
+      dut.io.aguValid #= false
+
+      var loadWait = 0
+      while (!dut.io.dataRequestValid.toBoolean && loadWait < 8) {
+        assert(!dut.io.translationRequestValid.toBoolean)
+        sample(dut)
+        loadWait += 1
+      }
+      assert(dut.io.dataRequestValid.toBoolean)
+      assert(dut.io.dataRequest.physicalAddress.toBigInt == 0x20000400)
+      assert(!dut.io.dataRequest.uncached.toBoolean)
+      assert(!dut.io.translationRequestValid.toBoolean)
+    }
+
+    compiled.doSim("ooo-lsq-translation-bypass-store", 0x4c7d) { dut =>
+      dut.clockDomain.forkStimulus(period = 10)
+      SimTimeout(2000)
+      clearInputs(dut)
+      dut.io.translationResponseEnable #= false
+      dut.io.translationBypassEligible #= true
+      dut.io.translationBypassPhysicalAddress #= 0x20000800
+      dut.clockDomain.assertReset()
+      dut.clockDomain.waitSampling(2)
+      dut.clockDomain.deassertReset()
+      sample(dut)
+
+      dut.io.allocateValid #= 1
+      dut.io.allocate(0).robPointer #= 6
+      dut.io.allocate(0).isStore #= true
+      dut.io.allocate(0).storeQueueIndex #= 0
+      sample(dut)
+      dut.io.allocateValid #= 0
+      setStoreAgu(dut, pointer = 6, address = 0x80000800L, data = 0x11223344)
+      sleep(1)
+      assert(dut.io.aguReady.toBoolean)
+      sample(dut)
+      dut.io.aguValid #= false
+
+      var storeWait = 0
+      while (!dut.io.completionValid.toBoolean && storeWait < 8) {
+        assert(!dut.io.translationRequestValid.toBoolean)
+        sample(dut)
+        storeWait += 1
+      }
+      assert(dut.io.completionValid.toBoolean)
+      assert(dut.io.completion.robPointer.toBigInt == 6)
+      assert(!dut.io.completion.exception.valid.toBoolean)
+      assert(!dut.io.translationRequestValid.toBoolean)
+    }
+
+    compiled.doSim("ooo-lsq-translation-bypass-sc", 0x4c7e) { dut =>
+      dut.clockDomain.forkStimulus(period = 10)
+      SimTimeout(2000)
+      clearInputs(dut)
+      dut.io.translationResponseEnable #= false
+      dut.io.translationBypassEligible #= true
+      dut.io.translationBypassPhysicalAddress #= 0x20000c00
+      dut.io.reservationValid #= true
+      dut.io.reservationLineAddress #= (BigInt(0x20000c00L) >> config.dataCache.offsetWidth)
+      dut.clockDomain.assertReset()
+      dut.clockDomain.waitSampling(2)
+      dut.clockDomain.deassertReset()
+      sample(dut)
+
+      dut.io.allocateValid #= 1
+      dut.io.allocate(0).robPointer #= 8
+      dut.io.allocate(0).isStore #= true
+      dut.io.allocate(0).storeQueueIndex #= 0
+      sample(dut)
+      dut.io.allocateValid #= 0
+      setStoreAgu(
+        dut,
+        pointer = 8,
+        address = 0x80000c00L,
+        data = 0x55667788,
+        isSc = true,
+        pdst = 9
+      )
+      sample(dut)
+      dut.io.aguValid #= false
+
+      var scWait = 0
+      while (!dut.io.completionValid.toBoolean && scWait < 8) {
+        assert(!dut.io.translationRequestValid.toBoolean)
+        sample(dut)
+        scWait += 1
+      }
+      assert(dut.io.completionValid.toBoolean)
+      assert(dut.io.completion.robPointer.toBigInt == 8)
+      assert(dut.io.completion.data.toBigInt == 1)
+      assert(!dut.io.translationRequestValid.toBoolean)
+    }
+
+    compiled.doSim("ooo-lsq-translation-bypass-uncached-sc", 0x4c7f) { dut =>
+      dut.clockDomain.forkStimulus(period = 10)
+      SimTimeout(2000)
+      clearInputs(dut)
+      dut.io.translationResponseEnable #= false
+      dut.io.translationBypassEligible #= true
+      dut.io.translationBypassPhysicalAddress #= 0x20001000
+      dut.io.translationBypassUncached #= true
+      dut.io.reservationValid #= true
+      dut.io.reservationLineAddress #= (BigInt(0x20001000L) >> config.dataCache.offsetWidth)
+      dut.clockDomain.assertReset()
+      dut.clockDomain.waitSampling(2)
+      dut.clockDomain.deassertReset()
+      sample(dut)
+
+      dut.io.allocateValid #= 1
+      dut.io.allocate(0).robPointer #= 10
+      dut.io.allocate(0).isStore #= true
+      dut.io.allocate(0).storeQueueIndex #= 0
+      sample(dut)
+      dut.io.allocateValid #= 0
+      setStoreAgu(
+        dut,
+        pointer = 10,
+        address = 0x80001000L,
+        data = 0x99aabbccL,
+        isSc = true,
+        pdst = 11
+      )
+      sample(dut)
+      dut.io.aguValid #= false
+
+      var waitCycles = 0
+      while (!dut.io.completionValid.toBoolean && waitCycles < 8) {
+        assert(!dut.io.translationRequestValid.toBoolean)
+        assert(!dut.io.dataRequestValid.toBoolean)
+        sample(dut)
+        waitCycles += 1
+      }
+      assert(dut.io.completionValid.toBoolean)
+      assert(dut.io.completion.robPointer.toBigInt == 10)
+      assert(dut.io.completion.data.toBigInt == 0)
+      assert(!dut.io.translationRequestValid.toBoolean)
+      assert(!dut.io.dataRequestValid.toBoolean)
+    }
+
+    val disabled = config.copy(enableDirectDmwPretranslation = false)
+    SimConfig.withVerilator
+      .workspacePath("target/sim-workspace-ooo-lsq-translation-bypass-disabled")
+      .compile(new OooLoadStoreQueueProbe(disabled))
+      .doSim("ooo-lsq-translation-bypass-disabled", 0x4c7c) { dut =>
+        dut.clockDomain.forkStimulus(period = 10)
+        SimTimeout(1000)
+        clearInputs(dut)
+        dut.io.translationResponseEnable #= false
+        dut.io.translationBypassEligible #= true
+        dut.io.translationBypassPhysicalAddress #= 0x20000400
+        dut.clockDomain.assertReset()
+        dut.clockDomain.waitSampling(2)
+        dut.clockDomain.deassertReset()
+        sample(dut)
+
+        dut.io.allocateValid #= 1
+        dut.io.allocate(0).robPointer #= 4
+        dut.io.allocate(0).isLoad #= true
+        dut.io.allocate(0).loadQueueIndex #= 0
+        sample(dut)
+        dut.io.allocateValid #= 0
+        setLoadAgu(dut, pointer = 4, address = 0x80000400L, loadIndex = 0)
+        sample(dut)
+        dut.io.aguValid #= false
+
+        var waitCycles = 0
+        var sawTranslation = false
+        while (!sawTranslation && waitCycles < 8) {
+          sawTranslation ||= dut.io.translationRequestValid.toBoolean
+          sample(dut)
+          waitCycles += 1
+        }
+        assert(sawTranslation)
+        assert(!dut.io.dataRequestValid.toBoolean)
+      }
   }
 
   test("memory epoch blocks cached, uncached, and committed-store requests") {

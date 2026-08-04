@@ -49,6 +49,9 @@ class OooCoreIntegrationSpec extends AnyFunSuite {
     dut.io.dataTranslationResponse.exception.badVAddrValid #= false
     dut.io.dataTranslationResponse.exception.badVAddr #= 0
     dut.io.dataTranslationResponse.exception.tlbRefill #= false
+    dut.io.dataTranslationBypass.eligible #= false
+    dut.io.dataTranslationBypass.physicalAddress #= 0
+    dut.io.dataTranslationBypass.uncached #= false
     dut.io.reservationValid #= false
     dut.io.reservationLineAddress #= 0
     dut.io.uncachedInstructionRequestReady #= false

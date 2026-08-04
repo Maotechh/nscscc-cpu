@@ -21,6 +21,8 @@ final class OooBackendWithExecution(
     val dataResponse = in(OooCacheResponse(config))
     val translationRequest = master(Stream(OooTranslationRequest(config)))
     val translationResponse = slave(Stream(OooTranslationResponse(config)))
+    val translationBypassAddress = out UInt (config.xlen bits)
+    val translationBypass = in(OooTranslationBypass(config))
     val reservationValid = in Bool ()
     val reservationLineAddress = in Bits (config.reservationAddressWidth bits)
     val systemReadValid = out Bool ()
@@ -128,6 +130,8 @@ final class OooBackendWithExecution(
   execution.io.timerId := io.timerId
   loadStoreQueue.io.aguValid := execution.io.aguValid
   loadStoreQueue.io.agu := execution.io.agu
+  io.translationBypassAddress := loadStoreQueue.io.translationBypassAddress
+  loadStoreQueue.io.translationBypass := io.translationBypass
   loadStoreQueue.io.commitValid := backend.io.commitValid
   loadStoreQueue.io.commit := backend.io.commit
   loadStoreQueue.io.dataRequestReady := io.dataRequestReady

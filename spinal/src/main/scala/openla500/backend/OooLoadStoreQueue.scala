@@ -153,6 +153,8 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
     val commit = in Vec (OooCommitRecord(config), config.commitWidth)
     val translationRequest = master(Stream(OooTranslationRequest(config)))
     val translationResponse = slave(Stream(OooTranslationResponse(config)))
+    val translationBypassAddress = out UInt (config.xlen bits)
+    val translationBypass = in(OooTranslationBypass(config))
     val reservationValid = in Bool ()
     val reservationLineAddress = in Bits (config.reservationAddressWidth bits)
     val dataRequestValid = out Bool ()
@@ -177,6 +179,17 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
   val storeReleaseValid = Bits(config.commitWidth bits)
   val aguMisaligned = (io.agu.size === B(2, 3 bits) && io.agu.virtualAddress(1 downto 0) =/= 0) ||
     (io.agu.size === B(1, 3 bits) && io.agu.virtualAddress(0))
+  io.translationBypassAddress := io.agu.virtualAddress
+  val aguBypassEligible = if (config.enableDirectDmwPretranslation) {
+    io.translationBypass.eligible
+  } else {
+    False
+  }
+  val aguTranslationBypass = aguBypassEligible && !aguMisaligned
+  val aguBypassScSuccess = !io.translationBypass.uncached && io.reservationValid &&
+    io.reservationLineAddress === io.translationBypass.physicalAddress(
+      config.xlen - 1 downto config.dataCache.offsetWidth
+    ).asBits
   val aguFire = Bool()
 
   val stores = Vec.fill(config.storeQueueEntries)(Reg(OooStoreQueueEntry(config)))
@@ -267,9 +280,13 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
         scheduledLoad.pdst := io.agu.uop.pdst
         scheduledLoad.writesPdst := io.agu.uop.pdst =/= 0
         scheduledLoad.virtualAddress := io.agu.virtualAddress
-        scheduledLoad.physicalAddress := 0
-        scheduledLoad.translationDone := False
-        scheduledLoad.uncached := False
+        scheduledLoad.physicalAddress := Mux(
+          aguTranslationBypass,
+          io.translationBypass.physicalAddress,
+          U(0, config.xlen bits)
+        )
+        scheduledLoad.translationDone := aguTranslationBypass
+        scheduledLoad.uncached := aguTranslationBypass && io.translationBypass.uncached
         scheduledLoad.size := io.agu.size
         scheduledLoad.byteMask := io.agu.byteMask
         scheduledLoad.signExtend := io.agu.uop.decoded.memorySignExtend
@@ -937,7 +954,15 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
       stores(index).size := io.agu.size
       stores(index).byteMask := io.agu.byteMask
       stores(index).addressReady := !aguMisaligned
-      stores(index).translationDone := False
+      stores(index).physicalAddress := Mux(
+        aguTranslationBypass,
+        io.translationBypass.physicalAddress,
+        U(0, config.xlen bits)
+      )
+      stores(index).translationDone := aguTranslationBypass
+      stores(index).uncached := aguTranslationBypass && io.translationBypass.uncached
+      stores(index).scSuccess := io.agu.uop.decoded.isSc && aguTranslationBypass &&
+        aguBypassScSuccess
     }
     when(storeDataFire) {
       val index = io.storeDataStoreQueueIndex
@@ -955,7 +980,13 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
       loads(index).isLl := io.agu.uop.decoded.isLl
       loads(index).addressReady := !aguMisaligned
       loads(index).completed := aguMisaligned
-      loads(index).translationDone := False
+      loads(index).physicalAddress := Mux(
+        aguTranslationBypass,
+        io.translationBypass.physicalAddress,
+        U(0, config.xlen bits)
+      )
+      loads(index).translationDone := aguTranslationBypass
+      loads(index).uncached := aguTranslationBypass && io.translationBypass.uncached
     }
 
     when(translationResponseFire && translationActive) {
