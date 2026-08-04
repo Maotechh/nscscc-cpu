@@ -121,7 +121,7 @@ class OpenLa500CsrSpec extends AnyFunSuite {
         assert(read(0xb2) == 0)
         assert(read(0xc0) == BigInt("0000001d", 16))
         assert(read(0xc1) == BigInt("06070001", 16))
-        assert(read(0xc2) == BigInt("06060001", 16))
+        assert(read(0xc2) == BigInt("06070001", 16))
         assert(read(0xc3) == BigInt("06090001", 16))
         assert(read(0xb3) == 0)
 

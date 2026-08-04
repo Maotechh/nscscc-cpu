@@ -11,7 +11,7 @@ class CoreConfigSpec extends AnyFunSuite {
     assert(OooCpuConfig.value(default, 2) == 0)
     assert(OooCpuConfig.value(default, 16) == BigInt("0000001d", 16))
     assert(OooCpuConfig.value(default, 17) == BigInt("06070001", 16))
-    assert(OooCpuConfig.value(default, 18) == BigInt("06060001", 16))
+    assert(OooCpuConfig.value(default, 18) == BigInt("06070001", 16))
     assert(OooCpuConfig.value(default, 19) == BigInt("06090001", 16))
 
     val fourWay = default.copy(

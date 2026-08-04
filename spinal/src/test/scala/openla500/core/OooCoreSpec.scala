@@ -40,7 +40,7 @@ class OooCoreSpec extends AnyFunSuite {
     assert(config.dispatchQueueEntries == 8)
     assert(config.mshrEntries == 4)
     assert(config.instructionCache.capacityBytes == 16384)
-    assert(config.dataCache.capacityBytes == 8192)
+    assert(config.dataCache.capacityBytes == 16384)
     assert(config.level2Cache.capacityBytes == 65536)
     assert(config.instructionCache.lineBytes == 64)
     assert(config.dataCache.lineBytes == 64)

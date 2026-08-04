@@ -26,7 +26,7 @@
 | 68 条目标指令与特权框架 | 已有 | Scala 译码、CSR、32 项 TLB、地址翻译、精确提交、`IDLE` |
 | `DBAR/IBAR` | 满足 | memory epoch、ROB-head 排空、Cache/AXI 双周期静止、IBAR L1D/L2/L1I 维护和 `PC+4` 重取 |
 | `CACOP` | 满足 | L1I/L1D/L2 的 Store Tag、Index、Hit 单行维护；脏行写回、Hit 翻译异常和维护 token 均有定向测试 |
-| `CPUCFG` | 满足 | 从 `OooCoreConfig` 派生，默认 `.16/.17/.18/.19` 为 `0x1d/0x06070001/0x06060001/0x06090001` |
+| `CPUCFG` | 满足 | 从 `OooCoreConfig` 派生，默认 `.16/.17/.18/.19` 为 `0x1d/0x06070001/0x06070001/0x06090001` |
 | LL/SC | 平台范围内满足 | 64 B line 保留粒度；uncached LL 不建立 reservation，uncached SC 失败且不写；平台限定单核、非一致性 DMA |
 | MMIO/AXI | 本地满足 | uncached store 等待 B，非 OKAY 形成 ADEM，检查 response ID；cached writeback B 错误在仿真中断言 |
 | Cache/AXI 响应仲裁 | 满足 | cached L1D 与 uncached 响应同拍时以一项 deferred response 保存 cached 响应，随机 AXI Linux 死锁已消除 |

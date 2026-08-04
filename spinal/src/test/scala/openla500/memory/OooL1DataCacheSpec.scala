@@ -253,7 +253,7 @@ class OooL1DataCacheSpec extends AnyFunSuite {
         dut.clockDomain.waitSampling(2)
         dut.clockDomain.deassertReset()
         assert(dut.io.invalidateBusy.toBoolean)
-        dut.clockDomain.waitSampling(70)
+        dut.clockDomain.waitSampling(config.dataCache.sets + 8)
         sleep(1)
         assert(!dut.io.invalidateBusy.toBoolean)
         assert(dut.io.requestReady.toBoolean)
@@ -318,7 +318,7 @@ class OooL1DataCacheSpec extends AnyFunSuite {
         dut.clockDomain.assertReset()
         dut.clockDomain.waitSampling(2)
         dut.clockDomain.deassertReset()
-        dut.clockDomain.waitSampling(70)
+        dut.clockDomain.waitSampling(config.dataCache.sets + 8)
         sleep(1)
 
         setRequest(
@@ -395,7 +395,7 @@ class OooL1DataCacheSpec extends AnyFunSuite {
         dut.clockDomain.assertReset()
         dut.clockDomain.waitSampling(2)
         dut.clockDomain.deassertReset()
-        dut.clockDomain.waitSampling(70)
+        dut.clockDomain.waitSampling(config.dataCache.sets + 8)
         sleep(1)
 
         setRequest(dut, 0x100, isWrite = false, 0, 0xf, robPointer = 1, pdst = 8)
@@ -440,7 +440,7 @@ class OooL1DataCacheSpec extends AnyFunSuite {
         dut.clockDomain.assertReset()
         dut.clockDomain.waitSampling(2)
         dut.clockDomain.deassertReset()
-        dut.clockDomain.waitSampling(70)
+        dut.clockDomain.waitSampling(config.dataCache.sets + 8)
 
         setRequest(dut, 0x240, isWrite = false, data = 0, mask = 0xf, robPointer = 1, pdst = 2)
         sample(dut)
@@ -468,7 +468,7 @@ class OooL1DataCacheSpec extends AnyFunSuite {
         dut.clockDomain.assertReset()
         dut.clockDomain.waitSampling(2)
         dut.clockDomain.deassertReset()
-        dut.clockDomain.waitSampling(70)
+        dut.clockDomain.waitSampling(config.dataCache.sets + 8)
         sleep(1)
 
         val addresses = Seq(BigInt(0x100), BigInt(0x180), BigInt(0x200), BigInt(0x280))
@@ -524,7 +524,7 @@ class OooL1DataCacheSpec extends AnyFunSuite {
         dut.clockDomain.assertReset()
         dut.clockDomain.waitSampling(2)
         dut.clockDomain.deassertReset()
-        dut.clockDomain.waitSampling(70)
+        dut.clockDomain.waitSampling(config.dataCache.sets + 8)
         sleep(1)
 
         def acceptRequest(address: BigInt, pointer: Int, pdst: Int): Unit = {
@@ -616,7 +616,7 @@ class OooL1DataCacheSpec extends AnyFunSuite {
         dut.clockDomain.assertReset()
         dut.clockDomain.waitSampling(2)
         dut.clockDomain.deassertReset()
-        dut.clockDomain.waitSampling(70)
+        dut.clockDomain.waitSampling(config.dataCache.sets + 8)
         sleep(1)
 
         setRequest(dut, 0x100, isWrite = false, data = 0, mask = 0xf, robPointer = 1, pdst = 8)
@@ -701,7 +701,7 @@ class OooL1DataCacheSpec extends AnyFunSuite {
         dut.clockDomain.assertReset()
         dut.clockDomain.waitSampling(2)
         dut.clockDomain.deassertReset()
-        dut.clockDomain.waitSampling(70)
+        dut.clockDomain.waitSampling(config.dataCache.sets + 8)
         sleep(1)
 
         setRequest(
@@ -793,7 +793,7 @@ class OooL1DataCacheSpec extends AnyFunSuite {
         dut.clockDomain.assertReset()
         dut.clockDomain.waitSampling(2)
         dut.clockDomain.deassertReset()
-        dut.clockDomain.waitSampling(70)
+        dut.clockDomain.waitSampling(config.dataCache.sets + 8)
         sleep(1)
 
         setRequest(dut, 0x100, isWrite = false, data = 0, mask = 0xf, robPointer = 1, pdst = 4)
@@ -858,15 +858,20 @@ class OooL1DataCacheSpec extends AnyFunSuite {
         dut.clockDomain.assertReset()
         dut.clockDomain.waitSampling(2)
         dut.clockDomain.deassertReset()
-        dut.clockDomain.waitSampling(70)
+        dut.clockDomain.waitSampling(config.dataCache.sets + 8)
         sleep(1)
 
-        loadMiss(0x100, BigInt("1000000000000000", 16), 1)
-        loadMiss(0x1100, BigInt("2000000000000000", 16), 2)
+        val setSpan = BigInt(config.dataCache.sets * config.dataCache.lineBytes)
+        val line0 = BigInt(0x100)
+        val line1 = line0 + setSpan
+        val line2 = line0 + setSpan * 2
+        val line3 = line0 + setSpan * 3
+        loadMiss(line0, BigInt("1000000000000000", 16), 1)
+        loadMiss(line1, BigInt("2000000000000000", 16), 2)
 
         setRequest(
           dut,
-          0x100,
+          line0,
           isWrite = true,
           data = BigInt("deadbeef", 16),
           mask = 0xf,
@@ -878,9 +883,9 @@ class OooL1DataCacheSpec extends AnyFunSuite {
         sample(dut)
         assert(!dut.io.lineWriteValid.toBoolean)
 
-        loadMiss(0x2100, BigInt("3000000000000000", 16), 4)
+        loadMiss(line2, BigInt("3000000000000000", 16), 4)
 
-        setRequest(dut, 0x3100, isWrite = false, data = 0, mask = 0xf, robPointer = 5, pdst = 4)
+        setRequest(dut, line3, isWrite = false, data = 0, mask = 0xf, robPointer = 5, pdst = 4)
         sample(dut)
         dut.io.requestValid #= false
         var waitCycles = 0
@@ -889,14 +894,14 @@ class OooL1DataCacheSpec extends AnyFunSuite {
           waitCycles += 1
         }
         assert(dut.io.lineWriteValid.toBoolean)
-        assert(dut.io.lineWrite.lineAddress.toBigInt == 0x100)
+        assert(dut.io.lineWrite.lineAddress.toBigInt == line0)
         assert((dut.io.lineWrite.data.toBigInt & BigInt("ffffffff", 16)) == BigInt("deadbeef", 16))
 
         val heldData = dut.io.lineWrite.data.toBigInt
         for (_ <- 0 until 3) {
           sample(dut)
           assert(dut.io.lineWriteValid.toBoolean)
-          assert(dut.io.lineWrite.lineAddress.toBigInt == 0x100)
+          assert(dut.io.lineWrite.lineAddress.toBigInt == line0)
           assert(dut.io.lineWrite.data.toBigInt == heldData)
         }
 
@@ -912,14 +917,14 @@ class OooL1DataCacheSpec extends AnyFunSuite {
           waitCycles += 1
         }
         assert(dut.io.lineWriteValid.toBoolean)
-        assert(dut.io.lineWrite.lineAddress.toBigInt == 0x100)
+        assert(dut.io.lineWrite.lineAddress.toBigInt == line0)
         assert(dut.io.lineWrite.data.toBigInt == heldData)
         dut.io.lineWriteReady #= true
         sample(dut)
         dut.io.lineWriteReady #= false
         while (!dut.io.lineReadValid.toBoolean) sample(dut)
         assert(dut.io.lineReadValid.toBoolean)
-        assert(dut.io.lineRead.lineAddress.toBigInt == 0x3100)
+        assert(dut.io.lineRead.lineAddress.toBigInt == line3)
       }
   }
 
@@ -1030,8 +1035,10 @@ class OooL1DataCacheSpec extends AnyFunSuite {
           sample(dut)
         }
 
+        val setSpan = BigInt(config.dataCache.sets * config.dataCache.lineBytes)
         val line0 = BigInt(0x100)
-        val line1 = BigInt(0x1100)
+        val line1 = line0 + setSpan
+        val absentLine = line0 + setSpan * 2
         install(line0, BigInt("1000000000000000", 16))
         install(line1, BigInt("2000000000000000", 16))
 
@@ -1046,7 +1053,7 @@ class OooL1DataCacheSpec extends AnyFunSuite {
         install(line0, BigInt("4000000000000000", 16))
 
         dirty(line0, BigInt("0badf00d", 16))
-        maintain(dut, 0x11, 0x2100, 0x2100, expectedWritebackAddress = None)
+        maintain(dut, 0x11, absentLine, absentLine, expectedWritebackAddress = None)
         expectHit(line0)
         maintain(dut, 0x11, line0, line0, expectedWritebackAddress = Some(line0))
         expectHit(line1)
