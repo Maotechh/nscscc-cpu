@@ -174,6 +174,58 @@ class OooBackendDispatchSpec extends AnyFunSuite {
     }
   }
 
+  test("unused encoded source fields do not create rename dependencies") {
+    SimConfig.withVerilator
+      .workspacePath("target/sim-workspace-ooo-backend-dispatch")
+      .compile(new OooBackendDispatchProbe(config))
+      .doSim("ooo-backend-unused-source-normalization", 0x4c60) { dut =>
+        dut.clockDomain.forkStimulus(period = 10)
+        clearControl(dut)
+        dut.io.issueReady #= 0xf
+        dut.clockDomain.assertReset()
+        dut.clockDomain.waitSampling(2)
+        dut.clockDomain.deassertReset()
+        dut.clockDomain.waitSampling()
+
+        val producerPc = BigInt("1c000000", 16)
+        val lu12iPc = producerPc + 4
+        val addiPc = producerPc + 8
+        dut.io.inputValid #= 7
+        dut.io.pc(0) #= producerPc
+        dut.io.instruction(0) #= BigInt("2880000d", 16) // ld.w r13,r0,0
+        dut.io.pc(1) #= lu12iPc
+        // LU12I.W has no register source; immediate bits [4:0] occupy rj and encode 13 here.
+        dut.io.instruction(1) #= BigInt("140001ae", 16) // lu12i.w r14,0xd
+        dut.io.pc(2) #= addiPc
+        // ADDI.W does not use rk; immediate bits [4:0] occupy rk and encode 13 here.
+        dut.io.instruction(2) #= BigInt("0280340f", 16) // addi.w r15,r0,13
+        dut.clockDomain.waitSampling()
+        dut.io.inputValid #= 0
+
+        val issuedBeforeLoadCompletion = ArrayBuffer.empty[BigInt]
+        var cycles = 0
+        while (
+          cycles < 16 &&
+          (!issuedBeforeLoadCompletion.contains(lu12iPc) ||
+            !issuedBeforeLoadCompletion.contains(addiPc))
+        ) {
+          dut.clockDomain.waitSampling()
+          sleep(1)
+          val mask = dut.io.issueValid.toBigInt
+          for (port <- 0 until config.executionWidth) {
+            if ((mask & (BigInt(1) << port)) != 0) {
+              issuedBeforeLoadCompletion += dut.io.issuePc(port).toBigInt
+            }
+          }
+          cycles += 1
+        }
+
+        assert(issuedBeforeLoadCompletion.contains(producerPc))
+        assert(issuedBeforeLoadCompletion.contains(lu12iPc))
+        assert(issuedBeforeLoadCompletion.contains(addiPc))
+      }
+  }
+
   test("memory epoch follows rename lane order, rollback, and eight-bit wrap") {
     val compiled = SimConfig.withVerilator
       .workspacePath("target/sim-workspace-ooo-backend-dispatch")

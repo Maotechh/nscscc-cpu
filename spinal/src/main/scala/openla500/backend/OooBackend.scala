@@ -246,8 +246,19 @@ final class OooBackend(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommi
 
   registerMap.io.renameValid := accepted
   for (lane <- 0 until config.renameWidth) {
-    registerMap.io.renameSource1(lane) := io.rename(lane).rs1
-    registerMap.io.renameSource2(lane) := io.rename(lane).rs2
+    // Immediate and PC-sourced encodings reuse the architectural source bit
+    // fields for payload bits. Canonicalize those unused fields before the RAT
+    // lookup so they cannot create false same-group or resident dependencies.
+    registerMap.io.renameSource1(lane) := Mux(
+      io.rename(lane).source1Used,
+      io.rename(lane).rs1,
+      U(0, config.archRegIndexWidth bits)
+    )
+    registerMap.io.renameSource2(lane) := Mux(
+      io.rename(lane).source2Used,
+      io.rename(lane).rs2,
+      U(0, config.archRegIndexWidth bits)
+    )
     registerMap.io.renameDestination(lane) := Mux(
       io.rename(lane).writesGpr,
       io.rename(lane).rd,
