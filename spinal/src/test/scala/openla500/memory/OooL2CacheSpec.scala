@@ -7,7 +7,7 @@ import spinal.core.sim._
 import scala.language.reflectiveCalls
 
 class OooL2CacheSpec extends AnyFunSuite {
-  private val config = OooCoreConfig.FourIssueThreeCommit
+  private val config = OooCoreConfig.FourIssueThreeCommit.copy(enableL2WriteBack = false)
 
   private def sample(dut: OooL2Cache): Unit = {
     dut.clockDomain.waitSampling()
@@ -154,6 +154,114 @@ class OooL2CacheSpec extends AnyFunSuite {
           dut.clockDomain.waitSampling()
           sleep(1)
         }
+      }
+  }
+
+  test("write-back L2 defers memory writes until dirty eviction or maintenance") {
+    val writeBackConfig = config.copy(enableL2WriteBack = true)
+    SimConfig.withVerilator
+      .workspacePath("target/sim-workspace-ooo-l2-write-back")
+      .compile(new OooL2Cache(writeBackConfig))
+      .doSim("ooo-l2-write-back", 0x4c70) { dut =>
+        dut.clockDomain.forkStimulus(period = 10)
+        SimTimeout(20000)
+        clearInputs(dut)
+        dut.clockDomain.assertReset()
+        dut.clockDomain.waitSampling(2)
+        dut.clockDomain.deassertReset()
+        dut.clockDomain.waitSampling(writeBackConfig.level2Cache.sets + 4)
+
+        def waitUntil(condition: => Boolean, clue: String, maxCycles: Int = 64): Unit = {
+          var cycles = 0
+          while (!condition && cycles < maxCycles) {
+            sample(dut)
+            cycles += 1
+          }
+          assert(condition, clue)
+        }
+
+        def writeLine(address: BigInt, data: BigInt, mshrId: Int): Unit = {
+          dut.io.writeValid #= true
+          dut.io.write.lineAddress #= address
+          dut.io.write.data #= data
+          dut.io.write.byteMask #= (BigInt(1) << OooCacheContract.LineBytes) - 1
+          dut.io.write.mshrId #= mshrId
+          waitUntil(dut.io.writeReady.toBoolean, s"write 0x${address.toString(16)} was not accepted")
+          sample(dut)
+          dut.io.writeValid #= false
+        }
+
+        def expectLocalCompletion(mshrId: Int): Unit = {
+          var cycles = 0
+          while (!dut.io.writeResponseValid.toBoolean && cycles < 16) {
+            assert(!dut.io.memoryWriteValid.toBoolean)
+            sample(dut)
+            cycles += 1
+          }
+          assert(dut.io.writeResponseValid.toBoolean)
+          assert(dut.io.writeResponse.mshrId.toBigInt == mshrId)
+          assert(!dut.io.writeResponse.error.toBoolean)
+          assert(!dut.io.memoryWriteValid.toBoolean)
+          sample(dut)
+        }
+
+        val setStride = BigInt(writeBackConfig.level2Cache.sets) * OooCacheContract.LineBytes
+        val addressA = BigInt("d0400000", 16)
+        val addressB = addressA + setStride
+        val addressC = addressB + setStride
+        val dataA = BigInt(0x11)
+        val dataB = BigInt(0x22)
+        val dataC = BigInt(0x33)
+
+        writeLine(addressA, dataA, 0)
+        expectLocalCompletion(0)
+        writeLine(addressB, dataB, 1)
+        expectLocalCompletion(1)
+
+        // Both ways now contain dirty lines. The replacement must first preserve A in memory.
+        writeLine(addressC, dataC, 2)
+        waitUntil(dut.io.memoryWriteValid.toBoolean, "dirty L2 victim was not written back")
+        assert(dut.io.memoryWrite.lineAddress.toBigInt == addressA)
+        assert(dut.io.memoryWrite.data.toBigInt == dataA)
+        assert(dut.io.memoryWrite.mshrId.toBigInt == 2)
+        dut.io.memoryWriteReady #= true
+        sample(dut)
+        dut.io.memoryWriteReady #= false
+        dut.io.memoryWriteResponseValid #= true
+        dut.io.memoryWriteResponse.mshrId #= 2
+        sample(dut)
+        dut.io.memoryWriteResponseValid #= false
+        expectLocalCompletion(2)
+
+        // Hit-mode CACOP must also write a dirty line before invalidating it.
+        waitUntil(dut.io.maintenanceRequest.ready.toBoolean, "L2 did not become idle")
+        dut.io.maintenanceRequest.valid #= true
+        dut.io.maintenanceRequest.code #= 0x12
+        dut.io.maintenanceRequest.virtualAddress #= addressC
+        dut.io.maintenanceRequest.physicalAddress #= addressC
+        sample(dut)
+        dut.io.maintenanceRequest.valid #= false
+        waitUntil(dut.io.memoryWriteValid.toBoolean, "dirty CACOP target was not written back")
+        assert(dut.io.memoryWrite.lineAddress.toBigInt == addressC)
+        assert(dut.io.memoryWrite.data.toBigInt == dataC)
+        dut.io.memoryWriteReady #= true
+        sample(dut)
+        dut.io.memoryWriteReady #= false
+        dut.io.memoryWriteResponseValid #= true
+        dut.io.memoryWriteResponse.mshrId #= 0
+        sample(dut)
+        dut.io.memoryWriteResponseValid #= false
+        waitUntil(dut.io.maintenanceDone.toBoolean, "dirty CACOP did not complete")
+        sample(dut)
+
+        dut.io.readValid #= true
+        dut.io.read.lineAddress #= addressC
+        dut.io.read.mshrId #= 3
+        waitUntil(dut.io.readReady.toBoolean, "post-CACOP lookup was not accepted")
+        sample(dut)
+        dut.io.readValid #= false
+        waitUntil(dut.io.memoryReadValid.toBoolean, "CACOP target remained valid in L2")
+        assert(dut.io.memoryRead.lineAddress.toBigInt == addressC)
       }
   }
 

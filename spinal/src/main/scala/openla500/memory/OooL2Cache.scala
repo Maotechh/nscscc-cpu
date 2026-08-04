@@ -256,10 +256,15 @@ final class OooL2Cache(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommi
       writeWay := Mux(cacheArray.io.hit, cacheArray.io.hitWay, cacheArray.io.victimWay)
       writeVictimAddress := cacheArray.io.victimAddress
       writeVictimData := cacheArray.io.victimData
+      val cleanVictimState = if (config.enableL2WriteBack) {
+        OooL2WriteState.install
+      } else {
+        OooL2WriteState.writeThrough
+      }
       writeState := Mux(
         !cacheArray.io.hit && cacheArray.io.victimValid && cacheArray.io.victimDirty,
         OooL2WriteState.victimWriteback,
-        OooL2WriteState.writeThrough
+        cleanVictimState
       )
     }.otherwise {
       val entry = misses(lookupMshrId)
@@ -362,7 +367,11 @@ final class OooL2Cache(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommi
         writeResponse.mshrId := writeMshrId
         writeResponse.error := True
       }.otherwise {
-        writeState := OooL2WriteState.writeThrough
+        writeState := (if (config.enableL2WriteBack) {
+          OooL2WriteState.install
+        } else {
+          OooL2WriteState.writeThrough
+        })
       }
     }.elsewhen(
       writeState === OooL2WriteState.writeThroughWait &&
@@ -511,7 +520,7 @@ final class OooL2Cache(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommi
     cacheArray.io.writeTag := tagOf(writeAddress)
     cacheArray.io.writeData := writeData
     cacheArray.io.writeEntryValid := True
-    cacheArray.io.writeDirty := False
+    cacheArray.io.writeDirty := (if (config.enableL2WriteBack) True else False)
     writeState := OooL2WriteState.idle
     writeResponseValid := True
     writeResponse.mshrId := writeMshrId
