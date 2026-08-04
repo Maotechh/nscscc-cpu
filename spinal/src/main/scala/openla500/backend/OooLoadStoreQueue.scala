@@ -405,17 +405,26 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
       .resize(config.storeQueueEntries)
   val storeTranslationOffset = OHToUInt(OHMasking.first(rotatedPendingStoreTranslations))
   val lookaheadStoreIndex = (storeHead + storeTranslationOffset).resized
+  val oldestPendingStore = stores(lookaheadStoreIndex)
   val lookaheadStoreNeedsTranslation = if (config.enableStoreTranslationLookahead) {
     !headStoreNeedsTranslation && !loadNeedsTranslation && pendingStoreTranslations.orR
   } else {
     False
   }
-  val selectStoreTranslation = headStoreNeedsTranslation || lookaheadStoreNeedsTranslation
-  val storeTranslationIndex = Mux(
-    headStoreNeedsTranslation,
-    storeHead,
+  // Give the single translation owner to the older memory operation. This
+  // lets Stores translate before reaching the STQ head without starving an older Load.
+  val ageAwareStorePriority = pendingStoreTranslations.orR &&
+    (!loadNeedsTranslation || isOlder(oldestPendingStore.robPointer, scheduledLoad.robPointer))
+  val selectStoreTranslation = if (config.enableAgeAwareTranslationArbitration) {
+    ageAwareStorePriority
+  } else {
+    headStoreNeedsTranslation || lookaheadStoreNeedsTranslation
+  }
+  val storeTranslationIndex = if (config.enableAgeAwareTranslationArbitration) {
     lookaheadStoreIndex
-  )
+  } else {
+    Mux(headStoreNeedsTranslation, storeHead, lookaheadStoreIndex)
+  }
   val selectedStoreTranslation = stores(storeTranslationIndex)
   io.translationRequest.valid := !io.flush && !translationActive && !translationCancelPending &&
     (selectStoreTranslation || loadNeedsTranslation)
