@@ -319,15 +319,19 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
   for (entry <- 0 until config.storeQueueEntries) {
     val store = stores(entry)
     val older = store.valid && isOlder(store.robPointer, scheduledLoad.robPointer)
-    val sameWord = store.virtualAddress(config.xlen - 1 downto 2) ===
-      scheduledLoad.virtualAddress(config.xlen - 1 downto 2)
+    // A virtual synonym is not an alias decision.  Hold every younger load
+    // until the older store has a translation, then compare the physical word
+    // addresses that the cache and external memory will actually observe.
+    val physicalAddressesKnown = store.translationDone && headLoadState.translationDone
+    val sameWord = store.physicalAddress(config.xlen - 1 downto 2) ===
+      headLoadState.physicalAddress(config.xlen - 1 downto 2)
     val overlap = (store.byteMask & scheduledLoad.byteMask).orR
     val covers = (store.byteMask & scheduledLoad.byteMask) === scheduledLoad.byteMask
-    unknownOlderStore(entry) := older && !store.addressReady
-    partialOverlapStore(entry) := older && store.addressReady && sameWord && overlap && !covers
-    pendingDataStore(entry) := older && store.addressReady && sameWord && overlap &&
+    unknownOlderStore(entry) := older && (!store.addressReady || !store.translationDone)
+    partialOverlapStore(entry) := older && physicalAddressesKnown && sameWord && overlap && !covers
+    pendingDataStore(entry) := older && physicalAddressesKnown && sameWord && overlap &&
       !store.dataReady
-    forwardingStore(entry) := older && store.addressReady && store.dataReady && sameWord && covers
+    forwardingStore(entry) := older && physicalAddressesKnown && store.dataReady && sameWord && covers
   }
 
   val forwardingCount = CountOne(forwardingStore)

@@ -26,7 +26,10 @@ private final class OooLoadStoreQueueProbe(config: OooCoreConfig) extends Compon
     val translationEcode = in UInt (6 bits)
     val translationResponseEnable = in Bool ()
     val translationUncached = in Bool ()
+    val translationPhysicalAddressEnable = in Bool ()
+    val translationPhysicalAddress = in UInt (config.xlen bits)
     val translationRequestValid = out Bool ()
+    val translationRequestAddress = out UInt (config.xlen bits)
     val reservationValid = in Bool ()
     val reservationLineAddress = in Bits (config.reservationAddressWidth bits)
     val completionValid = out Bool ()
@@ -72,7 +75,11 @@ private final class OooLoadStoreQueueProbe(config: OooCoreConfig) extends Compon
   }
   lsq.io.translationResponse.valid := translationValid && io.translationResponseEnable
   lsq.io.translationResponse.virtualAddress := translationAddress
-  lsq.io.translationResponse.physicalAddress := translationAddress
+  lsq.io.translationResponse.physicalAddress := Mux(
+    io.translationPhysicalAddressEnable,
+    io.translationPhysicalAddress,
+    translationAddress
+  )
   lsq.io.translationResponse.uncached := io.translationUncached
   lsq.io.translationResponse.exception.valid := io.translationFault
   lsq.io.translationResponse.exception.ecode := io.translationEcode
@@ -87,6 +94,7 @@ private final class OooLoadStoreQueueProbe(config: OooCoreConfig) extends Compon
   lsq.io.orderingRobPointer := 0
 
   io.aguReady := lsq.io.aguReady
+  io.translationRequestAddress := lsq.io.translationRequest.virtualAddress
   io.dataRequestValid := lsq.io.dataRequestValid
   io.dataRequest := lsq.io.dataRequest
   io.completionValid := lsq.io.completionValid
@@ -111,6 +119,8 @@ class OooLoadStoreQueueSpec extends AnyFunSuite {
     dut.io.translationEcode #= 0
     dut.io.translationResponseEnable #= true
     dut.io.translationUncached #= false
+    dut.io.translationPhysicalAddressEnable #= false
+    dut.io.translationPhysicalAddress #= 0
     dut.io.reservationValid #= false
     dut.io.reservationLineAddress #= 0
     dut.io.committedMemoryEpoch #= 0
@@ -996,13 +1006,178 @@ class OooLoadStoreQueueSpec extends AnyFunSuite {
         sleep(1)
         assert(dut.io.aguReady.toBoolean)
         sample(dut)
-        sample(dut)
+        dut.io.aguValid #= false
+        var forwardingWait = 0
+        while (
+          (!dut.io.completionValid.toBoolean || dut.io.completion.robPointer.toBigInt != 1) &&
+          forwardingWait < 8
+        ) {
+          sample(dut)
+          forwardingWait += 1
+        }
         assert(dut.io.completionValid.toBoolean)
         assert(dut.io.completion.robPointer.toBigInt == 1)
         assert(dut.io.completion.pdst.toBigInt == 7)
         assert(dut.io.completion.data.toBigInt == BigInt("12345678", 16))
         assert(!dut.io.dataRequestValid.toBoolean)
+      }
+  }
+
+  test("physical synonyms forward only after both Store and Load translations complete") {
+    SimConfig.withVerilator
+      .workspacePath("target/sim-workspace-ooo-lsq")
+      .compile(new OooLoadStoreQueueProbe(config))
+      .doSim("ooo-lsq-physical-synonym-forwarding", 0x4c79) { dut =>
+        dut.clockDomain.forkStimulus(period = 10)
+        clearInputs(dut)
+        dut.io.translationResponseEnable #= false
+        dut.io.translationPhysicalAddressEnable #= true
+        dut.clockDomain.assertReset()
+        dut.clockDomain.waitSampling(2)
+        dut.clockDomain.deassertReset()
+        sample(dut)
+
+        dut.io.allocateValid #= 3
+        dut.io.allocate(0).robPointer #= 0
+        dut.io.allocate(0).isStore #= true
+        dut.io.allocate(0).storeQueueIndex #= 0
+        dut.io.allocate(1).robPointer #= 1
+        dut.io.allocate(1).isLoad #= true
+        dut.io.allocate(1).loadQueueIndex #= 0
+        sample(dut)
+        dut.io.allocateValid #= 0
+
+        setStoreAgu(dut, 0, 0x1000, BigInt("12345678", 16))
+        sample(dut)
         dut.io.aguValid #= false
+        var storeTranslationWait = 0
+        while (!dut.io.translationRequestValid.toBoolean && storeTranslationWait < 8) {
+          sample(dut)
+          storeTranslationWait += 1
+        }
+        assert(dut.io.translationRequestValid.toBoolean)
+        assert(dut.io.translationRequestAddress.toBigInt == 0x1000)
+        sample(dut)
+
+        setLoadAgu(dut, 1, 0x2000)
+        sample(dut)
+        dut.io.aguValid #= false
+        for (_ <- 0 until 3) {
+          assert(!dut.io.dataRequestValid.toBoolean)
+          sample(dut)
+        }
+
+        dut.io.translationPhysicalAddress #= 0x8000
+        dut.io.translationResponseEnable #= true
+        sample(dut)
+        dut.io.translationResponseEnable #= false
+        var loadTranslationWait = 0
+        while (!dut.io.translationRequestValid.toBoolean && loadTranslationWait < 8) {
+          sample(dut)
+          loadTranslationWait += 1
+        }
+        assert(dut.io.translationRequestValid.toBoolean)
+        assert(dut.io.translationRequestAddress.toBigInt == 0x2000)
+        sample(dut)
+        assert(!dut.io.dataRequestValid.toBoolean)
+
+        dut.io.translationPhysicalAddress #= 0x8000
+        dut.io.translationResponseEnable #= true
+        sample(dut)
+        dut.io.translationResponseEnable #= false
+
+        var completionWait = 0
+        while (
+          (!dut.io.completionValid.toBoolean || dut.io.completion.robPointer.toBigInt != 1) &&
+          completionWait < 8
+        ) {
+          assert(!dut.io.dataRequestValid.toBoolean)
+          sample(dut)
+          completionWait += 1
+        }
+        assert(dut.io.completionValid.toBoolean)
+        assert(dut.io.completion.robPointer.toBigInt == 1)
+        assert(dut.io.completion.data.toBigInt == BigInt("12345678", 16))
+        assert(!dut.io.dataRequestValid.toBoolean)
+      }
+  }
+
+  test("a physical-synonym partial overlap waits until the older Store drains") {
+    SimConfig.withVerilator
+      .workspacePath("target/sim-workspace-ooo-lsq")
+      .compile(new OooLoadStoreQueueProbe(config))
+      .doSim("ooo-lsq-physical-synonym-partial-overlap", 0x4c7a) { dut =>
+        dut.clockDomain.forkStimulus(period = 10)
+        clearInputs(dut)
+        dut.io.translationPhysicalAddressEnable #= true
+        dut.io.translationPhysicalAddress #= 0x9000
+        dut.clockDomain.assertReset()
+        dut.clockDomain.waitSampling(2)
+        dut.clockDomain.deassertReset()
+        sample(dut)
+
+        dut.io.allocateValid #= 3
+        dut.io.allocate(0).robPointer #= 0
+        dut.io.allocate(0).isStore #= true
+        dut.io.allocate(0).storeQueueIndex #= 0
+        dut.io.allocate(1).robPointer #= 1
+        dut.io.allocate(1).isLoad #= true
+        dut.io.allocate(1).loadQueueIndex #= 0
+        sample(dut)
+        dut.io.allocateValid #= 0
+
+        setStoreAgu(dut, 0, 0x3000, BigInt("000000ab", 16))
+        dut.io.agu.size #= 0
+        dut.io.agu.byteMask #= 1
+        sample(dut)
+        dut.io.aguValid #= false
+        var storeCompletionWait = 0
+        while (
+          (!dut.io.completionValid.toBoolean || dut.io.completion.robPointer.toBigInt != 0) &&
+          storeCompletionWait < 12
+        ) {
+          sample(dut)
+          storeCompletionWait += 1
+        }
+        assert(dut.io.completionValid.toBoolean)
+        assert(dut.io.completion.robPointer.toBigInt == 0)
+        sample(dut)
+
+        setLoadAgu(dut, 1, 0x4000)
+        sample(dut)
+        dut.io.aguValid #= false
+        for (_ <- 0 until 8) {
+          assert(!dut.io.dataRequestValid.toBoolean)
+          assert(!dut.io.completionValid.toBoolean)
+          sample(dut)
+        }
+
+        dut.io.commitValid #= 1
+        dut.io.commit(0).robPointer #= 0
+        dut.io.commit(0).isStore #= true
+        dut.io.commit(0).storeQueueIndex #= 0
+        sample(dut)
+        dut.io.commitValid #= 0
+        dut.io.dataRequestReady #= true
+
+        var storeRequestWait = 0
+        while (!dut.io.dataRequestValid.toBoolean && storeRequestWait < 8) {
+          sample(dut)
+          storeRequestWait += 1
+        }
+        assert(dut.io.dataRequestValid.toBoolean)
+        assert(dut.io.dataRequest.isWrite.toBoolean)
+        assert(dut.io.dataRequest.physicalAddress.toBigInt == 0x9000)
+        sample(dut)
+
+        var loadRequestWait = 0
+        while (!dut.io.dataRequestValid.toBoolean && loadRequestWait < 10) {
+          sample(dut)
+          loadRequestWait += 1
+        }
+        assert(dut.io.dataRequestValid.toBoolean)
+        assert(!dut.io.dataRequest.isWrite.toBoolean)
+        assert(dut.io.dataRequest.physicalAddress.toBigInt == 0x9000)
       }
   }
 
