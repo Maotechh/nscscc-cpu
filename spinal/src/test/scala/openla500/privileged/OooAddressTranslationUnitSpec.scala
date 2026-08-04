@@ -513,4 +513,56 @@ class OooAddressTranslationUnitSpec extends AnyFunSuite {
         assert(dut.io.instructionResponse.uncached.toBoolean)
       }
   }
+
+  test("TLB mutation cancels every accepted instruction and data translation") {
+    SimConfig.withVerilator
+      .workspacePath("target/sim-workspace-ooo-address-translation-cancel")
+      .compile(new OooAddressTranslationUnit(config))
+      .doSim("ooo-address-translation-cancel", 0x4c79) { dut =>
+        dut.domain.forkStimulus(period = 10)
+        clearInputs(dut)
+        dut.domain.assertReset()
+        dut.domain.waitSampling(2)
+        dut.domain.deassertReset()
+        sample(dut)
+
+        dut.io.csrDa #= false
+        dut.io.csrPg #= true
+        val instructionAddress = BigInt("00456040", 16)
+        val dataAddress = BigInt("0089a084", 16)
+        dut.io.instructionRequest.valid #= true
+        dut.io.instructionRequest.virtualAddress #= instructionAddress
+        dut.io.dataRequest.valid #= true
+        dut.io.dataRequest.virtualAddress #= dataAddress
+        dut.io.dataRequest.isWrite #= true
+        sleep(1)
+        assert(dut.io.instructionRequest.ready.toBoolean)
+        assert(dut.io.dataRequest.ready.toBoolean)
+        sample(dut)
+        dut.io.instructionRequest.valid #= false
+        dut.io.dataRequest.valid #= false
+
+        dut.io.tlbInvalidateValid #= true
+        dut.io.tlbInvalidateOperation #= 0
+        sample(dut)
+        dut.io.tlbInvalidateValid #= false
+        sleep(1)
+
+        assert(dut.io.instructionResponse.valid.toBoolean)
+        assert(dut.io.instructionResponse.cancelled.toBoolean)
+        assert(dut.io.instructionResponse.virtualAddress.toBigInt == instructionAddress)
+        assert(!dut.io.instructionResponse.exception.valid.toBoolean)
+        assert(dut.io.dataResponse.valid.toBoolean)
+        assert(dut.io.dataResponse.cancelled.toBoolean)
+        assert(dut.io.dataResponse.virtualAddress.toBigInt == dataAddress)
+        assert(!dut.io.dataResponse.exception.valid.toBoolean)
+        sample(dut)
+
+        assert(!dut.io.instructionResponse.valid.toBoolean)
+        assert(!dut.io.dataResponse.valid.toBoolean)
+        assert(translateInstruction(dut, instructionAddress) >= 10)
+        assert(!dut.io.instructionResponse.cancelled.toBoolean)
+        assert(dut.io.instructionResponse.exception.tlbRefill.toBoolean)
+      }
+  }
 }

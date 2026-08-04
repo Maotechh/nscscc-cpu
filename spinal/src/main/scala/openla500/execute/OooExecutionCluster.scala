@@ -366,13 +366,17 @@ final class OooExecutionCluster(config: OooCoreConfig = OooCoreConfig.FourIssueT
   when(
     barrierState === OooBarrierState.translationResponse && translationResponseFire
   ) {
-    barrierPhysicalAddress := io.cacheTranslationResponse.physicalAddress
-    barrierException := io.cacheTranslationResponse.exception
-    barrierState := Mux(
-      io.cacheTranslationResponse.exception.valid,
-      OooBarrierState.complete,
-      OooBarrierState.startCacheMaintenance
-    )
+    when(io.cacheTranslationResponse.cancelled) {
+      barrierState := OooBarrierState.translationRequest
+    }.otherwise {
+      barrierPhysicalAddress := io.cacheTranslationResponse.physicalAddress
+      barrierException := io.cacheTranslationResponse.exception
+      barrierState := Mux(
+        io.cacheTranslationResponse.exception.valid,
+        OooBarrierState.complete,
+        OooBarrierState.startCacheMaintenance
+      )
+    }
   }
   when(
     barrierState === OooBarrierState.startInstructionMaintenance &&

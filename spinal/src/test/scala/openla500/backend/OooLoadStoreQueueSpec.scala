@@ -26,6 +26,7 @@ private final class OooLoadStoreQueueProbe(config: OooCoreConfig) extends Compon
     val translationEcode = in UInt (6 bits)
     val translationResponseEnable = in Bool ()
     val translationUncached = in Bool ()
+    val translationCancelled = in Bool ()
     val translationPhysicalAddressEnable = in Bool ()
     val translationPhysicalAddress = in UInt (config.xlen bits)
     val translationRequestValid = out Bool ()
@@ -81,6 +82,7 @@ private final class OooLoadStoreQueueProbe(config: OooCoreConfig) extends Compon
     translationAddress
   )
   lsq.io.translationResponse.uncached := io.translationUncached
+  lsq.io.translationResponse.cancelled := io.translationCancelled
   lsq.io.translationResponse.exception.valid := io.translationFault
   lsq.io.translationResponse.exception.ecode := io.translationEcode
   lsq.io.translationResponse.exception.esubcode := 0
@@ -119,6 +121,7 @@ class OooLoadStoreQueueSpec extends AnyFunSuite {
     dut.io.translationEcode #= 0
     dut.io.translationResponseEnable #= true
     dut.io.translationUncached #= false
+    dut.io.translationCancelled #= false
     dut.io.translationPhysicalAddressEnable #= false
     dut.io.translationPhysicalAddress #= 0
     dut.io.reservationValid #= false
@@ -1930,6 +1933,59 @@ class OooLoadStoreQueueSpec extends AnyFunSuite {
         assert(dut.io.completionValid.toBoolean)
         assert(dut.io.completion.data.toBigInt == 0)
         assert(!dut.io.dataRequestValid.toBoolean)
+      }
+  }
+
+  test("a cancelled translation releases the LSQ owner without architectural completion") {
+    SimConfig.withVerilator
+      .workspacePath("target/sim-workspace-ooo-lsq")
+      .compile(new OooLoadStoreQueueProbe(config))
+      .doSim("ooo-lsq-translation-cancel", 0x4c7b) { dut =>
+        dut.clockDomain.forkStimulus(period = 10)
+        clearInputs(dut)
+        dut.clockDomain.assertReset()
+        dut.clockDomain.waitSampling(2)
+        dut.clockDomain.deassertReset()
+        sample(dut)
+
+        dut.io.translationResponseEnable #= false
+        dut.io.allocateValid #= 1
+        dut.io.allocate(0).robPointer #= 0
+        dut.io.allocate(0).isLoad #= true
+        dut.io.allocate(0).loadQueueIndex #= 0
+        sample(dut)
+        dut.io.allocateValid #= 0
+        setLoadAgu(dut, 0, 0x2460)
+        sample(dut)
+        dut.io.aguValid #= false
+
+        while (!dut.io.translationRequestValid.toBoolean) sample(dut)
+        assert(dut.io.translationRequestAddress.toBigInt == 0x2460)
+        sample(dut)
+        dut.io.translationCancelled #= true
+        dut.io.translationResponseEnable #= true
+        sample(dut)
+        dut.io.translationResponseEnable #= false
+        dut.io.translationCancelled #= false
+        assert(!dut.io.completionValid.toBoolean)
+        assert(!dut.io.dataRequestValid.toBoolean)
+
+        var cycles = 0
+        while (!dut.io.translationRequestValid.toBoolean && cycles < 8) {
+          sample(dut)
+          cycles += 1
+          assert(!dut.io.completionValid.toBoolean)
+          assert(!dut.io.dataRequestValid.toBoolean)
+        }
+        assert(dut.io.translationRequestValid.toBoolean)
+        assert(dut.io.translationRequestAddress.toBigInt == 0x2460)
+        sample(dut)
+        dut.io.translationResponseEnable #= true
+        sample(dut)
+        dut.io.translationResponseEnable #= false
+        while (!dut.io.dataRequestValid.toBoolean) sample(dut)
+        assert(!dut.io.completionValid.toBoolean)
+        assert(dut.io.dataRequest.physicalAddress.toBigInt == 0x2460)
       }
   }
 }

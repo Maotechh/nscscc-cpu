@@ -14,6 +14,7 @@ final case class OooTranslationResponse(config: OooCoreConfig) extends Bundle {
   val virtualAddress = UInt(config.xlen bits)
   val physicalAddress = UInt(config.xlen bits)
   val uncached = Bool()
+  val cancelled = Bool()
   val exception = OooExceptionMeta()
 }
 
@@ -130,6 +131,7 @@ final class OooAddressTranslationUnit(
     io.tlbReadAsid := tlb.io.readEntry.asid
 
     val pagingMode = !io.csrDa && io.csrPg
+    val tlbMutation = io.tlbFillValid || io.tlbWriteValid || io.tlbInvalidateValid
     def dmwEnabled(address: UInt, dmw: Bits): Bool =
       pagingMode && address(31 downto 29) === dmw(31 downto 29).asUInt &&
         ((io.csrPrivilege === 0 && dmw(0)) || (io.csrPrivilege === 3 && dmw(3)))
@@ -164,7 +166,8 @@ final class OooAddressTranslationUnit(
     val instructionDmw0 = dmwEnabled(io.instructionRequest.virtualAddress, io.csrDmw0)
     val instructionDmw1 = dmwEnabled(io.instructionRequest.virtualAddress, io.csrDmw1)
     val instructionTranslate = pagingMode && !instructionDmw0 && !instructionDmw1
-    val instructionRequestReady = !instructionSearchPending && !instructionResponseValid &&
+    val instructionRequestReady = !tlbMutation && !instructionSearchPending &&
+      !instructionResponseValid &&
       (!instructionTranslate || tlb.io.instructionRequest.ready)
     io.instructionRequest.ready := instructionRequestReady
     val instructionRequestFire = io.instructionRequest.valid && io.instructionRequest.ready
@@ -201,6 +204,7 @@ final class OooAddressTranslationUnit(
           instructionDmw1
         )
         instructionResponse.uncached := io.disableCache || memoryAttribute === 0
+        instructionResponse.cancelled := False
         instructionResponse.exception.valid := misaligned
         instructionResponse.exception.ecode := Mux(misaligned, U(8, 6 bits), U(0, 6 bits))
         instructionResponse.exception.esubcode := 0
@@ -234,6 +238,7 @@ final class OooAddressTranslationUnit(
           tlb.io.instructionResponse.memoryAttribute,
           instructionContext.memoryAttribute
         ) === 0
+      instructionResponse.cancelled := False
       instructionResponse.exception.valid := misaligned || refill || invalid || privilege
       instructionResponse.exception.ecode := Mux(
         misaligned,
@@ -249,7 +254,7 @@ final class OooAddressTranslationUnit(
       instructionResponse.exception.badVAddr := instructionContext.virtualAddress
       instructionResponse.exception.tlbRefill := !misaligned && refill
     }
-    io.instructionResponse.valid := instructionResponseValid
+    io.instructionResponse.valid := instructionResponseValid && !tlbMutation
     io.instructionResponse.payload := instructionResponse
 
     val dataContext = Reg(OooTranslationContext(config))
@@ -259,7 +264,7 @@ final class OooAddressTranslationUnit(
     val dataDmw0 = dmwEnabled(io.dataRequest.virtualAddress, io.csrDmw0)
     val dataDmw1 = dmwEnabled(io.dataRequest.virtualAddress, io.csrDmw1)
     val dataTranslate = pagingMode && !dataDmw0 && !dataDmw1
-    val dataRequestReady = !dataSearchPending && !dataResponseValid &&
+    val dataRequestReady = !tlbMutation && !dataSearchPending && !dataResponseValid &&
       (!dataTranslate || tlb.io.dataRequest.ready)
     io.dataRequest.ready := dataRequestReady
     val dataRequestFire = io.dataRequest.valid && io.dataRequest.ready
@@ -296,6 +301,7 @@ final class OooAddressTranslationUnit(
           dataDmw1
         )
         dataResponse.uncached := io.disableCache || memoryAttribute === 0
+        dataResponse.cancelled := False
         dataResponse.exception.valid := False
         dataResponse.exception.ecode := 0
         dataResponse.exception.esubcode := 0
@@ -329,6 +335,7 @@ final class OooAddressTranslationUnit(
           tlb.io.dataResponse.memoryAttribute,
           dataContext.memoryAttribute
         ) === 0
+      dataResponse.cancelled := False
       dataResponse.exception.valid := refill || invalid || privilege || modify
       dataResponse.exception.ecode := Mux(
         refill,
@@ -344,7 +351,7 @@ final class OooAddressTranslationUnit(
       dataResponse.exception.badVAddr := dataContext.virtualAddress
       dataResponse.exception.tlbRefill := refill
     }
-    io.dataResponse.valid := dataResponseValid
+    io.dataResponse.valid := dataResponseValid && !tlbMutation
     io.dataResponse.payload := dataResponse
     // Management search is combinational, matching the architectural TLBSRCH
     // boundary: TLBIDX is updated on the same edge that retires the instruction.
@@ -352,11 +359,31 @@ final class OooAddressTranslationUnit(
     io.tlbSearchFound := tlb.io.managementFound
     io.tlbSearchIndex := tlb.io.managementIndex.asBits
 
-    when(io.tlbFillValid || io.tlbWriteValid || io.tlbInvalidateValid) {
+    when(tlbMutation) {
+      when(instructionSearchPending || instructionResponseValid) {
+        instructionResponseValid := True
+        instructionResponse.virtualAddress := instructionContext.virtualAddress
+        instructionResponse.physicalAddress := 0
+        instructionResponse.uncached := False
+        instructionResponse.cancelled := True
+        instructionResponse.exception.assignFromBits(
+          B(0, instructionResponse.exception.getBitsWidth bits)
+        )
+      }.otherwise {
+        instructionResponseValid := False
+      }
       instructionSearchPending := False
-      instructionResponseValid := False
+      when(dataSearchPending || dataResponseValid) {
+        dataResponseValid := True
+        dataResponse.virtualAddress := dataContext.virtualAddress
+        dataResponse.physicalAddress := 0
+        dataResponse.uncached := False
+        dataResponse.cancelled := True
+        dataResponse.exception.assignFromBits(B(0, dataResponse.exception.getBitsWidth bits))
+      }.otherwise {
+        dataResponseValid := False
+      }
       dataSearchPending := False
-      dataResponseValid := False
     }
   }
 }

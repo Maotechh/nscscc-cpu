@@ -392,6 +392,7 @@ private final class OooCacopExecutionProbe(config: OooCoreConfig) extends Compon
     val issueReady = out Bool ()
     val translationReady = in Bool ()
     val translationResponseValid = in Bool ()
+    val translationCancelled = in Bool ()
     val translationPhysicalAddress = in UInt (config.xlen bits)
     val translationException = in(OooExceptionMeta())
     val translationRequestValid = out Bool ()
@@ -464,6 +465,7 @@ private final class OooCacopExecutionProbe(config: OooCoreConfig) extends Compon
     execution.io.cacheTranslationRequest.virtualAddress
   execution.io.cacheTranslationResponse.physicalAddress := io.translationPhysicalAddress
   execution.io.cacheTranslationResponse.uncached := False
+  execution.io.cacheTranslationResponse.cancelled := io.translationCancelled
   execution.io.cacheTranslationResponse.exception := io.translationException
   execution.io.cacheMaintenanceRequest.ready := io.maintenanceReady
   execution.io.cacheMaintenanceResponse.valid := io.maintenanceResponseValid
@@ -1076,6 +1078,7 @@ class OooExecutionClusterSpec extends AnyFunSuite {
           dut.io.flush #= false
           dut.io.translationReady #= true
           dut.io.translationResponseValid #= false
+          dut.io.translationCancelled #= false
           dut.io.translationPhysicalAddress #= 0
           dut.io.translationException.valid #= false
           dut.io.translationException.ecode #= 0
@@ -1172,6 +1175,18 @@ class OooExecutionClusterSpec extends AnyFunSuite {
         dut.io.translationReady #= false
         issue(code = 0x12, address = 0x127)
         while (!dut.io.translationRequestValid.toBoolean) sample()
+        dut.io.translationReady #= true
+        sample()
+        dut.io.translationReady #= false
+        dut.io.translationCancelled #= true
+        dut.io.translationResponseValid #= true
+        sample()
+        dut.io.translationResponseValid #= false
+        dut.io.translationCancelled #= false
+        sleep(1)
+        assert(dut.io.translationRequestValid.toBoolean)
+        assert(!dut.io.maintenanceValid.toBoolean)
+        assert(!dut.io.completionValid.toBoolean)
         dut.io.translationReady #= true
         sample()
         dut.io.translationResponseValid #= true

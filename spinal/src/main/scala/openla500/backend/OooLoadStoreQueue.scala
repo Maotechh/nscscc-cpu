@@ -505,7 +505,8 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
   io.storeDataReady := !io.flush && storeDataTarget.valid &&
     storeDataTarget.robPointer === io.storeDataRobPointer && !storeDataTarget.dataReady
   val storeDataFire = io.storeDataValid && io.storeDataReady
-  val translatedScSuccess = !io.translationResponse.exception.valid &&
+  val translatedScSuccess = !io.translationResponse.cancelled &&
+    !io.translationResponse.exception.valid &&
     !io.translationResponse.uncached && io.reservationValid &&
     io.reservationLineAddress === io.translationResponse.physicalAddress(
       config.xlen - 1 downto config.dataCache.offsetWidth
@@ -514,9 +515,10 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
   val translationStore = stores(translationOwnerStoreIndex)
   val translationStoreCanComplete = translationStore.dataReady ||
     (translationStore.isSc && !translatedScSuccess)
-  val translationProducesCompletion = io.translationResponse.exception.valid ||
-    (translationOwnerStore && translationStoreCanComplete &&
-      (!io.translationResponse.uncached || translationStore.isSc))
+  val translationProducesCompletion = !io.translationResponse.cancelled &&
+    (io.translationResponse.exception.valid ||
+      (translationOwnerStore && translationStoreCanComplete &&
+        (!io.translationResponse.uncached || translationStore.isSc)))
   val storeCompletionCandidate = headStore.valid && headStore.addressReady &&
     headStore.translationDone && !headStore.completed &&
     (headStore.dataReady || (headStore.isSc && !headStore.scSuccess)) &&
@@ -886,7 +888,7 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
 
     when(translationResponseFire && translationActive) {
       translationActive := False
-      when(translationOwnerStore) {
+      when(!io.translationResponse.cancelled && translationOwnerStore) {
         val entry = stores(translationOwnerStoreIndex)
         when(entry.valid && entry.robPointer === translationOwnerRobPointer) {
           entry.physicalAddress := io.translationResponse.physicalAddress
@@ -895,7 +897,7 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
           when(entry.isSc) { entry.scSuccess := translatedScSuccess }
           when(translationCompletionFire) { entry.completed := True }
         }
-      }.otherwise {
+      }.elsewhen(!io.translationResponse.cancelled) {
         val entry = loads(translationOwnerLoadIndex)
         when(entry.valid && entry.robPointer === translationOwnerRobPointer) {
           entry.physicalAddress := io.translationResponse.physicalAddress
