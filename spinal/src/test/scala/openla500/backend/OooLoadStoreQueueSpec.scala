@@ -1374,7 +1374,7 @@ class OooLoadStoreQueueSpec extends AnyFunSuite {
   test("an older Store completion wins a collision with younger Load forwarding") {
     SimConfig.withVerilator
       .workspacePath("target/sim-workspace-ooo-lsq")
-      .compile(new OooLoadStoreQueueProbe(config))
+      .compile(new OooLoadStoreQueueProbe(config.copy(enableFastStoreCompletion = true)))
       .doSim("ooo-lsq-store-forwarding-completion-priority", 0x4c7c) { dut =>
         dut.clockDomain.forkStimulus(period = 10)
         clearInputs(dut)

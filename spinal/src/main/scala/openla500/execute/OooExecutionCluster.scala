@@ -295,6 +295,12 @@ final class OooExecutionCluster(config: OooCoreConfig = OooCoreConfig.FourIssueT
   )
 
   val barrierState = RegInit(OooBarrierState.idle)
+  // Keep the high-fanout P0 acceptance/wakeup cone off the multi-bit barrier
+  // FSM.  A captured barrier clears this token on the same edge; after the FSM
+  // returns to idle, one conservative recovery cycle restores availability.
+  // The extra cycle is paid only after a serializing operation completes.
+  val barrierPortAvailable = RegInit(True)
+  barrierPortAvailable.addAttribute("max_fanout", "16")
   val barrierUop = Reg(OooRenamedUop(config))
   val barrierIsInstruction = RegInit(False)
   val barrierIsCache = RegInit(False)
@@ -320,6 +326,34 @@ final class OooExecutionCluster(config: OooCoreConfig = OooCoreConfig.FourIssueT
     io.cacheTranslationRequest.ready
   val translationResponseFire = io.cacheTranslationResponse.valid &&
     io.cacheTranslationResponse.ready
+
+  val barrierReturnsIdle =
+    barrierState === OooBarrierState.complete ||
+      (!io.flush &&
+        ((barrierState === OooBarrierState.dropTranslationResponse &&
+          translationResponseFire) ||
+          (barrierState === OooBarrierState.dropPostDrain &&
+            io.memorySubsystemIdle && barrierIdleObserved))) ||
+      (io.flush &&
+        (barrierState === OooBarrierState.idle ||
+          barrierState === OooBarrierState.drain ||
+          barrierState === OooBarrierState.complete ||
+          (barrierState === OooBarrierState.translationRequest &&
+            !translationRequestFire) ||
+          (barrierState === OooBarrierState.translationResponse &&
+            translationResponseFire) ||
+          (barrierState === OooBarrierState.startInstructionMaintenance &&
+            !instructionMaintenanceFire) ||
+          (barrierState === OooBarrierState.startCacheMaintenance &&
+            !cacheMaintenanceFire) ||
+          (barrierState === OooBarrierState.dropTranslationResponse &&
+            translationResponseFire)))
+
+  when(barrierAccept) {
+    barrierPortAvailable := False
+  }.elsewhen(barrierState === OooBarrierState.idle || barrierReturnsIdle) {
+    barrierPortAvailable := True
+  }
 
   // Active denotes a captured barrier token.  Keeping acceptance out of this
   // signal lets the LSQ query the incoming ROB pointer on the capture cycle
@@ -621,7 +655,7 @@ final class OooExecutionCluster(config: OooCoreConfig = OooCoreConfig.FourIssueT
         )
       }
     } else if (port == csrPort) {
-      io.issueReady(port) := !io.flush && barrierState === OooBarrierState.idle
+      io.issueReady(port) := !io.flush && barrierPortAvailable
     } else {
       io.issueReady(port) := !io.flush
     }
