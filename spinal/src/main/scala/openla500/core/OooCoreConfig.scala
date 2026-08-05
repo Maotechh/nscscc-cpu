@@ -92,6 +92,7 @@ final case class OooCoreConfig(
     enableDirectDmwPretranslation: Boolean = true,
     enableLoadCompletionEarlyWakeup: Boolean = true,
     enableFrontendTranslationResponseBypass: Boolean = true,
+    enableFrontendTranslationTurnover: Boolean = true,
     enableL2WriteBack: Boolean = true,
     resetVector: BigInt = BigInt("1c000000", 16),
     instructionCache: OooCacheGeometry = OooCacheGeometry(ways = 2, sets = 128, lineBytes = 64),

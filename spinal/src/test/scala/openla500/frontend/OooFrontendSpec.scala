@@ -170,7 +170,7 @@ class OooFrontendSpec extends AnyFunSuite {
       }
   }
 
-  test("a valid translation response hands directly to an available instruction cache") {
+  test("a straight-line translation response turns over to L1I and the next translation") {
     SimConfig.withVerilator
       .workspacePath("target/sim-workspace-ooo-frontend-translation-response-bypass")
       .compile(new OooFrontend(config))
@@ -191,6 +191,7 @@ class OooFrontendSpec extends AnyFunSuite {
         dut.io.translationRequest.ready #= false
 
         dut.io.cacheRequestReady #= true
+        dut.io.translationRequest.ready #= true
         dut.io.translationResponse.valid #= true
         dut.io.translationResponse.virtualAddress #= firstPc
         dut.io.translationResponse.physicalAddress #= 0x1000
@@ -199,14 +200,11 @@ class OooFrontendSpec extends AnyFunSuite {
         assert(dut.io.cacheRequestValid.toBoolean)
         assert(dut.io.cacheRequest.virtualAddress.toBigInt == firstPc)
         assert(dut.io.cacheRequest.physicalAddress.toBigInt == 0x1000)
+        assert(dut.io.translationRequest.valid.toBoolean)
+        assert(dut.io.translationRequest.virtualAddress.toBigInt == secondPc)
         sample(dut)
         dut.io.translationResponse.valid #= false
         dut.io.cacheRequestReady #= false
-
-        assert(dut.io.translationRequest.valid.toBoolean)
-        assert(dut.io.translationRequest.virtualAddress.toBigInt == secondPc)
-        dut.io.translationRequest.ready #= true
-        sample(dut)
         dut.io.translationRequest.ready #= false
 
         // The next translated group may replace the prior cache request in the same cycle that

@@ -190,8 +190,9 @@ final class OooAddressTranslationUnit(
     val instructionDmw0 = dmwEnabled(io.instructionRequest.virtualAddress, io.csrDmw0)
     val instructionDmw1 = dmwEnabled(io.instructionRequest.virtualAddress, io.csrDmw1)
     val instructionTranslate = pagingMode && !instructionDmw0 && !instructionDmw1
+    val instructionResponseFire = io.instructionResponse.valid && io.instructionResponse.ready
     val instructionRequestReady = !tlbMutation && !instructionSearchPending &&
-      !instructionResponseValid &&
+      (!instructionResponseValid || instructionResponseFire) &&
       (!instructionTranslate || tlb.io.instructionRequest.ready)
     io.instructionRequest.ready := instructionRequestReady
     val instructionRequestFire = io.instructionRequest.valid && io.instructionRequest.ready
@@ -237,7 +238,10 @@ final class OooAddressTranslationUnit(
         instructionResponse.exception.tlbRefill := False
       }
     }
-    when(io.instructionResponse.valid && io.instructionResponse.ready) {
+    // A direct replacement produces its response on this edge and keeps valid asserted.  A paged
+    // replacement starts a TLB lookup, so the consumed response must be cleared until that lookup
+    // completes.
+    when(instructionResponseFire && (!instructionRequestFire || instructionTranslate)) {
       instructionResponseValid := False
     }
 

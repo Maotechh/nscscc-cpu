@@ -133,7 +133,8 @@ final class OooFrontend(config: OooCoreConfig = OooCoreConfig.FourIssueThreeComm
   io.predictorDebugPhtState := cachePrediction(0).phtState
 
   val targetPredictor = new OooBankedFetchPredictor(config)
-  targetPredictor.io.lookupPc := nextFetchPc
+  val targetPredictorLookupPc = UInt(config.xlen bits)
+  targetPredictor.io.lookupPc := targetPredictorLookupPc
 
   val predictionForTranslation = Vec(OooBankedFetchPrediction(config), config.fetchWidth)
   for (lane <- 0 until config.fetchWidth) {
@@ -222,14 +223,25 @@ final class OooFrontend(config: OooCoreConfig = OooCoreConfig.FourIssueThreeComm
   }
   val requestHistoryValid = translatedConditionalSeen.asBits.orR
 
+  // A straight-line or non-RAS direct transfer does not change speculative GHR/RAS state.  Such
+  // a group can launch the next translation while its own response is bypassed to L1I.  Branches
+  // that would update history remain on the registered path so the next lookup observes the same
+  // predictor state as the non-turnover implementation.
+  val requestPredictedNextPc = UInt(config.xlen bits)
+  requestPredictedNextPc := Mux(
+    requestPredictedTaken,
+    requestPredictedTarget,
+    translatedGroupBase + fetchGroupBytes
+  )
+  val translationTurnoverEligible = if (config.enableFrontendTranslationTurnover) {
+    translationResponseBypassValid && !requestHistoryValid &&
+      requestPredictedType =/= OooPredictedBranchType.call &&
+      requestPredictedType =/= OooPredictedBranchType.ret
+  } else {
+    False
+  }
+
   val freeSlots = U(config.instructionBufferEntries, countWidth bits) - count
-  io.translationRequest.valid := !translationOutstanding && !translationDropPending &&
-    !translatedRequestValid && !translatedExceptionValid && !io.redirectValid &&
-    !predictionCorrectionFlushPending && freeSlots >= config.fetchWidth
-  io.translationRequest.virtualAddress := nextFetchPc
-  io.translationRequest.isWrite := False
-  val translationRequestFire = io.translationRequest.valid && io.translationRequest.ready
-  targetPredictor.io.lookupValid := translationRequestFire
   val translationExceptionFire = translationResponseFire && translationOutstanding &&
     !io.redirectValid && translationResponseMatches && !io.translationResponse.cancelled &&
     io.translationResponse.exception.valid
@@ -263,6 +275,20 @@ final class OooFrontend(config: OooCoreConfig = OooCoreConfig.FourIssueThreeComm
   val cachedRequestFire = io.cacheRequestValid && io.cacheRequestReady
   val uncachedRequestFire = io.cacheUncachedRequestValid && io.cacheRequestReady
   val requestFire = cachedRequestFire || uncachedRequestFire
+  // The next translation may replace the current owner only when the translated group actually
+  // enters L1I on this edge.  Merely buffering the old translation response would otherwise
+  // overwrite the single translation context with two live groups.
+  val translationRequestCanTurnover = translationTurnoverEligible &&
+    !translationDropPending && requestFire
+  io.translationRequest.valid := (!translationOutstanding || translationRequestCanTurnover) &&
+    !translatedRequestValid && !translatedExceptionValid && !io.redirectValid &&
+    !predictionCorrectionFlushPending && freeSlots >= config.fetchWidth
+  val translationRequestPc = Mux(translationRequestCanTurnover, requestPredictedNextPc, nextFetchPc)
+  io.translationRequest.virtualAddress := translationRequestPc
+  io.translationRequest.isWrite := False
+  val translationRequestFire = io.translationRequest.valid && io.translationRequest.ready
+  targetPredictorLookupPc := translationRequestPc
+  targetPredictor.io.lookupValid := translationRequestFire
   val correctionKillsCachedRequest = predictionCorrectionOnResponse && cachedRequestFire
   // The cache-array lookup is synchronous, so canceling the just-accepted wrong-path request on
   // the following cycle still prevents both a hit response and a miss allocation.  Registering
@@ -508,7 +534,7 @@ final class OooFrontend(config: OooCoreConfig = OooCoreConfig.FourIssueThreeComm
   }.otherwise {
     when(translationRequestFire) {
       translationOutstanding := True
-      translationPc := nextFetchPc
+      translationPc := translationRequestPc
       predictionPendingValid := False
     }
     when(targetPredictor.io.responseValid) {
@@ -522,7 +548,7 @@ final class OooFrontend(config: OooCoreConfig = OooCoreConfig.FourIssueThreeComm
       when(translationDropPending) {
         translationDropPending := False
       }.elsewhen(translationOutstanding) {
-        translationOutstanding := False
+        translationOutstanding := translationRequestFire
         when(io.translationResponse.cancelled) {
           translatedRequestValid := False
           translatedExceptionValid := False

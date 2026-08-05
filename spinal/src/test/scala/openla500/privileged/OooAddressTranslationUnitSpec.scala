@@ -256,6 +256,71 @@ class OooAddressTranslationUnitSpec extends AnyFunSuite {
       }
   }
 
+  test("instruction responses accept direct and paged replacements on their consume edge") {
+    SimConfig.withVerilator
+      .workspacePath("target/sim-workspace-ooo-address-translation-turnover")
+      .compile(new OooAddressTranslationUnit(config))
+      .doSim("ooo-address-translation-turnover", 0x4c68) { dut =>
+        dut.domain.forkStimulus(period = 10)
+        clearInputs(dut)
+        dut.io.instructionResponse.ready #= false
+        dut.domain.assertReset()
+        dut.domain.waitSampling(2)
+        dut.domain.deassertReset()
+        sample(dut)
+
+        val firstPc = BigInt(0x1c001000)
+        val secondPc = firstPc + 0x10
+        val pagedPc = BigInt(0x00004000)
+
+        dut.io.instructionRequest.valid #= true
+        dut.io.instructionRequest.virtualAddress #= firstPc
+        sleep(1)
+        assert(dut.io.instructionRequest.ready.toBoolean)
+        sample(dut)
+        dut.io.instructionRequest.valid #= false
+        assert(dut.io.instructionResponse.valid.toBoolean)
+        assert(dut.io.instructionResponse.virtualAddress.toBigInt == firstPc)
+
+        // A direct replacement produces the next response on the same consume edge.
+        dut.io.instructionResponse.ready #= true
+        dut.io.instructionRequest.valid #= true
+        dut.io.instructionRequest.virtualAddress #= secondPc
+        sleep(1)
+        assert(dut.io.instructionRequest.ready.toBoolean)
+        sample(dut)
+        dut.io.instructionRequest.valid #= false
+        dut.io.instructionResponse.ready #= false
+        assert(dut.io.instructionResponse.valid.toBoolean)
+        assert(dut.io.instructionResponse.virtualAddress.toBigInt == secondPc)
+        assert(dut.io.instructionResponse.physicalAddress.toBigInt == secondPc)
+
+        // A paged replacement consumes the direct response but cannot expose it while the TLB
+        // lookup for the new owner is pending.
+        dut.io.csrDa #= false
+        dut.io.csrPg #= true
+        dut.io.instructionResponse.ready #= true
+        dut.io.instructionRequest.valid #= true
+        dut.io.instructionRequest.virtualAddress #= pagedPc
+        sleep(1)
+        assert(dut.io.instructionRequest.ready.toBoolean)
+        sample(dut)
+        dut.io.instructionRequest.valid #= false
+        assert(!dut.io.instructionResponse.valid.toBoolean)
+
+        var cycles = 0
+        while (!dut.io.instructionResponse.valid.toBoolean && cycles < 24) {
+          sample(dut)
+          cycles += 1
+        }
+        assert(cycles > 0)
+        assert(dut.io.instructionResponse.valid.toBoolean)
+        assert(dut.io.instructionResponse.virtualAddress.toBigInt == pagedPc)
+        assert(dut.io.instructionResponse.exception.valid.toBoolean)
+        assert(dut.io.instructionResponse.exception.ecode.toBigInt == 0x3f)
+      }
+  }
+
   test(
     "micro TLBs cache main-walk results and mutations discard stale positive and negative state"
   ) {
