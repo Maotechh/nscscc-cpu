@@ -281,13 +281,36 @@ final class OooCore(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommit) 
   frontend.io.predictorUpdateIsCall := predictorUpdateQueue.io.pop.isCall
   frontend.io.predictorUpdateIsReturn := predictorUpdateQueue.io.pop.isReturn
   predictorUpdateQueue.io.popReady := frontend.io.predictorUpdateReady
-  frontend.io.predictorRetireValid := committedBranch
+
+  // Recovery redirects are already staged through recoveryPending.  Stage the retirement
+  // batch on the same boundary so ROB payloads and pc+4 do not feed the three-lane RAS fold
+  // combinationally; the batch still reaches the predictor in the recovery/flush cycle.
+  val stagedPredictorRetireValid = Reg(Bits(config.commitWidth bits)) init (0)
+  val stagedPredictorRetireTaken = Reg(Bits(config.commitWidth bits)) init (0)
+  val stagedPredictorRetireType = Vec.fill(config.commitWidth)(
+    Reg(UInt(OooPredictedBranchType.Width bits)) init (OooPredictedBranchType.direct)
+  )
+  val stagedPredictorRetireIsCall = Reg(Bits(config.commitWidth bits)) init (0)
+  val stagedPredictorRetireIsReturn = Reg(Bits(config.commitWidth bits)) init (0)
+  val stagedPredictorRetireReturnAddress = Vec.fill(config.commitWidth)(
+    Reg(UInt(config.xlen bits)) init (0)
+  )
+  stagedPredictorRetireValid := committedBranch
   for (lane <- 0 until config.commitWidth) {
-    frontend.io.predictorRetireTaken(lane) := retiredPredictorUpdate(lane).taken
-    frontend.io.predictorRetireType(lane) := retiredPredictorUpdate(lane).branchType
-    frontend.io.predictorRetireIsCall(lane) := retiredPredictorUpdate(lane).isCall
-    frontend.io.predictorRetireIsReturn(lane) := retiredPredictorUpdate(lane).isReturn
-    frontend.io.predictorRetireReturnAddress(lane) := retiredPredictorUpdate(lane).pc + 4
+    stagedPredictorRetireTaken(lane) := retiredPredictorUpdate(lane).taken
+    stagedPredictorRetireType(lane) := retiredPredictorUpdate(lane).branchType
+    stagedPredictorRetireIsCall(lane) := retiredPredictorUpdate(lane).isCall
+    stagedPredictorRetireIsReturn(lane) := retiredPredictorUpdate(lane).isReturn
+    stagedPredictorRetireReturnAddress(lane) := retiredPredictorUpdate(lane).pc + 4
+  }
+  frontend.io.predictorRetireValid := stagedPredictorRetireValid
+  frontend.io.predictorRetireTaken := stagedPredictorRetireTaken
+  frontend.io.predictorRetireIsCall := stagedPredictorRetireIsCall
+  frontend.io.predictorRetireIsReturn := stagedPredictorRetireIsReturn
+  for (lane <- 0 until config.commitWidth) {
+    frontend.io.predictorRetireType(lane) := stagedPredictorRetireType(lane)
+    frontend.io.predictorRetireReturnAddress(lane) :=
+      stagedPredictorRetireReturnAddress(lane)
   }
   frontend.io.privilege := io.privilege
   frontend.io.interruptPending := io.interruptPending
