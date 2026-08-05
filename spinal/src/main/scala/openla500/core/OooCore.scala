@@ -8,6 +8,40 @@ import openla500.privileged._
 import spinal.core._
 import spinal.lib._
 
+private[core] object OooPredictorUpdateLaneSelect {
+  def apply(
+      config: OooCoreConfig,
+      committedBranch: Bits,
+      commitRobPointer: Vec[UInt],
+      recoveryValid: Bool,
+      recoveryCause: UInt,
+      recoveryRobPointer: UInt
+  ): UInt = {
+    val selectedLane = UInt(log2Up(config.commitWidth) bits)
+    selectedLane := 0
+    for (lane <- (0 until config.commitWidth).reverse) {
+      when(committedBranch(lane)) {
+        selectedLane := lane
+      }
+    }
+
+    val recoveryBranch = Bits(config.commitWidth bits)
+    for (lane <- 0 until config.commitWidth) {
+      recoveryBranch(lane) := committedBranch(lane) && recoveryValid &&
+        (recoveryCause === OooRecoveryCause.branchMispredict) &&
+        (commitRobPointer(lane) === recoveryRobPointer)
+    }
+    when(recoveryBranch.orR) {
+      for (lane <- (0 until config.commitWidth).reverse) {
+        when(recoveryBranch(lane)) {
+          selectedLane := lane
+        }
+      }
+    }
+    selectedLane
+  }
+}
+
 /** Self-fetching four-issue, three-commit out-of-order core.
   *
   * Branch recovery is handled internally. Precise exception entry and privileged redirects remain
@@ -183,13 +217,23 @@ final class OooCore(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommit) 
     committedBranch(lane) := backend.io.commitValid(lane) &&
       backend.io.commit(lane).retired && backend.io.commit(lane).isBranch
   }
-  val predictorUpdateLane = UInt(log2Up(config.commitWidth) bits)
-  predictorUpdateLane := 0
-  for (lane <- (0 until config.commitWidth).reverse) {
-    when(committedBranch(lane)) {
-      predictorUpdateLane := lane
-    }
+  val commitRobPointer = Vec(UInt(config.robPointerWidth bits), config.commitWidth)
+  for (lane <- 0 until config.commitWidth) {
+    commitRobPointer(lane) := backend.io.commit(lane).robPointer
   }
+  val recoveryBranchTrainingValid = if (config.enableRecoveryBranchTrainingPriority) {
+    backend.io.recoveryValid
+  } else {
+    False
+  }
+  val predictorUpdateLane = OooPredictorUpdateLaneSelect(
+    config,
+    committedBranch,
+    commitRobPointer,
+    recoveryBranchTrainingValid,
+    backend.io.recovery.cause,
+    backend.io.recovery.robPointer
+  )
   val predictorCommit = backend.io.commit(predictorUpdateLane)
   val predictorIsCall = predictorCommit.predictorType === OooPredictedBranchType.call
   val predictorIsReturn = predictorCommit.predictorType === OooPredictedBranchType.ret
