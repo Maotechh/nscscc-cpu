@@ -100,7 +100,10 @@ private final class OooFrontendL1InstructionCacheProbe(config: OooCoreConfig) ex
 
   cache.io.requestValid := frontend.io.cacheRequestValid
   cache.io.request := frontend.io.cacheRequest
-  frontend.io.cacheRequestReady := cache.io.requestReady
+  frontend.io.cacheRequestReady := cache.io.requestCapacityReady
+  when(frontend.io.cacheRequestValid) {
+    assert(cache.io.requestCapacityReady === cache.io.requestReady)
+  }
   frontend.io.cacheResponseValid := cache.io.responseValid
   frontend.io.cacheResponse := cache.io.response
   cache.io.kill := frontend.io.cacheKill

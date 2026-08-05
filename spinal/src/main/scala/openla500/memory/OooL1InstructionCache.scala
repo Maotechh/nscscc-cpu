@@ -78,6 +78,7 @@ final class OooL1InstructionCache(
     val requestValid = in Bool ()
     val request = in(OooInstructionCacheRequest(config))
     val requestReady = out Bool ()
+    val requestCapacityReady = out Bool ()
     val responseValid = out Bool ()
     val response = out(OooInstructionCacheResponse(config))
     val kill = in Bool ()
@@ -177,12 +178,16 @@ final class OooL1InstructionCache(
   val idleRequestReady = state === OooL1InstructionCacheState.idle &&
     cacheArray.io.lookupReady
   // Reuse a completed hit's array-response cycle for the next synchronous lookup.
-  val lookupHitTurnoverReady = state === OooL1InstructionCacheState.lookup &&
+  val lookupHitTurnoverCapacityReady = state === OooL1InstructionCacheState.lookup &&
     cacheArray.io.responseValid && cacheArray.io.hit && !requestKilled &&
-    !io.kill && !newInvalidate && cacheArray.io.lookupReady
+    !newInvalidate && cacheArray.io.lookupReady
+  val lookupHitTurnoverReady = lookupHitTurnoverCapacityReady && !io.kill
   val refillSameLineReady = state === OooL1InstructionCacheState.refillData &&
     refillResponseSent && !refillReplayPending && !requestKilled && !io.request.uncached &&
     lineAddress(io.request.physicalAddress) === lineAddress(request.physicalAddress)
+  io.requestCapacityReady :=
+    (idleRequestReady || lookupHitTurnoverCapacityReady || refillSameLineReady) &&
+      !invalidateRequest && !io.maintenanceRequest.valid
   io.requestReady := (idleRequestReady || lookupHitTurnoverReady || refillSameLineReady) &&
     !invalidateRequest && !io.maintenanceRequest.valid
   io.maintenanceRequest.ready := state === OooL1InstructionCacheState.idle &&

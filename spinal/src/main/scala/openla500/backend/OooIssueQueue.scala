@@ -103,15 +103,17 @@ final class OooIssueQueue(
     }.otherwise {
       outputCount := nextOutputCount
       outputEnqueueReady := nextOutputCount < 2
-      when(queueDequeue) {
-        when(outputWritePointer) {
-          outputSlots(1) := selectedUop
-        }.otherwise {
-          outputSlots(0) := selectedUop
-        }
-        outputWritePointer := !outputWritePointer
-      }
+      when(queueDequeue) { outputWritePointer := !outputWritePointer }
       when(outputDequeue) { outputReadPointer := !outputReadPointer }
+    }
+    // outputCount alone defines visibility.  Let an invalid slot absorb the
+    // flush-edge payload write so redirect does not drive every payload CE.
+    when(queueDequeue) {
+      when(outputWritePointer) {
+        outputSlots(1) := selectedUop
+      }.otherwise {
+        outputSlots(0) := selectedUop
+      }
     }
 
     io.occupancy := (count + outputCount).resized
@@ -159,43 +161,45 @@ final class OooIssueQueue(
   when(io.flush) {
     count := 0
   }.otherwise {
-    for (entry <- 0 until config.issueQueueEntriesPerPort) {
-      val entryEnqueue = enqueueFire &&
-        enqueueIndex === U(entry, log2Up(config.issueQueueEntriesPerPort) bits)
-      if (entry < config.issueQueueEntriesPerPort - 1) {
-        val entryShift = queueDequeue &&
-          U(entry, count.getWidth bits) >= issueIndexWide &&
-          U(entry + 1, count.getWidth bits) < count
-        when(entryEnqueue) {
-          queue(entry) := enqueued
-        }.elsewhen(entryShift) {
-          queue(entry).decoded := queue(entry + 1).decoded
-          queue(entry).pdst := queue(entry + 1).pdst
-          queue(entry).oldPdst := queue(entry + 1).oldPdst
-          queue(entry).psrc1 := queue(entry + 1).psrc1
-          queue(entry).psrc2 := queue(entry + 1).psrc2
-          queue(entry).source1Ready :=
-            queue(entry + 1).source1Ready || wakeupEntry1(entry + 1)
-          queue(entry).source2Ready :=
-            queue(entry + 1).source2Ready || wakeupEntry2(entry + 1)
-          queue(entry).robPointer := queue(entry + 1).robPointer
-          queue(entry).recoveryEpoch := queue(entry + 1).recoveryEpoch
-          queue(entry).loadQueueIndex := queue(entry + 1).loadQueueIndex
-          queue(entry).storeQueueIndex := queue(entry + 1).storeQueueIndex
-        }.otherwise {
-          when(wakeupEntry1(entry)) { queue(entry).source1Ready := True }
-          when(wakeupEntry2(entry)) { queue(entry).source2Ready := True }
-        }
-      } else {
-        when(entryEnqueue) {
-          queue(entry) := enqueued
-        }.otherwise {
-          when(wakeupEntry1(entry)) { queue(entry).source1Ready := True }
-          when(wakeupEntry2(entry)) { queue(entry).source2Ready := True }
-        }
+    count := count + enqueueFire.asUInt - queueDequeue.asUInt
+  }
+  // count alone defines resident entries.  Payload mutation on a flush edge
+  // is harmless and keeps the redirect net out of every wide queue CE.
+  for (entry <- 0 until config.issueQueueEntriesPerPort) {
+    val entryEnqueue = enqueueFire &&
+      enqueueIndex === U(entry, log2Up(config.issueQueueEntriesPerPort) bits)
+    if (entry < config.issueQueueEntriesPerPort - 1) {
+      val entryShift = queueDequeue &&
+        U(entry, count.getWidth bits) >= issueIndexWide &&
+        U(entry + 1, count.getWidth bits) < count
+      when(entryEnqueue) {
+        queue(entry) := enqueued
+      }.elsewhen(entryShift) {
+        queue(entry).decoded := queue(entry + 1).decoded
+        queue(entry).pdst := queue(entry + 1).pdst
+        queue(entry).oldPdst := queue(entry + 1).oldPdst
+        queue(entry).psrc1 := queue(entry + 1).psrc1
+        queue(entry).psrc2 := queue(entry + 1).psrc2
+        queue(entry).source1Ready :=
+          queue(entry + 1).source1Ready || wakeupEntry1(entry + 1)
+        queue(entry).source2Ready :=
+          queue(entry + 1).source2Ready || wakeupEntry2(entry + 1)
+        queue(entry).robPointer := queue(entry + 1).robPointer
+        queue(entry).recoveryEpoch := queue(entry + 1).recoveryEpoch
+        queue(entry).loadQueueIndex := queue(entry + 1).loadQueueIndex
+        queue(entry).storeQueueIndex := queue(entry + 1).storeQueueIndex
+      }.otherwise {
+        when(wakeupEntry1(entry)) { queue(entry).source1Ready := True }
+        when(wakeupEntry2(entry)) { queue(entry).source2Ready := True }
+      }
+    } else {
+      when(entryEnqueue) {
+        queue(entry) := enqueued
+      }.otherwise {
+        when(wakeupEntry1(entry)) { queue(entry).source1Ready := True }
+        when(wakeupEntry2(entry)) { queue(entry).source2Ready := True }
       }
     }
-    count := count + enqueueFire.asUInt - queueDequeue.asUInt
   }
 }
 

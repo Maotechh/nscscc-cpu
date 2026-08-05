@@ -223,8 +223,9 @@ final class OooBackend(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommi
     config.physicalRegs - 1 - config.robEntries >= config.renameWidth,
     "ROB capacity must bound physical-register allocation"
   )
-  val resourcesReady = dispatchQueue.io.enqueueReady && rob.io.allocateReady &&
-    lsqAllocator.io.allocateReady && !io.flush
+  val resourcesReady = dispatchQueue.io.enqueueReady &&
+    rob.io.allocateCapacityReady && lsqAllocator.io.allocateCapacityReady &&
+    !io.flush
   val acceptAll = resourcesReady && io.renameValid.orR
   val accepted = Bits(config.renameWidth bits)
   val allLanes = B((BigInt(1) << config.renameWidth) - 1, config.renameWidth bits)
@@ -284,10 +285,10 @@ final class OooBackend(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommi
     registerMap.io.renamePdst(lane) := freeList.io.allocatePdst(lane)
   }
 
-  rob.io.allocateAccept := acceptAll && !io.flush
-  freeList.io.allocateAccept := acceptAll && !io.flush
-  lsqAllocator.io.allocateAccept := acceptAll && !io.flush
-  dispatchQueue.io.enqueueAccept := acceptAll && !io.flush
+  rob.io.allocateAccept := acceptAll
+  freeList.io.allocateAccept := acceptAll
+  lsqAllocator.io.allocateAccept := acceptAll
+  dispatchQueue.io.enqueueAccept := acceptAll
   lsqAllocator.io.releaseLoadValid := io.releaseLoadValid
   lsqAllocator.io.releaseStoreValid := io.releaseStoreValid
   lsqAllocator.io.flush := io.flush

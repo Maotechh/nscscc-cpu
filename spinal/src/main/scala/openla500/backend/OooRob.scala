@@ -62,6 +62,7 @@ final class OooRob(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommit) e
     val allocateValid = in Bits (config.renameWidth bits)
     val allocate = in Vec (OooRobAllocate(config), config.renameWidth)
     val allocateReady = out Bool ()
+    val allocateCapacityReady = out Bool ()
     val allocateAccept = in Bool ()
     val allocatedPointer = out Vec (UInt(config.robPointerWidth bits), config.renameWidth)
 
@@ -117,7 +118,8 @@ final class OooRob(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommit) e
 
   val requested = allocatePrefix(config.renameWidth)
   val freeSlots = U(config.robEntries, occupancy.getWidth bits) - occupancy
-  io.allocateReady := !io.flush && freeSlots >= requested
+  io.allocateCapacityReady := freeSlots >= requested
+  io.allocateReady := !io.flush && io.allocateCapacityReady
 
   val allocationPayload = Vec(OooRobPayload(config), config.renameWidth)
   for (lane <- 0 until config.renameWidth) {
@@ -177,7 +179,6 @@ final class OooRob(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommit) e
       entries(destination(config.robIndexWidth - 1 downto 0)).completionExceptionValid := False
       entries(destination(config.robIndexWidth - 1 downto 0)).branchMispredict := False
       entries(destination(config.robIndexWidth - 1 downto 0)).branchTaken := False
-      entries(destination(config.robIndexWidth - 1 downto 0)).branchTarget := U(0, config.xlen bits)
     }
   }
 

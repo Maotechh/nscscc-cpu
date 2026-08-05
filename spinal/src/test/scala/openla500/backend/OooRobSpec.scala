@@ -24,6 +24,7 @@ private final class OooRobProbe(config: OooCoreConfig) extends Component {
       in Vec (UInt(config.recoveryEpochWidth bits), config.writebackWidth)
     val completionExceptionValid = in Bits (config.writebackWidth bits)
     val completionBranchResolved = in Bits (config.writebackWidth bits)
+    val completionBranchTarget = in Vec (UInt(config.xlen bits), config.writebackWidth)
     val currentEpoch = in UInt (config.recoveryEpochWidth bits)
     val predictorUpdateCapacity = in UInt (log2Up(config.commitWidth + 1) bits)
     val completionWakeupValid = out Bits (config.writebackWidth bits)
@@ -31,6 +32,7 @@ private final class OooRobProbe(config: OooCoreConfig) extends Component {
     val commitValid = out Bits (config.commitWidth bits)
     val commitPc = out Vec (UInt(config.xlen bits), config.commitWidth)
     val commitResult = out Vec (Bits(config.xlen bits), config.commitWidth)
+    val commitBranchTarget = out Vec (UInt(config.xlen bits), config.commitWidth)
     val occupancy = out UInt (log2Up(config.robEntries + 1) bits)
     val empty = out Bool ()
     val headPointer = out UInt (config.robPointerWidth bits)
@@ -68,7 +70,7 @@ private final class OooRobProbe(config: OooCoreConfig) extends Component {
     completion.exception.tlbRefill := False
     completion.branchResolved := io.completionBranchResolved(lane)
     completion.branchTaken := False
-    completion.branchTarget := 0
+    completion.branchTarget := io.completionBranchTarget(lane)
     completion.branchMispredict := False
   }
   rob.io.allocateValid := io.allocateValid
@@ -83,6 +85,7 @@ private final class OooRobProbe(config: OooCoreConfig) extends Component {
   for (lane <- 0 until config.commitWidth) {
     io.commitPc(lane) := rob.io.commit(lane).pc
     io.commitResult(lane) := rob.io.commit(lane).result
+    io.commitBranchTarget(lane) := rob.io.commit(lane).branchTarget
   }
   io.occupancy := rob.io.occupancy
   io.empty := rob.io.empty
@@ -105,6 +108,7 @@ class OooRobSpec extends AnyFunSuite {
     for (lane <- 0 until config.writebackWidth) {
       dut.io.completionRobPointer(lane) #= 0
       dut.io.completionRecoveryEpoch(lane) #= 0
+      dut.io.completionBranchTarget(lane) #= 0
     }
     for (lane <- 0 until config.renameWidth) {
       dut.io.allocatePc(lane) #= 0
@@ -410,6 +414,58 @@ class OooRobSpec extends AnyFunSuite {
         )
         sample()
         assert(dut.io.occupancy.toBigInt == 0)
+      }
+  }
+
+  test("branch completion overwrites a reused ROB slot target before retirement") {
+    val config = OooCoreConfig.FourIssueThreeCommit
+    SimConfig.withVerilator
+      .workspacePath("target/sim-workspace-ooo-rob")
+      .compile(new OooRobProbe(config))
+      .doSim("ooo-rob-branch-target-reuse", 0x4f4f4d) { dut =>
+        def sample(): Unit = {
+          dut.clockDomain.waitSampling()
+          sleep(1)
+        }
+
+        def allocateAndComplete(pc: Int, isBranch: Boolean, target: BigInt): Unit = {
+          dut.io.allocatePc(0) #= pc
+          dut.io.allocateIsBranch #= (if (isBranch) 1 else 0)
+          dut.io.allocateValid #= 1
+          dut.io.allocateAccept #= true
+          sleep(1)
+          val pointer = dut.io.allocatedPointer(0).toBigInt
+          sample()
+          dut.io.allocateValid #= 0
+          dut.io.allocateAccept #= false
+          dut.io.completionRobPointer(0) #= pointer
+          dut.io.completionBranchResolved #= (if (isBranch) 1 else 0)
+          dut.io.completionBranchTarget(0) #= target
+          dut.io.completionValid #= 1
+          sample()
+          dut.io.completionValid #= 0
+          dut.io.completionBranchResolved #= 0
+          sample()
+          assert((dut.io.commitValid.toBigInt & 1) == 1)
+          if (isBranch) assert(dut.io.commitBranchTarget(0).toBigInt == target)
+          sample()
+        }
+
+        dut.clockDomain.forkStimulus(period = 10)
+        initialize(dut, config)
+        dut.clockDomain.assertReset()
+        dut.clockDomain.waitSampling(2)
+        dut.clockDomain.deassertReset()
+        sample()
+
+        val firstTarget = BigInt("1c010004", 16)
+        val reusedTarget = BigInt("1c020008", 16)
+        allocateAndComplete(pc = 0, isBranch = true, target = firstTarget)
+        for (pointer <- 1 until config.robEntries) {
+          allocateAndComplete(pc = pointer * 4, isBranch = false, target = 0)
+        }
+        allocateAndComplete(pc = config.robEntries * 4, isBranch = true, target = reusedTarget)
+        assert(dut.io.empty.toBoolean)
       }
   }
 

@@ -340,4 +340,103 @@ class OooIssueQueueSpec extends AnyFunSuite {
         assert(!dut.io.issueValid.toBoolean)
       }
   }
+
+  test("flush hides simultaneous compact-queue payload mutations") {
+    val config = OooCoreConfig.FourIssueThreeCommit
+    SimConfig.withVerilator
+      .workspacePath("target/sim-workspace-ooo-iq")
+      .compile(new OooIssueQueueProbe(config))
+      .doSim("ooo-iq-flush-payload-collision", 0x4957) { dut =>
+        dut.clockDomain.forkStimulus(period = 10)
+        clearInputs(dut, config)
+        dut.clockDomain.assertReset()
+        dut.clockDomain.waitSampling(2)
+        dut.clockDomain.deassertReset()
+        sample(dut)
+
+        dut.io.enqueueValid #= true
+        dut.io.enqueue.robPointer #= 1
+        dut.io.enqueue.source1Ready #= true
+        dut.io.enqueue.source2Ready #= true
+        sample(dut)
+        assert(dut.io.issueValid.toBoolean)
+
+        dut.io.flush #= true
+        dut.io.issueReady #= true
+        dut.io.enqueue.robPointer #= 2
+        dut.io.wakeupValid #= 1
+        dut.io.wakeupPdst(0) #= 0
+        sample(dut)
+        assert(dut.io.occupancy.toBigInt == 0)
+        assert(!dut.io.issueValid.toBoolean)
+
+        dut.io.flush #= false
+        dut.io.issueReady #= false
+        dut.io.enqueueValid #= false
+        dut.io.wakeupValid #= 0
+        sample(dut)
+        assert(dut.io.occupancy.toBigInt == 0)
+        assert(!dut.io.issueValid.toBoolean)
+
+        dut.io.enqueueValid #= true
+        dut.io.enqueue.robPointer #= 3
+        sample(dut)
+        dut.io.enqueueValid #= false
+        sleep(1)
+        assert(dut.io.issueValid.toBoolean)
+        assert(dut.io.issue.robPointer.toBigInt == 3)
+      }
+  }
+
+  test("flush hides simultaneous registered LSU output mutations") {
+    val config = OooCoreConfig.FourIssueThreeCommit
+    val loadStorePort =
+      config.executionPorts.indexWhere(_.capabilities.contains(OooFuKind.LoadStore))
+    SimConfig.withVerilator
+      .workspacePath("target/sim-workspace-ooo-iq")
+      .compile(new OooIssueQueueProbe(config, loadStorePort))
+      .doSim("ooo-iq-lsu-flush-output-collision", 0x4958) { dut =>
+        dut.clockDomain.forkStimulus(period = 10)
+        clearInputs(dut, config)
+        dut.clockDomain.assertReset()
+        dut.clockDomain.waitSampling(2)
+        dut.clockDomain.deassertReset()
+        sample(dut)
+
+        dut.io.enqueueValid #= true
+        dut.io.enqueue.robPointer #= 4
+        dut.io.enqueue.source1Ready #= true
+        dut.io.enqueue.source2Ready #= true
+        sample(dut)
+        dut.io.enqueueValid #= false
+        sample(dut)
+        assert(dut.io.issueValid.toBoolean)
+
+        dut.io.flush #= true
+        dut.io.issueReady #= true
+        dut.io.enqueueValid #= true
+        dut.io.enqueue.robPointer #= 5
+        dut.io.wakeupValid #= 1
+        dut.io.wakeupPdst(0) #= 0
+        sample(dut)
+        assert(dut.io.occupancy.toBigInt == 0)
+        assert(!dut.io.issueValid.toBoolean)
+
+        dut.io.flush #= false
+        dut.io.issueReady #= false
+        dut.io.enqueueValid #= false
+        dut.io.wakeupValid #= 0
+        sample(dut)
+        assert(dut.io.occupancy.toBigInt == 0)
+        assert(!dut.io.issueValid.toBoolean)
+
+        dut.io.enqueueValid #= true
+        dut.io.enqueue.robPointer #= 6
+        sample(dut)
+        dut.io.enqueueValid #= false
+        sample(dut)
+        assert(dut.io.issueValid.toBoolean)
+        assert(dut.io.issue.robPointer.toBigInt == 6)
+      }
+  }
 }

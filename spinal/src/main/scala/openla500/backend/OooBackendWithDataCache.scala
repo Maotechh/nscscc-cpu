@@ -19,6 +19,7 @@ final class OooBackendWithDataCache(
     val instructionUncachedRequestValid = in Bool ()
     val instructionRequest = in(OooInstructionCacheRequest(config))
     val instructionRequestReady = out Bool ()
+    val instructionRequestCapacityReady = out Bool ()
     val instructionResponseValid = out Bool ()
     val instructionResponse = out(OooInstructionCacheResponse(config))
     val instructionKill = in Bool ()
@@ -119,6 +120,7 @@ final class OooBackendWithDataCache(
   cacheHierarchy.io.instructionRequest := io.instructionRequest
   cacheHierarchy.io.instructionKill := io.instructionKill
   io.instructionRequestReady := cacheHierarchy.io.instructionRequestReady
+  io.instructionRequestCapacityReady := cacheHierarchy.io.instructionRequestCapacityReady
   io.instructionResponseValid := cacheHierarchy.io.instructionResponseValid
   io.instructionResponse := cacheHierarchy.io.instructionResponse
   io.uncachedInstructionRequestValid :=

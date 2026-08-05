@@ -1111,6 +1111,40 @@ class OooBackendDispatchSpec extends AnyFunSuite {
       }
   }
 
+  test("flush atomically blocks rename allocation despite available capacity") {
+    SimConfig.withVerilator
+      .workspacePath("target/sim-workspace-ooo-backend-dispatch")
+      .compile(new OooBackendDispatchProbe(config))
+      .doSim("ooo-backend-flush-blocks-allocation", 0x4c47) { dut =>
+        dut.clockDomain.forkStimulus(period = 10)
+        clearControl(dut)
+        dut.io.issueReady #= 0xf
+        dut.clockDomain.assertReset()
+        dut.clockDomain.waitSampling(2)
+        dut.clockDomain.deassertReset()
+        dut.clockDomain.waitSampling()
+
+        dut.io.inputValid #= 7
+        for (lane <- 0 until config.renameWidth) {
+          dut.io.pc(lane) #= BigInt("1c002000", 16) + lane * 4
+          dut.io.instruction(lane) #= BigInt("00100000", 16)
+        }
+        dut.io.flush #= true
+        sleep(1)
+        assert(dut.io.renameReady.toBigInt == 0)
+        assert(dut.io.memoryAllocateValid.toBigInt == 0)
+        dut.clockDomain.waitSampling()
+
+        dut.io.flush #= false
+        dut.io.inputValid #= 0
+        for (_ <- 0 until 8) {
+          dut.clockDomain.waitSampling()
+          sleep(1)
+          assert(dut.io.issueValid.toBigInt == 0)
+        }
+      }
+  }
+
   test("a completion without a physical write cannot wake a reused destination tag") {
     SimConfig.withVerilator
       .workspacePath("target/sim-workspace-ooo-backend-dispatch")

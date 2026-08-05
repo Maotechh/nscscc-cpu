@@ -210,7 +210,10 @@ final class OooCore(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommit) 
   backend.io.instructionRequestValid := frontend.io.cacheRequestValid
   backend.io.instructionUncachedRequestValid := frontend.io.cacheUncachedRequestValid
   backend.io.instructionRequest := frontend.io.cacheRequest
-  frontend.io.cacheRequestReady := backend.io.instructionRequestReady
+  // Redirect/correction kill suppresses requestValid.  Use the kill-independent
+  // capacity path for frontend ownership so redirect cannot loop through L1I
+  // turnover ready and back into nextFetchPc enables.
+  frontend.io.cacheRequestReady := backend.io.instructionRequestCapacityReady
   frontend.io.cacheResponseValid := backend.io.instructionResponseValid
   frontend.io.cacheResponse := backend.io.instructionResponse
   backend.io.instructionKill := frontend.io.cacheKill

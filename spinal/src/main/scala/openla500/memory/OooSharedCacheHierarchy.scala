@@ -25,6 +25,7 @@ final class OooSharedCacheHierarchy(
     val instructionUncachedRequestValid = in Bool ()
     val instructionRequest = in(OooInstructionCacheRequest(config))
     val instructionRequestReady = out Bool ()
+    val instructionRequestCapacityReady = out Bool ()
     val instructionResponseValid = out Bool ()
     val instructionResponse = out(OooInstructionCacheResponse(config))
     val instructionKill = in Bool ()
@@ -278,6 +279,12 @@ final class OooSharedCacheHierarchy(
     io.uncachedInstructionRequestReady,
     l1i.io.requestReady
   )
+  io.instructionRequestCapacityReady :=
+    !hierarchyMaintenanceBusy && !io.barrierDrain && Mux(
+      io.instructionRequest.uncached,
+      io.uncachedInstructionRequestReady,
+      l1i.io.requestCapacityReady
+    )
   io.instructionResponseValid := l1i.io.responseValid || io.uncachedInstructionResponseValid
   io.instructionResponse := io.uncachedInstructionResponse
   // A killed uncached AXI transaction may return in the same cycle as a new L1I hit.  The

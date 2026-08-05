@@ -16,6 +16,7 @@ final class OooLsqAllocator(config: OooCoreConfig = OooCoreConfig.FourIssueThree
     val allocateLoadIndex = out Vec (UInt(config.loadQueueIndexWidth bits), config.renameWidth)
     val allocateStoreIndex = out Vec (UInt(config.storeQueueIndexWidth bits), config.renameWidth)
     val allocateReady = out Bool ()
+    val allocateCapacityReady = out Bool ()
     val allocateAccept = in Bool ()
 
     val releaseLoadValid = in Bits (config.commitWidth bits)
@@ -47,7 +48,8 @@ final class OooLsqAllocator(config: OooCoreConfig = OooCoreConfig.FourIssueThree
   val storeRequested = storePrefix(config.renameWidth)
   val loadFree = U(config.loadQueueEntries, countWidth bits) - loadOccupancy
   val storeFree = U(config.storeQueueEntries, countWidth bits) - storeOccupancy
-  io.allocateReady := !io.flush && loadFree >= loadRequested && storeFree >= storeRequested
+  io.allocateCapacityReady := loadFree >= loadRequested && storeFree >= storeRequested
+  io.allocateReady := !io.flush && io.allocateCapacityReady
 
   val loadReleased = CountOne(io.releaseLoadValid)
   val storeReleased = CountOne(io.releaseStoreValid)

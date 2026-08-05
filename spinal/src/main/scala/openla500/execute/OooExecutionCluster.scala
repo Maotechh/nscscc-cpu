@@ -300,7 +300,6 @@ final class OooExecutionCluster(config: OooCoreConfig = OooCoreConfig.FourIssueT
   // returns to idle, one conservative recovery cycle restores availability.
   // The extra cycle is paid only after a serializing operation completes.
   val barrierPortAvailable = RegInit(True)
-  barrierPortAvailable.addAttribute("max_fanout", "16")
   val barrierUop = Reg(OooRenamedUop(config))
   val barrierIsInstruction = RegInit(False)
   val barrierIsCache = RegInit(False)
