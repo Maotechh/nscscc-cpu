@@ -203,6 +203,175 @@ class OooL1InstructionCacheSpec extends AnyFunSuite {
     sample(dut)
   }
 
+  private def installLine(
+      dut: OooL1InstructionCacheProbe,
+      address: BigInt,
+      firstInstruction: Int
+  ): Unit = {
+    acceptRequest(dut, address, address)
+    refill(
+      dut,
+      expectedLineAddress = address & ~BigInt(0x3f),
+      firstInstruction = firstInstruction,
+      expectedResponseFirstInstruction = Some(firstInstruction)
+    )
+  }
+
+  private def assertResponse(
+      dut: OooL1InstructionCacheProbe,
+      virtualAddress: BigInt,
+      firstInstruction: Int
+  ): Unit = {
+    assert(dut.io.responseValid.toBoolean)
+    assert(dut.io.response.virtualAddress.toBigInt == virtualAddress)
+    assert(!dut.io.response.error.toBoolean)
+    for (lane <- 0 until config.fetchWidth) {
+      assert(dut.io.response.instructions(lane).toBigInt == firstInstruction + lane)
+    }
+  }
+
+  test("L1I turns confirmed hits over at one response per cycle and preserves hit-to-miss") {
+    SimConfig.withVerilator
+      .workspacePath("target/sim-workspace-ooo-l1i-hit-turnover")
+      .compile(new OooL1InstructionCacheProbe(config))
+      .doSim("ooo-l1i-hit-turnover", 0x4c56) { dut =>
+        dut.clockDomain.forkStimulus(period = 10)
+        clearInputs(dut)
+        dut.clockDomain.assertReset()
+        dut.clockDomain.waitSampling(2)
+        dut.clockDomain.deassertReset()
+        dut.clockDomain.waitSampling(config.instructionCache.sets + 8)
+
+        val addresses = Seq(BigInt(0x100), BigInt(0x180), BigInt(0x200))
+        val instructions = Seq(1000, 2000, 3000)
+        addresses.zip(instructions).foreach { case (address, firstInstruction) =>
+          installLine(dut, address, firstInstruction)
+        }
+
+        acceptRequest(dut, addresses(0), addresses(0))
+        for (next <- 1 until addresses.length) {
+          dut.io.requestValid #= true
+          dut.io.request.virtualAddress #= addresses(next)
+          dut.io.request.physicalAddress #= addresses(next)
+          sleep(1)
+          assert(dut.io.requestReady.toBoolean)
+          sample(dut)
+          assertResponse(dut, addresses(next - 1), instructions(next - 1))
+        }
+        dut.io.requestValid #= false
+        sample(dut)
+        assertResponse(dut, addresses.last, instructions.last)
+        sample(dut)
+        assert(!dut.io.responseValid.toBoolean)
+
+        val missAddress = BigInt(0x2c0)
+        acceptRequest(dut, addresses.head, addresses.head)
+        dut.io.requestValid #= true
+        dut.io.request.virtualAddress #= missAddress
+        dut.io.request.physicalAddress #= missAddress
+        sleep(1)
+        assert(dut.io.requestReady.toBoolean)
+        sample(dut)
+        dut.io.requestValid #= false
+        assertResponse(dut, addresses.head, instructions.head)
+
+        var cycles = 0
+        while (!dut.io.lineReadValid.toBoolean && cycles < 8) {
+          sample(dut)
+          cycles += 1
+        }
+        assert(dut.io.lineReadValid.toBoolean)
+        assert(dut.io.lineRead.lineAddress.toBigInt == (missAddress & ~BigInt(0x3f)))
+        assert(!dut.io.requestReady.toBoolean)
+      }
+  }
+
+  test("L1I hit turnover yields to kill, invalidate, and maintenance") {
+    SimConfig.withVerilator
+      .workspacePath("target/sim-workspace-ooo-l1i-hit-turnover-control")
+      .compile(new OooL1InstructionCacheProbe(config))
+      .doSim("ooo-l1i-hit-turnover-control", 0x4c57) { dut =>
+        dut.clockDomain.forkStimulus(period = 10)
+        clearInputs(dut)
+        dut.clockDomain.assertReset()
+        dut.clockDomain.waitSampling(2)
+        dut.clockDomain.deassertReset()
+        dut.clockDomain.waitSampling(config.instructionCache.sets + 8)
+
+        val line0 = BigInt(0x100)
+        val line1 = BigInt(0x180)
+        installLine(dut, line0, 4000)
+        installLine(dut, line1, 5000)
+
+        acceptRequest(dut, line0, line0)
+        dut.io.requestValid #= true
+        dut.io.request.virtualAddress #= line1
+        dut.io.request.physicalAddress #= line1
+        dut.io.kill #= true
+        sleep(1)
+        assert(!dut.io.requestReady.toBoolean)
+        sample(dut)
+        dut.io.requestValid #= false
+        dut.io.kill #= false
+        assert(!dut.io.responseValid.toBoolean)
+
+        acceptRequest(dut, line0, line0)
+        dut.io.requestValid #= true
+        dut.io.request.virtualAddress #= line1
+        dut.io.request.physicalAddress #= line1
+        dut.io.maintenanceValid #= true
+        dut.io.maintenanceRequest.code #= 0x10
+        dut.io.maintenanceRequest.virtualAddress #= line0
+        dut.io.maintenanceRequest.physicalAddress #= line0
+        sleep(1)
+        assert(!dut.io.requestReady.toBoolean)
+        assert(!dut.io.maintenanceReady.toBoolean)
+        sample(dut)
+        dut.io.requestValid #= false
+        assertResponse(dut, line0, 4000)
+        sleep(1)
+        assert(dut.io.maintenanceReady.toBoolean)
+        sample(dut)
+        dut.io.maintenanceValid #= false
+        var cycles = 0
+        while (!dut.io.maintenanceDone.toBoolean && cycles < 8) {
+          sample(dut)
+          cycles += 1
+        }
+        assert(dut.io.maintenanceDone.toBoolean)
+        sample(dut)
+
+        acceptRequest(dut, line1, line1)
+        dut.io.requestValid #= true
+        dut.io.request.virtualAddress #= line0
+        dut.io.request.physicalAddress #= line0
+        dut.io.invalidate #= true
+        sleep(1)
+        assert(!dut.io.requestReady.toBoolean)
+        sample(dut)
+        dut.io.requestValid #= false
+        dut.io.invalidate #= false
+        assert(!dut.io.responseValid.toBoolean)
+        cycles = 0
+        while (dut.io.invalidateBusy.toBoolean &&
+            cycles < config.instructionCache.sets + 16) {
+          sample(dut)
+          cycles += 1
+        }
+        assert(!dut.io.invalidateBusy.toBoolean)
+
+        acceptRequest(dut, line1, line1)
+        cycles = 0
+        while (!dut.io.lineReadValid.toBoolean && cycles < 8) {
+          assert(!dut.io.responseValid.toBoolean)
+          sample(dut)
+          cycles += 1
+        }
+        assert(dut.io.lineReadValid.toBoolean)
+        assert(dut.io.lineRead.lineAddress.toBigInt == line1)
+      }
+  }
+
   test("L1I refills 64-byte lines, selects fetch groups, and suppresses killed responses") {
     SimConfig.withVerilator
       .workspacePath("target/sim-workspace-ooo-l1i")
