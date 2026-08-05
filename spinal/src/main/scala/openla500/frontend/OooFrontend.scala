@@ -602,8 +602,8 @@ final class OooFrontend(config: OooCoreConfig = OooCoreConfig.FourIssueThreeComm
         translatedExceptionValid := False
         translationOutstanding := False
         translationDropPending :=
-          (translationOutstanding || translationDropPending || translationRequestFire) &&
-            !translationResponseFire
+          translationRequestFire ||
+            ((translationOutstanding || translationDropPending) && !translationResponseFire)
         predictionPendingValid := False
       }
       for (lane <- 0 until config.fetchWidth) {

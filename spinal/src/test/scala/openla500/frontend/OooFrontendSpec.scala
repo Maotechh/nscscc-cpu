@@ -756,6 +756,87 @@ class OooFrontendSpec extends AnyFunSuite {
       }
   }
 
+  test("FixBranch drains a translation turned over on the correction edge") {
+    SimConfig.withVerilator
+      .workspacePath("target/sim-workspace-ooo-frontend")
+      .compile(new OooFrontend(config))
+      .doSim("ooo-frontend-fix-branch-translation-turnover-drain", 0x4c6b) { dut =>
+        dut.clockDomain.forkStimulus(period = 10)
+        clearInputs(dut)
+        dut.clockDomain.assertReset()
+        dut.clockDomain.waitSampling(2)
+        dut.clockDomain.deassertReset()
+        sample(dut)
+
+        val base = config.resetVector
+        val sequentialPc = base + config.fetchWidth * 4
+        val turnedOverPc = sequentialPc + config.fetchWidth * 4
+        val branchTarget = base + 4 + 0x40
+        acceptFetch(dut, base)
+
+        // Establish the sequential translation owner while the branch-bearing group is in L1I.
+        assert(dut.io.translationRequest.valid.toBoolean)
+        assert(dut.io.translationRequest.virtualAddress.toBigInt == sequentialPc)
+        dut.io.translationRequest.ready #= true
+        sample(dut)
+        dut.io.translationRequest.ready #= false
+
+        // Four events overlap: the old L1I response corrects prediction, the sequential
+        // translation responds and enters L1I, and turnover allocates one more wrong-path ATU
+        // owner.  The correction must retain a drain obligation for that newest owner.
+        dut.io.cacheRequestReady #= true
+        dut.io.cacheResponseValid #= true
+        dut.io.cacheResponse.virtualAddress #= base
+        dut.io.cacheResponse.physicalAddress #= base
+        dut.io.cacheResponse.instructions(0) #= (BigInt("00100000", 16) | 1)
+        dut.io.cacheResponse.instructions(1) #= encodeDirectBranch(0x14, 0x40)
+        dut.io.cacheResponse.instructions(2) #= (BigInt("00100000", 16) | 3)
+        dut.io.cacheResponse.instructions(3) #= (BigInt("00100000", 16) | 4)
+        setBranchPredecode(
+          dut,
+          lane = 1,
+          branchType = 1,
+          target = branchTarget,
+          staticTaken = true
+        )
+        dut.io.translationResponse.valid #= true
+        dut.io.translationResponse.virtualAddress #= sequentialPc
+        dut.io.translationResponse.physicalAddress #= sequentialPc
+        dut.io.translationRequest.ready #= true
+        sleep(1)
+        assert(dut.io.translationResponse.ready.toBoolean)
+        assert(dut.io.cacheRequestValid.toBoolean)
+        assert(dut.io.cacheRequest.virtualAddress.toBigInt == sequentialPc)
+        assert(dut.io.translationRequest.valid.toBoolean)
+        assert(dut.io.translationRequest.virtualAddress.toBigInt == turnedOverPc)
+        sample(dut)
+        dut.io.cacheRequestReady #= false
+        dut.io.cacheResponseValid #= false
+        dut.io.translationResponse.valid #= false
+        dut.io.translationRequest.ready #= false
+        clearPredecode(dut)
+
+        // The just-allocated wrong-path owner is not architecturally live, but its ATU response
+        // still has to be consumed before corrected fetching can resume.
+        dut.io.translationResponse.valid #= true
+        dut.io.translationResponse.virtualAddress #= turnedOverPc
+        dut.io.translationResponse.physicalAddress #= turnedOverPc
+        sleep(1)
+        assert(dut.io.translationResponse.ready.toBoolean)
+        sample(dut)
+        dut.io.translationResponse.valid #= false
+
+        var retryWait = 0
+        while (!dut.io.translationRequest.valid.toBoolean && retryWait < 8) {
+          sample(dut)
+          retryWait += 1
+        }
+        assert(dut.io.translationRequest.valid.toBoolean)
+        assert(dut.io.translationRequest.virtualAddress.toBigInt == branchTarget)
+        assert(dut.io.occupancy.toBigInt == 2)
+      }
+  }
+
   test("FixBranch drains a same-cycle uncached handoff before issuing the corrected group") {
     SimConfig.withVerilator
       .workspacePath("target/sim-workspace-ooo-frontend")
