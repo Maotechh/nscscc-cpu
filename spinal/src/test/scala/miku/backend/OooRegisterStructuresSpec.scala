@@ -364,4 +364,33 @@ class OooRegisterStructuresSpec extends AnyFunSuite {
         checkAllocation(dut, Seq(4))
       }
   }
+
+  test("free list exposes conservative rename-group capacity") {
+    val config = OooCoreConfig.FourIssueThreeCommit
+    SimConfig.withVerilator
+      .workspacePath("target/sim-workspace-ooo-free-list")
+      .compile(new OooFreeList(config))
+      .doSim("ooo-free-list-group-capacity", 0x4654) { dut =>
+        dut.clockDomain.forkStimulus(period = 10)
+        clearFreeListInputs(dut, config)
+        dut.clockDomain.assertReset()
+        dut.clockDomain.waitSampling(2)
+        dut.clockDomain.deassertReset()
+        freeListSample(dut)
+
+        dut.io.allocateValid #= 7
+        dut.io.allocateAccept #= true
+        for (_ <- 0 until 20) freeListSample(dut)
+        assert(dut.io.allocateCapacityReady.toBoolean)
+
+        // Consume one of the last three entries directly. One exact request
+        // still fits, while an arbitrary three-wide rename group does not.
+        dut.io.allocateValid #= 1
+        freeListSample(dut)
+        dut.io.allocateAccept #= false
+        sleep(1)
+        assert(dut.io.allocateReady.toBoolean)
+        assert(!dut.io.allocateCapacityReady.toBoolean)
+      }
+  }
 }

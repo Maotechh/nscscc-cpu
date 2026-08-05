@@ -223,6 +223,7 @@ final class OooFreeList(config: OooCoreConfig = OooCoreConfig.FourIssueThreeComm
     val allocateValid = in Bits (config.renameWidth bits)
     val allocatePdst = out Vec (UInt(config.physicalRegIndexWidth bits), config.renameWidth)
     val allocateReady = out Bool ()
+    val allocateCapacityReady = out Bool ()
     val allocateAccept = in Bool ()
     val commitFreeValid = in Bits (config.commitWidth bits)
     val commitFreePdst = in Vec (UInt(config.physicalRegIndexWidth bits), config.commitWidth)
@@ -258,6 +259,10 @@ final class OooFreeList(config: OooCoreConfig = OooCoreConfig.FourIssueThreeComm
 
   val requested = CountOne(io.allocateValid)
   io.allocateReady := !io.flush && freeCount >= requested
+  // The global rename decision must not depend on destination decode and its
+  // CountOne cone. Reserve enough registers for a worst-case rename group;
+  // the exact ready signal remains available for local contract checks.
+  io.allocateCapacityReady := freeCount >= U(config.renameWidth, countWidth bits)
 
   val acceptedCount = Mux(io.allocateAccept, requested, U(0, requested.getWidth bits))
   val releaseValid = Bits(config.commitWidth bits)

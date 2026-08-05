@@ -214,18 +214,13 @@ final class OooBackend(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommi
     freeList.io.allocateValid(lane) := io.renameValid(lane) &&
       io.rename(lane).writesGpr && io.rename(lane).rd =/= 0
   }
-  // At most robEntries destinations can be live. With p1..p63 allocatable,
-  // the production geometry retains at least 31 free registers, so FreeList
-  // exhaustion cannot be the limiting resource for a three-wide rename group.
-  // Keep the FreeList's own generic guard, but remove its rd-dependent ready
-  // cone from the global atomic allocation decision.
-  require(
-    config.physicalRegs - 1 - config.robEntries >= config.renameWidth,
-    "ROB capacity must bound physical-register allocation"
-  )
+  // Architectural mappings and speculative destinations share the physical
+  // pool, so ROB capacity alone cannot prove that the FreeList has space.
+  // Use its conservative group-capacity guard to keep rd/writesGpr decode out
+  // of this global ready cone without permitting tag reuse.
   val resourcesReady = dispatchQueue.io.enqueueReady &&
-    rob.io.allocateCapacityReady && lsqAllocator.io.allocateCapacityReady &&
-    !io.flush
+    rob.io.allocateCapacityReady && freeList.io.allocateCapacityReady &&
+    lsqAllocator.io.allocateCapacityReady && !io.flush
   val acceptAll = resourcesReady && io.renameValid.orR
   val accepted = Bits(config.renameWidth bits)
   val allLanes = B((BigInt(1) << config.renameWidth) - 1, config.renameWidth bits)
