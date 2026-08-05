@@ -24,7 +24,7 @@ GOLDEN_COMMIT_KEY = "team_golden_candidate"
 GOLDEN_PATH = "rtl/mul.v"
 GOLDEN_SHA256 = "251d2bba3e659c294c9a004bbb2b542435fcfa0b0c1582cc1a7a3edca765a4c0"
 GOLDEN_SIZE = 6045
-GENERATOR_MAIN = "openla500.execute.GenerateOpenLa500Mul"
+GENERATOR_MAIN = "miku.execute.GenerateOpenLa500Mul"
 LOCKED_PORTS: dict[str, dict[str, object]] = {
     "mul_clk": {"direction": "input", "width": 1},
     "reset": {"direction": "input", "width": 1},

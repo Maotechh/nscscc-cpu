@@ -2,10 +2,10 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
-ICACHE = (ROOT / "spinal/src/main/scala/openla500/memory/OpenLa500ICache.scala").read_text(encoding="utf-8")
-DCACHE = (ROOT / "spinal/src/main/scala/openla500/memory/OpenLa500DCache.scala").read_text(encoding="utf-8")
+ICACHE = (ROOT / "spinal/src/main/scala/miku/memory/OpenLa500ICache.scala").read_text(encoding="utf-8")
+DCACHE = (ROOT / "spinal/src/main/scala/miku/memory/OpenLa500DCache.scala").read_text(encoding="utf-8")
 CORE_TOP_GENERATOR = (
-    ROOT / "spinal/src/main/scala/openla500/compat/GenerateCoreTopCompat.scala"
+    ROOT / "spinal/src/main/scala/miku/compat/GenerateCoreTopCompat.scala"
 ).read_text(encoding="utf-8")
 
 

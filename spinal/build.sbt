@@ -33,7 +33,7 @@ val manifestLock = loadManifestLock(file("../reference/manifest.lock"))
 def lockedVersion(key: String): String =
   manifestLock.getOrElse(key, sys.error(s"Missing '$key' in reference/manifest.lock"))
 
-name := "nscscc-cpu-spinal"
+name := "miku-spinal"
 version := "1.0"
 scalaVersion := lockedVersion("scala")
 

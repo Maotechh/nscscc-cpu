@@ -1,32 +1,30 @@
-# 4 发射 / 3 提交乱序核交接说明
+# MIKU 乱序核交接说明
 
-本文是 dev-OoOE 分支的架构、接口、验证和迁移入口。CPU 逻辑由 Scala/SpinalHDL 生成；权威生成物是 `build/core_top/package/rtl/mycpu_top.v`，Git 跟踪的 `rtl/mycpu_top.v` 是内容相同的发布镜像，不是第二份手写实现。
+MIKU 是 **MIKU Is Kinda Unordered** 的递归缩写。本文是 `dev/ECHO` 分支的架构、接口、验证和迁移入口。CPU 逻辑由 Scala/SpinalHDL 生成；权威生成物是 `build/core_top/package/rtl/mycpu_top.v`，Git 跟踪的 `rtl/mycpu_top.v` 是内容相同的发布镜像，不是第二份手写实现。
 
 ## 当前基线
 
-官方顶层已经实例化 `openla500.core.OooCoreSystem(OooCoreConfig.FourIssueThreeCommit)`。旧的 `SpinalCoreBackend` 和 `openla500.pipeline` 不参与生成；仍存在的少量 `OpenLa500*` leaf 只供 OoO 核复用或独立合同测试使用。
+官方顶层已经实例化 `miku.core.OooCoreSystem(OooCoreConfig.FourIssueThreeCommit)`。旧的 `SpinalCoreBackend` 不参与生成；仍存在的少量 `OpenLa500*` leaf 名称用于兼容既有 Verilog 模块、来源审计或独立合同测试，不代表当前核名称。
 
-精确状态以机器可读的 [refactor/status.yml](refactor/status.yml) 为唯一权威记录：
+本次命名迁移以前一阶段性能候选为逻辑基线；RTL 发布哈希由机器可读的
+`reference/component-replacements/core-top.json` 与 `reference/core-top-lint-waivers.json` 锁定：
 
 | 项目 | 当前结果 |
 | --- | --- |
-| RTL 基线提交 | `da71fd32e0db3d13f1964895bbafeb5d2e5af412` |
-| 生成 RTL SHA-256 | `14874c00bf2a4632ac9792da2234286d4f1ac05140df03b7db90b784d00074f0` |
-| 本地门禁 | Scala 37 suites / 133 passed；Python 362 passed；port、lint、Yosys、publish 全部通过 |
-| standalone Vivado 100 MHz | WNS `+0.419 ns`，TNS `0 ns` |
-| 完整 SoC 100 MHz | implementation 和 bitstream 完成；WNS `+0.036678 ns`，TNS `0 ns`，DRC 0 Error |
-| 三次真实 perf20 | 全部 20/20；最低 `soc_count=74,446,699`，即 `0.74446699 s` |
-| 性能参考 | `724b808959957c27fc64bda36b8c5cb828f51c8b` 的最低 `73,826,502` cycles |
-| 当前结论 | 功能正确且 100 MHz 时序闭合；比性能参考慢 0.84%，不是性能提升 |
+| 命名迁移前逻辑基线 | `2c11ca6730a94b26e2de74eb33a4a1568ab9ad92` |
+| 生成 RTL SHA-256 | `0625976bcfc430c7084f9e4dcb7bb7bf391714b474150b994aa29201526d986a` |
+| 本地门禁 | 2026-08-05 完整 `make cpu-check` 通过，包括 Scala/Python、locked lint、Yosys 和 publication gates |
+| 功能验证 | 本轮时序候选的资源接受、ROB 槽位复用、L1I kill/turnover 和 IQ flush 碰撞均有定向测试并进入完整门禁；尚未把旧候选的 func/Linux 结果继承为本候选证据 |
+| 性能仿真 | 按最终实现调度决定跳过精确候选 perf20；旧候选周期只作历史参考，不写入本基线 |
+| 完整 SoC / 板测 | 必须使用上述 RTL hash 重新取得 100 MHz 时序和板测结果；任何旧候选结果不能继承 |
+| 当前结论 | 命名迁移只允许改变源码组织、全限定 Scala 名称和说明；生成 RTL 必须与上述哈希逐字节一致 |
 
-三次板测使用同一个锁定包，SHA-256 为 `bfe51c269e939588698f1f1de52f73bfa74f0d34904c7cdaa594296e243f99fa`；Job ID 和逐项哈希验证状态记录在 status.yml。完整 SoC 的 setup 余量只有 0.036678 ns，因此任何 RTL 修改都必须重新走完整实现，不能沿用本次闭合结论。
-
-顶层 lint 当前审计 849 条生成器 warning，类别只有 `CMPCONST` 和 `UNUSEDSIGNAL`。它们由 `reference/core-top-lint-waivers.json` 按 RTL 哈希和精确签名锁定，不是允许新增 warning 的通配豁免。仓库根目录的 `baseline.txt` 是最初标量核的历史比赛基准，不是当前 RTL 或当前性能参考。
+顶层 lint 当前审计 861 条生成器 warning，类别只有 `CMPCONST` 和 `UNUSEDSIGNAL`。它们由 `reference/core-top-lint-waivers.json` 按 RTL 哈希和精确签名锁定，不是允许新增 warning 的通配豁免。仓库根目录的 `baseline.txt` 是最初标量核的历史比赛基准，不是当前 RTL 或当前性能参考。
 
 ## 源码布局
 
 ~~~text
-spinal/src/main/scala/openla500/
+spinal/src/main/scala/miku/
   compat/       官方 core_top 适配、AXI3 扁平化、发布生成器
   core/         OooCoreConfig、OooCore、OooCoreSystem、生成入口
   frontend/     取指、4-slot 到 3-uop 适配、LA32R decoder
@@ -39,11 +37,11 @@ spinal/src/main/scala/openla500/
   config/       仍被独立 leaf 合同测试使用的历史配置类型
 ~~~
 
-对应测试位于 `spinal/src/test/scala/openla500/{core,frontend,backend,execute,memory,privileged,observe}`。新增文件必须放入职责对应的 package，不要重新创建 flat `openla500.ooo` 或 `openla500.pipeline`。
+对应测试位于 `spinal/src/test/scala/miku/{core,frontend,backend,execute,memory,privileged,observe}`。新增文件必须放入职责对应的 package，不要重新创建 flat `miku.ooo` 或 `miku.pipeline`。
 
 ## 固定配置
 
-配置入口是 `openla500.core.OooCoreConfig.FourIssueThreeCommit`。当前实现有意固定为 4 发射、5 回写、3 提交，不保留另一套可变宽逻辑。
+配置入口是 `miku.core.OooCoreConfig.FourIssueThreeCommit`。当前实现有意固定为 4 发射、5 回写、3 提交，不保留另一套可变宽逻辑。
 
 | 结构 | 配置 |
 | --- | --- |
@@ -85,7 +83,7 @@ translation/L1I -> frontend(fetch4) -> decode/rename3 -> dispatch
 
 ### OooCore
 
-`openla500.core.OooCore` 是不含 CSR/TLB/AXI 外壳的核心：
+`miku.core.OooCore` 是不含 CSR/TLB/AXI 外壳的核心：
 
 | 方向 | 接口 | 语义 |
 | --- | --- | --- |

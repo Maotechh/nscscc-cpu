@@ -3,7 +3,7 @@
   "target": "div",
   "module": "div",
   "generated_file": "div.v",
-  "generator_main": "openla500.execute.GenerateOpenLa500Div",
+  "generator_main": "miku.execute.GenerateOpenLa500Div",
   "golden": {
     "commit_key": "team_golden_candidate",
     "path": "rtl/div.v",

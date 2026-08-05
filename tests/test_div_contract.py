@@ -169,7 +169,7 @@ class DivContractSchemaTests(unittest.TestCase):
 
     def test_generator_main_is_locked(self) -> None:
         document = self.changed()
-        document["generator_main"] = "openla500.DividerGen"
+        document["generator_main"] = "miku.DividerGen"
         with self.assertRaisesRegex(div_contract.DivContractError, "generator_main"):
             div_contract.validate_contract(document)
 

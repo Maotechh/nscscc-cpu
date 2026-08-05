@@ -3,7 +3,7 @@
   "target": "axi_bridge",
   "module": "axi_bridge",
   "generated_file": "axi_bridge.v",
-  "generator_main": "openla500.memory.GenerateOpenLa500AxiBridge",
+  "generator_main": "miku.memory.GenerateOpenLa500AxiBridge",
   "golden": {
     "commit_key": "team_golden_candidate",
     "path": "rtl/axi_bridge.v",

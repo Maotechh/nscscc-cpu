@@ -36,7 +36,7 @@ DIV_PORTS = {
     "r": ("output", 32),
     "complete": ("output", 1),
 }
-GENERATOR_MAIN = "openla500.execute.GenerateOpenLa500Div"
+GENERATOR_MAIN = "miku.execute.GenerateOpenLa500Div"
 GOLDEN_PATH = "rtl/div.v"
 SCALA_DEPENDENCY_LOCK = "scala-dependencies.lock.json"
 FORMAL_PASS_BASE = "Base case for induction length 1 proven."

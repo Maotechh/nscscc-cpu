@@ -25,7 +25,7 @@ ALU_PORTS = {
     "alu_src2": ("input", 32),
     "alu_result": ("output", 32),
 }
-GENERATOR_MAIN = "openla500.execute.GenerateOpenLa500Alu"
+GENERATOR_MAIN = "miku.execute.GenerateOpenLa500Alu"
 GOLDEN_PATH = "rtl/alu.v"
 
 
@@ -601,7 +601,7 @@ def unit(args: argparse.Namespace) -> int:
     )
     workspace = Path(str(scala_summary.get("build_workspace", "")))
     report = workspace / "spinal" / "target" / "test-reports" / (
-        "TEST-openla500.execute.OpenLa500AluSpec.xml"
+        "TEST-miku.execute.OpenLa500AluSpec.xml"
     )
     counts: dict[str, int] = {}
     if report.is_file():

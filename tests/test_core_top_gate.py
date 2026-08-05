@@ -114,7 +114,7 @@ class CoreTopContractTests(unittest.TestCase):
             / "src"
             / "main"
             / "scala"
-            / "openla500"
+            / "miku"
             / "compat"
             / "CoreTopCompat.scala"
         ).read_text(encoding="utf-8")

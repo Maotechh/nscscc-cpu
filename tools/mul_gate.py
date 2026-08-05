@@ -33,7 +33,7 @@ MUL_PORTS = {
     "y": ("input", 32),
     "result": ("output", 64),
 }
-GENERATOR_MAIN = "openla500.execute.GenerateOpenLa500Mul"
+GENERATOR_MAIN = "miku.execute.GenerateOpenLa500Mul"
 GOLDEN_PATH = "rtl/mul.v"
 SCALA_DEPENDENCY_LOCK = "scala-dependencies.lock.json"
 FORMAL_PASS_BASE = "Base case for induction length 1 proven."

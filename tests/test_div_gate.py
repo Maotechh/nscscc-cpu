@@ -29,7 +29,7 @@ class DivGateContractTests(unittest.TestCase):
             },
             div_gate.DIV_PORTS,
         )
-        self.assertEqual("openla500.execute.GenerateOpenLa500Div", div_gate.GENERATOR_MAIN)
+        self.assertEqual("miku.execute.GenerateOpenLa500Div", div_gate.GENERATOR_MAIN)
 
     def test_warning_parser_is_fail_closed(self) -> None:
         self.assertEqual([], div_gate.warning_lines("all clean\n"))
@@ -105,7 +105,7 @@ class DivGenerationTests(unittest.TestCase):
             "build.sbt",
             "project/build.properties",
             "project/plugins.sbt",
-            "src/main/scala/openla500/execute/OpenLa500Div.scala",
+            "src/main/scala/miku/execute/OpenLa500Div.scala",
         ):
             path = spinal / relative
             path.parent.mkdir(parents=True, exist_ok=True)

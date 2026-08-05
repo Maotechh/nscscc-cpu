@@ -4,7 +4,7 @@
 
 - Golden candidate: `a158aa8ab4d49cece1a0fe488d7ac7dc02bd8cf6`.
 - Behavioral sources: `rtl/lacc_core.v` and `rtl/lacc_demo.v` at that commit.
-- Candidate generator: `openla500.execute.GenerateOpenLa500LaccCore`.
+- Candidate generator: `miku.execute.GenerateOpenLa500LaccCore`.
 - Generated top definition: `lacc_core`.
 
 This contract covers the active demo accelerator only. Passing it does not prove execute-stage,

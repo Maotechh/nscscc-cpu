@@ -2,7 +2,7 @@
 """Locked, reproducible SpinalHDL RTL generation.
 
 This command is deliberately independent from the component-specific gates.
-It accepts only a repository ``openla500.*`` main class, runs it from copied
+It accepts only a repository ``miku.*`` main class, runs it from copied
 Scala sources with the locked offline toolchain, and publishes RTL only after
 all requested runs produce the same validated bytes.
 """
@@ -27,7 +27,7 @@ from typing import Iterable
 
 
 SCALA_DEPENDENCY_LOCK = "scala-dependencies.lock.json"
-MAIN_CLASS_RE = re.compile(r"openla500(?:\.[A-Za-z_][A-Za-z0-9_]*)+")
+MAIN_CLASS_RE = re.compile(r"miku(?:\.[A-Za-z_][A-Za-z0-9_]*)+")
 VERILOG_IDENTIFIER_RE = re.compile(r"[A-Za-z_][A-Za-z0-9_$]*")
 ANSI_RE = re.compile(r"\x1b\[[0-?]*[ -/]*[@-~]")
 
@@ -284,7 +284,7 @@ def reject_linked_path(path: Path, label: str) -> Path:
 
 def validate_request(args: argparse.Namespace) -> tuple[Path, Path, Path, Path]:
     if MAIN_CLASS_RE.fullmatch(args.main_class) is None:
-        raise SpinalGenerateError("main class must be a repository openla500.* identifier")
+        raise SpinalGenerateError("main class must be a repository miku.* identifier")
     if VERILOG_IDENTIFIER_RE.fullmatch(args.expected_module) is None:
         raise SpinalGenerateError(f"invalid expected Verilog module: {args.expected_module!r}")
     expected_path = Path(args.expected_file)

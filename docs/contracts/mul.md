@@ -6,8 +6,8 @@
 - Golden blob SHA256：`251d2bba3e659c294c9a004bbb2b542435fcfa0b0c1582cc1a7a3edca765a4c0`，6045 bytes。
 - 活动实例：同一提交的 `rtl/mycpu_top.v` 中唯一 `u_mul`。
 - Golden harness 由前置迭代建立；candidate 生成入口固定为
-  `openla500.execute.GenerateOpenLa500Mul`，生成物仍必须由全部门禁证明后才可 overlay。
-- 现有 `spinal/src/main/scala/openla500/Multiplier.scala` 的 ready/valid、32-cycle 和 32-bit result 合同不兼容，不能作为 oracle。
+  `miku.execute.GenerateOpenLa500Mul`，生成物仍必须由全部门禁证明后才可 overlay。
+- 历史 `spinal/src/main/scala/openla500/Multiplier.scala` 的 ready/valid、32-cycle 和 32-bit result 合同不兼容，不能作为 oracle。
 
 ## 精确端口
 

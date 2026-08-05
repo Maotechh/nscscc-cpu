@@ -40,15 +40,15 @@ class SpinalGenerateFixture:
             path = self.spinal / relative
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text(relative + "\n", encoding="utf-8")
-        generator = self.spinal / "src/main/scala/openla500/compat/GenerateCoreTopCompat.scala"
+        generator = self.spinal / "src/main/scala/miku/compat/GenerateCoreTopCompat.scala"
         generator.parent.mkdir(parents=True)
         generator.write_text(
-            "package openla500.compat\nobject GenerateCoreTopCompat { def main(args: Array[String]) = () }\n",
+            "package miku.compat\nobject GenerateCoreTopCompat { def main(args: Array[String]) = () }\n",
             encoding="utf-8",
         )
-        test_source = self.spinal / "src/test/scala/openla500/CompatSpec.scala"
+        test_source = self.spinal / "src/test/scala/miku/CompatSpec.scala"
         test_source.parent.mkdir(parents=True)
-        test_source.write_text("package openla500\n", encoding="utf-8")
+        test_source.write_text("package miku\n", encoding="utf-8")
         self.java = root / ("java.exe" if os.name == "nt" else "java")
         self.java.write_bytes(b"locked-java")
         if os.name != "nt":
@@ -76,7 +76,7 @@ class SpinalGenerateFixture:
             manifest=self.manifest,
             spinal_dir=self.spinal,
             tool_root=self.tools,
-            main_class="openla500.compat.GenerateCoreTopCompat",
+            main_class="miku.compat.GenerateCoreTopCompat",
             expected_module="core_top",
             expected_file="core_top.v",
             out_dir=self.out,
@@ -92,13 +92,13 @@ class RequestValidationTests(unittest.TestCase):
             fixture = SpinalGenerateFixture(Path(temporary))
             for value in (
                 "scala.Predef",
-                "openla500.compat.Generate;show update",
-                "openla500.compat.Generate\nreload",
-                " openla500.compat.GenerateCoreTopCompat",
+                "miku.compat.Generate;show update",
+                "miku.compat.Generate\nreload",
+                " miku.compat.GenerateCoreTopCompat",
             ):
                 with self.subTest(value=value):
                     fixture.args.main_class = value
-                    with self.assertRaisesRegex(spinal_generate.SpinalGenerateError, "openla500"):
+                    with self.assertRaisesRegex(spinal_generate.SpinalGenerateError, "miku"):
                         spinal_generate.validate_request(fixture.args)
 
     def test_rejects_path_expected_file_and_single_run(self) -> None:
@@ -180,12 +180,12 @@ class RequestValidationTests(unittest.TestCase):
                 fixture.spinal, fixture.args.main_class
             )
             self.assertEqual(
-                "src/main/scala/openla500/compat/GenerateCoreTopCompat.scala",
+                "src/main/scala/miku/compat/GenerateCoreTopCompat.scala",
                 evidence["path"],
             )
             with self.assertRaisesRegex(spinal_generate.SpinalGenerateError, "exactly one"):
                 spinal_generate.find_main_source(
-                    fixture.spinal, "openla500.compat.DoesNotExist"
+                    fixture.spinal, "miku.compat.DoesNotExist"
                 )
 
 
@@ -310,7 +310,7 @@ class GenerationTests(unittest.TestCase):
             if mutate_snapshot:
                 source = (
                     isolated[0]
-                    / "src/main/scala/openla500/compat/GenerateCoreTopCompat.scala"
+                    / "src/main/scala/miku/compat/GenerateCoreTopCompat.scala"
                 )
                 source.write_text(
                     source.read_text(encoding="utf-8") + "// isolated drift\n",

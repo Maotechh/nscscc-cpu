@@ -31,7 +31,7 @@ python-test:
 generate-raw:
 	rm -rf "$(CORE_TOP_RAW_DIR)"
 	mkdir -p "$(CORE_TOP_RAW_DIR)"
-	cd spinal && $(SBT) -batch 'runMain openla500.compat.GenerateCoreTopCompat --out-dir ../$(CORE_TOP_RAW_DIR)'
+	cd spinal && $(SBT) -batch 'runMain miku.compat.GenerateCoreTopCompat --out-dir ../$(CORE_TOP_RAW_DIR)'
 
 package-core: generate-raw
 	rm -rf "$(CORE_TOP_PACKAGE_DIR)"

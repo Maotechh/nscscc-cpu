@@ -7,9 +7,9 @@
   `7e499f4c43c92154d1d4e21be2f269ac140b4f2b2d944677c71f6f4213b66dc6`，2642 bytes。
 - 活动实例：同一提交的 `rtl/mycpu_top.v` 中唯一 `u_div`。`exe_stage` 在除法期间保持
   `es_div_enable` 为高，直到 `div_complete` 解除流水停顿。
-- 后续 SpinalHDL 生成入口固定为 `openla500.execute.GenerateOpenLa500Div`。生成物只有通过
+- 后续 SpinalHDL 生成入口固定为 `miku.execute.GenerateOpenLa500Div`。生成物只有通过
   精确端口、逐周期差分、formal 和 mixed overlay 后才可替换活动 RTL。
-- 现有 `spinal/src/main/scala/openla500/Divider.scala` 使用另一套 valid/result 接口，不是本合同
+- 历史 `spinal/src/main/scala/openla500/Divider.scala` 使用另一套 valid/result 接口，不是本合同
   的 oracle，也不能据其现状修改 golden 合同。
 
 ## 精确端口

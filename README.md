@@ -1,6 +1,9 @@
-# nscscc-cpu
+# MIKU
 
-本仓库的官方 `core_top` 已切换为 Scala/SpinalHDL 实现的 LA32R 乱序核。当前固定配置为取指 4、译码/重命名/分派 3、执行发射 4、写回 5、顺序提交 3；旧标量流水线不再参与生成。
+**MIKU Is Kinda Unordered** 是本团队的 LA32R 多发射乱序 CPU 核名称。仓库名仍保留为
+`nscscc-cpu`，对外 `core_top`、AXI、debug/commit 与 Chiplab 集成合同不因命名变更而改变。
+
+本仓库的官方 `core_top` 已切换为 Scala/SpinalHDL 实现的 MIKU。当前固定配置为取指 4、译码/重命名/分派 3、执行发射 4、写回 5、顺序提交 3；旧标量流水线不再参与生成。
 
 当前架构、接口、生成方法、验证基线和接手注意事项统一记录在 [`docs/ooo-core.md`](docs/ooo-core.md)。
 

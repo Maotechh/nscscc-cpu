@@ -26,7 +26,7 @@ class MulGateContractTests(unittest.TestCase):
             },
             mul_gate.MUL_PORTS,
         )
-        self.assertEqual("openla500.execute.GenerateOpenLa500Mul", mul_gate.GENERATOR_MAIN)
+        self.assertEqual("miku.execute.GenerateOpenLa500Mul", mul_gate.GENERATOR_MAIN)
 
     def test_warning_parser_is_fail_closed(self) -> None:
         self.assertEqual([], mul_gate.warning_lines("all clean\n"))
@@ -76,7 +76,7 @@ class MulGenerationTests(unittest.TestCase):
             "build.sbt",
             "project/build.properties",
             "project/plugins.sbt",
-            "src/main/scala/openla500/execute/OpenLa500Mul.scala",
+            "src/main/scala/miku/execute/OpenLa500Mul.scala",
         ):
             path = spinal / relative
             path.parent.mkdir(parents=True, exist_ok=True)
