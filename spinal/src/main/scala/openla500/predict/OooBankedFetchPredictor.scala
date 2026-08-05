@@ -60,6 +60,7 @@ final class OooBankedFetchPredictor(
     val lookupPc = in UInt (config.xlen bits)
     val responseValid = out Bool ()
     val prediction = out Vec (OooBankedFetchPrediction(config), config.fetchWidth)
+    val tableUpdateReady = out Bool ()
 
     val btbUpdateValid = in Bool ()
     val btbUpdatePc = in UInt (config.xlen bits)
@@ -83,6 +84,11 @@ final class OooBankedFetchPredictor(
     val commitRasPush = in Bool ()
     val commitRasPop = in Bool ()
     val commitReturnAddress = in UInt (config.xlen bits)
+    val architecturalHistoryValid = in Bits (config.commitWidth bits)
+    val architecturalHistoryTaken = in Bits (config.commitWidth bits)
+    val architecturalRasPush = in Bits (config.commitWidth bits)
+    val architecturalRasPop = in Bits (config.commitWidth bits)
+    val architecturalReturnAddress = in Vec (UInt(config.xlen bits), config.commitWidth)
     val flush = in Bool ()
   }
 
@@ -102,6 +108,7 @@ final class OooBankedFetchPredictor(
       invalidateRow := invalidateRow + 1
     }
   }
+  io.tableUpdateReady := !invalidating
 
   val speculativeGhr = Reg(Bits(historyWidth bits)) init (0)
   val architecturalGhr = Reg(Bits(historyWidth bits)) init (0)
@@ -111,24 +118,54 @@ final class OooBankedFetchPredictor(
   val speculativeRasCount = Reg(UInt(rasCountWidth bits)) init (0)
   val architecturalRasCount = Reg(UInt(rasCountWidth bits)) init (0)
 
-  when(io.phtUpdateValid) {
-    architecturalGhr := architecturalGhr(historyWidth - 2 downto 0) ##
-      io.phtUpdateTaken.asBits
+  val architecturalGhrStage = Vec(Bits(historyWidth bits), config.commitWidth + 1)
+  architecturalGhrStage(0) := architecturalGhr
+  for (lane <- 0 until config.commitWidth) {
+    architecturalGhrStage(lane + 1) := architecturalGhrStage(lane)
+    when(io.architecturalHistoryValid(lane)) {
+      architecturalGhrStage(lane + 1) :=
+        architecturalGhrStage(lane)(historyWidth - 2 downto 0) ##
+          io.architecturalHistoryTaken(lane).asBits
+    }
+  }
+  when(io.architecturalHistoryValid.orR) {
+    architecturalGhr := architecturalGhrStage(config.commitWidth)
   }
   when(io.speculativeHistoryValid) {
     speculativeGhr := speculativeGhr(historyWidth - 2 downto 0) ##
       io.speculativeHistoryTaken.asBits
   }
 
-  when(io.commitRasPush && !io.commitRasPop) {
-    when(architecturalRasCount =/= U(rasDepth, rasCountWidth bits)) {
-      architecturalRas(architecturalRasCount(rasIndexWidth - 1 downto 0)) :=
-        io.commitReturnAddress
-      architecturalRasCount := architecturalRasCount + 1
+  val architecturalRasCountStage = Vec(UInt(rasCountWidth bits), config.commitWidth + 1)
+  val architecturalRasStage = Array.fill(config.commitWidth + 1)(
+    Vec(UInt(config.xlen bits), rasDepth)
+  )
+  architecturalRasCountStage(0) := architecturalRasCount
+  for (entry <- 0 until rasDepth) {
+    architecturalRasStage(0)(entry) := architecturalRas(entry)
+  }
+  for (lane <- 0 until config.commitWidth) {
+    architecturalRasCountStage(lane + 1) := architecturalRasCountStage(lane)
+    for (entry <- 0 until rasDepth) {
+      architecturalRasStage(lane + 1)(entry) := architecturalRasStage(lane)(entry)
     }
-  }.elsewhen(io.commitRasPop && !io.commitRasPush) {
-    when(architecturalRasCount =/= 0) {
-      architecturalRasCount := architecturalRasCount - 1
+    when(io.architecturalRasPush(lane) && !io.architecturalRasPop(lane)) {
+      when(architecturalRasCountStage(lane) =/= U(rasDepth, rasCountWidth bits)) {
+        architecturalRasStage(lane + 1)(
+          architecturalRasCountStage(lane)(rasIndexWidth - 1 downto 0)
+        ) := io.architecturalReturnAddress(lane)
+        architecturalRasCountStage(lane + 1) := architecturalRasCountStage(lane) + 1
+      }
+    }.elsewhen(io.architecturalRasPop(lane) && !io.architecturalRasPush(lane)) {
+      when(architecturalRasCountStage(lane) =/= 0) {
+        architecturalRasCountStage(lane + 1) := architecturalRasCountStage(lane) - 1
+      }
+    }
+  }
+  when(io.architecturalRasPush.orR || io.architecturalRasPop.orR) {
+    architecturalRasCount := architecturalRasCountStage(config.commitWidth)
+    for (entry <- 0 until rasDepth) {
+      architecturalRas(entry) := architecturalRasStage(config.commitWidth)(entry)
     }
   }
   when(io.speculativeRasPush && !io.speculativeRasPop) {
@@ -143,28 +180,10 @@ final class OooBankedFetchPredictor(
     }
   }
   when(io.flush) {
-    speculativeGhr := Mux(
-      io.phtUpdateValid,
-      architecturalGhr(historyWidth - 2 downto 0) ## io.phtUpdateTaken.asBits,
-      architecturalGhr
-    )
-    speculativeRasCount := architecturalRasCount
+    speculativeGhr := architecturalGhrStage(config.commitWidth)
+    speculativeRasCount := architecturalRasCountStage(config.commitWidth)
     for (entry <- 0 until rasDepth) {
-      speculativeRas(entry) := architecturalRas(entry)
-    }
-    // A registered retirement update can intentionally arrive in the same
-    // cycle as the redirect caused by that branch.  Recover to the state after
-    // this architectural push/pop, matching the GHR merge above.
-    when(io.commitRasPush && !io.commitRasPop) {
-      when(architecturalRasCount =/= U(rasDepth, rasCountWidth bits)) {
-        speculativeRas(architecturalRasCount(rasIndexWidth - 1 downto 0)) :=
-          io.commitReturnAddress
-        speculativeRasCount := architecturalRasCount + 1
-      }
-    }.elsewhen(io.commitRasPop && !io.commitRasPush) {
-      when(architecturalRasCount =/= 0) {
-        speculativeRasCount := architecturalRasCount - 1
-      }
+      speculativeRas(entry) := architecturalRasStage(config.commitWidth)(entry)
     }
   }
 

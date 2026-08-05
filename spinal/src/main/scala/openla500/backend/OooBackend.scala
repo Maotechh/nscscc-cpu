@@ -54,6 +54,7 @@ final class OooBackend(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommi
     val commit = out Vec (OooCommitRecord(config), config.commitWidth)
     val recoveryValid = out Bool ()
     val recovery = out(OooRecoveryRequest(config))
+    val predictorUpdateCapacity = in UInt (log2Up(config.commitWidth + 1) bits)
     val flush = in Bool ()
   }
 
@@ -78,6 +79,7 @@ final class OooBackend(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommi
   val recoveryEpoch = Reg(UInt(config.recoveryEpochWidth bits)) init (0)
   when(io.flush) { recoveryEpoch := recoveryEpoch + 1 }
   rob.io.currentEpoch := recoveryEpoch
+  rob.io.predictorUpdateCapacity := io.predictorUpdateCapacity
   val committedMemoryEpoch = Reg(UInt(config.memoryEpochWidth bits)) init (0)
   val speculativeMemoryEpoch = Reg(UInt(config.memoryEpochWidth bits)) init (0)
 

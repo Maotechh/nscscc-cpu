@@ -25,6 +25,7 @@ private final class OooRobProbe(config: OooCoreConfig) extends Component {
     val completionExceptionValid = in Bits (config.writebackWidth bits)
     val completionBranchResolved = in Bits (config.writebackWidth bits)
     val currentEpoch = in UInt (config.recoveryEpochWidth bits)
+    val predictorUpdateCapacity = in UInt (log2Up(config.commitWidth + 1) bits)
     val completionWakeupValid = out Bits (config.writebackWidth bits)
     val completionWakeupCandidateValid = out Bits (config.writebackWidth bits)
     val commitValid = out Bits (config.commitWidth bits)
@@ -49,6 +50,7 @@ private final class OooRobProbe(config: OooCoreConfig) extends Component {
     rob.io.allocate(lane).uop.decoded.systemOperation := io.allocateSystemOperation(lane)
   }
   rob.io.currentEpoch := io.currentEpoch
+  rob.io.predictorUpdateCapacity := io.predictorUpdateCapacity
   rob.io.completionValid := io.completionValid
   for (lane <- 0 until config.writebackWidth) {
     val completion = rob.io.completion(lane)
@@ -97,6 +99,7 @@ class OooRobSpec extends AnyFunSuite {
     dut.io.completionExceptionValid #= 0
     dut.io.completionBranchResolved #= 0
     dut.io.currentEpoch #= 0
+    dut.io.predictorUpdateCapacity #= config.commitWidth
     dut.io.allocateSerializing #= 0
     dut.io.allocateIsBranch #= 0
     for (lane <- 0 until config.writebackWidth) {
@@ -280,6 +283,57 @@ class OooRobSpec extends AnyFunSuite {
         sample()
         assert(dut.io.occupancy.toBigInt == 0)
         assert(dut.io.empty.toBoolean)
+      }
+  }
+
+  test("ROB narrows the retirement prefix to predictor FIFO capacity") {
+    val config = OooCoreConfig.FourIssueThreeCommit
+    SimConfig.withVerilator
+      .workspacePath("target/sim-workspace-ooo-rob-predictor-capacity")
+      .compile(new OooRobProbe(config))
+      .doSim("ooo-rob-predictor-capacity", 0xb03c) { dut =>
+        def sample(): Unit = {
+          dut.clockDomain.waitSampling()
+          sleep(1)
+        }
+
+        dut.clockDomain.forkStimulus(period = 10)
+        initialize(dut, config)
+        dut.clockDomain.assertReset()
+        dut.clockDomain.waitSampling(2)
+        dut.clockDomain.deassertReset()
+        sample()
+
+        dut.io.allocateValid #= 7
+        dut.io.allocateAccept #= true
+        dut.io.allocateIsBranch #= 7
+        for (lane <- 0 until config.renameWidth) dut.io.allocatePc(lane) #= lane
+        sleep(1)
+        val pointers =
+          (0 until config.renameWidth).map(lane => dut.io.allocatedPointer(lane).toBigInt)
+        sample()
+
+        dut.io.allocateValid #= 0
+        dut.io.allocateAccept #= false
+        for (lane <- 0 until config.writebackWidth) {
+          dut.io.completionRobPointer(lane) #= pointers.lift(lane).getOrElse(BigInt(0))
+        }
+        dut.io.completionValid #= 7
+        sample()
+        dut.io.completionValid #= 0
+        sample()
+
+        dut.io.predictorUpdateCapacity #= 1
+        sleep(1)
+        assert(dut.io.commitValid.toBigInt == 1)
+        sample()
+        assert(dut.io.occupancy.toInt == 2)
+
+        dut.io.predictorUpdateCapacity #= 2
+        sleep(1)
+        assert(dut.io.commitValid.toBigInt == 3)
+        sample()
+        assert(dut.io.occupancy.toInt == 0)
       }
   }
 

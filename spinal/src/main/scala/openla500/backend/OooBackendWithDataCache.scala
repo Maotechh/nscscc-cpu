@@ -66,6 +66,7 @@ final class OooBackendWithDataCache(
     val commitMemory = out Vec (OooMemoryCommitObservation(config), config.commitWidth)
     val recoveryValid = out Bool ()
     val recovery = out(OooRecoveryRequest(config))
+    val predictorUpdateCapacity = in UInt (log2Up(config.commitWidth + 1) bits)
     val debugCommitValid = out Bool ()
     val debugCommit = out(OooCommitRecord(config))
     val csrWriteValid = out Bool ()
@@ -110,6 +111,7 @@ final class OooBackendWithDataCache(
 
   backend.io.renameValid := io.renameValid
   backend.io.rename := io.rename
+  backend.io.predictorUpdateCapacity := io.predictorUpdateCapacity
   io.renameReady := backend.io.renameReady
 
   cacheHierarchy.io.instructionRequestValid := io.instructionRequestValid

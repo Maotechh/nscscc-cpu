@@ -8,38 +8,74 @@ import openla500.privileged._
 import spinal.core._
 import spinal.lib._
 
-private[core] object OooPredictorUpdateLaneSelect {
-  def apply(
-      config: OooCoreConfig,
-      committedBranch: Bits,
-      commitRobPointer: Vec[UInt],
-      recoveryValid: Bool,
-      recoveryCause: UInt,
-      recoveryRobPointer: UInt
-  ): UInt = {
-    val selectedLane = UInt(log2Up(config.commitWidth) bits)
-    selectedLane := 0
-    for (lane <- (0 until config.commitWidth).reverse) {
-      when(committedBranch(lane)) {
-        selectedLane := lane
-      }
-    }
+private[core] final case class OooRetiredPredictorUpdate(config: OooCoreConfig) extends Bundle {
+  val pc = UInt(config.xlen bits)
+  val taken = Bool()
+  val target = UInt(config.xlen bits)
+  val branchType = UInt(OooPredictedBranchType.Width bits)
+  val metadata = Bits(16 bits)
+  val isCall = Bool()
+  val isReturn = Bool()
+}
 
-    val recoveryBranch = Bits(config.commitWidth bits)
-    for (lane <- 0 until config.commitWidth) {
-      recoveryBranch(lane) := committedBranch(lane) && recoveryValid &&
-        (recoveryCause === OooRecoveryCause.branchMispredict) &&
-        (commitRobPointer(lane) === recoveryRobPointer)
-    }
-    when(recoveryBranch.orR) {
-      for (lane <- (0 until config.commitWidth).reverse) {
-        when(recoveryBranch(lane)) {
-          selectedLane := lane
-        }
-      }
-    }
-    selectedLane
+/** Lossless width adapter from three-wide retirement to the predictor's single table-write port. */
+private[core] final class OooPredictorUpdateQueue(
+    config: OooCoreConfig,
+    depth: Int = 8
+) extends Component {
+  require(isPow2(depth))
+  require(depth >= config.commitWidth * 2)
+  private val pointerWidth = log2Up(depth)
+  private val countWidth = log2Up(depth + 1)
+  private val capacityWidth = log2Up(config.commitWidth + 1)
+
+  val io = new Bundle {
+    val pushValid = in Bits (config.commitWidth bits)
+    val push = in Vec (OooRetiredPredictorUpdate(config), config.commitWidth)
+    val pushCapacity = out UInt (capacityWidth bits)
+    val popValid = out Bool ()
+    val pop = out(OooRetiredPredictorUpdate(config))
+    val popReady = in Bool ()
+    val occupancy = out UInt (countWidth bits)
   }
+
+  val entries = Vec.fill(depth)(Reg(OooRetiredPredictorUpdate(config)))
+  val head = Reg(UInt(pointerWidth bits)) init (0)
+  val tail = Reg(UInt(pointerWidth bits)) init (0)
+  val count = Reg(UInt(countWidth bits)) init (0)
+
+  io.popValid := count =/= 0
+  io.pop := entries(head)
+  io.occupancy := count
+  val popFire = io.popValid && io.popReady
+
+  val available = UInt(countWidth bits)
+  available := U(depth, countWidth bits) - count + popFire.asUInt
+  io.pushCapacity := Mux(
+    available >= U(config.commitWidth, countWidth bits),
+    U(config.commitWidth, capacityWidth bits),
+    available.resized
+  )
+
+  val pushCount = CountOne(io.pushValid)
+  for (lane <- 0 until config.commitWidth) {
+    val earlierCount = if (lane == 0) {
+      U(0, capacityWidth bits)
+    } else {
+      CountOne(io.pushValid(lane - 1 downto 0)).resize(capacityWidth)
+    }
+    when(io.pushValid(lane)) {
+      entries((tail + earlierCount).resized) := io.push(lane)
+    }
+  }
+
+  when(popFire) {
+    head := head + 1
+  }
+  when(pushCount =/= 0) {
+    tail := tail + pushCount.resized
+  }
+  count := count + pushCount - popFire.asUInt
 }
 
 /** Self-fetching four-issue, three-commit out-of-order core.
@@ -144,6 +180,8 @@ final class OooCore(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommit) 
   val frontend = new OooFrontend(config)
   val decodeRenameBuffer = new OooDecodeRenameBuffer(config)
   val backend = new OooBackendWithDataCache(config)
+  val predictorUpdateQueue = new OooPredictorUpdateQueue(config)
+  backend.io.predictorUpdateCapacity := predictorUpdateQueue.io.pushCapacity
 
   io.instructionTranslationRequest.valid := frontend.io.translationRequest.valid
   io.instructionTranslationRequest.payload := frontend.io.translationRequest.payload
@@ -215,58 +253,42 @@ final class OooCore(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommit) 
   val committedBranch = Bits(config.commitWidth bits)
   for (lane <- 0 until config.commitWidth) {
     committedBranch(lane) := backend.io.commitValid(lane) &&
-      backend.io.commit(lane).retired && backend.io.commit(lane).isBranch
+      backend.io.commit(lane).retired && backend.io.commit(lane).isBranch &&
+      !internalRedirectValid
   }
-  val commitRobPointer = Vec(UInt(config.robPointerWidth bits), config.commitWidth)
+  val retiredPredictorUpdate = Vec(OooRetiredPredictorUpdate(config), config.commitWidth)
   for (lane <- 0 until config.commitWidth) {
-    commitRobPointer(lane) := backend.io.commit(lane).robPointer
+    val commit = backend.io.commit(lane)
+    retiredPredictorUpdate(lane).pc := commit.pc
+    retiredPredictorUpdate(lane).taken := commit.branchTaken
+    retiredPredictorUpdate(lane).target := commit.branchTarget
+    retiredPredictorUpdate(lane).branchType := commit.predictorType
+    retiredPredictorUpdate(lane).metadata := commit.predictorMetadata
+    retiredPredictorUpdate(lane).isCall := commit.predictorType === OooPredictedBranchType.call
+    retiredPredictorUpdate(lane).isReturn := commit.predictorType === OooPredictedBranchType.ret
+    predictorUpdateQueue.io.push(lane) := retiredPredictorUpdate(lane)
   }
-  val recoveryBranchTrainingValid = if (config.enableRecoveryBranchTrainingPriority) {
-    backend.io.recoveryValid
-  } else {
-    False
+  predictorUpdateQueue.io.pushValid := committedBranch
+
+  // Table writes drain in program order. Architectural history and RAS state use the unqueued
+  // batch below so a recovery observes every branch retired in the recovery branch's cycle.
+  frontend.io.predictorUpdateValid := predictorUpdateQueue.io.popValid
+  frontend.io.predictorUpdatePc := predictorUpdateQueue.io.pop.pc
+  frontend.io.predictorUpdateTaken := predictorUpdateQueue.io.pop.taken
+  frontend.io.predictorUpdateTarget := predictorUpdateQueue.io.pop.target
+  frontend.io.predictorUpdateType := predictorUpdateQueue.io.pop.branchType
+  frontend.io.predictorUpdateMetadata := predictorUpdateQueue.io.pop.metadata
+  frontend.io.predictorUpdateIsCall := predictorUpdateQueue.io.pop.isCall
+  frontend.io.predictorUpdateIsReturn := predictorUpdateQueue.io.pop.isReturn
+  predictorUpdateQueue.io.popReady := frontend.io.predictorUpdateReady
+  frontend.io.predictorRetireValid := committedBranch
+  for (lane <- 0 until config.commitWidth) {
+    frontend.io.predictorRetireTaken(lane) := retiredPredictorUpdate(lane).taken
+    frontend.io.predictorRetireType(lane) := retiredPredictorUpdate(lane).branchType
+    frontend.io.predictorRetireIsCall(lane) := retiredPredictorUpdate(lane).isCall
+    frontend.io.predictorRetireIsReturn(lane) := retiredPredictorUpdate(lane).isReturn
+    frontend.io.predictorRetireReturnAddress(lane) := retiredPredictorUpdate(lane).pc + 4
   }
-  val predictorUpdateLane = OooPredictorUpdateLaneSelect(
-    config,
-    committedBranch,
-    commitRobPointer,
-    recoveryBranchTrainingValid,
-    backend.io.recovery.cause,
-    backend.io.recovery.robPointer
-  )
-  val predictorCommit = backend.io.commit(predictorUpdateLane)
-  val predictorIsCall = predictorCommit.predictorType === OooPredictedBranchType.call
-  val predictorIsReturn = predictorCommit.predictorType === OooPredictedBranchType.ret
-  // Predictor training is retirement state, but it does not need to update in
-  // the ROB decision cycle.  This register bank removes the three-wide commit
-  // prefix from the BTB/PHT/RAS write network.  A mispredicted branch therefore
-  // trains in the following redirect cycle; the predictor explicitly merges
-  // that update into its recovered architectural history.
-  val retiredPredictorUpdateValid = RegInit(False)
-  val retiredPredictorUpdatePc = Reg(UInt(config.xlen bits)) init (0)
-  val retiredPredictorUpdateTaken = RegInit(False)
-  val retiredPredictorUpdateTarget = Reg(UInt(config.xlen bits)) init (0)
-  val retiredPredictorUpdateType =
-    Reg(UInt(OooPredictedBranchType.Width bits)) init (OooPredictedBranchType.direct)
-  val retiredPredictorUpdateMetadata = Reg(Bits(16 bits)) init (0)
-  val retiredPredictorUpdateIsCall = RegInit(False)
-  val retiredPredictorUpdateIsReturn = RegInit(False)
-  retiredPredictorUpdateValid := committedBranch.orR && !internalRedirectValid
-  retiredPredictorUpdatePc := predictorCommit.pc
-  retiredPredictorUpdateTaken := predictorCommit.branchTaken
-  retiredPredictorUpdateTarget := predictorCommit.branchTarget
-  retiredPredictorUpdateType := predictorCommit.predictorType
-  retiredPredictorUpdateMetadata := predictorCommit.predictorMetadata
-  retiredPredictorUpdateIsCall := predictorIsCall
-  retiredPredictorUpdateIsReturn := predictorIsReturn
-  frontend.io.predictorUpdateValid := retiredPredictorUpdateValid
-  frontend.io.predictorUpdatePc := retiredPredictorUpdatePc
-  frontend.io.predictorUpdateTaken := retiredPredictorUpdateTaken
-  frontend.io.predictorUpdateTarget := retiredPredictorUpdateTarget
-  frontend.io.predictorUpdateType := retiredPredictorUpdateType
-  frontend.io.predictorUpdateMetadata := retiredPredictorUpdateMetadata
-  frontend.io.predictorUpdateIsCall := retiredPredictorUpdateIsCall
-  frontend.io.predictorUpdateIsReturn := retiredPredictorUpdateIsReturn
   frontend.io.privilege := io.privilege
   frontend.io.interruptPending := io.interruptPending
   decodeRenameBuffer.io.flush := internalRedirectValid

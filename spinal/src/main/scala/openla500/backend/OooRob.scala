@@ -73,6 +73,7 @@ final class OooRob(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommit) e
       out Vec (UInt(config.physicalRegIndexWidth bits), config.writebackWidth)
     val completionWakeupData = out Vec (Bits(config.xlen bits), config.writebackWidth)
     val currentEpoch = in UInt (config.recoveryEpochWidth bits)
+    val predictorUpdateCapacity = in UInt (log2Up(config.commitWidth + 1) bits)
 
     val commitValid = out Bits (config.commitWidth bits)
     val commit = out Vec (OooCommitRecord(config), config.commitWidth)
@@ -284,16 +285,26 @@ final class OooRob(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommit) e
   val headCompletionBypassResult = Bits(config.xlen bits)
   val canCommit = Vec(Bool(), config.commitWidth)
   val stopAfter = Vec(Bool(), config.commitWidth)
+  val branchPrefix = Vec(UInt(log2Up(config.commitWidth + 1) bits), config.commitWidth)
   for (lane <- 0 until config.commitWidth) {
+    val retiringBranch = candidates(lane).payload.isBranch && !candidates(lane).exception.valid
+    if (lane == 0) {
+      branchPrefix(lane) := retiringBranch.asUInt.resized
+    } else {
+      branchPrefix(lane) := branchPrefix(lane - 1) + retiringBranch.asUInt
+    }
+    val predictorHasCapacity = !retiringBranch ||
+      branchPrefix(lane) <= io.predictorUpdateCapacity
     stopAfter(lane) := candidates(lane).exception.valid ||
       candidates(lane).state.serializing || candidates(lane).state.branchMispredict
     if (lane == 0) {
       canCommit(lane) := candidates(lane).state.valid &&
         (candidates(lane).state.complete || headCompletionBypass) &&
-        candidates(lane).state.payloadReady
+        candidates(lane).state.payloadReady && predictorHasCapacity
     } else {
       canCommit(lane) := candidates(lane).state.valid && candidates(lane).state.complete &&
-        candidates(lane).state.payloadReady && canCommit(lane - 1) && !stopAfter(lane - 1)
+        candidates(lane).state.payloadReady && canCommit(lane - 1) && !stopAfter(lane - 1) &&
+        predictorHasCapacity
     }
     io.commitValid(lane) := canCommit(lane)
     io.commit(lane).pc := candidates(lane).payload.pc

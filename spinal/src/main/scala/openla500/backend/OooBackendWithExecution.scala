@@ -37,6 +37,7 @@ final class OooBackendWithExecution(
     val commitMemory = out Vec (OooMemoryCommitObservation(config), config.commitWidth)
     val recoveryValid = out Bool ()
     val recovery = out(OooRecoveryRequest(config))
+    val predictorUpdateCapacity = in UInt (log2Up(config.commitWidth + 1) bits)
     val debugCommitValid = out Bool ()
     val debugCommit = out(OooCommitRecord(config))
     val csrWriteValid = out Bool ()
@@ -88,6 +89,7 @@ final class OooBackendWithExecution(
     io.renameValid
   )
   backend.io.rename := io.rename
+  backend.io.predictorUpdateCapacity := io.predictorUpdateCapacity
   backend.io.releaseLoadValid := loadStoreQueue.io.releaseLoadValid
   backend.io.releaseStoreValid := Mux(
     storeDrainBusy,

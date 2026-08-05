@@ -58,6 +58,16 @@ final class OooFrontend(config: OooCoreConfig = OooCoreConfig.FourIssueThreeComm
     val predictorUpdateMetadata = in Bits (16 bits)
     val predictorUpdateIsCall = in Bool ()
     val predictorUpdateIsReturn = in Bool ()
+    val predictorUpdateReady = out Bool ()
+    val predictorRetireValid = in Bits (config.commitWidth bits)
+    val predictorRetireTaken = in Bits (config.commitWidth bits)
+    val predictorRetireType = in Vec (
+      UInt(OooPredictedBranchType.Width bits),
+      config.commitWidth
+    )
+    val predictorRetireIsCall = in Bits (config.commitWidth bits)
+    val predictorRetireIsReturn = in Bits (config.commitWidth bits)
+    val predictorRetireReturnAddress = in Vec (UInt(config.xlen bits), config.commitWidth)
     val privilege = in Bits (2 bits)
     val interruptPending = in Bool ()
 
@@ -435,7 +445,9 @@ final class OooFrontend(config: OooCoreConfig = OooCoreConfig.FourIssueThreeComm
   val responseLearnTypeReg = RegNextWhen(responseLearnType, responseFire) init (
     OooPredictedBranchType.direct
   )
-  val preciseBtbUpdate = io.predictorUpdateValid && io.predictorUpdateTaken
+  io.predictorUpdateReady := targetPredictor.io.tableUpdateReady
+  val preciseUpdate = io.predictorUpdateValid && io.predictorUpdateReady
+  val preciseBtbUpdate = preciseUpdate && io.predictorUpdateTaken
   targetPredictor.io.btbUpdateValid := preciseBtbUpdate || responseLearnPending
   targetPredictor.io.btbUpdatePc := responseLearnPcReg
   targetPredictor.io.btbUpdateTarget := responseLearnTargetReg
@@ -447,7 +459,7 @@ final class OooFrontend(config: OooCoreConfig = OooCoreConfig.FourIssueThreeComm
     targetPredictor.io.btbUpdateType := io.predictorUpdateType
     targetPredictor.io.btbUpdateDirectionTrained := True
   }
-  targetPredictor.io.phtUpdateValid := io.predictorUpdateValid &&
+  targetPredictor.io.phtUpdateValid := preciseUpdate &&
     io.predictorUpdateType === OooPredictedBranchType.conditional
   targetPredictor.io.phtUpdatePc := io.predictorUpdatePc
   targetPredictor.io.phtUpdateIndex := io.predictorUpdateMetadata(9 downto 0).asUInt
@@ -457,6 +469,17 @@ final class OooFrontend(config: OooCoreConfig = OooCoreConfig.FourIssueThreeComm
   targetPredictor.io.commitRasPush := io.predictorUpdateValid && io.predictorUpdateIsCall
   targetPredictor.io.commitRasPop := io.predictorUpdateValid && io.predictorUpdateIsReturn
   targetPredictor.io.commitReturnAddress := io.predictorUpdatePc + 4
+  for (lane <- 0 until config.commitWidth) {
+    targetPredictor.io.architecturalHistoryValid(lane) := io.predictorRetireValid(lane) &&
+      io.predictorRetireType(lane) === OooPredictedBranchType.conditional
+    targetPredictor.io.architecturalHistoryTaken(lane) := io.predictorRetireTaken(lane)
+    targetPredictor.io.architecturalRasPush(lane) := io.predictorRetireValid(lane) &&
+      io.predictorRetireIsCall(lane)
+    targetPredictor.io.architecturalRasPop(lane) := io.predictorRetireValid(lane) &&
+      io.predictorRetireIsReturn(lane)
+    targetPredictor.io.architecturalReturnAddress(lane) :=
+      io.predictorRetireReturnAddress(lane)
+  }
   val decodeInputValid = Bits(config.fetchWidth bits)
   val decodePc = Vec(UInt(config.xlen bits), config.fetchWidth)
   val decodeInstruction = Vec(Bits(32 bits), config.fetchWidth)

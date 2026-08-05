@@ -236,7 +236,7 @@ class OpenLa500PredictorSpec extends AnyFunSuite {
       }
   }
 
-  test("banked predictor preserves a retiring RAS push across same-cycle flush") {
+  test("banked predictor preserves an ordered retirement batch across same-cycle flush") {
     val config = OooCoreConfig.FourIssueThreeCommit
     SimConfig.withVerilator
       .workspacePath("target/sim-workspace-ooo-banked-predictor")
@@ -264,6 +264,13 @@ class OpenLa500PredictorSpec extends AnyFunSuite {
         dut.io.commitRasPush #= false
         dut.io.commitRasPop #= false
         dut.io.commitReturnAddress #= 0
+        dut.io.architecturalHistoryValid #= 0
+        dut.io.architecturalHistoryTaken #= 0
+        dut.io.architecturalRasPush #= 0
+        dut.io.architecturalRasPop #= 0
+        for (lane <- 0 until config.commitWidth) {
+          dut.io.architecturalReturnAddress(lane) #= 0
+        }
         dut.io.flush #= false
         dut.clockDomain.assertReset()
         dut.clockDomain.waitSampling(2)
@@ -272,7 +279,8 @@ class OpenLa500PredictorSpec extends AnyFunSuite {
 
         val returnPc = BigInt("1c004000", 16)
         val fallbackTarget = BigInt("1c008000", 16)
-        val committedReturnAddress = BigInt("1c00c004", 16)
+        val olderReturnAddress = BigInt("1c00a004", 16)
+        val recoveryReturnAddress = BigInt("1c00c004", 16)
         dut.io.btbUpdatePc #= returnPc
         dut.io.btbUpdateTarget #= fallbackTarget
         dut.io.btbUpdateType #= 3
@@ -280,11 +288,12 @@ class OpenLa500PredictorSpec extends AnyFunSuite {
         dut.clockDomain.waitSampling()
         dut.io.btbUpdateValid #= false
 
-        dut.io.commitRasPush #= true
-        dut.io.commitReturnAddress #= committedReturnAddress
+        dut.io.architecturalRasPush #= 3
+        dut.io.architecturalReturnAddress(0) #= olderReturnAddress
+        dut.io.architecturalReturnAddress(1) #= recoveryReturnAddress
         dut.io.flush #= true
         dut.clockDomain.waitSampling()
-        dut.io.commitRasPush #= false
+        dut.io.architecturalRasPush #= 0
         dut.io.flush #= false
 
         dut.io.lookupPc #= returnPc
@@ -294,7 +303,24 @@ class OpenLa500PredictorSpec extends AnyFunSuite {
         sleep(1)
         assert(dut.io.responseValid.toBoolean)
         assert(dut.io.prediction(0).hit.toBoolean)
-        assert(dut.io.prediction(0).target.toBigInt == committedReturnAddress)
+        assert(dut.io.prediction(0).target.toBigInt == recoveryReturnAddress)
+
+        // Three conditional branches retire oldest-to-youngest with outcomes T,N,T. The flush
+        // must restore speculative history to binary 101 in the same cycle as the batch update.
+        dut.io.architecturalHistoryValid #= 7
+        dut.io.architecturalHistoryTaken #= 5
+        dut.io.flush #= true
+        dut.clockDomain.waitSampling()
+        dut.io.architecturalHistoryValid #= 0
+        dut.io.architecturalHistoryTaken #= 0
+        dut.io.flush #= false
+        dut.io.lookupPc #= returnPc
+        dut.io.lookupValid #= true
+        dut.clockDomain.waitSampling()
+        dut.io.lookupValid #= false
+        sleep(1)
+        val pcIndex = ((returnPc >> 4) & 0x1f).toInt
+        assert(dut.io.prediction(0).phtIndex.toInt == ((5 << 5) | pcIndex))
       }
   }
 }

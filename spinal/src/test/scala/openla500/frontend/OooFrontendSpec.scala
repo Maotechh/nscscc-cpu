@@ -52,6 +52,14 @@ class OooFrontendSpec extends AnyFunSuite {
     dut.io.predictorUpdateMetadata #= 0
     dut.io.predictorUpdateIsCall #= false
     dut.io.predictorUpdateIsReturn #= false
+    dut.io.predictorRetireValid #= 0
+    dut.io.predictorRetireTaken #= 0
+    dut.io.predictorRetireIsCall #= 0
+    dut.io.predictorRetireIsReturn #= 0
+    for (lane <- 0 until config.commitWidth) {
+      dut.io.predictorRetireType(lane) #= 0
+      dut.io.predictorRetireReturnAddress(lane) #= 0
+    }
     dut.io.privilege #= 0
     dut.io.interruptPending #= false
   }
@@ -1143,10 +1151,15 @@ class OooFrontendSpec extends AnyFunSuite {
         for (_ <- 0 until 6) {
           val phtIndex = ((learnedHistory & 0x1f) << 5) | ((learnedPc >> 4) & 0x1f)
           dut.io.predictorUpdateMetadata #= (phtIndex | (2 << 10))
+          dut.io.predictorRetireValid #= 1
+          dut.io.predictorRetireTaken #= 1
+          dut.io.predictorRetireType(0) #= 0
           sample(dut)
           learnedHistory = ((learnedHistory << 1) | 1) & 0x1f
         }
         dut.io.predictorUpdateValid #= false
+        dut.io.predictorRetireValid #= 0
+        dut.io.predictorRetireTaken #= 0
 
         dut.io.redirectTarget #= learnedPc
         dut.io.redirectValid #= true

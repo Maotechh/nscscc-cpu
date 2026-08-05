@@ -54,6 +54,10 @@ private final class OooBackendDispatchProbe(config: OooCoreConfig) extends Compo
   noIoPrefix()
 
   val backend = new OooBackend(config)
+  backend.io.predictorUpdateCapacity := U(
+    config.commitWidth,
+    log2Up(config.commitWidth + 1) bits
+  )
   val decoders = Array.tabulate(config.renameWidth)(_ => new OooLa32rDecoder(config))
 
   backend.io.renameValid := io.inputValid
