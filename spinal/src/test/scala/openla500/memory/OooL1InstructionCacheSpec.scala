@@ -340,7 +340,7 @@ class OooL1InstructionCacheSpec extends AnyFunSuite {
     }
   }
 
-  test("real frontend owner gate replaces a warm L1I hit in its response cycle") {
+  test("registered warm L1I response releases the frontend owner after one response stage") {
     SimConfig.withVerilator
       .workspacePath("target/sim-workspace-ooo-frontend-l1i-hit-turnover")
       .compile(new OooFrontendL1InstructionCacheProbe(config))
@@ -407,18 +407,19 @@ class OooL1InstructionCacheSpec extends AnyFunSuite {
         }
         assert(fires.map(_._2) == (0 until 4).map(config.resetVector + _ * 16))
         // Fetch produces four instructions while decode consumes at most three, so the finite
-        // frontend buffer must eventually throttle a sustained hit stream.  The optimization's
-        // decisive contract is the first response replacing its cache owner on the same edge.
+        // frontend buffer must eventually throttle a sustained hit stream.  The registered
+        // response appears with the next owner release, two cycles after its lookup request.
         withClue(
           s"cache request fires: ${fires.mkString(", ")}; overlap: ${responseRequestOverlap.mkString(", ")}"
         ) {
           assert(responseRequestOverlap.nonEmpty)
-          assert(fires(1)._1 - fires(0)._1 == 1)
+          assert(responseRequestOverlap.contains(fires(1)._1))
+          assert(fires(1)._1 - fires(0)._1 == 2)
         }
       }
   }
 
-  test("real frontend correction kills the direct-hit turnover accepted behind it") {
+  test("real frontend correction kills the registered-hit turnover accepted behind it") {
     SimConfig.withVerilator
       .workspacePath("target/sim-workspace-ooo-frontend-l1i-hit-correction")
       .compile(new OooFrontendL1InstructionCacheProbe(config))
@@ -526,22 +527,22 @@ class OooL1InstructionCacheSpec extends AnyFunSuite {
 
         acceptRequest(dut, addresses(0), addresses(0))
         for (next <- 1 until addresses.length) {
-          assertResponse(dut, addresses(next - 1), instructions(next - 1))
           dut.io.requestValid #= true
           dut.io.request.virtualAddress #= addresses(next)
           dut.io.request.physicalAddress #= addresses(next)
           sleep(1)
           assert(dut.io.requestReady.toBoolean)
           sample(dut)
+          assertResponse(dut, addresses(next - 1), instructions(next - 1))
         }
         dut.io.requestValid #= false
+        sample(dut)
         assertResponse(dut, addresses.last, instructions.last)
         sample(dut)
         assert(!dut.io.responseValid.toBoolean)
 
         val missAddress = BigInt(0x2c0)
         acceptRequest(dut, addresses.head, addresses.head)
-        assertResponse(dut, addresses.head, instructions.head)
         dut.io.requestValid #= true
         dut.io.request.virtualAddress #= missAddress
         dut.io.request.physicalAddress #= missAddress
@@ -549,7 +550,7 @@ class OooL1InstructionCacheSpec extends AnyFunSuite {
         assert(dut.io.requestReady.toBoolean)
         sample(dut)
         dut.io.requestValid #= false
-        assert(!dut.io.responseValid.toBoolean)
+        assertResponse(dut, addresses.head, instructions.head)
 
         var cycles = 0
         while (!dut.io.lineReadValid.toBoolean && cycles < 8) {
@@ -602,9 +603,9 @@ class OooL1InstructionCacheSpec extends AnyFunSuite {
         sleep(1)
         assert(!dut.io.requestReady.toBoolean)
         assert(!dut.io.maintenanceReady.toBoolean)
-        assertResponse(dut, line0, 4000)
         sample(dut)
         dut.io.requestValid #= false
+        assertResponse(dut, line0, 4000)
         sleep(1)
         assert(dut.io.maintenanceReady.toBoolean)
         sample(dut)
