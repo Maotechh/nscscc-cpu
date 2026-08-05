@@ -9,6 +9,7 @@ import scala.language.reflectiveCalls
 
 class OooFrontendSpec extends AnyFunSuite {
   private val config = OooCoreConfig.FourIssueThreeCommit
+  private val turnoverConfig = config.copy(enableFrontendTranslationTurnover = true)
 
   private def sample(dut: OooFrontend): Unit = {
     dut.clockDomain.waitSampling()
@@ -181,7 +182,7 @@ class OooFrontendSpec extends AnyFunSuite {
   test("a straight-line translation response turns over to L1I and the next translation") {
     SimConfig.withVerilator
       .workspacePath("target/sim-workspace-ooo-frontend-translation-response-bypass")
-      .compile(new OooFrontend(config))
+      .compile(new OooFrontend(turnoverConfig))
       .doSim("ooo-frontend-translation-response-bypass", 0x4c7b) { dut =>
         dut.clockDomain.forkStimulus(period = 10)
         clearInputs(dut)
@@ -767,7 +768,7 @@ class OooFrontendSpec extends AnyFunSuite {
   test("FixBranch drains a translation turned over on the correction edge") {
     SimConfig.withVerilator
       .workspacePath("target/sim-workspace-ooo-frontend")
-      .compile(new OooFrontend(config))
+      .compile(new OooFrontend(turnoverConfig))
       .doSim("ooo-frontend-fix-branch-translation-turnover-drain", 0x4c6b) { dut =>
         dut.clockDomain.forkStimulus(period = 10)
         clearInputs(dut)

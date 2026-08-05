@@ -92,7 +92,7 @@ final case class OooCoreConfig(
     enableDirectDmwPretranslation: Boolean = true,
     enableLoadCompletionEarlyWakeup: Boolean = true,
     enableFrontendTranslationResponseBypass: Boolean = true,
-    enableFrontendTranslationTurnover: Boolean = true,
+    enableFrontendTranslationTurnover: Boolean = false,
     enableRecoveryBranchTrainingPriority: Boolean = true,
     enableL2WriteBack: Boolean = true,
     resetVector: BigInt = BigInt("1c000000", 16),
