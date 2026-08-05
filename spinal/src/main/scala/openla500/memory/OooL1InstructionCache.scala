@@ -127,7 +127,9 @@ final class OooL1InstructionCache(
   val responseValid = RegInit(False)
   val response = Reg(OooInstructionCacheResponse(config))
   responseValid := False
-  io.responseValid := responseValid
+  val lookupHitResponseValid = Bool()
+  lookupHitResponseValid := False
+  io.responseValid := responseValid || lookupHitResponseValid
   io.response := response
 
   // Compute each way's response in parallel with the tag comparison.  The hit way then selects
@@ -232,8 +234,12 @@ final class OooL1InstructionCache(
     when(requestKilled || io.kill || newInvalidate) {
       state := OooL1InstructionCacheState.idle
     }.elsewhen(cacheArray.io.hit) {
-      responseValid := True
-      response := hitResponseByWay(cacheArray.io.hitWay)
+      // A confirmed hit is already a complete response.  Expose it in the array-response cycle
+      // so the frontend can retire the old cache owner and present the next translated group to
+      // lookupHitTurnoverReady on the same edge.  Refill and error responses remain registered;
+      // the resulting array-to-frontend hit path must be judged again with full-SoC timing.
+      lookupHitResponseValid := True
+      io.response := hitResponseByWay(cacheArray.io.hitWay)
       state := Mux(
         lookupHitTurnoverFire,
         OooL1InstructionCacheState.lookup,

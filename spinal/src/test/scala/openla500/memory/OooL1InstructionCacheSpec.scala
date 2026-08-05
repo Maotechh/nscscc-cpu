@@ -1,6 +1,7 @@
 package openla500.memory
 
 import openla500.core._
+import openla500.frontend._
 import org.scalatest.funsuite.AnyFunSuite
 import spinal.core._
 import spinal.core.sim._
@@ -50,10 +51,103 @@ private final class OooL1InstructionCacheProbe(config: OooCoreConfig) extends Co
   io.maintenanceDone := cache.io.maintenanceDone
 }
 
+private final class OooFrontendL1InstructionCacheProbe(config: OooCoreConfig) extends Component {
+  val io = new Bundle {
+    val decodeReady = in Bits (config.decodeWidth bits)
+    val translationEnable = in Bool ()
+    val redirectValid = in Bool ()
+    val redirectTarget = in UInt (config.xlen bits)
+    val invalidate = in Bool ()
+    val lineReadValid = out Bool ()
+    val lineRead = out(OooLineReadRequest(config))
+    val lineReadReady = in Bool ()
+    val lineReadBeatValid = in Bool ()
+    val lineReadBeat = in(OooLineReadBeat(config))
+    val lineReadBeatReady = out Bool ()
+    val cacheRequestFire = out Bool ()
+    val cacheRequestAddress = out UInt (config.xlen bits)
+    val cacheResponseValid = out Bool ()
+    val cacheKill = out Bool ()
+    val fetchPc = out UInt (config.xlen bits)
+    val frontendOccupancy = out UInt (log2Up(config.instructionBufferEntries + 1) bits)
+  }
+  noIoPrefix()
+
+  val frontend = new OooFrontend(config)
+  val cache = new OooL1InstructionCache(config)
+
+  // Model the direct-address ATU path with the same one-entry response replacement contract.
+  val translationValid = RegInit(False)
+  val translationAddress = Reg(UInt(config.xlen bits)) init (U(config.resetVector, config.xlen bits))
+  val translationResponseFire = translationValid && frontend.io.translationResponse.ready
+  frontend.io.translationRequest.ready :=
+    io.translationEnable && (!translationValid || translationResponseFire)
+  val translationRequestFire =
+    frontend.io.translationRequest.valid && frontend.io.translationRequest.ready
+  when(translationRequestFire) {
+    translationValid := True
+    translationAddress := frontend.io.translationRequest.virtualAddress
+  }
+  when(translationResponseFire && !translationRequestFire) { translationValid := False }
+  frontend.io.translationResponse.valid := translationValid && io.translationEnable
+  frontend.io.translationResponse.virtualAddress := translationAddress
+  frontend.io.translationResponse.physicalAddress := translationAddress
+  frontend.io.translationResponse.uncached := False
+  frontend.io.translationResponse.cancelled := False
+  frontend.io.translationResponse.exception.assignFromBits(
+    B(0, frontend.io.translationResponse.exception.getBitsWidth bits)
+  )
+
+  cache.io.requestValid := frontend.io.cacheRequestValid
+  cache.io.request := frontend.io.cacheRequest
+  frontend.io.cacheRequestReady := cache.io.requestReady
+  frontend.io.cacheResponseValid := cache.io.responseValid
+  frontend.io.cacheResponse := cache.io.response
+  cache.io.kill := frontend.io.cacheKill
+
+  frontend.io.decodeReady := io.decodeReady
+  frontend.io.redirectValid := io.redirectValid
+  frontend.io.redirectTarget := io.redirectTarget
+  frontend.io.predictorUpdateValid := False
+  frontend.io.predictorUpdatePc := 0
+  frontend.io.predictorUpdateTaken := False
+  frontend.io.predictorUpdateTarget := 0
+  frontend.io.predictorUpdateType := 0
+  frontend.io.predictorUpdateMetadata := 0
+  frontend.io.predictorUpdateIsCall := False
+  frontend.io.predictorUpdateIsReturn := False
+  frontend.io.privilege := 0
+  frontend.io.interruptPending := False
+
+  cache.io.lineReadReady := io.lineReadReady
+  cache.io.lineReadBeatValid := io.lineReadBeatValid
+  cache.io.lineReadBeat := io.lineReadBeat
+  cache.io.invalidate := io.invalidate
+  cache.io.maintenanceRequest.valid := False
+  cache.io.maintenanceRequest.payload.assignFromBits(
+    B(0, cache.io.maintenanceRequest.payload.getBitsWidth bits)
+  )
+
+  io.lineReadValid := cache.io.lineReadValid
+  io.lineRead := cache.io.lineRead
+  io.lineReadBeatReady := cache.io.lineReadBeatReady
+  io.cacheRequestFire := frontend.io.cacheRequestValid && cache.io.requestReady
+  io.cacheRequestAddress := frontend.io.cacheRequest.physicalAddress
+  io.cacheResponseValid := cache.io.responseValid
+  io.cacheKill := frontend.io.cacheKill
+  io.fetchPc := frontend.io.fetchPc
+  io.frontendOccupancy := frontend.io.occupancy
+}
+
 class OooL1InstructionCacheSpec extends AnyFunSuite {
   private val config = OooCoreConfig.FourIssueThreeCommit
 
   private def sample(dut: OooL1InstructionCacheProbe): Unit = {
+    dut.clockDomain.waitSampling()
+    sleep(1)
+  }
+
+  private def sample(dut: OooFrontendL1InstructionCacheProbe): Unit = {
     dut.clockDomain.waitSampling()
     sleep(1)
   }
@@ -129,6 +223,14 @@ class OooL1InstructionCacheSpec extends AnyFunSuite {
     val low = BigInt(firstInstruction + beat * 2) & BigInt("ffffffff", 16)
     val high = BigInt(firstInstruction + beat * 2 + 1) & BigInt("ffffffff", 16)
     (high << 32) | low
+  }
+
+  private def encodeDirectBranch(byteOffset: Int): BigInt = {
+    require((byteOffset & 3) == 0)
+    val encoded = (byteOffset >> 2) & ((1 << 26) - 1)
+    val high10 = (encoded >> 16) & 0x3ff
+    val low16 = encoded & 0xffff
+    (BigInt(0x14) << 26) | (BigInt(low16) << 10) | high10
   }
 
   private def refill(
@@ -230,6 +332,172 @@ class OooL1InstructionCacheSpec extends AnyFunSuite {
     }
   }
 
+  test("real frontend owner gate replaces a warm L1I hit in its response cycle") {
+    SimConfig.withVerilator
+      .workspacePath("target/sim-workspace-ooo-frontend-l1i-hit-turnover")
+      .compile(new OooFrontendL1InstructionCacheProbe(config))
+      .doSim("ooo-frontend-l1i-hit-turnover", 0x4c58) { dut =>
+        dut.clockDomain.forkStimulus(period = 10)
+        dut.io.decodeReady #= (1 << config.decodeWidth) - 1
+        dut.io.translationEnable #= true
+        dut.io.redirectValid #= false
+        dut.io.redirectTarget #= config.resetVector
+        dut.io.invalidate #= false
+        dut.io.lineReadReady #= false
+        dut.io.lineReadBeatValid #= false
+        dut.io.lineReadBeat.mshrId #= 0
+        dut.io.lineReadBeat.beat #= 0
+        dut.io.lineReadBeat.data #= 0
+        dut.io.lineReadBeat.last #= false
+        dut.io.lineReadBeat.error #= false
+        dut.clockDomain.assertReset()
+        dut.clockDomain.waitSampling(2)
+        dut.clockDomain.deassertReset()
+        dut.clockDomain.waitSampling(config.instructionCache.sets + 8)
+
+        var cycles = 0
+        while (!dut.io.lineReadValid.toBoolean && cycles < 24) {
+          sample(dut)
+          cycles += 1
+        }
+        assert(dut.io.lineReadValid.toBoolean)
+        assert(dut.io.lineRead.lineAddress.toBigInt == config.resetVector)
+        dut.io.lineReadReady #= true
+        sample(dut)
+        dut.io.lineReadReady #= false
+        for (beat <- 0 until OooCacheContract.BeatsPerLine) {
+          dut.io.lineReadBeatValid #= true
+          dut.io.lineReadBeat.beat #= beat
+          dut.io.lineReadBeat.data #= instructionBeat(1000, beat)
+          dut.io.lineReadBeat.last #= beat == OooCacheContract.BeatsPerLine - 1
+          sleep(1)
+          assert(dut.io.lineReadBeatReady.toBoolean)
+          sample(dut)
+        }
+        dut.io.lineReadBeatValid #= false
+        // Complete installation, then discard all first-pass frontend state without invalidating
+        // the warm line.
+        sample(dut)
+        dut.io.redirectValid #= true
+        dut.io.redirectTarget #= config.resetVector
+        sample(dut)
+        dut.io.redirectValid #= false
+
+        val fires = scala.collection.mutable.ArrayBuffer.empty[(Int, BigInt)]
+        val responseRequestOverlap = scala.collection.mutable.ArrayBuffer.empty[Int]
+        cycles = 0
+        while (fires.size < 4 && cycles < 32) {
+          sleep(1)
+          if (dut.io.cacheRequestFire.toBoolean) {
+            fires += cycles -> dut.io.cacheRequestAddress.toBigInt
+            if (dut.io.cacheResponseValid.toBoolean) {
+              responseRequestOverlap += cycles
+            }
+          }
+          sample(dut)
+          cycles += 1
+        }
+        assert(fires.map(_._2) == (0 until 4).map(config.resetVector + _ * 16))
+        // Fetch produces four instructions while decode consumes at most three, so the finite
+        // frontend buffer must eventually throttle a sustained hit stream.  The optimization's
+        // decisive contract is the first response replacing its cache owner on the same edge.
+        withClue(
+          s"cache request fires: ${fires.mkString(", ")}; overlap: ${responseRequestOverlap.mkString(", ")}"
+        ) {
+          assert(responseRequestOverlap.nonEmpty)
+          assert(fires(1)._1 - fires(0)._1 == 1)
+        }
+      }
+  }
+
+  test("real frontend correction kills the direct-hit turnover accepted behind it") {
+    SimConfig.withVerilator
+      .workspacePath("target/sim-workspace-ooo-frontend-l1i-hit-correction")
+      .compile(new OooFrontendL1InstructionCacheProbe(config))
+      .doSim("ooo-frontend-l1i-hit-correction", 0x4c59) { dut =>
+        dut.clockDomain.forkStimulus(period = 10)
+        dut.io.decodeReady #= (1 << config.decodeWidth) - 1
+        dut.io.translationEnable #= true
+        dut.io.redirectValid #= false
+        dut.io.redirectTarget #= config.resetVector
+        dut.io.invalidate #= false
+        dut.io.lineReadReady #= false
+        dut.io.lineReadBeatValid #= false
+        dut.io.lineReadBeat.mshrId #= 0
+        dut.io.lineReadBeat.beat #= 0
+        dut.io.lineReadBeat.data #= 0
+        dut.io.lineReadBeat.last #= false
+        dut.io.lineReadBeat.error #= false
+        dut.clockDomain.assertReset()
+        dut.clockDomain.waitSampling(2)
+        dut.clockDomain.deassertReset()
+        dut.clockDomain.waitSampling(config.instructionCache.sets + 8)
+
+        var cycles = 0
+        while (!dut.io.lineReadValid.toBoolean && cycles < 24) {
+          sample(dut)
+          cycles += 1
+        }
+        assert(dut.io.lineReadValid.toBoolean)
+        // Kill the cold request before critical-word return so its predecode cannot train the BTB.
+        dut.io.translationEnable #= false
+        dut.io.redirectValid #= true
+        dut.io.redirectTarget #= config.resetVector + 0x1000
+        sample(dut)
+        dut.io.redirectValid #= false
+
+        dut.io.lineReadReady #= true
+        sample(dut)
+        dut.io.lineReadReady #= false
+        val branchTarget = config.resetVector + 0x20
+        val lineInstructions = IndexedSeq.tabulate(16)(index => BigInt(2000 + index)).updated(
+          1,
+          encodeDirectBranch(branchTarget.toInt - (config.resetVector + 4).toInt)
+        )
+        for (beat <- 0 until OooCacheContract.BeatsPerLine) {
+          dut.io.lineReadBeatValid #= true
+          dut.io.lineReadBeat.beat #= beat
+          val low = lineInstructions(beat * 2) & BigInt("ffffffff", 16)
+          val high = lineInstructions(beat * 2 + 1) & BigInt("ffffffff", 16)
+          dut.io.lineReadBeat.data #= (high << 32) | low
+          dut.io.lineReadBeat.last #= beat == OooCacheContract.BeatsPerLine - 1
+          sleep(1)
+          assert(dut.io.lineReadBeatReady.toBoolean)
+          sample(dut)
+        }
+        dut.io.lineReadBeatValid #= false
+        sample(dut)
+
+        dut.io.redirectValid #= true
+        dut.io.redirectTarget #= config.resetVector
+        sample(dut)
+        dut.io.redirectValid #= false
+        dut.io.translationEnable #= true
+
+        val requestAddresses = scala.collection.mutable.ArrayBuffer.empty[BigInt]
+        var sawCorrectionKill = false
+        var responseDuringKill = false
+        cycles = 0
+        while ((!sawCorrectionKill || !requestAddresses.contains(branchTarget)) && cycles < 40) {
+          sleep(1)
+          if (dut.io.cacheRequestFire.toBoolean) {
+            requestAddresses += dut.io.cacheRequestAddress.toBigInt
+          }
+          if (dut.io.cacheKill.toBoolean) {
+            sawCorrectionKill = true
+            responseDuringKill ||= dut.io.cacheResponseValid.toBoolean
+          }
+          sample(dut)
+          cycles += 1
+        }
+        assert(requestAddresses.headOption.contains(config.resetVector))
+        assert(requestAddresses.contains(config.resetVector + 16))
+        assert(sawCorrectionKill)
+        assert(!responseDuringKill)
+        assert(requestAddresses.contains(branchTarget))
+      }
+  }
+
   test("L1I turns confirmed hits over at one response per cycle and preserves hit-to-miss") {
     SimConfig.withVerilator
       .workspacePath("target/sim-workspace-ooo-l1i-hit-turnover")
@@ -250,22 +518,22 @@ class OooL1InstructionCacheSpec extends AnyFunSuite {
 
         acceptRequest(dut, addresses(0), addresses(0))
         for (next <- 1 until addresses.length) {
+          assertResponse(dut, addresses(next - 1), instructions(next - 1))
           dut.io.requestValid #= true
           dut.io.request.virtualAddress #= addresses(next)
           dut.io.request.physicalAddress #= addresses(next)
           sleep(1)
           assert(dut.io.requestReady.toBoolean)
           sample(dut)
-          assertResponse(dut, addresses(next - 1), instructions(next - 1))
         }
         dut.io.requestValid #= false
-        sample(dut)
         assertResponse(dut, addresses.last, instructions.last)
         sample(dut)
         assert(!dut.io.responseValid.toBoolean)
 
         val missAddress = BigInt(0x2c0)
         acceptRequest(dut, addresses.head, addresses.head)
+        assertResponse(dut, addresses.head, instructions.head)
         dut.io.requestValid #= true
         dut.io.request.virtualAddress #= missAddress
         dut.io.request.physicalAddress #= missAddress
@@ -273,7 +541,7 @@ class OooL1InstructionCacheSpec extends AnyFunSuite {
         assert(dut.io.requestReady.toBoolean)
         sample(dut)
         dut.io.requestValid #= false
-        assertResponse(dut, addresses.head, instructions.head)
+        assert(!dut.io.responseValid.toBoolean)
 
         var cycles = 0
         while (!dut.io.lineReadValid.toBoolean && cycles < 8) {
@@ -326,9 +594,9 @@ class OooL1InstructionCacheSpec extends AnyFunSuite {
         sleep(1)
         assert(!dut.io.requestReady.toBoolean)
         assert(!dut.io.maintenanceReady.toBoolean)
+        assertResponse(dut, line0, 4000)
         sample(dut)
         dut.io.requestValid #= false
-        assertResponse(dut, line0, 4000)
         sleep(1)
         assert(dut.io.maintenanceReady.toBoolean)
         sample(dut)
