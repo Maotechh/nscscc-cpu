@@ -87,8 +87,10 @@ final case class OooCoreConfig(
     enableDivideFastPath: Boolean = false,
     enableFastStoreCompletion: Boolean = true,
     enableStoreTranslationLookahead: Boolean = true,
-    enableDirectWakeupEchoSuppression: Boolean = true,
-    enableHeadCompletionCommitBypass: Boolean = true,
+    // Timing experiment: remove the low-ROI wakeup/retirement shortcuts while
+    // retaining F01 phase 1 and the cache response cut.
+    enableDirectWakeupEchoSuppression: Boolean = false,
+    enableHeadCompletionCommitBypass: Boolean = false,
     enableDirectDmwPretranslation: Boolean = true,
     enableLoadCompletionEarlyWakeup: Boolean = true,
     enableFrontendTranslationResponseBypass: Boolean = true,
