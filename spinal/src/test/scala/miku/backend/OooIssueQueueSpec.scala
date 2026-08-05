@@ -5,6 +5,8 @@ import org.scalatest.funsuite.AnyFunSuite
 import spinal.core._
 import spinal.core.sim._
 
+import scala.util.Random
+
 private final class OooIssueQueueProbe(config: OooCoreConfig, portIndex: Int = 0)
     extends Component {
   val io = new Bundle {
@@ -64,6 +66,124 @@ class OooIssueQueueSpec extends AnyFunSuite {
   private def sample(dut: OooIssueQueueProbe): Unit = {
     dut.clockDomain.waitSampling()
     sleep(1)
+  }
+
+  test("IQ randomized compaction preserves payload and wakeup state") {
+    val config = OooCoreConfig.FourIssueThreeCommit
+    final case class ModelEntry(
+        id: Long,
+        pdst: Int,
+        psrc1: Int,
+        psrc2: Int,
+        source1Ready: Boolean,
+        source2Ready: Boolean
+    )
+
+    SimConfig.withVerilator
+      .workspacePath("target/sim-workspace-ooo-iq")
+      .compile(new OooIssueQueueProbe(config, portIndex = 0))
+      .doSim("ooo-iq-randomized-scoreboard", 0x4957) { dut =>
+        val random = new Random(0x4957)
+        var entries = Vector.empty[ModelEntry]
+        var nextId = 1L
+
+        dut.clockDomain.forkStimulus(period = 10)
+        clearInputs(dut, config)
+        dut.io.enqueue.decoded.fuType #= 0
+        dut.io.enqueue.decoded.source1IsPc #= false
+        dut.io.enqueue.decoded.source2IsImmediate #= false
+        dut.io.enqueue.decoded.source2IsFour #= false
+        dut.io.enqueue.decoded.operation #= 1
+        dut.io.enqueue.decoded.exception.valid #= false
+        dut.clockDomain.assertReset()
+        dut.clockDomain.waitSampling(2)
+        dut.clockDomain.deassertReset()
+        sample(dut)
+
+        for (cycle <- 0 until 20000) {
+          val wakeTags = Vector.fill(config.writebackWidth) {
+            if (random.nextInt(4) == 0) 1 + random.nextInt(config.physicalRegs - 1)
+            else 0
+          }
+          var wakeMask = BigInt(0)
+          for (lane <- 0 until config.writebackWidth) {
+            if (wakeTags(lane) != 0) wakeMask = wakeMask.setBit(lane)
+            dut.io.wakeupPdst(lane) #= wakeTags(lane)
+          }
+          dut.io.wakeupValid #= wakeMask
+
+          val issueReady = random.nextBoolean()
+          val enqueueValid = random.nextInt(4) != 0
+          val psrc1 = 1 + random.nextInt(config.physicalRegs - 1)
+          val psrc2 = 1 + random.nextInt(config.physicalRegs - 1)
+          val pdst = 1 + random.nextInt(config.physicalRegs - 1)
+          val source1Ready = random.nextInt(3) == 0
+          val source2Ready = random.nextInt(3) == 0
+          val enqueueId = 0x1c000000L + nextId * 4
+
+          dut.io.issueReady #= issueReady
+          dut.io.enqueueValid #= enqueueValid
+          dut.io.enqueue.decoded.pc #= enqueueId
+          dut.io.enqueue.pdst #= pdst
+          dut.io.enqueue.psrc1 #= psrc1
+          dut.io.enqueue.psrc2 #= psrc2
+          dut.io.enqueue.source1Ready #= source1Ready
+          dut.io.enqueue.source2Ready #= source2Ready
+          dut.io.enqueue.robPointer #= (nextId % (1 << config.robPointerWidth))
+          sleep(1)
+
+          assert(
+            dut.io.occupancy.toInt == entries.size,
+            s"cycle $cycle occupancy ${dut.io.occupancy.toInt} != ${entries.size}"
+          )
+
+          def awakened(tag: Int): Boolean = wakeTags.contains(tag)
+          val effectiveEntries = entries.map { entry =>
+            entry.copy(
+              source1Ready = entry.source1Ready || awakened(entry.psrc1),
+              source2Ready = entry.source2Ready || awakened(entry.psrc2)
+            )
+          }
+          val selectedIndex = effectiveEntries.indexWhere(entry =>
+            entry.source1Ready && entry.source2Ready
+          )
+          val expectedIssueValid = selectedIndex >= 0
+          assert(
+            dut.io.issueValid.toBoolean == expectedIssueValid,
+            s"cycle $cycle issueValid mismatch with ${entries.size} resident entries"
+          )
+          if (expectedIssueValid) {
+            val expected = effectiveEntries(selectedIndex)
+            assert(
+              dut.io.issue.decoded.pc.toLong == expected.id,
+              f"cycle $cycle selected PC 0x${dut.io.issue.decoded.pc.toLong}%08x != 0x${expected.id}%08x"
+            )
+            assert(dut.io.issue.pdst.toInt == expected.pdst, s"cycle $cycle pdst mismatch")
+            assert(dut.io.issue.psrc1.toInt == expected.psrc1, s"cycle $cycle psrc1 mismatch")
+            assert(dut.io.issue.psrc2.toInt == expected.psrc2, s"cycle $cycle psrc2 mismatch")
+          }
+
+          val enqueueFire = enqueueValid && dut.io.enqueueReady.toBoolean
+          val dequeueFire = expectedIssueValid && issueReady
+          val enqueued = ModelEntry(
+            enqueueId,
+            pdst,
+            psrc1,
+            psrc2,
+            source1Ready || awakened(psrc1),
+            source2Ready || awakened(psrc2)
+          )
+
+          dut.clockDomain.waitSampling()
+          entries =
+            if (dequeueFire) effectiveEntries.patch(selectedIndex, Nil, 1)
+            else effectiveEntries
+          if (enqueueFire) {
+            entries :+= enqueued
+            nextId += 1
+          }
+        }
+      }
   }
 
   test("IQ retains only the decoded payload required by each fixed execution port") {
