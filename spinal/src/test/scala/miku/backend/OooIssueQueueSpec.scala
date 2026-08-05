@@ -66,6 +66,125 @@ class OooIssueQueueSpec extends AnyFunSuite {
     sleep(1)
   }
 
+  test("IQ retains only the decoded payload required by each fixed execution port") {
+    val config = OooCoreConfig.FourIssueThreeCommit
+    for (port <- 0 until config.executionWidth) {
+      val capabilities = config.executionPorts(port).capabilities
+      val hasBranch = capabilities.contains(OooFuKind.Branch)
+      val hasDivide = capabilities.contains(OooFuKind.Divide)
+      val hasSystem = capabilities.contains(OooFuKind.Csr)
+      val hasMemory = capabilities.contains(OooFuKind.LoadStore)
+      val fuType =
+        if (hasMemory) 5
+        else if (hasBranch) 1
+        else if (hasDivide) 3
+        else 4
+
+      SimConfig.withVerilator
+        .workspacePath("target/sim-workspace-ooo-iq-port-payload")
+        .compile(new OooIssueQueueProbe(config, port))
+        .doSim(s"ooo-iq-port-$port-payload", 0x5100 + port) { dut =>
+          dut.clockDomain.forkStimulus(period = 10)
+          clearInputs(dut, config)
+          dut.clockDomain.assertReset()
+          dut.clockDomain.waitSampling(2)
+          dut.clockDomain.deassertReset()
+          sample(dut)
+
+          dut.io.enqueueValid #= true
+          dut.io.enqueue.decoded.fuType #= fuType
+          dut.io.enqueue.decoded.pc #= 0x1c001234L
+          dut.io.enqueue.decoded.immediate #= 0x12345678L
+          dut.io.enqueue.decoded.source1IsPc #= true
+          dut.io.enqueue.decoded.source2IsImmediate #= true
+          dut.io.enqueue.decoded.source2IsFour #= true
+          dut.io.enqueue.decoded.operation #= 0x123
+          dut.io.enqueue.decoded.isBranch #= true
+          dut.io.enqueue.decoded.branchKind #= 5
+          dut.io.enqueue.decoded.predictedTaken #= true
+          dut.io.enqueue.decoded.predictedTarget #= 0x1c00abcdL
+          dut.io.enqueue.decoded.mulDivOperation #= 9
+          dut.io.enqueue.decoded.mulDivSigned #= true
+          dut.io.enqueue.decoded.rd #= 23
+          dut.io.enqueue.decoded.csrAddress #= 0x456
+          dut.io.enqueue.decoded.csrMask #= true
+          dut.io.enqueue.decoded.resultFromCsr #= true
+          dut.io.enqueue.decoded.systemOperation #= 17
+          dut.io.enqueue.decoded.serializing #= true
+          dut.io.enqueue.decoded.isLoad #= true
+          dut.io.enqueue.decoded.isStore #= false
+          dut.io.enqueue.decoded.memorySize #= 2
+          dut.io.enqueue.decoded.memorySignExtend #= true
+          dut.io.enqueue.decoded.isLl #= true
+          dut.io.enqueue.decoded.isSc #= false
+          dut.io.enqueue.decoded.exception.valid #= true
+          dut.io.enqueue.decoded.exception.ecode #= 0x0d
+          dut.io.enqueue.decoded.exception.esubcode #= 3
+          dut.io.enqueue.decoded.exception.badVAddrValid #= true
+          dut.io.enqueue.decoded.exception.badVAddr #= 0x87654321L
+          dut.io.enqueue.decoded.exception.tlbRefill #= true
+          dut.io.enqueue.pdst #= 41
+          dut.io.enqueue.psrc1 #= 17
+          dut.io.enqueue.psrc2 #= 19
+          dut.io.enqueue.source1Ready #= true
+          dut.io.enqueue.source2Ready #= true
+          dut.io.enqueue.robPointer #= 9
+          dut.io.enqueue.recoveryEpoch #= 0x5a
+          dut.io.enqueue.loadQueueIndex #= 3
+          dut.io.enqueue.storeQueueIndex #= 5
+          dut.io.robHeadPointer #= 9
+          sample(dut)
+          dut.io.enqueueValid #= false
+          // The LSU IQ has one registered output boundary.
+          if (hasMemory) sample(dut)
+
+          assert(dut.io.issueValid.toBoolean, s"port $port did not expose its resident uop")
+          assert(dut.io.issue.pdst.toBigInt == 41)
+          assert(dut.io.issue.psrc1.toBigInt == 17)
+          assert(dut.io.issue.psrc2.toBigInt == 19)
+          assert(dut.io.issue.robPointer.toBigInt == 9)
+          assert(dut.io.issue.recoveryEpoch.toBigInt == 0x5a)
+
+          if (hasMemory) {
+            assert(dut.io.issue.decoded.immediate.toBigInt == 0x12345678L)
+            assert(dut.io.issue.decoded.isLoad.toBoolean)
+            assert(dut.io.issue.decoded.memorySize.toBigInt == 2)
+            assert(dut.io.issue.decoded.memorySignExtend.toBoolean)
+            assert(dut.io.issue.decoded.isLl.toBoolean)
+            assert(dut.io.issue.decoded.pc.toBigInt == 0x1c001234L)
+            assert(!dut.io.issue.decoded.exception.valid.toBoolean)
+          } else {
+            assert(dut.io.issue.decoded.pc.toBigInt == 0x1c001234L)
+            assert(dut.io.issue.decoded.immediate.toBigInt == 0x12345678L)
+            assert(dut.io.issue.decoded.operation.toBigInt == 0x123)
+            assert(dut.io.issue.decoded.exception.valid.toBoolean)
+            assert(dut.io.issue.decoded.exception.badVAddr.toBigInt == 0x87654321L)
+            assert(!dut.io.issue.decoded.isLoad.toBoolean)
+          }
+          if (hasBranch) {
+            assert(dut.io.issue.decoded.isBranch.toBoolean)
+            assert(dut.io.issue.decoded.branchKind.toBigInt == 5)
+            assert(dut.io.issue.decoded.predictedTarget.toBigInt == 0x1c00abcdL)
+          } else {
+            assert(!dut.io.issue.decoded.isBranch.toBoolean)
+            assert(dut.io.issue.decoded.predictedTarget.toBigInt == 0)
+          }
+          if (hasDivide || capabilities.contains(OooFuKind.Multiply)) {
+            assert(dut.io.issue.decoded.mulDivOperation.toBigInt == 9)
+            assert(dut.io.issue.decoded.mulDivSigned.toBoolean)
+          }
+          if (hasSystem) {
+            assert(dut.io.issue.decoded.rd.toBigInt == 23)
+            assert(dut.io.issue.decoded.csrAddress.toBigInt == 0x456)
+            assert(dut.io.issue.decoded.serializing.toBoolean)
+          } else {
+            assert(dut.io.issue.decoded.rd.toBigInt == 0)
+            assert(!dut.io.issue.decoded.serializing.toBoolean)
+          }
+        }
+    }
+  }
+
   test("IQ removes the selected younger ready entry without duplicating it") {
     val config = OooCoreConfig.FourIssueThreeCommit
     SimConfig.withVerilator
