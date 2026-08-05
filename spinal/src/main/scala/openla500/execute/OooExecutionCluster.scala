@@ -208,6 +208,8 @@ final class OooExecutionCluster(config: OooCoreConfig = OooCoreConfig.FourIssueT
     config.executionPorts.indexWhere(_.capabilities.contains(OooFuKind.Divide))
   private val loadStorePort =
     config.executionPorts.indexWhere(_.capabilities.contains(OooFuKind.LoadStore))
+  private val dedicatedLoadStorePort =
+    config.executionPorts(loadStorePort).capabilities == Set(OooFuKind.LoadStore)
   private val csrPort = config.executionPorts.indexWhere(_.capabilities.contains(OooFuKind.Csr))
   require(Seq(multiplyPort, dividePort, loadStorePort, csrPort).forall(_ >= 0))
   require(config.writebackWidth >= config.executionWidth + 1)
@@ -606,11 +608,18 @@ final class OooExecutionCluster(config: OooCoreConfig = OooCoreConfig.FourIssueT
         !divider.io.completionValid
       )
     } else if (port == loadStorePort) {
-      io.issueReady(port) := !io.flush && Mux(
-        usesAgu,
-        io.aguReady,
-        !io.loadStoreCompletionValid
-      )
+      if (dedicatedLoadStorePort) {
+        // The router can only send real Loads/Stores to this lane. PRELD uses
+        // an ALU lane, so completion arbitration cannot feed back into LSU
+        // issue readiness.
+        io.issueReady(port) := !io.flush && io.aguReady
+      } else {
+        io.issueReady(port) := !io.flush && Mux(
+          usesAgu,
+          io.aguReady,
+          !io.loadStoreCompletionValid
+        )
+      }
     } else if (port == csrPort) {
       io.issueReady(port) := !io.flush && barrierState === OooBarrierState.idle
     } else {

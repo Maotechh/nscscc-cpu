@@ -198,14 +198,8 @@ final class OooFrontend(config: OooCoreConfig = OooCoreConfig.FourIssueThreeComm
   val earlierTranslatedPredictionTaken = Vec(Bool(), config.fetchWidth + 1)
   earlierTranslatedPredictionTaken(0) := False
   for (lane <- 0 until config.fetchWidth) {
-    val lanePc = translatedGroupBase + U(lane * 4, config.xlen bits)
-    val coldConditionalTaken = requestPrediction(lane).target < lanePc
     val laneTaken = requestPrediction(lane).branchType =/=
-      OooPredictedBranchType.conditional || Mux(
-        requestPrediction(lane).phtValid,
-        requestPrediction(lane).phtState(1),
-        coldConditionalTaken
-      )
+      OooPredictedBranchType.conditional || requestPrediction(lane).phtState(1)
     translatedPredictionTaken(lane) := requestPrediction(lane).hit &&
       laneTaken &&
       U(lane, config.fetchSlotWidth bits) >= translatedFirstSlot &&

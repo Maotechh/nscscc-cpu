@@ -13,6 +13,10 @@ private final class OooExecutionClusterProbe(config: OooCoreConfig) extends Comp
     config.executionPorts.indexWhere(_.capabilities.contains(OooFuKind.LoadStore))
   private val csrPort =
     config.executionPorts.indexWhere(_.capabilities.contains(OooFuKind.Csr))
+  private val aluPort =
+    config.executionPorts.indexWhere(port =>
+      port.capabilities.contains(OooFuKind.Alu) && !port.capabilities.contains(OooFuKind.Csr)
+    )
 
   val io = new Bundle {
     val instruction = in Bits (32 bits)
@@ -42,10 +46,12 @@ private final class OooExecutionClusterProbe(config: OooCoreConfig) extends Comp
   val execution = new OooExecutionCluster(config)
   execution.io.issueValid := 0
   val decodedIsBarrier = OooFuType.isBarrier(decoder.io.decoded.fuType)
-  execution.io.issueValid(loadStorePort) := io.issueValid && !decodedIsBarrier
+  val decodedUsesLsu = decoder.io.decoded.fuType === OooFuType.loadStore
+  execution.io.issueValid(loadStorePort) := io.issueValid && decodedUsesLsu
+  execution.io.issueValid(aluPort) := io.issueValid && !decodedUsesLsu && !decodedIsBarrier
   execution.io.issueValid(csrPort) := io.issueValid && decodedIsBarrier
   for (port <- 0 until config.executionWidth) {
-    if (port == loadStorePort || port == csrPort) {
+    if (port == loadStorePort || port == csrPort || port == aluPort) {
       execution.io.issue(port).decoded := decoder.io.decoded
       execution.io.issue(port).pdst := 0
       execution.io.issue(port).oldPdst := 0
@@ -98,11 +104,11 @@ private final class OooExecutionClusterProbe(config: OooCoreConfig) extends Comp
   io.issueReady := Mux(
     decodedIsBarrier,
     execution.io.issueReady(csrPort),
-    execution.io.issueReady(loadStorePort)
+    Mux(decodedUsesLsu, execution.io.issueReady(loadStorePort), execution.io.issueReady(aluPort))
   )
   io.aguValid := execution.io.aguValid
   io.completionValid := execution.io.completionValid(loadStorePort) ||
-    execution.io.completionValid(csrPort)
+    execution.io.completionValid(csrPort) || execution.io.completionValid(aluPort)
   io.systemOperation := decoder.io.decoded.systemOperation
   io.isLoad := decoder.io.decoded.isLoad
   io.isStore := decoder.io.decoded.isStore

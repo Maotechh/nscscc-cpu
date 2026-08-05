@@ -41,11 +41,13 @@ private final class OooLoadStoreQueueProbe(config: OooCoreConfig) extends Compon
     val loadWakeupValid = out Bool ()
     val loadWakeupPdst = out UInt (config.physicalRegIndexWidth bits)
     val loadWakeupRecoveryEpoch = out UInt (config.recoveryEpochWidth bits)
+    val loadWakeupEpochCurrent = out Bool ()
     val releaseLoadValid = out Bits (config.commitWidth bits)
     val releaseStoreValid = out Bits (config.commitWidth bits)
     val commitMemory = out Vec (OooMemoryCommitObservation(config), config.commitWidth)
     val storeDrainBusy = out Bool ()
     val committedMemoryEpoch = in UInt (config.memoryEpochWidth bits)
+    val currentRecoveryEpoch = in UInt (config.recoveryEpochWidth bits)
     val robHeadPointer = in UInt (config.robPointerWidth bits)
     val flush = in Bool ()
   }
@@ -101,6 +103,7 @@ private final class OooLoadStoreQueueProbe(config: OooCoreConfig) extends Compon
   lsq.io.reservationValid := io.reservationValid
   lsq.io.reservationLineAddress := io.reservationLineAddress
   lsq.io.committedMemoryEpoch := io.committedMemoryEpoch
+  lsq.io.currentRecoveryEpoch := io.currentRecoveryEpoch
   lsq.io.robHeadPointer := io.robHeadPointer
   lsq.io.orderingRobPointer := 0
 
@@ -113,6 +116,7 @@ private final class OooLoadStoreQueueProbe(config: OooCoreConfig) extends Compon
   io.loadWakeupValid := lsq.io.loadWakeupValid
   io.loadWakeupPdst := lsq.io.loadWakeupPdst
   io.loadWakeupRecoveryEpoch := lsq.io.loadWakeupRecoveryEpoch
+  io.loadWakeupEpochCurrent := lsq.io.loadWakeupEpochCurrent
   io.releaseLoadValid := lsq.io.releaseLoadValid
   io.releaseStoreValid := lsq.io.releaseStoreValid
   io.commitMemory := lsq.io.commitObservation
@@ -142,6 +146,7 @@ class OooLoadStoreQueueSpec extends AnyFunSuite {
     dut.io.reservationValid #= false
     dut.io.reservationLineAddress #= 0
     dut.io.committedMemoryEpoch #= 0
+    dut.io.currentRecoveryEpoch #= 0
     dut.io.robHeadPointer #= 0
     dut.io.flush #= false
     for (lane <- 0 until config.renameWidth) {

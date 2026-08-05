@@ -47,7 +47,8 @@ final class OooBankedFetchPredictor(
   private val btbTagLsb = btbTypeLsb + OooPredictedBranchType.Width
   private val btbValidBit = btbTagLsb + btbTagWidth
   private val btbDirectionTrainedBit = btbValidBit + 1
-  private val btbEntryWidth = btbDirectionTrainedBit + 1
+  private val btbStaticTakenBit = btbDirectionTrainedBit + 1
+  private val btbEntryWidth = btbStaticTakenBit + 1
 
   require(config.fetchWidth == 4)
   require(btbEntriesPerBank == 128)
@@ -230,6 +231,9 @@ final class OooBankedFetchPredictor(
   btbUpdateEntry(btbTagLsb + btbTagWidth - 1 downto btbTagLsb) := btbUpdateTag
   btbUpdateEntry(btbValidBit) := True
   btbUpdateEntry(btbDirectionTrainedBit) := io.btbUpdateDirectionTrained
+  // BTFNT is invariant for a learned PC/target pair. Compute it on the rare
+  // update path instead of rebuilding a 32-bit comparator on every BTB hit.
+  btbUpdateEntry(btbStaticTakenBit) := io.btbUpdateTarget < io.btbUpdatePc
 
   val phtUpdateBank = io.phtUpdatePc(fetchGroupOffsetWidth - 1 downto 2)
   val phtNextState = UInt(2 bits)
@@ -278,7 +282,11 @@ final class OooBankedFetchPredictor(
       btbRead(bank)(btbDirectionTrainedBit)
     io.prediction(bank).branchType :=
       btbRead(bank)(btbTypeLsb + OooPredictedBranchType.Width - 1 downto btbTypeLsb).asUInt
-    io.prediction(bank).phtState := phtRead(bank).asUInt
+    io.prediction(bank).phtState := Mux(
+      btbRead(bank)(btbDirectionTrainedBit),
+      phtRead(bank),
+      Mux(btbRead(bank)(btbStaticTakenBit), B"10", B"01")
+    ).asUInt
     io.prediction(bank).phtIndex := capturedPhtIndex
     io.prediction(bank).target :=
       btbRead(bank)(btbTargetLsb + config.xlen - 1 downto btbTargetLsb).asUInt

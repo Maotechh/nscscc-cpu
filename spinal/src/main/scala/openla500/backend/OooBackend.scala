@@ -29,6 +29,7 @@ final class OooBackend(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommi
     val loadWakeupValid = in Bool ()
     val loadWakeupPdst = in UInt (config.physicalRegIndexWidth bits)
     val loadWakeupRecoveryEpoch = in UInt (config.recoveryEpochWidth bits)
+    val loadWakeupEpochCurrent = in Bool ()
     val resultForwardValid = in Bool ()
     val resultForwardPdst = in UInt (config.physicalRegIndexWidth bits)
     val resultForwardData = in Bits (config.xlen bits)
@@ -45,6 +46,7 @@ final class OooBackend(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommi
     val releaseStoreValid = in Bits (config.commitWidth bits)
     val committedMemoryEpoch = out UInt (config.memoryEpochWidth bits)
     val speculativeMemoryEpoch = out UInt (config.memoryEpochWidth bits)
+    val currentRecoveryEpoch = out UInt (config.recoveryEpochWidth bits)
     val robHeadPointer = out UInt (config.robPointerWidth bits)
 
     val debugReadAddress = in UInt (config.archRegIndexWidth bits)
@@ -78,6 +80,7 @@ final class OooBackend(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommi
   val issueOperandSource2 = Vec.fill(config.executionWidth)(Reg(Bits(config.xlen bits)))
   val recoveryEpoch = Reg(UInt(config.recoveryEpochWidth bits)) init (0)
   when(io.flush) { recoveryEpoch := recoveryEpoch + 1 }
+  io.currentRecoveryEpoch := recoveryEpoch
   rob.io.currentEpoch := recoveryEpoch
   rob.io.predictorUpdateCapacity := io.predictorUpdateCapacity
   val committedMemoryEpoch = Reg(UInt(config.memoryEpochWidth bits)) init (0)
@@ -211,8 +214,17 @@ final class OooBackend(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommi
     freeList.io.allocateValid(lane) := io.renameValid(lane) &&
       io.rename(lane).writesGpr && io.rename(lane).rd =/= 0
   }
+  // At most robEntries destinations can be live. With p1..p63 allocatable,
+  // the production geometry retains at least 31 free registers, so FreeList
+  // exhaustion cannot be the limiting resource for a three-wide rename group.
+  // Keep the FreeList's own generic guard, but remove its rd-dependent ready
+  // cone from the global atomic allocation decision.
+  require(
+    config.physicalRegs - 1 - config.robEntries >= config.renameWidth,
+    "ROB capacity must bound physical-register allocation"
+  )
   val resourcesReady = dispatchQueue.io.enqueueReady && rob.io.allocateReady &&
-    freeList.io.allocateReady && lsqAllocator.io.allocateReady && !io.flush
+    lsqAllocator.io.allocateReady && !io.flush
   val acceptAll = resourcesReady && io.renameValid.orR
   val accepted = Bits(config.renameWidth bits)
   val allLanes = B((BigInt(1) << config.renameWidth) - 1, config.renameWidth bits)
@@ -330,8 +342,8 @@ final class OooBackend(config: OooCoreConfig = OooCoreConfig.FourIssueThreeCommi
     } else if (write == loadStorePort) {
       val registeredWake = rob.io.completionWakeupCandidateValid(write)
       val loadWake = if (config.enableLoadCompletionEarlyWakeup) {
-        io.loadWakeupValid && io.loadWakeupPdst =/= 0 &&
-          io.loadWakeupRecoveryEpoch === recoveryEpoch
+        // LSQ qualifies recoveryEpoch while registering this completion.
+        io.loadWakeupValid && io.loadWakeupEpochCurrent && io.loadWakeupPdst =/= 0
       } else {
         False
       }

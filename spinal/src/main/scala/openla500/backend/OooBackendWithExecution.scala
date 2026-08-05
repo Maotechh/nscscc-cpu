@@ -104,6 +104,7 @@ final class OooBackendWithExecution(
   loadStoreQueue.io.allocateValid := backend.io.memoryAllocateValid
   loadStoreQueue.io.allocate := backend.io.memoryAllocate
   loadStoreQueue.io.committedMemoryEpoch := backend.io.committedMemoryEpoch
+  loadStoreQueue.io.currentRecoveryEpoch := backend.io.currentRecoveryEpoch
   loadStoreQueue.io.robHeadPointer := backend.io.robHeadPointer
   loadStoreQueue.io.storeDataValid := backend.io.storeDataValid
   loadStoreQueue.io.storeDataRobPointer := backend.io.storeDataRobPointer
@@ -204,6 +205,7 @@ final class OooBackendWithExecution(
   backend.io.loadWakeupValid := loadStoreQueue.io.loadWakeupValid
   backend.io.loadWakeupPdst := loadStoreQueue.io.loadWakeupPdst
   backend.io.loadWakeupRecoveryEpoch := loadStoreQueue.io.loadWakeupRecoveryEpoch
+  backend.io.loadWakeupEpochCurrent := loadStoreQueue.io.loadWakeupEpochCurrent
   backend.io.resultForwardValid :=
     execution.io.completionValid(config.executionWidth) &&
       execution.io.completion(config.executionWidth).writesPdst

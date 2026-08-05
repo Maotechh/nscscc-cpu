@@ -167,6 +167,8 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
     val loadWakeupValid = out Bool ()
     val loadWakeupPdst = out UInt (config.physicalRegIndexWidth bits)
     val loadWakeupRecoveryEpoch = out UInt (config.recoveryEpochWidth bits)
+    val loadWakeupEpochCurrent = out Bool ()
+    val currentRecoveryEpoch = in UInt (config.recoveryEpochWidth bits)
     val releaseLoadValid = out Bits (config.commitWidth bits)
     val releaseStoreValid = out Bits (config.commitWidth bits)
     val commitObservation = out Vec (OooMemoryCommitObservation(config), config.commitWidth)
@@ -717,6 +719,7 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
   val completionValid = RegInit(False)
   val completion = Reg(OooCompletion(config))
   val completionLoadWakeup = RegInit(False)
+  val completionLoadWakeupEpochCurrent = RegInit(False)
   val translatedFastStore = translationCompletionFire && translationOwnerStore &&
     !translationStore.isSc && !io.translationResponse.cancelled &&
     !io.translationResponse.exception.valid && !io.translationResponse.uncached
@@ -766,6 +769,7 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
     }
     completionValid := False
     completionLoadWakeup := False
+    completionLoadWakeupEpochCurrent := False
   }.otherwise {
     when(aguExceptionCompletionReady) {
       aguExceptionCompletionValid := False
@@ -801,6 +805,11 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
     completionLoadWakeup := generatedCompletionValid && !fastStoreCompletionValid &&
       generatedCompletionIsLoad && !generatedCompletion.exception.valid &&
       generatedCompletion.writesPdst && generatedCompletion.pdst =/= 0
+    // Qualify the epoch on the same existing LSQ completion boundary. Backend
+    // broadcasts this registered Boolean instead of placing the global epoch
+    // comparator on every IQ select path.
+    completionLoadWakeupEpochCurrent :=
+      generatedCompletion.recoveryEpoch === io.currentRecoveryEpoch
     // Validity, not payload clock-enables, defines whether this register is
     // observable. Sampling every cycle prevents the deep forwarding predicate
     // from being replicated onto every completion payload register.
@@ -814,6 +823,7 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
   io.loadWakeupValid := completionValid && completionLoadWakeup
   io.loadWakeupPdst := completion.pdst
   io.loadWakeupRecoveryEpoch := completion.recoveryEpoch
+  io.loadWakeupEpochCurrent := completionLoadWakeupEpochCurrent
 
   loadReleaseValid := B(0, config.commitWidth bits)
   storeReleaseValid := B(0, config.commitWidth bits)

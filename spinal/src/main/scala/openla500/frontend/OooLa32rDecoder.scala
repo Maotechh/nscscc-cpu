@@ -520,7 +520,10 @@ final class OooLa32rDecoder(config: OooCoreConfig = OooCoreConfig.FourIssueThree
   when(any(instMulW, instMulhW, instMulhWu)) { fuType := OooFuType.multiply }
   when(any(instDivW, instDivWu, instModW, instModWu)) { fuType := OooFuType.divide }
   when(csrInstruction) { fuType := OooFuType.csr }
-  when(any(loadOperation, storeOperation, instPreload)) {
+  // PRELD is currently an architectural no-op completed at retirement. Route
+  // it through an ALU lane so the dedicated LSU lane never needs to arbitrate
+  // a direct completion against an older memory completion.
+  when(any(loadOperation, storeOperation)) {
     fuType := OooFuType.loadStore
   }
   when(privilegedInstruction) { fuType := OooFuType.serial }

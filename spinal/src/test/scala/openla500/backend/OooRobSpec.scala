@@ -156,7 +156,9 @@ class OooRobSpec extends AnyFunSuite {
   }
 
   test("ROB flush does not immediately alias stale completion pointers") {
-    val config = OooCoreConfig.FourIssueThreeCommit
+    val config = OooCoreConfig.FourIssueThreeCommit.copy(
+      enableHeadCompletionCommitBypass = true
+    )
     SimConfig.withVerilator
       .workspacePath("target/sim-workspace-ooo-rob")
       .compile(new OooRobProbe(config))
@@ -220,7 +222,9 @@ class OooRobSpec extends AnyFunSuite {
   }
 
   test("ROB retains three-wide commit after a head completion bypass") {
-    val config = OooCoreConfig.FourIssueThreeCommit
+    val config = OooCoreConfig.FourIssueThreeCommit.copy(
+      enableHeadCompletionCommitBypass = true
+    )
     SimConfig.withVerilator
       .workspacePath("target/sim-workspace-ooo-rob")
       .compile(new OooRobProbe(config))
@@ -338,7 +342,9 @@ class OooRobSpec extends AnyFunSuite {
   }
 
   test("banked ROB payload remains ordered across the physical index wrap") {
-    val config = OooCoreConfig.FourIssueThreeCommit
+    val config = OooCoreConfig.FourIssueThreeCommit.copy(
+      enableHeadCompletionCommitBypass = true
+    )
     SimConfig.withVerilator
       .workspacePath("target/sim-workspace-ooo-rob")
       .compile(new OooRobProbe(config))
@@ -408,7 +414,9 @@ class OooRobSpec extends AnyFunSuite {
   }
 
   test("ROB exposes accepted physical writes from the registered completion stage") {
-    val config = OooCoreConfig.FourIssueThreeCommit
+    val config = OooCoreConfig.FourIssueThreeCommit.copy(
+      enableHeadCompletionCommitBypass = true
+    )
     SimConfig.withVerilator
       .workspacePath("target/sim-workspace-ooo-rob")
       .compile(new OooRobProbe(config))
@@ -653,7 +661,9 @@ class OooRobSpec extends AnyFunSuite {
   }
 
   test("ROB rejects an old-epoch completion after the full pointer identity wraps") {
-    val config = OooCoreConfig.FourIssueThreeCommit
+    val config = OooCoreConfig.FourIssueThreeCommit.copy(
+      enableHeadCompletionCommitBypass = true
+    )
     SimConfig.withVerilator
       .workspacePath("target/sim-workspace-ooo-rob")
       .compile(new OooRobProbe(config))

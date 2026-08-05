@@ -33,6 +33,7 @@ private final class OooBackendDispatchProbe(config: OooCoreConfig) extends Compo
     val loadWakeupValid = in Bool ()
     val loadWakeupPdst = in UInt (config.physicalRegIndexWidth bits)
     val loadWakeupRecoveryEpoch = in UInt (config.recoveryEpochWidth bits)
+    val loadWakeupEpochCurrent = in Bool ()
     val multiplyWakeupValid = in Bool ()
     val multiplyWakeupPdst = in UInt (config.physicalRegIndexWidth bits)
     val multiplyForwardValid = in Bool ()
@@ -99,6 +100,7 @@ private final class OooBackendDispatchProbe(config: OooCoreConfig) extends Compo
   backend.io.loadWakeupValid := io.loadWakeupValid
   backend.io.loadWakeupPdst := io.loadWakeupPdst
   backend.io.loadWakeupRecoveryEpoch := io.loadWakeupRecoveryEpoch
+  backend.io.loadWakeupEpochCurrent := io.loadWakeupEpochCurrent
   backend.io.resultForwardValid := io.multiplyForwardValid
   backend.io.resultForwardPdst := io.multiplyForwardPdst
   backend.io.resultForwardData := io.multiplyForwardData
@@ -178,6 +180,7 @@ class OooBackendDispatchSpec extends AnyFunSuite {
     dut.io.loadWakeupValid #= false
     dut.io.loadWakeupPdst #= 0
     dut.io.loadWakeupRecoveryEpoch #= 0
+    dut.io.loadWakeupEpochCurrent #= true
     dut.io.multiplyWakeupValid #= false
     dut.io.multiplyWakeupPdst #= 0
     dut.io.multiplyForwardValid #= false
@@ -965,6 +968,7 @@ class OooBackendDispatchSpec extends AnyFunSuite {
           dut.io.loadWakeupValid #= true
           dut.io.loadWakeupPdst #= producerPdst
           dut.io.loadWakeupRecoveryEpoch #= wakeEpoch
+          dut.io.loadWakeupEpochCurrent #= (wakeEpoch == 0)
           dut.clockDomain.waitSampling()
           dut.io.completionValid #= 0
           dut.io.loadWakeupValid #= false
