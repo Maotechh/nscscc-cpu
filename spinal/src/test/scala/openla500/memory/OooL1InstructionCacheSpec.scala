@@ -116,6 +116,14 @@ private final class OooFrontendL1InstructionCacheProbe(config: OooCoreConfig) ex
   frontend.io.predictorUpdateMetadata := 0
   frontend.io.predictorUpdateIsCall := False
   frontend.io.predictorUpdateIsReturn := False
+  frontend.io.predictorRetireValid := 0
+  frontend.io.predictorRetireTaken := 0
+  for (lane <- 0 until config.commitWidth) {
+    frontend.io.predictorRetireType(lane) := 0
+    frontend.io.predictorRetireReturnAddress(lane) := 0
+  }
+  frontend.io.predictorRetireIsCall := 0
+  frontend.io.predictorRetireIsReturn := 0
   frontend.io.privilege := 0
   frontend.io.interruptPending := False
 
