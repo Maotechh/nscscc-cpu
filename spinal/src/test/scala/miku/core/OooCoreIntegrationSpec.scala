@@ -72,6 +72,7 @@ class OooCoreIntegrationSpec extends AnyFunSuite {
     dut.io.uncachedDataResponse.robPointer #= 0
     dut.io.uncachedDataResponse.recoveryEpoch #= 0
     dut.io.uncachedDataResponse.pdst #= 0
+    dut.io.uncachedDataResponse.loadQueueIndex #= 0
     dut.io.uncachedDataResponse.data #= 0
     dut.io.uncachedDataResponse.error #= false
     dut.io.memoryReadReady #= false

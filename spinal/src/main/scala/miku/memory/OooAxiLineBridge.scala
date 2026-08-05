@@ -288,6 +288,7 @@ final class OooAxiLineBridge(
       dataResponse.robPointer := dataReadContext.robPointer
       dataResponse.recoveryEpoch := dataReadContext.recoveryEpoch
       dataResponse.pdst := dataReadContext.pdst
+      dataResponse.loadQueueIndex := dataReadContext.loadQueueIndex
       dataResponse.data := io.axi.r.payload.data
       dataResponse.error := io.axi.r.payload.response.orR ||
         io.axi.r.payload.id =/= B(3, 4 bits) || !io.axi.r.payload.last
@@ -360,6 +361,7 @@ final class OooAxiLineBridge(
       dataResponse.robPointer := dataWriteContext.robPointer
       dataResponse.recoveryEpoch := dataWriteContext.recoveryEpoch
       dataResponse.pdst := dataWriteContext.pdst
+      dataResponse.loadQueueIndex := dataWriteContext.loadQueueIndex
       dataResponse.data := B(0, config.xlen bits)
       dataResponse.error := io.axi.b.payload.response.orR ||
         io.axi.b.payload.id =/= B(3, 4 bits)

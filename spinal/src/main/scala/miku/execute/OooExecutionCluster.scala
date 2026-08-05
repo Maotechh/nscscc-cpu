@@ -309,7 +309,9 @@ final class OooExecutionCluster(config: OooCoreConfig = OooCoreConfig.FourIssueT
   val barrierIdleObserved = RegInit(False)
   val csrIsBarrier = OooFuType.isBarrier(csrDecoded.fuType)
   val barrierAccept = io.issueValid(csrPort) && io.issueReady(csrPort) && csrIsBarrier
-  val barrierQuiescent = !io.olderStorePending && io.memorySubsystemIdle
+  // Serializing operations already require two consecutive quiescent observations.
+  // Register the subsystem-wide reduction before it reaches the multi-bit FSM.
+  val barrierQuiescent = RegNext(!io.olderStorePending && io.memorySubsystemIdle) init (False)
   val barrierCacheTarget = barrierUop.decoded.rd(2 downto 0)
   val barrierCacheTargetDefined =
     barrierCacheTarget === OooCacheMaintenanceTarget.instructionL1 ||

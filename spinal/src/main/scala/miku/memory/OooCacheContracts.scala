@@ -52,12 +52,14 @@ final case class OooCacheRequest(config: OooCoreConfig) extends Bundle {
   val robPointer = UInt(config.robPointerWidth bits)
   val recoveryEpoch = UInt(config.recoveryEpochWidth bits)
   val pdst = UInt(config.physicalRegIndexWidth bits)
+  val loadQueueIndex = UInt(config.loadQueueIndexWidth bits)
 }
 
 final case class OooCacheResponse(config: OooCoreConfig) extends Bundle {
   val robPointer = UInt(config.robPointerWidth bits)
   val recoveryEpoch = UInt(config.recoveryEpochWidth bits)
   val pdst = UInt(config.physicalRegIndexWidth bits)
+  val loadQueueIndex = UInt(config.loadQueueIndexWidth bits)
   val data = Bits(config.xlen bits)
   val error = Bool()
 }

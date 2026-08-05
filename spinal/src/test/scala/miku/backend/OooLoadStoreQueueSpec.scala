@@ -187,6 +187,7 @@ class OooLoadStoreQueueSpec extends AnyFunSuite {
     dut.io.dataResponse.robPointer #= 0
     dut.io.dataResponse.recoveryEpoch #= 0
     dut.io.dataResponse.pdst #= 0
+    dut.io.dataResponse.loadQueueIndex #= 0
     dut.io.dataResponse.data #= 0
     dut.io.dataResponse.error #= false
   }
@@ -675,6 +676,7 @@ class OooLoadStoreQueueSpec extends AnyFunSuite {
         dut.io.dataRequestReady #= false
         dut.io.dataResponseValid #= true
         dut.io.dataResponse.robPointer #= 18
+        dut.io.dataResponse.loadQueueIndex #= 4
         dut.io.dataResponse.data #= BigInt("18181818", 16)
         sample(dut)
         dut.io.dataResponseValid #= false
@@ -699,7 +701,7 @@ class OooLoadStoreQueueSpec extends AnyFunSuite {
       }
   }
 
-  test("independent loads issue before the first response and complete by ROB tag") {
+  test("independent loads complete only with matching LQ owner and ROB tag") {
     SimConfig.withVerilator
       .workspacePath("target/sim-workspace-ooo-lsq")
       .compile(new OooLoadStoreQueueProbe(config))
@@ -742,7 +744,17 @@ class OooLoadStoreQueueSpec extends AnyFunSuite {
 
         dut.io.dataResponseValid #= true
         dut.io.dataResponse.robPointer #= 1
+        // A matching ROB tag attached to the wrong LQ owner is stale and must
+        // not complete either entry.
+        dut.io.dataResponse.loadQueueIndex #= 0
         dut.io.dataResponse.data #= BigInt("11111111", 16)
+        sample(dut)
+        assert(!dut.io.completionValid.toBoolean)
+
+        dut.io.dataResponseValid #= false
+        sample(dut)
+        dut.io.dataResponseValid #= true
+        dut.io.dataResponse.loadQueueIndex #= 1
         sample(dut)
         assert(dut.io.completionValid.toBoolean)
         assert(dut.io.completion.robPointer.toBigInt == 1)
@@ -752,6 +764,7 @@ class OooLoadStoreQueueSpec extends AnyFunSuite {
         assert(dut.io.loadWakeupRecoveryEpoch.toBigInt == 0)
 
         dut.io.dataResponse.robPointer #= 0
+        dut.io.dataResponse.loadQueueIndex #= 0
         dut.io.dataResponse.data #= BigInt("01010101", 16)
         sample(dut)
         assert(dut.io.completionValid.toBoolean)

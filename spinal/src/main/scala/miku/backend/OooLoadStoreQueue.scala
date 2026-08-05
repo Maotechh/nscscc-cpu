@@ -476,6 +476,7 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
   requestCandidate.robPointer := scheduledLoad.robPointer
   requestCandidate.recoveryEpoch := scheduledLoad.recoveryEpoch
   requestCandidate.pdst := scheduledLoad.pdst
+  requestCandidate.loadQueueIndex := loadHead
   when(storeRequest) {
     requestCandidate.virtualAddress := headStore.virtualAddress
     requestCandidate.physicalAddress := headStore.physicalAddress
@@ -491,6 +492,7 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
     requestCandidate.robPointer := headStore.robPointer
     requestCandidate.recoveryEpoch := headStore.recoveryEpoch
     requestCandidate.pdst := U(0, config.physicalRegIndexWidth bits)
+    requestCandidate.loadQueueIndex := 0
   }
 
   // Cut the oldest-load/store-ordering cone before cache and AXI backpressure.  A buffered
@@ -513,24 +515,24 @@ final class OooLoadStoreQueue(config: OooCoreConfig = OooCoreConfig.FourIssueThr
   val storeRequestFire = dataRequestFire && requestBuffer.isWrite
   val loadRequestFire = dataRequestFire && !requestBuffer.isWrite
 
-  val responseLoadMatch = Bits(config.loadQueueEntries bits)
-  for (entry <- 0 until config.loadQueueEntries) {
-    responseLoadMatch(entry) := loads(entry).valid && loads(entry).requestSent &&
-      !loads(entry).completed && io.dataResponse.robPointer === loads(entry).robPointer &&
-      io.dataResponse.recoveryEpoch === loads(entry).recoveryEpoch
-  }
-  val responseLoadValid = responseLoadMatch.orR
-  val responseLoadIndex = OHToUInt(OHMasking.first(responseLoadMatch))
-  val responseLoadRobPointer = loads(responseLoadIndex).robPointer
-  val responseLoadRecoveryEpoch = loads(responseLoadIndex).recoveryEpoch
-  val responseLoadPdst = loads(responseLoadIndex).pdst
-  val responseLoadWritesPdst = loads(responseLoadIndex).writesPdst
-  val responseLoadVirtualAddress = loads(responseLoadIndex).virtualAddress
-  val responseLoadSize = loads(responseLoadIndex).size
-  val responseLoadSignExtend = loads(responseLoadIndex).signExtend
-  val responseLoadIsLl = loads(responseLoadIndex).isLl
-  val responseLoadPhysicalAddress = loads(responseLoadIndex).physicalAddress
-  val responseLoadUncached = loads(responseLoadIndex).uncached
+  // The accepted cache request carries its LQ owner through cached and uncached
+  // response paths. Keep ROB pointer and epoch checks as the authoritative stale-
+  // response guard, while avoiding a 16-way associative search before load formatting.
+  val responseLoadIndex = io.dataResponse.loadQueueIndex
+  val responseLoad = loads(responseLoadIndex)
+  val responseLoadValid = responseLoad.valid && responseLoad.requestSent &&
+    !responseLoad.completed && io.dataResponse.robPointer === responseLoad.robPointer &&
+    io.dataResponse.recoveryEpoch === responseLoad.recoveryEpoch
+  val responseLoadRobPointer = responseLoad.robPointer
+  val responseLoadRecoveryEpoch = responseLoad.recoveryEpoch
+  val responseLoadPdst = responseLoad.pdst
+  val responseLoadWritesPdst = responseLoad.writesPdst
+  val responseLoadVirtualAddress = responseLoad.virtualAddress
+  val responseLoadSize = responseLoad.size
+  val responseLoadSignExtend = responseLoad.signExtend
+  val responseLoadIsLl = responseLoad.isLl
+  val responseLoadPhysicalAddress = responseLoad.physicalAddress
+  val responseLoadUncached = responseLoad.uncached
   val responseLoadAccepted = io.dataResponseValid && responseLoadValid
   val responseStoreValid = headStore.valid && headStore.uncached &&
     headStore.requestSent && !headStore.completed &&

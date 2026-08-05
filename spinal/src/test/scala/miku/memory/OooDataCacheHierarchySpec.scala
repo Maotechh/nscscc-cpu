@@ -75,6 +75,7 @@ class OooDataCacheHierarchySpec extends AnyFunSuite {
     dut.io.request.robPointer #= 0
     dut.io.request.recoveryEpoch #= 0
     dut.io.request.pdst #= 0
+    dut.io.request.loadQueueIndex #= 0
     dut.io.memoryReadReady #= false
     dut.io.memoryReadBeatValid #= false
     dut.io.memoryReadBeat.mshrId #= 0
@@ -117,6 +118,7 @@ class OooDataCacheHierarchySpec extends AnyFunSuite {
     dut.io.request.robPointer #= robPointer
     dut.io.request.recoveryEpoch #= recoveryEpoch
     dut.io.request.pdst #= pdst
+    dut.io.request.loadQueueIndex #= 0
     sleep(1)
 
     var cycles = 0

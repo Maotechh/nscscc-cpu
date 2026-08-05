@@ -82,6 +82,7 @@ class OooL1DataCacheSpec extends AnyFunSuite {
     dut.io.request.robPointer #= 0
     dut.io.request.recoveryEpoch #= 0
     dut.io.request.pdst #= 0
+    dut.io.request.loadQueueIndex #= 0
     dut.io.lineReadReady #= false
     dut.io.lineReadBeatValid #= false
     dut.io.lineReadBeat.mshrId #= 0
@@ -126,6 +127,7 @@ class OooL1DataCacheSpec extends AnyFunSuite {
     dut.io.request.robPointer #= robPointer
     dut.io.request.recoveryEpoch #= recoveryEpoch
     dut.io.request.pdst #= pdst
+    dut.io.request.loadQueueIndex #= 0
   }
 
   private def refillLine(

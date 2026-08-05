@@ -317,6 +317,7 @@ final class OooL1DataCache(config: OooCoreConfig = OooCoreConfig.FourIssueThreeC
     lookupRequest.robPointer := io.request.robPointer
     lookupRequest.recoveryEpoch := io.request.recoveryEpoch
     lookupRequest.pdst := io.request.pdst
+    lookupRequest.loadQueueIndex := io.request.loadQueueIndex
     lookupMshrId := freeMissId
     lookupWaiterId := freeWaiterId
   }
@@ -327,6 +328,7 @@ final class OooL1DataCache(config: OooCoreConfig = OooCoreConfig.FourIssueThreeC
     waiters(freeWaiterId).robPointer := io.request.robPointer
     waiters(freeWaiterId).recoveryEpoch := io.request.recoveryEpoch
     waiters(freeWaiterId).pdst := io.request.pdst
+    waiters(freeWaiterId).loadQueueIndex := io.request.loadQueueIndex
     waiterBeatReady(freeWaiterId) :=
       misses(lineMatchId).refillMask(refillBeatIndex(io.request.physicalAddress)) ||
         (io.lineReadBeatValid && io.lineReadBeatReady && refillId === lineMatchId &&
@@ -406,6 +408,7 @@ final class OooL1DataCache(config: OooCoreConfig = OooCoreConfig.FourIssueThreeC
         waiters(lookupWaiterId).robPointer := lookupRequest.robPointer
         waiters(lookupWaiterId).recoveryEpoch := lookupRequest.recoveryEpoch
         waiters(lookupWaiterId).pdst := lookupRequest.pdst
+        waiters(lookupWaiterId).loadQueueIndex := lookupRequest.loadQueueIndex
         waiterBeatReady(lookupWaiterId) := False
       }
     }
@@ -604,6 +607,7 @@ final class OooL1DataCache(config: OooCoreConfig = OooCoreConfig.FourIssueThreeC
     response.robPointer := lookupRequest.robPointer
     response.recoveryEpoch := lookupRequest.recoveryEpoch
     response.pdst := lookupRequest.pdst
+    response.loadQueueIndex := lookupRequest.loadQueueIndex
     response.data := selectWord(cacheArray.io.hitData, lookupRequest.physicalAddress)
     response.error := False
   }.elsewhen(waiterResponseFire) {
@@ -611,6 +615,7 @@ final class OooL1DataCache(config: OooCoreConfig = OooCoreConfig.FourIssueThreeC
     response.robPointer := waiters(responseWaiterId).robPointer
     response.recoveryEpoch := waiters(responseWaiterId).recoveryEpoch
     response.pdst := waiters(responseWaiterId).pdst
+    response.loadQueueIndex := waiters(responseWaiterId).loadQueueIndex
     response.data := selectBeatWord(responseBeat, waiters(responseWaiterId).physicalAddress)
     response.error := misses(responseMshrId).refillError
     waiters(responseWaiterId).valid := False

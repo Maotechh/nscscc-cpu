@@ -132,6 +132,7 @@ class OooAxiLineBridgeSpec extends AnyFunSuite {
     dut.io.uncachedDataRequest.robPointer #= 0
     dut.io.uncachedDataRequest.recoveryEpoch #= 0
     dut.io.uncachedDataRequest.pdst #= 0
+    dut.io.uncachedDataRequest.loadQueueIndex #= 0
     dut.io.axi.ar.ready #= false
     dut.io.axi.r.valid #= false
     dut.io.axi.r.payload.id #= 0
@@ -550,6 +551,7 @@ class OooAxiLineBridgeSpec extends AnyFunSuite {
         dut.io.uncachedDataRequest.robPointer #= 17
         dut.io.uncachedDataRequest.recoveryEpoch #= 29
         dut.io.uncachedDataRequest.pdst #= 23
+        dut.io.uncachedDataRequest.loadQueueIndex #= 6
         sleep(1)
         assert(dut.io.uncachedDataRequestReady.toBoolean)
         sample(dut)
@@ -574,6 +576,7 @@ class OooAxiLineBridgeSpec extends AnyFunSuite {
         assert(dut.io.uncachedDataResponse.robPointer.toBigInt == 17)
         assert(dut.io.uncachedDataResponse.recoveryEpoch.toBigInt == 29)
         assert(dut.io.uncachedDataResponse.pdst.toBigInt == 23)
+        assert(dut.io.uncachedDataResponse.loadQueueIndex.toBigInt == 6)
         assert(dut.io.uncachedDataResponse.data.toBigInt == BigInt("00005a00", 16))
 
         sample(dut)
@@ -586,6 +589,7 @@ class OooAxiLineBridgeSpec extends AnyFunSuite {
         dut.io.uncachedDataRequest.robPointer #= 18
         dut.io.uncachedDataRequest.recoveryEpoch #= 30
         dut.io.uncachedDataRequest.pdst #= 0
+        dut.io.uncachedDataRequest.loadQueueIndex #= 0
         sleep(1)
         assert(dut.io.uncachedDataRequestReady.toBoolean)
         sample(dut)

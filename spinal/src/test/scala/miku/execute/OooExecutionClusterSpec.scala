@@ -982,7 +982,7 @@ class OooExecutionClusterSpec extends AnyFunSuite {
       }
   }
 
-  test("DBAR waits for two quiescent observations before completing") {
+  test("DBAR registers subsystem quiescence before two stable observations") {
     SimConfig.withVerilator
       .workspacePath("target/sim-workspace-ooo-execution-cluster")
       .compile(new OooBarrierExecutionProbe(config))
@@ -1018,6 +1018,9 @@ class OooExecutionClusterSpec extends AnyFunSuite {
         assert(!dut.io.completionValid.toBoolean)
 
         dut.io.memorySubsystemIdle #= true
+        dut.clockDomain.waitSampling()
+        sleep(1)
+        assert(!dut.io.completionValid.toBoolean)
         dut.clockDomain.waitSampling()
         sleep(1)
         assert(!dut.io.completionValid.toBoolean)
